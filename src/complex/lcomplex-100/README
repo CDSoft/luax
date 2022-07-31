@@ -1,0 +1,30 @@
+This code provides support for complex numbers in Lua using the functions
+available in C99.
+
+To build the library and run a simple test, just do make.
+If Lua is not installed in /usr/local, tell make:
+	make LUA_TOPDIR=/var/tmp/lhf/lua-5.3.5/install
+
+To install the library where Lua can find it, use a variant of these:
+	make install
+	sudo make install
+	sudo make install LIBDIR=/usr/local/lib/lua/5.3
+
+For detailed installation instructions, see
+	http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/install.html
+
+The library is simple and intuitive; see the summary below and a C99
+reference manual. Read test.lua to see the library in action.
+
+This code is hereby placed in the public domain and also under the MIT license.
+
+Please send comments, suggestions, and bug reports to lhf@tecgraf.puc-rio.br .
+
+complex library:
+I		__tostring(z)	asinh(z)	imag(z)		sinh(z)
+__add(z,w)	__unm(z)	atan(z)		log(z)		sqrt(z)
+__div(z,w)	abs(z)		atanh(z)	new(x,y)	tan(z)
+__eq(z,w)	acos(z)		conj(z)		pow(z,w)	tanh(z)
+__mul(z,w)	acosh(z)	cos(z)		proj(z)		tostring(z)
+__pow(z,w)	arg(z)		cosh(z)		real(z)		version
+__sub(z,w)	asin(z)		exp(z)		sin(z)
