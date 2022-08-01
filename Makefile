@@ -19,11 +19,17 @@
 BUILD = .build
 ZIG_CACHE = $(BUILD)/zig-cache
 
+# Linux
 RUNTIMES += $(BUILD)/lrun-x86_64-linux-musl
+RUNTIMES += $(BUILD)/lrun-i386-linux-musl
+RUNTIMES += $(BUILD)/lrun-aarch64-linux-musl
+
+# Windows
 RUNTIMES += $(BUILD)/lrun-x86_64-windows-gnu.exe
+
+# MacOS
 RUNTIMES += $(BUILD)/lrun-x86_64-macos-gnu
 RUNTIMES += $(BUILD)/lrun-aarch64-macos-gnu
-RUNTIMES += $(BUILD)/lrun-aarch64-linux-musl
 
 LUAX_BINARIES = $(patsubst $(BUILD)/lrun-%,$(BUILD)/luax-%,$(RUNTIMES))
 
