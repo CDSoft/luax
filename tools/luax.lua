@@ -96,6 +96,7 @@ local target = nil
 
 do
     local i = 1
+    -- Scan options
     while i <= #arg do
         local a = arg[i]
         if a == '-e' then
@@ -152,16 +153,19 @@ do
             break
         elseif a == '-' then
             run_stdin = true
+            -- this is not an option but a file (stdin) to execute
+            args[#args+1] = arg[i]
             break
         elseif a:match "^%-" then
             wrong_arg(a)
         else
-            args[#args+1] = a
+            -- this is not an option but a file to execute/compile
+            break
         end
         i = i+1
     end
+    -- scan files/arguments to execute/compile
     while i <= #arg do
-        if arg[i] == '-' then run_stdin = true end
         args[#args+1] = arg[i]
         i = i+1
     end
@@ -185,10 +189,10 @@ local function run_interpretor()
     -- scripts
 
     if #args >= 1 then
-        local luax = arg[0]
-        arg = args
+        arg = {}
         local script = args[1]
         arg[0] = script == "-" and "stdin" or script
+        for i = 2, #args do arg[i-1] = args[i] end
         local chunk, msg
         if script == "-" then
             chunk, msg = load(io.stdin:read "*a")
@@ -207,7 +211,6 @@ local function run_interpretor()
         else
             os.exit(1)
         end
-        arg[0] = luax
     end
 
     -- interactive REPL
