@@ -115,7 +115,9 @@ do
                 local res = table.pack(xpcall(chunk, traceback))
                 local ok = table.remove(res, 1)
                 if ok then
-                    print(table.unpack(res))
+                    if #res > 0 then
+                        print(table.unpack(res))
+                    end
                 else
                     os.exit(1)
                 end
@@ -207,7 +209,9 @@ local function run_interpretor()
         local res = table.pack(xpcall(chunk, traceback))
         local ok = table.remove(res, 1)
         if ok then
-            print(table.unpack(res))
+            if #res > 0 then
+                print(table.unpack(res))
+            end
         else
             os.exit(1)
         end
