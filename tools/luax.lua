@@ -18,25 +18,57 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
-local function usage(wrong_arg)
-    if wrong_arg then
-        print(("luax: unrecognized option '%s'"):format(wrong_arg))
-    end
-    print [==[
-usage: luax [options] [script [args]]
-Available options are:
-  -e stat  execute string 'stat'
-  -i       enter interactive mode after executing 'script'
-  -l name  require library 'name' into global 'name'
-  -v       show version information
-  --       stop handling options
-  -        stop handling options and execute stdin
+local fun = require "fun"
+local fs = require "fs"
+local sys = require "sys"
+
+local welcome = fun.I(_G)[[
+Lua eXtended $(_LUAX_VERSION)
+Copyright (C) 2021-2022 Christophe Delord (http://cdelord.fr/luax)
+Based on $(_VERSION)
+]]
+
+local usage = fun.I(_G){fs=fs}[==[
+usage: $(fs.basename(arg[0])) [options] [script [args]]
+
+General options:
+  -h            show this help
+  -v            show version information
+  --            stop handling options
+
+Lua options:
+  -e stat       execute string 'stat'
+  -i            enter interactive mode after executing 'script'
+  -l name       require library 'name' into global 'name'
+  -             stop handling options and execute stdin (incompatible with -i)
+
+Compilation options:
+  -t target     name of the luax binary compiled for the targetted platform
+  -o file       name the executable file to create
+
+Lua and Compilation options can not be mixed.
 ]==]
+
+local function print_welcome()
+    print(welcome)
+end
+
+local function print_usage(fmt, ...)
+    print_welcome()
+    if fmt then
+        print(("error: %s"):format(fmt:format(...)))
+        print("")
+    end
+    print(usage)
+end
+
+local function err(fmt, ...)
+    print_usage(fmt, ...)
     os.exit(1)
 end
 
-local function print_version()
-    print(("Lua eXtended %s - based on %s (http://cdelord.fr/luax)"):format(_LUAX_VERSION, _VERSION))
+local function wrong_arg(a)
+    err("unrecognized option '%s'", a)
 end
 
 local function traceback(message)
@@ -53,24 +85,121 @@ end
 
 -- Read options
 
+local interpretor_mode = false
+local compiler_mode = false
 local interactive = #arg == 0
+local run_stdin = false
+local actions = {}
+local args = {}
+local output = nil
+local target = nil
 
-local function shift(n)
-    n = n or 1
-    for _ = 1, n do table.remove(arg, 1) end
+do
+    local i = 1
+    while i <= #arg do
+        local a = arg[i]
+        if a == '-e' then
+            interpretor_mode = true
+            i = i+1
+            local stat = arg[i]
+            if stat == nil then wrong_arg(a) end
+            actions[#actions+1] = function()
+                assert(stat)
+                local chunk, msg = load(stat, "=(command line)")
+                if not chunk then
+                    io.stderr:write(("%s: %s\n"):format(arg[0], msg))
+                    os.exit(1)
+                end
+                assert(chunk)
+                local res = table.pack(xpcall(chunk, traceback))
+                local ok = table.remove(res, 1)
+                if ok then
+                    print(table.unpack(res))
+                else
+                    os.exit(1)
+                end
+            end
+        elseif a == '-i' then
+            interpretor_mode = true
+            interactive = true
+        elseif a == '-l' then
+            interpretor_mode = true
+            i = i+1
+            local lib = arg[i]
+            if lib == nil then wrong_arg(a) end
+            actions[#actions+1] = function()
+                assert(lib)
+                _G[lib] = require(lib)
+            end
+        elseif a == '-o' then
+            compiler_mode = true
+            i = i+1
+            if output then wrong_arg(a) end
+            output = arg[i]
+        elseif a == '-t' then
+            compiler_mode = true
+            i = i+1
+            if target then wrong_arg(a) end
+            target = arg[i]
+        elseif a == '-v' then
+            print_welcome()
+            os.exit()
+        elseif a == '-h' then
+            print_usage()
+            os.exit(0)
+        elseif a == '--' then
+            i = i+1
+            break
+        elseif a == '-' then
+            run_stdin = true
+            break
+        elseif a:match "^%-" then
+            wrong_arg(a)
+        else
+            args[#args+1] = a
+        end
+        i = i+1
+    end
+    while i <= #arg do
+        if arg[i] == '-' then run_stdin = true end
+        args[#args+1] = arg[i]
+        i = i+1
+    end
 end
 
-while #arg > 0 do
-    local a = arg[1]
-    if a == '-e' then
-        if #arg < 2 then usage(a) end
-        local stat = arg[2]
-        shift(2)
-        local chunk, err = load(stat, "=(command line)")
+if interpretor_mode and compiler_mode then
+    err "Lua options and compiler options can not be mixed"
+    os.exit(1)
+end
+
+if interactive and run_stdin then
+    err "Interactive mode and stdin execution are incompatible"
+    os.exit(1)
+end
+
+-- run actions
+fun.foreach(actions, function(action) action() end)
+
+local function run_interpretor()
+
+    -- scripts
+
+    if #args >= 1 then
+        local luax = arg[0]
+        arg = args
+        local script = args[1]
+        arg[0] = script == "-" and "stdin" or script
+        local chunk, msg
+        if script == "-" then
+            chunk, msg = load(io.stdin:read "*a")
+        else
+            chunk, msg = loadfile(script)
+        end
         if not chunk then
-            io.stderr:write(("%s: %s\n"):format(arg[0], err))
+            io.stderr:write(("%s: %s\n"):format(script, msg))
             os.exit(1)
         end
+        assert(chunk)
         local res = table.pack(xpcall(chunk, traceback))
         local ok = table.remove(res, 1)
         if ok then
@@ -78,89 +207,103 @@ while #arg > 0 do
         else
             os.exit(1)
         end
-    elseif a == '-i' then
-        interactive = true
-        shift()
-    elseif a == '-l' then
-        if #arg < 2 then usage(a) end
-        local lib = arg[2]
-        _G[lib] = require(lib)
-        shift(2)
-    elseif a == '-v' then
-        print_version()
-        shift()
-    elseif a == "--" then
-        shift()
-        break
-    elseif a == "-" then
-        break
-    elseif a:match "^%-" then
-        usage(a)
-    else
-        break
+        arg[0] = luax
     end
-end
 
--- run script
+    -- interactive REPL
 
-if #arg >= 1 then
-    local luax = arg[0]
-    local script = arg[1]
-    shift()
-    arg[0] = script == "-" and "stdin" or script
-    local chunk, err
-    if script == "-" then
-        chunk, err = load(io.stdin:read "*a")
-    else
-        chunk, err = loadfile(script)
-    end
-    if not chunk then
-        io.stderr:write(("%s: %s\n"):format(script, err))
-        os.exit(1)
-    end
-    local res = table.pack(xpcall(chunk, traceback))
-    local ok = table.remove(res, 1)
-    if ok then
-        print(table.unpack(res))
-    else
-        os.exit(1)
-    end
-    arg[0] = luax
-end
-
--- interactive REPL
-
-if interactive then
-    local rl = require "rl"
-    local function try(input)
-        local chunk, err = load(input, "=stdin")
-        if not chunk then
-            if err and type(err) == "string" and err:match "<eof>$" then return "cont" end
-            return nil, err
-        end
-        local res = table.pack(xpcall(chunk, traceback))
-        local ok = table.remove(res, 1)
-        if ok then
-            if res ~= nil then print(table.unpack(res)) end
-        end
-        return "done"
-    end
-    print_version()
-    while true do
-        local inputs = {}
-        local prompt = "> "
-        while true do
-            table.insert(inputs, rl.read(prompt))
-            local input = table.concat(inputs, "\n")
-            local try_expr, err_expr = try("return "..input)
-            if try_expr == "done" then break end
-            local try_stat, err_stat = try(input)
-            if try_stat == "done" then break end
-            if try_expr ~= "cont" and try_stat ~= "cont" then
-                print(try_stat == nil and err_stat or err_expr)
-                break
+    if interactive then
+        local rl = require "rl"
+        local function try(input)
+            local chunk, msg = load(input, "=stdin")
+            if not chunk then
+                if msg and type(msg) == "string" and msg:match "<eof>$" then return "cont" end
+                return nil, msg
             end
-            prompt = ">> "
+            local res = table.pack(xpcall(chunk, traceback))
+            local ok = table.remove(res, 1)
+            if ok then
+                if res ~= nil then print(table.unpack(res)) end
+            end
+            return "done"
+        end
+        print_welcome()
+        while true do
+            local inputs = {}
+            local prompt = "> "
+            while true do
+                table.insert(inputs, rl.read(prompt))
+                local input = table.concat(inputs, "\n")
+                local try_expr, err_expr = try("return "..input)
+                if try_expr == "done" then break end
+                local try_stat, err_stat = try(input)
+                if try_stat == "done" then break end
+                if try_expr ~= "cont" and try_stat ~= "cont" then
+                    print(try_stat == nil and err_stat or err_expr)
+                    break
+                end
+                prompt = ">> "
+            end
         end
     end
+
 end
+
+function run_compiler()
+
+    print_welcome()
+
+    local scripts = args
+
+    if #scripts == 0 then err "No input script specified" end
+    if output == nil then err "No output specified (option -o)" end
+
+    local function search_in_path(name)
+        local sep = sys.os == "windows" and ";" or ":"
+        local pathes = os.getenv("PATH"):split(sep)
+        for i = 1, #pathes do
+            local path = fs.join(pathes[i], fs.basename(name))
+            if fs.is_file(path) then return path end
+        end
+    end
+
+    actual_target = target or arg[0]
+    if not fs.is_file(actual_target) then
+        actual_target = search_in_path(actual_target) or actual_target
+    end
+    if not fs.is_file(actual_target) then
+        local luax = search_in_path(arg[0])
+        actual_target = fs.join(fs.dirname(luax), fs.basename(actual_target))
+    end
+    if not fs.is_file(actual_target) then
+        err("Can not find "..target)
+    end
+
+    local function log(k, fmt, ...)
+        print(("%-8s: %s"):format(k, fmt:format(...)))
+    end
+
+    log("target", "%s", actual_target)
+    log("output", "%s", output)
+    log("scripts", "%s", scripts[1])
+    for i = 2, #scripts do log("", "%s", scripts[i]) end
+
+    local bundle = require "bundle"
+    local exe, chunk = bundle.combine(actual_target, scripts)
+    log("Chunk", "%7d bytes", #chunk)
+    log("Total", "%7d bytes", #exe)
+
+    assert(output)
+    local f = io.open(output, "wb")
+    if f == nil then err("Can not create "..output)
+    else
+        f:write(exe)
+        f:close()
+    end
+
+    fs.chmod(output, fs.aX|fs.aR|fs.uW)
+
+end
+
+if interpretor_mode or not compiler_mode then run_interpretor() end
+if compiler_mode then run_compiler() end

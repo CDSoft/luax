@@ -1,16 +1,16 @@
 # Lua eXtended
 
 `luax` is a Lua interpretor and REPL based on Lua 5.4.4, augmented with some useful packages.
-It comes with `lpack` that produces standalone executables from Lua scripts.
+`luax` can also produces standalone executables from Lua scripts.
 
-`luax` and `lpack` runs on several platforms with no dependency:
+`luax` runs on several platforms with no dependency:
 
 - Linux (x86_64)
 - Raspberry Pi (ARM)
 - MacOS (x86_64, ARM)
 - Windows (x86_64)
 
-`lpack` can cross-compile scripts from and to any of these platforms.
+`luax` can cross-compile scripts from and to any of these platforms.
 
 ## Compilation
 
@@ -30,12 +30,12 @@ $ make                  # compile and test
 ## Installation
 
 ``` sh
-$ make install                  # install luax and lpack to ~/.local/bin or ~/bin
-$ make install PREFIX=/usr/bin  # install luax and lpack to /usr/bin
+$ make install                  # install luax to ~/.local/bin or ~/bin
+$ make install PREFIX=/usr/bin  # install luax to /usr/bin
 ```
 
-`luax` and `lpack` are single autonomous executables.
-They do not need to be installed and can be copied anywhere you want.
+`luax` is a single autonomous executable.
+It does not need to be installed and can be copied anywhere you want.
 
 ## Precompiled binaries
 
@@ -48,44 +48,41 @@ work on any Linux distributions.
 
 ## Usage
 
-### `luax`
-
-`luax` is very similar to `lua`:
+`luax` is very similar to `lua` and adds more options to compile scripts:
 
 ```
 usage: luax [options] [script [args]]
-Available options are:
-  -e stat  execute string 'stat'
-  -i       enter interactive mode after executing 'script'
-  -l name  require library 'name' into global 'name'
-  -v       show version information
-  --       stop handling options
-  -        stop handling options and execute stdin
+
+General options:
+  -h            show this help
+  -v            show version information
+  --            stop handling options
+
+Lua options:
+  -e stat       execute string 'stat'
+  -i            enter interactive mode after executing 'script'
+  -l name       require library 'name' into global 'name'
+  -             stop handling options and execute stdin (incompatible with -i)
+
+Compilation options:
+  -t target     name of the luax binary compiled for the targetted platform
+  -o file       name the executable file to create
+
+Lua and Compilation options can not be mixed.
 ```
 
-### `lpack`
-
-```
-usage: lpack <main Lua script> [Lua libraries] [options]
-
-options:
-    -o <file>   name the executable file to create
-    -t <target> name of the lpack binary compiled for the targetted platform
-                (cross-compilation)
-```
-
-The main script shall be the first one.
-Other scripts are libraries that can be loaded by the main script.
+When compiling scripts (options `-t` and `-o`), the main script shall be the
+first one. Other scripts are libraries that can be loaded by the main script.
 
 #### Examples
 
 ``` bash
-# Native compilation (lpack is a symlink to the lpack binary of the host)
-$ lpack main.lua lib1.lua lib2.lua -o executable
+# Native compilation (luax is a symlink to the luax binary of the host)
+$ luax main.lua lib1.lua lib2.lua -o executable
 $ ./executable      # equivalent to luax main.lua
 
 # Cross compilation to MacOS x86_64
-$ lpack -t lpack-x86_64-macos-gnu main.lua lib1.lua lib2.lua -o executable
+$ luax -t luax-x86_64-macos-gnu main.lua lib1.lua lib2.lua -o executable
 ```
 
 ## Built-in modules

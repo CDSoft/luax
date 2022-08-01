@@ -20,6 +20,10 @@ http://cdelord.fr/luax
 
 -- bundle a set of scripts into a single Lua script that can be added to the runtime
 
+-- WARNING: bundle.lua is used to create the first Luax executable
+-- and is executed by a standard Lua interpretor.
+-- It can not use Luax packages such as fun or fs.
+
 local bundle = {}
 
 bundle.magic = 0xF0E1D2C3B4A59687
@@ -27,9 +31,10 @@ bundle.magic = 0xF0E1D2C3B4A59687
 local function read(name)
     local f = io.open(name)
     if f == nil then
-        io.stderr:write("File not found: ", name, "\n")
+        io.stderr:write("error: ", name, ": File not found\n")
         os.exit(1)
     end
+    assert(f)
     local content = f:read "a"
     f:close()
     return content
@@ -41,10 +46,6 @@ local function Bundle()
     function self.emit(s) fragments[#fragments+1] = s end
     function self.get() return table.concat(fragments) end
     return self
-end
-
-local function dirname(path)
-    return path:gsub("[/\\][^/\\]*$", "")
 end
 
 local function basename(path)

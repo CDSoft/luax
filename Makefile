@@ -26,7 +26,6 @@ RUNTIMES += $(BUILD)/lrun-aarch64-macos-gnu
 RUNTIMES += $(BUILD)/lrun-aarch64-linux-musl
 
 LUAX_BINARIES = $(patsubst $(BUILD)/lrun-%,$(BUILD)/luax-%,$(RUNTIMES))
-LPACK_BINARIES = $(patsubst $(BUILD)/lrun-%,$(BUILD)/lpack-%,$(RUNTIMES))
 
 LUA = $(BUILD)/lua
 LUA_SOURCES = $(sort $(wildcard lua/*))
@@ -55,7 +54,6 @@ endif
 
 all: $(RUNTIMES)
 all: $(LUAX_BINARIES)
-all: $(LPACK_BINARIES)
 all: $(BUILD)/luax.tar.xz
 all: test
 
@@ -63,12 +61,20 @@ clean:
 	rm -rf $(BUILD)
 
 INSTALL_PATH = $(firstword $(wildcard $(PREFIX) $(HOME)/.local/bin $(HOME)/bin))
+INSTALLED_LUAX_BINARIES = $(patsubst $(BUILD)/%,$(INSTALL_PATH)/%,$(LUAX_BINARIES))
 
-install: $(LUAX_BINARIES) $(LPACK_BINARIES)
+install: $(INSTALL_PATH)/luax$(EXT)
+install: $(INSTALLED_LUAX_BINARIES)
+
+$(INSTALL_PATH)/luax$(EXT): $(INSTALL_PATH)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
+	@$(call cyan,"SYMLINK",$< -> $@)
 	@test -n "$(INSTALL_PATH)" || (echo "No installation path found" && false)
-	install $^ $(INSTALL_PATH)
-	ln -sf $(INSTALL_PATH)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(INSTALL_PATH)/luax$(EXT)
-	ln -sf $(INSTALL_PATH)/lpack-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(INSTALL_PATH)/lpack$(EXT)
+	@cd $(dir $@) && ln -sf $(notdir $<) $(notdir $@)
+
+$(INSTALL_PATH)/luax-%: $(BUILD)/luax-%
+	@$(call cyan,"INSTALL",$@)
+	@test -n "$(INSTALL_PATH)" || (echo "No installation path found" && false)
+	@install $< $@
 
 .SECONDARY:
 
@@ -149,7 +155,7 @@ $(BUILD)/lrun-%: $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_RUNTIME_MAGIC) $(LUAX_
 # luax
 ###############################################################################
 
-LUAX_PACKAGES = tools/luax.lua
+LUAX_PACKAGES = tools/luax.lua tools/bundle.lua
 
 $(BUILD)/luax-%: $(BUILD)/lrun-% $(LUAX_PACKAGES) tools/bundle.lua
 	@$(call cyan,"BUNDLE",$@)
@@ -158,26 +164,14 @@ $(BUILD)/luax-%: $(BUILD)/lrun-% $(LUAX_PACKAGES) tools/bundle.lua
 	@chmod +x $@
 
 ###############################################################################
-# lpack
-###############################################################################
-
-LPACK_PACKAGES = tools/lpack.lua tools/bundle.lua
-
-$(BUILD)/lpack-%: $(BUILD)/lrun-% $(LPACK_PACKAGES) tools/bundle.lua
-	@$(call cyan,"BUNDLE",$@)
-	@( cat $(word 1,$^); $(LUA) tools/bundle.lua $(LPACK_PACKAGES) ) > $@.tmp
-	@mv $@.tmp $@
-	@chmod +x $@
-
-###############################################################################
 # Archive
 ###############################################################################
 
-$(BUILD)/luax.tar.xz: README.md $(LPACK_BINARIES) $(LUAX_BINARIES)
+$(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES)
 	@$(call cyan,"ARCHIVE",$@)
 	@tar cJf $@ \
 		README.md \
-		-C $(abspath $(BUILD)) $(notdir $(LPACK_BINARIES) $(LUAX_BINARIES))
+		-C $(abspath $(BUILD)) $(notdir $(LUAX_BINARIES))
 
 ###############################################################################
 # Tests (native only)
@@ -192,6 +186,6 @@ $(BUILD)/test.ok: $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) $< Lua is great
 	@touch $@
 
-$(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT): $(BUILD)/lpack-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(TEST_SOURCES)
+$(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT): $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(TEST_SOURCES)
 	@$(call cyan,"BUNDLE",$@)
-	@$(BUILD)/lpack-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(TEST_SOURCES) -o $@
+	@$(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(TEST_SOURCES) -o $@
