@@ -49,8 +49,8 @@
 
 typedef struct
 {
-    uint64_t magic;
     uint64_t size;
+    uint64_t magic;
 } t_header;
 
 const uint64_t magic = (uint64_t)

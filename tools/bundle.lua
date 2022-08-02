@@ -26,7 +26,7 @@ http://cdelord.fr/luax
 
 local bundle = {}
 
-bundle.magic = 0xF0E1D2C3B4A59687
+bundle.magic = string.unpack("<I8", "LuaX/CD!")
 
 local function read(name)
     local f = io.open(name)
@@ -103,7 +103,7 @@ function bundle.bundle(arg)
     if format == "b" then
         local chunk = Bundle()
         local payload = encoded.get()
-        local header = string.pack("<I8I8", bundle.magic, #payload)
+        local header = string.pack("<I8I8", #payload, bundle.magic)
         chunk.emit(payload)
         chunk.emit(header)
         return(chunk.get())
@@ -124,8 +124,11 @@ function bundle.bundle(arg)
 end
 
 local function drop_chunk(exe)
-    local magic, size = string.unpack("<I8I8", exe, #exe - 15)
-    if magic ~= bundle.magic then return exe end
+    local size, magic = string.unpack("<I8I8", exe, #exe - 15)
+    if magic ~= bundle.magic then
+        io.stderr:write("error: no LuaX header found in the current target\n")
+        os.exit(1)
+    end
     return exe:sub(1, #exe - 16 - size)
 end
 
