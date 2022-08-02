@@ -39,7 +39,7 @@ LUA_SOURCES = $(sort $(wildcard lua/*))
 LUAX_SOURCES = $(sort $(shell find src -name "*.[ch]"))
 
 LUAX_RUNTIME = $(sort $(shell find src -name "*.lua"))
-LUAX_RUNTIME_ARGS = $(patsubst %x.lua,-l %x.lua,$(LUAX_RUNTIME)) # autoload *x.lua only
+LUAX_RUNTIME_ARGS = $(patsubst %x.lua,-autoload %x.lua,$(LUAX_RUNTIME)) # autoload *x.lua only
 LUAX_RUNTIME_BUNDLE = $(BUILD)/lua_runtime_bundle.inc
 LUAX_RUNTIME_MAGIC = $(BUILD)/magic.inc
 LUAX_VERSION = $(BUILD)/luax_version.h
@@ -129,7 +129,7 @@ $(SYS_PARAMS):
 
 $(LUAX_RUNTIME_BUNDLE): $(LUA) $(LUAX_RUNTIME) tools/bundle.lua
 	@$(call cyan,"BUNDLE",$(LUAX_RUNTIME))
-	@$(LUA) tools/bundle.lua -c $(LUAX_RUNTIME_ARGS) > $@.tmp
+	$(LUA) tools/bundle.lua -nomain -ascii $(LUAX_RUNTIME_ARGS) > $@.tmp
 	@mv $@.tmp $@
 	@touch $@
 

@@ -52,27 +52,30 @@ local function basename(path)
     return path:gsub(".-([^/\\]+)$", "%1")
 end
 
-local function package_name(path)
-    return basename(path):gsub("%.lua$", "")
+local function strip_ext(path)
+    return path:gsub("%.lua$", "")
 end
 
 function bundle.bundle(arg)
 
-    local format = "b"
+    local format = "binary"
+    local main = true
     local scripts = {}
-    local autoload = {}
     local autoload_next = false
     for i = 1, #arg do
-        if arg[i] == "-c" then
-            format = "c"
-        elseif arg[i] == "-l" then
-            autoload_next = true
+        if arg[i] == "-nomain" then         main = false
+        elseif arg[i] == "-ascii" then      format = "ascii"
+        elseif arg[i] == "-autoload" then   autoload_next = true
         else
-            scripts[#scripts+1] = arg[i]
-            if autoload_next then
-                autoload[#autoload+1] = arg[i]
-                autoload_next = false
-            end
+            local local_path, dest_path = arg[i]:match "(.-):(.*)"
+            local_path = local_path or arg[i]
+            scripts[#scripts+1] = {
+                local_path = local_path,
+                path = dest_path or basename(local_path),
+                name = dest_path and strip_ext(dest_path) or basename(strip_ext(local_path)),
+                autoload = autoload_next,
+            }
+            autoload_next = false
         end
     end
 
@@ -80,16 +83,20 @@ function bundle.bundle(arg)
     plain.emit "do\n"
     plain.emit "local libs = {\n"
     for i = 1, #scripts do
-        local script_source = read(scripts[i]):gsub("^(#!)", "--%1")
-        assert(load(script_source, scripts[i], 't'))
-        plain.emit(("%s = assert(load(%q, '@%s', 't')),"):format(package_name(scripts[i]), script_source, scripts[i]))
+        local script_source = read(scripts[i].local_path):gsub("^#![^\n]*", "")
+        assert(load(script_source, scripts[i].local_path, 't'))
+        plain.emit(("['%s'] = assert(load(%q, '@%s', 't')),\n"):format(scripts[i].name, script_source, scripts[i].path))
     end
     plain.emit "}\n"
     plain.emit "table.insert(package.searchers, 1, function(name) return libs[name] end)\n"
-    for i = 2, #autoload do
-        plain.emit(("require '%s'\n"):format(package_name(autoload[i])))
+    for i = main and 2 or 1, #scripts do
+        if scripts[i].autoload then
+            plain.emit(("require '%s'\n"):format(scripts[i].name))
+        end
     end
-    plain.emit(("require '%s'\n"):format(package_name(scripts[1])))
+    if main then
+        plain.emit(("require '%s'\n"):format(scripts[1].name))
+    end
     plain.emit "end\n"
 
     local encoded = Bundle()
@@ -100,16 +107,16 @@ function bundle.bundle(arg)
         encoded.emit(string.pack("B", c1))
     end)
 
-    if format == "b" then
+    if format == "binary" then
         local chunk = Bundle()
         local payload = encoded.get()
         local header = string.pack("<I8I8", #payload, bundle.magic)
         chunk.emit(payload)
         chunk.emit(header)
-        return(chunk.get())
+        return chunk.get()
     end
 
-    if format == "c" then
+    if format == "ascii" then
         local hex = Bundle()
         local n = 0
         local _ = encoded.get():gsub(".", function(c)

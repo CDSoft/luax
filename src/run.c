@@ -170,7 +170,11 @@ int main(int argc, const char *argv[])
 
     char *rt_chunk = decode(runtime_chunk, sizeof(runtime_chunk));
 
-    if (luaL_dostring(L, rt_chunk) != LUA_OK) error(argv[0], "Lua runtime error: can not initialize the Lua runtime");
+    if (luaL_dostring(L, rt_chunk) != LUA_OK)
+    {
+        fprintf(stderr, "%s\n", lua_tostring(L, -1));
+        error(argv[0], "Lua runtime error: can not initialize the Lua runtime");
+    }
     lua_pop(L, lua_gettop(L));
 
     free(rt_chunk);
