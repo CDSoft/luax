@@ -26,6 +26,8 @@ http://cdelord.fr/luax
 
 local bundle = {}
 
+local crypt = _LUAX_VERSION and require "crypt" -- available only when run by luax
+
 bundle.magic = string.unpack("<I8", "LuaX/CD!")
 
 local function read(name)
@@ -85,7 +87,7 @@ function bundle.bundle(arg)
     for i = 1, #scripts do
         local script_source = read(scripts[i].local_path):gsub("^#![^\n]*", "")
         assert(load(script_source, scripts[i].local_path, 't'))
-        plain.emit(("['%s'] = assert(load(%q, '@%s', 't')),\n"):format(scripts[i].name, script_source, scripts[i].path))
+        plain.emit(("[%q] = assert(load(%q, %q, 't')),\n"):format(scripts[i].name, script_source, "@"..scripts[i].path))
     end
     plain.emit "}\n"
     plain.emit "table.insert(package.searchers, 1, function(name) return libs[name] end)\n"
@@ -100,12 +102,18 @@ function bundle.bundle(arg)
     plain.emit "end\n"
 
     local encoded = Bundle()
-    local last = 0
-    local _ = plain.get():gsub(".", function(c)
-        local c1 = (c:byte() - last) & 0xFF
-        last = c:byte()
-        encoded.emit(string.pack("B", c1))
-    end)
+    if crypt then
+        encoded.emit(crypt.rand_encode(0, plain.get()))
+        encoded.emit("#")
+    else
+        local last = 0
+        local _ = plain.get():gsub(".", function(c)
+            local c1 = (c:byte() - last) & 0xFF
+            last = c:byte()
+            encoded.emit(string.pack("B", c1))
+        end)
+        encoded.emit("-")
+    end
 
     if format == "binary" then
         local chunk = Bundle()

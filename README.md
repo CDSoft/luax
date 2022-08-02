@@ -382,38 +382,27 @@ local sys = require "sys"
 local crypt = require "crypt"
 ```
 
-**Warning**: the `crypt` package is a pure Lua package (i.e. not really fast).
+**`crypt.hex_encode(data)`{.lua}** encodes `data` in hexa.
 
-**`crypt.hex.encode(data)`{.lua}** encodes `data` in hexa.
+**`crypt.hex_decode(data)`{.lua}** decodes the hexa `data`.
 
-**`crypt.hex.decode(data)`{.lua}** decodes the hexa `data`.
+**`crypt.base64_encode(data)`{.lua}** encodes `data` in base64.
 
-**`crypt.base64.encode(data)`{.lua}** encodes `data` in base64.
-
-**`crypt.base64.decode(data)`{.lua}** decodes the base64 `data`.
+**`crypt.base64_decode(data)`{.lua}** decodes the base64 `data`.
 
 **`crypt.crc32(data)`{.lua}** computes the CRC32 of `data`.
 
-**`crypt.AES(password [,keylen [,mode] ])`{.lua}** returns an AES codec.
-`password` is the encryption/decryption key, `keylen` is the length of the key
-(128 (default), 192 or 256), `mode` is the encryption/decryption mode ("cbc"
-(default) or "ecb"). `crypt.AES` objects have two methods: `encrypt(data)` and
-`decrypt(data)`.
+**`crypt.crc64(data)`{.lua}** computes the CRC64 of `data`.
 
-**`crypt.BTEA(password)`{.lua}** returns a BTEA codec (a tiny cipher with
-reasonable security and efficiency, see http://en.wikipedia.org/wiki/XXTEA).
-`password` is the encryption/decryption key (only the first 16 bytes are used).
-`crypt.BTEA` objects have two methods: `encrypt(data)` and `decrypt(data)`.
-BTEA encrypts 32-bit words so the length of data should be a multiple of 4 (if
-not, BTEA will add null padding at the end of data).
+**`crypt.rand_encode(key, data)`{.lua}** encrypts `data` using a random number generator and the encryption key `key`.
 
-**`crypt.RC4(password, drop)`{.lua}** return a RC4 codec (a popular stream
-cypher, see http://en.wikipedia.org/wiki/RC4). `password` is the
-encryption/decryption key. `drop` is the numbre of bytes ignores before
-encoding (768 by default). `crypt.RC4` returns the encryption/decryption
-function.
+**`crypt.rand_decode(key, data)`{.lua}** decrypts `data` using a random number generator and the encryption key `key`.
 
-**`crypt.random(bits)`{.lua}** returns a string with `bits` random bits.
+**`crypt.srand(seed)`{.lua}** sets the random seed.
+
+**`crypt.rand()`{.lua}** returns a random number between `0` and `crypt.RAND_MAX`{.lua}.
+
+**`crypt.rand(bytes)`{.lua}** returns a string with `bytes` random bytes.
 
 ### lpeg: Parsing Expression Grammars For Lua
 

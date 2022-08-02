@@ -58,7 +58,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.install();
     exe.addIncludeDir(lua_src);
     const c_flags = [_][]const u8{
-        "-std=c99",
+        "-std=gnu11",
         "-Os",
         "-DLUA_USE_POSIX",
     };

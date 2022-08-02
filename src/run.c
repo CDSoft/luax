@@ -33,6 +33,8 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
+#include "luax_version.h"
+
 #include "tools.h"
 
 #include "std/std.h"
@@ -53,7 +55,7 @@ typedef struct
     uint64_t magic;
 } t_header;
 
-const uint64_t magic = (uint64_t)
+static const uint64_t magic = (uint64_t)
 #include "magic.inc"
 ;
 
@@ -104,7 +106,7 @@ static int traceback(lua_State *L)
 {
     const char *msg = lua_tostring(L, 1);
     luaL_traceback(L, L, msg, 1);
-    char *tb = lua_tostring(L, -1);
+    char *tb = safe_strdup(lua_tostring(L, -1));
     size_t nb_nl = 0;
     for (size_t p = strlen(tb)-1; p > 0; p--)
     {
@@ -119,20 +121,37 @@ static int traceback(lua_State *L)
         }
     }
     fprintf(stderr, "%s\n", tb);
+    free(tb);
     lua_pop(L, 1);
     return 0;
 }
 
-static char *decode(const char *chunk, size_t size)
+static void decode(char *chunk, size_t size)
 {
-    char *decoded = safe_malloc(size + 1);
-    decoded[0] = chunk[0];
-    for (size_t i = 1; i < size; i++)
+    switch (chunk[size-1])
     {
-        decoded[i] = decoded[i-1] + chunk[i];
+        case '-':
+        {
+            for (size_t i = 1; i < size-1; i++)
+            {
+                chunk[i] += chunk[i-1];
+            }
+            chunk[size-1] = '\0';
+            break;
+        }
+        case '#':
+        {
+            rand_decode(crc64(LUAX_CRYPT_KEY, sizeof(LUAX_CRYPT_KEY)-1), chunk, size-1);
+            chunk[size-1] = '\0';
+            break;
+        }
+        case '=':
+        default:
+        {
+            chunk[size-1] = '\0';
+            break;
+        }
     }
-    decoded[size] = '\0';
-    return decoded;
 }
 
 static uint64_t letoh(uint64_t n)
@@ -152,6 +171,17 @@ static uint64_t letoh(uint64_t n)
     return w.v;
 }
 
+static int run_buffer(lua_State *L, const char *buffer, size_t size, const char *name, const char *argv0)
+{
+    if (luaL_loadbuffer(L, buffer, size, name) != LUA_OK) error(argv0, lua_tostring(L, -1));
+    const int base = lua_gettop(L);         /* function index */
+    lua_pushcfunction(L, traceback);        /* push message handler */
+    lua_insert(L, base);                    /* put it under function and args */
+    const int status = lua_pcall(L, 0, 0, base);
+    lua_remove(L, base);                    /* remove message handler from the stack */
+    return status;
+}
+
 int main(int argc, const char *argv[])
 {
     /**************************************************************************
@@ -168,15 +198,10 @@ int main(int argc, const char *argv[])
         lua_pop(L, 1);
     }
 
-    char *rt_chunk = decode(runtime_chunk, sizeof(runtime_chunk));
-
-    if (luaL_dostring(L, rt_chunk) != LUA_OK)
-    {
-        fprintf(stderr, "%s\n", lua_tostring(L, -1));
-        error(argv[0], "Lua runtime error: can not initialize the Lua runtime");
-    }
-    lua_pop(L, lua_gettop(L));
-
+    char *rt_chunk = safe_malloc(sizeof(runtime_chunk));
+    memcpy(rt_chunk, runtime_chunk, sizeof(runtime_chunk));
+    decode(rt_chunk, sizeof(runtime_chunk));
+    run_buffer(L, rt_chunk, sizeof(runtime_chunk)-1, "=runtime", argv[0]);
     free(rt_chunk);
 
     /**************************************************************************
@@ -189,7 +214,6 @@ int main(int argc, const char *argv[])
     if (f == NULL) perror(exe);
 
     t_header header;
-    char *chunk = NULL;
     fseek(f, -(long)sizeof(header), SEEK_END);
     if (fread(&header, sizeof(header), 1, f) != 1) perror(argv[0]);
     header.magic = letoh(header.magic);
@@ -201,20 +225,13 @@ int main(int argc, const char *argv[])
     }
 
     fseek(f, -(long)(header.size + sizeof(header)), SEEK_END);
-    chunk = safe_malloc(header.size);
+    char *chunk = safe_malloc(header.size);
     if (fread(chunk, header.size, 1, f) != 1) perror(argv[0]);
     fclose(f);
-
-    char *app_chunk = decode(chunk, header.size);
-    if (luaL_loadbuffer(L, app_chunk, header.size, "@?") != LUA_OK) error(argv[0], lua_tostring(L, -1));
-    free(app_chunk);
+    decode(chunk, header.size);
+    const int status = run_buffer(L, chunk, header.size-1, "=", argv[0]);
     free(chunk);
 
-    int base = lua_gettop(L);               /* function index */
-    lua_pushcfunction(L, traceback);        /* push message handler */
-    lua_insert(L, base);                    /* put it under function and args */
-    int status = lua_pcall(L, 0, 0, base);
-    lua_remove(L, base);                    /* remove message handler from the stack */
     lua_close(L);
 
     return status;

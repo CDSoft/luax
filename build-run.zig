@@ -85,17 +85,16 @@ pub fn build(b: *std.build.Builder) void {
     exe.addIncludeDir(lua_src);
     if (target.os_tag == std.Target.Os.Tag.windows) {
         const c_flags = [_][]const u8{
-            "-std=gnu99",
+            "-std=gnu11",
             "-Os",
             "-DLUA_USE_WINDOWS",
         };
         inline for (lua_c_files) |c_file| {
             exe.addCSourceFile(lua_src ++ "/" ++ c_file, &c_flags);
         }
-        //exe.add("ws2_32");
     } else {
         const c_flags = [_][]const u8{
-            "-std=gnu99",
+            "-std=gnu11",
             "-Os",
             "-DLUA_USE_POSIX",
         };
@@ -104,7 +103,7 @@ pub fn build(b: *std.build.Builder) void {
         }
     }
     const c_flags = [_][]const u8{
-        "-std=gnu99",
+        "-std=gnu11",
         "-Os",
     };
     inline for (runtime_c_files) |c_file| {

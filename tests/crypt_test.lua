@@ -29,15 +29,15 @@ require "test"
 return function()
     do
         local x = "foo"
-        local y = crypt.hex.encode(x)
+        local y = crypt.hex_encode(x)
         eq(y, "666f6f")
-        eq(crypt.hex.decode(y), x)
+        eq(crypt.hex_decode(y), x)
     end
     do
         local x = "foo"
-        local y = crypt.base64.encode(x)
+        local y = crypt.base64_encode(x)
         eq(y, "Zm9v")
-        eq(crypt.base64.decode(y), x)
+        eq(crypt.base64_decode(y), x)
     end
     do
         local x = "foo123456789\n"
@@ -46,37 +46,13 @@ return function()
     end
     do
         local x = "foobar!"
-        local aes1 = crypt.AES("password", 128)
-        local aes2 = crypt.AES("password", 128)
-        local y1 = aes1.encrypt(x)
-        local y2 = aes2.encrypt(x)
-        local z1 = aes1.decrypt(y1)
-        local z2 = aes2.decrypt(y2)
-        ne(y1, x)
-        ne(y2, x)
-        ne(y1, y2)
-        eq(z1, x)
-        eq(z2, x)
-    end
-    do
-        local x = "foobar!"
-        local btea_1 = crypt.BTEA("password")
-        local btea_2 = crypt.BTEA("password")
-        local y = btea_1.encrypt(x)
-        local z = btea_2.decrypt(y)
-        ne(y, x)
-        eq(z:sub(1, #x), x)
-    end
-    do
-        local x = "foobar!"
-        local rc4_1 = crypt.RC4("password", 4)
-        local rc4_2 = crypt.RC4("password", 4)
-        local y = rc4_1(x)
-        local z = rc4_2(y)
+        local key = 1337
+        local y = crypt.rand_encode(key, x)
+        local z = crypt.rand_decode(key, y)
         ne(y, x)
         eq(z, x)
     end
     do
-        for _ = 1, 1000 do ne(crypt.random(16), crypt.random(16)) end
+        for _ = 1, 1000 do ne(crypt.rand(16), crypt.rand(16)) end
     end
 end

@@ -16,6 +16,8 @@
 # For further information about luax you can visit
 # http://cdelord.fr/luax
 
+CRYPT_KEY ?= "LuaX"
+
 BUILD = .build
 ZIG_CACHE = $(BUILD)/zig-cache
 
@@ -116,6 +118,7 @@ $(LUAX_VERSION): $(wildcard .git/refs/tags) $(wildcard .git/index)
 	@mkdir -p $(dir $@)
 	@(  echo "#pragma once";                                                        \
 	    echo "#define LUAX_VERSION \"`git describe --tags || echo undefined`\"";    \
+	    echo "#define LUAX_CRYPT_KEY \"$(CRYPT_KEY)\"";                             \
 	) > $@
 
 $(SYS_PARAMS):
@@ -129,7 +132,7 @@ $(SYS_PARAMS):
 
 $(LUAX_RUNTIME_BUNDLE): $(LUA) $(LUAX_RUNTIME) tools/bundle.lua
 	@$(call cyan,"BUNDLE",$(LUAX_RUNTIME))
-	$(LUA) tools/bundle.lua -nomain -ascii $(LUAX_RUNTIME_ARGS) > $@.tmp
+	@$(LUA) tools/bundle.lua -nomain -ascii $(LUAX_RUNTIME_ARGS) > $@.tmp
 	@mv $@.tmp $@
 	@touch $@
 
