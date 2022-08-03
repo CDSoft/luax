@@ -400,9 +400,11 @@ local crypt = require "crypt"
 
 **`crypt.srand(seed)`{.lua}** sets the random seed.
 
-**`crypt.rand()`{.lua}** returns a random number between `0` and `crypt.RAND_MAX`{.lua}.
+**`crypt.rand()`{.lua}** returns a random integral number between `0` and `crypt.RAND_MAX`{.lua}.
 
 **`crypt.rand(bytes)`{.lua}** returns a string with `bytes` random bytes.
+
+**`crypt.frand()`{.lua}** returns a random floating point number between `0.0` and `1.0`{.lua}.
 
 ### lpeg: Parsing Expression Grammars For Lua
 

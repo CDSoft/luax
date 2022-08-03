@@ -65,3 +65,12 @@ function ne(a, b)
     if not same(a, b) then return end
     error(("Unexpected: %s"):format(dump(a)))
 end
+
+function bounded(x, a, b)
+    if x >= a and x <= b then return end
+    error(([[
+
+Got     : %s
+Expected: [%s, %s]
+]]):format(x, a, b), 2)
+end

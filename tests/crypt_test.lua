@@ -40,9 +40,14 @@ return function()
         eq(crypt.base64_decode(y), x)
     end
     do
-        local x = "foo123456789\n"
+        local x = "foo123456789"
         local y = crypt.crc32(x)
-        eq(y, 0x3b13cda7)
+        eq(y, 0x72871f0c)
+    end
+    do
+        local x = "foo123456789"
+        local y = crypt.crc64(x)
+        eq(y, 0xd85c06f88a2a27d8)
     end
     do
         local x = "foobar!"
@@ -53,6 +58,26 @@ return function()
         eq(z, x)
     end
     do
-        for _ = 1, 1000 do ne(crypt.rand(16), crypt.rand(16)) end
+        for _ = 1, 1000 do
+            local x = crypt.rand()
+            local y = crypt.rand()
+            bounded(x, 0, crypt.RAND_MAX)
+            bounded(y, 0, crypt.RAND_MAX)
+            ne(x, y)
+        end
+        for _ = 1, 1000 do
+            local x = crypt.frand()
+            local y = crypt.frand()
+            bounded(x, 0.0, 1.0)
+            bounded(y, 0.0, 1.0)
+            ne(x, y)
+        end
+        for _ = 1, 1000 do
+            local x = crypt.rand(16)
+            local y = crypt.rand(16)
+            eq(#x, 16)
+            eq(#y, 16)
+            ne(x, y)
+        end
     end
 end

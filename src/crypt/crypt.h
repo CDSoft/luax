@@ -27,7 +27,5 @@
 /* C module registration function */
 LUAMOD_API int luaopen_crypt(lua_State *L);
 
-uint32_t crc32(const char *s, size_t n);
-uint64_t crc64(const char *s, size_t n);
 void rand_encode(uint64_t key, char *buf, size_t n);
 void rand_decode(uint64_t key, char *buf, size_t n);

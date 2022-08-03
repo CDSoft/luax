@@ -16,7 +16,8 @@
 # For further information about luax you can visit
 # http://cdelord.fr/luax
 
-CRYPT_KEY ?= "LuaX"
+# Default encryption key for the Lua chunks in compiled applications
+CRYPT_KEY ?= 18446744073709551557
 
 BUILD = .build
 ZIG_CACHE = $(BUILD)/zig-cache
@@ -126,7 +127,7 @@ $(LUAX_VERSION): $(wildcard .git/refs/tags) $(wildcard .git/index)
 	@mkdir -p $(dir $@)
 	@(  echo "#pragma once";                                                        \
 	    echo "#define LUAX_VERSION \"`git describe --tags || echo undefined`\"";    \
-	    echo "#define LUAX_CRYPT_KEY \"$(CRYPT_KEY)\"";                             \
+	    echo "#define LUAX_CRYPT_KEY $(CRYPT_KEY)";                                 \
 	) > $@
 
 $(SYS_PARAMS):

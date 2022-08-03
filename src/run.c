@@ -33,8 +33,6 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-#include "luax_version.h"
-
 #include "tools.h"
 
 #include "std/std.h"
@@ -141,7 +139,7 @@ static void decode(char *chunk, size_t size)
         }
         case '#':
         {
-            rand_decode(crc64(LUAX_CRYPT_KEY, sizeof(LUAX_CRYPT_KEY)-1), chunk, size-1);
+            rand_decode(0, chunk, size-1);
             chunk[size-1] = '\0';
             break;
         }
