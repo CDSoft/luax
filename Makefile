@@ -28,6 +28,7 @@ RUNTIMES += $(BUILD)/lrun-aarch64-linux-musl
 
 # Windows
 RUNTIMES += $(BUILD)/lrun-x86_64-windows-gnu.exe
+RUNTIMES += $(BUILD)/lrun-i386-windows-gnu.exe
 
 # MacOS
 RUNTIMES += $(BUILD)/lrun-x86_64-macos-gnu
@@ -74,10 +75,15 @@ INSTALLED_LUAX_BINARIES = $(patsubst $(BUILD)/%,$(INSTALL_PATH)/%,$(LUAX_BINARIE
 install: $(INSTALL_PATH)/luax$(EXT)
 install: $(INSTALLED_LUAX_BINARIES)
 
-$(INSTALL_PATH)/luax$(EXT): $(INSTALL_PATH)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
+$(INSTALL_PATH)/luax: $(INSTALL_PATH)/luax-$(ARCH)-$(OS)-$(LIBC)
 	@$(call cyan,"SYMLINK",$< -> $@)
 	@test -n "$(INSTALL_PATH)" || (echo "No installation path found" && false)
 	@cd $(dir $@) && ln -sf $(notdir $<) $(notdir $@)
+
+$(INSTALL_PATH)/luax.exe: $(INSTALL_PATH)/luax-$(ARCH)-$(OS)-$(LIBC).exe
+	@$(call cyan,"SYMLINK",$< -> $@)
+	@test -n "$(INSTALL_PATH)" || (echo "No installation path found" && false)
+	@install $< $@
 
 $(INSTALL_PATH)/luax-%: $(BUILD)/luax-%
 	@$(call cyan,"INSTALL",$@)
