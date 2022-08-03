@@ -111,6 +111,9 @@ cyan  = printf "${CYAN}[%s]${RESET} %s\n" "$1" "$2"
 # Native Lua interpretor
 ###############################################################################
 
+# avoid being polluted by user definitions
+export LUA_PATH := ./?.lua
+
 $(LUA): $(LUA_SOURCES) build-lua.zig
 	@$(call cyan,"ZIG",$@)
 	@zig build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-lua.zig
