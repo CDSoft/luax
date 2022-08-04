@@ -21,6 +21,8 @@ CRYPT_KEY ?= "LuaX"
 BUILD = .build
 ZIG_CACHE = $(BUILD)/zig-cache
 
+RELEASE = release-small
+
 # Linux
 RUNTIMES += $(BUILD)/lrun-x86_64-linux-musl
 RUNTIMES += $(BUILD)/lrun-i386-linux-musl
@@ -108,9 +110,9 @@ cyan  = printf "${CYAN}[%s]${RESET} %s\n" "$1" "$2"
 # Native Lua interpretor
 ###############################################################################
 
-$(LUA): $(LUA_SOURCES)
+$(LUA): $(LUA_SOURCES) build-lua.zig
 	@$(call cyan,"ZIG",$@)
-	@zig build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -Drelease-small --build-file build-lua.zig
+	@zig build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-lua.zig
 	@touch $@
 
 ###############################################################################
@@ -152,17 +154,17 @@ $(LUAX_RUNTIME_MAGIC): $(LUA) tools/bundle.lua
 # Runtimes
 ###############################################################################
 
-$(BUILD)/lrun-%.exe: $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_RUNTIME_MAGIC) $(LUAX_SOURCES) $(LUAX_VERSION) $(SYS_PARAMS)
+$(BUILD)/lrun-%.exe: $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_RUNTIME_MAGIC) $(LUAX_SOURCES) $(LUAX_VERSION) $(SYS_PARAMS) build-run.zig
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
-	@zig build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -Drelease-small --build-file build-run.zig -Dtarget=$(patsubst $(BUILD)/lrun-%.exe,%,$@)
+	@zig build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-run.zig -Dtarget=$(patsubst $(BUILD)/lrun-%.exe,%,$@)
 	@mv $(BUILD)/lrun.exe $@
 	@touch $@
 
-$(BUILD)/lrun-%: $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_RUNTIME_MAGIC) $(LUAX_SOURCES) $(LUAX_VERSION) $(SYS_PARAMS)
+$(BUILD)/lrun-%: $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_RUNTIME_MAGIC) $(LUAX_SOURCES) $(LUAX_VERSION) $(SYS_PARAMS) build-run.zig
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
-	@zig build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -Drelease-small --build-file build-run.zig -Dtarget=$(patsubst $(BUILD)/lrun-%,%,$@)
+	@zig build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-run.zig -Dtarget=$(patsubst $(BUILD)/lrun-%,%,$@)
 	@mv $(BUILD)/lrun $@
 	@touch $@
 

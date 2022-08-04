@@ -1,65 +1,67 @@
 const std = @import("std");
 
+const lua_src = "lua";
 const src_path = "src";
 const build_path = ".build";
 
-const lua_src = "lua";
-const lua_c_files = [_][]const u8 {
-    "lapi.c",
-    "lauxlib.c",
-    "lbaselib.c",
-    "lcode.c",
-    "lcorolib.c",
-    "lctype.c",
-    "ldblib.c",
-    "ldebug.c",
-    "ldo.c",
-    "ldump.c",
-    "lfunc.c",
-    "lgc.c",
-    "linit.c",
-    "liolib.c",
-    "llex.c",
-    "lmathlib.c",
-    "lmem.c",
-    "loadlib.c",
-    "lobject.c",
-    "lopcodes.c",
-    "loslib.c",
-    "lparser.c",
-    "lstate.c",
-    "lstring.c",
-    "lstrlib.c",
-    "ltable.c",
-    "ltablib.c",
-    "ltm.c",
-    //"lua.c",
-    //"luac.c",
-    "lundump.c",
-    "lutf8lib.c",
-    "lvm.c",
-    "lzio.c",
-};
+const c_files = [_][]const u8 {
 
-const runtime_c_files = [_][]const u8 {
-    "tools.c",
-    "std/std.c",
-    "fs/fs.c",
-    "ps/ps.c",
-    "sys/sys.c",
-    "lpeg/lpeg-1.0.2/lpcap.c",
-    "lpeg/lpeg-1.0.2/lpcode.c",
-    "lpeg/lpeg-1.0.2/lpprint.c",
-    "lpeg/lpeg-1.0.2/lptree.c",
-    "lpeg/lpeg-1.0.2/lpvm.c",
-    "crypt/crypt.c",
-    "rl/rl.c",
-    "mathx/mathx/lmathx.c",
-    "imath/limath-104/limath.c",
-    "imath/limath-104/src/imath.c",
-    "qmath/lqmath-104/lqmath.c",
-    "qmath/lqmath-104/src/imrat.c",
-    //"complex/lcomplex-100/lcomplex.c",
+    // Lua interpretor
+    "lua/lapi.c",
+    "lua/lauxlib.c",
+    "lua/lbaselib.c",
+    "lua/lcode.c",
+    "lua/lcorolib.c",
+    "lua/lctype.c",
+    "lua/ldblib.c",
+    "lua/ldebug.c",
+    "lua/ldo.c",
+    "lua/ldump.c",
+    "lua/lfunc.c",
+    "lua/lgc.c",
+    "lua/linit.c",
+    "lua/liolib.c",
+    "lua/llex.c",
+    "lua/lmathlib.c",
+    "lua/lmem.c",
+    "lua/loadlib.c",
+    "lua/lobject.c",
+    "lua/lopcodes.c",
+    "lua/loslib.c",
+    "lua/lparser.c",
+    "lua/lstate.c",
+    "lua/lstring.c",
+    "lua/lstrlib.c",
+    "lua/ltable.c",
+    "lua/ltablib.c",
+    "lua/ltm.c",
+    //"lua/lua.c",
+    //"lua/luac.c",
+    "lua/lundump.c",
+    "lua/lutf8lib.c",
+    "lua/lvm.c",
+    "lua/lzio.c",
+
+    // LuaX runtime
+    "src/run.c",
+    "src/tools.c",
+    "src/std/std.c",
+    "src/fs/fs.c",
+    "src/ps/ps.c",
+    "src/sys/sys.c",
+    "src/lpeg/lpeg-1.0.2/lpcap.c",
+    "src/lpeg/lpeg-1.0.2/lpcode.c",
+    "src/lpeg/lpeg-1.0.2/lpprint.c",
+    "src/lpeg/lpeg-1.0.2/lptree.c",
+    "src/lpeg/lpeg-1.0.2/lpvm.c",
+    "src/crypt/crypt.c",
+    "src/rl/rl.c",
+    "src/mathx/mathx/lmathx.c",
+    "src/imath/limath-104/limath.c",
+    "src/imath/limath-104/src/imath.c",
+    "src/qmath/lqmath-104/lqmath.c",
+    "src/qmath/lqmath-104/src/imrat.c",
+    //"src/complex/lcomplex-100/lcomplex.c",
 };
 
 pub fn build(b: *std.build.Builder) void {
@@ -73,7 +75,7 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("lrun", "src/run.c");
+    const exe = b.addExecutable("lrun", null);
     exe.single_threaded = true;
     exe.strip = true;
     exe.setTarget(target);
@@ -83,30 +85,9 @@ pub fn build(b: *std.build.Builder) void {
     exe.addIncludeDir(src_path);
     exe.addIncludeDir(build_path);
     exe.addIncludeDir(lua_src);
-    if (target.os_tag == std.Target.Os.Tag.windows) {
-        const c_flags = [_][]const u8{
-            "-std=gnu11",
-            "-Os",
-            "-DLUA_USE_WINDOWS",
-        };
-        inline for (lua_c_files) |c_file| {
-            exe.addCSourceFile(lua_src ++ "/" ++ c_file, &c_flags);
-        }
-    } else {
-        const c_flags = [_][]const u8{
-            "-std=gnu11",
-            "-Os",
-            "-DLUA_USE_POSIX",
-        };
-        inline for (lua_c_files) |c_file| {
-            exe.addCSourceFile(lua_src ++ "/" ++ c_file, &c_flags);
-        }
-    }
-    const c_flags = [_][]const u8{
+    exe.addCSourceFiles(&c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
-    };
-    inline for (runtime_c_files) |c_file| {
-        exe.addCSourceFile("src/" ++ c_file, &c_flags);
-    }
+        if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_USE_WINDOWS" else "-DLUA_USE_POSIX",
+    });
 }

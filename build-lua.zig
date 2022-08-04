@@ -2,40 +2,40 @@ const std = @import("std");
 
 const lua_src = "lua";
 const lua_c_files = [_][]const u8 {
-    "lapi.c",
-    "lauxlib.c",
-    "lbaselib.c",
-    "lcode.c",
-    "lcorolib.c",
-    "lctype.c",
-    "ldblib.c",
-    "ldebug.c",
-    "ldo.c",
-    "ldump.c",
-    "lfunc.c",
-    "lgc.c",
-    "linit.c",
-    "liolib.c",
-    "llex.c",
-    "lmathlib.c",
-    "lmem.c",
-    "loadlib.c",
-    "lobject.c",
-    "lopcodes.c",
-    "loslib.c",
-    "lparser.c",
-    "lstate.c",
-    "lstring.c",
-    "lstrlib.c",
-    "ltable.c",
-    "ltablib.c",
-    "ltm.c",
-    //"lua.c",
-    //"luac.c",
-    "lundump.c",
-    "lutf8lib.c",
-    "lvm.c",
-    "lzio.c",
+    "lua/lapi.c",
+    "lua/lauxlib.c",
+    "lua/lbaselib.c",
+    "lua/lcode.c",
+    "lua/lcorolib.c",
+    "lua/lctype.c",
+    "lua/ldblib.c",
+    "lua/ldebug.c",
+    "lua/ldo.c",
+    "lua/ldump.c",
+    "lua/lfunc.c",
+    "lua/lgc.c",
+    "lua/linit.c",
+    "lua/liolib.c",
+    "lua/llex.c",
+    "lua/lmathlib.c",
+    "lua/lmem.c",
+    "lua/loadlib.c",
+    "lua/lobject.c",
+    "lua/lopcodes.c",
+    "lua/loslib.c",
+    "lua/lparser.c",
+    "lua/lstate.c",
+    "lua/lstring.c",
+    "lua/lstrlib.c",
+    "lua/ltable.c",
+    "lua/ltablib.c",
+    "lua/ltm.c",
+    //"lua/lua.c",
+    //"lua/luac.c",
+    "lua/lundump.c",
+    "lua/lutf8lib.c",
+    "lua/lvm.c",
+    "lua/lzio.c",
 };
 
 pub fn build(b: *std.build.Builder) void {
@@ -57,12 +57,9 @@ pub fn build(b: *std.build.Builder) void {
     exe.linkLibC();
     exe.install();
     exe.addIncludeDir(lua_src);
-    const c_flags = [_][]const u8{
+    exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
-        "-DLUA_USE_POSIX",
-    };
-    inline for (lua_c_files) |c_file| {
-        exe.addCSourceFile(lua_src ++ "/" ++ c_file, &c_flags);
-    }
+        if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_USE_WINDOWS" else "-DLUA_USE_POSIX",
+    });
 }
