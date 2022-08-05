@@ -5,10 +5,10 @@
 
 `luax` runs on several platforms with no dependency:
 
-- Linux (x86_64)
+- Linux (x86_64, i386)
 - Raspberry Pi (ARM)
 - MacOS (x86_64, ARM)
-- Windows (x86_64)
+- Windows (x86_64, i386)
 
 `luax` can cross-compile scripts from and to any of these platforms.
 

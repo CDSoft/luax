@@ -64,19 +64,90 @@ else
 EXT :=
 endif
 
+.DEFAULT_GOAL := test
+
+###############################################################################
+# Help
+###############################################################################
+
+RED    := $(shell tput -Txterm setaf 1)
+GREEN  := $(shell tput -Txterm setaf 2)
+YELLOW := $(shell tput -Txterm setaf 3)
+BLUE   := $(shell tput -Txterm setaf 4)
+CYAN   := $(shell tput -Txterm setaf 6)
+RESET  := $(shell tput -Txterm sgr0)
+
+red   = printf "${RED}[%s]${RESET} %s\n" "$1" "$2"
+green = printf "${GREEN}[%s]${RESET} %s\n" "$1" "$2"
+blue  = printf "${BLUE}[%s]${RESET} %s\n" "$1" "$2"
+cyan  = printf "${CYAN}[%s]${RESET} %s\n" "$1" "$2"
+
+COMMAND := ${YELLOW}
+TARGET  := ${GREEN}
+TEXT    := ${YELLOW}
+
+TARGET_MAX_CHAR_NUM=20
+
+## Show this help
+help:
+	@echo '${CYAN}Lua${RESET} e${CYAN}X${RESET}tended'
+	@echo 'Copyright (C) 2021-2022 Christophe Delord (http://cdelord.fr/luax)'
+	@echo ''
+	@echo '${CYAN}luax${RESET} is a Lua interpretor and REPL based on Lua 5.4.4, augmented with some useful packages.'
+	@echo '${CYAN}luax${RESET} can also produces standalone executables from Lua scripts.'
+	@echo ''
+	@echo '${CYAN}luax${RESET} runs on several platforms with no dependency:'
+	@echo ''
+	@echo '- Linux (x86_64, i386)'
+	@echo '- Raspberry Pi (aarch64)'
+	@echo '- MacOS (x86_64, aarch64)'
+	@echo '- Windows (x86_64, i386)'
+	@echo ''
+	@echo '${CYAN}luax${RESET} can cross-compile scripts from and to any of these platforms.'
+	@echo ''
+	@echo 'Usage:'
+	@echo '  ${COMMAND}make${RESET} ${TARGET}<target>${RESET}'
+	@echo ''
+	@echo 'Targets:'
+	@awk '/^[a-zA-Z\-_0-9]+:/ { \
+		helpMessage = match(lastLine, /^## (.*)/); \
+		if (helpMessage) { \
+			helpCommand = substr($$1, 0, index($$1, ":")-1); \
+			helpMessage = substr(lastLine, RSTART + 3, RLENGTH); \
+			printf "  ${TARGET}%-$(TARGET_MAX_CHAR_NUM)s${RESET} ${TEXT}%s${RESET}\n", helpCommand, helpMessage; \
+		} \
+	} \
+	{ lastLine = $$0 }' $(MAKEFILE_LIST)
+
+###############################################################################
+# All
+###############################################################################
+
+.SECONDARY:
+
+## Compile LuaX for Linux, MacOS and Windows
 all: $(RUNTIMES)
 all: $(LUAX_BINARIES)
 all: $(BUILD)/luax.tar.xz
 all: test
 
+## Delete the build directory
 clean:
 	rm -rf $(BUILD)
+
+###############################################################################
+# Installation
+###############################################################################
 
 INSTALL_PATH = $(firstword $(wildcard $(PREFIX) $(HOME)/.local/bin $(HOME)/bin))
 INSTALLED_LUAX_BINARIES = $(patsubst $(BUILD)/%,$(INSTALL_PATH)/%,$(LUAX_BINARIES))
 
+## Install LuaX (for the host only)
 install: $(INSTALL_PATH)/luax$(EXT)
-install: $(INSTALLED_LUAX_BINARIES)
+
+## Install LuaX for Linux, MacOS and Windows
+install-all: install
+install-all: $(INSTALLED_LUAX_BINARIES)
 
 $(INSTALL_PATH)/luax: $(INSTALL_PATH)/luax-$(ARCH)-$(OS)-$(LIBC)
 	@$(call cyan,"SYMLINK",$< -> $@)
@@ -92,20 +163,6 @@ $(INSTALL_PATH)/luax-%: $(BUILD)/luax-%
 	@$(call cyan,"INSTALL",$@)
 	@test -n "$(INSTALL_PATH)" || (echo "No installation path found" && false)
 	@install $< $@
-
-.SECONDARY:
-
-RED    := $(shell tput -Txterm setaf 1)
-GREEN  := $(shell tput -Txterm setaf 2)
-YELLOW := $(shell tput -Txterm setaf 3)
-BLUE   := $(shell tput -Txterm setaf 4)
-CYAN   := $(shell tput -Txterm setaf 6)
-RESET  := $(shell tput -Txterm sgr0)
-
-red   = printf "${RED}[%s]${RESET} %s\n" "$1" "$2"
-green = printf "${GREEN}[%s]${RESET} %s\n" "$1" "$2"
-blue  = printf "${BLUE}[%s]${RESET} %s\n" "$1" "$2"
-cyan  = printf "${CYAN}[%s]${RESET} %s\n" "$1" "$2"
 
 ###############################################################################
 # Native Lua interpretor
@@ -198,8 +255,11 @@ $(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES)
 # Tests (native only)
 ###############################################################################
 
+.PHONY: test
+
 TEST_SOURCES = tests/main.lua $(sort $(filter-out test/main.lua,$(wildcard tests/*.lua)))
 
+## Run LuaX tests
 test: $(BUILD)/test.ok
 
 $(BUILD)/test.ok: $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
