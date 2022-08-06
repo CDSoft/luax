@@ -26,6 +26,7 @@ local function is_a_list(t)
 end
 
 function dump(t)
+    if (getmetatable(t) or {}).imag then return t:tostring() end
     if type(t) ~= "table" then return ("%q"):format(t) end
     if is_a_list(t) then
         local s = {}
@@ -42,6 +43,7 @@ local function same(a, b)
     local ta = type(a)
     local tb = type(b)
     if ta ~= tb then return false end
+    if (getmetatable(a) or {}).imag and (getmetatable(a) or {}).imag then return (a-b):abs() < 1e-12 end
     if ta ~= "table" then return a == b end
     local function contains(a, b)
         for k, v in pairs(b) do

@@ -45,7 +45,7 @@
 #include "mathx/mathx.h"
 #include "imath/imath.h"
 #include "qmath/qmath.h"
-//#include "complex/complex.h"
+#include "complex/complex.h"
 
 typedef struct
 {
@@ -68,7 +68,7 @@ static const luaL_Reg lrun_libs[] = {
     {"mathx", luaopen_mathx},
     {"imath", luaopen_imath},
     {"qmath", luaopen_qmath},
-    //{"complex", luaopen_complex},
+    {"complex", luaopen_complex},
     {NULL, NULL},
 };
 
@@ -129,27 +129,19 @@ static void decode(char *chunk, size_t size)
     switch (chunk[size-1])
     {
         case '-':
-        {
             for (size_t i = 1; i < size-1; i++)
             {
                 chunk[i] += chunk[i-1];
             }
-            chunk[size-1] = '\0';
             break;
-        }
         case '#':
-        {
             rand_decode(0, chunk, size-1);
-            chunk[size-1] = '\0';
             break;
-        }
         case '=':
         default:
-        {
-            chunk[size-1] = '\0';
             break;
-        }
     }
+    chunk[size-1] = '\0';
 }
 
 static uint64_t letoh(uint64_t n)

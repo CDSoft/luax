@@ -334,8 +334,6 @@ qmath library:
 
 ### complex: math library for complex numbers based on C99
 
-**NOTE**: `complex` is currently not included in `luax` because of Zig limitations.
-
 ```lua
 local complex = require "complex"
 ```

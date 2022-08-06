@@ -61,7 +61,8 @@ const c_files = [_][]const u8 {
     "src/imath/limath-104/src/imath.c",
     "src/qmath/lqmath-104/lqmath.c",
     "src/qmath/lqmath-104/src/imrat.c",
-    //"src/complex/lcomplex-100/lcomplex.c",
+    "src/complex/complex.c",
+    "src/complex/lcomplex-100/lcomplex.c",
 };
 
 pub fn build(b: *std.build.Builder) void {
