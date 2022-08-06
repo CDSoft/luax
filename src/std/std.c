@@ -19,7 +19,7 @@
 
 #include "std.h"
 
-#include "luax_version.h"
+#include "luax_config.h"
 #include "tools.h"
 
 #include "lua.h"

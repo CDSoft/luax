@@ -33,6 +33,8 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
+#include "luax_config.h"
+
 #include "tools.h"
 
 #include "std/std.h"
@@ -52,10 +54,6 @@ typedef struct
     uint64_t size;
     uint64_t magic;
 } t_header;
-
-static const uint64_t magic = (uint64_t)
-#include "magic.inc"
-;
 
 static const luaL_Reg lrun_libs[] = {
     {"std", luaopen_std},
@@ -208,7 +206,7 @@ int main(int argc, const char *argv[])
     if (fread(&header, sizeof(header), 1, f) != 1) perror(argv[0]);
     header.magic = letoh(header.magic);
     header.size = letoh(header.size);
-    if (header.magic != magic)
+    if (header.magic != MAGIC)
     {
         /* The runtime contains no application */
         error(argv[0], "Lua application not found");

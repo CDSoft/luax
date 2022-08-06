@@ -21,7 +21,7 @@
 
 #include "tools.h"
 
-#include "luax_version.h"
+#include "luax_config.h"
 
 #include "lua.h"
 #include "lauxlib.h"

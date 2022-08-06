@@ -377,11 +377,7 @@ local ps = require "ps"
 local sys = require "sys"
 ```
 
-**`sys.arch`{.lua}** is `"x86_64"`, `"i386"` or `"aarch64"`
-
 **`sys.os`{.lua}** is `"linux"`, `"macos"` or `"windows"`
-
-**`sys.libc`{.lua}** is `"musl"` or `"gnu"`
 
 ### crypt: cryptography module
 

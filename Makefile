@@ -37,19 +37,17 @@ RUNTIMES += $(BUILD)/lrun-i386-windows-gnu.exe
 RUNTIMES += $(BUILD)/lrun-x86_64-macos-gnu
 RUNTIMES += $(BUILD)/lrun-aarch64-macos-gnu
 
-LUAX_BINARIES = $(patsubst $(BUILD)/lrun-%,$(BUILD)/luax-%,$(RUNTIMES))
+LUAX_BINARIES := $(patsubst $(BUILD)/lrun-%,$(BUILD)/luax-%,$(RUNTIMES))
 
 LUA = $(BUILD)/lua
-LUA_SOURCES = $(sort $(wildcard lua/*))
+LUA_SOURCES := $(sort $(wildcard lua/*))
 
-LUAX_SOURCES = $(sort $(shell find src -name "*.[ch]"))
+LUAX_SOURCES := $(sort $(shell find src -name "*.[ch]"))
 
-LUAX_RUNTIME = $(sort $(shell find src -name "*.lua"))
-LUAX_RUNTIME_ARGS = $(patsubst %x.lua,-autoload %x.lua,$(LUAX_RUNTIME)) # autoload *x.lua only
-LUAX_RUNTIME_BUNDLE = $(BUILD)/lua_runtime_bundle.inc
-LUAX_RUNTIME_MAGIC = $(BUILD)/magic.inc
-LUAX_VERSION = $(BUILD)/luax_version.h
-SYS_PARAMS = $(BUILD)/sys_params.h
+LUAX_RUNTIME := $(sort $(shell find src -name "*.lua"))
+LUAX_RUNTIME_ARGS := $(patsubst %x.lua,-autoload %x.lua,$(LUAX_RUNTIME)) # autoload *x.lua only
+LUAX_RUNTIME_BUNDLE := $(BUILD)/lua_runtime_bundle.inc
+LUAX_CONFIG := $(BUILD)/luax_config.h
 
 ARCH := $(shell uname -m)
 OS   := $(shell uname -s | tr A-Z a-z)
@@ -86,7 +84,7 @@ COMMAND := ${YELLOW}
 TARGET  := ${GREEN}
 TEXT    := ${YELLOW}
 
-TARGET_MAX_CHAR_NUM=20
+TARGET_MAX_CHAR_NUM = 20
 
 ## Show this help
 help:
@@ -139,8 +137,8 @@ clean:
 # Installation
 ###############################################################################
 
-INSTALL_PATH = $(firstword $(wildcard $(PREFIX) $(HOME)/.local/bin $(HOME)/bin))
-INSTALLED_LUAX_BINARIES = $(patsubst $(BUILD)/%,$(INSTALL_PATH)/%,$(LUAX_BINARIES))
+INSTALL_PATH := $(firstword $(wildcard $(PREFIX) $(HOME)/.local/bin $(HOME)/bin))
+INSTALLED_LUAX_BINARIES := $(patsubst $(BUILD)/%,$(INSTALL_PATH)/%,$(LUAX_BINARIES))
 
 ## Install LuaX (for the host only)
 install: $(INSTALL_PATH)/luax$(EXT)
@@ -180,49 +178,34 @@ $(LUA): $(LUA_SOURCES) build-lua.zig
 # Code generation
 ###############################################################################
 
-
-# all lua scripts from src are bundled and added to the runtime
-$(LUAX_VERSION): $(wildcard .git/refs/tags) $(wildcard .git/index)
+$(LUAX_CONFIG): $(wildcard .git/refs/tags) $(wildcard .git/index) $(LUA) tools/bundle.lua
 	@$(call cyan,"GEN",$@)
 	@mkdir -p $(dir $@)
-	@(  echo "#pragma once";                                                        \
-	    echo "#define LUAX_VERSION \"`git describe --tags || echo undefined`\"";    \
-	    echo "#define LUAX_CRYPT_KEY $(CRYPT_KEY)";                                 \
-	) > $@
-
-$(SYS_PARAMS):
-	@$(call cyan,"SYS",$@)
-	@mkdir -p $(dir $@)
-	@(  echo "#pragma once";                \
-	    echo "#define ARCH \"$(ARCH)\"";    \
-	    echo "#define OS \"$(OS)\"";        \
-	    echo "#define LIBC \"$(LIBC)\"";    \
-	) > $@
+	@(  set -eu;                                                                                \
+	    echo "#pragma once";                                                                    \
+	    echo "#define LUAX_VERSION \"`git describe --tags || echo undefined`\"";                \
+	    echo "#define LUAX_CRYPT_KEY $(CRYPT_KEY)";                                             \
+	    $(LUA) -e "print(('#define MAGIC 0x%016XULL'):format(require 'tools/bundle'.magic))"    \
+	) > $@.tmp
+	@mv $@.tmp $@
 
 $(LUAX_RUNTIME_BUNDLE): $(LUA) $(LUAX_RUNTIME) tools/bundle.lua
 	@$(call cyan,"BUNDLE",$(LUAX_RUNTIME))
 	@$(LUA) tools/bundle.lua -nomain -ascii $(LUAX_RUNTIME_ARGS) > $@.tmp
 	@mv $@.tmp $@
-	@touch $@
-
-$(LUAX_RUNTIME_MAGIC): $(LUA) tools/bundle.lua
-	@$(call cyan,"MAGIC",$(word 2,$^))
-	@$(LUA) -e "print(('0x%016XULL'):format(require 'tools/bundle'.magic))" > $@.tmp
-	@mv $@.tmp $@
-	@touch $@
 
 ###############################################################################
 # Runtimes
 ###############################################################################
 
-$(BUILD)/lrun-%.exe: $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_RUNTIME_MAGIC) $(LUAX_SOURCES) $(LUAX_VERSION) $(SYS_PARAMS) build-run.zig
+$(BUILD)/lrun-%.exe: $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build-run.zig
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
 	@zig build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-run.zig -Dtarget=$(patsubst $(BUILD)/lrun-%.exe,%,$@)
 	@mv $(BUILD)/lrun.exe $@
 	@touch $@
 
-$(BUILD)/lrun-%: $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_RUNTIME_MAGIC) $(LUAX_SOURCES) $(LUAX_VERSION) $(SYS_PARAMS) build-run.zig
+$(BUILD)/lrun-%: $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build-run.zig
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
 	@zig build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-run.zig -Dtarget=$(patsubst $(BUILD)/lrun-%,%,$@)
@@ -233,7 +216,7 @@ $(BUILD)/lrun-%: $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_RUNTIME_MAGIC) $(LUAX_
 # luax
 ###############################################################################
 
-LUAX_PACKAGES = tools/luax.lua tools/bundle.lua
+LUAX_PACKAGES := tools/luax.lua tools/bundle.lua
 
 $(BUILD)/luax-%: $(BUILD)/lrun-% $(LUAX_PACKAGES) tools/bundle.lua
 	@$(call cyan,"BUNDLE",$@)
@@ -257,7 +240,7 @@ $(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES)
 
 .PHONY: test
 
-TEST_SOURCES = tests/main.lua $(sort $(filter-out test/main.lua,$(wildcard tests/*.lua)))
+TEST_SOURCES := tests/main.lua $(sort $(filter-out test/main.lua,$(wildcard tests/*.lua)))
 
 ## Run LuaX tests
 test: $(BUILD)/test.ok

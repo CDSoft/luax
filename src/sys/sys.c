@@ -23,7 +23,15 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-#include "sys_params.h"
+#ifdef _WIN32
+#define OS "windows"
+#endif
+#ifdef __APPLE__
+#define OS "macos"
+#endif
+#ifdef __linux__
+#define OS "linux"
+#endif
 
 static const luaL_Reg blsyslib[] =
 {
@@ -34,9 +42,7 @@ LUAMOD_API int luaopen_sys (lua_State *L)
 {
     luaL_newlib(L, blsyslib);
 #define STRING(NAME, VAL) lua_pushliteral(L, VAL); lua_setfield(L, -2, NAME)
-    STRING("arch", ARCH);
     STRING("os", OS);
-    STRING("libc", LIBC);
 #undef STRING
     return 1;
 }
