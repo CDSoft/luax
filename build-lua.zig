@@ -1,7 +1,9 @@
 const std = @import("std");
 
 const lua_src = "lua";
-const lua_c_files = [_][]const u8 {
+const c_files = [_][]const u8 {
+
+    // Lua interpretor
     "lua/lapi.c",
     "lua/lauxlib.c",
     "lua/lbaselib.c",
@@ -57,7 +59,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.linkLibC();
     exe.install();
     exe.addIncludeDir(lua_src);
-    exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
+    exe.addCSourceFiles(&c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
         if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_USE_WINDOWS" else "-DLUA_USE_POSIX",

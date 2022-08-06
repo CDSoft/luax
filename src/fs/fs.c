@@ -22,13 +22,9 @@
 #include "tools.h"
 
 #ifdef _WIN32
-#include <io.h>
-#include <ws2tcpip.h>
 #include <windows.h>
-#include <wincrypt.h>
 #else
 #include <glob.h>
-#include <sys/select.h>
 #endif
 
 #include <dirent.h>
@@ -40,7 +36,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
-#include <unistd.h>
 #include <unistd.h>
 #include <utime.h>
 
