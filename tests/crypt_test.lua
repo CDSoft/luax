@@ -58,6 +58,19 @@ return function()
         eq(z, x)
     end
     do
+        local rands = {}
+        local i = 0
+        local done = false
+        while not done and i < 10000 do
+            i = i+1
+            local x = crypt.rand() % 100
+            bounded(x, 0, 100)
+            rands[x] = true
+            done = true
+            for y = 0, 99 do done = done and rands[y] end
+        end
+        eq(done, true)
+        bounded(i, 100, 1000)
         for _ = 1, 1000 do
             local x = crypt.rand()
             local y = crypt.rand()
@@ -78,6 +91,28 @@ return function()
             eq(#x, 16)
             eq(#y, 16)
             ne(x, y)
+        end
+    end
+    do
+        local r1 = crypt.prng(42)
+        local r2 = crypt.prng(42)
+        local r3 = crypt.prng(43)
+        for _ = 1, 1000 do
+            local x1 = r1:rand()
+            local x2 = r2:rand()
+            local x3 = r3:rand()
+            eq(x1, x2)
+            ne(x1, x3)
+            local s1 = r1:rand(32)
+            local s2 = r2:rand(32)
+            local s3 = r3:rand(32)
+            eq(s1, s2)
+            ne(s1, s3)
+            local f1 = r1:rand()
+            local f2 = r2:rand()
+            local f3 = r3:rand()
+            eq(f1, f2)
+            ne(f1, f3)
         end
     end
 end

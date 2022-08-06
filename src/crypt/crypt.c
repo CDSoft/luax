@@ -38,25 +38,102 @@
 
 /* https://en.wikipedia.org/wiki/Linear_congruential_generator */
 
+#define PRNG_MT "luax prng"
+
+typedef struct
+{
+    uint64_t seed;
+} t_prng;
+
 #define CRYPT_MAX_RAND 0xFFFFFFFFULL
 
-static uint64_t rnd;
+/* Low level random functions */
 
-static void set_random_seed(uint64_t seed)
+static inline void prng_srand(t_prng *prng, uint64_t seed)
 {
-    rnd = seed;
+    prng->seed = seed;
 }
 
-static uint32_t next_random_number(void)
+static inline uint32_t prng_rand(t_prng *prng)
 {
-    rnd = 6364136223846793005*rnd + 1;
-    return rnd >> 32ULL;
+    prng->seed = 6364136223846793005*prng->seed + 1;
+    return prng->seed >> 32ULL;
 }
+
+static inline double prng_frand(t_prng *prng)
+{
+    const uint32_t x = prng_rand(prng);
+    return (double)x / (double)(CRYPT_MAX_RAND + 1);
+}
+
+/* Lua interface to low level random functions */
+
+static int crypt_prng(lua_State *L)
+{
+    t_prng *prng = (t_prng *)lua_newuserdata(L, sizeof(t_prng));
+    const uint64_t seed = lua_type(L, 1) == LUA_TNUMBER
+        ? (uint64_t)luaL_checkinteger(L, 1)
+        : (uint64_t)time(NULL) * (uint64_t)getpid();
+    luaL_setmetatable(L, PRNG_MT);
+    prng_srand(prng, seed);
+    return 1;
+}
+
+static int crypt_prng_srand(lua_State *L)
+{
+    t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
+    const uint64_t seed = lua_type(L, 2) == LUA_TNUMBER
+        ? (uint64_t)luaL_checkinteger(L, 2)
+        : (uint64_t)time(NULL) * (uint64_t)getpid();
+    prng_srand(prng, seed);
+    return 0;
+}
+
+static int crypt_prng_rand(lua_State *L)
+{
+    t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
+    if (lua_type(L, 2) == LUA_TNUMBER)
+    {
+        const size_t bytes = (size_t)luaL_checkinteger(L, 2);
+        char *buffer = (char *)safe_malloc(bytes);
+        for (size_t i = 0; i < bytes; i++)
+        {
+            buffer[i] = (char)prng_rand(prng);
+        }
+        lua_pushlstring(L, buffer, bytes);
+        free(buffer);
+        return 1;
+    }
+    else
+    {
+        lua_pushinteger(L, prng_rand(prng));
+        return 1;
+    }
+}
+
+static int crypt_prng_frand(lua_State *L)
+{
+    t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
+    lua_pushnumber(L, prng_frand(prng));
+    return 1;
+}
+
+static const luaL_Reg prng_funcs[] =
+{
+    {"srand", crypt_prng_srand},
+    {"rand", crypt_prng_rand},
+    {"frand", crypt_prng_frand},
+    {NULL, NULL}
+};
+
+/* global random number generator */
+
+static t_prng prng;
 
 static int crypt_srand(lua_State *L)
 {
     const uint64_t seed = (uint64_t)luaL_checkinteger(L, 1);
-    set_random_seed(seed);
+    prng_srand(&prng, seed);
     return 0;
 }
 
@@ -68,7 +145,7 @@ static int crypt_rand(lua_State *L)
         char *buffer = (char *)safe_malloc(bytes);
         for (size_t i = 0; i < bytes; i++)
         {
-            buffer[i] = (char)next_random_number();
+            buffer[i] = (char)prng_rand(&prng);
         }
         lua_pushlstring(L, buffer, bytes);
         free(buffer);
@@ -76,14 +153,14 @@ static int crypt_rand(lua_State *L)
     }
     else
     {
-        lua_pushinteger(L, next_random_number());
+        lua_pushinteger(L, prng_rand(&prng));
     }
     return 1;
 }
 
 static int crypt_frand(lua_State *L)
 {
-    lua_pushnumber(L, (double)next_random_number() / (double)(CRYPT_MAX_RAND+1));
+    lua_pushnumber(L, prng_frand(&prng));
     return 1;
 }
 
@@ -418,55 +495,46 @@ static const uint64_t default_key = (uint64_t)LUAX_CRYPT_KEY;
 
 void rand_encode(uint64_t key, char *buf, size_t n)
 {
-    uint64_t r = key == 0 ? default_key : key;
-    size_t *p = safe_malloc(n * sizeof(size_t));
-    /* Random permutation */
+    t_prng r;
+    prng_srand(&r, key == 0 ? default_key : key);
+    uint8_t *p = safe_malloc(n * sizeof(uint8_t));
+    /* Reverse random permutation */
     for (size_t i = 0; i < n; i++)
     {
-        r = 6364136223846793005*r + 1;
-        p[i] = (r>>32) % n;
-    }
-    /* Apply random permutation */
-    for (size_t i = 0; i < n; i++)
-    {
-        const char tmp = buf[i];
-        buf[i] = buf[p[i]];
-        buf[p[i]] = tmp;
+        p[i] = (uint8_t)(prng_rand(&r) % n);
     }
     /* Random xor */
     for (size_t i = 0; i < n; i++)
     {
-        r = 6364136223846793005*r + 1;
-        buf[i] ^= (r>>32) & 0xFF;
+        buf[i] ^= prng_rand(&r) & 0xFF;
+    }
+    /* Apply reverse random permutation */
+    for (ssize_t i = (ssize_t)(n-1); i >= 0; i--)
+    {
+        const char tmp = buf[i];
+        buf[i] = buf[p[i]];
+        buf[p[i]] = tmp;
     }
     free(p);
 }
 
 void rand_decode(uint64_t key, char *buf, size_t n)
 {
-    uint64_t r = key == 0 ? default_key : key;
-    size_t *p = safe_malloc(n * sizeof(size_t));
-    /* Random permutation */
+    t_prng r;
+    prng_srand(&r, key == 0 ? default_key : key);
+    /* Apply random permutation */
     for (size_t i = 0; i < n; i++)
     {
-        r = 6364136223846793005*r + 1;
-        p[i] = (r>>32) % n;
+        const uint8_t pi = (uint8_t)(prng_rand(&r) % n);
+        const char tmp = buf[i];
+        buf[i] = buf[pi];
+        buf[pi] = tmp;
     }
     /* Random xor */
     for (size_t i = 0; i < n; i++)
     {
-        r = 6364136223846793005*r + 1;
-        buf[i] ^= (r>>32) & 0xFF;
+        buf[i] ^= prng_rand(&r) & 0xFF;
     }
-    /* Apply reverse random permutation */
-    for (size_t j = 0; j < n; j++)
-    {
-        const size_t i = n - j - 1;
-        const char tmp = buf[i];
-        buf[i] = buf[p[i]];
-        buf[p[i]] = tmp;
-    }
-    free(p);
 }
 
 static int crypt_rand_encode(lua_State *L)
@@ -504,6 +572,7 @@ static const luaL_Reg crypt_module[] =
     {"srand", crypt_srand},
     {"rand", crypt_rand},
     {"frand", crypt_frand},
+    {"prng", crypt_prng},
     {"hex_encode", crypt_hex_encode},
     {"hex_decode", crypt_hex_decode},
     {"base64_encode", crypt_base64_encode},
@@ -517,7 +586,14 @@ static const luaL_Reg crypt_module[] =
 
 LUAMOD_API int luaopen_crypt(lua_State *L)
 {
-    set_random_seed((uint64_t)time(NULL) * (uint64_t)getpid());
+    luaL_newmetatable(L, PRNG_MT);
+    luaL_setfuncs(L, prng_funcs, 0);
+    lua_pushliteral(L, "__index");
+    lua_pushvalue(L, -2);
+    lua_settable(L, -3);
+
+    prng_srand(&prng, (uint64_t)time(NULL) * (uint64_t)getpid());
+
     luaL_newlib(L, crypt_module);
 #define INTEGER(NAME, VAL) lua_pushinteger(L, VAL); lua_setfield(L, -2, NAME)
     INTEGER("RAND_MAX", CRYPT_MAX_RAND);
