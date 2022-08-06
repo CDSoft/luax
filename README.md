@@ -29,6 +29,8 @@ $ make                  # compile and test
 
 ## Installation
 
+### Installation of luax for the current host only
+
 ``` sh
 $ make install                  # install luax to ~/.local/bin or ~/bin
 $ make install PREFIX=/usr/bin  # install luax to /usr/bin
@@ -36,6 +38,13 @@ $ make install PREFIX=/usr/bin  # install luax to /usr/bin
 
 `luax` is a single autonomous executable.
 It does not need to be installed and can be copied anywhere you want.
+
+### Installation of luax for all supported platforms (cross compilation support)
+
+``` sh
+$ make install-all                  # install luax to ~/.local/bin or ~/bin
+$ make install-all PREFIX=/usr/bin  # install luax to /usr/bin
+```
 
 ## Precompiled binaries
 
