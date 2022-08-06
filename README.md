@@ -370,7 +370,7 @@ local ps = require "ps"
 local sys = require "sys"
 ```
 
-**`sys.arch`{.lua}** is `"x86_64"` or `"aarch64"`
+**`sys.arch`{.lua}** is `"x86_64"`, `"i386"` or `"aarch64"`
 
 **`sys.os`{.lua}** is `"linux"`, `"macos"` or `"windows"`
 
@@ -406,7 +406,7 @@ local crypt = require "crypt"
 
 **`crypt.frand()`{.lua}** returns a random floating point number between `0.0` and `1.0`{.lua}.
 
-**`crypt.prng(seed)`{.lua}** returns a random number generator starting from the optional seed `seed`{.lua}`.
+**`crypt.prng(seed)`{.lua}** returns a random number generator starting from the optional seed `seed`{.lua}.
 This object has three methods: `srand(seed)`, `rand([bytes])` and `frand()`.
 
 ### lpeg: Parsing Expression Grammars For Lua
