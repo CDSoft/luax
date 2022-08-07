@@ -1,20 +1,21 @@
 # Lua eXtended
 
-`luax` is a Lua interpretor and REPL based on Lua 5.4.4, augmented with some useful packages.
-`luax` can also produces standalone executables from Lua scripts.
+`luax` is a Lua interpretor and REPL based on Lua 5.4.4, augmented with some
+useful packages. `luax` can also produces standalone executables from Lua
+scripts.
 
 `luax` runs on several platforms with no dependency:
 
-- Linux (x86_64, i386)
-- Raspberry Pi (ARM)
-- MacOS (x86_64, ARM)
+- Linux (x86_64, i386, aarch64)
+- MacOS (x86_64, aarch64)
 - Windows (x86_64, i386)
 
 `luax` can cross-compile scripts from and to any of these platforms.
 
 ## Compilation
 
-`luax` is written in C and Lua and uses the Zig build system. First download `luax` and Zig:
+`luax` is written in C and Lua and uses the Zig build system. First download
+`luax` and Zig:
 
 - `luax`: <https://github.com/CDSoft/luax>
 - `Zig`: <https://ziglang.org/download/>
@@ -48,8 +49,9 @@ $ make install-all PREFIX=/usr/bin  # install luax to /usr/bin
 
 ## Precompiled binaries
 
-It is usually highly recommended to build `luax` from sources.
-Some precompiled binaries are available here: [luax release](http://cdelord.fr/luax/luax.tar.xz).
+It is usually highly recommended to build `luax` from sources. Some precompiled
+binaries are available here: [luax
+release](http://cdelord.fr/luax/luax.tar.xz).
 
 The Linux and Raspberry Pi binaries are linked statically with
 [musl](https://musl.libc.org/) and are not dynamic executables. They should
@@ -98,7 +100,8 @@ $ luax -t luax-x86_64-macos-gnu main.lua lib1.lua lib2.lua -o executable
 
 The `luax` runtime comes with a few builtin modules.
 
-These modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and [lapp](http://cdelord.fr/lapp).
+These modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
+[lapp](http://cdelord.fr/lapp).
 
 ### "Standard" library
 
@@ -106,60 +109,60 @@ These modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and [lapp
 local fun = require "fun"
 ```
 
-**`fun.id(...)`{.lua}** is the identity function.
+**`fun.id(...)`** is the identity function.
 
-**`fun.const(...)`{.lua}** returns a constant function that returns `...`.
+**`fun.const(...)`** returns a constant function that returns `...`.
 
-**`fun.keys(t)`{.lua}** returns a sorted list of keys from the table `t`.
+**`fun.keys(t)`** returns a sorted list of keys from the table `t`.
 
-**`fun.values(t)`{.lua}** returns a list of values from the table `t`, in the same order than `fun.keys(t)`{.lua}.
+**`fun.values(t)`** returns a list of values from the table `t`, in the same order than `fun.keys(t)`.
 
-**`fun.pairs(t)`{.lua}** returns a `pairs`{.lua} like iterator, in the same order than `fun.keys(t)`{.lua}.
+**`fun.pairs(t)`** returns a `pairs` like iterator, in the same order than `fun.keys(t)`.
 
-**`fun.concat(...)`{.lua}** returns a concatenated list from input lists.
+**`fun.concat(...)`** returns a concatenated list from input lists.
 
-**`fun.merge(...)`{.lua}** returns a merged table from input tables.
+**`fun.merge(...)`** returns a merged table from input tables.
 
-**`fun.flatten(...)`{.lua}** flattens input lists and non list parameters.
+**`fun.flatten(...)`** flattens input lists and non list parameters.
 
-**`fun.replicate(n, x)`{.lua}** returns a list containing `n`{.lua} times the Lua object `x`{.lua}.
+**`fun.replicate(n, x)`** returns a list containing `n` times the Lua object `x`.
 
-**`fun.compose(...)`{.lua}** returns a function that composes input functions.
+**`fun.compose(...)`** returns a function that composes input functions.
 
-**`fun.map(f, xs)`{.lua}** returns the list of `f(x)`{.lua} for all `x`{.lua} in `xs`{.lua}.
+**`fun.map(f, xs)`** returns the list of `f(x)` for all `x` in `xs`.
 
-**`fun.tmap(f, t)`{.lua}** returns the table of `{k = f(t[k])}`{.lua} for all `k`{.lua} in `keys(t)`{.lua}.
+**`fun.tmap(f, t)`** returns the table of `{k = f(t[k])}` for all `k` in `keys(t)`.
 
-**`fun.filter(p, xs)`{.lua}** returns the list of `x`{.lua} such that `p(x)`{.lua} is true.
+**`fun.filter(p, xs)`** returns the list of `x` such that `p(x)` is true.
 
-**`fun.tfilter(p, t)`{.lua}** returns the table of `{k = v}`{.lua} for all `k`{.lua} in `keys(t)` such that `p(v)`{.lua} is true.
+**`fun.tfilter(p, t)`** returns the table of `{k = v}` for all `k` in `keys(t)` such that `p(v)` is true.
 
-**`fun.foreach(xs, f)`{.lua}** executes `f(x)`{.lua} for all `x` in `xs`.
+**`fun.foreach(xs, f)`** executes `f(x)` for all `x` in `xs`.
 
-**`fun.tforeach(t, f)`{.lua}** executes `f(t[k])`{.lua} for all `k`{.lua} in `keys(t)`{.lua}.
+**`fun.tforeach(t, f)`** executes `f(t[k])` for all `k` in `keys(t)`.
 
-**`fun.prefix(pre)`{.lua}** returns a function that adds a prefix `pre` to a string.
+**`fun.prefix(pre)`** returns a function that adds a prefix `pre` to a string.
 
-**`fun.suffix(suf)`{.lua}** returns a function that adds a suffix `suf` to a string.
+**`fun.suffix(suf)`** returns a function that adds a suffix `suf` to a string.
 
-**`fun.range(a, b [, step])`{.lua}** returns a list of values `[a, a+step, ... b]`. The default step value is 1.
+**`fun.range(a, b [, step])`** returns a list of values `[a, a+step, ... b]`. The default step value is 1.
 
-**`fun.I(t)`{.lua}** returns a string interpolator that replaces `$(...)` by
+**`fun.I(t)`** returns a string interpolator that replaces `$(...)` by
 the value of `...` in the environment defined by the table `t`. An interpolator
 can be given another table to build a new interpolator with new values.
 
 `luax` adds a few functions to the builtin `string` module:
 
-**`string.split(s, sep, maxsplit, plain)`{.lua}** splits `s` using `sep` as a separator.
+**`string.split(s, sep, maxsplit, plain)`** splits `s` using `sep` as a separator.
 If `plain` is true, the separator is considered as plain text.
 `maxsplit` is the maximum number of separators to find (ie the remaining string is returned unsplit.
 This function returns a list of strings.
 
-**`string.lines(s)`{.lua}** splits `s` using '\n' as a separator.
+**`string.lines(s)`** splits `s` using `'\n'` as a separator.
 
-**`string.words(s)`{.lua}** splits `s` using '%s' as a separator.
+**`string.words(s)`** splits `s` using `'%s'` as a separator.
 
-**`string.ltrim(s)`{.lua}, `string.rtrim(s)`{.lua}, `string.trim(s)`{.lua}** remove left/right/both end spaces
+**`string.ltrim(s)`, `string.rtrim(s)`, `string.trim(s)`** remove left/right/both end spaces
 
 ### fs: File System module
 
@@ -167,42 +170,42 @@ This function returns a list of strings.
 local fs = require "fs"
 ```
 
-**`fs.getcwd()`{.lua}** returns the current working directory.
+**`fs.getcwd()`** returns the current working directory.
 
-**`fs.chdir(path)`{.lua}** changes the current directory to `path`.
+**`fs.chdir(path)`** changes the current directory to `path`.
 
-**`fs.dir([path])`{.lua}** returns the list of files and directories in
+**`fs.dir([path])`** returns the list of files and directories in
 `path` (the default path is the current directory).
 
-**`fs.walk([path], [reverse])`{.lua}** returns a list listing directory and
+**`fs.walk([path], [reverse])`** returns a list listing directory and
 file names in `path` and its subdirectories (the default path is the current
 directory). If `reverse` is true, the list is built in a reverse order
 (suitable for recursive directory removal)
 
-**`fs.mkdir(path)`{.lua}** creates a new directory `path`.
+**`fs.mkdir(path)`** creates a new directory `path`.
 
-**`fs.mkdirs(path)`{.lua}** creates a new directory `path` and its parent
+**`fs.mkdirs(path)`** creates a new directory `path` and its parent
 directories.
 
-**`fs.rename(old_name, new_name)`{.lua}** renames the file `old_name` to
+**`fs.rename(old_name, new_name)`** renames the file `old_name` to
 `new_name`.
 
-**`fs.mv(old_name, new_name)`{.lua}** alias for `fs.rename(old_name, new_name)`{.lua}.
+**`fs.mv(old_name, new_name)`** alias for `fs.rename(old_name, new_name)`.
 
-**`fs.remove(name)`{.lua}** deletes the file `name`.
+**`fs.remove(name)`** deletes the file `name`.
 
-**`fs.rm(name)`{.lua}** alias for `fs.remove(name)`{.lua}.
+**`fs.rm(name)`** alias for `fs.remove(name)`.
 
-**`fs.rmdir(path, [params])`{.lua}** deletes the directory `path`{.lua} (recursively if `params.recursive`{.lua} is `true`{.lua}.
+**`fs.rmdir(path, [params])`** deletes the directory `path` (recursively if `params.recursive` is `true`.
 
-**`fs.copy(source_name, target_name)`{.lua}** copies file `source_name` to
+**`fs.copy(source_name, target_name)`** copies file `source_name` to
 `target_name`. The attributes and times are preserved.
 
 **`fs.is_file(name)`** returns `true` if `name` is a file.
 
 **`fs.is_dir(name)`** returns `true` if `name` is a directory.
 
-**`fs.stat(name)`{.lua}** reads attributes of the file `name`.  Attributes are:
+**`fs.stat(name)`** reads attributes of the file `name`.  Attributes are:
 
 - `name`: name
 - `type`: `"file"` or `"directory"`
@@ -214,51 +217,51 @@ directories.
 - `oR`, `oW`, `oX`: other Read/Write/eXecute permissions (Linux only)
 - `aR`, `aW`, `aX`: anybody Read/Write/eXecute permissions
 
-**`fs.inode(name)`{.lua}** reads device and inode attributes of the file `name`.
+**`fs.inode(name)`** reads device and inode attributes of the file `name`.
 Attributes are:
 
 - `dev`, `ino`: device and inode numbers
 
-**`fs.chmod(name, other_file_name)`{.lua}** sets file `name` permissions as
+**`fs.chmod(name, other_file_name)`** sets file `name` permissions as
 file `other_file_name` (string containing the name of another file).
 
-**`fs.chmod(name, bit1, ..., bitn)`{.lua}** sets file `name` permissions as
+**`fs.chmod(name, bit1, ..., bitn)`** sets file `name` permissions as
 `bit1` or ... or `bitn` (integers).
 
-**`fs.touch(name)`{.lua}** sets the access time and the modification time of
+**`fs.touch(name)`** sets the access time and the modification time of
 file `name` with the current time.
 
-**`fs.touch(name, number)`{.lua}** sets the access time and the modification
+**`fs.touch(name, number)`** sets the access time and the modification
 time of file `name` with `number`.
 
-**`fs.touch(name, other_name)`{.lua}** sets the access time and the
+**`fs.touch(name, other_name)`** sets the access time and the
 modification time of file `name` with the times of file `other_name`.
 
-**`fs.basename(path)`{.lua}** return the last component of path.
+**`fs.basename(path)`** return the last component of path.
 
-**`fs.dirname(path)`{.lua}** return all but the last component of path.
+**`fs.dirname(path)`** return all but the last component of path.
 
-**`fs.absname(path)`{.lua}** return the absolute path name of path.
+**`fs.absname(path)`** return the absolute path name of path.
 
-**`fs.join(...)`{.lua}** return a path name made of several path components
+**`fs.join(...)`** return a path name made of several path components
 (separated by `fs.sep`).
 
-**`fs.with_tmpfile(f)`{.lua}** calls `f(tmp)`{.lua} where `tmp`{.lua} is the name of a temporary file.
+**`fs.with_tmpfile(f)`** calls `f(tmp)` where `tmp` is the name of a temporary file.
 
-**`fs.with_tmpdir(f)`{.lua}** calls `f(tmp)`{.lua} where `tmp`{.lua} is the name of a temporary directory.
+**`fs.with_tmpdir(f)`** calls `f(tmp)` where `tmp` is the name of a temporary directory.
 
-**`fs.sep`{.lua}** is the directory separator.
+**`fs.sep`** is the directory separator.
 
-**`fs.uR, fs.uW, fs.uX`{.lua}** are the User Read/Write/eXecute mask for
+**`fs.uR, fs.uW, fs.uX`** are the User Read/Write/eXecute mask for
 `fs.chmod`.
 
-**`fs.gR, fs.gW, fs.gX`{.lua}** are the Group Read/Write/eXecute mask for
+**`fs.gR, fs.gW, fs.gX`** are the Group Read/Write/eXecute mask for
 `fs.chmod`.
 
-**`fs.oR, fs.oW, fs.oX`{.lua}** are the Other Read/Write/eXecute mask for
+**`fs.oR, fs.oW, fs.oX`** are the Other Read/Write/eXecute mask for
 `fs.chmod`.
 
-**`fs.aR, fs.aW, fs.aX`{.lua}** are All Read/Write/eXecute mask for `fs.chmod`.
+**`fs.aR, fs.aW, fs.aX`** are All Read/Write/eXecute mask for `fs.chmod`.
 
 ### mathx: complete math library for Lua
 
@@ -266,11 +269,12 @@ modification time of file `name` with the times of file `other_name`.
 local mathx = require "mathx"
 ```
 
-`mathx` is taken from [Libraries and tools for Lua](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/#lmathx).
+`mathx` is taken from [Libraries and tools for
+Lua](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/#lmathx).
 
-This is a complete math library for Lua 5.3 with the functions available
-in C99. It can replace the standard Lua math library, except that mathx
-deals exclusively with floats.
+This is a complete math library for Lua 5.3 with the functions available in
+C99. It can replace the standard Lua math library, except that mathx deals
+exclusively with floats.
 
 There is no manual: see the summary below and a C99 reference manual, e.g.
 <http://en.wikipedia.org/wiki/C_mathematical_functions>
@@ -295,7 +299,8 @@ mathx library:
 local imath = require "imath"
 ```
 
-`imath` is taken from [Libraries and tools for Lua](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/#limath).
+`imath` is taken from [Libraries and tools for
+Lua](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/#limath).
 
 `imath` is an [arbitrary-precision](http://en.wikipedia.org/wiki/Bignum)
 integer library for Lua based on [imath](https://github.com/creachadair/imath).
@@ -324,9 +329,11 @@ imath library:
 local qmath = require "qmath"
 ```
 
-`qmath` is taken from [Libraries and tools for Lua](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/#lqmath).
+`qmath` is taken from [Libraries and tools for
+Lua](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/#lqmath).
 
-`qmath` is a rational number library for Lua based on [imath](https://github.com/creachadair/imath).
+`qmath` is a rational number library for Lua based on
+[imath](https://github.com/creachadair/imath).
 
 qmath library:
 
@@ -347,7 +354,8 @@ qmath library:
 local complex = require "complex"
 ```
 
-`complex` is taken from [Libraries and tools for Lua](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/#lcomplex).
+`complex` is taken from [Libraries and tools for
+Lua](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/#lcomplex).
 
 `complex` is a math library for complex numbers based on C99.
 
@@ -367,9 +375,9 @@ complex library:
 local ps = require "ps"
 ```
 
-**`ps.sleep(n)`{.lua}** sleeps for `n` seconds.
+**`ps.sleep(n)`** sleeps for `n` seconds.
 
-**`ps.time()`{.lua}** returns the current time in seconds (the resolution is OS dependant).
+**`ps.time()`** returns the current time in seconds (the resolution is OS dependant).
 
 ### sys: System module
 
@@ -377,7 +385,7 @@ local ps = require "ps"
 local sys = require "sys"
 ```
 
-**`sys.os`{.lua}** is `"linux"`, `"macos"` or `"windows"`
+**`sys.os`** is `"linux"`, `"macos"` or `"windows"`
 
 ### crypt: cryptography module
 
@@ -385,31 +393,31 @@ local sys = require "sys"
 local crypt = require "crypt"
 ```
 
-**`crypt.hex_encode(data)`{.lua}** encodes `data` in hexa.
+**`crypt.hex_encode(data)`** encodes `data` in hexa.
 
-**`crypt.hex_decode(data)`{.lua}** decodes the hexa `data`.
+**`crypt.hex_decode(data)`** decodes the hexa `data`.
 
-**`crypt.base64_encode(data)`{.lua}** encodes `data` in base64.
+**`crypt.base64_encode(data)`** encodes `data` in base64.
 
-**`crypt.base64_decode(data)`{.lua}** decodes the base64 `data`.
+**`crypt.base64_decode(data)`** decodes the base64 `data`.
 
-**`crypt.crc32(data)`{.lua}** computes the CRC32 of `data`.
+**`crypt.crc32(data)`** computes the CRC32 of `data`.
 
-**`crypt.crc64(data)`{.lua}** computes the CRC64 of `data`.
+**`crypt.crc64(data)`** computes the CRC64 of `data`.
 
-**`crypt.rand_encode(key, data)`{.lua}** encrypts `data` using a random number generator and the encryption key `key`.
+**`crypt.rand_encode(key, data)`** encrypts `data` using a random number generator and the encryption key `key`.
 
-**`crypt.rand_decode(key, data)`{.lua}** decrypts `data` using a random number generator and the encryption key `key`.
+**`crypt.rand_decode(key, data)`** decrypts `data` using a random number generator and the encryption key `key`.
 
-**`crypt.srand(seed)`{.lua}** sets the random seed.
+**`crypt.srand(seed)`** sets the random seed.
 
-**`crypt.rand()`{.lua}** returns a random integral number between `0` and `crypt.RAND_MAX`{.lua}.
+**`crypt.rand()`** returns a random integral number between `0` and `crypt.RAND_MAX`.
 
-**`crypt.rand(bytes)`{.lua}** returns a string with `bytes` random bytes.
+**`crypt.rand(bytes)`** returns a string with `bytes` random bytes.
 
-**`crypt.frand()`{.lua}** returns a random floating point number between `0.0` and `1.0`{.lua}.
+**`crypt.frand()`** returns a random floating point number between `0.0` and `1.0`.
 
-**`crypt.prng(seed)`{.lua}** returns a random number generator starting from the optional seed `seed`{.lua}.
+**`crypt.prng(seed)`** returns a random number generator starting from the optional seed `seed`.
 This object has three methods: `srand(seed)`, `rand([bytes])` and `frand()`.
 
 ### lpeg: Parsing Expression Grammars For Lua
@@ -430,8 +438,8 @@ The documentation of these modules are available on Lpeg web site:
 
 **rl.read(prompt)** prints `prompt` and returns the string entered by the user.
 
-**Warning**: `rl` is no longer related to the Linux readline library.
-If you need readline, you can use `rlwrap` on Linux.
+**Warning**: `rl` is no longer related to the Linux readline library. If you
+need readline, you can use `rlwrap` on Linux.
 
 ## License
 
