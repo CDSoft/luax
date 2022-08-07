@@ -237,7 +237,7 @@ local function run_interpretor()
         print_welcome()
         while true do
             local inputs = {}
-            local prompt = "> "
+            local prompt = "▶ "
             while true do
                 table.insert(inputs, rl.read(prompt))
                 local input = table.concat(inputs, "\n")
@@ -249,7 +249,7 @@ local function run_interpretor()
                     print(try_stat == nil and err_stat or err_expr)
                     break
                 end
-                prompt = ">> "
+                prompt = "… "
             end
         end
     end
