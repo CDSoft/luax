@@ -103,22 +103,21 @@ function bundle.bundle(arg)
 
     local encoded = Bundle()
     if crypt then
-        encoded.emit(crypt.rand_encode(0, plain.get()))
+        encoded.emit(crypt.rc4(plain.get()))
         encoded.emit("#")
     else
-        local last = 0
-        local _ = plain.get():gsub(".", function(c)
-            local c1 = (c:byte() - last) & 0xFF
-            last = c:byte()
-            encoded.emit(string.pack("B", c1))
-        end)
+        local chunk = plain.get()
+        encoded.emit(("B"):pack(chunk:byte(1)))
+        for i = 2, #chunk do
+            encoded.emit(("B"):pack((chunk:byte(i)-chunk:byte(i-1)) & 0xFF))
+        end
         encoded.emit("-")
     end
 
     if format == "binary" then
         local chunk = Bundle()
         local payload = encoded.get()
-        local header = string.pack("<I8I8", #payload, bundle.magic)
+        local header = ("<I8I8"):pack(#payload, bundle.magic)
         chunk.emit(payload)
         chunk.emit(header)
         return chunk.get()

@@ -51,9 +51,9 @@ return function()
     end
     do
         local x = "foobar!"
-        local key = 1337
-        local y = crypt.rand_encode(key, x)
-        local z = crypt.rand_decode(key, y)
+        local key = "rc4key"
+        local y = crypt.rc4(key, x)
+        local z = crypt.rc4(key, y)
         ne(y, x)
         eq(z, x)
     end

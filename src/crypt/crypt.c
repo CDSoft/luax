@@ -488,76 +488,73 @@ static int crypt_crc64(lua_State *L)
 }
 
 /******************************************************************************
- * Encryption
+ * Encryption (RC4)
  ******************************************************************************/
 
-static const uint64_t default_key = (uint64_t)LUAX_CRYPT_KEY;
+/* https://en.wikipedia.org/wiki/RC4 */
 
-void rand_encode(uint64_t key, char *buf, size_t n)
+static inline void swap(uint8_t *a, uint8_t *b)
 {
-    t_prng r;
-    prng_srand(&r, key == 0 ? default_key : key);
-    uint8_t *p = safe_malloc(n * sizeof(uint8_t));
-    /* Reverse random permutation */
-    for (size_t i = 0; i < n; i++)
-    {
-        p[i] = (uint8_t)(prng_rand(&r) % n);
-    }
-    /* Random xor */
-    for (size_t i = 0; i < n; i++)
-    {
-        buf[i] ^= prng_rand(&r) & 0xFF;
-    }
-    /* Apply reverse random permutation */
-    for (ssize_t i = (ssize_t)(n-1); i >= 0; i--)
-    {
-        const char tmp = buf[i];
-        buf[i] = buf[p[i]];
-        buf[p[i]] = tmp;
-    }
-    free(p);
+    uint8_t tmp = *a;
+    *a = *b;
+    *b = tmp;
 }
 
-void rand_decode(uint64_t key, char *buf, size_t n)
+void rc4(const char *key, size_t key_size, const char *input, size_t size, char *output)
 {
-    t_prng r;
-    prng_srand(&r, key == 0 ? default_key : key);
-    /* Apply random permutation */
-    for (size_t i = 0; i < n; i++)
+    if (key_size == 0)
     {
-        const uint8_t pi = (uint8_t)(prng_rand(&r) % n);
-        const char tmp = buf[i];
-        buf[i] = buf[pi];
-        buf[pi] = tmp;
+        key = LUAX_CRYPT_KEY;
+        key_size = sizeof(LUAX_CRYPT_KEY)-1;
     }
-    /* Random xor */
-    for (size_t i = 0; i < n; i++)
+
+    uint8_t S[256];
+
+    for (size_t i = 0; i < 256; i++)
     {
-        buf[i] ^= prng_rand(&r) & 0xFF;
+        S[i] = (uint8_t)i;
+    }
+
+    size_t j = 0;
+    for (size_t i = 0; i < 256; i++)
+    {
+        j = (j + S[i] + key[i % key_size]) % 256;
+        swap(&S[i], &S[j]);
+    }
+
+    size_t i = 0;
+    j = 0;
+    for (size_t k = 0; k < size; k++)
+    {
+        i = (i + 1) % 256;
+        j = (j + S[i]) % 256;
+        swap(&S[i], &S[j]);
+        output[k] = input[k] ^ S[(S[i] + S[j]) % 256];
     }
 }
 
-static int crypt_rand_encode(lua_State *L)
+static int crypt_rc4(lua_State *L)
 {
-    const uint64_t key = (uint64_t)luaL_checkinteger(L, 1);
-    const char *in = luaL_checkstring(L, 2);
-    const size_t n = lua_rawlen(L, 2);
+    const char *key;
+    size_t key_size;
+    const char *in;
+    size_t n;
+    if (lua_isnone(L, 2))
+    {
+        key = NULL;
+        key_size = 0;
+        in = luaL_checkstring(L, 1);
+        n = lua_rawlen(L, 1);
+    }
+    else
+    {
+        key = luaL_checkstring(L, 1);
+        key_size = lua_rawlen(L, 1);
+        in = luaL_checkstring(L, 2);
+        n = lua_rawlen(L, 2);
+    }
     char *out = safe_malloc(n);
-    memcpy(out, in, n);
-    rand_encode(key, out, n);
-    lua_pushlstring(L, out, n);
-    free(out);
-    return 1;
-}
-
-static int crypt_rand_decode(lua_State *L)
-{
-    const uint64_t key = (uint64_t)luaL_checkinteger(L, 1);
-    const char *in = luaL_checkstring(L, 2);
-    const size_t n = lua_rawlen(L, 2);
-    char *out = safe_malloc(n);
-    memcpy(out, in, n);
-    rand_decode(key, out, n);
+    rc4(key, key_size, in, n, out);
     lua_pushlstring(L, out, n);
     free(out);
     return 1;
@@ -577,8 +574,7 @@ static const luaL_Reg crypt_module[] =
     {"hex_decode", crypt_hex_decode},
     {"base64_encode", crypt_base64_encode},
     {"base64_decode", crypt_base64_decode},
-    {"rand_encode", crypt_rand_encode},
-    {"rand_decode", crypt_rand_decode},
+    {"rc4", crypt_rc4},
     {"crc32", crypt_crc32},
     {"crc64", crypt_crc64},
     {NULL, NULL}

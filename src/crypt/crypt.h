@@ -27,5 +27,5 @@
 /* C module registration function */
 LUAMOD_API int luaopen_crypt(lua_State *L);
 
-void rand_encode(uint64_t key, char *buf, size_t n);
-void rand_decode(uint64_t key, char *buf, size_t n);
+/* RC4 algorithm exported to be used by run.c to decrypt the payload */
+void rc4(const char *key, size_t key_size, const char *input, size_t size, char *output);

@@ -121,24 +121,26 @@ static int traceback(lua_State *L)
     return 0;
 }
 
-static void decode(char *chunk, size_t size)
+static void decode(const char *input, size_t size, char *output)
 {
-    switch (chunk[size-1])
+    switch (input[size-1])
     {
         case '-':
+        {
+            output[0] = input[0];
             for (size_t i = 1; i < size-1; i++)
             {
-                chunk[i] += chunk[i-1];
+                output[i] = output[i-1] + input[i];
             }
             break;
+        }
         case '#':
-            rand_decode(0, chunk, size-1);
+            rc4(NULL, 0, input, size-1, output);
             break;
-        case '=':
         default:
+            /* unknown encoding, let it fail */
             break;
     }
-    chunk[size-1] = '\0';
 }
 
 static uint64_t letoh(uint64_t n)
@@ -186,8 +188,7 @@ int main(int argc, const char *argv[])
     }
 
     char *rt_chunk = safe_malloc(sizeof(runtime_chunk));
-    memcpy(rt_chunk, runtime_chunk, sizeof(runtime_chunk));
-    decode(rt_chunk, sizeof(runtime_chunk));
+    decode(runtime_chunk, sizeof(runtime_chunk), rt_chunk);
     run_buffer(L, rt_chunk, sizeof(runtime_chunk)-1, "=runtime", argv[0]);
     free(rt_chunk);
 
@@ -215,9 +216,11 @@ int main(int argc, const char *argv[])
     char *chunk = safe_malloc(header.size);
     if (fread(chunk, header.size, 1, f) != 1) perror(argv[0]);
     fclose(f);
-    decode(chunk, header.size);
-    const int status = run_buffer(L, chunk, header.size-1, "=", argv[0]);
+    char *plain_chunk = safe_malloc(header.size);
+    decode(chunk, header.size, plain_chunk);
     free(chunk);
+    const int status = run_buffer(L, plain_chunk, header.size-1, "=", argv[0]);
+    free(plain_chunk);
 
     lua_close(L);
 
