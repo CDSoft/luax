@@ -235,77 +235,92 @@ static int crypt_hex_decode(lua_State *L)
  * Base64
  ******************************************************************************/
 
-/* https://github.com/elzoughby/Base64/blob/master/base64.c */
+/* https://fr.wikipedia.org/wiki/Base64 */
 
-static const char base46_map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+static const char base64_map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                  "abcdefghijklmnopqrstuvwxyz"
                                  "0123456789+/";
 
-static void base64_encode(const char *plain, size_t n_in, char **cipher_out, size_t *n_out)
+static const char base64_rev[] =
 {
-    size_t counts = 0;
-    char buffer[3];
-    *cipher_out = safe_malloc(n_in * 4 / 3 + 4);
-    char *cipher = *cipher_out;
-    size_t c = 0;
+    ['A'] = 0,      ['a'] = 26+0,       ['0'] = 2*26+0,
+    ['B'] = 1,      ['b'] = 26+1,       ['1'] = 2*26+1,
+    ['C'] = 2,      ['c'] = 26+2,       ['2'] = 2*26+2,
+    ['D'] = 3,      ['d'] = 26+3,       ['3'] = 2*26+3,
+    ['E'] = 4,      ['e'] = 26+4,       ['4'] = 2*26+4,
+    ['F'] = 5,      ['f'] = 26+5,       ['5'] = 2*26+5,
+    ['G'] = 6,      ['g'] = 26+6,       ['6'] = 2*26+6,
+    ['H'] = 7,      ['h'] = 26+7,       ['7'] = 2*26+7,
+    ['I'] = 8,      ['i'] = 26+8,       ['8'] = 2*26+8,
+    ['J'] = 9,      ['j'] = 26+9,       ['9'] = 2*26+9,
+    ['K'] = 10,     ['k'] = 26+10,      ['+'] = 2*26+10,
+    ['L'] = 11,     ['l'] = 26+11,      ['/'] = 2*26+11,
+    ['M'] = 12,     ['m'] = 26+12,
+    ['N'] = 13,     ['n'] = 26+13,
+    ['O'] = 14,     ['o'] = 26+14,
+    ['P'] = 15,     ['p'] = 26+15,
+    ['Q'] = 16,     ['q'] = 26+16,
+    ['R'] = 17,     ['r'] = 26+17,
+    ['S'] = 18,     ['s'] = 26+18,
+    ['T'] = 19,     ['t'] = 26+19,
+    ['U'] = 20,     ['u'] = 26+20,
+    ['V'] = 21,     ['v'] = 26+21,
+    ['W'] = 22,     ['w'] = 26+22,
+    ['X'] = 23,     ['x'] = 26+23,
+    ['Y'] = 24,     ['y'] = 26+24,
+    ['Z'] = 25,     ['z'] = 26+25,
+};
 
-    for (size_t i = 0; i < n_in; i++)
+static void base64_encode(const char *plain, size_t n_in, char **b64_out, size_t *n_out)
+{
+    *b64_out = safe_malloc(n_in * 4 / 3 + 4);
+    char *b64 = *b64_out;
+
+    size_t i = 0;
+    size_t b = 0;
+    while (i + 2 < n_in)
     {
-        buffer[counts++] = plain[i];
-        if (counts == 3)
-        {
-            cipher[c++] = base46_map[buffer[0] >> 2];
-            cipher[c++] = base46_map[((buffer[0] & 0x03) << 4) + (buffer[1] >> 4)];
-            cipher[c++] = base46_map[((buffer[1] & 0x0f) << 2) + (buffer[2] >> 6)];
-            cipher[c++] = base46_map[buffer[2] & 0x3f];
-            counts = 0;
-        }
+        b64[b++] = base64_map[plain[i] >> 2];
+        b64[b++] = base64_map[((plain[i] & 0x03) << 4) | (plain[i+1] >> 4)];
+        b64[b++] = base64_map[((plain[i+1] & 0x0f) << 2) | (plain[i+2] >> 6)];
+        b64[b++] = base64_map[(plain[i+2] & 0x3f)];
+        i = i + 3;
     }
-
-    if (counts > 0)
+    switch (n_in - i)
     {
-        cipher[c++] = base46_map[buffer[0] >> 2];
-        if (counts == 1)
-        {
-            cipher[c++] = base46_map[(buffer[0] & 0x03) << 4];
-            cipher[c++] = '=';
-        }
-        else
-        {
-            cipher[c++] = base46_map[((buffer[0] & 0x03) << 4) + (buffer[1] >> 4)];
-            cipher[c++] = base46_map[(buffer[1] & 0x0f) << 2];
-        }
-        cipher[c++] = '=';
+        case 1:     /* i == n_in - 1 */
+            b64[b++] = base64_map[plain[i] >> 2];
+            b64[b++] = base64_map[(plain[i] & 0x03) << 4];
+            b64[b++] = '=';
+            b64[b++] = '=';
+            break;
+        case 2:     /* i+1 == n_in - 1 */
+            b64[b++] = base64_map[plain[i] >> 2];
+            b64[b++] = base64_map[((plain[i] & 0x03) << 4) | (plain[i+1] >> 4)];
+            b64[b++] = base64_map[(plain[i+1] & 0x0f) << 2];
+            b64[b++] = '=';
+            break;
     }
-
-    cipher[c] = '\0';
-    *n_out = c;
+    b64[b] = '\0';
+    *n_out = b;
 }
 
-static void base64_decode(const char *cipher, size_t n_in, char **plain_out, size_t *n_out)
+static void base64_decode(const char *b64, size_t n_in, char **plain_out, size_t *n_out)
 {
-    size_t counts = 0;
-    int buffer[4];
-    *plain_out = safe_malloc(strnlen(cipher, n_in) * 3 / 4);
+    *plain_out = safe_malloc(n_in * 3 / 4);
     char *plain = *plain_out;
+
+    size_t i = 0;
     size_t p = 0;
-
-    for (size_t i = 0; cipher[i] != '\0'; i++)
+    while (i + 3 < n_in)
     {
-        int k;
-        for (k = 0 ; k < 64 && base46_map[k] != cipher[i]; k++);
-        buffer[counts++] = k;
-        if (counts == 4)
-        {
-            plain[p++] = (char)((buffer[0] << 2) + (buffer[1] >> 4));
-            if(buffer[2] != 64)
-                plain[p++] = (char)((buffer[1] << 4) + (buffer[2] >> 2));
-            if(buffer[3] != 64)
-                plain[p++] = (char)((buffer[2] << 6) + buffer[3]);
-            counts = 0;
-        }
+        plain[p++] = (base64_rev[b64[i]] << 2) | (base64_rev[b64[i+1]] >> 4);
+        plain[p++] = (base64_rev[b64[i+1]] << 4) | (base64_rev[b64[i+2]] >> 2);
+        plain[p++] = (base64_rev[b64[i+2]] << 6) | base64_rev[b64[i+3]];
+        i = i + 4;
     }
-
+    if (b64[n_in-1] == '=') p--;
+    if (b64[n_in-2] == '=') p--;
     *n_out = p;
 }
 
@@ -313,21 +328,21 @@ static int crypt_base64_encode(lua_State *L)
 {
     const char *plain = luaL_checkstring(L, 1);
     const size_t n_in = lua_rawlen(L, 1);
-    char *cipher;
+    char *b64;
     size_t n_out;
-    base64_encode(plain, n_in, &cipher, &n_out);
-    lua_pushlstring(L, cipher, n_out);
-    free(cipher);
+    base64_encode(plain, n_in, &b64, &n_out);
+    lua_pushlstring(L, b64, n_out);
+    free(b64);
     return 1;
 }
 
 static int crypt_base64_decode(lua_State *L)
 {
-    const char *cipher = luaL_checkstring(L, 1);
+    const char *b64 = luaL_checkstring(L, 1);
     const size_t n_in = lua_rawlen(L, 1);
     char *plain;
     size_t n_out;
-    base64_decode(cipher, n_in, &plain, &n_out);
+    base64_decode(b64, n_in, &plain, &n_out);
     lua_pushlstring(L, plain, n_out);
     free(plain);
     return 1;

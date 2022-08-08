@@ -34,10 +34,24 @@ return function()
         eq(crypt.hex_decode(y), x)
     end
     do
-        local x = "foo"
-        local y = crypt.base64_encode(x)
-        eq(y, "Zm9v")
-        eq(crypt.base64_decode(y), x)
+        do
+            local x = "foobarbaz"
+            local y = crypt.base64_encode(x)
+            eq(y, "Zm9vYmFyYmF6")
+            eq(crypt.base64_decode(y), x)
+        end
+        do
+            local x = "foobarbaz1"
+            local y = crypt.base64_encode(x)
+            eq(y, "Zm9vYmFyYmF6MQ==")
+            eq(crypt.base64_decode(y), x)
+        end
+        do
+            local x = "foobarbaz12"
+            local y = crypt.base64_encode(x)
+            eq(y, "Zm9vYmFyYmF6MTI=")
+            eq(crypt.base64_decode(y), x)
+        end
     end
     do
         local x = "foo123456789"
