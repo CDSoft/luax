@@ -170,6 +170,20 @@ static int crypt_frand(lua_State *L)
 
 static const char hex_map[] = "0123456789abcdef";
 
+static const char digit[] =
+{
+    ['0'] = 0,      ['A'] = 10,     ['a'] = 10,
+    ['1'] = 1,      ['B'] = 11,     ['b'] = 11,
+    ['2'] = 2,      ['C'] = 12,     ['c'] = 12,
+    ['3'] = 3,      ['D'] = 13,     ['d'] = 13,
+    ['4'] = 4,      ['E'] = 14,     ['e'] = 14,
+    ['5'] = 5,      ['F'] = 15,     ['f'] = 15,
+    ['6'] = 6,
+    ['7'] = 7,
+    ['8'] = 8,
+    ['9'] = 9,
+};
+
 static void hex_encode(const char *plain, size_t n_in, char **hex_out, size_t *n_out)
 {
     *hex_out = safe_malloc(n_in*2 + 1);
@@ -185,13 +199,6 @@ static void hex_encode(const char *plain, size_t n_in, char **hex_out, size_t *n
     }
 }
 
-static inline int digit(int c)
-{
-    return '0' <= c && c <= '9' ? c - '0' :
-           'a' <= c && c <= 'f' ? c - 'a' + 10 :
-           0;
-}
-
 static void hex_decode(const char *hex, size_t n_in, char **plain_out, size_t *n_out)
 {
     *plain_out = safe_malloc((n_in+1)/2 + 1);
@@ -200,7 +207,7 @@ static void hex_decode(const char *hex, size_t n_in, char **plain_out, size_t *n
 
     for (size_t i = 0; i < n_in; i += 2)
     {
-        plain[p++] = (char)((digit(hex[i])<<4) | digit(hex[i+1]));
+        plain[p++] = (char)((digit[hex[i]]<<4) | digit[hex[i+1]]);
     }
 
     *n_out = p;
@@ -229,7 +236,6 @@ static int crypt_hex_decode(lua_State *L)
     free(plain);
     return 1;
 }
-
 
 /******************************************************************************
  * Base64

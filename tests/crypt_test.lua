@@ -28,9 +28,9 @@ require "test"
 
 return function()
     do
-        local x = "foo"
+        local x = "foobarbaz"
         local y = crypt.hex_encode(x)
-        eq(y, "666f6f")
+        eq(y, "666f6f62617262617a")
         eq(crypt.hex_decode(y), x)
     end
     do
