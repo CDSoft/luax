@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include <time.h>
+#include <sys/time.h>
 
 #include <unistd.h>
 
@@ -66,6 +67,19 @@ static inline double prng_frand(t_prng *prng)
     return (double)x / (double)(CRYPT_MAX_RAND + 1);
 }
 
+static inline uint64_t prng_default_seed(void)
+{
+#ifdef _WIN32
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    return (time(NULL) + t.tv_sec + t.tv_usec) * getpid();
+#else
+    struct timespec t;
+    clock_gettime(CLOCK_REALTIME, &t);
+    return (time(NULL) + t.tv_sec + t.tv_nsec) * getpid();
+#endif
+}
+
 /* Lua interface to low level random functions */
 
 static int crypt_prng(lua_State *L)
@@ -73,7 +87,7 @@ static int crypt_prng(lua_State *L)
     t_prng *prng = (t_prng *)lua_newuserdata(L, sizeof(t_prng));
     const uint64_t seed = lua_type(L, 1) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 1)
-        : (uint64_t)time(NULL) * (uint64_t)getpid();
+        : prng_default_seed();
     luaL_setmetatable(L, PRNG_MT);
     prng_srand(prng, seed);
     return 1;
@@ -84,7 +98,7 @@ static int crypt_prng_srand(lua_State *L)
     t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
     const uint64_t seed = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
-        : (uint64_t)time(NULL) * (uint64_t)getpid();
+        : prng_default_seed();
     prng_srand(prng, seed);
     return 0;
 }
@@ -609,7 +623,7 @@ LUAMOD_API int luaopen_crypt(lua_State *L)
     lua_pushvalue(L, -2);
     lua_settable(L, -3);
 
-    prng_srand(&prng, (uint64_t)time(NULL) * (uint64_t)getpid());
+    prng_srand(&prng, prng_default_seed());
 
     luaL_newlib(L, crypt_module);
 #define INTEGER(NAME, VAL) lua_pushinteger(L, VAL); lua_setfield(L, -2, NAME)
