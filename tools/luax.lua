@@ -292,8 +292,16 @@ function run_compiler()
 
     log("target", "%s", actual_target)
     log("output", "%s", output)
-    log("scripts", "%s", scripts[1])
-    for i = 2, #scripts do log("", "%s", scripts[i]) end
+    local head = "scripts"
+    local autoload = false
+    for i = 1, #scripts do
+        if scripts[i] == "-autoload" then autoload = true
+        else
+            log(head, "%s%s", autoload and "autoload " or "", scripts[i])
+            autoload = false
+        end
+        head = ""
+    end
 
     local bundle = require "bundle"
     local exe, chunk = bundle.combine(actual_target, scripts)
