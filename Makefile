@@ -45,7 +45,7 @@ LUA_SOURCES := $(sort $(wildcard lua/*))
 LUAX_SOURCES := $(sort $(shell find src -name "*.[ch]"))
 
 LUAX_RUNTIME := $(sort $(shell find src -name "*.lua"))
-LUAX_RUNTIME_ARGS := $(patsubst %x.lua,-autoload %x.lua,$(LUAX_RUNTIME)) # autoload *x.lua only
+LUAX_RUNTIME_ARGS := $(patsubst %x.lua,-autoexec %x.lua,$(LUAX_RUNTIME)) # autoexec *x.lua only
 LUAX_RUNTIME_BUNDLE := $(BUILD)/lua_runtime_bundle.inc
 LUAX_CONFIG := $(BUILD)/luax_config.h
 

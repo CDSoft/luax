@@ -64,10 +64,18 @@ function bundle.bundle(arg)
     local main = true
     local scripts = {}
     local autoload_next = false
+    local autoexec_next = false
+    local autoload_all = false
+    local autoexec_all = false
     for i = 1, #arg do
-        if arg[i] == "-nomain" then         main = false
-        elseif arg[i] == "-ascii" then      format = "ascii"
-        elseif arg[i] == "-autoload" then   autoload_next = true
+        if arg[i] == "-nomain" then             main = false
+        elseif arg[i] == "-ascii" then          format = "ascii"
+        elseif arg[i] == "-autoload" then       autoload_next = true
+        elseif arg[i] == "-autoload-all" then   autoload_all = true
+        elseif arg[i] == "-autoload-none" then  autoload_none = false
+        elseif arg[i] == "-autoexec" then   autoexec_next = true
+        elseif arg[i] == "-autoexec-all" then   autoexec_all = true
+        elseif arg[i] == "-autoexec-none" then  autoexec_none = false
         else
             local local_path, dest_path = arg[i]:match "(.-):(.*)"
             local_path = local_path or arg[i]
@@ -75,9 +83,11 @@ function bundle.bundle(arg)
                 local_path = local_path,
                 path = dest_path or basename(local_path),
                 name = dest_path and strip_ext(dest_path) or basename(strip_ext(local_path)),
-                autoload = autoload_next,
+                autoload = autoload_next or autoload_all,
+                autoexec = autoexec_next or autoexec_all,
             }
             autoload_next = false
+            autoexec_next = false
         end
     end
 
@@ -93,11 +103,13 @@ function bundle.bundle(arg)
     plain.emit "table.insert(package.searchers, 1, function(name) return libs[name] end)\n"
     for i = main and 2 or 1, #scripts do
         if scripts[i].autoload then
-            plain.emit(("require '%s'\n"):format(scripts[i].name))
+            plain.emit(("_ENV[%q] = require %q\n"):format(scripts[i].name, scripts[i].name))
+        elseif scripts[i].autoexec then
+            plain.emit(("require %q\n"):format(scripts[i].name, scripts[i].name))
         end
     end
     if main then
-        plain.emit(("require '%s'\n"):format(scripts[1].name))
+        plain.emit(("require %q\n"):format(scripts[1].name))
     end
     plain.emit "end\n"
 

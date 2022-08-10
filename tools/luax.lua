@@ -32,19 +32,35 @@ local usage = fun.I(_G){fs=fs}[==[
 usage: $(fs.basename(arg[0])) [options] [script [args]]
 
 General options:
-  -h            show this help
-  -v            show version information
-  --            stop handling options
+  -h                show this help
+  -v                show version information
+  --                stop handling options
 
 Lua options:
-  -e stat       execute string 'stat'
-  -i            enter interactive mode after executing 'script'
-  -l name       require library 'name' into global 'name'
-  -             stop handling options and execute stdin (incompatible with -i)
+  -e stat           execute string 'stat'
+  -i                enter interactive mode after executing 'script'
+  -l name           require library 'name' into global 'name'
+  -                 stop handling options and execute stdin
+                    (incompatible with -i)
 
 Compilation options:
-  -t target     name of the luax binary compiled for the targetted platform
-  -o file       name the executable file to create
+  -t target         name of the luax binary compiled for the targetted platform
+  -o file           name the executable file to create
+
+Scripts for compilation:
+  file name         name of a Lua package to add to the binary
+                    (the first one is the main script)
+  -autoload         the next package will be loaded with require
+                    and stored in a global variable of the same name
+                    when the binary starts
+  -autoload-all     all following packages (until -autoload-none)
+                    are loaded with require when the binary starts
+  -autoload-none    cancel -autoload-all
+  -autoexec         the next package will be executed with require
+                    when the binary start
+  -autoexec-all     all following packages (until -autoexec-none)
+                    are executed with require when the binary starts
+  -autoexec-none    cancel -autoexec-all
 
 Lua and Compilation options can not be mixed.
 ]==]
@@ -158,6 +174,11 @@ do
             -- this is not an option but a file (stdin) to execute
             args[#args+1] = arg[i]
             break
+        elseif a == '-autoload' or a == '-autoload-all' or a == '-autoload-none'
+            or a == '-autoexec' or a == '-autoexec-all' or a == '-autoexec-none' then
+            -- this is an option for the compiler
+            compiler_mode = true
+            break
         elseif a:match "^%-" then
             wrong_arg(a)
         else
@@ -171,6 +192,10 @@ do
         args[#args+1] = arg[i]
         i = i+1
     end
+end
+
+if compiler_mode and not output then
+    err "No output specified"
 end
 
 if interpretor_mode and compiler_mode then
@@ -294,11 +319,27 @@ function run_compiler()
     log("output", "%s", output)
     local head = "scripts"
     local autoload = false
+    local autoexec = false
+    local autoload_all = false
+    local autoexec_all = false
     for i = 1, #scripts do
         if scripts[i] == "-autoload" then autoload = true
+        elseif scripts[i] == "-autoload-all" then autoload_all = true
+        elseif scripts[i] == "-autoload-none" then autoload_all = false
+        elseif scripts[i] == "-autoexec" then autoexec = true
+        elseif scripts[i] == "-autoexec-all" then autoexec_all = true
+        elseif scripts[i] == "-autoexec-none" then autoexec_all = false
         else
-            log(head, "%s%s", autoload and "autoload " or "", scripts[i])
+            if (autoload or autoload_all) and (autoexec or autoexec_all) then
+                err("Can not autoload and autoexec a package")
+            end
+            log(head, "%s%s",
+                (autoload or autoload_all) and "autoload "
+                or (autoexec or autoexec_all) and "autoexec"
+                or "",
+                scripts[i])
             autoload = false
+            autoexec = false
         end
         head = ""
     end
