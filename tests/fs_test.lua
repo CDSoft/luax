@@ -53,6 +53,7 @@ return function()
     fs.mkdirs(tmp)
     assert(fs.chdir(tmp))
     eq(fs.getcwd(), fs.absname(tmp))
+    eq(fs.getcwd(), fs.realpath(tmp))
 
     fs.mkdir "foo"
     fs.mkdir "bar"
@@ -171,6 +172,12 @@ return function()
     eq(fs.absname("/foo"), "/foo")
     eq(fs.absname("\\foo"), "\\foo")
     eq(fs.absname("Z:foo"), "Z:foo")
+    eq(fs.realpath("."), tmp)
+    eq(fs.realpath(tmp), tmp)
+    eq(fs.realpath("foo"), fs.join(tmp, "foo"))
+    eq(fs.realpath("/foo"), nil) -- unknown file
+    eq(fs.realpath("\\foo"), nil) -- unknown file
+    eq(fs.realpath("Z:foo"), nil) -- unknown file
 
     eq(fs.sep, sys.platform == "Windows" and "\\" or "/")
 

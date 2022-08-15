@@ -30,6 +30,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -150,8 +151,9 @@ static int fs_remove(lua_State *L)
     {
         return bl_pushresult(L, rmdir(filename) == 0, filename);
     }
-#endif
+#else
     return bl_pushresult(L, remove(filename) == 0, filename);
+#endif
 }
 
 static int fs_rename(lua_State *L)
@@ -207,7 +209,7 @@ static int fs_copy(lua_State *L)
     if (stat(fromname, &st) != 0) return bl_pushresult(L, 0, fromname);
     t.actime = st.st_atime;
     t.modtime = st.st_mtime;
-    return bl_pushresult(L, 
+    return bl_pushresult(L,
         utime(toname, &t) == 0 && chmod(toname, st.st_mode) == 0,
         toname);
 }
@@ -398,28 +400,32 @@ static int fs_touch(lua_State *L)
 
 static int fs_basename(lua_State *L)
 {
-    char path[FS_PATHSIZE+1];
-    strncpy(path, luaL_checkstring(L, 1), FS_PATHSIZE);
-    path[FS_PATHSIZE] = '\0';
-    char *p = path;
-    while (*p) p++;
-    while (p>path && (*(p-1)=='/' || *(p-1)=='\\')) *--p = '\0';
-    while (p>path && (*(p-1)!='/' && *(p-1)!='\\')) p--;
-    lua_pushstring(L, p);
+    char *path = strdup(luaL_checkstring(L, 1));
+    lua_pushstring(L, basename(path));
+    free(path);
     return 1;
 }
 
 static int fs_dirname(lua_State *L)
 {
-    char path[FS_PATHSIZE+1];
-    strncpy(path, luaL_checkstring(L, 1), FS_PATHSIZE);
-    path[FS_PATHSIZE] = '\0';
-    char *p = path;
-    while (*p) p++;
-    while (p>path && (*(p-1)=='/' || *(p-1)=='\\')) *--p = '\0';
-    while (p>path && (*(p-1)!='/' && *(p-1)!='\\')) *--p = '\0';
-    while (p>path && (*(p-1)=='/' || *(p-1)=='\\')) *--p = '\0';
-    lua_pushstring(L, path);
+    char *path = strdup(luaL_checkstring(L, 1));
+    lua_pushstring(L, dirname(path));
+    free(path);
+    return 1;
+}
+
+static int fs_realpath(lua_State *L)
+{
+    const char *path = luaL_checkstring(L, 1);
+#ifdef _WIN32
+    char real[FS_PATHSIZE+1];
+    GetFullPathNameA(path, sizeof(real), real, NULL);
+    lua_pushstring(L, real);
+#else
+    const char *real = realpath(path, NULL);
+    lua_pushstring(L, real);
+    free(real);
+#endif
     return 1;
 }
 
@@ -450,6 +456,7 @@ static const luaL_Reg fslib[] =
     {"basename",    fs_basename},
     {"dirname",     fs_dirname},
     {"absname",     fs_absname},
+    {"realpath",    fs_realpath},
     {"getcwd",      fs_getcwd},
     {"chdir",       fs_chdir},
     {"dir",         fs_dir},

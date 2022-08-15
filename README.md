@@ -253,6 +253,8 @@ modification time of file `name` with the times of file `other_name`.
 
 **`fs.dirname(path)`** return all but the last component of path.
 
+**`fs.realpath(path)`** return the resolved path name of path.
+
 **`fs.absname(path)`** return the absolute path name of path.
 
 **`fs.join(...)`** return a path name made of several path components
