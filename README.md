@@ -14,19 +14,16 @@ scripts.
 
 ## Compilation
 
-`luax` is written in C and Lua and uses the Zig build system. First download
-`luax` and Zig:
-
-- `luax`: <https://github.com/CDSoft/luax>
-- `Zig`: <https://ziglang.org/download/>
-
-Install Zig and compile `luax`:
+`luax` is written in C and Lua and uses the Zig build system. Just ownload
+`luax` (<https://github.com/CDSoft/luax>) and run `make`:
 
 ```sh
 $ git clone https://github.com/CDSoft/luax
 $ cd luax
 $ make                  # compile and test
 ```
+
+**Note**: `make` will download a Zig compiler if necessary.
 
 ## Installation
 
@@ -49,9 +46,8 @@ $ make install-all PREFIX=/usr/bin  # install luax to /usr/bin
 
 ## Precompiled binaries
 
-It is usually highly recommended to build `luax` from sources. Some precompiled
-binaries are available here: [luax
-release](http://cdelord.fr/luax/luax.tar.xz).
+It is usually highly recommended to build `luax` from sources. The latest
+binaries are available here: [luax.tar.xz](http://cdelord.fr/luax/luax.tar.xz).
 
 The Linux and Raspberry Pi binaries are linked statically with
 [musl](https://musl.libc.org/) and are not dynamic executables. They should

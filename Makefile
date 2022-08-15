@@ -21,6 +21,7 @@ CRYPT_KEY ?= Luax
 
 BUILD = .build
 ZIG_CACHE = $(BUILD)/zig-cache
+ZIG_INSTALL = .zig
 
 RELEASE = release-small
 
@@ -132,6 +133,10 @@ all: test
 clean:
 	rm -rf $(BUILD)
 
+## Delete the build directory and the downloaded Zig compiler
+mrproper: clean
+	rm -rf $(ZIG_INSTALL)
+
 ###############################################################################
 # Installation
 ###############################################################################
@@ -162,15 +167,40 @@ $(INSTALL_PATH)/luax-%: $(BUILD)/luax-%
 	@install $< $@
 
 ###############################################################################
+# Search for or install a zig compiler
+###############################################################################
+
+ifeq ($(shell which zig 2>/dev/null),)
+ZIG := $(ZIG_INSTALL)/zig
+else
+ZIG := $(shell which zig)
+endif
+
+ZIG_VERSION = 0.9.1
+ZIG_URL = https://ziglang.org/download/$(ZIG_VERSION)/zig-$(OS)-$(ARCH)-$(ZIG_VERSION).tar.xz
+ZIG_ARCHIVE = $(BUILD)/$(notdir $(ZIG_URL))
+
+$(ZIG_INSTALL)/zig: $(ZIG_ARCHIVE)
+	@$(call cyan,"EXTRACT",$^)
+	@mkdir -p $(dir $@)
+	@test -x $@ || tar xJf $(ZIG_ARCHIVE) -C $(dir $@) --strip-components 1
+	@touch $@
+
+$(ZIG_ARCHIVE):
+	@$(call cyan,"DOWNLOAD",$@)
+	@mkdir -p $(dir $@)
+	@test -f $@ || wget $(ZIG_URL) -O $@
+
+###############################################################################
 # Native Lua interpretor
 ###############################################################################
 
 # avoid being polluted by user definitions
 export LUA_PATH := ./?.lua
 
-$(LUA): $(LUA_SOURCES) build-lua.zig
+$(LUA): $(ZIG) $(LUA_SOURCES) build-lua.zig
 	@$(call cyan,"ZIG",$@)
-	@zig build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-lua.zig
+	@$(ZIG) build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-lua.zig
 	@touch $@
 
 ###############################################################################
@@ -199,17 +229,17 @@ $(LUAX_RUNTIME_BUNDLE): $(LUA) $(LUAX_RUNTIME) tools/bundle.lua
 # Runtimes
 ###############################################################################
 
-$(BUILD)/lrun-%.exe: $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build-run.zig
+$(BUILD)/lrun-%.exe: $(ZIG) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build-run.zig
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
-	@zig build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-run.zig -Dtarget=$(patsubst $(BUILD)/lrun-%.exe,%,$@)
+	@$(ZIG) build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-run.zig -Dtarget=$(patsubst $(BUILD)/lrun-%.exe,%,$@)
 	@mv $(BUILD)/lrun.exe $@
 	@touch $@
 
-$(BUILD)/lrun-%: $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build-run.zig
+$(BUILD)/lrun-%: $(ZIG) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build-run.zig
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
-	@zig build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-run.zig -Dtarget=$(patsubst $(BUILD)/lrun-%,%,$@)
+	@$(ZIG) build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-run.zig -Dtarget=$(patsubst $(BUILD)/lrun-%,%,$@)
 	@mv $(BUILD)/lrun $@
 	@touch $@
 
