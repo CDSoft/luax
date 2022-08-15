@@ -68,9 +68,9 @@ static int ps_time(lua_State *L)
 #else
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
-    const uint64_t sec_in_nsec = ts.tv_sec * 1000000000;
-    const uint64_t nsec = ts.tv_nsec;
-    const lua_Number t = (sec_in_nsec + nsec) / 1e9;
+    const uint64_t sec_in_nsec = (uint64_t)ts.tv_sec * 1000000000;
+    const uint64_t nsec = (uint64_t)ts.tv_nsec;
+    const lua_Number t = (double)((sec_in_nsec + nsec) / 1e9);
 #endif
     lua_pushnumber(L, t);
     return 1;
