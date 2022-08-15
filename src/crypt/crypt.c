@@ -257,11 +257,11 @@ static int crypt_hex_decode(lua_State *L)
 
 /* https://fr.wikipedia.org/wiki/Base64 */
 
-static const char base64_map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                 "abcdefghijklmnopqrstuvwxyz"
-                                 "0123456789+/";
+static const unsigned char base64_map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                          "abcdefghijklmnopqrstuvwxyz"
+                                          "0123456789+/";
 
-static const char base64_rev[] =
+static const unsigned char base64_rev[] =
 {
     ['A'] = 0,      ['a'] = 26+0,       ['0'] = 2*26+0,
     ['B'] = 1,      ['b'] = 26+1,       ['1'] = 2*26+1,
@@ -291,10 +291,10 @@ static const char base64_rev[] =
     ['Z'] = 25,     ['z'] = 26+25,
 };
 
-static void base64_encode(const char *plain, size_t n_in, char **b64_out, size_t *n_out)
+static void base64_encode(const unsigned char *plain, size_t n_in, unsigned char **b64_out, size_t *n_out)
 {
-    *b64_out = safe_malloc(n_in * 4 / 3 + 4);
-    char *b64 = *b64_out;
+    *b64_out = safe_malloc(n_in*4/3 + 4);
+    unsigned char *b64 = *b64_out;
 
     size_t i = 0;
     size_t b = 0;
@@ -321,14 +321,13 @@ static void base64_encode(const char *plain, size_t n_in, char **b64_out, size_t
             b64[b++] = '=';
             break;
     }
-    b64[b] = '\0';
     *n_out = b;
 }
 
-static void base64_decode(const char *b64, size_t n_in, char **plain_out, size_t *n_out)
+static void base64_decode(const unsigned char *b64, size_t n_in, unsigned char **plain_out, size_t *n_out)
 {
-    *plain_out = safe_malloc(n_in * 3 / 4);
-    char *plain = *plain_out;
+    *plain_out = safe_malloc(n_in*3 / 4);
+    unsigned char *plain = *plain_out;
 
     size_t i = 0;
     size_t p = 0;
@@ -346,24 +345,24 @@ static void base64_decode(const char *b64, size_t n_in, char **plain_out, size_t
 
 static int crypt_base64_encode(lua_State *L)
 {
-    const char *plain = luaL_checkstring(L, 1);
+    const unsigned char *plain = (const unsigned char *)luaL_checkstring(L, 1);
     const size_t n_in = lua_rawlen(L, 1);
-    char *b64;
+    unsigned char *b64;
     size_t n_out;
     base64_encode(plain, n_in, &b64, &n_out);
-    lua_pushlstring(L, b64, n_out);
+    lua_pushlstring(L, (const char *)b64, n_out);
     free(b64);
     return 1;
 }
 
 static int crypt_base64_decode(lua_State *L)
 {
-    const char *b64 = luaL_checkstring(L, 1);
+    const unsigned char *b64 = (const unsigned char *)luaL_checkstring(L, 1);
     const size_t n_in = lua_rawlen(L, 1);
-    char *plain;
+    unsigned char *plain;
     size_t n_out;
     base64_decode(b64, n_in, &plain, &n_out);
-    lua_pushlstring(L, plain, n_out);
+    lua_pushlstring(L, (char *)plain, n_out);
     free(plain);
     return 1;
 }
