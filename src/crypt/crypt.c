@@ -67,6 +67,16 @@ static inline double prng_frand(t_prng *prng)
     return (double)x / (double)(CRYPT_MAX_RAND + 1);
 }
 
+static inline char *prng_block(t_prng *prng, size_t size)
+{
+    char *buffer = safe_malloc(size);
+    for (size_t i = 0; i < size; i++)
+    {
+        buffer[i] = (char)prng_rand(prng);
+    }
+    return buffer;
+}
+
 static inline uint64_t prng_default_seed(void)
 {
 #ifdef _WIN32
@@ -109,11 +119,7 @@ static int crypt_prng_rand(lua_State *L)
     if (lua_type(L, 2) == LUA_TNUMBER)
     {
         const size_t bytes = (size_t)luaL_checkinteger(L, 2);
-        char *buffer = (char *)safe_malloc(bytes);
-        for (size_t i = 0; i < bytes; i++)
-        {
-            buffer[i] = (char)prng_rand(prng);
-        }
+        char *buffer = prng_block(prng, bytes);
         lua_pushlstring(L, buffer, bytes);
         free(buffer);
         return 1;
@@ -156,11 +162,7 @@ static int crypt_rand(lua_State *L)
     if (lua_type(L, 1) == LUA_TNUMBER)
     {
         const size_t bytes = (size_t)luaL_checkinteger(L, 1);
-        char *buffer = (char *)safe_malloc(bytes);
-        for (size_t i = 0; i < bytes; i++)
-        {
-            buffer[i] = (char)prng_rand(&prng);
-        }
+        char *buffer = prng_block(&prng, bytes);
         lua_pushlstring(L, buffer, bytes);
         free(buffer);
         return 1;
