@@ -30,38 +30,66 @@ return function()
     do
         local x = "foobarbaz"
         local y = crypt.hex_encode(x)
+        local z = x:hex_encode()
         eq(y, "666f6f62617262617a")
+        eq(y, z)
         eq(crypt.hex_decode(y), x)
+        eq(z:hex_decode(), x)
+        for _ = 1, 1000 do
+            local s = crypt.rand(256)
+            eq(s:hex_encode():hex_decode(), s)
+        end
     end
     do
         do
             local x = "foobarbaz"
             local y = crypt.base64_encode(x)
+            local z = x:base64_encode()
             eq(y, "Zm9vYmFyYmF6")
+            eq(y, z)
             eq(crypt.base64_decode(y), x)
+            eq(z:base64_decode(), x)
         end
         do
             local x = "foobarbaz1"
             local y = crypt.base64_encode(x)
+            local z = x:base64_encode()
             eq(y, "Zm9vYmFyYmF6MQ==")
+            eq(y, z)
             eq(crypt.base64_decode(y), x)
+            eq(z:base64_decode(), x)
         end
         do
             local x = "foobarbaz12"
             local y = crypt.base64_encode(x)
+            local z = x:base64_encode()
             eq(y, "Zm9vYmFyYmF6MTI=")
+            eq(y, z)
             eq(crypt.base64_decode(y), x)
+            eq(z:base64_decode(), x)
+        end
+        eq((""):base64_encode():base64_decode(), "")
+        for i = 0, 255 do
+            eq(string.char(i):base64_encode():base64_decode(), string.char(i))
+        end
+        for i = 1, 1000 do
+            local s = crypt.rand(256 + i%3)
+            eq(s:base64_encode():base64_decode(), s)
         end
     end
     do
         local x = "foo123456789"
         local y = crypt.crc32(x)
+        local z = x:crc32()
         eq(y, 0x72871f0c)
+        eq(y, z)
     end
     do
         local x = "foo123456789"
         local y = crypt.crc64(x)
+        local z = x:crc64()
         eq(y, 0xd85c06f88a2a27d8)
+        eq(y, z)
     end
     do
         local x = "foobar!"
@@ -70,6 +98,14 @@ return function()
         local z = crypt.rc4(key, y)
         ne(y, x)
         eq(z, x)
+        eq(crypt.rc4(key, x), x:rc4(key))
+        eq(crypt.rc4(key, y), y:rc4(key))
+        eq(x:rc4(key):rc4(key), x)
+        for _ = 1, 1000 do
+            local s = crypt.rand(256)
+            local k = crypt.rand(256)
+            eq(s:rc4(k):rc4(k), s)
+        end
     end
     do
         local rands = {}
