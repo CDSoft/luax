@@ -400,7 +400,7 @@ static int fs_touch(lua_State *L)
 
 static int fs_basename(lua_State *L)
 {
-    char *path = strdup(luaL_checkstring(L, 1));
+    char *path = safe_strdup(luaL_checkstring(L, 1));
     lua_pushstring(L, basename(path));
     free(path);
     return 1;
@@ -408,7 +408,7 @@ static int fs_basename(lua_State *L)
 
 static int fs_dirname(lua_State *L)
 {
-    char *path = strdup(luaL_checkstring(L, 1));
+    char *path = safe_strdup(luaL_checkstring(L, 1));
     lua_pushstring(L, dirname(path));
     free(path);
     return 1;
