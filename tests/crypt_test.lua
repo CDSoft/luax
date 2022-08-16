@@ -31,7 +31,7 @@ return function()
         local x = "foobarbaz"
         local y = crypt.hex_encode(x)
         local z = x:hex_encode()
-        eq(y, "666f6f62617262617a")
+        eq(y, "666F6F62617262617A")
         eq(y, z)
         eq(crypt.hex_decode(y), x)
         eq(z:hex_decode(), x)

@@ -184,7 +184,7 @@ static int crypt_frand(lua_State *L)
  * Hex
  ******************************************************************************/
 
-static const char hex_map[] = "0123456789abcdef";
+static const char hex_map[] = "0123456789ABCDEF";
 
 static const char digit[] =
 {
@@ -202,7 +202,7 @@ static const char digit[] =
 
 static void hex_encode(const char *plain, size_t n_in, char **hex_out, size_t *n_out)
 {
-    *hex_out = safe_malloc(n_in*2 + 1);
+    *hex_out = safe_malloc(n_in*2);
     char *hex = *hex_out;
     *n_out = n_in*2;
     size_t p = 0;
@@ -217,11 +217,11 @@ static void hex_encode(const char *plain, size_t n_in, char **hex_out, size_t *n
 
 static void hex_decode(const char *hex, size_t n_in, char **plain_out, size_t *n_out)
 {
-    *plain_out = safe_malloc((n_in+1)/2 + 1);
+    *plain_out = safe_malloc(n_in/2);
     char *plain = *plain_out;
     size_t p = 0;
 
-    for (size_t i = 0; i < n_in; i += 2)
+    for (size_t i = 0; i < n_in-1; i += 2)
     {
         plain[p++] = (char)((digit[hex[i]]<<4) | digit[hex[i+1]]);
     }
