@@ -41,8 +41,7 @@ static inline void *check_ptr(void *ptr)
 {
     if (ptr == NULL)
     {
-        fprintf(stderr, "Memory allocation error\n");
-        exit(EXIT_FAILURE);
+        error(NULL, "Memory allocation error\n");
     }
     return ptr;
 }
@@ -86,7 +85,7 @@ void strip_ext(char *name)
 
 int bl_pushresult(lua_State *L, int i, const char *filename)
 {
-    int en = errno;  /* calls to Lua API may change this value */
+    const int en = errno;  /* calls to Lua API may change this value */
     if (i)
     {
         lua_pushboolean(L, 1);
