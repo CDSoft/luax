@@ -92,19 +92,45 @@ return function()
         eq(y, z)
     end
     do
-        local x = "foobar!"
-        local key = "rc4key"
-        local y = crypt.rc4(key, x)
-        local z = crypt.rc4(key, y)
-        ne(y, x)
-        eq(z, x)
-        eq(crypt.rc4(key, x), x:rc4(key))
-        eq(crypt.rc4(key, y), y:rc4(key))
-        eq(x:rc4(key):rc4(key), x)
-        for _ = 1, 1000 do
-            local s = crypt.rand(256)
-            local k = crypt.rand(256)
-            eq(s:rc4(k):rc4(k), s)
+        do
+            local x = "foobar!"
+            local key = "rc4key"
+            local y = crypt.rc4(x, key)
+            local z = crypt.rc4(y, key)
+            ne(y, x)
+            eq(z, x)
+            eq(crypt.rc4(x, key), x:rc4(key))
+            eq(crypt.rc4(y, key), y:rc4(key))
+            eq(x:rc4(key):rc4(key), x)
+            for _ = 1, 1000 do
+                local s = crypt.rand(256)
+                local k = crypt.rand(256)
+                eq(s:rc4(k):rc4(k), s)
+            end
+        end
+        for drop = 0, 10 do
+            local x = "foobar!"
+            local key = "rc4key"
+            local y = crypt.rc4(x, key, drop)
+            local z = crypt.rc4(y, key, drop)
+            ne(y, x)
+            eq(z, x)
+            eq(crypt.rc4(x, key, drop), x:rc4(key, drop))
+            eq(crypt.rc4(y, key, drop), y:rc4(key, drop))
+            eq(x:rc4(key, drop):rc4(key, drop), x)
+            for _ = 1, 1000 do
+                local s = crypt.rand(256)
+                local k = crypt.rand(256)
+                eq(s:rc4(k, drop):rc4(k, drop), s)
+            end
+        end
+        do
+            for _ = 1, 1000 do
+                local s = crypt.rand(256)
+                local k = crypt.rand(256)
+                local drop = crypt.rand() % 4096
+                eq(s:rc4(k, drop):rc4(k, drop), s)
+            end
         end
     end
     do

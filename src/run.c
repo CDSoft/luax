@@ -135,7 +135,7 @@ static void decode(const char *input, size_t size, char *output)
             break;
         }
         case '#':
-            rc4(NULL, 0, input, size-1, output);
+            rc4_runtime(input, size-1, output);
             break;
         default:
             /* unknown encoding, let it fail */

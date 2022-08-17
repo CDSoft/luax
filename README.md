@@ -419,7 +419,9 @@ local crypt = require "crypt"
 
 **`crypt.crc64(data)`** computes the CRC64 of `data`.
 
-**`crypt.rc4(key, data)`** encrypts/decrypts `data` using the RC4 algorithm and the encryption key `key`.
+**`crypt.rc4(data, key, [drop])`** encrypts/decrypts `data` using the RC4Drop
+algorithm and the encryption key `key` (drops the first `drop` encryption
+steps, the default value of `drop` is 768).
 
 **`crypt.srand(seed)`** sets the random seed.
 
@@ -446,7 +448,7 @@ Some functions of the `crypt` package are added to the string module:
 
 **`s:crc64()`** is `crypt.crc64(s)`.
 
-**`s:rc4(key)`** is `crypt.crc64(key, s)`.
+**`s:rc4(key, drop)`** is `crypt.crc64(s, key, drop)`.
 
 ### lpeg: Parsing Expression Grammars For Lua
 

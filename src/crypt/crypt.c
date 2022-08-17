@@ -529,6 +529,9 @@ static int crypt_crc64(lua_State *L)
 
 /* https://en.wikipedia.org/wiki/RC4 */
 
+#define RC4_DROP        768
+#define RC4_DROP_3072   3072
+
 static inline void swap(uint8_t *a, uint8_t *b)
 {
     uint8_t tmp = *a;
@@ -536,14 +539,8 @@ static inline void swap(uint8_t *a, uint8_t *b)
     *b = tmp;
 }
 
-void rc4(const char *key, size_t key_size, const char *input, size_t size, char *output)
+static void rc4(const char *key, size_t key_size, size_t drop, const char *input, size_t size, char *output)
 {
-    if (key_size == 0)
-    {
-        key = LUAX_CRYPT_KEY;
-        key_size = sizeof(LUAX_CRYPT_KEY)-1;
-    }
-
     uint8_t S[256];
 
     for (size_t i = 0; i < 256; i++)
@@ -560,6 +557,12 @@ void rc4(const char *key, size_t key_size, const char *input, size_t size, char 
 
     size_t i = 0;
     j = 0;
+    for (size_t k = 0; k < drop; k++)
+    {
+        i = (i + 1) % 256;
+        j = (j + S[i]) % 256;
+        swap(&S[i], &S[j]);
+    }
     for (size_t k = 0; k < size; k++)
     {
         i = (i + 1) % 256;
@@ -569,28 +572,43 @@ void rc4(const char *key, size_t key_size, const char *input, size_t size, char 
     }
 }
 
+void rc4_runtime(const char *input, size_t size, char *output)
+{
+    rc4(LUAX_CRYPT_KEY, sizeof(LUAX_CRYPT_KEY)-1, RC4_DROP_3072, input, size, output);
+}
+
 static int crypt_rc4(lua_State *L)
 {
-    const char *key;
-    size_t key_size;
-    const char *in;
+    const char *key = NULL;     /* default key to encrypt the runtime payload */
+    size_t key_size = 0;
+    size_t drop = RC4_DROP;     /* default number of steps dropped before encryption */
+    const char *in = NULL;
     size_t n;
-    if (lua_isnone(L, 2))
+
+    /* arg 1: input data */
+    in = luaL_checkstring(L, 1);
+    n = lua_rawlen(L, 1);
+
+    /* arg 2: key (optional) */
+    if (!lua_isnoneornil(L, 2)) {
+        key = luaL_checkstring(L, 2);
+        key_size = lua_rawlen(L, 2);
+    }
+
+    /* arg 3: drop (optional) */
+    if (!lua_isnoneornil(L, 3)) {
+        drop = luaL_checkinteger(L, 3);
+    }
+
+    char *out = safe_malloc(n);
+    if (key == NULL)
     {
-        key = NULL;
-        key_size = 0;
-        in = luaL_checkstring(L, 1);
-        n = lua_rawlen(L, 1);
+        rc4_runtime(in, n, out);
     }
     else
     {
-        key = luaL_checkstring(L, 1);
-        key_size = lua_rawlen(L, 1);
-        in = luaL_checkstring(L, 2);
-        n = lua_rawlen(L, 2);
+        rc4(key, key_size, drop, in, n, out);
     }
-    char *out = safe_malloc(n);
-    rc4(key, key_size, in, n, out);
     lua_pushlstring(L, out, n);
     free(out);
     return 1;
