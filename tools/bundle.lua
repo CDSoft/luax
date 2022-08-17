@@ -26,9 +26,9 @@ http://cdelord.fr/luax
 
 local bundle = {}
 
-local crypt = _LUAX_VERSION and require "crypt" -- available only when run by luax
+bundle.magic = string.unpack("<I4", "LuaX")
 
-bundle.magic = string.unpack("<I8", "LuaX/CD!")
+local header_format = "<I4I4"
 
 local function read(name)
     local f = io.open(name)
@@ -114,8 +114,8 @@ function bundle.bundle(arg)
     plain.emit "end\n"
 
     local encoded = Bundle()
-    if crypt then
-        encoded.emit(crypt.rc4(plain.get()))
+    if string.rc4 then
+        encoded.emit(plain.get():rc4())
         encoded.emit("#")
     else
         local chunk = plain.get()
@@ -129,7 +129,7 @@ function bundle.bundle(arg)
     if format == "binary" then
         local chunk = Bundle()
         local payload = encoded.get()
-        local header = ("<I8I8"):pack(#payload, bundle.magic)
+        local header = header_format:pack(#payload, bundle.magic)
         chunk.emit(payload)
         chunk.emit(header)
         return chunk.get()
@@ -150,12 +150,13 @@ function bundle.bundle(arg)
 end
 
 local function drop_chunk(exe)
-    local size, magic = string.unpack("<I8I8", exe, #exe - 15)
+    local header_size = header_format:packsize()
+    local size, magic = header_format:unpack(exe, #exe - header_size + 1)
     if magic ~= bundle.magic then
         io.stderr:write("error: no LuaX header found in the current target\n")
         os.exit(1)
     end
-    return exe:sub(1, #exe - 16 - size)
+    return exe:sub(1, #exe - header_size - size + 1)
 end
 
 function bundle.combine(target, scripts)

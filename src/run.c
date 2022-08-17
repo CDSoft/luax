@@ -50,8 +50,8 @@
 
 typedef struct
 {
-    uint64_t size;
-    uint64_t magic;
+    uint32_t size;
+    uint32_t magic;
 } t_header;
 
 static const luaL_Reg lrun_libs[] = {
@@ -143,26 +143,23 @@ static void decode(const char *input, size_t size, char *output)
     }
 }
 
-static uint64_t letoh(uint64_t n)
+static uint32_t letoh(uint32_t n)
 {
     union {
-        uint64_t v;
-        uint8_t b[8];
+        uint32_t v;
+        uint8_t b[4];
     } w;
     w.b[0] = (n >> (0*8)) & 0xFF;
     w.b[1] = (n >> (1*8)) & 0xFF;
     w.b[2] = (n >> (2*8)) & 0xFF;
     w.b[3] = (n >> (3*8)) & 0xFF;
-    w.b[4] = (n >> (4*8)) & 0xFF;
-    w.b[5] = (n >> (5*8)) & 0xFF;
-    w.b[6] = (n >> (6*8)) & 0xFF;
-    w.b[7] = (n >> (7*8)) & 0xFF;
     return w.v;
 }
 
 static int run_buffer(lua_State *L, const char *buffer, size_t size, const char *name, const char *argv0)
 {
     if (luaL_loadbuffer(L, buffer, size, name) != LUA_OK) error(argv0, lua_tostring(L, -1));
+    memset(buffer, 0, size);
     const int base = lua_gettop(L);         /* function index */
     lua_pushcfunction(L, traceback);        /* push message handler */
     lua_insert(L, base);                    /* put it under function and args */
