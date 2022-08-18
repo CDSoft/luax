@@ -89,6 +89,21 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFiles(&c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
+
+        if (target.cpu_arch == std.Target.Cpu.Arch.x86_64)          "-DLUAX_ARCH=\"x86_64\""
+        else if (target.cpu_arch == std.Target.Cpu.Arch.i386)       "-DLUAX_ARCH=\"i386\""
+        else if (target.cpu_arch == std.Target.Cpu.Arch.aarch64)    "-DLUAX_ARCH=\"aarch64\""
+        else unreachable, // the list may not be exhaustive
+
+        if (target.os_tag == std.Target.Os.Tag.linux)               "-DLUAX_OS=\"linux\""
+        else if (target.os_tag == std.Target.Os.Tag.macos)          "-DLUAX_OS=\"macos\""
+        else if (target.os_tag == std.Target.Os.Tag.windows)        "-DLUAX_OS=\"windows\""
+        else unreachable, // the list may not be exhaustive
+
+        if (target.abi == std.Target.Abi.musl)                      "-DLUAX_ABI=\"musl\""
+        else if (target.abi == std.Target.Abi.gnu)                  "-DLUAX_ABI=\"gnu\""
+        else unreachable, // the list may not be exhaustive
+
         if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_USE_WINDOWS" else "-DLUA_USE_POSIX",
     });
 }
