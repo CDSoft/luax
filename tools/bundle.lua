@@ -73,7 +73,7 @@ function bundle.bundle(arg)
         elseif arg[i] == "-autoload" then       autoload_next = true
         elseif arg[i] == "-autoload-all" then   autoload_all = true
         elseif arg[i] == "-autoload-none" then  autoload_none = false
-        elseif arg[i] == "-autoexec" then   autoexec_next = true
+        elseif arg[i] == "-autoexec" then       autoexec_next = true
         elseif arg[i] == "-autoexec-all" then   autoexec_all = true
         elseif arg[i] == "-autoexec-none" then  autoexec_none = false
         else
@@ -116,14 +116,14 @@ function bundle.bundle(arg)
     local encoded = Bundle()
     if string.rc4 then
         encoded.emit(plain.get():rc4())
-        encoded.emit("#")
+        encoded.emit "#"
     else
         local chunk = plain.get()
         encoded.emit(("B"):pack(chunk:byte(1)))
         for i = 2, #chunk do
             encoded.emit(("B"):pack((chunk:byte(i)-chunk:byte(i-1)) & 0xFF))
         end
-        encoded.emit("-")
+        encoded.emit "-"
     end
 
     if format == "binary" then
@@ -137,13 +137,10 @@ function bundle.bundle(arg)
 
     if format == "ascii" then
         local hex = Bundle()
-        local n = 0
         local _ = encoded.get():gsub(".", function(c)
-            if n % 16 == 0 then hex.emit("\n") end
-            n = n+1
-            hex.emit((" 0x%02X,"):format(c:byte()))
+            hex.emit(("'\\x%02X',"):format(c:byte()))
         end)
-        hex.emit("\n")
+        hex.emit "\n"
         return hex:get()
     end
 

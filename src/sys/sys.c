@@ -28,13 +28,17 @@ static const luaL_Reg blsyslib[] =
     {NULL, NULL}
 };
 
+static inline void set_string(lua_State *L, const char *name, const char *val)
+{
+    lua_pushstring(L, val);
+    lua_setfield(L, -2, name);
+}
+
 LUAMOD_API int luaopen_sys (lua_State *L)
 {
     luaL_newlib(L, blsyslib);
-#define STRING(NAME, VAL) lua_pushliteral(L, VAL); lua_setfield(L, -2, NAME)
-    STRING("arch", LUAX_ARCH);
-    STRING("os", LUAX_OS);
-    STRING("abi", LUAX_ABI);
-#undef STRING
+    set_string(L, "arch", LUAX_ARCH);
+    set_string(L, "os", LUAX_OS);
+    set_string(L, "abi", LUAX_ABI);
     return 1;
 }

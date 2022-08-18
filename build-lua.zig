@@ -62,6 +62,10 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFiles(&c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
-        if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_USE_WINDOWS" else "-DLUA_USE_POSIX",
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+
+        if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
     });
 }

@@ -102,6 +102,11 @@ static int fs_dir(lua_State *L)
 /* no glob function */
 /* TODO: implement glob in Lua */
 
+static int fs_glob(lua_State *L)
+{
+    return bl_pusherror(L, "glob: not implemented on Windows");
+}
+
 #else
 
 static int fs_glob(lua_State *L)
@@ -151,9 +156,8 @@ static int fs_remove(lua_State *L)
     {
         return bl_pushresult(L, rmdir(filename) == 0, filename);
     }
-#else
-    return bl_pushresult(L, remove(filename) == 0, filename);
 #endif
+    return bl_pushresult(L, remove(filename) == 0, filename);
 }
 
 static int fs_rename(lua_State *L)
@@ -224,37 +228,47 @@ static int fs_mkdir(lua_State *L)
 #endif
 }
 
+static inline void set_string(lua_State *L, const char *name, const char *val)
+{
+    lua_pushstring(L, val);
+    lua_setfield(L, -2, name);
+}
+
+static inline void set_integer(lua_State *L, const char *name, lua_Integer val)
+{
+    lua_pushinteger(L, val);
+    lua_setfield(L, -2, name);
+}
+
+static inline void set_boolean(lua_State *L, const char *name, bool val)
+{
+    lua_pushboolean(L, val);
+    lua_setfield(L, -2, name);
+}
+
 static int fs_stat(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 1);
     struct stat buf;
     if (stat(path, &buf)==0)
     {
-#define STRING(VAL, ATTR) { lua_pushstring(L, VAL); lua_setfield(L, -2, ATTR); }
-#define INTEGER(VAL, ATTR) { lua_pushinteger(L, VAL); lua_setfield(L, -2, ATTR); }
         lua_newtable(L); /* stat */
-        STRING(path, "name")
-        INTEGER(buf.st_size, "size")
-        INTEGER(buf.st_mtime, "mtime")
-        INTEGER(buf.st_atime, "atime")
-        INTEGER(buf.st_ctime, "ctime")
-        STRING(S_ISDIR(buf.st_mode)?"directory":S_ISREG(buf.st_mode)?"file":"unknown", "type")
-        INTEGER(buf.st_mode, "mode")
-#define PERMISSION(MASK, ATTR) { lua_pushboolean(L, buf.st_mode & MASK); lua_setfield(L, -2, ATTR); }
-        PERMISSION(S_IRUSR, "uR")
-        PERMISSION(S_IWUSR, "uW")
-        PERMISSION(S_IXUSR, "uX")
-#ifndef _WIN32
-        PERMISSION(S_IRGRP, "gR")
-        PERMISSION(S_IWGRP, "gW")
-        PERMISSION(S_IXGRP, "gX")
-        PERMISSION(S_IROTH, "oR")
-        PERMISSION(S_IWOTH, "oW")
-        PERMISSION(S_IXOTH, "oX")
-#endif
-#undef STRING
-#undef INTEGER
-#undef PERMISSION
+        set_string(L, "name", path);
+        set_integer(L, "size", buf.st_size);
+        set_integer(L, "mtime", buf.st_mtime);
+        set_integer(L, "atime", buf.st_atime);
+        set_integer(L, "ctime", buf.st_ctime);
+        set_string(L, "type", S_ISDIR(buf.st_mode)?"directory":S_ISREG(buf.st_mode)?"file":"unknown");
+        set_integer(L, "mode", buf.st_mode);
+        set_boolean(L, "uR", buf.st_mode & S_IRUSR);
+        set_boolean(L, "uW", buf.st_mode & S_IWUSR);
+        set_boolean(L, "uX", buf.st_mode & S_IXUSR);
+        set_boolean(L, "gR", buf.st_mode & S_IRGRP);
+        set_boolean(L, "gW", buf.st_mode & S_IWGRP);
+        set_boolean(L, "gX", buf.st_mode & S_IXGRP);
+        set_boolean(L, "oR", buf.st_mode & S_IROTH);
+        set_boolean(L, "oW", buf.st_mode & S_IWOTH);
+        set_boolean(L, "oX", buf.st_mode & S_IXOTH);
         return 1;
     }
     else
@@ -280,19 +294,19 @@ static ino_t getino(const char *path)
     uint64_t ino64, refnum;
     ino_t ino;
     if (!path || !*path) /* path = NULL */
-        return 0;
+        return (ino_t)0;
     if (access(path, F_OK)) /* path does not exist */
-        return -1;
+        return (ino_t)(-1);
     /* obtain handle to "path"; FILE_FLAG_BACKUP_SEMANTICS is used to open directories */
     hFile = CreateFile(path, 0, 0, NULL, OPEN_EXISTING,
             FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_READONLY,
             NULL);
     if (hFile == INVALID_HANDLE_VALUE) /* file cannot be opened */
-        return 0;
+        return (ino_t)0;
     ZeroMemory(&FileInformation, sizeof(FileInformation));
     if (!GetFileInformationByHandle(hFile, &FileInformation)) { /* cannot obtain FileInformation */
         CloseHandle(hFile);
-        return 0;
+        return (ino_t)0;
     }
     ino64 = (uint64_t)MAKEDWORDLONG(
         FileInformation.nFileIndexLow, FileInformation.nFileIndexHigh);
@@ -320,15 +334,13 @@ static int fs_inode(lua_State *L)
     struct stat buf;
     if (stat(path, &buf)==0)
     {
-#define INTEGER(VAL, ATTR) { lua_pushinteger(L, VAL); lua_setfield(L, -2, ATTR); }
         lua_newtable(L); /* stat */
-        INTEGER((lua_Integer)buf.st_dev, "dev")
+        set_integer(L, "dev", (lua_Integer)buf.st_dev);
 #ifdef _WIN32
-        INTEGER((lua_Integer)getino(path), "ino")
+        set_integer(L, "ino", (lua_Integer)getino(path));
 #else
-        INTEGER((lua_Integer)buf.st_ino, "ino")
+        set_integer(L, "ino", (lua_Integer)buf.st_ino);
 #endif
-#undef INTEGER
         return 1;
     }
     else
@@ -422,7 +434,7 @@ static int fs_realpath(lua_State *L)
     GetFullPathNameA(path, sizeof(real), real, NULL);
     lua_pushstring(L, real);
 #else
-    const char *real = realpath(path, NULL);
+    char *real = realpath(path, NULL);
     lua_pushstring(L, real);
     free(real);
 #endif
@@ -460,11 +472,7 @@ static const luaL_Reg fslib[] =
     {"getcwd",      fs_getcwd},
     {"chdir",       fs_chdir},
     {"dir",         fs_dir},
-#ifdef _WIN32
-    /* no glob function */
-#else
     {"glob",        fs_glob},
-#endif
     {"remove",      fs_remove},
     {"rename",      fs_rename},
     {"mkdir",       fs_mkdir},
@@ -479,30 +487,20 @@ static const luaL_Reg fslib[] =
 LUAMOD_API int luaopen_fs(lua_State *L)
 {
     luaL_newlib(L, fslib);
-#define STRING(NAME, VAL) lua_pushliteral(L, VAL); lua_setfield(L, -2, NAME)
-#define INTEGER(NAME, VAL) lua_pushinteger(L, VAL); lua_setfield(L, -2, NAME)
     /* File separator */
-    STRING("sep", LUA_DIRSEP);
+    set_string(L, "sep", LUA_DIRSEP);
     /* File permission bits */
-    INTEGER("uR", S_IRUSR);
-    INTEGER("uW", S_IWUSR);
-    INTEGER("uX", S_IXUSR);
-#ifdef _WIN32
-    INTEGER("aR", S_IRUSR);
-    INTEGER("aW", S_IWUSR);
-    INTEGER("aX", S_IXUSR);
-#else
-    INTEGER("aR", S_IRUSR|S_IRGRP|S_IROTH);
-    INTEGER("aW", S_IWUSR|S_IWGRP|S_IWOTH);
-    INTEGER("aX", S_IXUSR|S_IXGRP|S_IXOTH);
-    INTEGER("gR", S_IRGRP);
-    INTEGER("gW", S_IWGRP);
-    INTEGER("gX", S_IXGRP);
-    INTEGER("oR", S_IROTH);
-    INTEGER("oW", S_IWOTH);
-    INTEGER("oX", S_IXOTH);
-#endif
-#undef STRING
-#undef INTEGER
+    set_integer(L, "uR", S_IRUSR);
+    set_integer(L, "uW", S_IWUSR);
+    set_integer(L, "uX", S_IXUSR);
+    set_integer(L, "aR", S_IRUSR|S_IRGRP|S_IROTH);
+    set_integer(L, "aW", S_IWUSR|S_IWGRP|S_IWOTH);
+    set_integer(L, "aX", S_IXUSR|S_IXGRP|S_IXOTH);
+    set_integer(L, "gR", S_IRGRP);
+    set_integer(L, "gW", S_IWGRP);
+    set_integer(L, "gX", S_IXGRP);
+    set_integer(L, "oR", S_IROTH);
+    set_integer(L, "oW", S_IWOTH);
+    set_integer(L, "oX", S_IXOTH);
     return 1;
 }

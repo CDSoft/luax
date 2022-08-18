@@ -79,15 +79,9 @@ static inline char *prng_block(t_prng *prng, size_t size)
 
 static inline uint64_t prng_default_seed(void)
 {
-#ifdef _WIN32
     struct timeval t;
     gettimeofday(&t, NULL);
-    return (time(NULL) + t.tv_sec + t.tv_usec) * getpid();
-#else
-    struct timespec t;
-    clock_gettime(CLOCK_REALTIME, &t);
-    return (time(NULL) + t.tv_sec + t.tv_nsec) * getpid();
-#endif
+    return ((uint64_t)time(NULL) + (uint64_t)t.tv_sec + (uint64_t)t.tv_usec) * (uint64_t)getpid();
 }
 
 /* Lua interface to low level random functions */
@@ -223,7 +217,7 @@ static void hex_decode(const char *hex, size_t n_in, char **plain_out, size_t *n
 
     for (size_t i = 0; i < n_in-1; i += 2)
     {
-        plain[p++] = (char)((digit[hex[i]]<<4) | digit[hex[i+1]]);
+        plain[p++] = (char)((digit[(unsigned char)hex[i]]<<4) | digit[(unsigned char)hex[i+1]]);
     }
 
     *n_out = p;
@@ -232,7 +226,7 @@ static void hex_decode(const char *hex, size_t n_in, char **plain_out, size_t *n
 static int crypt_hex_encode(lua_State *L)
 {
     const char *plain = luaL_checkstring(L, 1);
-    const size_t n_in = lua_rawlen(L, 1);
+    const size_t n_in = (size_t)lua_rawlen(L, 1);
     char *hex;
     size_t n_out;
     hex_encode(plain, n_in, &hex, &n_out);
@@ -244,7 +238,7 @@ static int crypt_hex_encode(lua_State *L)
 static int crypt_hex_decode(lua_State *L)
 {
     const char *hex = luaL_checkstring(L, 1);
-    const size_t n_in = lua_rawlen(L, 1);
+    const size_t n_in = (size_t)lua_rawlen(L, 1);
     char *plain;
     size_t n_out;
     hex_decode(hex, n_in, &plain, &n_out);
@@ -335,9 +329,9 @@ static void base64_decode(const unsigned char *b64, size_t n_in, unsigned char *
     size_t p = 0;
     while (i + 3 < n_in)
     {
-        plain[p++] = (base64_rev[b64[i]] << 2) | (base64_rev[b64[i+1]] >> 4);
-        plain[p++] = (base64_rev[b64[i+1]] << 4) | (base64_rev[b64[i+2]] >> 2);
-        plain[p++] = (base64_rev[b64[i+2]] << 6) | base64_rev[b64[i+3]];
+        plain[p++] = (unsigned char)((base64_rev[b64[i]] << 2) | (base64_rev[b64[i+1]] >> 4));
+        plain[p++] = (unsigned char)((base64_rev[b64[i+1]] << 4) | (base64_rev[b64[i+2]] >> 2));
+        plain[p++] = (unsigned char)((base64_rev[b64[i+2]] << 6) | base64_rev[b64[i+3]]);
         i = i + 4;
     }
     if (b64[n_in-1] == '=') p--;
@@ -348,7 +342,7 @@ static void base64_decode(const unsigned char *b64, size_t n_in, unsigned char *
 static int crypt_base64_encode(lua_State *L)
 {
     const unsigned char *plain = (const unsigned char *)luaL_checkstring(L, 1);
-    const size_t n_in = lua_rawlen(L, 1);
+    const size_t n_in = (size_t)lua_rawlen(L, 1);
     unsigned char *b64;
     size_t n_out;
     base64_encode(plain, n_in, &b64, &n_out);
@@ -360,7 +354,7 @@ static int crypt_base64_encode(lua_State *L)
 static int crypt_base64_decode(lua_State *L)
 {
     const unsigned char *b64 = (const unsigned char *)luaL_checkstring(L, 1);
-    const size_t n_in = lua_rawlen(L, 1);
+    const size_t n_in = (size_t)lua_rawlen(L, 1);
     unsigned char *plain;
     size_t n_out;
     base64_decode(b64, n_in, &plain, &n_out);
@@ -424,7 +418,7 @@ static uint32_t crc32(const char *s, size_t n)
 static int crypt_crc32(lua_State *L)
 {
     const char *s = luaL_checkstring(L, 1);
-    const size_t n = lua_rawlen(L, 1);
+    const size_t n = (size_t)lua_rawlen(L, 1);
     const uint32_t crc = crc32(s, n);
     lua_pushinteger(L, (lua_Integer)crc);
     return 1;
@@ -517,7 +511,7 @@ static uint64_t crc64(const char *s, size_t n)
 static int crypt_crc64(lua_State *L)
 {
     const char *s = luaL_checkstring(L, 1);
-    const size_t n = lua_rawlen(L, 1);
+    const size_t n = (size_t)lua_rawlen(L, 1);
     const uint64_t crc = crc64(s, n);
     lua_pushinteger(L, (lua_Integer)crc);
     return 1;
@@ -551,7 +545,7 @@ static void rc4(const char *key, size_t key_size, size_t drop, const char *input
     size_t j = 0;
     for (size_t i = 0; i < 256; i++)
     {
-        j = (j + S[i] + key[i % key_size]) % 256;
+        j = (j + (size_t)S[i] + (size_t)key[i % key_size]) % 256;
         swap(&S[i], &S[j]);
     }
 
@@ -568,7 +562,7 @@ static void rc4(const char *key, size_t key_size, size_t drop, const char *input
         i = (i + 1) % 256;
         j = (j + S[i]) % 256;
         swap(&S[i], &S[j]);
-        output[k] = input[k] ^ S[(S[i] + S[j]) % 256];
+        output[k] = (char)(input[k] ^ S[(S[i] + S[j]) % 256]);
     }
 }
 
@@ -587,17 +581,17 @@ static int crypt_rc4(lua_State *L)
 
     /* arg 1: input data */
     in = luaL_checkstring(L, 1);
-    n = lua_rawlen(L, 1);
+    n = (size_t)lua_rawlen(L, 1);
 
     /* arg 2: key (optional) */
     if (!lua_isnoneornil(L, 2)) {
         key = luaL_checkstring(L, 2);
-        key_size = lua_rawlen(L, 2);
+        key_size = (size_t)lua_rawlen(L, 2);
     }
 
     /* arg 3: drop (optional) */
     if (!lua_isnoneornil(L, 3)) {
-        drop = luaL_checkinteger(L, 3);
+        drop = (size_t)luaL_checkinteger(L, 3);
     }
 
     char *out = safe_malloc(n);
@@ -634,6 +628,12 @@ static const luaL_Reg crypt_module[] =
     {NULL, NULL}
 };
 
+static inline void set_integer(lua_State *L, const char *name, lua_Integer val)
+{
+    lua_pushinteger(L, val);
+    lua_setfield(L, -2, name);
+}
+
 LUAMOD_API int luaopen_crypt(lua_State *L)
 {
     luaL_newmetatable(L, PRNG_MT);
@@ -645,8 +645,6 @@ LUAMOD_API int luaopen_crypt(lua_State *L)
     prng_srand(&prng, prng_default_seed());
 
     luaL_newlib(L, crypt_module);
-#define INTEGER(NAME, VAL) lua_pushinteger(L, VAL); lua_setfield(L, -2, NAME)
-    INTEGER("RAND_MAX", CRYPT_MAX_RAND);
-#undef INTEGER
+    set_integer(L, "RAND_MAX", CRYPT_MAX_RAND);
     return 1;
 }

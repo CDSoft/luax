@@ -226,9 +226,9 @@ directories.
 - `size`: size in bytes
 - `mtime`, `atime`, `ctime`: modification, access and creation times.
 - `mode`: file permissions
-- `uR`, `uW`, `uX`: user Read/Write/eXecute permissions (Linux only)
-- `gR`, `gW`, `gX`: group Read/Write/eXecute permissions (Linux only)
-- `oR`, `oW`, `oX`: other Read/Write/eXecute permissions (Linux only)
+- `uR`, `uW`, `uX`: user Read/Write/eXecute permissions
+- `gR`, `gW`, `gX`: group Read/Write/eXecute permissions
+- `oR`, `oW`, `oX`: other Read/Write/eXecute permissions
 - `aR`, `aW`, `aX`: anybody Read/Write/eXecute permissions
 
 **`fs.inode(name)`** reads device and inode attributes of the file `name`.

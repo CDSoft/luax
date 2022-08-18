@@ -45,16 +45,7 @@
 static int ps_sleep(lua_State *L)
 {
     double t = luaL_checknumber(L, 1);
-#ifdef _WIN32
-    Sleep(1000 * t);
-#else
-    struct timeval timeout;
-    double s;
-    double us = modf(t, &s);
-    timeout.tv_sec = (long int)s;
-    timeout.tv_usec = (long int)(1e6*us);
-    select(0, NULL, NULL, NULL, &timeout);
-#endif
+    usleep((useconds_t)(t * 1e6));
     return 0;
 }
 
@@ -64,13 +55,13 @@ static int ps_time(lua_State *L)
     __int64 wintime;
     GetSystemTimeAsFileTime((FILETIME*)&wintime);
     wintime -= 116444736000000000ULL;  /* 1jan1601 to 1jan1970 */
-    const lua_Number t = wintime / 1e7;
+    const lua_Number t = (double)wintime / 1e7;
 #else
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
     const uint64_t sec_in_nsec = (uint64_t)ts.tv_sec * 1000000000;
     const uint64_t nsec = (uint64_t)ts.tv_nsec;
-    const lua_Number t = (double)((sec_in_nsec + nsec) / 1e9);
+    const lua_Number t = (double)(sec_in_nsec + nsec) / 1e9;
 #endif
     lua_pushnumber(L, t);
     return 1;

@@ -70,7 +70,7 @@ static const luaL_Reg lrun_libs[] = {
 };
 
 static const char runtime_chunk[] = {
-#include "lua_runtime_bundle.inc"
+#include "lua_runtime_bundle.dat"
 };
 
 static void createargtable(lua_State *L, const char **argv, int argc, int shift)
@@ -159,7 +159,7 @@ static uint32_t letoh(uint32_t n)
     return w.v;
 }
 
-static int run_buffer(lua_State *L, const char *buffer, size_t size, const char *name, const char *argv0)
+static int run_buffer(lua_State *L, char *buffer, size_t size, const char *name, const char *argv0)
 {
     if (luaL_loadbuffer(L, buffer, size, name) != LUA_OK) error(argv0, lua_tostring(L, -1));
     memset(buffer, 0, size);

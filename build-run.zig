@@ -4,8 +4,7 @@ const lua_src = "lua";
 const src_path = "src";
 const build_path = ".build";
 
-const c_files = [_][]const u8 {
-
+const lua_c_files = [_][]const u8 {
     // Lua interpretor
     "lua/lapi.c",
     "lua/lauxlib.c",
@@ -41,7 +40,9 @@ const c_files = [_][]const u8 {
     "lua/lutf8lib.c",
     "lua/lvm.c",
     "lua/lzio.c",
+};
 
+const luax_c_files = [_][]const u8 {
     // LuaX runtime
     "src/run.c",
     "src/tools.c",
@@ -49,19 +50,22 @@ const c_files = [_][]const u8 {
     "src/fs/fs.c",
     "src/ps/ps.c",
     "src/sys/sys.c",
+    "src/crypt/crypt.c",
+    "src/rl/rl.c",
+    "src/complex/complex.c",
+};
+
+const third_party_c_files = [_][]const u8 {
     "src/lpeg/lpeg-1.0.2/lpcap.c",
     "src/lpeg/lpeg-1.0.2/lpcode.c",
     "src/lpeg/lpeg-1.0.2/lpprint.c",
     "src/lpeg/lpeg-1.0.2/lptree.c",
     "src/lpeg/lpeg-1.0.2/lpvm.c",
-    "src/crypt/crypt.c",
-    "src/rl/rl.c",
     "src/mathx/mathx/lmathx.c",
     "src/imath/limath-104/limath.c",
     "src/imath/limath-104/src/imath.c",
     "src/qmath/lqmath-104/lqmath.c",
     "src/qmath/lqmath-104/src/imrat.c",
-    "src/complex/complex.c",
     "src/complex/lcomplex-100/lcomplex.c",
 };
 
@@ -86,9 +90,26 @@ pub fn build(b: *std.build.Builder) void {
     exe.addIncludeDir(src_path);
     exe.addIncludeDir(build_path);
     exe.addIncludeDir(lua_src);
-    exe.addCSourceFiles(&c_files, &[_][]const u8 {
+    exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+
+        if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
+    });
+    exe.addCSourceFiles(&luax_c_files, &[_][]const u8 {
+        "-std=gnu11",
+        "-Os",
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+        "-Weverything",
+        "-Wno-padded",
+        "-Wno-reserved-identifier",
+        "-Wno-disabled-macro-expansion",
+        "-Wno-used-but-marked-unused",
 
         if (target.cpu_arch == std.Target.Cpu.Arch.x86_64)          "-DLUAX_ARCH=\"x86_64\""
         else if (target.cpu_arch == std.Target.Cpu.Arch.i386)       "-DLUAX_ARCH=\"i386\""
@@ -104,6 +125,13 @@ pub fn build(b: *std.build.Builder) void {
         else if (target.abi == std.Target.Abi.gnu)                  "-DLUAX_ABI=\"gnu\""
         else unreachable, // the list may not be exhaustive
 
-        if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_USE_WINDOWS" else "-DLUA_USE_POSIX",
+        if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
+    });
+    exe.addCSourceFiles(&third_party_c_files, &[_][]const u8 {
+        "-std=gnu11",
+        "-Os",
+        "-Werror",
+
+        if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
     });
 }

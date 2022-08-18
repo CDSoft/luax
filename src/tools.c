@@ -28,11 +28,11 @@ void error(const char *what, const char *message)
 {
     if (what != NULL)
     {
-        fprintf(stderr,"%s: %s\n", what, message);
+        fprintf(stderr, "%s: %s\n", what, message);
     }
     else
     {
-        fprintf(stderr,"%s\n", message);
+        fprintf(stderr, "%s\n", message);
     }
     exit(EXIT_FAILURE);
 }
