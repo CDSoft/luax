@@ -122,6 +122,9 @@ static int traceback(lua_State *L)
 
 static void decode(const char *input, size_t size, char *output)
 {
+    /* Important: decode shall be able to decode the input in place.
+     * I.e. output == input when decoding the playload.
+     */
     switch (input[size-1])
     {
         case '-':
@@ -213,11 +216,9 @@ int main(int argc, const char *argv[])
     char *chunk = safe_malloc(header.size);
     if (fread(chunk, header.size, 1, f) != 1) perror(argv[0]);
     fclose(f);
-    char *plain_chunk = safe_malloc(header.size);
-    decode(chunk, header.size, plain_chunk);
+    decode(chunk, header.size, chunk); /* decode chunk in place */
+    const int status = run_buffer(L, chunk, header.size-1, "=", argv[0]);
     free(chunk);
-    const int status = run_buffer(L, plain_chunk, header.size-1, "=", argv[0]);
-    free(plain_chunk);
 
     lua_close(L);
 
