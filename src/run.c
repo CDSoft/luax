@@ -75,10 +75,9 @@ static const char runtime_chunk[] = {
 
 static void createargtable(lua_State *L, const char **argv, int argc, int shift)
 {
-    int i, narg;
-    narg = argc - 1 - shift;  /* number of positive indices */
+    const int narg = argc - 1 - shift;  /* number of positive indices */
     lua_createtable(L, narg, 1);
-    for (i = 0; i < argc-shift; i++) {
+    for (int i = 0; i < argc-shift; i++) {
         lua_pushstring(L, argv[i+shift]);
         lua_rawseti(L, -2, i);
     }
@@ -88,10 +87,10 @@ static void createargtable(lua_State *L, const char **argv, int argc, int shift)
 static void get_exe(const char *arg0, char *name, size_t name_size)
 {
 #ifdef _WIN32
-    DWORD n = GetModuleFileName(NULL, name, name_size);
+    const DWORD n = GetModuleFileName(NULL, name, name_size);
     if (n == 0) error(arg0, "Can not be found");
 #else
-    ssize_t n = readlink("/proc/self/exe", name, name_size);
+    const ssize_t n = readlink("/proc/self/exe", name, name_size);
     if (n < 0) perror(arg0);
 #endif
     name[n] = '\0';
@@ -126,14 +125,12 @@ static void decode(const char *input, size_t size, char *output)
     switch (input[size-1])
     {
         case '-':
-        {
             output[0] = input[0];
             for (size_t i = 1; i < size-1; i++)
             {
                 output[i] = output[i-1] + input[i];
             }
             break;
-        }
         case '#':
             rc4_runtime(input, size-1, output);
             break;
@@ -145,14 +142,17 @@ static void decode(const char *input, size_t size, char *output)
 
 static uint32_t letoh(uint32_t n)
 {
-    union {
+    const union {
         uint32_t v;
         uint8_t b[4];
-    } w;
-    w.b[0] = (n >> (0*8)) & 0xFF;
-    w.b[1] = (n >> (1*8)) & 0xFF;
-    w.b[2] = (n >> (2*8)) & 0xFF;
-    w.b[3] = (n >> (3*8)) & 0xFF;
+    } w = {
+        .b = {
+            [0] = (n >> (0*8)) & 0xFF,
+            [1] = (n >> (1*8)) & 0xFF,
+            [2] = (n >> (2*8)) & 0xFF,
+            [3] = (n >> (3*8)) & 0xFF,
+        }
+    };
     return w.v;
 }
 
