@@ -27,7 +27,7 @@
 
 static int rl_read(lua_State* L)
 {
-    const char *prompt = lua_tostring(L, 1);
+    const char *prompt = luaL_checkstring(L, 1);
     /* io.write(prompt) */
     lua_getglobal(L, "io");         /* push io */
     lua_getfield(L, -1, "write");   /* push io.write */
