@@ -54,13 +54,17 @@ function string.words(s)
 end
 
 function string.ltrim(s)
-    return s:match("^%s*(.*)")
+    return (s:match("^%s*(.*)"))
 end
 
 function string.rtrim(s)
-    return s:match("(.-)%s*$")
+    return (s:match("(.-)%s*$"))
 end
 
 function string.trim(s)
-    return s:match("^%s*(.-)%s*$")
+    return (s:match("^%s*(.-)%s*$"))
+end
+
+function string.cap(s)
+    return s:sub(1, 1):upper()..s:sub(2):lower()
 end

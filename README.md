@@ -174,7 +174,9 @@ This function returns a list of strings.
 
 **`string.words(s)`** splits `s` using `'%s'` as a separator.
 
-**`string.ltrim(s)`, `string.rtrim(s)`, `string.trim(s)`** remove left/right/both end spaces
+**`string.ltrim(s)`, `string.rtrim(s)`, `string.trim(s)`** removes left/right/both end spaces.
+
+**`string.cap(s)`** capitalizes `s`.
 
 ### fs: File System module
 
