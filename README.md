@@ -14,7 +14,7 @@ scripts.
 
 ## Compilation
 
-`luax` is written in C and Lua and uses the Zig build system. Just ownload
+`luax` is written in C and Lua and uses the Zig build system. Just download
 `luax` (<https://github.com/CDSoft/luax>) and run `make`:
 
 ```sh
