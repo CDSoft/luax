@@ -22,10 +22,13 @@ local fun = require "fun"
 local fs = require "fs"
 local sys = require "sys"
 
-local welcome = fun.I(_G)[[
-Lua eXtended $(_LUAX_VERSION)
-Copyright (C) 2021-2022 Christophe Delord (http://cdelord.fr/luax)
-Based on $(_VERSION)
+local welcome = fun.I(_G)(sys)[[
+ _               __  __  |  Documentation: http://cdelord.fr/luax
+| |   _   _  __ _\ \/ /  |
+| |  | | | |/ _` |\  /   |  Version $(_LUAX_VERSION)
+| |__| |_| | (_| |/  \   |  Powered by $(_VERSION)
+|_____\__,_|\__,_/_/\_\  |
+                         |  $(os:cap()) $(arch) $(abi) build
 ]]
 
 local usage = fun.I(_G){fs=fs}[==[
