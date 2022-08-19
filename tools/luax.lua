@@ -269,7 +269,7 @@ local function run_interpretor()
             while true do
                 local line = rl.read(prompt)
                 if not line then os.exit() end
-                table.insert(inputs, rl.read(prompt))
+                table.insert(inputs, line)
                 local input = table.concat(inputs, "\n")
                 local try_expr, err_expr = try("return "..input)
                 if try_expr == "done" then break end
