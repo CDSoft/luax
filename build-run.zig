@@ -56,6 +56,7 @@ const luax_c_files = [_][]const u8 {
 };
 
 const third_party_c_files = [_][]const u8 {
+    // LuaX runtime
     "src/lpeg/lpeg-1.0.2/lpcap.c",
     "src/lpeg/lpeg-1.0.2/lpcode.c",
     "src/lpeg/lpeg-1.0.2/lpprint.c",
@@ -69,7 +70,7 @@ const third_party_c_files = [_][]const u8 {
     "src/complex/lcomplex-100/lcomplex.c",
 };
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.build.Builder) !void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
@@ -80,7 +81,15 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("lrun", null);
+    var page = std.heap.page_allocator;
+
+    const ARCH = (try std.fmt.allocPrint(page, "{s}", .{target.cpu_arch}))[5..];
+    const OS = (try std.fmt.allocPrint(page, "{s}", .{target.os_tag}))[4..];
+    const ABI = (try std.fmt.allocPrint(page, "{s}", .{target.abi}))[4..];
+
+    const exe_name = try std.fmt.allocPrint(page, "lrun-{s}-{s}-{s}", .{ARCH, OS, ABI});
+
+    const exe = b.addExecutable(exe_name, null);
     exe.single_threaded = true;
     exe.strip = true;
     exe.setTarget(target);
@@ -96,7 +105,6 @@ pub fn build(b: *std.build.Builder) void {
         "-Werror",
         "-Wall",
         "-Wextra",
-
         if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
     });
     exe.addCSourceFiles(&luax_c_files, &[_][]const u8 {
@@ -110,28 +118,15 @@ pub fn build(b: *std.build.Builder) void {
         "-Wno-reserved-identifier",
         "-Wno-disabled-macro-expansion",
         "-Wno-used-but-marked-unused",
-
-        if (target.cpu_arch == std.Target.Cpu.Arch.x86_64)          "-DLUAX_ARCH=\"x86_64\""
-        else if (target.cpu_arch == std.Target.Cpu.Arch.i386)       "-DLUAX_ARCH=\"i386\""
-        else if (target.cpu_arch == std.Target.Cpu.Arch.aarch64)    "-DLUAX_ARCH=\"aarch64\""
-        else unreachable, // the list may not be exhaustive
-
-        if (target.os_tag == std.Target.Os.Tag.linux)               "-DLUAX_OS=\"linux\""
-        else if (target.os_tag == std.Target.Os.Tag.macos)          "-DLUAX_OS=\"macos\""
-        else if (target.os_tag == std.Target.Os.Tag.windows)        "-DLUAX_OS=\"windows\""
-        else unreachable, // the list may not be exhaustive
-
-        if (target.abi == std.Target.Abi.musl)                      "-DLUAX_ABI=\"musl\""
-        else if (target.abi == std.Target.Abi.gnu)                  "-DLUAX_ABI=\"gnu\""
-        else unreachable, // the list may not be exhaustive
-
+        try std.fmt.allocPrint(page, "-DLUAX_ARCH=\"{s}\"", .{ARCH}),
+        try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),
+        try std.fmt.allocPrint(page, "-DLUAX_ABI=\"{s}\"", .{ABI}),
         if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
     });
     exe.addCSourceFiles(&third_party_c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
         "-Werror",
-
         if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
     });
 }

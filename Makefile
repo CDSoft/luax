@@ -151,15 +151,10 @@ install: $(INSTALL_PATH)/luax$(EXT)
 install-all: install
 install-all: $(INSTALLED_LUAX_BINARIES)
 
-$(INSTALL_PATH)/luax: $(INSTALL_PATH)/luax-$(ARCH)-$(OS)-$(LIBC)
+$(INSTALL_PATH)/luax$(EXT): $(INSTALL_PATH)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"SYMLINK",$< -> $@)
 	@test -n "$(INSTALL_PATH)" || (echo "No installation path found" && false)
 	@cd $(dir $@) && ln -sf $(notdir $<) $(notdir $@)
-
-$(INSTALL_PATH)/luax.exe: $(INSTALL_PATH)/luax-$(ARCH)-$(OS)-$(LIBC).exe
-	@$(call cyan,"SYMLINK",$< -> $@)
-	@test -n "$(INSTALL_PATH)" || (echo "No installation path found" && false)
-	@install $< $@
 
 $(INSTALL_PATH)/luax-%: $(BUILD)/luax-%
 	@$(call cyan,"INSTALL",$@)
@@ -200,8 +195,11 @@ export LUA_PATH := ./?.lua
 
 $(LUA): $(ZIG) $(LUA_SOURCES) build-lua.zig
 	@$(call cyan,"ZIG",$@)
-	@$(ZIG) build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-lua.zig
-	@touch $@
+	@$(ZIG) build \
+		--cache-dir $(ZIG_CACHE) \
+		--prefix $(dir $@) --prefix-exe-dir "" \
+		-D$(RELEASE) \
+		--build-file build-lua.zig
 
 ###############################################################################
 # Code generation
@@ -229,19 +227,15 @@ $(LUAX_RUNTIME_BUNDLE): $(LUA) $(LUAX_RUNTIME) tools/bundle.lua
 # Runtimes
 ###############################################################################
 
-$(BUILD)/lrun-%.exe: $(ZIG) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build-run.zig
-	@$(call cyan,"ZIG",$@)
-	@mkdir -p $(dir $@)
-	@$(ZIG) build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-run.zig -Dtarget=$(patsubst $(BUILD)/lrun-%.exe,%,$@)
-	@mv $(BUILD)/lrun.exe $@
-	@touch $@
-
 $(BUILD)/lrun-%: $(ZIG) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build-run.zig
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
-	@$(ZIG) build --cache-dir $(ZIG_CACHE) --prefix $(dir $@) --prefix-exe-dir "" -D$(RELEASE) --build-file build-run.zig -Dtarget=$(patsubst $(BUILD)/lrun-%,%,$@)
-	@mv $(BUILD)/lrun $@
-	@touch $@
+	@$(ZIG) build \
+		--cache-dir $(ZIG_CACHE) \
+		--prefix $(dir $@) --prefix-exe-dir "" \
+		-D$(RELEASE) \
+		-Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD)/lrun-%,%,$@)) \
+		--build-file build-run.zig
 
 ###############################################################################
 # luax
@@ -251,7 +245,7 @@ LUAX_PACKAGES := tools/luax.lua tools/bundle.lua
 
 $(BUILD)/luax-%: $(BUILD)/lrun-% $(LUAX_PACKAGES) tools/bundle.lua
 	@$(call cyan,"BUNDLE",$@)
-	@( cat $(word 1,$^); $(LUA) tools/bundle.lua $(LUAX_PACKAGES) ) > $@.tmp
+	@( cat $(word 1,$^) && $(LUA) tools/bundle.lua $(LUAX_PACKAGES) ) > $@.tmp
 	@mv $@.tmp $@
 	@chmod +x $@
 

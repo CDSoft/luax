@@ -65,7 +65,6 @@ pub fn build(b: *std.build.Builder) void {
         "-Werror",
         "-Wall",
         "-Wextra",
-
         if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
     });
 }
