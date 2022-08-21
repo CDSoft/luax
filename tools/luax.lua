@@ -197,23 +197,6 @@ do
     end
 end
 
-if compiler_mode and not output then
-    err "No output specified"
-end
-
-if interpretor_mode and compiler_mode then
-    err "Lua options and compiler options can not be mixed"
-    os.exit(1)
-end
-
-if interactive and run_stdin then
-    err "Interactive mode and stdin execution are incompatible"
-    os.exit(1)
-end
-
--- run actions
-fun.foreach(actions, function(action) action() end)
-
 local function run_interpretor()
 
     -- scripts
@@ -286,7 +269,7 @@ local function run_interpretor()
 
 end
 
-function run_compiler()
+local function run_compiler()
 
     print_welcome()
 
@@ -366,5 +349,19 @@ function run_compiler()
 
 end
 
-if interpretor_mode or not compiler_mode then run_interpretor() end
-if compiler_mode then run_compiler() end
+if interpretor_mode and compiler_mode then
+    err "Lua options and compiler options can not be mixed"
+end
+
+if compiler_mode and not output then
+    err "No output specified"
+end
+
+if interactive and run_stdin then
+    err "Interactive mode and stdin execution are incompatible"
+end
+
+actions[#actions+1] = compiler_mode and run_compiler or run_interpretor
+
+-- run actions
+fun.foreach(actions, function(action) action() end)
