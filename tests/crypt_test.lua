@@ -139,7 +139,7 @@ return function()
         local done = false
         while not done and i < 10000 do
             i = i+1
-            local x = crypt.rand() % 100
+            local x = crypt.rand() % 100                        eq(type(x), "number") eq(math.type(x), "integer")
             bounded(x, 0, 100)
             rands[x] = true
             done = true
@@ -148,22 +148,22 @@ return function()
         eq(done, true)
         bounded(i, 100, 1000)
         for _ = 1, 1000 do
-            local x = crypt.rand()
-            local y = crypt.rand()
+            local x = crypt.rand()                              eq(type(x), "number") eq(math.type(x), "integer")
+            local y = crypt.rand()                              eq(type(y), "number") eq(math.type(y), "integer")
             bounded(x, 0, crypt.RAND_MAX)
             bounded(y, 0, crypt.RAND_MAX)
             ne(x, y)
         end
         for _ = 1, 1000 do
-            local x = crypt.frand()
-            local y = crypt.frand()
+            local x = crypt.frand()                             eq(type(x), "number") eq(math.type(x), "float")
+            local y = crypt.frand()                             eq(type(y), "number") eq(math.type(y), "float")
             bounded(x, 0.0, 1.0)
             bounded(y, 0.0, 1.0)
             ne(x, y)
         end
         for _ = 1, 1000 do
-            local x = crypt.rand(16)
-            local y = crypt.rand(16)
+            local x = crypt.rand(16)                            eq(type(x), "string")
+            local y = crypt.rand(16)                            eq(type(y), "string")
             eq(#x, 16)
             eq(#y, 16)
             ne(x, y)
@@ -174,19 +174,19 @@ return function()
         local r2 = crypt.prng(42)
         local r3 = crypt.prng(43)
         for _ = 1, 1000 do
-            local x1 = r1:rand()
-            local x2 = r2:rand()
-            local x3 = r3:rand()
+            local x1 = r1:rand()                                eq(type(x1), "number") eq(math.type(x1), "integer")
+            local x2 = r2:rand()                                eq(type(x2), "number") eq(math.type(x2), "integer")
+            local x3 = r3:rand()                                eq(type(x2), "number") eq(math.type(x3), "integer")
             eq(x1, x2)
             ne(x1, x3)
-            local s1 = r1:rand(32)
-            local s2 = r2:rand(32)
-            local s3 = r3:rand(32)
+            local s1 = r1:rand(32)                              eq(type(s1), "string") eq(#s1, 32)
+            local s2 = r2:rand(32)                              eq(type(s2), "string") eq(#s2, 32)
+            local s3 = r3:rand(32)                              eq(type(s3), "string") eq(#s3, 32)
             eq(s1, s2)
             ne(s1, s3)
-            local f1 = r1:rand()
-            local f2 = r2:rand()
-            local f3 = r3:rand()
+            local f1 = r1:frand()                               eq(type(f1), "number") eq(math.type(f1), "float")
+            local f2 = r2:frand()                               eq(type(f2), "number") eq(math.type(f2), "float")
+            local f3 = r3:frand()                               eq(type(f3), "number") eq(math.type(f3), "float")
             eq(f1, f2)
             ne(f1, f3)
         end
