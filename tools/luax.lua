@@ -47,7 +47,9 @@ Lua options:
                     (incompatible with -i)
 
 Compilation options:
-  -t target         name of the luax binary compiled for the targetted platform
+  -t target         name of the targetted platform
+  -t all            compile for all available targets
+  -t list           list available targets
   -o file           name the executable file to create
 
 Scripts for compilation:
@@ -79,6 +81,25 @@ local function print_usage(fmt, ...)
         print("")
     end
     print(usage)
+end
+
+local function is_windows(compiler_target) return compiler_target:match "-windows-" end
+local function ext(compiler_target) return is_windows(compiler_target) and ".exe" or "" end
+
+local function find_in_path(name)
+    if fs.is_file(name) then return name end
+    for _, path in ipairs(os.getenv("PATH"):split(sys.os == "windows" and ";" or ":")) do
+        local full_path = fs.join(path, name)
+        if fs.is_file(full_path) then return fs.realpath(full_path) end
+    end
+    return name
+end
+
+local function print_targets()
+    fun.foreach(require "targets", function(target)
+        local compiler = fs.join(fs.dirname(find_in_path(arg[0])), "luax-"..target..ext(target))
+        print(("%-20s%s%s"):format(target, compiler, fs.is_file(compiler) and "" or " [NOT FOUND]"))
+    end)
 end
 
 local function err(fmt, ...)
@@ -163,6 +184,10 @@ do
             i = i+1
             if target then wrong_arg(a) end
             target = arg[i]
+            if target == "list" then
+                print_targets()
+                os.exit()
+            end
         elseif a == '-v' then
             print_welcome()
             os.exit()
@@ -278,33 +303,11 @@ local function run_compiler()
     if #scripts == 0 then err "No input script specified" end
     if output == nil then err "No output specified (option -o)" end
 
-    local function search_in_path(name)
-        local sep = sys.os == "windows" and ";" or ":"
-        local pathes = os.getenv("PATH"):split(sep)
-        for i = 1, #pathes do
-            local path = fs.join(pathes[i], fs.basename(name))
-            if fs.is_file(path) then return path end
-        end
-    end
-
-    actual_target = target or arg[0]
-    if not fs.is_file(actual_target) then
-        actual_target = search_in_path(actual_target) or actual_target
-    end
-    if not fs.is_file(actual_target) then
-        local luax = search_in_path(arg[0])
-        actual_target = fs.join(fs.dirname(luax), fs.basename(actual_target))
-    end
-    if not fs.is_file(actual_target) then
-        err("Can not find "..target)
-    end
-
     local function log(k, fmt, ...)
         print(("%-8s: %s"):format(k, fmt:format(...)))
     end
 
-    log("target", "%s", actual_target)
-    log("output", "%s", output)
+    -- List scripts
     local head = "scripts"
     local autoload = false
     local autoexec = false
@@ -332,20 +335,52 @@ local function run_compiler()
         head = ""
     end
 
-    local bundle = require "bundle"
-    local exe, chunk = bundle.combine(actual_target, scripts)
-    log("Chunk", "%7d bytes", #chunk)
-    log("Total", "%7d bytes", #exe)
-
-    assert(output)
-    local f = io.open(output, "wb")
-    if f == nil then err("Can not create "..output)
-    else
-        f:write(exe)
-        f:close()
+    -- Compile scripts for each targets
+    local valid_targets = {}
+    fun.foreach(require "targets", function(t) valid_targets[t] = true end)
+    local compilers = {}
+    local function rmext(compiler_target, name) return name:gsub(ext(compiler_target):gsub("%.", "%%.").."$", "") end
+    fun.foreach(target == "all" and fun.keys(valid_targets) or target and {target} or {}, function(compiler_target)
+        if not valid_targets[compiler_target] then err("Invalid target: %s", compiler_target) end
+        local compiler = fs.join(fs.dirname(find_in_path(arg[0])), "luax-"..compiler_target..ext(compiler_target))
+        if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, compiler_target} end
+    end)
+    if not target then
+        local compiler = find_in_path(arg[0])
+        if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, nil} end
     end
 
-    fs.chmod(output, fs.aX|fs.aR|fs.uW)
+    local function compile_target(current_output, compiler)
+        local compiler_exe, compiler_target = table.unpack(compiler)
+        if target == "all" then
+            current_output = rmext(compiler_target, current_output).."-"..compiler_target..ext(compiler_target)
+        end
+        if compiler_target then
+            current_output = rmext(compiler_target, current_output)..ext(compiler_target)
+        end
+
+        print()
+        log("compiler", "%s", compiler_exe)
+        log("output", "%s", current_output)
+
+        local bundle = require "bundle"
+        local exe, chunk = bundle.combine(compiler_exe, scripts)
+        log("Chunk", "%7d bytes", #chunk)
+        log("Total", "%7d bytes", #exe)
+
+        local f = io.open(current_output, "wb")
+        if f == nil then err("Can not create "..current_output)
+        else
+            f:write(exe)
+            f:close()
+        end
+
+        fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
+    end
+
+    fun.foreach(compilers, function(compiler)
+        compile_target(output, compiler)
+    end)
 
 end
 

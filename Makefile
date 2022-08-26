@@ -26,18 +26,19 @@ ZIG_INSTALL = .zig
 RELEASE = release-small
 
 # Linux
-RUNTIMES += $(BUILD)/lrun-x86_64-linux-musl
-RUNTIMES += $(BUILD)/lrun-i386-linux-musl
-RUNTIMES += $(BUILD)/lrun-aarch64-linux-musl
+TARGETS += x86_64-linux-musl
+TARGETS += i386-linux-musl
+TARGETS += aarch64-linux-musl
 
 # Windows
-RUNTIMES += $(BUILD)/lrun-x86_64-windows-gnu.exe
-RUNTIMES += $(BUILD)/lrun-i386-windows-gnu.exe
+TARGETS += x86_64-windows-gnu
+TARGETS += i386-windows-gnu
 
 # MacOS
-RUNTIMES += $(BUILD)/lrun-x86_64-macos-gnu
-RUNTIMES += $(BUILD)/lrun-aarch64-macos-gnu
+TARGETS += x86_64-macos-gnu
+TARGETS += aarch64-macos-gnu
 
+RUNTIMES = $(patsubst %-windows-gnu,%-windows-gnu.exe,$(patsubst %,$(BUILD)/lrun-%,$(TARGETS)))
 LUAX_BINARIES := $(patsubst $(BUILD)/lrun-%,$(BUILD)/luax-%,$(RUNTIMES))
 
 LUA = $(BUILD)/lua
@@ -218,6 +219,11 @@ $(LUAX_CONFIG): $(wildcard .git/refs/tags) $(wildcard .git/index) $(LUA) tools/b
 	) > $@.tmp
 	@mv $@.tmp $@
 
+$(BUILD)/targets.lua:
+	@$(call cyan,"GEN",$@)
+	@echo "return ('$(sort $(TARGETS))'):words()" > $@.tmp
+	@mv $@.tmp $@
+
 $(LUAX_RUNTIME_BUNDLE): $(LUA) $(LUAX_RUNTIME) tools/bundle.lua
 	@$(call cyan,"BUNDLE",$(LUAX_RUNTIME))
 	@$(LUA) tools/bundle.lua -nomain -ascii $(LUAX_RUNTIME_ARGS) > $@.tmp
@@ -241,7 +247,7 @@ $(BUILD)/lrun-%: $(ZIG) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX
 # luax
 ###############################################################################
 
-LUAX_PACKAGES := tools/luax.lua tools/bundle.lua
+LUAX_PACKAGES := tools/luax.lua tools/bundle.lua $(BUILD)/targets.lua
 
 $(BUILD)/luax-%: $(BUILD)/lrun-% $(LUAX_PACKAGES) tools/bundle.lua
 	@$(call cyan,"BUNDLE",$@)

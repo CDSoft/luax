@@ -73,7 +73,9 @@ Lua options:
                     (incompatible with -i)
 
 Compilation options:
-  -t target         name of the luax binary compiled for the targetted platform
+  -t target         name of the targetted platform
+  -t all            compile for all available targets
+  -t list           list available targets
   -o file           name the executable file to create
 
 Scripts for compilation:
@@ -105,7 +107,17 @@ $ luax main.lua lib1.lua lib2.lua -o executable
 $ ./executable      # equivalent to luax main.lua
 
 # Cross compilation to MacOS x86_64
-$ luax -t luax-x86_64-macos-gnu main.lua lib1.lua lib2.lua -o executable
+$ luax -t x86_64-macos-gnu main.lua lib1.lua lib2.lua -o executable
+
+# Available targets
+$ luax -t list
+aarch64-linux-musl  <path to>/luax-aarch64-linux-musl
+aarch64-macos-gnu   <path to>/luax-aarch64-macos-gnu
+i386-linux-musl     <path to>/luax-i386-linux-musl
+i386-windows-gnu    <path to>/luax-i386-windows-gnu.exe
+x86_64-linux-musl   <path to>/luax-x86_64-linux-musl
+x86_64-macos-gnu    <path to>/luax-x86_64-macos-gnu
+x86_64-windows-gnu  <path to>/luax-x86_64-windows-gnu.exe
 ```
 
 ## Built-in modules
