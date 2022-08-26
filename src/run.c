@@ -47,6 +47,7 @@
 #include "imath/imath.h"
 #include "qmath/qmath.h"
 #include "complex/complex.h"
+#include "linenoise/linenoise.h"
 
 typedef struct
 {
@@ -62,6 +63,7 @@ static const luaL_Reg lrun_libs[] = {
     {"lpeg", luaopen_lpeg},
     {"crypt", luaopen_crypt},
     {"rl", luaopen_rl},
+    {"linenoise", luaopen_linenoise},
     {"mathx", luaopen_mathx},
     {"imath", luaopen_imath},
     {"qmath", luaopen_qmath},

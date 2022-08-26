@@ -53,6 +53,7 @@ const luax_c_files = [_][]const u8 {
     "src/crypt/crypt.c",
     "src/rl/rl.c",
     "src/complex/complex.c",
+    "src/linenoise/linenoise.c",
 };
 
 const third_party_c_files = [_][]const u8 {
@@ -68,6 +69,10 @@ const third_party_c_files = [_][]const u8 {
     "src/qmath/lqmath-104/lqmath.c",
     "src/qmath/lqmath-104/src/imrat.c",
     "src/complex/lcomplex-100/lcomplex.c",
+};
+
+const linux_third_party_c_files = [_][]const u8 {
+    "src/linenoise/linenoise/linenoise.c",
 };
 
 pub fn build(b: *std.build.Builder) !void {
@@ -129,4 +134,12 @@ pub fn build(b: *std.build.Builder) !void {
         "-Werror",
         if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
     });
+    if (target.os_tag != std.Target.Os.Tag.windows) {
+        exe.addCSourceFiles(&linux_third_party_c_files, &[_][]const u8 {
+            "-std=gnu11",
+            "-Os",
+            "-Werror",
+            if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
+        });
+    }
 }
