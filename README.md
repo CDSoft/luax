@@ -231,7 +231,9 @@ directories.
 
 **`fs.is_dir(name)`** returns `true` if `name` is a directory.
 
-**`fs.stat(name)`** reads attributes of the file `name`.  Attributes are:
+**`fs.findpath(name)`** returns the full path of `name` if `name` is found in `$PATH` or `nil`.
+
+**`fs.stat(name)`** reads attributes of the file `name`. Attributes are:
 
 - `name`: name
 - `type`: `"file"` or `"directory"`

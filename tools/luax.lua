@@ -86,18 +86,15 @@ end
 local function is_windows(compiler_target) return compiler_target:match "-windows-" end
 local function ext(compiler_target) return is_windows(compiler_target) and ".exe" or "" end
 
-local function find_in_path(name)
+local function findpath(name)
     if fs.is_file(name) then return name end
-    for _, path in ipairs(os.getenv("PATH"):split(sys.os == "windows" and ";" or ":")) do
-        local full_path = fs.join(path, name)
-        if fs.is_file(full_path) then return fs.realpath(full_path) end
-    end
-    return name
+    local full_path = fs.findpath(name)
+    return full_path and fs.realpath(full_path) or name
 end
 
 local function print_targets()
     fun.foreach(require "targets", function(target)
-        local compiler = fs.join(fs.dirname(find_in_path(arg[0])), "luax-"..target..ext(target))
+        local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..target..ext(target))
         print(("%-20s%s%s"):format(target, compiler, fs.is_file(compiler) and "" or " [NOT FOUND]"))
     end)
 end
@@ -351,11 +348,11 @@ local function run_compiler()
     local function rmext(compiler_target, name) return name:gsub(ext(compiler_target):gsub("%.", "%%.").."$", "") end
     fun.foreach(target == "all" and fun.keys(valid_targets) or target and {target} or {}, function(compiler_target)
         if not valid_targets[compiler_target] then err("Invalid target: %s", compiler_target) end
-        local compiler = fs.join(fs.dirname(find_in_path(arg[0])), "luax-"..compiler_target..ext(compiler_target))
+        local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..compiler_target..ext(compiler_target))
         if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, compiler_target} end
     end)
     if not target then
-        local compiler = find_in_path(arg[0])
+        local compiler = findpath(arg[0])
         if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, nil} end
     end
 

@@ -20,6 +20,8 @@ http://cdelord.fr/luax
 
 local fs = require "fs"
 
+local sys = require "sys"
+
 local flatten = require"fun".flatten
 local foreach = require"fun".foreach
 
@@ -35,6 +37,14 @@ end
 function fs.is_dir(name)
     local stat = fs.stat(name)
     return stat ~= nil and stat.type == "directory"
+end
+
+function fs.findpath(name)
+    for _, path in ipairs(os.getenv("PATH"):split(sys.os == "windows" and ";" or ":")) do
+        local full_path = fs.join(path, name)
+        if fs.is_file(full_path) then return full_path end
+    end
+    return nil, "not found in $PATH"
 end
 
 function fs.mkdirs(path)
