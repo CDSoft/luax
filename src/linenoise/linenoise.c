@@ -19,8 +19,7 @@
 
 #include "linenoise.h"
 
-#include "tools.h"
-
+#include <stdbool.h>
 #include <unistd.h>
 
 #include "lua.h"
@@ -33,7 +32,9 @@
 #include "linenoise/linenoise.h"
 #endif
 
+#ifdef HAS_LINENOISE
 #define LUAX_HISTORY_LEN    10000
+#endif
 
 #ifdef HAS_LINENOISE
 static int mask_mode = 0;
@@ -185,14 +186,6 @@ static int linenoise_mask_mode(lua_State *L)
     return 0;
 }
 
-static int linenoise_prin_key_codes(lua_State *L __attribute__((unused)))
-{
-#ifdef HAS_LINENOISE
-    linenoisePrintKeyCodes();
-#endif
-    return 0;
-}
-
 static const luaL_Reg linenoiselib[] =
 {
     {"read",        linenoise_read},
@@ -204,7 +197,6 @@ static const luaL_Reg linenoiselib[] =
     {"clear",       linenoise_clear_screen},
     {"multi_line",  linenoise_set_multi_line},
     {"mask",        linenoise_mask_mode},
-    {"key_codes",   linenoise_prin_key_codes},
     {NULL, NULL}
 };
 
@@ -215,8 +207,6 @@ LUAMOD_API int luaopen_linenoise (lua_State *L)
     running_in_a_tty = isatty(STDIN_FILENO);
     linenoiseHistorySetMaxLen(LUAX_HISTORY_LEN);
     linenoiseSetMultiLine(false);
-#else
-    (void)LUAX_HISTORY_LEN;
 #endif
     return 1;
 }
