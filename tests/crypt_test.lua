@@ -146,7 +146,7 @@ return function()
             for y = 0, 99 do done = done and rands[y] end
         end
         eq(done, true)
-        bounded(i, 100, 1000)
+        bounded(i, 100, 2000)
         for _ = 1, 1000 do
             local x = crypt.rand()                              eq(type(x), "number") eq(math.type(x), "integer")
             local y = crypt.rand()                              eq(type(y), "number") eq(math.type(y), "integer")
