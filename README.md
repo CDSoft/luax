@@ -513,6 +513,18 @@ the characters are not echoed but replaced with `*`.
 
 **linenoise.mask(b)** enable/disable the mask mode.
 
+### luasocket: Network support for the Lua language
+
+```lua
+local socket = require "socket"
+```
+
+The socket package is based on [Lua
+Socket](http://w3.impa.br/~diego/software/luasocket/) and adapted for `luax`.
+
+The documentation of `Lua Socket` is available at the [Lua Socket documentation
+web site](http://w3.impa.br/~diego/software/luasocket/reference.html).
+
 ## License
 
     luax is free software: you can redistribute it and/or modify

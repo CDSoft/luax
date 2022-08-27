@@ -47,7 +47,6 @@ LUA_SOURCES := $(sort $(wildcard lua/*))
 LUAX_SOURCES := $(sort $(shell find src -name "*.[ch]"))
 
 LUAX_RUNTIME := $(sort $(shell find src -name "*.lua"))
-LUAX_RUNTIME_ARGS := $(patsubst %x.lua,-autoexec %x.lua,$(LUAX_RUNTIME)) # autoexec *x.lua only
 LUAX_RUNTIME_BUNDLE := $(BUILD)/lua_runtime_bundle.dat
 LUAX_CONFIG := $(BUILD)/luax_config.h
 
@@ -224,9 +223,9 @@ $(BUILD)/targets.lua:
 	@echo "return ('$(sort $(TARGETS))'):words()" > $@.tmp
 	@mv $@.tmp $@
 
-$(LUAX_RUNTIME_BUNDLE): $(LUA) $(LUAX_RUNTIME) tools/bundle.lua
-	@$(call cyan,"BUNDLE",$(LUAX_RUNTIME))
-	@$(LUA) tools/bundle.lua -nomain -ascii $(LUAX_RUNTIME_ARGS) > $@.tmp
+$(LUAX_RUNTIME_BUNDLE): $(LUA) $(LUAX_RUNTIME) tools/bundle.lua tools/build_bundle_args.lua
+	@$(call cyan,"BUNDLE",$(@))
+	@$(LUA) tools/bundle.lua -nomain -ascii $(shell $(LUA) tools/build_bundle_args.lua $(LUAX_RUNTIME)) > $@.tmp
 	@mv $@.tmp $@
 
 ###############################################################################

@@ -48,6 +48,7 @@
 #include "qmath/qmath.h"
 #include "complex/complex.h"
 #include "linenoise/linenoise.h"
+#include "socket/luasocket.h"
 
 typedef struct
 {
@@ -68,6 +69,7 @@ static const luaL_Reg lrun_libs[] = {
     {"imath", luaopen_imath},
     {"qmath", luaopen_qmath},
     {"complex", luaopen_complex},
+    {"socket", luaopen_luasocket},
     {NULL, NULL},
 };
 
