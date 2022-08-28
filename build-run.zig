@@ -51,7 +51,6 @@ const luax_c_files = [_][]const u8 {
     "src/ps/ps.c",
     "src/sys/sys.c",
     "src/crypt/crypt.c",
-    "src/rl/rl.c",
     "src/complex/complex.c",
     "src/linenoise/linenoise.c",
     "src/socket/luasocket.c",

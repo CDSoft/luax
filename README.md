@@ -484,13 +484,6 @@ The documentation of these modules are available on Lpeg web site:
 - [Lpeg](http://www.inf.puc-rio.br/~roberto/lpeg/)
 - [Re](http://www.inf.puc-rio.br/~roberto/lpeg/re.html)
 
-### rl: readline
-
-**rl.read(prompt)** prints `prompt` and returns the string entered by the user.
-
-**Warning**: `rl` is no longer related to the Linux readline library. If you
-need readline, you can use `rlwrap` on Linux.
-
 ### linenoise: light readline alternative
 
 **linenoise.read(prompt)** prints `prompt` and returns the string entered by

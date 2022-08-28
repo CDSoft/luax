@@ -42,7 +42,6 @@
 #include "sys/sys.h"
 #include "lpeg/lpeg.h"
 #include "crypt/crypt.h"
-#include "rl/rl.h"
 #include "mathx/mathx.h"
 #include "imath/imath.h"
 #include "qmath/qmath.h"
@@ -63,7 +62,6 @@ static const luaL_Reg lrun_libs[] = {
     {"sys", luaopen_sys},
     {"lpeg", luaopen_lpeg},
     {"crypt", luaopen_crypt},
-    {"rl", luaopen_rl},
     {"linenoise", luaopen_linenoise},
     {"mathx", luaopen_mathx},
     {"imath", luaopen_imath},
