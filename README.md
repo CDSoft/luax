@@ -571,3 +571,9 @@ web site](http://w3.impa.br/~diego/software/luasocket/reference.html).
   ([MIT license](http://www.lua.org/license.html))
 * **[Lpeg](http://www.inf.puc-rio.br/~roberto/lpeg/)**: Parsing Expression
   Grammars For Lua ([MIT license](http://www.lua.org/license.html))
+* **[luasocket](https://github.com/diegonehab/luasocket)**: Network support for
+  the Lua language ([LuaSocket 3.0
+  license](https://github.com/diegonehab/luasocket/blob/master/LICENSE))
+* **[linenoise](https://github.com/antirez/linenoise)**:  A small
+  self-contained alternative to readline and libedit ([BSD-2-Clause
+  license](https://github.com/antirez/linenoise/blob/master/LICENSE))
