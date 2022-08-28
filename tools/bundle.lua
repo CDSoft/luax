@@ -94,7 +94,7 @@ function bundle.bundle(arg)
     local plain = Bundle()
     plain.emit "do\n"
     plain.emit "local libs = {\n"
-    for i = 1, #scripts do
+    for i = main and 2 or 1, #scripts do
         local script_source = read(scripts[i].local_path):gsub("^#![^\n]*", "")
         assert(load(script_source, scripts[i].local_path, 't'))
         plain.emit(("[%q] = assert(load(%q, %q, 't')),\n"):format(scripts[i].name, script_source, "@"..scripts[i].path))
@@ -109,7 +109,9 @@ function bundle.bundle(arg)
         end
     end
     if main then
-        plain.emit(("require %q\n"):format(scripts[1].name))
+        local script_source = read(scripts[1].local_path):gsub("^#![^\n]*", "")
+        assert(load(script_source, scripts[1].local_path, 't'))
+        plain.emit(("assert(load(%q, %q, 't'))()\n"):format(script_source, "@"..scripts[1].path))
     end
     plain.emit "end\n"
 

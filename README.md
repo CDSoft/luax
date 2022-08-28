@@ -99,7 +99,7 @@ Lua and Compilation options can not be mixed.
 When compiling scripts (options `-t` and `-o`), the main script shall be the
 first one. Other scripts are libraries that can be loaded by the main script.
 
-#### Examples
+### Examples
 
 ``` bash
 # Native compilation (luax is a symlink to the luax binary of the host)
@@ -126,6 +126,32 @@ The `luax` runtime comes with a few builtin modules.
 
 These modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 [lapp](http://cdelord.fr/lapp).
+
+### LuaX interactive usage
+
+The `luax` module provides a few functions for the interactive mode.
+These functions are also made available to LuaX scripts.
+
+```lua
+local luax = require "luax"
+```
+
+**`luax.pretty(x)`** returns a string representing `x` with nice formatting for
+tables and numbers.
+
+**`luax.base(b)`** changes the format of integers. `b` can be `10` (decimal
+numbers), `16` (hexadecimal numbers), `8` (octal numbers), a custom format
+string or `nil` (to reset the integer format).
+
+**`luax.precision(len, frac)`** changes the format of floats. `len` is the
+total number of characters and `frac` the number of decimals after the floating
+point (`frac` can be `nil`). `len` can also be a string (custom format string)
+or `nil` (to reset the float format). `b` can be `10` (decimal numbers), `16`
+(hexadecimal numbers), `8` (octal numbers), a custom format string or `nil` (to
+reset the integer format).
+
+In interactive mode, these functions are available as global functions.
+`luax.pretty` is used by the LuaX REPL to print results.
 
 ### "Standard" library
 

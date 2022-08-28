@@ -131,6 +131,17 @@ local args = {}
 local output = nil
 local target = nil
 
+local luax_loaded = false
+
+local function load_luax()
+    if not luax_loaded then
+        -- luax functions loaded at the top level in interactive mode only
+        local luax = require "luax"
+        for k, v in pairs(luax) do _ENV[k] = v end
+        luax_loaded = true
+    end
+end
+
 do
     local i = 1
     -- Scan options
@@ -143,6 +154,7 @@ do
             if stat == nil then wrong_arg(a) end
             actions[#actions+1] = function()
                 assert(stat)
+                load_luax()
                 local chunk, msg = load(stat, "=(command line)")
                 if not chunk then
                     io.stderr:write(("%s: %s\n"):format(arg[0], msg))
@@ -153,7 +165,7 @@ do
                 local ok = table.remove(res, 1)
                 if ok then
                     if #res > 0 then
-                        print(table.unpack(res))
+                        print(table.unpack(fun.map(pretty, res)))
                     end
                 else
                     os.exit(1)
@@ -223,6 +235,8 @@ local function run_interpretor()
 
     -- scripts
 
+    load_luax()
+
     if #args >= 1 then
         arg = {}
         local script = args[1]
@@ -243,7 +257,7 @@ local function run_interpretor()
         local ok = table.remove(res, 1)
         if ok then
             if #res > 0 then
-                print(table.unpack(res))
+                print(table.unpack(fun.map(pretty, res)))
             end
         else
             os.exit(1)
@@ -271,7 +285,7 @@ local function run_interpretor()
             local res = table.pack(xpcall(chunk, traceback))
             local ok = table.remove(res, 1)
             if ok then
-                if res ~= nil then print(table.unpack(res)) end
+                if res ~= nil then print(table.unpack(fun.map(pretty, res))) end
             end
             return "done"
         end

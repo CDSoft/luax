@@ -32,7 +32,10 @@ end
 function fun.keys(t)
     local ks = {}
     for k,_ in pairs(t) do table.insert(ks, k) end
-    table.sort(ks)
+    table.sort(ks, function(a, b)
+        local ta, tb = type(a), type(b)
+        if ta == tb then return a < b else return ta < tb end
+    end)
     return ks
 end
 

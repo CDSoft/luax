@@ -22,6 +22,6 @@ return {
     hello = function(name)
         local file = debug.getinfo(1, 'S').source
         return file.." says: Hello "..name.."\n"..
-               debug.traceback("Traceback test"):gsub("\n[^\n]*\n[^\n]*$", "")
+               debug.traceback("Traceback test"):gsub("\n[^\n]*$", "")
     end,
 }
