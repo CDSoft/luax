@@ -92,7 +92,8 @@ help:
 	@echo '${CYAN}Lua${RESET} e${CYAN}X${RESET}tended'
 	@echo 'Copyright (C) 2021-2022 Christophe Delord (http://cdelord.fr/luax)'
 	@echo ''
-	@echo '${CYAN}luax${RESET} is a Lua interpretor and REPL based on Lua 5.4.4, augmented with some useful packages.'
+	@echo '${CYAN}luax${RESET} is a Lua interpretor and REPL based on Lua 5.4.4'
+	@echo 'augmented with some useful packages.'
 	@echo '${CYAN}luax${RESET} can also produces standalone executables from Lua scripts.'
 	@echo ''
 	@echo '${CYAN}luax${RESET} runs on several platforms with no dependency:'
@@ -199,7 +200,9 @@ $(LUA): $(ZIG) $(LUA_SOURCES) build-lua.zig
 		--cache-dir $(ZIG_CACHE) \
 		--prefix $(dir $@) --prefix-exe-dir "" \
 		-D$(RELEASE) \
+		-Dtarget=$(ARCH)-$(OS)-$(LIBC) \
 		--build-file build-lua.zig
+	@touch $@
 
 ###############################################################################
 # Code generation
@@ -241,6 +244,7 @@ $(BUILD)/lrun-%: $(ZIG) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX
 		-D$(RELEASE) \
 		-Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD)/lrun-%,%,$@)) \
 		--build-file build-run.zig
+	@touch $@
 
 ###############################################################################
 # luax
