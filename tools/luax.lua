@@ -324,7 +324,7 @@ local function run_compiler()
     if output == nil then err "No output specified (option -o)" end
 
     local function log(k, fmt, ...)
-        print(("%-8s: %s"):format(k, fmt:format(...)))
+        print(("%-9s: %s"):format(k, fmt:format(...)))
     end
 
     -- List scripts

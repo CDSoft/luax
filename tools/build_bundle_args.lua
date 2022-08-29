@@ -1,19 +1,29 @@
-local socket_submodules = { "ftp", "headers", "http", "smtp", "tp", "url" }
+local autoexec = {
+    ["src/crypt/cryptx.lua"]    = true,
+    ["src/fs/fsx.lua"]          = true,
+    ["src/std/stringx.lua"]     = true,
+}
+
+local submodule = {
+    ["src/socket/luasocket/ftp.lua"]        = "socket.ftp",
+    ["src/socket/luasocket/headers.lua"]    = "socket.headers",
+    ["src/socket/luasocket/http.lua"]       = "socket.http",
+    ["src/socket/luasocket/smtp.lua"]       = "socket.smtp",
+    ["src/socket/luasocket/tp.lua"]         = "socket.tp",
+    ["src/socket/luasocket/url.lua"]        = "socket.url",
+}
 
 local function emit(x) io.stdout:write(x, " ") end
 
 for i = 1, #arg do
 
-    -- autoexec *x.lua only
-    if arg[i]:match "x%.lua$" then
+    if autoexec[arg[i]] then
         emit "-autoexec"
     end
 
-    -- some luasocket packages are socket submodules
-    for _, submodule in ipairs(socket_submodules) do
-        if arg[i]:match("luasocket/"..submodule.."%.lua$") then
-            arg[i] = arg[i]..":socket."..submodule
-        end
+    local submodule_name = submodule[arg[i]]
+    if submodule_name then
+        arg[i] = arg[i]..":"..submodule_name
     end
 
     emit(arg[i])
