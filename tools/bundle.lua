@@ -93,25 +93,40 @@ function bundle.bundle(arg)
 
     local plain = Bundle()
     plain.emit "do\n"
+    local function compile_library(script)
+        local script_source = read(script.local_path):gsub("^#![^\n]*", "")
+        assert(load(script_source, script.local_path, 't'))
+        plain.emit(("[%q] = assert(load(%q, %q, 't')),\n"):format(script.name, script_source, "@"..script.path))
+    end
+    local function load_library(script)
+        plain.emit(("_ENV[%q] = require %q\n"):format(script.name, script.name))
+    end
+    local function run_script(script)
+        local script_source = read(script.local_path):gsub("^#![^\n]*", "")
+        assert(load(script_source, script.local_path, 't'))
+        plain.emit(("assert(load(%q, %q, 't'))()\n"):format(script_source, "@"..script.path))
+    end
     plain.emit "local libs = {\n"
     for i = main and 2 or 1, #scripts do
-        local script_source = read(scripts[i].local_path):gsub("^#![^\n]*", "")
-        assert(load(script_source, scripts[i].local_path, 't'))
-        plain.emit(("[%q] = assert(load(%q, %q, 't')),\n"):format(scripts[i].name, script_source, "@"..scripts[i].path))
+        -- add non autoexec scripts to the libs table used by the require function
+        if not scripts[i].autoexec then
+            compile_library(scripts[i])
+        end
     end
     plain.emit "}\n"
     plain.emit "table.insert(package.searchers, 1, function(name) return libs[name] end)\n"
     for i = main and 2 or 1, #scripts do
         if scripts[i].autoload then
-            plain.emit(("_ENV[%q] = require %q\n"):format(scripts[i].name, scripts[i].name))
+            -- autoload packages are require'd and stored in a global variable
+            load_library(scripts[i])
         elseif scripts[i].autoexec then
-            plain.emit(("require %q\n"):format(scripts[i].name, scripts[i].name))
+            -- autoexec scripts are executed before main and can not be require'd
+            run_script(scripts[i])
         end
     end
     if main then
-        local script_source = read(scripts[1].local_path):gsub("^#![^\n]*", "")
-        assert(load(script_source, scripts[1].local_path, 't'))
-        plain.emit(("assert(load(%q, %q, 't'))()\n"):format(script_source, "@"..scripts[1].path))
+        -- finally the main script is executed
+        run_script(scripts[1])
     end
     plain.emit "end\n"
 
