@@ -139,6 +139,140 @@ mrproper: clean
 	rm -rf $(ZIG_INSTALL)
 
 ###############################################################################
+# Package updates
+###############################################################################
+
+.PHONY: update
+.PHONY: update-lua
+.PHONY: update-lcomplex
+.PHONY: update-limath
+.PHONY: update-lqmath
+.PHONY: update-lmathx
+.PHONY: update-linenoise
+.PHONY: update-luasocket
+.PHONY: update-lpeg
+
+LUA_VERSION = 5.4.4
+LUA_ARCHIVE = lua-$(LUA_VERSION).tar.gz
+LUA_URL = https://www.lua.org/ftp/$(LUA_ARCHIVE)
+
+LCOMPLEX_ARCHIVE = lcomplex-100.tar.gz
+LCOMPLEX_URL = https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$(LCOMPLEX_ARCHIVE)
+
+LIMATH_ARCHIVE = limath-104.tar.gz
+LIMATH_URL = https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$(LIMATH_ARCHIVE)
+
+LQMATH_ARCHIVE = lqmath-104.tar.gz
+LQMATH_URL = https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$(LQMATH_ARCHIVE)
+
+LMATHX_ARCHIVE = lmathx.tar.gz
+LMATHX_URL = https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/5.3/$(LMATHX_ARCHIVE)
+
+LINENOISE_VERSION = master
+LINENOISE_ARCHIVE = linenoise-$(LINENOISE_VERSION).zip
+LINENOISE_URL = https://github.com/antirez/linenoise/archive/refs/heads/$(LINENOISE_VERSION).zip
+
+LUASOCKET_VERSION = 3.1.0
+LUASOCKET_ARCHIVE = luasocket-$(VERSION).zip
+LUASOCKET_URL = https://github.com/lunarmodules/luasocket/archive/refs/tags/v$(LUASOCKET_VERSION).zip
+
+LPEG_VERSION = 1.0.2
+LPEG_ARCHIVE = lpeg-$(LPEG_VERSION).tar.gz
+LPEG_URL = http://www.inf.puc-rio.br/~roberto/lpeg/$(LPEG_ARCHIVE)
+
+## Update the source code of third party packages
+update: update-lua
+update: update-lcomplex
+update: update-limath
+update: update-lqmath
+update: update-lmathx
+update: update-linenoise
+update: update-luasocket
+update: update-lpeg
+
+## Update Lua sources
+update-lua: $(BUILD)/$(LUA_ARCHIVE)
+	rm -rf lua
+	mkdir lua
+	tar -xzf $< -C lua --exclude=Makefile --strip-components=2 "lua-$(LUA_VERSION)/src"
+
+$(BUILD)/$(LUA_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(LUA_URL) -O $@
+
+## Update lcomplex sources
+update-lcomplex: $(BUILD)/$(LCOMPLEX_ARCHIVE)
+	rm -rf src/complex/lcomplex-*
+	tar -xzf $< -C src/complex --exclude=Makefile --exclude=test.lua
+
+$(BUILD)/$(LCOMPLEX_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(LCOMPLEX_URL) -O $@
+
+## Update limath sources
+update-limath: $(BUILD)/$(LIMATH_ARCHIVE)
+	rm -rf src/imath/limath-*
+	tar -xzf $< -C src/imath --exclude=Makefile --exclude=test.lua
+	sed -i 's@"imath.h"@"src/imath.h"@' src/imath/$(shell basename $(LIMATH_ARCHIVE) .tar.gz)/limath.c
+
+$(BUILD)/$(LIMATH_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(LIMATH_URL) -O $@
+
+## Update lqmath sources
+update-lqmath: $(BUILD)/$(LQMATH_ARCHIVE)
+	rm -rf src/qmath/lqmath-*
+	tar -xzf $< -C src/qmath --exclude=Makefile --exclude=test.lua
+	sed -i 's@"imrat.h"@"src/imrat.h"@' src/qmath/$(shell basename $(LQMATH_ARCHIVE) .tar.gz)/lqmath.c
+
+$(BUILD)/$(LQMATH_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(LQMATH_URL) -O $@
+
+## Update lmathx sources
+update-lmathx: $(BUILD)/$(LMATHX_ARCHIVE)
+	rm -rf src/mathx/mathx
+	tar -xzf $< -C src/mathx --exclude=Makefile --exclude=test.lua
+
+$(BUILD)/$(LMATHX_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(LMATHX_URL) -O $@
+
+## Update linenoise sources
+update-linenoise: $(BUILD)/$(LINENOISE_ARCHIVE)
+	rm -rf src/linenoise/linenoise
+	mkdir src/linenoise/linenoise
+	unzip -j $< -x '*/.gitignore' '*/Makefile' '*/example.c' -d src/linenoise/linenoise
+	sed -i -e 's/case ENTER:/case ENTER: case 10:/'                         \
+	       -e 's/malloc(/safe_malloc(/'                                     \
+	       -e 's/realloc(/safe_realloc(/'                                   \
+	       -e 's/\(#include "linenoise.h"\)/\1\n\n#include "tools.h"/'      \
+	       src/linenoise/linenoise/linenoise.c
+
+$(BUILD)/$(LINENOISE_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(LINENOISE_URL) -O $@
+
+## Update luasocket sources
+update-luasocket: $(BUILD)/$(LUASOCKET_ARCHIVE)
+	rm -rf src/socket/luasocket
+	mkdir src/socket/luasocket
+	unzip -j $< 'luasocket-$(LUASOCKET_VERSION)/src/*' -d src/socket/luasocket
+
+$(BUILD)/$(LUASOCKET_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(LUASOCKET_URL) -O $@
+
+## Update lpeg sources
+update-lpeg: $(BUILD)/$(LPEG_ARCHIVE)
+	rm -rf src/lpeg/lpeg-*
+	tar xzf $< -C src/lpeg --exclude=HISTORY --exclude=*.gif --exclude=*.html --exclude=makefile --exclude=test.lua
+
+$(BUILD)/$(LPEG_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(LPEG_URL) -O $@
+
+###############################################################################
 # Installation
 ###############################################################################
 
