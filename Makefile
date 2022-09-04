@@ -17,7 +17,7 @@
 # http://cdelord.fr/luax
 
 # Default encryption key for the Lua chunks in compiled applications
-CRYPT_KEY ?= Luax
+CRYPT_KEY ?= LuaX
 
 BUILD = .build
 ZIG_CACHE = $(BUILD)/zig-cache
@@ -342,7 +342,7 @@ $(LUA): $(ZIG) $(LUA_SOURCES) build-lua.zig
 # Code generation
 ###############################################################################
 
-CRYPT_KEY_HASH := $(shell echo $(CRYPT_KEY) | sha512sum -b | cut -d" " -f1 | sed 's/\(..\)/\\x\1/g')
+CRYPT_KEY_HASH := $(shell echo -n $(CRYPT_KEY) | sha512sum -b | cut -d" " -f1 | sed 's/\(..\)/\\x\1/g')
 
 $(LUAX_CONFIG): $(wildcard .git/refs/tags) $(wildcard .git/index) $(LUA) tools/bundle.lua
 	@$(call cyan,"GEN",$@)

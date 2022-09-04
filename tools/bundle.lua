@@ -20,9 +20,9 @@ http://cdelord.fr/luax
 
 -- bundle a set of scripts into a single Lua script that can be added to the runtime
 
--- WARNING: bundle.lua is used to create the first Luax executable
+-- WARNING: bundle.lua is used to create the first LuaX executable
 -- and is executed by a standard Lua interpretor.
--- It can not use Luax packages such as fun or fs.
+-- It can not use LuaX packages such as fun or fs.
 
 local bundle = {}
 
