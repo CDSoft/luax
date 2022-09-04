@@ -124,11 +124,13 @@ help:
 
 .SECONDARY:
 
+.PHONY: all
+
 ## Compile LuaX for Linux, MacOS and Windows
+all: test
 all: $(RUNTIMES)
 all: $(LUAX_BINARIES)
 all: $(BUILD)/luax.tar.xz
-all: test
 
 ## Delete the build directory
 clean:
