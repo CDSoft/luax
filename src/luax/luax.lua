@@ -107,4 +107,10 @@ function luax.pretty(x)
     return table.concat(tokens)
 end
 
+luax.inspect = require "inspect"
+
+function luax.printi(x)
+    print(luax.inspect(x))
+end
+
 return luax

@@ -153,6 +153,7 @@ mrproper: clean
 .PHONY: update-linenoise
 .PHONY: update-luasocket
 .PHONY: update-lpeg
+.PHONY: update-inspect
 
 LUA_VERSION = 5.4.4
 LUA_ARCHIVE = lua-$(LUA_VERSION).tar.gz
@@ -182,6 +183,10 @@ LPEG_VERSION = 1.0.2
 LPEG_ARCHIVE = lpeg-$(LPEG_VERSION).tar.gz
 LPEG_URL = http://www.inf.puc-rio.br/~roberto/lpeg/$(LPEG_ARCHIVE)
 
+INSPECT_VERSION = master
+INSPECT_ARCHIVE = inspect-$(INSPECT_VERSION).zip
+INSPECT_URL = https://github.com/kikito/inspect.lua/archive/refs/heads/$(INSPECT_VERSION).zip
+
 ## Update the source code of third party packages
 update: update-lua
 update: update-lcomplex
@@ -191,6 +196,7 @@ update: update-lmathx
 update: update-linenoise
 update: update-luasocket
 update: update-lpeg
+update: update-inspect
 
 ## Update Lua sources
 update-lua: $(BUILD)/$(LUA_ARCHIVE)
@@ -273,6 +279,15 @@ update-lpeg: $(BUILD)/$(LPEG_ARCHIVE)
 $(BUILD)/$(LPEG_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(LPEG_URL) -O $@
+
+## Update inspect sources
+update-inspect: $(BUILD)/$(INSPECT_ARCHIVE)
+	rm -f src/inspect/inspect.lua
+	unzip -j $< '*/inspect.lua' -d src/inspect
+
+$(BUILD)/$(INSPECT_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(INSPECT_URL) -O $@
 
 ###############################################################################
 # Installation

@@ -18,21 +18,40 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
--- Check the test environment first
-require "test_test"()
+return function()
 
--- luax builtins
-require "arg_test"()
-require "require_test"()
+    local inspect = require "inspect"
+    assert(inspect)
 
--- luax libraries
-require "fun_test"()
-require "string_test"()
-require "sys_test"()
-require "fs_test"()
-require "ps_test"()
-require "crypt_test"()
-require "lpeg_test"()
-require "complex_test"()
-require "socket_test"()
-require "inspect_test"()
+    eq(inspect(42), "42")
+    eq(inspect("Hello"), '"Hello"')
+
+    eq(inspect({}), "{}")
+    eq(inspect({1, 2, 3}), "{ 1, 2, 3 }")
+    eq(inspect({x=1, y=2, z=3}), [[
+{
+  x = 1,
+  y = 2,
+  z = 3
+}]])
+    eq(inspect({a={x=1, y=2}, {x=3, y=4}, 5, 6}), [[
+{ {
+    x = 3,
+    y = 4
+  }, 5, 6,
+  a = {
+    x = 1,
+    y = 2
+  }
+}]])
+
+    local t = setmetatable({x = 1}, { __call = function(self) return self.x end })
+    eq(inspect(t), [[
+{
+  x = 1,
+  <metatable> = {
+    __call = <function 1>
+  }
+}]])
+
+end

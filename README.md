@@ -150,6 +150,11 @@ or `nil` (to reset the float format). `b` can be `10` (decimal numbers), `16`
 (hexadecimal numbers), `8` (octal numbers), a custom format string or `nil` (to
 reset the integer format).
 
+**`luax.inspect(x)`** calls `inspect(x)` to build a human readable
+representation of `x` (see the `inspect` package).
+
+**`luax.printi(x)`** prints `inspect(x)`.
+
 In interactive mode, these functions are available as global functions.
 `luax.pretty` is used by the LuaX REPL to print results.
 
@@ -544,6 +549,24 @@ Socket](http://w3.impa.br/~diego/software/luasocket/) and adapted for `luax`.
 The documentation of `Lua Socket` is available at the [Lua Socket documentation
 web site](http://w3.impa.br/~diego/software/luasocket/reference.html).
 
+### inspect: Human-readable representation of Lua tables
+
+```lua
+local inspect = require "inspect"
+```
+
+The inspect package is taken from
+[inspect.lua](https://github.com/kikito/inspect.lua).
+
+This library transforms any Lua value into a human-readable representation. It
+is especially useful for debugging errors in tables.
+
+The objective here is human understanding (i.e. for debugging), not
+serialization or compactness.
+
+Please check [inspect.lua](https://github.com/kikito/inspect.lua) for further
+information.
+
 ## License
 
     luax is free software: you can redistribute it and/or modify
@@ -577,3 +600,6 @@ web site](http://w3.impa.br/~diego/software/luasocket/reference.html).
 * **[linenoise](https://github.com/antirez/linenoise)**:  A small
   self-contained alternative to readline and libedit ([BSD-2-Clause
   license](https://github.com/antirez/linenoise/blob/master/LICENSE))
+* **[inspect](https://github.com/kikito/inspect.lua)**:  Human-readable
+  representation of Lua tables ([MIT
+  license](https://github.com/kikito/inspect.lua/blob/master/MIT-LICENSE.txt))
