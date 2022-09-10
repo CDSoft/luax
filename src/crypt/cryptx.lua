@@ -26,6 +26,8 @@ function string.hex_encode(s) return crypt.hex_encode(s) end
 function string.hex_decode(s) return crypt.hex_decode(s) end
 function string.base64_encode(s) return crypt.base64_encode(s) end
 function string.base64_decode(s) return crypt.base64_decode(s) end
+function string.base64url_encode(s) return crypt.base64url_encode(s) end
+function string.base64url_decode(s) return crypt.base64url_decode(s) end
 function string.rc4(s, k, d) return crypt.rc4(s, k, d) end
 function string.crc32(s) return crypt.crc32(s) end
 function string.crc64(s) return crypt.crc64(s) end

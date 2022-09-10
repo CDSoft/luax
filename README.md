@@ -466,6 +466,10 @@ local crypt = require "crypt"
 
 **`crypt.base64_decode(data)`** decodes the base64 `data`.
 
+**`crypt.base64url_encode(data)`** encodes `data` in base64url.
+
+**`crypt.base64url_decode(data)`** decodes the base64url `data`.
+
 **`crypt.crc32(data)`** computes the CRC32 of `data`.
 
 **`crypt.crc64(data)`** computes the CRC64 of `data`.
@@ -494,6 +498,10 @@ Some functions of the `crypt` package are added to the string module:
 **`s:base64_encode()`** is `crypt.base64_encode(s)`.
 
 **`s:base64_decode()`** is `crypt.base64_decode(s)`.
+
+**`s:base64url_encode()`** is `crypt.base64url_encode(s)`.
+
+**`s:base64url_decode()`** is `crypt.base64url_decode(s)`.
 
 **`s:crc32()`** is `crypt.crc32(s)`.
 

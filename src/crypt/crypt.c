@@ -287,7 +287,41 @@ static const unsigned char base64_rev[] =
     ['Z'] = 25,     ['z'] = 26+25,
 };
 
-static void base64_encode(const unsigned char *plain, size_t n_in, unsigned char **b64_out, size_t *n_out)
+static const unsigned char base64url_map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                             "abcdefghijklmnopqrstuvwxyz"
+                                             "0123456789-_";
+
+static const unsigned char base64url_rev[] =
+{
+    ['A'] = 0,      ['a'] = 26+0,       ['0'] = 2*26+0,
+    ['B'] = 1,      ['b'] = 26+1,       ['1'] = 2*26+1,
+    ['C'] = 2,      ['c'] = 26+2,       ['2'] = 2*26+2,
+    ['D'] = 3,      ['d'] = 26+3,       ['3'] = 2*26+3,
+    ['E'] = 4,      ['e'] = 26+4,       ['4'] = 2*26+4,
+    ['F'] = 5,      ['f'] = 26+5,       ['5'] = 2*26+5,
+    ['G'] = 6,      ['g'] = 26+6,       ['6'] = 2*26+6,
+    ['H'] = 7,      ['h'] = 26+7,       ['7'] = 2*26+7,
+    ['I'] = 8,      ['i'] = 26+8,       ['8'] = 2*26+8,
+    ['J'] = 9,      ['j'] = 26+9,       ['9'] = 2*26+9,
+    ['K'] = 10,     ['k'] = 26+10,      ['-'] = 2*26+10,
+    ['L'] = 11,     ['l'] = 26+11,      ['_'] = 2*26+11,
+    ['M'] = 12,     ['m'] = 26+12,
+    ['N'] = 13,     ['n'] = 26+13,
+    ['O'] = 14,     ['o'] = 26+14,
+    ['P'] = 15,     ['p'] = 26+15,
+    ['Q'] = 16,     ['q'] = 26+16,
+    ['R'] = 17,     ['r'] = 26+17,
+    ['S'] = 18,     ['s'] = 26+18,
+    ['T'] = 19,     ['t'] = 26+19,
+    ['U'] = 20,     ['u'] = 26+20,
+    ['V'] = 21,     ['v'] = 26+21,
+    ['W'] = 22,     ['w'] = 26+22,
+    ['X'] = 23,     ['x'] = 26+23,
+    ['Y'] = 24,     ['y'] = 26+24,
+    ['Z'] = 25,     ['z'] = 26+25,
+};
+
+static void base64_encode(const unsigned char *map, const unsigned char *plain, size_t n_in, unsigned char **b64_out, size_t *n_out)
 {
     *b64_out = safe_malloc(n_in*4/3 + 4);
     unsigned char *b64 = *b64_out;
@@ -296,31 +330,31 @@ static void base64_encode(const unsigned char *plain, size_t n_in, unsigned char
     size_t b = 0;
     while (i + 2 < n_in)
     {
-        b64[b++] = base64_map[plain[i] >> 2];
-        b64[b++] = base64_map[((plain[i] & 0x03) << 4) | (plain[i+1] >> 4)];
-        b64[b++] = base64_map[((plain[i+1] & 0x0f) << 2) | (plain[i+2] >> 6)];
-        b64[b++] = base64_map[(plain[i+2] & 0x3f)];
+        b64[b++] = map[plain[i] >> 2];
+        b64[b++] = map[((plain[i] & 0x03) << 4) | (plain[i+1] >> 4)];
+        b64[b++] = map[((plain[i+1] & 0x0f) << 2) | (plain[i+2] >> 6)];
+        b64[b++] = map[(plain[i+2] & 0x3f)];
         i = i + 3;
     }
     switch (n_in - i)
     {
         case 1:     /* i == n_in - 1 */
-            b64[b++] = base64_map[plain[i] >> 2];
-            b64[b++] = base64_map[(plain[i] & 0x03) << 4];
+            b64[b++] = map[plain[i] >> 2];
+            b64[b++] = map[(plain[i] & 0x03) << 4];
             b64[b++] = '=';
             b64[b++] = '=';
             break;
         case 2:     /* i+1 == n_in - 1 */
-            b64[b++] = base64_map[plain[i] >> 2];
-            b64[b++] = base64_map[((plain[i] & 0x03) << 4) | (plain[i+1] >> 4)];
-            b64[b++] = base64_map[(plain[i+1] & 0x0f) << 2];
+            b64[b++] = map[plain[i] >> 2];
+            b64[b++] = map[((plain[i] & 0x03) << 4) | (plain[i+1] >> 4)];
+            b64[b++] = map[(plain[i+1] & 0x0f) << 2];
             b64[b++] = '=';
             break;
     }
     *n_out = b;
 }
 
-static void base64_decode(const unsigned char *b64, size_t n_in, unsigned char **plain_out, size_t *n_out)
+static void base64_decode(const unsigned char *rev, const unsigned char *b64, size_t n_in, unsigned char **plain_out, size_t *n_out)
 {
     *plain_out = safe_malloc(n_in*3 / 4);
     unsigned char *plain = *plain_out;
@@ -329,9 +363,9 @@ static void base64_decode(const unsigned char *b64, size_t n_in, unsigned char *
     size_t p = 0;
     while (i + 3 < n_in)
     {
-        plain[p++] = (unsigned char)((base64_rev[b64[i]] << 2) | (base64_rev[b64[i+1]] >> 4));
-        plain[p++] = (unsigned char)((base64_rev[b64[i+1]] << 4) | (base64_rev[b64[i+2]] >> 2));
-        plain[p++] = (unsigned char)((base64_rev[b64[i+2]] << 6) | base64_rev[b64[i+3]]);
+        plain[p++] = (unsigned char)((rev[b64[i]]   << 2) | (rev[b64[i+1]] >> 4));
+        plain[p++] = (unsigned char)((rev[b64[i+1]] << 4) | (rev[b64[i+2]] >> 2));
+        plain[p++] = (unsigned char)((rev[b64[i+2]] << 6) |  rev[b64[i+3]]);
         i = i + 4;
     }
     if (b64[n_in-1] == '=') p--;
@@ -345,7 +379,7 @@ static int crypt_base64_encode(lua_State *L)
     const size_t n_in = (size_t)lua_rawlen(L, 1);
     unsigned char *b64;
     size_t n_out;
-    base64_encode(plain, n_in, &b64, &n_out);
+    base64_encode(base64_map, plain, n_in, &b64, &n_out);
     lua_pushlstring(L, (const char *)b64, n_out);
     free(b64);
     return 1;
@@ -357,7 +391,31 @@ static int crypt_base64_decode(lua_State *L)
     const size_t n_in = (size_t)lua_rawlen(L, 1);
     unsigned char *plain;
     size_t n_out;
-    base64_decode(b64, n_in, &plain, &n_out);
+    base64_decode(base64_rev, b64, n_in, &plain, &n_out);
+    lua_pushlstring(L, (char *)plain, n_out);
+    free(plain);
+    return 1;
+}
+
+static int crypt_base64url_encode(lua_State *L)
+{
+    const unsigned char *plain = (const unsigned char *)luaL_checkstring(L, 1);
+    const size_t n_in = (size_t)lua_rawlen(L, 1);
+    unsigned char *b64;
+    size_t n_out;
+    base64_encode(base64url_map, plain, n_in, &b64, &n_out);
+    lua_pushlstring(L, (const char *)b64, n_out);
+    free(b64);
+    return 1;
+}
+
+static int crypt_base64url_decode(lua_State *L)
+{
+    const unsigned char *b64 = (const unsigned char *)luaL_checkstring(L, 1);
+    const size_t n_in = (size_t)lua_rawlen(L, 1);
+    unsigned char *plain;
+    size_t n_out;
+    base64_decode(base64url_rev, b64, n_in, &plain, &n_out);
     lua_pushlstring(L, (char *)plain, n_out);
     free(plain);
     return 1;
@@ -622,6 +680,8 @@ static const luaL_Reg crypt_module[] =
     {"hex_decode", crypt_hex_decode},
     {"base64_encode", crypt_base64_encode},
     {"base64_decode", crypt_base64_decode},
+    {"base64url_encode", crypt_base64url_encode},
+    {"base64url_decode", crypt_base64url_decode},
     {"rc4", crypt_rc4},
     {"crc32", crypt_crc32},
     {"crc64", crypt_crc64},

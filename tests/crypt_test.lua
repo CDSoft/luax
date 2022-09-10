@@ -75,6 +75,8 @@ return function()
         for i = 1, 1000 do
             local s = crypt.rand(256 + i%3)
             eq(s:base64_encode():base64_decode(), s)
+            eq(s:base64url_encode():base64url_decode(), s)
+            eq(s:base64url_encode(), s:base64_encode():gsub("+", "-"):gsub("/", "_"))
         end
     end
     do
