@@ -49,7 +49,7 @@ static int ps_sleep(lua_State *L)
     return 0;
 }
 
-static int ps_time(lua_State *L)
+static inline lua_Number gettime(void)
 {
 #ifdef _WIN32
     __int64 wintime;
@@ -63,14 +63,43 @@ static int ps_time(lua_State *L)
     const uint64_t nsec = (uint64_t)ts.tv_nsec;
     const lua_Number t = (double)(sec_in_nsec + nsec) / 1e9;
 #endif
-    lua_pushnumber(L, t);
+    return t;
+}
+
+static int ps_time(lua_State *L)
+{
+    lua_pushnumber(L, gettime());
     return 1;
+}
+
+static int ps_profile(lua_State *L)
+{
+    if (lua_gettop(L) == 1 && lua_isfunction(L, 1))
+    {
+        const lua_Number t0 = gettime();
+        const int status = lua_pcall(L, 0, 0, 0);
+        const lua_Number t1 = gettime();
+        if (status == LUA_OK)
+        {
+            lua_pushnumber(L, t1 - t0);
+            return 1;
+        }
+        else
+        {
+            return bl_pusherror(L, "ps.profile argument shall be callable (?)");
+        }
+    }
+    else
+    {
+        return bl_pusherror(L, "ps.profile argument shall be callable");
+    }
 }
 
 static const luaL_Reg pslib[] =
 {
     {"sleep",       ps_sleep},
     {"time",        ps_time},
+    {"profile",     ps_profile},
     {NULL, NULL}
 };
 

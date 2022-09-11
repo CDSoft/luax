@@ -440,6 +440,8 @@ local ps = require "ps"
 
 **`ps.time()`** returns the current time in seconds (the resolution is OS dependant).
 
+**`ps.profile(func)`** executes `func` and returns its execution time in seconds.
+
 ### sys: System module
 
 ```lua

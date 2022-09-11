@@ -32,7 +32,15 @@ local function sleep_test(n)
     assert(n <= dt and dt <= n+0.001, ("Expected delay: %f, actual delay: %f"):format(n, dt))
 end
 
+local function profile_test(n)
+    local dt, err = ps.profile(function() ps.sleep(n) end)
+    assert(dt, err)
+    assert(n <= dt and dt <= n+0.001, ("Expected delay: %f, actual delay: %f"):format(n, dt))
+end
+
 return function()
     sleep_test(0)
     sleep_test(0.142)
+    profile_test(0)
+    profile_test(0.142)
 end
