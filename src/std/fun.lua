@@ -187,15 +187,10 @@ function fun.range(a, b, step)
 end
 
 function fun.memo(f)
-    local cache = {}
-    return function(x)
-        local y = cache[x]
-        if y == nil then
-            y = f(x)
-            cache[x] = y
-        end
-        return y
-    end
+    return setmetatable({}, {
+        __index = function(self, k) local v = f(k); self[k] = v; return v; end,
+        __call = function(self, k) return self[k] end
+    })
 end
 
 local function interpolate(s, t)

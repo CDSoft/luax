@@ -101,4 +101,22 @@ return function()
     eq(fun.I{foo="aaa", bar="bbb"}"foo = $(foo); 1 + 1 = $(1+1)", "foo = aaa; 1 + 1 = 2")
     eq(fun.I{foo="aaa"}{bar="bbb"}"foo = $(foo); 1 + 1 = $(1+1); bar = $(bar)", "foo = aaa; 1 + 1 = 2; bar = bbb")
 
+    do
+        local imath = require "imath"
+        local ps = require "ps"
+
+        local function fib(n) return n <= 1 and imath.new(n) or fib(n-1) + fib(n-2) end
+        fib = fun.memo(fib)
+
+        eq(fib(0):tostring(), "0")
+        eq(fib(1):tostring(), "1")
+        eq(fib(2):tostring(), "1")
+        eq(fib(3):tostring(), "2")
+        eq(fib(4):tostring(), "3")
+        eq(fib(5):tostring(), "5")
+        eq(fib(6):tostring(), "8")
+        local dt = ps.profile(function() eq(fib(100):tostring(), "354224848179261915075") end) -- this should be fast because of memoization
+        assert(dt < 0.01, "memoized fibonacci suite is too long")
+    end
+
 end

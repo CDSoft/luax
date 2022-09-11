@@ -202,6 +202,8 @@ local fun = require "fun"
 
 **`fun.range(a, b [, step])`** returns a list of values `[a, a+step, ... b]`. The default step value is 1.
 
+**`fun.memo(func)`** returns a memoized version of the function `func`.
+
 **`fun.I(t)`** returns a string interpolator that replaces `$(...)` by
 the value of `...` in the environment defined by the table `t`. An interpolator
 can be given another table to build a new interpolator with new values.
