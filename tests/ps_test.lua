@@ -29,7 +29,7 @@ local function sleep_test(n)
     ps.sleep(n)
     local t1 = ps.time()
     local dt = t1 - t0
-    assert(n <= dt and dt <= n+0.001)
+    assert(n <= dt and dt <= n+0.001, ("Expected delay: %f, actual delay: %f"):format(n, dt))
 end
 
 return function()
