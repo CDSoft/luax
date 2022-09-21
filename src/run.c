@@ -145,20 +145,13 @@ static void decode(const char *input, size_t size, char *output)
     }
 }
 
-static uint32_t letoh(uint32_t n)
+static uint32_t letoh(uint8_t *bs)
 {
-    const union {
-        uint32_t v;
-        uint8_t b[4];
-    } w = {
-        .b = {
-            [0] = (n >> (0*8)) & 0xFF,
-            [1] = (n >> (1*8)) & 0xFF,
-            [2] = (n >> (2*8)) & 0xFF,
-            [3] = (n >> (3*8)) & 0xFF,
-        }
-    };
-    return w.v;
+    return (uint32_t)( (bs[0] << (0*8))
+                     | (bs[1] << (1*8))
+                     | (bs[2] << (2*8))
+                     | (bs[3] << (3*8))
+                     );
 }
 
 static int run_buffer(lua_State *L, char *buffer, size_t size, const char *name, const char *argv0)
@@ -206,8 +199,8 @@ int main(int argc, const char *argv[])
     t_header header;
     fseek(f, -(long)sizeof(header), SEEK_END);
     if (fread(&header, sizeof(header), 1, f) != 1) perror(argv[0]);
-    header.magic = letoh(header.magic);
-    header.size = letoh(header.size);
+    header.magic = letoh((uint8_t*)&header.magic);
+    header.size = letoh((uint8_t*)&header.size);
     if (header.magic != MAGIC)
     {
         /* The runtime contains no application */

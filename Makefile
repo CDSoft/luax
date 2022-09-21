@@ -154,6 +154,7 @@ mrproper: clean
 .PHONY: update-luasocket
 .PHONY: update-lpeg
 .PHONY: update-inspect
+.PHONY: update-tinycrypt
 
 LUA_VERSION = 5.4.4
 LUA_ARCHIVE = lua-$(LUA_VERSION).tar.gz
@@ -187,6 +188,10 @@ INSPECT_VERSION = master
 INSPECT_ARCHIVE = inspect-$(INSPECT_VERSION).zip
 INSPECT_URL = https://github.com/kikito/inspect.lua/archive/refs/heads/$(INSPECT_VERSION).zip
 
+TINYCRYPT_VERSION = master
+TINYCRYPT_ARCHIVE = tinycrypt-$(TINYCRYPT_VERSION).zip
+TINYCRYPT_URL = https://github.com/intel/tinycrypt/archive/refs/heads/$(TINYCRYPT_VERSION).zip
+
 ## Update the source code of third party packages
 update: update-lua
 update: update-lcomplex
@@ -197,6 +202,7 @@ update: update-linenoise
 update: update-luasocket
 update: update-lpeg
 update: update-inspect
+update: update-tinycrypt
 
 ## Update Lua sources
 update-lua: $(BUILD)/$(LUA_ARCHIVE)
@@ -288,6 +294,19 @@ update-inspect: $(BUILD)/$(INSPECT_ARCHIVE)
 $(BUILD)/$(INSPECT_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(INSPECT_URL) -O $@
+
+## Update tinycrypt sources
+update-tinycrypt: $(BUILD)/$(TINYCRYPT_ARCHIVE)
+	rm -rf src/crypt/tinycrypt
+	mkdir src/crypt/tinycrypt
+	unzip -j $< -x '*/.gitignore' '*/README' '*/Makefile' '*/*.mk' '*/*.rst' '*/tests/*' -d src/crypt/tinycrypt
+	find src/crypt/tinycrypt/*.[ch] -exec sed -i 's#<\(tinycrypt/.*\)>#"\1"#' {} \;
+	mkdir -p src/crypt/tinycrypt/tinycrypt
+	mv src/crypt/tinycrypt/*.h src/crypt/tinycrypt/tinycrypt/
+
+$(BUILD)/$(TINYCRYPT_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(TINYCRYPT_URL) -O $@
 
 ###############################################################################
 # Installation

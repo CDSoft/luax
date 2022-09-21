@@ -19,6 +19,7 @@
 const std = @import("std");
 
 const lua_src = "lua";
+const tinycrypt_src = "src/crypt/tinycrypt";
 const src_path = "src";
 const build_path = ".build";
 
@@ -100,6 +101,21 @@ const third_party_c_files = [_][]const u8 {
     "src/socket/luasocket/tcp.c",
     "src/socket/luasocket/timeout.c",
     "src/socket/luasocket/udp.c",
+    "src/crypt/tinycrypt/aes_decrypt.c",
+    "src/crypt/tinycrypt/aes_encrypt.c",
+    "src/crypt/tinycrypt/cbc_mode.c",
+    "src/crypt/tinycrypt/ccm_mode.c",
+    "src/crypt/tinycrypt/cmac_mode.c",
+    "src/crypt/tinycrypt/ctr_mode.c",
+    "src/crypt/tinycrypt/ctr_prng.c",
+    "src/crypt/tinycrypt/ecc.c",
+    "src/crypt/tinycrypt/ecc_dh.c",
+    "src/crypt/tinycrypt/ecc_dsa.c",
+    "src/crypt/tinycrypt/ecc_platform_specific.c",
+    "src/crypt/tinycrypt/hmac.c",
+    "src/crypt/tinycrypt/hmac_prng.c",
+    "src/crypt/tinycrypt/sha256.c",
+    "src/crypt/tinycrypt/utils.c",
 };
 
 const linux_third_party_c_files = [_][]const u8 {
@@ -144,6 +160,7 @@ pub fn build(b: *std.build.Builder) !void {
     exe.addIncludeDir(src_path);
     exe.addIncludeDir(build_path);
     exe.addIncludeDir(lua_src);
+    exe.addIncludeDir(tinycrypt_src);
     exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
@@ -163,6 +180,7 @@ pub fn build(b: *std.build.Builder) !void {
         "-Wno-reserved-identifier",
         "-Wno-disabled-macro-expansion",
         "-Wno-used-but-marked-unused",
+        "-Wno-documentation",
         try std.fmt.allocPrint(page, "-DLUAX_ARCH=\"{s}\"", .{ARCH}),
         try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),
         try std.fmt.allocPrint(page, "-DLUAX_ABI=\"{s}\"", .{ABI}),
@@ -171,12 +189,14 @@ pub fn build(b: *std.build.Builder) !void {
     exe.addCSourceFiles(&third_party_c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
+        "-Wno-documentation",
         if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
     });
     if (target.os_tag == std.Target.Os.Tag.windows) {
         exe.addCSourceFiles(&windows_third_party_c_files, &[_][]const u8 {
             "-std=gnu11",
             "-Os",
+            "-Wno-documentation",
             if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
         });
         exe.linkSystemLibraryName("ws2_32");
@@ -185,6 +205,7 @@ pub fn build(b: *std.build.Builder) !void {
         exe.addCSourceFiles(&linux_third_party_c_files, &[_][]const u8 {
             "-std=gnu11",
             "-Os",
+            "-Wno-documentation",
             if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
         });
     }

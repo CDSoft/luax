@@ -490,8 +490,31 @@ steps, the default value of `drop` is 768).
 
 **`crypt.frand()`** returns a random floating point number between `0.0` and `1.0`.
 
-**`crypt.prng(seed)`** returns a random number generator starting from the optional seed `seed`.
-This object has three methods: `srand(seed)`, `rand([bytes])` and `frand()`.
+**`crypt.prng(seed)`** returns a random number generator starting from the
+optional seed `seed`. This object has three methods: `srand(seed)`,
+`rand([bytes])` and `frand()`.
+
+`crypt` also exports functions from
+[TinyCrypt](https://github.com/intel/tinycrypt):
+
+**`crypt.sha256(data)`** returns the SHA256 digest of `data`.
+
+**`crypt.hmac(data, key)`** returns the HMAC-SHA256 digest of `data` using `key`
+as a key.
+
+**`crypt.hmac_prng(personalization)`** returns a HMAC PRNG initialized with
+`personalization` (32 bytes of more) and some OS dependant entropy. This object
+has three methods: `srand(seed)`, `rand([bytes])` and `frand()`.
+
+**`crypt.ctr_prng(personalization)`** returns a CTR PRNG initialized with
+`personalization` (32 bytes of more) and some OS dependant entropy. This object
+has three methods: `srand(seed)`, `rand([bytes])` and `frand()`.
+
+**`crypt.aes_encrypt(data, key)`** encrypts `data` using the AES-128-CBC
+algorithm and the encryption key `key`.
+
+**`crypt.aes_decrypt(data, key)`** decrypts `data` using the AES-128-CBC
+algorithm and the encryption key `key`.
 
 Some functions of the `crypt` package are added to the string module:
 
@@ -512,6 +535,14 @@ Some functions of the `crypt` package are added to the string module:
 **`s:crc64()`** is `crypt.crc64(s)`.
 
 **`s:rc4(key, drop)`** is `crypt.crc64(s, key, drop)`.
+
+**`s:sha256()`** is `crypt.sha256(s)`.
+
+**`s:hmac(key)`** is `crypt.hmac(s, key)`.
+
+**`s:aes_encrypt(key)`** is `crypt.aes_encrypt(s, key)`.
+
+**`s:aes_decrypt(key)`** is `crypt.aes_decrypt(s, key)`.
 
 ### lpeg: Parsing Expression Grammars For Lua
 
@@ -615,3 +646,6 @@ information.
 * **[inspect](https://github.com/kikito/inspect.lua)**:  Human-readable
   representation of Lua tables ([MIT
   license](https://github.com/kikito/inspect.lua/blob/master/MIT-LICENSE.txt))
+* **[TinyCrypt](https://github.com/intel/tinycrypt)**:  tinycrypt is a library
+  of cryptographic algorithms with a focus on small, simple implementation
+  ([License](https://github.com/intel/tinycrypt/blob/master/LICENSE))

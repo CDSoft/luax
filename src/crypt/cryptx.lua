@@ -31,3 +31,10 @@ function string.base64url_decode(s) return crypt.base64url_decode(s) end
 function string.rc4(s, k, d) return crypt.rc4(s, k, d) end
 function string.crc32(s) return crypt.crc32(s) end
 function string.crc64(s) return crypt.crc64(s) end
+
+-- TinyCrypt functions
+
+function string.sha256(s) return crypt.sha256(s) end
+function string.hmac(s, k) return crypt.hmac(s, k) end
+function string.aes_encrypt(s, k) return crypt.aes_encrypt(s, k) end
+function string.aes_decrypt(s, k) return crypt.aes_decrypt(s, k) end

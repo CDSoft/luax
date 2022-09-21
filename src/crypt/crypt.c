@@ -27,11 +27,24 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
+#include "tinycrypt/hmac.h"
+#include <tinycrypt/hmac_prng.h>
+#include "tinycrypt/sha256.h"
+#include "tinycrypt/constants.h"
+#include "tinycrypt/ecc_platform_specific.h"
+#include "tinycrypt/aes.h"
+#include "tinycrypt/cbc_mode.h"
+#include "tinycrypt/ctr_prng.h"
+
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
 
 #include <unistd.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 /******************************************************************************
  * Random number generator
@@ -39,7 +52,7 @@
 
 /* https://en.wikipedia.org/wiki/Linear_congruential_generator */
 
-#define PRNG_MT "luax prng"
+#define PRNG_MT "prng"
 
 typedef struct
 {
@@ -667,11 +680,381 @@ static int crypt_rc4(lua_State *L)
 }
 
 /******************************************************************************
+ * TinyCrypt functions
+ ******************************************************************************/
+
+/* see https://github.com/intel/tinycrypt */
+
+#ifdef _WIN32
+
+/* User platform specific functions not implemented for Windows */
+
+int default_CSPRNG(uint8_t *dest, unsigned int size) {
+    HCRYPTPROV hProv;
+    const LPCSTR UserName = "LuaXKeyContainer";
+    return
+        (  CryptAcquireContext(&hProv, UserName, NULL, PROV_RSA_FULL, 0)
+        || CryptAcquireContext(&hProv, UserName, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET)
+        ) && CryptGenRandom(hProv, size, dest);
+}
+
+#endif
+
+static int crypt_tinycrypt_sha256(lua_State *L)
+{
+    const uint8_t *data = (const uint8_t *)luaL_checkstring(L, 1);
+    const size_t datalen = (size_t)lua_rawlen(L, 1);
+    struct tc_sha256_state_struct s = {0};
+    if (tc_sha256_init(&s) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_sha256_init failed");
+    }
+    if (tc_sha256_update(&s, data, datalen) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_sha256_update failed");
+    }
+    uint8_t digest[TC_SHA256_DIGEST_SIZE];
+    if (tc_sha256_final(digest, &s) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_sha256_final failed");
+    }
+    lua_pushlstring(L, (char *)digest, sizeof(digest));
+    return 1;
+}
+
+static int crypt_tinycrypt_hmac(lua_State *L)
+{
+    const uint8_t *data = (const uint8_t *)luaL_checkstring(L, 1);
+    const size_t datalen = (size_t)lua_rawlen(L, 1);
+    const uint8_t *key = (const uint8_t *)luaL_checkstring(L, 2);
+    const size_t keylen = (size_t)lua_rawlen(L, 2);
+
+    struct tc_hmac_state_struct h = {0};
+    if (tc_hmac_set_key(&h, key, (unsigned int)keylen) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_hmac_set_key failed");
+    }
+    if (tc_hmac_init(&h) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_hmac_init failed");
+    }
+    if (tc_hmac_update(&h, data, (unsigned int)datalen) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_hmac_update failed");
+    }
+    uint8_t digest[TC_SHA256_DIGEST_SIZE];
+    if (tc_hmac_final(digest, TC_SHA256_DIGEST_SIZE, &h) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_hmac_final failed");
+    }
+    lua_pushlstring(L, (char *)digest, sizeof(digest));
+    return 1;
+}
+
+#define HMAC_PRNG_MT "hmac_prng"
+
+static int crypt_tinycrypt_hmac_prng(lua_State *L)
+{
+    const uint8_t *entropy = (const uint8_t *)luaL_checkstring(L, 1);
+    const size_t entropy_len = (size_t)lua_rawlen(L, 1);
+    struct tc_hmac_prng_struct *h = (struct tc_hmac_prng_struct *)lua_newuserdata(L, sizeof(*h));
+    memset(h, 0, sizeof(*h));
+    luaL_setmetatable(L, HMAC_PRNG_MT);
+    if (tc_hmac_prng_init(h, entropy, (unsigned int)entropy_len) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_hmac_prng_init failed");
+    }
+    uint8_t seed[32];
+    default_CSPRNG(seed, sizeof(seed));
+    if (tc_hmac_prng_reseed(h, seed, sizeof(seed), NULL, 0) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_hmac_prng_reseed failed");
+    }
+    return 1;
+}
+
+static int crypt_tinycrypt_hmac_prng_seed(lua_State *L)
+{
+    struct tc_hmac_prng_struct *h = luaL_checkudata(L, 1, HMAC_PRNG_MT);
+    const uint8_t *seed = (const uint8_t *)luaL_checkstring(L, 2);
+    const size_t seed_len = (size_t)lua_rawlen(L, 2);
+    if (tc_hmac_prng_reseed(h, seed, (unsigned int)seed_len, NULL, 0) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_hmac_prng_reseed failed");
+    }
+    return 0;
+}
+
+static int crypt_tinycrypt_hmac_prng_rand(lua_State *L)
+{
+    struct tc_hmac_prng_struct *h = luaL_checkudata(L, 1, HMAC_PRNG_MT);
+    if (lua_type(L, 2) == LUA_TNUMBER)
+    {
+        const size_t bytes = (size_t)luaL_checkinteger(L, 2);
+        char *buffer = safe_malloc(bytes);
+        if (tc_hmac_prng_generate((uint8_t *)buffer, (unsigned int)bytes, h) != TC_CRYPTO_SUCCESS)
+        {
+            free(buffer);
+            return bl_pusherror(L, "tc_hmac_prng_generate failed");
+        }
+        lua_pushlstring(L, buffer, bytes);
+        free(buffer);
+        return 1;
+    }
+    else
+    {
+        lua_Integer n;
+        if (tc_hmac_prng_generate((uint8_t *)&n, (unsigned int)sizeof(n), h) != TC_CRYPTO_SUCCESS)
+        {
+            return bl_pusherror(L, "tc_hmac_prng_generate failed");
+        }
+
+        lua_pushinteger(L, n);
+        return 1;
+    }
+}
+
+static int crypt_tinycrypt_hmac_prng_frand(lua_State *L)
+{
+    struct tc_hmac_prng_struct *h = luaL_checkudata(L, 1, HMAC_PRNG_MT);
+    uint32_t n;
+    if (tc_hmac_prng_generate((uint8_t *)&n, (unsigned int)sizeof(n), h) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_hmac_prng_generate failed");
+    }
+    lua_pushnumber(L, (double)n / (double)(1ULL<<(8*sizeof(uint32_t))));
+    return 1;
+}
+
+static const luaL_Reg hmac_prng_funcs[] =
+{
+    {"seed", crypt_tinycrypt_hmac_prng_seed},
+    {"rand", crypt_tinycrypt_hmac_prng_rand},
+    {"frand", crypt_tinycrypt_hmac_prng_frand},
+    {NULL, NULL},
+};
+
+#define CTR_PRNG_MT "ctr_prng"
+
+static int crypt_tinycrypt_ctr_prng(lua_State *L)
+{
+    const uint8_t *entropy = (const uint8_t *)luaL_checkstring(L, 1);
+    const size_t entropy_len = (size_t)lua_rawlen(L, 1);
+    TCCtrPrng_t *h = (TCCtrPrng_t *)lua_newuserdata(L, sizeof(*h));
+    memset(h, 0, sizeof(*h));
+    luaL_setmetatable(L, CTR_PRNG_MT);
+    if (tc_ctr_prng_init(h, entropy, (unsigned int)entropy_len, NULL, 0) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_ctr_prng_init failed");
+    }
+    uint8_t seed[32];
+    default_CSPRNG(seed, sizeof(seed));
+    if (tc_ctr_prng_reseed(h, seed, sizeof(seed), NULL, 0) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_ctr_prng_reseed failed");
+    }
+    return 1;
+}
+
+static int crypt_tinycrypt_ctr_prng_seed(lua_State *L)
+{
+    TCCtrPrng_t *h = luaL_checkudata(L, 1, CTR_PRNG_MT);
+    const uint8_t *seed = (const uint8_t *)luaL_checkstring(L, 2);
+    const size_t seed_len = (size_t)lua_rawlen(L, 2);
+    if (tc_ctr_prng_reseed(h, seed, (unsigned int)seed_len, NULL, 0) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_ctr_prng_reseed failed");
+    }
+    return 0;
+}
+
+static int crypt_tinycrypt_ctr_prng_rand(lua_State *L)
+{
+    TCCtrPrng_t *h = luaL_checkudata(L, 1, CTR_PRNG_MT);
+    if (lua_type(L, 2) == LUA_TNUMBER)
+    {
+        const size_t bytes = (size_t)luaL_checkinteger(L, 2);
+        char *buffer = safe_malloc(bytes);
+        if (tc_ctr_prng_generate(h, NULL, 0, (uint8_t *)buffer, (unsigned int)bytes) != TC_CRYPTO_SUCCESS)
+        {
+            free(buffer);
+            return bl_pusherror(L, "tc_ctr_prng_generate failed");
+        }
+        lua_pushlstring(L, buffer, bytes);
+        free(buffer);
+        return 1;
+    }
+    else
+    {
+        lua_Integer n;
+        if (tc_ctr_prng_generate(h, NULL, 0, (uint8_t *)&n, (unsigned int)sizeof(n)) != TC_CRYPTO_SUCCESS)
+        {
+            return bl_pusherror(L, "tc_ctr_prng_generate failed");
+        }
+
+        lua_pushinteger(L, n);
+        return 1;
+    }
+}
+
+static int crypt_tinycrypt_ctr_prng_frand(lua_State *L)
+{
+    TCCtrPrng_t *h = luaL_checkudata(L, 1, CTR_PRNG_MT);
+    uint32_t n;
+    if (tc_ctr_prng_generate(h, NULL, 0, (uint8_t *)&n, (unsigned int)sizeof(n)) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_ctr_prng_generate failed");
+    }
+    lua_pushnumber(L, (double)n / (double)(1ULL<<(8*sizeof(uint32_t))));
+    return 1;
+}
+
+static const luaL_Reg ctr_prng_funcs[] =
+{
+    {"seed", crypt_tinycrypt_ctr_prng_seed},
+    {"rand", crypt_tinycrypt_ctr_prng_rand},
+    {"frand", crypt_tinycrypt_ctr_prng_frand},
+    {NULL, NULL},
+};
+
+static inline void htole(uint32_t n, uint8_t *bs)
+{
+    bs[0] = (n >> (0*8)) & 0xFF;
+    bs[1] = (n >> (1*8)) & 0xFF;
+    bs[2] = (n >> (2*8)) & 0xFF;
+    bs[3] = (n >> (3*8)) & 0xFF;
+}
+
+static inline uint32_t letoh(uint8_t *bs)
+{
+    return (uint32_t)( (bs[0] << (0*8))
+                     | (bs[1] << (1*8))
+                     | (bs[2] << (2*8))
+                     | (bs[3] << (3*8))
+                     );
+}
+
+static int crypt_tinycrypt_aes128_encrypt(lua_State *L)
+{
+    const uint8_t *plaintext = (const uint8_t *)luaL_checkstring(L, 1);
+    const size_t plaintext_len = (size_t)lua_rawlen(L, 1);
+    const uint8_t *key = (const uint8_t *)luaL_checkstring(L, 2);
+    const size_t key_len = (size_t)lua_rawlen(L, 2);
+
+    /* The encryption key is a 128-bit hash of the key parameter */
+    struct tc_sha256_state_struct s = {0};
+    if (tc_sha256_init(&s) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_sha256_init failed");
+    }
+    if (tc_sha256_update(&s, key, key_len) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_sha256_update failed");
+    }
+    uint8_t key_hash[TC_SHA256_DIGEST_SIZE];
+    if (tc_sha256_final(key_hash, &s) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_sha256_final failed");
+    }
+
+    /* Set encryption key */
+    struct tc_aes_key_sched_struct a;
+    if (tc_aes128_set_encrypt_key(&a, key_hash) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_aes128_set_decrypt_key failed");
+    }
+
+    /* CBC mode + random IV */
+    const size_t plaintext_buffer_len = (plaintext_len+sizeof(uint32_t) + TC_AES_BLOCK_SIZE-1) / TC_AES_BLOCK_SIZE * TC_AES_BLOCK_SIZE;
+    uint8_t *plaintext_buffer = safe_malloc(plaintext_buffer_len);
+    const uint32_t plaintext_len32 = (uint32_t)plaintext_len;
+    htole(plaintext_len32, &plaintext_buffer[0]);
+    memcpy(&plaintext_buffer[sizeof(uint32_t)], plaintext, plaintext_len);
+    default_CSPRNG(&plaintext_buffer[sizeof(uint32_t)+plaintext_len], (unsigned int)(plaintext_buffer_len-plaintext_len-sizeof(plaintext_len32)));
+    uint8_t iv_buffer[TC_AES_BLOCK_SIZE];
+    default_CSPRNG(iv_buffer, sizeof(iv_buffer));
+    const size_t encrypted_len = plaintext_buffer_len + TC_AES_BLOCK_SIZE;
+    uint8_t *encrypted = safe_malloc(encrypted_len);
+    if (tc_cbc_mode_encrypt(
+            encrypted, (unsigned int)encrypted_len,
+            plaintext_buffer, (unsigned int)plaintext_buffer_len,
+            iv_buffer,
+            &a) != TC_CRYPTO_SUCCESS)
+    {
+        free(plaintext_buffer);
+        free(encrypted);
+        return bl_pusherror(L, "tc_cbc_mode_encrypt failed");
+    }
+    free(plaintext_buffer);
+
+    lua_pushlstring(L, (const char *)encrypted, encrypted_len);
+    free(encrypted);
+    return 1;
+}
+
+static int crypt_tinycrypt_aes128_decrypt(lua_State *L)
+{
+    const uint8_t *encrypted = (const uint8_t *)luaL_checkstring(L, 1);
+    const size_t encrypted_len = (size_t)lua_rawlen(L, 1);
+    const uint8_t *key = (const uint8_t *)luaL_checkstring(L, 2);
+    const size_t key_len = (size_t)lua_rawlen(L, 2);
+
+    if (encrypted_len < sizeof(uint32_t) + TC_AES_BLOCK_SIZE)
+    {
+        return bl_pusherror(L, "Invalid encrypted string size");
+    }
+
+    /* The decryption key is a 128-bit hash of the key parameter */
+    struct tc_sha256_state_struct s = {0};
+    if (tc_sha256_init(&s) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_sha256_init failed");
+    }
+    if (tc_sha256_update(&s, key, key_len) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_sha256_update failed");
+    }
+    uint8_t key_hash[TC_SHA256_DIGEST_SIZE];
+    if (tc_sha256_final(key_hash, &s) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_sha256_final failed");
+    }
+
+    /* Set decryption key */
+    struct tc_aes_key_sched_struct a;
+    if (tc_aes128_set_decrypt_key(&a, key_hash) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_aes128_set_decrypt_key failed");
+    }
+
+    /* CBC mode + random IV */
+    uint8_t iv_buffer[TC_AES_BLOCK_SIZE];
+    default_CSPRNG(iv_buffer, sizeof(iv_buffer));
+    const size_t decrypted_len = encrypted_len - TC_AES_BLOCK_SIZE;
+    uint8_t *decrypted = safe_malloc(decrypted_len + TC_AES_BLOCK_SIZE);
+    if (tc_cbc_mode_decrypt(
+            decrypted, (unsigned int)decrypted_len,
+            &encrypted[TC_AES_BLOCK_SIZE], (unsigned int)decrypted_len,
+            encrypted,
+            &a) != TC_CRYPTO_SUCCESS)
+    {
+        free(decrypted);
+        return bl_pusherror(L, "tc_cbc_mode_decrypt failed");
+    }
+    const uint32_t plaintext_len32 = letoh(&decrypted[0]);
+
+    lua_pushlstring(L, (const char *)&decrypted[sizeof(uint32_t)], plaintext_len32);
+    free(decrypted);
+    return 1;
+}
+
+/******************************************************************************
  * Crypt package
  ******************************************************************************/
 
 static const luaL_Reg crypt_module[] =
 {
+    /* LuaX functions */
     {"srand", crypt_srand},
     {"rand", crypt_rand},
     {"frand", crypt_frand},
@@ -685,6 +1068,15 @@ static const luaL_Reg crypt_module[] =
     {"rc4", crypt_rc4},
     {"crc32", crypt_crc32},
     {"crc64", crypt_crc64},
+
+    /* TinyCrypt functions */
+    {"sha256", crypt_tinycrypt_sha256},
+    {"hmac", crypt_tinycrypt_hmac},
+    {"hmac_prng", crypt_tinycrypt_hmac_prng},
+    {"ctr_prng", crypt_tinycrypt_ctr_prng},
+    {"aes_encrypt", crypt_tinycrypt_aes128_encrypt},
+    {"aes_decrypt", crypt_tinycrypt_aes128_decrypt},
+
     {NULL, NULL}
 };
 
@@ -696,6 +1088,8 @@ static inline void set_integer(lua_State *L, const char *name, lua_Integer val)
 
 LUAMOD_API int luaopen_crypt(lua_State *L)
 {
+    /* LuaX crypt initialization */
+
     luaL_newmetatable(L, PRNG_MT);
     luaL_setfuncs(L, prng_funcs, 0);
     lua_pushliteral(L, "__index");
@@ -703,6 +1097,22 @@ LUAMOD_API int luaopen_crypt(lua_State *L)
     lua_settable(L, -3);
 
     prng_srand(&prng, prng_default_seed());
+
+    /* TinyCrypt initialization */
+
+    luaL_newmetatable(L, HMAC_PRNG_MT);
+    luaL_setfuncs(L, hmac_prng_funcs, 0);
+    lua_pushliteral(L, "__index");
+    lua_pushvalue(L, -2);
+    lua_settable(L, -3);
+
+    luaL_newmetatable(L, CTR_PRNG_MT);
+    luaL_setfuncs(L, ctr_prng_funcs, 0);
+    lua_pushliteral(L, "__index");
+    lua_pushvalue(L, -2);
+    lua_settable(L, -3);
+
+    /* module initialization */
 
     luaL_newlib(L, crypt_module);
     set_integer(L, "RAND_MAX", CRYPT_MAX_RAND);
