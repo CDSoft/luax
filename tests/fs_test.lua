@@ -36,7 +36,7 @@ return function()
     if sys.os == "linux" or sys.os == "macos" then
         cwd = io.popen("pwd"):read("a"):trim()
     end
-    if sys.platform == "windows" then
+    if sys.os == "windows" then
         cwd = io.popen("cd"):read("a"):trim()
     end
 
@@ -110,7 +110,7 @@ return function()
     eq(stat_foo.name, fs.join(tmp, "foo"))
     eq(stat_foo.type, "directory")
 
-    if sys.platform == "Linux" then
+    if sys.os == "linux" then
         local f1 = fs.join(tmp, "f1.txt")
         local f2 = fs.join(tmp, "f2.txt")
         fs.chmod(fs.join(tmp, "f1.txt"), 0)
@@ -179,7 +179,7 @@ return function()
     eq(fs.realpath("\\foo"), nil) -- unknown file
     eq(fs.realpath("Z:foo"), nil) -- unknown file
 
-    eq(fs.sep, sys.platform == "Windows" and "\\" or "/")
+    eq(fs.sep, sys.os == "windows" and "\\" or "/")
 
     eq(fs.rmdir(tmp), true)
 
