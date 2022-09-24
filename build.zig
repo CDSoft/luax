@@ -151,11 +151,14 @@ pub fn build(b: *std.build.Builder) !void {
 
     var page = std.heap.page_allocator;
 
+    const runtime_name = std.os.getenv("RUNTIME_NAME");
+    const runtime = std.os.getenv("RUNTIME");
+
     const ARCH = (try std.fmt.allocPrint(page, "{s}", .{target.cpu_arch}))[5..];
     const OS = (try std.fmt.allocPrint(page, "{s}", .{target.os_tag}))[4..];
     const ABI = (try std.fmt.allocPrint(page, "{s}", .{target.abi}))[4..];
 
-    const exe_name = try std.fmt.allocPrint(page, "lrun-{s}-{s}-{s}", .{ARCH, OS, ABI});
+    const exe_name = try std.fmt.allocPrint(page, "{s}-{s}-{s}-{s}", .{runtime_name, ARCH, OS, ABI});
 
     const exe = b.addExecutable(exe_name, null);
     exe.single_threaded = true;
@@ -190,6 +193,7 @@ pub fn build(b: *std.build.Builder) !void {
         "-Wno-used-but-marked-unused",
         "-Wno-documentation",
         "-Wno-documentation-unknown-command",
+        try std.fmt.allocPrint(page, "-DRUNTIME={s}", .{runtime}),
         try std.fmt.allocPrint(page, "-DLUAX_ARCH=\"{s}\"", .{ARCH}),
         try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),
         try std.fmt.allocPrint(page, "-DLUAX_ABI=\"{s}\"", .{ABI}),

@@ -41,7 +41,7 @@ TARGETS += aarch64-macos-gnu
 RUNTIMES = $(patsubst %-windows-gnu,%-windows-gnu.exe,$(patsubst %,$(BUILD)/lrun-%,$(TARGETS)))
 LUAX_BINARIES := $(patsubst $(BUILD)/lrun-%,$(BUILD)/luax-%,$(RUNTIMES))
 
-LUA = $(BUILD)/lua
+LUA = $(BUILD)/lua0-$(ARCH)-$(OS)-$(LIBC)
 LUA_SOURCES := $(sort $(wildcard lua/*))
 
 LUAX_SOURCES := $(sort $(shell find src -name "*.[ch]"))
@@ -380,14 +380,14 @@ $(ZIG_ARCHIVE):
 # avoid being polluted by user definitions
 export LUA_PATH := ./?.lua
 
-$(LUA): $(ZIG) $(LUA_SOURCES) build-lua.zig
+$(LUA): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) build.zig
 	@$(call cyan,"ZIG",$@)
-	@$(ZIG) build \
+	@RUNTIME_NAME=lua0 RUNTIME=0 $(ZIG) build \
 		--cache-dir $(ZIG_CACHE) \
 		--prefix $(dir $@) --prefix-exe-dir "" \
 		-D$(RELEASE) \
 		-Dtarget=$(ARCH)-$(OS)-$(LIBC) \
-		--build-file build-lua.zig
+		--build-file build.zig
 	@touch $@
 
 ###############################################################################
@@ -421,15 +421,15 @@ $(LUAX_RUNTIME_BUNDLE): $(LUA) $(LUAX_RUNTIME) tools/bundle.lua tools/build_bund
 # Runtimes
 ###############################################################################
 
-$(BUILD)/lrun-%: $(ZIG) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build-run.zig
+$(BUILD)/lrun-%: $(ZIG) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
-	@$(ZIG) build \
+	@RUNTIME_NAME=lrun RUNTIME=1 $(ZIG) build \
 		--cache-dir $(ZIG_CACHE) \
 		--prefix $(dir $@) --prefix-exe-dir "" \
 		-D$(RELEASE) \
 		-Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD)/lrun-%,%,$@)) \
-		--build-file build-run.zig
+		--build-file build.zig
 	@touch $@
 
 ###############################################################################
