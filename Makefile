@@ -380,7 +380,7 @@ $(ZIG_ARCHIVE):
 # avoid being polluted by user definitions
 export LUA_PATH := ./?.lua
 
-$(LUA): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) build.zig
+$(LUA): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
 	@$(call cyan,"ZIG",$@)
 	@RUNTIME_NAME=lua0 RUNTIME=0 $(ZIG) build \
 		--cache-dir $(ZIG_CACHE) \
@@ -396,14 +396,13 @@ $(LUA): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) build.zig
 
 CRYPT_KEY_HASH := $(shell echo -n $(CRYPT_KEY) | sha512sum -b | cut -d" " -f1 | sed 's/\(..\)/\\x\1/g')
 
-$(LUAX_CONFIG): $(wildcard .git/refs/tags) $(wildcard .git/index) $(LUA) tools/bundle.lua
+$(LUAX_CONFIG): $(wildcard .git/refs/tags) $(wildcard .git/index) tools/bundle.lua
 	@$(call cyan,"GEN",$@)
 	@mkdir -p $(dir $@)
 	@(  set -eu;                                                                                \
 	    echo "#pragma once";                                                                    \
 	    echo "#define LUAX_VERSION \"`git describe --tags || echo undefined`\"";                \
 	    echo "#define LUAX_CRYPT_KEY \"$(CRYPT_KEY_HASH)\"";                                    \
-	    $(LUA) -e "print(('#define MAGIC 0x%016XULL'):format(require 'tools/bundle'.magic))"    \
 	) > $@.tmp
 	@mv $@.tmp $@
 
@@ -421,7 +420,7 @@ $(LUAX_RUNTIME_BUNDLE): $(LUA) $(LUAX_RUNTIME) tools/bundle.lua tools/build_bund
 # Runtimes
 ###############################################################################
 
-$(BUILD)/lrun-%: $(ZIG) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
+$(BUILD)/lrun-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
 	@RUNTIME_NAME=lrun RUNTIME=1 $(ZIG) build \

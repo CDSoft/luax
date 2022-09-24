@@ -637,9 +637,12 @@ static void rc4(const char *key, size_t key_size, size_t drop, const char *input
     }
 }
 
-void rc4_runtime(const char *input, size_t size, char *output)
+const char *rc4_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
 {
-    rc4(LUAX_CRYPT_KEY, sizeof(LUAX_CRYPT_KEY)-1, RC4_DROP_3072, input, size, output);
+    *output = safe_malloc(input_len);
+    rc4(LUAX_CRYPT_KEY, sizeof(LUAX_CRYPT_KEY)-1, RC4_DROP_3072, input, input_len, *output);
+    *output_len = input_len;
+    return NULL;
 }
 
 static int crypt_rc4(lua_State *L)
@@ -665,13 +668,15 @@ static int crypt_rc4(lua_State *L)
         drop = (size_t)luaL_checkinteger(L, 3);
     }
 
-    char *out = safe_malloc(n);
+    char *out = NULL;
     if (key == NULL)
     {
-        rc4_runtime(in, n, out);
+        size_t out_len = 0;
+        rc4_runtime(in, n, &out, &out_len);
     }
     else
     {
+        out = safe_malloc(n);
         rc4(key, key_size, drop, in, n, out);
     }
     lua_pushlstring(L, out, n);
@@ -934,34 +939,29 @@ static inline uint32_t letoh(uint8_t *bs)
                      );
 }
 
-static int crypt_tinycrypt_aes128_encrypt(lua_State *L)
+static const char *aes_encrypt(const uint8_t *plaintext, const size_t plaintext_len, const uint8_t *key, const size_t key_len, uint8_t **encrypted, size_t *encrypted_len)
 {
-    const uint8_t *plaintext = (const uint8_t *)luaL_checkstring(L, 1);
-    const size_t plaintext_len = (size_t)lua_rawlen(L, 1);
-    const uint8_t *key = (const uint8_t *)luaL_checkstring(L, 2);
-    const size_t key_len = (size_t)lua_rawlen(L, 2);
-
     /* The encryption key is a 128-bit hash of the key parameter */
     struct tc_sha256_state_struct s = {0};
     if (tc_sha256_init(&s) != TC_CRYPTO_SUCCESS)
     {
-        return bl_pusherror(L, "tc_sha256_init failed");
+        return "tc_sha256_init failed";
     }
     if (tc_sha256_update(&s, key, key_len) != TC_CRYPTO_SUCCESS)
     {
-        return bl_pusherror(L, "tc_sha256_update failed");
+        return "tc_sha256_update failed";
     }
     uint8_t key_hash[TC_SHA256_DIGEST_SIZE];
     if (tc_sha256_final(key_hash, &s) != TC_CRYPTO_SUCCESS)
     {
-        return bl_pusherror(L, "tc_sha256_final failed");
+        return "tc_sha256_final failed";
     }
 
     /* Set encryption key */
     struct tc_aes_key_sched_struct a;
     if (tc_aes128_set_encrypt_key(&a, key_hash) != TC_CRYPTO_SUCCESS)
     {
-        return bl_pusherror(L, "tc_aes128_set_decrypt_key failed");
+        return "tc_aes128_set_decrypt_key failed";
     }
 
     /* CBC mode + random IV */
@@ -973,78 +973,147 @@ static int crypt_tinycrypt_aes128_encrypt(lua_State *L)
     default_CSPRNG(&plaintext_buffer[sizeof(uint32_t)+plaintext_len], (unsigned int)(plaintext_buffer_len-plaintext_len-sizeof(plaintext_len32)));
     uint8_t iv_buffer[TC_AES_BLOCK_SIZE];
     default_CSPRNG(iv_buffer, sizeof(iv_buffer));
-    const size_t encrypted_len = plaintext_buffer_len + TC_AES_BLOCK_SIZE;
-    uint8_t *encrypted = safe_malloc(encrypted_len);
+    *encrypted_len = plaintext_buffer_len + TC_AES_BLOCK_SIZE;
+    *encrypted = safe_malloc(*encrypted_len);
     if (tc_cbc_mode_encrypt(
-            encrypted, (unsigned int)encrypted_len,
+            *encrypted, (unsigned int)*encrypted_len,
             plaintext_buffer, (unsigned int)plaintext_buffer_len,
             iv_buffer,
             &a) != TC_CRYPTO_SUCCESS)
     {
         free(plaintext_buffer);
-        free(encrypted);
-        return bl_pusherror(L, "tc_cbc_mode_encrypt failed");
+        free(*encrypted);
+        return "tc_cbc_mode_encrypt failed";
     }
     free(plaintext_buffer);
+
+    return NULL; /* no error */
+}
+
+const char *aes_encrypt_runtime(const uint8_t *plaintext, const size_t plaintext_len, uint8_t **encrypted, size_t *encrypted_len)
+{
+    return aes_encrypt(plaintext, plaintext_len, (const uint8_t *)LUAX_CRYPT_KEY, sizeof(LUAX_CRYPT_KEY)-1, encrypted, encrypted_len);
+}
+
+static int crypt_tinycrypt_aes128_encrypt(lua_State *L)
+{
+    const uint8_t *plaintext = (const uint8_t *)luaL_checkstring(L, 1);
+    const size_t plaintext_len = (size_t)lua_rawlen(L, 1);
+    const uint8_t *key = NULL;
+    size_t key_len = 0;
+    if (!lua_isnoneornil(L, 2)) {
+        key = (const uint8_t *)luaL_checkstring(L, 2);
+        key_len = (size_t)lua_rawlen(L, 2);
+    }
+    uint8_t *encrypted;
+    size_t encrypted_len;
+
+    const char *err;
+    if (key == NULL)
+    {
+        err = aes_encrypt_runtime(plaintext, plaintext_len, &encrypted, &encrypted_len);
+    }
+    else
+    {
+        err = aes_encrypt(plaintext, plaintext_len, key, key_len, &encrypted, &encrypted_len);
+    }
+    if (err != NULL)
+    {
+        return bl_pusherror(L, err);
+    }
 
     lua_pushlstring(L, (const char *)encrypted, encrypted_len);
     free(encrypted);
     return 1;
 }
 
-static int crypt_tinycrypt_aes128_decrypt(lua_State *L)
+static const char *aes_decrypt(const uint8_t *encrypted, const size_t encrypted_len, const uint8_t *key, const size_t key_len, uint8_t **decrypted_buffer, uint8_t **decrypted, size_t *decrypted_len)
 {
-    const uint8_t *encrypted = (const uint8_t *)luaL_checkstring(L, 1);
-    const size_t encrypted_len = (size_t)lua_rawlen(L, 1);
-    const uint8_t *key = (const uint8_t *)luaL_checkstring(L, 2);
-    const size_t key_len = (size_t)lua_rawlen(L, 2);
-
     if (encrypted_len < sizeof(uint32_t) + TC_AES_BLOCK_SIZE)
     {
-        return bl_pusherror(L, "Invalid encrypted string size");
+        return "Invalid encrypted string size";
     }
 
     /* The decryption key is a 128-bit hash of the key parameter */
     struct tc_sha256_state_struct s = {0};
     if (tc_sha256_init(&s) != TC_CRYPTO_SUCCESS)
     {
-        return bl_pusherror(L, "tc_sha256_init failed");
+        return "tc_sha256_init failed";
     }
     if (tc_sha256_update(&s, key, key_len) != TC_CRYPTO_SUCCESS)
     {
-        return bl_pusherror(L, "tc_sha256_update failed");
+        return "tc_sha256_update failed";
     }
     uint8_t key_hash[TC_SHA256_DIGEST_SIZE];
     if (tc_sha256_final(key_hash, &s) != TC_CRYPTO_SUCCESS)
     {
-        return bl_pusherror(L, "tc_sha256_final failed");
+        return "tc_sha256_final failed";
     }
 
     /* Set decryption key */
     struct tc_aes_key_sched_struct a;
     if (tc_aes128_set_decrypt_key(&a, key_hash) != TC_CRYPTO_SUCCESS)
     {
-        return bl_pusherror(L, "tc_aes128_set_decrypt_key failed");
+        return "tc_aes128_set_decrypt_key failed";
     }
 
     /* CBC mode + random IV */
     uint8_t iv_buffer[TC_AES_BLOCK_SIZE];
     default_CSPRNG(iv_buffer, sizeof(iv_buffer));
-    const size_t decrypted_len = encrypted_len - TC_AES_BLOCK_SIZE;
-    uint8_t *decrypted = safe_malloc(decrypted_len + TC_AES_BLOCK_SIZE);
+    *decrypted_len = encrypted_len - TC_AES_BLOCK_SIZE;
+    *decrypted = safe_malloc(*decrypted_len + TC_AES_BLOCK_SIZE);
     if (tc_cbc_mode_decrypt(
-            decrypted, (unsigned int)decrypted_len,
-            &encrypted[TC_AES_BLOCK_SIZE], (unsigned int)decrypted_len,
+            *decrypted, (unsigned int)*decrypted_len,
+            &encrypted[TC_AES_BLOCK_SIZE], (unsigned int)*decrypted_len,
             encrypted,
             &a) != TC_CRYPTO_SUCCESS)
     {
-        free(decrypted);
-        return bl_pusherror(L, "tc_cbc_mode_decrypt failed");
+        free(*decrypted);
+        return "tc_cbc_mode_decrypt failed";
     }
-    const uint32_t plaintext_len32 = letoh(&decrypted[0]);
+    const uint32_t plaintext_len32 = letoh(&(*decrypted)[0]);
+    *decrypted_len = (size_t)plaintext_len32;
+    *decrypted_buffer = *decrypted;
+    *decrypted += sizeof(uint32_t);
 
-    lua_pushlstring(L, (const char *)&decrypted[sizeof(uint32_t)], plaintext_len32);
-    free(decrypted);
+    return NULL; /* no error */
+}
+
+const char *aes_decrypt_runtime(const uint8_t *encrypted, const size_t encrypted_len, uint8_t **decrypted_buffer, uint8_t **decrypted, size_t *decrypted_len)
+{
+    return aes_decrypt(encrypted, encrypted_len, (const uint8_t *)LUAX_CRYPT_KEY, sizeof(LUAX_CRYPT_KEY)-1, decrypted_buffer, decrypted, decrypted_len);
+}
+
+static int crypt_tinycrypt_aes128_decrypt(lua_State *L)
+{
+    const uint8_t *encrypted = (const uint8_t *)luaL_checkstring(L, 1);
+    const size_t encrypted_len = (size_t)lua_rawlen(L, 1);
+    const uint8_t *key = NULL;
+    size_t key_len = 0;
+    if (!lua_isnoneornil(L, 2)) {
+        key = (const uint8_t *)luaL_checkstring(L, 2);
+        key_len = (size_t)lua_rawlen(L, 2);
+    }
+    uint8_t *decrypted_buffer;
+    uint8_t *decrypted;
+    size_t decrypted_len;
+
+    const char *err;
+    if (key == NULL)
+    {
+        err = aes_decrypt_runtime(encrypted, encrypted_len, &decrypted_buffer, &decrypted, &decrypted_len);
+    }
+    else
+    {
+        err = aes_decrypt(encrypted, encrypted_len, key, key_len, &decrypted_buffer, &decrypted, &decrypted_len);
+    }
+    if (err != NULL)
+    {
+        return bl_pusherror(L, err);
+    }
+
+    lua_pushlstring(L, (const char *)decrypted, decrypted_len);
+    free(decrypted_buffer);
     return 1;
 }
 

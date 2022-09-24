@@ -54,8 +54,12 @@
 typedef struct
 {
     uint32_t size;
-    uint32_t magic;
+    char magic[4];
 } t_header;
+
+#if RUNTIME == 1
+static const char magic[4] = "LuaX";
+#endif
 
 static const luaL_Reg lrun_libs[] = {
     {"std", luaopen_std},
@@ -129,26 +133,13 @@ static int traceback(lua_State *L)
     return 0;
 }
 
-static void decode(const char *input, size_t size, char *output)
+static void decode(const char *input, size_t input_len, char **output_buffer, char **output, size_t *output_len)
 {
-    /* Important: decode shall be able to decode the input in place.
-     * I.e. output == input when decoding the playload.
-     */
-    switch (input[size-1])
+    const char *err = aes_decrypt_runtime((const uint8_t *)input, input_len, (uint8_t **)output_buffer, (uint8_t **)output, output_len);
+    if (err != NULL)
     {
-        case '-':
-            output[0] = input[0];
-            for (size_t i = 1; i < size-1; i++)
-            {
-                output[i] = output[i-1] + input[i];
-            }
-            break;
-        case '#':
-            rc4_runtime(input, size-1, output);
-            break;
-        default:
-            /* unknown encoding, let it fail */
-            break;
+        fprintf(stderr, "Runtime error: %s\n", err);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -195,10 +186,12 @@ int main(int argc, const char *argv[])
     }
 
 #if RUNTIME == 1
-    char *rt_chunk = safe_malloc(sizeof(runtime_chunk));
-    decode(runtime_chunk, sizeof(runtime_chunk), rt_chunk);
-    run_buffer(L, rt_chunk, sizeof(runtime_chunk)-1, "=runtime", argv[0]);
-    free(rt_chunk);
+    char *rt_chunk_buffer = NULL;
+    char *rt_chunk = NULL;
+    size_t rt_chunk_len = 0;
+    decode(runtime_chunk, sizeof(runtime_chunk), &rt_chunk_buffer, &rt_chunk, &rt_chunk_len);
+    run_buffer(L, rt_chunk, rt_chunk_len, "=runtime", argv[0]);
+    free(rt_chunk_buffer);
 #endif
 
 #if RUNTIME == 1
@@ -213,9 +206,8 @@ int main(int argc, const char *argv[])
     t_header header;
     fseek(f, -(long)sizeof(header), SEEK_END);
     if (fread(&header, sizeof(header), 1, f) != 1) perror(argv[0]);
-    header.magic = letoh((uint8_t*)&header.magic);
     header.size = letoh((uint8_t*)&header.size);
-    if (header.magic != MAGIC)
+    if (strncmp(header.magic, magic, sizeof(magic)) != 0)
     {
         /* The runtime contains no application */
         error(argv[0], "Lua application not found");
@@ -225,9 +217,13 @@ int main(int argc, const char *argv[])
     char *chunk = safe_malloc(header.size);
     if (fread(chunk, header.size, 1, f) != 1) perror(argv[0]);
     fclose(f);
-    decode(chunk, header.size, chunk); /* decode chunk in place */
-    const int status = run_buffer(L, chunk, header.size-1, "=", argv[0]);
+    char *decoded_chunk_buffer = NULL;
+    char *decoded_chunk = NULL;
+    size_t decoded_chunk_len = 0;
+    decode(chunk, header.size, &decoded_chunk_buffer, &decoded_chunk, &decoded_chunk_len);
     free(chunk);
+    const int status = run_buffer(L, decoded_chunk, decoded_chunk_len, "=", argv[0]);
+    free(decoded_chunk_buffer);
 
     lua_close(L);
 
@@ -239,13 +235,13 @@ int main(int argc, const char *argv[])
      * Lua script execution (bootstrap interpretor with no LuaX runtime and payload)
      **************************************************************************/
 
+    luaL_dostring(L, "arg[0] = arg[1]; table.remove(arg, 1)");
     if (argc == 3 && strcmp(argv[1], "-e") == 0)
     {
         luaL_dostring(L, argv[2]);
     }
     else if (argc > 1)
     {
-        luaL_dostring(L, "arg[0] = arg[1]; table.remove(arg, 1)");
         luaL_dofile(L, argv[1]);
     }
     else

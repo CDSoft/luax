@@ -20,10 +20,6 @@ http://cdelord.fr/luax
 
 -- bundle a set of scripts into a single Lua script that can be added to the runtime
 
--- WARNING: bundle.lua is used to create the first LuaX executable
--- and is executed by a standard Lua interpretor.
--- It can not use LuaX packages such as fun or fs.
-
 local bundle = {}
 
 bundle.magic = string.unpack("<I4", "LuaX")
@@ -130,22 +126,10 @@ function bundle.bundle(arg)
     end
     plain.emit "end\n"
 
-    local encoded = Bundle()
-    if string.rc4 then
-        encoded.emit(plain.get():rc4())
-        encoded.emit "#"
-    else
-        local chunk = plain.get()
-        encoded.emit(("B"):pack(chunk:byte(1)))
-        for i = 2, #chunk do
-            encoded.emit(("B"):pack((chunk:byte(i)-chunk:byte(i-1)) & 0xFF))
-        end
-        encoded.emit "-"
-    end
+    local payload = require"crypt".aes_encrypt(plain.get())
 
     if format == "binary" then
         local chunk = Bundle()
-        local payload = encoded.get()
         local header = header_format:pack(#payload, bundle.magic)
         chunk.emit(payload)
         chunk.emit(header)
@@ -154,7 +138,7 @@ function bundle.bundle(arg)
 
     if format == "ascii" then
         local hex = Bundle()
-        local _ = encoded.get():gsub(".", function(c)
+        local _ = payload:gsub(".", function(c)
             hex.emit(("'\\x%02X',"):format(c:byte()))
         end)
         hex.emit "\n"
