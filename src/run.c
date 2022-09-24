@@ -48,6 +48,7 @@
 #include "complex/complex.h"
 #include "linenoise/linenoise.h"
 #include "socket/luasocket.h"
+#include "lz4/lz4.h"
 
 typedef struct
 {
@@ -68,6 +69,7 @@ static const luaL_Reg lrun_libs[] = {
     {"qmath", luaopen_qmath},
     {"complex", luaopen_complex},
     {"socket", luaopen_luasocket},
+    {"lz4", luaopen_lz4},
     {NULL, NULL},
 };
 

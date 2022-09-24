@@ -20,6 +20,7 @@ const std = @import("std");
 
 const lua_src = "lua";
 const tinycrypt_src = "src/crypt/tinycrypt";
+const lz4_src = "src/lz4/lz4";
 const src_path = "src";
 const build_path = ".build";
 
@@ -73,6 +74,7 @@ const luax_c_files = [_][]const u8 {
     "src/complex/complex.c",
     "src/linenoise/linenoise.c",
     "src/socket/luasocket.c",
+    "src/lz4/lz4.c",
 };
 
 const third_party_c_files = [_][]const u8 {
@@ -116,6 +118,11 @@ const third_party_c_files = [_][]const u8 {
     "src/crypt/tinycrypt/hmac_prng.c",
     "src/crypt/tinycrypt/sha256.c",
     "src/crypt/tinycrypt/utils.c",
+    "src/lz4/lz4/lz4.c",
+    "src/lz4/lz4/lz4file.c",
+    "src/lz4/lz4/lz4frame.c",
+    "src/lz4/lz4/lz4hc.c",
+    "src/lz4/lz4/xxhash.c",
 };
 
 const linux_third_party_c_files = [_][]const u8 {
@@ -161,6 +168,7 @@ pub fn build(b: *std.build.Builder) !void {
     exe.addIncludeDir(build_path);
     exe.addIncludeDir(lua_src);
     exe.addIncludeDir(tinycrypt_src);
+    exe.addIncludeDir(lz4_src);
     exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
@@ -181,6 +189,7 @@ pub fn build(b: *std.build.Builder) !void {
         "-Wno-disabled-macro-expansion",
         "-Wno-used-but-marked-unused",
         "-Wno-documentation",
+        "-Wno-documentation-unknown-command",
         try std.fmt.allocPrint(page, "-DLUAX_ARCH=\"{s}\"", .{ARCH}),
         try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),
         try std.fmt.allocPrint(page, "-DLUAX_ABI=\"{s}\"", .{ABI}),

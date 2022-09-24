@@ -18,22 +18,9 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
--- Check the test environment first
-require "test_test"()
+-- functions added to the string package
 
--- luax builtins
-require "arg_test"()
-require "require_test"()
+local lz4 = require "lz4"
 
--- luax libraries
-require "fun_test"()
-require "string_test"()
-require "sys_test"()
-require "fs_test"()
-require "ps_test"()
-require "crypt_test"()
-require "lpeg_test"()
-require "complex_test"()
-require "socket_test"()
-require "inspect_test"()
-require "lz4_test"()
+function string.lz4_compress(s, ...) return lz4.compress(s, ...) end
+function string.lz4_decompress(s, ...) return lz4.decompress(s, ...) end

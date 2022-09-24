@@ -22,6 +22,7 @@ local autoexec = {
     ["src/crypt/cryptx.lua"]    = true,
     ["src/fs/fsx.lua"]          = true,
     ["src/std/stringx.lua"]     = true,
+    ["src/lz4/lz4x.lua"]        = true,
 }
 
 local submodule = {

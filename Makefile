@@ -155,6 +155,7 @@ mrproper: clean
 .PHONY: update-lpeg
 .PHONY: update-inspect
 .PHONY: update-tinycrypt
+.PHONY: update-lz4
 
 LUA_VERSION = 5.4.4
 LUA_ARCHIVE = lua-$(LUA_VERSION).tar.gz
@@ -192,6 +193,10 @@ TINYCRYPT_VERSION = master
 TINYCRYPT_ARCHIVE = tinycrypt-$(TINYCRYPT_VERSION).zip
 TINYCRYPT_URL = https://github.com/intel/tinycrypt/archive/refs/heads/$(TINYCRYPT_VERSION).zip
 
+LZ4_VERSION = release
+LZ4_ARCHIVE = lz4-$(LZ4_VERSION).zip
+LZ4_URL = https://github.com/lz4/lz4/archive/refs/heads/$(LZ4_VERSION).zip
+
 ## Update the source code of third party packages
 update: update-lua
 update: update-lcomplex
@@ -203,6 +208,7 @@ update: update-luasocket
 update: update-lpeg
 update: update-inspect
 update: update-tinycrypt
+update: update-lz4
 
 ## Update Lua sources
 update-lua: $(BUILD)/$(LUA_ARCHIVE)
@@ -307,6 +313,16 @@ update-tinycrypt: $(BUILD)/$(TINYCRYPT_ARCHIVE)
 $(BUILD)/$(TINYCRYPT_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(TINYCRYPT_URL) -O $@
+
+## Update LZ4 sources
+update-lz4: $(BUILD)/$(LZ4_ARCHIVE)
+	rm -rf src/lz4/lz4
+	mkdir src/lz4/lz4
+	unzip -j $< '*/lib/*.[ch]' '*/lib/LICENSE' -d src/lz4/lz4
+
+$(BUILD)/$(LZ4_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(LZ4_URL) -O $@
 
 ###############################################################################
 # Installation
