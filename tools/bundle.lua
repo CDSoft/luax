@@ -126,7 +126,7 @@ function bundle.bundle(arg)
     end
     plain.emit "end\n"
 
-    local payload = require"crypt".aes_encrypt(plain.get())
+    local payload = require"crypt".aes_encrypt(require"lz4".compress(plain.get()))
 
     if format == "binary" then
         local chunk = Bundle()

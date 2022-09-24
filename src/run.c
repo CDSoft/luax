@@ -133,9 +133,21 @@ static int traceback(lua_State *L)
     return 0;
 }
 
-static void decode(const char *input, size_t input_len, char **output_buffer, char **output, size_t *output_len)
+static void decode(const char *input, size_t input_len, char **output, size_t *output_len)
 {
-    const char *err = aes_decrypt_runtime((const uint8_t *)input, input_len, (uint8_t **)output_buffer, (uint8_t **)output, output_len);
+    char *decrypted_buffer = NULL;
+    char *decrypted = NULL;
+    size_t decrypted_len = 0;
+
+    const char *err = aes_decrypt_runtime((const uint8_t *)input, input_len, (uint8_t **)&decrypted_buffer, (uint8_t **)&decrypted, &decrypted_len);
+    if (err != NULL)
+    {
+        fprintf(stderr, "Runtime error: %s\n", err);
+        exit(EXIT_FAILURE);
+    }
+
+    err = lz4_decompress(decrypted, decrypted_len, output, output_len);
+    free(decrypted_buffer);
     if (err != NULL)
     {
         fprintf(stderr, "Runtime error: %s\n", err);
@@ -186,12 +198,11 @@ int main(int argc, const char *argv[])
     }
 
 #if RUNTIME == 1
-    char *rt_chunk_buffer = NULL;
     char *rt_chunk = NULL;
     size_t rt_chunk_len = 0;
-    decode(runtime_chunk, sizeof(runtime_chunk), &rt_chunk_buffer, &rt_chunk, &rt_chunk_len);
+    decode(runtime_chunk, sizeof(runtime_chunk), &rt_chunk, &rt_chunk_len);
     run_buffer(L, rt_chunk, rt_chunk_len, "=runtime", argv[0]);
-    free(rt_chunk_buffer);
+    free(rt_chunk);
 #endif
 
 #if RUNTIME == 1
@@ -217,13 +228,12 @@ int main(int argc, const char *argv[])
     char *chunk = safe_malloc(header.size);
     if (fread(chunk, header.size, 1, f) != 1) perror(argv[0]);
     fclose(f);
-    char *decoded_chunk_buffer = NULL;
     char *decoded_chunk = NULL;
     size_t decoded_chunk_len = 0;
-    decode(chunk, header.size, &decoded_chunk_buffer, &decoded_chunk, &decoded_chunk_len);
+    decode(chunk, header.size, &decoded_chunk, &decoded_chunk_len);
     free(chunk);
     const int status = run_buffer(L, decoded_chunk, decoded_chunk_len, "=", argv[0]);
-    free(decoded_chunk_buffer);
+    free(decoded_chunk);
 
     lua_close(L);
 
