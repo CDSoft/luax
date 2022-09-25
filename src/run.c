@@ -201,7 +201,10 @@ int main(int argc, const char *argv[])
     char *rt_chunk = NULL;
     size_t rt_chunk_len = 0;
     decode(runtime_chunk, sizeof(runtime_chunk), &rt_chunk, &rt_chunk_len);
-    run_buffer(L, rt_chunk, rt_chunk_len, "=runtime", argv[0]);
+    if (run_buffer(L, rt_chunk, rt_chunk_len, "=runtime", argv[0]) != LUA_OK)
+    {
+        error(argv[0], "can not initialize LuaX runtime\n");
+    }
     free(rt_chunk);
 #endif
 
@@ -245,14 +248,20 @@ int main(int argc, const char *argv[])
      * Lua script execution (bootstrap interpretor with no LuaX runtime and payload)
      **************************************************************************/
 
-    luaL_dostring(L, "arg[0] = arg[1]; table.remove(arg, 1)");
     if (argc == 3 && strcmp(argv[1], "-e") == 0)
     {
-        luaL_dostring(L, argv[2]);
+        if (luaL_dostring(L, argv[2]) != LUA_OK)
+        {
+            error(argv[2], "Can not execute");
+        }
     }
     else if (argc > 1)
     {
-        luaL_dofile(L, argv[1]);
+        luaL_dostring(L, "arg[0] = arg[1]; table.remove(arg, 1)");
+        if (luaL_dofile(L, argv[1]) != LUA_OK)
+        {
+            error(argv[1], "Can not execute");
+        }
     }
     else
     {
