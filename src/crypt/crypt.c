@@ -922,35 +922,12 @@ static const luaL_Reg ctr_prng_funcs[] =
     {NULL, NULL},
 };
 
-static inline uint32_t htole(uint32_t n)
+static inline uint32_t littleendian(uint32_t n)
 {
-    const union {
-        uint32_t n;
-        uint8_t bs[4];
-    } w = {
-        .bs = {
-            [0] = (n >> (0*8)) & 0xFF,
-            [1] = (n >> (1*8)) & 0xFF,
-            [2] = (n >> (2*8)) & 0xFF,
-            [3] = (n >> (3*8)) & 0xFF,
-        }
-    };
-    return w.n;
-}
-
-static inline uint32_t letoh(uint32_t n)
-{
-    const union {
-        uint32_t n;
-        uint8_t bs[4];
-    } w = {
-        .n = n
-    };
-    return (uint32_t)( (w.bs[0] << (0*8))
-                     | (w.bs[1] << (1*8))
-                     | (w.bs[2] << (2*8))
-                     | (w.bs[3] << (3*8))
-                     );
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    n = __builtin_bswap32(n);
+#endif
+    return n;
 }
 
 typedef struct {
@@ -991,7 +968,7 @@ static const char *aes_encrypt(const uint8_t *plaintext, const size_t plaintext_
     const uint32_t plaintext_len32 = (uint32_t)plaintext_len;
     t_aes_header header;
     memcpy(header.magic, magic, sizeof(header.magic));
-    header.size = htole(plaintext_len32);
+    header.size = littleendian(plaintext_len32);
     memcpy(&plaintext_buffer[0], &header, sizeof(t_aes_header));
     memcpy(&plaintext_buffer[sizeof(t_aes_header)], plaintext, plaintext_len);
     default_CSPRNG(&plaintext_buffer[sizeof(t_aes_header)+plaintext_len], (unsigned int)(plaintext_buffer_len-plaintext_len-sizeof(t_aes_header)));
@@ -1102,7 +1079,7 @@ static const char *aes_decrypt(const uint8_t *encrypted, const size_t encrypted_
         free(*decrypted);
         return "Invalid AES encrypted string";
     }
-    header.size = letoh(header.size);
+    header.size = littleendian(header.size);
     *decrypted_len = (size_t)header.size;
     *decrypted_buffer = *decrypted;
     *decrypted += sizeof(t_aes_header);

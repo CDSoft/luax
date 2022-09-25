@@ -155,13 +155,12 @@ static void decode(const char *input, size_t input_len, char **output, size_t *o
     }
 }
 
-static uint32_t letoh(uint8_t *bs)
+static inline uint32_t littleendian(uint32_t n)
 {
-    return (uint32_t)( (bs[0] << (0*8))
-                     | (bs[1] << (1*8))
-                     | (bs[2] << (2*8))
-                     | (bs[3] << (3*8))
-                     );
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    n = __builtin_bswap32(n);
+#endif
+    return n;
 }
 
 static int run_buffer(lua_State *L, char *buffer, size_t size, const char *name, const char *argv0)
@@ -220,7 +219,7 @@ int main(int argc, const char *argv[])
     t_header header;
     fseek(f, -(long)sizeof(header), SEEK_END);
     if (fread(&header, sizeof(header), 1, f) != 1) perror(argv[0]);
-    header.size = letoh((uint8_t*)&header.size);
+    header.size = littleendian(header.size);
     if (strncmp(header.magic, magic, sizeof(magic)) != 0)
     {
         /* The runtime contains no application */
