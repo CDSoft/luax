@@ -922,22 +922,43 @@ static const luaL_Reg ctr_prng_funcs[] =
     {NULL, NULL},
 };
 
-static inline void htole(uint32_t n, uint8_t *bs)
+static inline uint32_t htole(uint32_t n)
 {
-    bs[0] = (n >> (0*8)) & 0xFF;
-    bs[1] = (n >> (1*8)) & 0xFF;
-    bs[2] = (n >> (2*8)) & 0xFF;
-    bs[3] = (n >> (3*8)) & 0xFF;
+    const union {
+        uint32_t n;
+        uint8_t bs[4];
+    } w = {
+        .bs = {
+            [0] = (n >> (0*8)) & 0xFF,
+            [1] = (n >> (1*8)) & 0xFF,
+            [2] = (n >> (2*8)) & 0xFF,
+            [3] = (n >> (3*8)) & 0xFF,
+        }
+    };
+    return w.n;
 }
 
-static inline uint32_t letoh(uint8_t *bs)
+static inline uint32_t letoh(uint32_t n)
 {
-    return (uint32_t)( (bs[0] << (0*8))
-                     | (bs[1] << (1*8))
-                     | (bs[2] << (2*8))
-                     | (bs[3] << (3*8))
+    const union {
+        uint32_t n;
+        uint8_t bs[4];
+    } w = {
+        .n = n
+    };
+    return (uint32_t)( (w.bs[0] << (0*8))
+                     | (w.bs[1] << (1*8))
+                     | (w.bs[2] << (2*8))
+                     | (w.bs[3] << (3*8))
                      );
 }
+
+typedef struct {
+    char magic[4];
+    uint32_t size;
+} t_aes_header;
+
+static const char magic[4] = "\x1b" "AES";
 
 static const char *aes_encrypt(const uint8_t *plaintext, const size_t plaintext_len, const uint8_t *key, const size_t key_len, uint8_t **encrypted, size_t *encrypted_len)
 {
@@ -965,12 +986,15 @@ static const char *aes_encrypt(const uint8_t *plaintext, const size_t plaintext_
     }
 
     /* CBC mode + random IV */
-    const size_t plaintext_buffer_len = (plaintext_len+sizeof(uint32_t) + TC_AES_BLOCK_SIZE-1) / TC_AES_BLOCK_SIZE * TC_AES_BLOCK_SIZE;
+    const size_t plaintext_buffer_len = (plaintext_len+sizeof(t_aes_header) + TC_AES_BLOCK_SIZE-1) / TC_AES_BLOCK_SIZE * TC_AES_BLOCK_SIZE;
     uint8_t *plaintext_buffer = safe_malloc(plaintext_buffer_len);
     const uint32_t plaintext_len32 = (uint32_t)plaintext_len;
-    htole(plaintext_len32, &plaintext_buffer[0]);
-    memcpy(&plaintext_buffer[sizeof(uint32_t)], plaintext, plaintext_len);
-    default_CSPRNG(&plaintext_buffer[sizeof(uint32_t)+plaintext_len], (unsigned int)(plaintext_buffer_len-plaintext_len-sizeof(plaintext_len32)));
+    t_aes_header header;
+    memcpy(header.magic, magic, sizeof(header.magic));
+    header.size = htole(plaintext_len32);
+    memcpy(&plaintext_buffer[0], &header, sizeof(t_aes_header));
+    memcpy(&plaintext_buffer[sizeof(t_aes_header)], plaintext, plaintext_len);
+    default_CSPRNG(&plaintext_buffer[sizeof(t_aes_header)+plaintext_len], (unsigned int)(plaintext_buffer_len-plaintext_len-sizeof(t_aes_header)));
     uint8_t iv_buffer[TC_AES_BLOCK_SIZE];
     default_CSPRNG(iv_buffer, sizeof(iv_buffer));
     *encrypted_len = plaintext_buffer_len + TC_AES_BLOCK_SIZE;
@@ -1029,9 +1053,9 @@ static int crypt_tinycrypt_aes128_encrypt(lua_State *L)
 
 static const char *aes_decrypt(const uint8_t *encrypted, const size_t encrypted_len, const uint8_t *key, const size_t key_len, uint8_t **decrypted_buffer, uint8_t **decrypted, size_t *decrypted_len)
 {
-    if (encrypted_len < sizeof(uint32_t) + TC_AES_BLOCK_SIZE)
+    if (encrypted_len < sizeof(t_aes_header) + TC_AES_BLOCK_SIZE)
     {
-        return "Invalid encrypted string size";
+        return "Invalid AES encrypted string";
     }
 
     /* The decryption key is a 128-bit hash of the key parameter */
@@ -1071,10 +1095,17 @@ static const char *aes_decrypt(const uint8_t *encrypted, const size_t encrypted_
         free(*decrypted);
         return "tc_cbc_mode_decrypt failed";
     }
-    const uint32_t plaintext_len32 = letoh(&(*decrypted)[0]);
-    *decrypted_len = (size_t)plaintext_len32;
+    t_aes_header header;
+    memcpy(&header, *decrypted, sizeof(t_aes_header));
+    if (strncmp(header.magic, magic, sizeof(header.magic)) != 0)
+    {
+        free(*decrypted);
+        return "Invalid AES encrypted string";
+    }
+    header.size = letoh(header.size);
+    *decrypted_len = (size_t)header.size;
     *decrypted_buffer = *decrypted;
-    *decrypted += sizeof(uint32_t);
+    *decrypted += sizeof(t_aes_header);
 
     return NULL; /* no error */
 }
