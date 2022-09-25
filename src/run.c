@@ -133,7 +133,21 @@ static int traceback(lua_State *L)
     return 0;
 }
 
-static void decode(const char *input, size_t input_len, char **output, size_t *output_len)
+static void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
+{
+    char *rc4_buffer = NULL;
+    size_t rc4_buffer_len = 0;
+    rc4_runtime(input, input_len, &rc4_buffer, &rc4_buffer_len);
+    const char *err = lz4_decompress(rc4_buffer, rc4_buffer_len, output, output_len);
+    free(rc4_buffer);
+    if (err != NULL)
+    {
+        fprintf(stderr, "Runtime error: %s\n", err);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static void decode_payload(const char *input, size_t input_len, char **output, size_t *output_len)
 {
     char *decrypted_buffer = NULL;
     char *decrypted = NULL;
@@ -199,7 +213,7 @@ int main(int argc, const char *argv[])
 #if RUNTIME == 1
     char *rt_chunk = NULL;
     size_t rt_chunk_len = 0;
-    decode(runtime_chunk, sizeof(runtime_chunk), &rt_chunk, &rt_chunk_len);
+    decode_runtime(runtime_chunk, sizeof(runtime_chunk), &rt_chunk, &rt_chunk_len);
     if (run_buffer(L, rt_chunk, rt_chunk_len, "=runtime", argv[0]) != LUA_OK)
     {
         error(argv[0], "can not initialize LuaX runtime\n");
@@ -232,7 +246,7 @@ int main(int argc, const char *argv[])
     fclose(f);
     char *decoded_chunk = NULL;
     size_t decoded_chunk_len = 0;
-    decode(chunk, header.size, &decoded_chunk, &decoded_chunk_len);
+    decode_payload(chunk, header.size, &decoded_chunk, &decoded_chunk_len);
     free(chunk);
     const int status = run_buffer(L, decoded_chunk, decoded_chunk_len, "=", argv[0]);
     free(decoded_chunk);

@@ -126,9 +126,10 @@ function bundle.bundle(arg)
     end
     plain.emit "end\n"
 
-    local payload = require"crypt".aes_encrypt(require"lz4".compress(plain.get()))
+    local payload = require"lz4".compress(plain.get())
 
     if format == "binary" then
+        payload = require"crypt".aes_encrypt(payload)
         local chunk = Bundle()
         local header = header_format:pack(#payload, bundle.magic)
         chunk.emit(payload)
@@ -137,6 +138,7 @@ function bundle.bundle(arg)
     end
 
     if format == "ascii" then
+        payload = require"crypt".rc4(payload)
         local hex = Bundle()
         local _ = payload:gsub(".", function(c)
             hex.emit(("'\\x%02X',"):format(c:byte()))
