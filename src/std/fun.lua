@@ -20,15 +20,20 @@ http://cdelord.fr/luax
 
 local fun = {}
 
+io.stderr:write("WARNING: the luax module 'fun' is deprecated\n")
+
+-- deprecated by P.id
 function fun.id(...)
     return ...
 end
 
+-- deprecated by P.const
 function fun.const(...)
     local res = {...}
     return function() return table.unpack(res) end
 end
 
+-- deprecated by M.keys
 function fun.keys(t)
     local ks = {}
     for k,_ in pairs(t) do table.insert(ks, k) end
@@ -39,12 +44,14 @@ function fun.keys(t)
     return ks
 end
 
+-- deprecated by M.values
 function fun.values(t)
     local vs = {}
     for _,v in fun.pairs(t) do table.insert(vs, v) end
     return vs
 end
 
+-- deprecated by M.pairs
 function fun.pairs(t)
     local ks = fun.keys(t)
     local i = 1
@@ -58,6 +65,7 @@ function fun.pairs(t)
     end
 end
 
+-- deprecated by L.concat
 function fun.concat(...)
     local t = {}
     for i = 1, select("#", ...) do
@@ -67,6 +75,7 @@ function fun.concat(...)
     return t
 end
 
+-- deprecated by M.unions
 function fun.merge(...)
     local t = {}
     for i = 1, select("#", ...) do
@@ -76,6 +85,7 @@ function fun.merge(...)
     return t
 end
 
+-- deprecated by L.flatten
 function fun.flatten(...)
     local xs = {}
     local function f(...)
@@ -92,12 +102,14 @@ function fun.flatten(...)
     return xs
 end
 
+-- deprecated by L.replicate
 function fun.replicate(n, x)
     local xs = {}
     for _ = 1, n do table.insert(xs, x) end
     return xs
 end
 
+-- deprecated by P.compose
 function fun.compose(...)
     local n = select("#", ...)
     local fs = {...}
@@ -110,6 +122,7 @@ function fun.compose(...)
     end
 end
 
+-- deprecated by L.map
 function fun.map(f, xs)
     if type(f) == "table" and type(xs) == "function" then f, xs = xs, f end
     local ys = {}
@@ -117,6 +130,7 @@ function fun.map(f, xs)
     return ys
 end
 
+-- deprecated by M.map
 function fun.tmap(f, t)
     if type(f) == "table" and type(t) == "function" then f, t = t, f end
     local t2 = {}
@@ -126,6 +140,7 @@ function fun.tmap(f, t)
     return t2
 end
 
+-- deprecated by L.filter
 function fun.filter(p, xs)
     if type(p) == "table" and type(xs) == "function" then p, xs = xs, p end
     local ys = {}
@@ -135,6 +150,7 @@ function fun.filter(p, xs)
     return ys
 end
 
+-- deprecated by M.filter[WithKey]
 function fun.tfilter(p, t)
     if type(p) == "table" and type(t) == "function" then p, t = t, p end
     local t2 = {}
@@ -144,25 +160,29 @@ function fun.tfilter(p, t)
     return t2
 end
 
+-- deprecated by L.map
 function fun.foreach(xs, f)
     if type(f) == "table" and type(xs) == "function" then f, xs = xs, f end
     for i, x in ipairs(xs) do f(x, i) end
 end
 
+-- deprecated by M.map[WithKey]
 function fun.tforeach(t, f)
     if type(f) == "table" and type(t) == "function" then f, t = t, f end
     for k, v in fun.pairs(t) do f(v, k) end
 end
 
-
+-- deprecated by P.prefix
 function fun.prefix(pre)
     return function(s) return pre..s end
 end
 
+-- deprecated by P.suffix
 function fun.suffix(suf)
     return function(s) return s..suf end
 end
 
+-- deprecated L.range
 function fun.range(a, b, step)
     assert(step ~= 0, "range step can not be zero")
     if not b then a, b = 1, a end
@@ -186,6 +206,7 @@ function fun.range(a, b, step)
     return r
 end
 
+-- deprecated by P.memo1
 function fun.memo(f)
     return setmetatable({}, {
         __index = function(self, k) local v = f(k); self[k] = v; return v; end,
@@ -208,6 +229,7 @@ local function Interpolator(t)
     end
 end
 
+-- deprecated by I
 function fun.I(t)
     return Interpolator(fun.merge(t))
 end

@@ -18,6 +18,18 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
--- functions added to the string package
+local I = require "I"
 
-require "String" -- to update the string methods
+---------------------------------------------------------------------
+-- Run all tests
+---------------------------------------------------------------------
+
+return function()
+
+    eq(I{}"foo = $(foo); 1 + 1 = $(1+1)", "foo = $(foo); 1 + 1 = 2")
+    eq(I{bar="aaa"}"foo = $(foo); 1 + 1 = $(1+1)", "foo = $(foo); 1 + 1 = 2")
+    eq(I{foo="aaa"}"foo = $(foo); 1 + 1 = $(1+1)", "foo = aaa; 1 + 1 = 2")
+    eq(I{foo="aaa", bar="bbb"}"foo = $(foo); 1 + 1 = $(1+1)", "foo = aaa; 1 + 1 = 2")
+    eq(I{foo="aaa"}{bar="bbb"}"foo = $(foo); 1 + 1 = $(1+1); bar = $(bar)", "foo = aaa; 1 + 1 = 2; bar = bbb")
+
+end

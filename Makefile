@@ -472,3 +472,21 @@ $(BUILD)/test.ok: $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT): $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(TEST_SOURCES)
 	@$(call cyan,"BUNDLE",$@)
 	@$(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -o $@ $(TEST_SOURCES)
+
+###############################################################################
+# Documentation
+###############################################################################
+
+.PHONY: doc
+
+MARKDOWN_SOURCES = $(wildcard doc/src/*.md)
+MARKDOWN_OUTPUTS = $(patsubst doc/src/%.md,doc/%.md,$(MARKDOWN_SOURCES))
+
+doc: README.md
+doc: $(MARKDOWN_OUTPUTS)
+
+doc/%.md: doc/src/%.md $(LUAX_SOURCES) $(LUAX_RUNTIME)
+	panda -t gfm $< -o $@
+
+README.md: doc/src/luax.md doc/src/fix_links.lua
+	panda --lua-filter doc/src/fix_links.lua -t gfm $< -o $@
