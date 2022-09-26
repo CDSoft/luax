@@ -18,6 +18,29 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
--- functions added to the string package
+local path = pandoc.path
+local output_path = path.directory(PANDOC_STATE.output_file)
 
-require "String" -- to update the string methods
+local function file_exists(name)
+    local f = io.open(name, 'r')
+    if f ~= nil then
+        io.close(f)
+        return true
+    else
+        return false
+    end
+end
+
+if FORMAT == "gfm" then
+
+    function Link(el)
+        if el.target:match"%.md$" then
+            local new_target = path.join{output_path, "doc", el.target}
+            if file_exists(new_target) then
+                el.target = path.make_relative(new_target, output_path)
+                return el
+            end
+        end
+    end
+
+end

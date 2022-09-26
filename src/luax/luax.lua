@@ -41,7 +41,7 @@ function luax.base(b)
 end
 
 function luax.pretty(x)
-    local fun = require "fun"
+    local M = require "Map"
 
     local tokens = {}
     local function emit(token) tokens[#tokens+1] = token end
@@ -69,7 +69,7 @@ function luax.pretty(x)
                     emit ", "
                     n = n + 1
                 end
-                for k, v in fun.pairs(val) do
+                for k, v in M.pairs(val) do
                     if type(k) == "number" or math.type(k) == "integer" then
                         if k < 1 or k > #val then
                             emit(("[%d]="):format(k))

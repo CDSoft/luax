@@ -128,37 +128,35 @@ The `luax` runtime comes with a few builtin modules.
 Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl)
 and [lapp](http://cdelord.fr/lapp).
 
-- [LuaX interactive usage](doc/repl.md): improved Lua REPL
+- [LuaX interactive usage](repl.md): improved Lua REPL
 - [Prelude](Prelude.md): functions inspired by the Haskell module
   [`Prelude`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Prelude.html)
-- [List](doc/List.md): list functions inspired by the Haskell module
+- [List](List.md): list functions inspired by the Haskell module
   [`Data.List`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-List.html)
-- [Map](doc/Map.md): table functions inspired by the Haskell module
+- [Map](Map.md): table functions inspired by the Haskell module
   [`Data.Map`](https://hackage.haskell.org/package/containers-0.6.6/docs/Data-Map.html)
-- [String](doc/String.md): string functions inspired by the Haskell
-  modules
+- [String](String.md): string functions inspired by the Haskell modules
   [`Data.List`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-List.html)
   and
   [`Data.String`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-String.html)
-- [I](doc/I.md): string interpolation
-- [fun](doc/fun.md): functional programming inspired function
+- [I](I.md): string interpolation
+- [fun](fun.md): functional programming inspired function
   (**deprecated**, use `Prelude`, `List`, `Map`, `String` and `I`
   instead)
-- [fs](doc/fs.md): file system management
-- [mathx](doc/mathx.md): complete math library for Lua
-- [imath](doc/imath.md): arbitrary precision integer and rational
-  arithmetic library
-- [qmath](doc/qmath.md): rational number library
-- [complex](doc/complex.md): math library for complex numbers based on
-  C99
-- [ps](doc/ps.md): Process management module
-- [sys](doc/sys.md): System module
-- [crypt](doc/crypt.md): cryptography module
-- [lz4](doc/lz4.md): Extremely Fast Compression algorithm
-- [lpeg](doc/lpeg.md): Parsing Expression Grammars For Lua
-- [linenoise](doc/linenoise.md): light readline alternative
-- [luasocket](doc/luasocket.md): Network support for the Lua language
-- [inspect](doc/inspect.md): Human-readable representation of Lua tables
+- [fs](fs.md): file system management
+- [mathx](mathx.md): complete math library for Lua
+- [imath](imath.md): arbitrary precision integer and rational arithmetic
+  library
+- [qmath](qmath.md): rational number library
+- [complex](complex.md): math library for complex numbers based on C99
+- [ps](ps.md): Process management module
+- [sys](sys.md): System module
+- [crypt](crypt.md): cryptography module
+- [lz4](lz4.md): Extremely Fast Compression algorithm
+- [lpeg](lpeg.md): Parsing Expression Grammars For Lua
+- [linenoise](linenoise.md): light readline alternative
+- [luasocket](luasocket.md): Network support for the Lua language
+- [inspect](inspect.md): Human-readable representation of Lua tables
 
 ## License
 

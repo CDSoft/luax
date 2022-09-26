@@ -18,11 +18,14 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
-local fun = require "fun"
 local fs = require "fs"
 local sys = require "sys"
+local I = require "I"
+local P = require "Prelude"
+local L = require "List"
+local M = require "Map"
 
-local welcome = fun.I(_G)(sys)[[
+local welcome = I(_G)(sys)[[
  _               __  __  |  Documentation: http://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |
 | |  | | | |/ _` |\  /   |  Version $(_LUAX_VERSION)
@@ -31,7 +34,7 @@ local welcome = fun.I(_G)(sys)[[
                          |  $(os:cap()) $(arch) $(abi) build
 ]]
 
-local usage = fun.I(_G){fs=fs}[==[
+local usage = I(_G){fs=fs}[==[
 usage: $(fs.basename(arg[0])) [options] [script [args]]
 
 General options:
@@ -93,7 +96,7 @@ local function findpath(name)
 end
 
 local function print_targets()
-    fun.foreach(require "targets", function(target)
+    L(require "targets"):map(function(target)
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..target..ext(target))
         print(("%-20s%s%s"):format(target, compiler, fs.is_file(compiler) and "" or " [NOT FOUND]"))
     end)
@@ -165,7 +168,7 @@ do
                 local ok = table.remove(res, 1)
                 if ok then
                     if #res > 0 then
-                        print(table.unpack(fun.map(pretty, res)))
+                        print(table.unpack(L.map(pretty, res)))
                     end
                 else
                     os.exit(1)
@@ -257,7 +260,7 @@ local function run_interpretor()
         local ok = table.remove(res, 1)
         if ok then
             if #res > 0 then
-                print(table.unpack(fun.map(pretty, res)))
+                print(table.unpack(L.map(pretty, res)))
             end
         else
             os.exit(1)
@@ -285,7 +288,7 @@ local function run_interpretor()
             local res = table.pack(xpcall(chunk, traceback))
             local ok = table.remove(res, 1)
             if ok then
-                if res ~= nil then print(table.unpack(fun.map(pretty, res))) end
+                if res ~= nil then print(table.unpack(L.map(pretty, res))) end
             end
             return "done"
         end
@@ -356,11 +359,10 @@ local function run_compiler()
     end
 
     -- Compile scripts for each targets
-    local valid_targets = {}
-    fun.foreach(require "targets", function(t) valid_targets[t] = true end)
+    local valid_targets = M.fromSet(P.const(true), require "targets")
     local compilers = {}
     local function rmext(compiler_target, name) return name:gsub(ext(compiler_target):gsub("%.", "%%.").."$", "") end
-    fun.foreach(target == "all" and fun.keys(valid_targets) or target and {target} or {}, function(compiler_target)
+    L(target == "all" and valid_targets:keys() or target and {target} or {}):map(function(compiler_target)
         if not valid_targets[compiler_target] then err("Invalid target: %s", compiler_target) end
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..compiler_target..ext(compiler_target))
         if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, compiler_target} end
@@ -398,7 +400,7 @@ local function run_compiler()
         fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
     end
 
-    fun.foreach(compilers, function(compiler)
+    L(compilers):map(function(compiler)
         compile_target(output, compiler)
     end)
 
@@ -419,4 +421,4 @@ end
 actions[#actions+1] = compiler_mode and run_compiler or run_interpretor
 
 -- run actions
-fun.foreach(actions, function(action) action() end)
+L(actions):map(function(action) action() end)

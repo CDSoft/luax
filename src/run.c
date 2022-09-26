@@ -265,7 +265,7 @@ int main(int argc, const char *argv[])
     {
         if (luaL_dostring(L, argv[2]) != LUA_OK)
         {
-            error(argv[2], "Can not execute");
+            error(argv[0], lua_tostring(L, -1));
         }
     }
     else if (argc > 1)
@@ -273,7 +273,7 @@ int main(int argc, const char *argv[])
         luaL_dostring(L, "arg[0] = arg[1]; table.remove(arg, 1)");
         if (luaL_dofile(L, argv[1]) != LUA_OK)
         {
-            error(argv[1], "Can not execute");
+            error(argv[0], lua_tostring(L, -1));
         }
     }
     else
