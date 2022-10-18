@@ -23,7 +23,7 @@ local fs = require "fs"
 local sys = require "sys"
 
 local flatten = require"fun".flatten
-local foreach = require"fun".foreach
+local map = require"fun".map
 
 function fs.join(...)
     return table.concat({...}, fs.sep)
@@ -58,7 +58,7 @@ fs.mv = fs.rename
 fs.rm = fs.remove
 
 function fs.rmdir(path)
-    foreach(fs.walk(path, true), fs.rm)
+    map(fs.rm, fs.walk(path, true))
     return fs.rm(path)
 end
 

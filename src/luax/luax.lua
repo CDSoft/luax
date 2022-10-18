@@ -20,6 +20,10 @@ http://cdelord.fr/luax
 
 local luax = {}
 
+local F = require "fun"
+
+luax.F = F
+
 local float_format = "%s"
 local int_format = "%s"
 
@@ -40,71 +44,8 @@ function luax.base(b)
         or "%s"
 end
 
-function luax.pretty(x)
-    local M = require "Map"
-
-    local tokens = {}
-    local function emit(token) tokens[#tokens+1] = token end
-    local function drop() table.remove(tokens) end
-
-    local stack = {}
-    local function push(val) stack[#stack + 1] = val end
-    local function pop() table.remove(stack) end
-    local function in_stack(val)
-        for i = 1, #stack do
-            if rawequal(stack[i], val) then return true end
-        end
-    end
-
-    local function fmt(val)
-        if type(val) == "table" then
-            if in_stack(val) then
-                emit "{...}" -- recursive table
-            else
-                push(val)
-                emit "{"
-                local n = 0
-                for i = 1, #val do
-                    fmt(val[i])
-                    emit ", "
-                    n = n + 1
-                end
-                for k, v in M.pairs(val) do
-                    if type(k) == "number" or math.type(k) == "integer" then
-                        if k < 1 or k > #val then
-                            emit(("[%d]="):format(k))
-                            fmt(v)
-                            emit ", "
-                            n = n + 1
-                        end
-                    else
-                        emit(("%s="):format(k))
-                        fmt(v)
-                        emit ", "
-                        n = n + 1
-                    end
-                end
-                if n > 0 then drop() end
-                emit "}"
-                pop()
-            end
-        elseif type(val) == "number" then
-            if math.type(val) == "integer" then
-                emit(int_format:format(val))
-            elseif math.type(val) == "float" then
-                emit(float_format:format(val))
-            else
-                emit(("%s"):format(val))
-            end
-        elseif type(val) == "string" then
-            emit(("%q"):format(val))
-        else
-            emit(("%s"):format(val))
-        end
-    end
-
-    fmt(x)
-    return table.concat(tokens)
+function luax.pretty(x, int_fmt, float_fmt)
+    return F.show(x, int_fmt or int_format, float_fmt or float_format)
 end
 
 luax.inspect = require "inspect"

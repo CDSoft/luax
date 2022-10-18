@@ -129,20 +129,8 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl)
 and [lapp](http://cdelord.fr/lapp).
 
 - [LuaX interactive usage](repl.md): improved Lua REPL
-- [Prelude](Prelude.md): functions inspired by the Haskell module
-  [`Prelude`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Prelude.html)
-- [List](List.md): list functions inspired by the Haskell module
-  [`Data.List`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-List.html)
-- [Map](Map.md): table functions inspired by the Haskell module
-  [`Data.Map`](https://hackage.haskell.org/package/containers-0.6.6/docs/Data-Map.html)
-- [String](String.md): string functions inspired by the Haskell modules
-  [`Data.List`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-List.html)
-  and
-  [`Data.String`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-String.html)
-- [I](I.md): string interpolation
 - [fun](fun.md): functional programming inspired function
-  (**deprecated**, use `Prelude`, `List`, `Map`, `String` and `I`
-  instead)
+- [I](I.md): string interpolation
 - [fs](fs.md): file system management
 - [mathx](mathx.md): complete math library for Lua
 - [imath](imath.md): arbitrary precision integer and rational arithmetic

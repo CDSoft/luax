@@ -20,4 +20,4 @@ http://cdelord.fr/luax
 
 -- functions added to the string package
 
-require "String" -- to update the string methods
+require "fun" -- to update the string methods

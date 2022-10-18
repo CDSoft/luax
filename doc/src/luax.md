@@ -122,23 +122,14 @@ x86_64-windows-gnu  <path to>/luax-x86_64-windows-gnu.exe
 
 ## Built-in modules
 
-[`Data.List`]: https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-List.html
-[`Data.Map`]: https://hackage.haskell.org/package/containers-0.6.6/docs/Data-Map.html
-[`Data.String`]: https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-String.html
-[`Prelude`]: https://hackage.haskell.org/package/base-4.17.0.0/docs/Prelude.html
-
 The `luax` runtime comes with a few builtin modules.
 
 Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 [lapp](http://cdelord.fr/lapp).
 
 - [LuaX interactive usage](repl.md): improved Lua REPL
-- [Prelude](Prelude.md): functions inspired by the Haskell module [`Prelude`]
-- [List](List.md): list functions inspired by the Haskell module [`Data.List`]
-- [Map](Map.md): table functions inspired by the Haskell module [`Data.Map`]
-- [String](String.md): string functions inspired by the Haskell modules [`Data.List`] and [`Data.String`]
+- [fun](fun.md): functional programming inspired function
 - [I](I.md): string interpolation
-- [fun](fun.md): functional programming inspired function (**deprecated**, use `Prelude`, `List`, `Map`, `String` and `I` instead)
 - [fs](fs.md): file system management
 - [mathx](mathx.md): complete math library for Lua
 - [imath](imath.md): arbitrary precision integer and rational arithmetic library

@@ -19,9 +19,9 @@ http://cdelord.fr/luax
 --]]
 
 local autoexec = {
+    ["src/std/funx.lua"]        = true,
     ["src/crypt/cryptx.lua"]    = true,
     ["src/fs/fsx.lua"]          = true,
-    ["src/std/stringx.lua"]     = true,
     ["src/lz4/lz4x.lua"]        = true,
 }
 

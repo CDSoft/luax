@@ -11,6 +11,11 @@ local luax = require "luax"
 ```
 
 ```lua
+luax.F
+```
+is the `fun` module.
+
+```lua
 luax.pretty(x)
 ```
 returns a string representing `x` with nice formatting for

@@ -26,9 +26,7 @@ local I = require "I"
 ```
 @@@]]
 
-local I = {}
-
-local M = require "Map"
+local F = require "fun"
 
 local function interpolate(s, t)
     return (s:gsub("%$(%b())", function(x)
@@ -40,7 +38,7 @@ end
 
 local function Interpolator(t)
     return function(x)
-        if type(x) == "table" then return Interpolator(M.union(x, t)) end
+        if type(x) == "table" then return Interpolator(F.merge{t, x}) end
         if type(x) == "string" then return interpolate(x, t) end
     end
 end
@@ -55,5 +53,5 @@ I(t)
 @@@]]
 
 return setmetatable({}, {
-    __call = function(_, t) return Interpolator(M.clone(t)) end,
+    __call = function(_, t) return Interpolator(F.clone(t)) end,
 })

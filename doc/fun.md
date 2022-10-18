@@ -1,78 +1,1615 @@
-# Functional programming inspired functions
-
-**Warning**: This module is deprecated
+# Functional programming utilities
 
 ``` lua
-local fun = require "fun"
+local F = require "fun"
 ```
 
-**`fun.id(...)`** is the identity function.
+`fun` provides some useful functions inspired by functional programming
+languages, especially by these Haskell modules:
 
-**`fun.const(...)`** returns a constant function that returns `...`.
+- [`Data.List`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-List.html)
+- [`Data.Map`](https://hackage.haskell.org/package/containers-0.6.6/docs/Data-Map.html)
+- [`Data.String`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-String.html)
+- [`Prelude`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Prelude.html)
 
-**`fun.keys(t)`** returns a sorted list of keys from the table `t`.
+## Standard types, and related functions
 
-**`fun.values(t)`** returns a list of values from the table `t`, in the
-same order than `fun.keys(t)`.
+### Basic data types
 
-**`fun.pairs(t)`** returns a `pairs` like iterator, in the same order
-than `fun.keys(t)`.
+``` lua
+F.op.and_(a, b)
+```
 
-**`fun.concat(...)`** returns a concatenated list from input lists.
+> Boolean and
 
-**`fun.merge(...)`** returns a merged table from input tables.
+``` lua
+F.op.or_(a, b)
+```
 
-**`fun.flatten(...)`** flattens input lists and non list parameters.
+> Boolean or
 
-**`fun.replicate(n, x)`** returns a list containing `n` times the Lua
-object `x`.
+``` lua
+F.op.xor_(a, b)
+```
 
-**`fun.compose(...)`** returns a function that composes input functions.
+> Boolean xor
 
-**`fun.map(f, xs)`** returns the list of `f(x)` for all `x` in `xs`.
+``` lua
+F.op.not_(a)
+```
 
-**`fun.tmap(f, t)`** returns the table of `{k = f(t[k])}` for all `k` in
-`keys(t)`.
+> Boolean not
 
-**`fun.filter(p, xs)`** returns the list of `x` such that `p(x)` is
-true.
+``` lua
+F.maybe(b, f, a)
+```
 
-**`fun.tfilter(p, t)`** returns the table of `{k = v}` for all `k` in
-`keys(t)` such that `p(v)` is true.
+> Returns f(a) if f(a) is not nil, otherwise b
 
-**`fun.foreach(xs, f)`** executes `f(x)` for all `x` in `xs`.
+``` lua
+F.default(def, x)
+```
 
-**`fun.tforeach(t, f)`** executes `f(t[k])` for all `k` in `keys(t)`.
+> Returns x if x is not nil, otherwise def
 
-**`fun.prefix(pre)`** returns a function that adds a prefix `pre` to a
-string.
+``` lua
+F.op.band(a, b)
+```
 
-**`fun.suffix(suf)`** returns a function that adds a suffix `suf` to a
-string.
+> Bitwise and
 
-**`fun.range(a, b [, step])`** returns a list of values
-`[a, a+step, ... b]`. The default step value is 1.
+``` lua
+F.op.bor(a, b)
+```
 
-**`fun.memo(func)`** returns a memoized version of the function `func`.
+> Bitwise or
 
-**`fun.I(t)`** returns a string interpolator that replaces `$(...)` by
-the value of `...` in the environment defined by the table `t`. An
-interpolator can be given another table to build a new interpolator with
-new values.
+``` lua
+F.op.bxor(a, b)
+```
 
-`luax` adds a few functions to the builtin `string` module:
+> Bitwise xor
 
-**`string.split(s, sep, maxsplit, plain)`** splits `s` using `sep` as a
-separator. If `plain` is true, the separator is considered as plain
-text. `maxsplit` is the maximum number of separators to find (ie the
-remaining string is returned unsplit. This function returns a list of
-strings.
+``` lua
+F.op.bnot(a)
+```
 
-**`string.lines(s)`** splits `s` using `'\n'` as a separator.
+> Bitwise not
 
-**`string.words(s)`** splits `s` using `'%s'` as a separator.
+``` lua
+F.op.shl(a, b)
+```
 
-**`string.ltrim(s)`, `string.rtrim(s)`, `string.trim(s)`** removes
-left/right/both end spaces.
+> Bitwise left shift
 
-**`string.cap(s)`** capitalizes `s`.
+``` lua
+F.op.shr(a, b)
+```
+
+> Bitwise right shift
+
+#### Tuples
+
+``` lua
+F.fst(ab)
+```
+
+> Extract the first component of a pair.
+
+``` lua
+F.snd(ab)
+```
+
+> Extract the second component of a pair.
+
+``` lua
+F.trd(ab)
+```
+
+> Extract the third component of a pair.
+
+### Basic type classes
+
+``` lua
+F.op.eq(a, b)
+```
+
+> Equality
+
+``` lua
+F.op.ne(a, b)
+```
+
+> Inequality
+
+``` lua
+F.compare(a, b)
+```
+
+> Comparison (-1, 0, 1)
+
+``` lua
+F.op.lt(a, b)
+```
+
+> a \< b
+
+``` lua
+F.op.le(a, b)
+```
+
+> a \<= b
+
+``` lua
+F.op.gt(a, b)
+```
+
+> a \> b
+
+``` lua
+F.op.ge(a, b)
+```
+
+> a \>= b
+
+``` lua
+F.max(a, b)
+```
+
+> max(a, b)
+
+``` lua
+F.min(a, b)
+```
+
+> min(a, b)
+
+``` lua
+F.succ(a)
+```
+
+> a + 1
+
+``` lua
+F.pred(a)
+```
+
+> a - 1
+
+### Numbers
+
+#### Numeric type classes
+
+``` lua
+F.op.add(a, b)
+```
+
+> a + b
+
+``` lua
+F.op.sub(a, b)
+```
+
+> a - b
+
+``` lua
+F.op.mul(a, b)
+```
+
+> a \* b
+
+``` lua
+F.op.div(a, b)
+```
+
+> a / b
+
+``` lua
+F.op.idiv(a, b)
+```
+
+> a // b
+
+``` lua
+F.op.mod(a, b)
+```
+
+> a % b
+
+``` lua
+F.negate(a)
+F.op.neg(a)
+```
+
+> -a
+
+``` lua
+F.abs(a)
+```
+
+> -a
+
+``` lua
+F.signum(a)
+```
+
+> sign of a (-1, 0 or +1)
+
+``` lua
+F.quot(a, b)
+```
+
+> integer division truncated toward zero
+
+``` lua
+F.rem(a, b)
+```
+
+> integer remainder satisfying quot(a, b)\*b + rem(a, b) == a, 0 \<=
+> rem(a, b) \< abs(b)
+
+``` lua
+F.quot_rem(a, b)
+```
+
+> simultaneous quot and rem
+
+``` lua
+F.div(a, b)
+```
+
+> integer division truncated toward negative infinity
+
+``` lua
+F.mod(a, b)
+```
+
+> integer modulus satisfying div(a, b)\*b + mod(a, b) == a, 0 \<= mod(a,
+> b) \< abs(b)
+
+``` lua
+F.div_mod(a, b)
+```
+
+> simultaneous div and mod
+
+``` lua
+F.recip(a)
+```
+
+> Reciprocal fraction.
+
+``` lua
+F.pi
+F.exp(x)
+F.log(x), F.log(x, base)
+F.sqrt(x)
+F.op.pow(x, y)
+F.sin(x)
+F.cos(x)
+F.tan(x)
+F.asin(x)
+F.acos(x)
+F.atan(x)
+F.sinh(x)
+F.cosh(x)
+F.tanh(x)
+F.asinh(x)
+F.acosh(x)
+F.atanh(x)
+```
+
+> standard math constants and functions
+
+``` lua
+F.proper_fraction(x)
+```
+
+> returns a pair (n,f) such that x = n+f, and:
+
+- n is an integral number with the same sign as x; and
+- f is a fraction with the same type and sign as x, and with absolute
+  value less than 1.
+
+``` lua
+F.truncate(x)
+```
+
+> returns the integer nearest x between zero and x.
+
+``` lua
+F.round(x)
+```
+
+> returns the nearest integer to x; the even integer if x is equidistant
+> between two integers
+
+``` lua
+F.ceiling(x)
+```
+
+> returns the least integer not less than x.
+
+``` lua
+F.floor(x)
+```
+
+> returns the greatest integer not greater than x.
+
+``` lua
+F.isNan(x)
+```
+
+> True if the argument is an IEEE “not-a-number” (NaN) value
+
+``` lua
+F.is_infinite(x)
+```
+
+> True if the argument is an IEEE infinity or negative infinity
+
+``` lua
+F.is_denormalized(x)
+```
+
+> True if the argument is too small to be represented in normalized
+> format
+
+``` lua
+F.is_negative_zero(x)
+```
+
+> True if the argument is an IEEE negative zero
+
+``` lua
+F.atan2(y, x)
+```
+
+> computes the angle (from the positive x-axis) of the vector from the
+> origin to the point (x,y).
+
+``` lua
+F.even(n)
+F.odd(n)
+```
+
+> parity check
+
+``` lua
+F.gcd(a, b)
+F.lcm(a, b)
+```
+
+> Greatest Common Divisor and Least Common Multiple of a and b.
+
+### Miscellaneous functions
+
+``` lua
+F.id(x)
+```
+
+> Identity function.
+
+``` lua
+F.const(...)
+```
+
+> Constant function. const(…)(y) always returns …
+
+``` lua
+F.compose(fs)
+```
+
+> Function composition. compose{f, g, h}(…) returns f(g(h(…))).
+
+``` lua
+F.flip(f)
+```
+
+> takes its (first) two arguments in the reverse order of f.
+
+``` lua
+F.curry(f)
+```
+
+> curry(f)(x)(…) calls f(x, …)
+
+``` lua
+F.uncurry(f)
+```
+
+> uncurry(f)(x, …) calls f(x)(…)
+
+``` lua
+F.until_(p, f, x)
+```
+
+> yields the result of applying f until p holds.
+
+``` lua
+F.error(message, level)
+F.error_without_stack_trace(message, level)
+```
+
+> stops execution and displays an error message (with out without a
+> stack trace).
+
+``` lua
+F.op.concat(a, b)
+```
+
+> Lua concatenation operator
+
+``` lua
+F.op.len(a)
+```
+
+> Lua length operator
+
+``` lua
+F.prefix(pre)
+```
+
+> returns a function that adds the prefix pre to a string
+
+``` lua
+F.suffix(suf)
+```
+
+> returns a function that adds the suffix suf to a string
+
+``` lua
+F.memo1(f)
+```
+
+> returns a memoized function (one argument)
+
+## Converting to and from string
+
+### Converting to string
+
+``` lua
+F.show(x)
+```
+
+> Convert x to a string (luax.pretty)
+
+### Converting from string
+
+``` lua
+F.read(s)
+```
+
+> Convert s to a Lua value
+
+## Table construction
+
+``` lua
+F(t)
+```
+
+> `F(t)` sets the metatable of `t` and returns `t`. Most of the
+> functions of `F` will be methods of `t`.
+>
+> Note that other `F` functions that return tables actually return `F`
+> tables.
+
+``` lua
+F.clone(t)
+f:clone()
+```
+
+> `F.clone(t)` clones the first level of `t`.
+
+``` lua
+F.deep_clone(t)
+f:deep_clone()
+```
+
+> `F.deep_clone(t)` recursively clones `t`.
+
+``` lua
+F.rep(n, x)
+```
+
+> Returns a list of length n with x the value of every element.
+
+``` lua
+F.range(a)
+F.range(a, b)
+F.range(a, b, step)
+```
+
+> Returns a range \[1, a\], \[a, b\] or \[a, a+step, … b\]
+
+``` lua
+F.concat{xs1, xs2, ... xsn}
+F{xs1, xs2, ... xsn}:concat()
+xs1 .. xs2
+```
+
+> concatenates lists
+
+``` lua
+F.flatten(xs)
+xs:flatten()
+```
+
+> Returns a flat list with all elements recursively taken from xs
+
+``` lua
+F.str({s1, s2, ... sn}, [separator])
+ss:str([separator])
+```
+
+> concatenates strings (separated with an optional separator) and
+> returns a string.
+
+``` lua
+F.from_set(f, ks)
+ks:from_set(f)
+```
+
+> Build a map from a set of keys and a function which for each key
+> computes its value.
+
+``` lua
+F.from_list(kvs)
+kvs:from_list()
+```
+
+> Build a map from a list of key/value pairs.
+
+## Iterators
+
+``` lua
+F.pairs(t, [compare])
+t:pairs([compare])
+F.ipairs(xs, [compare])
+xs:ipairs([compare])
+```
+
+> behave like the Lua `pairs` and `ipairs` iterators. `F.pairs` sorts
+> keys using the function `compare` or the standard Lua `<=` operator.
+
+``` lua
+F.keys(t, [compare])
+t:keys([compare])
+F.values(t, [compare])
+t:values([compare])
+F.items(t, [compare])
+t:items([compare])
+```
+
+> returns the list of keys, values or pairs of keys/values (same order
+> than F.pairs).
+
+## Table extraction
+
+``` lua
+F.head(xs)
+xs:head()
+F.last(xs)
+xs:last()
+```
+
+> returns the first element (head) or the last element (last) of a list.
+
+``` lua
+F.tail(xs)
+xs:tail()
+F.init(xs)
+xs:init()
+```
+
+> returns the list after the head (tail) or before the last element
+> (init).
+
+``` lua
+F.uncons(xs)
+xs:uncons()
+```
+
+> returns the head and the tail of a list.
+
+``` lua
+F.take(n, xs)
+xs:take(n)
+```
+
+> Returns the prefix of xs of length n.
+
+``` lua
+F.drop(n, xs)
+xs:drop(n)
+```
+
+> Returns the suffix of xs after the first n elements.
+
+``` lua
+F.split_at(n, xs)
+xs:split_at(n)
+```
+
+> Returns a tuple where first element is xs prefix of length n and
+> second element is the remainder of the list.
+
+``` lua
+F.take_while(p, xs)
+xs:take_while(p)
+```
+
+> Returns the longest prefix (possibly empty) of xs of elements that
+> satisfy p.
+
+``` lua
+F.drop_while(p, xs)
+xs:drop_while(p)
+```
+
+> Returns the suffix remaining after `take_while(p, xs)`.
+
+``` lua
+F.drop_while_end(p, xs)
+xs:drop_while_end(p)
+```
+
+> Drops the largest suffix of a list in which the given predicate holds
+> for all elements.
+
+``` lua
+F.span(p, xs)
+xs:span(p)
+```
+
+> Returns a tuple where first element is longest prefix (possibly empty)
+> of xs of elements that satisfy p and second element is the remainder
+> of the list.
+
+``` lua
+F.break_(p, xs)
+xs:break_(p)
+```
+
+> Returns a tuple where first element is longest prefix (possibly empty)
+> of xs of elements that do not satisfy p and second element is the
+> remainder of the list.
+
+``` lua
+F.strip_prefix(prefix, xs)
+xs:strip_prefix(prefix)
+```
+
+> Drops the given prefix from a list.
+
+``` lua
+F.strip_suffix(suffix, xs)
+xs:strip_suffix(suffix)
+```
+
+> Drops the given suffix from a list.
+
+``` lua
+F.group(xs, [compare])
+xs:group([compare])
+```
+
+> Returns a list of lists such that the concatenation of the result is
+> equal to the argument. Moreover, each sublist in the result contains
+> only equal elements.
+
+``` lua
+F.inits(xs)
+xs:inits()
+```
+
+> Returns all initial segments of the argument, shortest first.
+
+``` lua
+F.tails(xs)
+xs:tails()
+```
+
+> Returns all final segments of the argument, longest first.
+
+## Predicates
+
+``` lua
+F.is_prefix_of(prefix, xs)
+prefix:is_prefix_of(xs)
+```
+
+> Returns `true` iff `xs` starts with `prefix`
+
+``` lua
+F.is_suffix_of(suffix, xs)
+suffix:is_suffix_of(xs)
+```
+
+> Returns `true` iff `xs` ends with `suffix`
+
+``` lua
+F.is_infix_of(infix, xs)
+infix:is_infix_of(xs)
+```
+
+> Returns `true` iff `xs` caontains `infix`
+
+``` lua
+F.has_prefix(xs, prefix)
+xs:has_prefix_(prefix)
+```
+
+> Returns `true` iff `xs` starts with `prefix`
+
+``` lua
+F.has_suffix(xs, suffix)
+xs:has_suffix(suffix)
+```
+
+> Returns `true` iff `xs` ends with `suffix`
+
+``` lua
+F.has_infix(xs, infix)
+xs:has_infix(infix)
+```
+
+> Returns `true` iff `xs` caontains `infix`
+
+``` lua
+F.is_subsequence_of(seq, xs)
+seq:is_subsequence_of(xs)
+```
+
+> Returns `true` if all the elements of the first list occur, in order,
+> in the second. The elements do not have to occur consecutively.
+
+``` lua
+F.is_submap_of(t1, t2)
+t1:is_submap_of(t2)
+```
+
+> returns true if all keys in t1 are in t2.
+
+``` lua
+F.map_contains(t1, t2, [compare])
+t1:map_contains(t2, [compare])
+```
+
+> returns true if all keys in t2 are in t1.
+
+``` lua
+F.is_proper_submap_of(t1, t2)
+t1:is_proper_submap_of(t2)
+```
+
+> returns true if all keys in t1 are in t2 and t1 keys and t2 keys are
+> different.
+
+``` lua
+F.map_strictly_contains(t1, t2, [compare])
+t1:map_strictly_contains(t2, [compare])
+```
+
+> returns true if all keys in t2 are in t1.
+
+## Searching
+
+``` lua
+F.elem(x, xs, [compare])
+xs:elem(x, [compare])
+```
+
+> Returns `true` if x occurs in xs (using the optional compare
+> function).
+
+``` lua
+F.not_elem(x, xs, [compare])
+xs:not_elem(x, [compare])
+```
+
+> Returns `true` if x does not occur in xs (using the optional compare
+> function).
+
+``` lua
+F.lookup(x, xys, [compare])
+xys:lookup(x, [compare])
+```
+
+> Looks up a key `x` in an association list (using the optional compare
+> function).
+
+``` lua
+F.find(p, xs)
+xs:find(p)
+```
+
+> Returns the leftmost element of xs matching the predicate p.
+
+``` lua
+F.filter(p, xs)
+xs:filter(p)
+```
+
+> Returns the list of those elements that satisfy the predicate p(x).
+
+``` lua
+F.filteri(p, xs)
+xs:filteri(p)
+```
+
+> Returns the list of those elements that satisfy the predicate p(i, x).
+
+``` lua
+F.filtert(p, t)
+t:filtert(p)
+```
+
+> Returns the table of those values that satisfy the predicate p(v).
+
+``` lua
+F.filterk(p, t)
+t:filterk(p)
+```
+
+> Returns the table of those values that satisfy the predicate p(k, v).
+
+``` lua
+F.restrictKeys(t, ks)
+t:restrict_keys(ks)
+```
+
+> Restrict a map to only those keys found in a list.
+
+``` lua
+F.without_keys(t, ks)
+t:without_keys(ks)
+```
+
+> Restrict a map to only those keys found in a list.
+
+``` lua
+F.partition(p, xs)
+xs:partition(p)
+```
+
+> Returns the pair of lists of elements which do and do not satisfy the
+> predicate, respectively.
+
+``` lua
+F.table_partition(p, t)
+t:table_partition(p)
+```
+
+> Partition the map according to a predicate. The first map contains all
+> elements that satisfy the predicate, the second all elements that fail
+> the predicate.
+
+``` lua
+F.table_partition_with_key(p, t)
+t:table_partition_with_key(p)
+```
+
+> Partition the map according to a predicate. The first map contains all
+> elements that satisfy the predicate, the second all elements that fail
+> the predicate.
+
+``` lua
+F.elemIndex(x, xs)
+xs:elem_index(x)
+```
+
+> Returns the index of the first element in the given list which is
+> equal to the query element.
+
+``` lua
+F.elem_indices(x, xs)
+xs:elem_indices(x)
+```
+
+> Returns the indices of all elements equal to the query element, in
+> ascending order.
+
+``` lua
+F.find_index(p, xs)
+xs:find_index(p)
+```
+
+> Returns the index of the first element in the list satisfying the
+> predicate.
+
+``` lua
+F.find_indices(p, xs)
+xs:find_indices(p)
+```
+
+> Returns the indices of all elements satisfying the predicate, in
+> ascending order.
+
+## Table size
+
+``` lua
+F.null(xs)
+xs:null()
+F.null(t)
+t:null("t")
+```
+
+> checks wether a list or a table is empty.
+
+``` lua
+#xs
+F.length(xs)
+xs:length()
+```
+
+> Length of a list.
+
+``` lua
+F.size(t)
+t:size()
+```
+
+> Size of a table (number of (key, value) pairs).
+
+## Table transformations
+
+``` lua
+F.map(f, xs)
+xs:map(f)
+```
+
+> maps `f` to the elements of `xs` and returns
+> `{f(xs[1]), f(xs[2]), ...}`
+
+``` lua
+F.mapi(f, xs)
+xs:mapi(f)
+```
+
+> maps `f` to the elements of `xs` and returns
+> `{f(i, xs[1]), f(i, xs[2]), ...}`
+
+``` lua
+F.mapt(f, t)
+t:mapt(f)
+```
+
+> maps `f` to the values of `t` and returns
+> `{k1=f(t[k1]), k2=f(t[k2]), ...}`
+
+``` lua
+F.mapk(f, t)
+t:mapk(f)
+```
+
+> maps `f` to the values of `t` and returns
+> `{k1=f(k1, t[k1]), k2=f(k2, t[k2]), ...}`
+
+``` lua
+F.reverse(xs)
+xs:reverse()
+```
+
+> reverses the order of a list
+
+``` lua
+F.transpose(xss)
+xss:transpose()
+```
+
+> Transposes the rows and columns of its argument.
+
+``` lua
+F.update(f, k, t)
+t:update(f, k)
+```
+
+> Updates the value `x` at `k`. If `f(x)` is nil, the element is
+> deleted. Otherwise the key `k` is bound to the value `f(x)`.
+>
+> **Warning**: in-place modification.
+
+``` lua
+F.updatek(f, k, t)
+t:updatek(f, k)
+```
+
+> Updates the value `x` at `k`. If `f(k, x)` is nil, the element is
+> deleted. Otherwise the key `k` is bound to the value `f(k, x)`.
+>
+> **Warning**: in-place modification.
+
+## Table reductions (folds)
+
+``` lua
+F.fold(f, x, xs)
+xs:fold(f, x)
+```
+
+> Left-associative fold of a list.
+
+``` lua
+F.fold1(f, xs)
+xs:fold1(f)
+```
+
+> Left-associative fold of a list, the initial value is `xs[1]`.
+
+``` lua
+F.foldt(f, x, t)
+t:foldt(f, x)
+```
+
+> Left-associative fold of a table (in the order given by F.pairs).
+
+``` lua
+F.foldk(f, x, t)
+t:foldk(f, x)
+```
+
+> Left-associative fold of a table (in the order given by F.pairs).
+
+``` lua
+F.and_(bs)
+bs:and_()
+```
+
+> Returns the conjunction of a container of booleans.
+
+``` lua
+F.or_(bs)
+bs:or_()
+```
+
+> Returns the disjunction of a container of booleans.
+
+``` lua
+F.any(p, xs)
+xs:any(p)
+```
+
+> Determines whether any element of the structure satisfies the
+> predicate.
+
+``` lua
+F.all(p, xs)
+xs:all(p)
+```
+
+> Determines whether all elements of the structure satisfy the
+> predicate.
+
+``` lua
+F.sum(xs)
+xs:sum()
+```
+
+> Returns the sum of the numbers of a structure.
+
+``` lua
+F.product(xs)
+xs:product()
+```
+
+> Returns the product of the numbers of a structure.
+
+``` lua
+F.maximum(xs, [compare])
+xs:maximum([compare])
+```
+
+> The largest element of a non-empty structure, according to the
+> optional comparison function.
+
+``` lua
+F.minimum(xs, [compare])
+xs:minimum([compare])
+```
+
+> The least element of a non-empty structure, according to the optional
+> comparison function.
+
+``` lua
+F.scan(f, x, xs)
+xs:scan(f, x)
+```
+
+> Similar to `fold` but returns a list of successive reduced values from
+> the left.
+
+``` lua
+F.scan1(f, xs)
+xs:scan1(f)
+```
+
+> Like `scan` but the initial value is `xs[1]`.
+
+``` lua
+F.concat_map(f, xs)
+xs:concat_map(f)
+```
+
+> Map a function over all the elements of a container and concatenate
+> the resulting lists.
+
+## Zipping
+
+``` lua
+F.zip(xss, [f])
+xss:zip([f])
+```
+
+> `zip` takes a list of lists and returns a list of corresponding
+> tuples.
+
+``` lua
+F.unzip(xss)
+xss:unzip()
+```
+
+> Transforms a list of n-tuples into n lists
+
+``` lua
+F.zip_with(f, xss)
+xss:zip_with(f)
+```
+
+> `zip_with` generalises `zip` by zipping with the function given as the
+> first argument, instead of a tupling function.
+
+## Set operations
+
+``` lua
+F.nub(xs, [compare])
+xs:nub([compare])
+```
+
+> Removes duplicate elements from a list. In particular, it keeps only
+> the first occurrence of each element, according to the optional
+> compare function.
+
+``` lua
+F.delete(x, xs, [compare])
+xs:delete(x, [compare])
+```
+
+> Removes the first occurrence of x from its list argument, according to
+> the optional compare function.
+
+``` lua
+F.difference(xs, ys, [compare])
+xs:difference(ys, [compare])
+```
+
+> Returns the list difference. In `difference(xs, ys)` the first
+> occurrence of each element of ys in turn (if any) has been removed
+> from xs, according to the optional compare function.
+
+``` lua
+F.union(xs, ys, [compare])
+xs:union(ys, [compare])
+```
+
+> Returns the list union of the two lists. Duplicates, and elements of
+> the first list, are removed from the the second list, but if the first
+> list contains duplicates, so will the result, according to the
+> optional compare function.
+
+``` lua
+F.intersection(xs, ys, [compare])
+xs:intersection(ys, [compare])
+```
+
+> Returns the list intersection of two lists. If the first list contains
+> duplicates, so will the result, according to the optional compare
+> function.
+
+## Table operations
+
+``` lua
+F.merge(ts)
+ts:merge()
+F.table_union(ts)
+ts:table_union()
+```
+
+> Right-biased union of tables.
+
+``` lua
+F.merge_with(f, ts)
+ts:merge_with(f)
+F.table_union_with(f, ts)
+ts:table_union_with(f)
+```
+
+> Right-biased union of tables with a combining function.
+
+``` lua
+F.merge_with_key(f, ts)
+ts:merge_with_key(f)
+F.table_union_with_key(f, ts)
+ts:table_union_with_key(f)
+```
+
+> Right-biased union of tables with a combining function.
+
+``` lua
+F.table_difference(t1, t2)
+t1:table_difference(t2)
+```
+
+> Difference of two maps. Return elements of the first map not existing
+> in the second map.
+
+``` lua
+F.table_difference_with(f, t1, t2)
+t1:table_difference_with(f, t2)
+```
+
+> Difference with a combining function. When two equal keys are
+> encountered, the combining function is applied to the values of these
+> keys.
+
+``` lua
+F.table_difference_with_key(f, t1, t2)
+t1:table_difference_with_key(f, t2)
+```
+
+> Union with a combining function.
+
+``` lua
+F.table_intersection(t1, t2)
+t1:table_intersection(t2)
+```
+
+> Intersection of two maps. Return data in the first map for the keys
+> existing in both maps.
+
+``` lua
+F.table_intersection_with(f, t1, t2)
+t1:table_intersection_with(f, t2)
+```
+
+> Difference with a combining function. When two equal keys are
+> encountered, the combining function is applied to the values of these
+> keys.
+
+``` lua
+F.table_intersection_with_key(f, t1, t2)
+t1:table_intersection_with_key(f, t2)
+```
+
+> Union with a combining function.
+
+``` lua
+F.disjoint(t1, t2)
+t1:disjoint(t2)
+```
+
+> Check the intersection of two maps is empty.
+
+``` lua
+F.table_compose(t1, t2)
+t1:table_compose(t2)
+```
+
+> Relate the keys of one map to the values of the other, by using the
+> values of the former as keys for lookups in the latter.
+
+## Ordered lists
+
+``` lua
+F.sort(xs, [compare])
+xs:sort([compare])
+```
+
+> Sorts xs from lowest to highest, according to the optional compare
+> function.
+
+``` lua
+F.sort_on(f, xs, [compare])
+xs:sort_on(f, [compare])
+```
+
+> Sorts a list by comparing the results of a key function applied to
+> each element, according to the optional compare function.
+
+``` lua
+F.insert(x, xs, [compare])
+xs:insert(x, [compare])
+```
+
+> Inserts the element into the list at the first position where it is
+> less than or equal to the next element, according to the optional
+> compare function.
+
+## Miscellaneous functions
+
+``` lua
+F.subsequences(xs)
+xs:subsequences()
+```
+
+> Returns the list of all subsequences of the argument.
+
+``` lua
+F.permutations(xs)
+xs:permutations()
+```
+
+> Returns the list of all permutations of the argument.
+
+## Functions on strings
+
+``` lua
+string.chars(s, i, j)
+s:chars(i, j)
+```
+
+> Returns the list of characters of a string between indices i and j, or
+> the whole string if i and j are not provided.
+
+``` lua
+string.head(s)
+s:head()
+```
+
+> Extract the first element of a string.
+
+``` lua
+sting.last(s)
+s:last()
+```
+
+> Extract the last element of a string.
+
+``` lua
+string.tail(s)
+s:tail()
+```
+
+> Extract the elements after the head of a string
+
+``` lua
+string.init(s)
+s:init()
+```
+
+> Return all the elements of a string except the last one.
+
+``` lua
+string.uncons(s)
+s:uncons()
+```
+
+> Decompose a string into its head and tail.
+
+``` lua
+string.null(s)
+s:null()
+```
+
+> Test whether the string is empty.
+
+``` lua
+string.length(s)
+s:length()
+```
+
+> Returns the length of a string.
+
+``` lua
+string.intersperse(c, s)
+c:intersperse(s)
+```
+
+> Intersperses a element c between the elements of s.
+
+``` lua
+string.intercalate(s, ss)
+s:intercalate(ss)
+```
+
+> Inserts the string s in between the strings in ss and concatenates the
+> result.
+
+``` lua
+string.subsequences(s)
+s:subsequences()
+```
+
+> Returns the list of all subsequences of the argument.
+
+``` lua
+string.permutations(s)
+s:permutations()
+```
+
+> Returns the list of all permutations of the argument.
+
+``` lua
+string.take(s, n)
+s:take(n)
+```
+
+> Returns the prefix of s of length n.
+
+``` lua
+string.drop(s, n)
+s:drop(n)
+```
+
+> Returns the suffix of s after the first n elements.
+
+``` lua
+string.split_at(s, n)
+s:split_at(n)
+```
+
+> Returns a tuple where first element is s prefix of length n and second
+> element is the remainder of the string.
+
+``` lua
+string.take_while(s, p)
+s:take_while(p)
+```
+
+> Returns the longest prefix (possibly empty) of s of elements that
+> satisfy p.
+
+``` lua
+string.dropWhile(s, p)
+s:dropWhile(p)
+```
+
+> Returns the suffix remaining after `s:take_while(p)`.
+
+``` lua
+string.drop_while_end(s, p)
+s:drop_while_end(p)
+```
+
+> Drops the largest suffix of a string in which the given predicate
+> holds for all elements.
+
+``` lua
+string.strip_prefix(s, prefix)
+s:strip_prefix(prefix)
+```
+
+> Drops the given prefix from a string.
+
+``` lua
+string.strip_suffix(s, suffix)
+s:strip_suffix(suffix)
+```
+
+> Drops the given suffix from a string.
+
+``` lua
+string.inits(s)
+s:inits()
+```
+
+> Returns all initial segments of the argument, shortest first.
+
+``` lua
+string.tails(s)
+s:tails()
+```
+
+> Returns all final segments of the argument, longest first.
+
+``` lua
+string.is_prefix_of(prefix, s)
+prefix:is_prefix_of(s)
+```
+
+> Returns `true` iff the first string is a prefix of the second.
+
+``` lua
+string.has_prefix(s, prefix)
+s:has_prefix(prefix)
+```
+
+> Returns `true` iff the second string is a prefix of the first.
+
+``` lua
+string.is_suffix_of(suffix, s)
+suffix:is_suffix_of(s)
+```
+
+> Returns `true` iff the first string is a suffix of the second.
+
+``` lua
+string.has_suffix(s, suffix)
+s:has_suffix(suffix)
+```
+
+> Returns `true` iff the second string is a suffix of the first.
+
+``` lua
+string.is_infix_of(infix, s)
+infix:is_infix_of(s)
+```
+
+> Returns `true` iff the first string is contained, wholly and intact,
+> anywhere within the second.
+
+``` lua
+string.has_infix(s, infix, s)
+s:has_infix(infix)
+```
+
+> Returns `true` iff the second string is contained, wholly and intact,
+> anywhere within the first.
+
+``` lua
+string.split(s, sep, maxsplit, plain)
+s:split(sep, maxsplit, plain)
+```
+
+> Splits a string `s` around the separator `sep`. `maxsplit` is the
+> maximal number of separators. If `plain` is true then the separator is
+> a plain string instead of a Lua string pattern.
+
+``` lua
+string.lines(s)
+s:lines()
+```
+
+> Splits the argument into a list of lines stripped of their terminating
+> `\n` characters.
+
+``` lua
+string.words(s)
+s:words()
+```
+
+> Breaks a string up into a list of words, which were delimited by white
+> space.
+
+``` lua
+F.unlines(xs)
+xs:unlines()
+```
+
+> Appends a `\n` character to each input string, then concatenates the
+> results.
+
+``` lua
+string.unwords(xs)
+xs:unwords()
+```
+
+> Joins words with separating spaces.
+
+``` lua
+string.ltrim(s)
+s:ltrim()
+```
+
+> Removes heading spaces
+
+``` lua
+string.rtrim(s)
+s:rtrim()
+```
+
+> Removes trailing spaces
+
+``` lua
+string.trim(s)
+s:trim()
+```
+
+> Removes heading and trailing spaces
+
+``` lua
+string.cap(s)
+s:cap()
+```
+
+> Capitalizes a string. The first character is upper case, other are
+> lower case.

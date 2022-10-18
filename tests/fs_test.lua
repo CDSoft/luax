@@ -20,9 +20,7 @@ http://cdelord.fr/luax
 
 local fs = require "fs"
 local sys = require "sys"
-local L = require "List"
-local S = require "String"
-local P = require "Prelude"
+local F = require "fun"
 
 local function sort(t)
     table.sort(t)
@@ -49,7 +47,7 @@ return function()
 
     local tmp = fs.join(cwd, ".build", "test", "fs")
     eq(tmp, cwd..fs.sep..".build"..fs.sep.."test"..fs.sep.."fs")
-    L.map(fs.remove, fs.walk(tmp, true))
+    F.map(fs.remove, fs.walk(tmp, true))
     fs.remove(tmp)
 
     fs.mkdirs(tmp)
@@ -60,7 +58,7 @@ return function()
     fs.mkdir "foo"
     fs.mkdir "bar"
     fs.mkdir "bar/baz"
-    L.map(createfile, {"foo.txt", "bar.txt", "foo/foo.txt", "bar/bar.txt", "bar/baz/baz.txt"})
+    F.map(createfile, {"foo.txt", "bar.txt", "foo/foo.txt", "bar/bar.txt", "bar/baz/baz.txt"})
 
     fs.mkdirs(fs.join(tmp, "level1", "level2", "level3"))
     eq(fs.is_dir(fs.join(tmp, "level1", "level2", "level3")), true)
@@ -72,10 +70,10 @@ return function()
     fs.chdir(tmp)
 
     local function test_files(f, testfiles, reverse)
-        eq(f(reverse), L.map(function(name) return P.prefix"."(name:gsub("/", fs.sep)) end, testfiles))
-        eq(f(".", reverse), L.map(function(name) return P.prefix"."(name:gsub("/", fs.sep)) end, testfiles))
+        eq(f(reverse), F.map(function(name) return F.prefix"."(name:gsub("/", fs.sep)) end, testfiles))
+        eq(f(".", reverse), F.map(function(name) return F.prefix"."(name:gsub("/", fs.sep)) end, testfiles))
         fs.chdir(cwd)
-        eq(f(tmp, reverse), L.map(function(name) return P.prefix(tmp)(name:gsub("/", fs.sep)) end, testfiles))
+        eq(f(tmp, reverse), F.map(function(name) return F.prefix(tmp)(name:gsub("/", fs.sep)) end, testfiles))
         fs.chdir(tmp)
     end
 
@@ -125,7 +123,7 @@ return function()
         eq(s2.uR, false) eq(s2.uW, false) eq(s2.uX, false)
         eq(s2.gR, false) eq(s2.gW, false) eq(s2.gX, false)
         eq(s2.oR, false) eq(s2.oW, false) eq(s2.oX, false)
-        S"uR uW uX gR gW gX oR oW oX":words():map(function(perm)
+        F"uR uW uX gR gW gX oR oW oX":words():map(function(perm)
             fs.chmod(f1, fs[perm])
             local s1 = fs.stat(f1)
             eq(s1.uR, perm=="uR") eq(s1.uW, perm=="uW") eq(s1.uX, perm=="uX")
