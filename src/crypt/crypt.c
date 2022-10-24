@@ -28,7 +28,7 @@
 #include "lualib.h"
 
 #include "tinycrypt/hmac.h"
-#include <tinycrypt/hmac_prng.h>
+#include "tinycrypt/hmac_prng.h"
 #include "tinycrypt/sha256.h"
 #include "tinycrypt/constants.h"
 #include "tinycrypt/ecc_platform_specific.h"
