@@ -337,7 +337,7 @@ F.floor(x)
 > returns the greatest integer not greater than x.
 
 ``` lua
-F.isNan(x)
+F.is_nan(x)
 ```
 
 > True if the argument is an IEEE “not-a-number” (NaN) value
@@ -347,6 +347,12 @@ F.is_infinite(x)
 ```
 
 > True if the argument is an IEEE infinity or negative infinity
+
+``` lua
+F.is_normalized(x)
+```
+
+> True if the argument is represented in normalized format
 
 ``` lua
 F.is_denormalized(x)
@@ -469,10 +475,13 @@ F.memo1(f)
 ### Converting to string
 
 ``` lua
-F.show(x)
+F.show(x, [int_fmt, float_fmt])
 ```
 
 > Convert x to a string (luax.pretty)
+>
+> `int_fmt` and `float_fmt` are optional and defines the format used by
+> integers and floating point numbers (the default format is `%s`).
 
 ### Converting from string
 

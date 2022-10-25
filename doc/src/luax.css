@@ -1,0 +1,159 @@
+/* This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+*/
+
+/* Style taken from https://cdelord.fr */
+
+/* links */
+
+a {
+    color: #444499;
+    background-color: white;
+    /* border: thin dotted #444499; */
+    border-radius: 4px;
+}
+
+a:hover {
+    color: white;
+    background-color: #444499;
+    border: thin dotted white;
+    border-radius: 4px;
+}
+
+.group {
+    color: white;
+    background-color: gray;
+    padding: 4px;
+    border-radius: 2px;
+}
+
+/* Header */
+
+h1.title {
+    text-align: center;
+    border-radius: 20px;
+    padding: 4px;
+    background-color: #444499;
+    color: #eeeeee;
+    border: thick solid black;
+}
+
+h1.title a {
+    text-decoration: none;
+    background-color: #444499;
+    color: #eeeeee;
+}
+
+p.author, p.date {
+    text-align: center;
+    padding: 4px;
+    background-color: white;
+    color: black;
+    border: none;
+}
+
+h2.author a, h3.date a {
+    text-decoration: none;
+    background-color: white;
+    color: #444499;
+}
+
+/* table of content */
+
+#TOC {
+    border-radius: 20px;
+    /*padding: 4px;*/
+    background-color: #ffffee;
+    border: medium solid black;
+}
+
+/* titles */
+
+h1 {
+    background-color: #444499;
+    color: #ffffff;
+    border: medium solid black;
+    border-radius: 10px;
+    padding: 0 0 0 16px;
+}
+
+h1 a {
+    text-decoration: none;
+    background-color: #444499;
+    color: #ffffff;
+}
+
+h2 {
+    background-color: #666666;
+    color: #ffffff;
+    border: medium solid black;
+    border-radius: 6px;
+    padding: 0 0 0 16px;
+}
+
+h2 a {
+    text-decoration: none;
+    background-color: #666666;
+    color: #ffffff;
+}
+
+h3 h4 h5 h6 {
+    background-color: #cccccc;
+    color: #000000;
+}
+
+/* tables */
+
+table {
+    border: 2px solid black;
+    border-collapse: collapse;
+}
+
+table caption {
+    font-weight: bold;
+    margin: 1em;
+}
+
+table th, table thead tr th {
+    border: 1px solid black;
+    border-bottom: 2px solid black;
+    vertical-align: top;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    font-weight: bold;
+    white-space: nowrap;
+    background-color: #dddddd;
+}
+
+table td, table tbody tr td {
+    border: 1px solid black;
+    vertical-align: top;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
+/* code examples */
+
+pre {
+    font-family: monospace;
+    color: #444499;
+    border: 1px solid gray;
+    padding: 5px;
+    background-color: #dddddd;
+    margin: 0 2em 0 2em;
+}

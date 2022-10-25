@@ -1,3 +1,8 @@
+---
+title: Lua eXtended
+author: Christophe Delord
+---
+
 # imath: arbitrary precision integer and rational arithmetic library
 
 ```lua

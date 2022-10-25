@@ -1,3 +1,8 @@
+---
+title: Lua eXtended
+author: Christophe Delord
+---
+
 # lpeg: Parsing Expression Grammars For Lua
 
 LPeg is a pattern-matching library for Lua.

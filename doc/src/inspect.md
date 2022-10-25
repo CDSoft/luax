@@ -1,3 +1,8 @@
+---
+title: Lua eXtended
+author: Christophe Delord
+---
+
 # inspect: Human-readable representation of Lua tables
 
 ```lua

@@ -1,3 +1,8 @@
+---
+title: Lua eXtended
+author: Christophe Delord
+---
+
 # linenoise: light readline alternative
 
 **linenoise.read(prompt)** prints `prompt` and returns the string entered by

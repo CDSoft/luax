@@ -11,6 +11,12 @@ local luax = require "luax"
 ```
 
 ``` lua
+luax.F
+```
+
+is the `fun` module.
+
+``` lua
 luax.pretty(x)
 ```
 

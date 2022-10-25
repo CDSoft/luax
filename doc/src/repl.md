@@ -1,3 +1,8 @@
+---
+title: Lua eXtended
+author: Christophe Delord
+---
+
 # LuaX interactive usage
 
 The `luax` module provides a few functions for the interactive mode.

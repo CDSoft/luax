@@ -1,3 +1,8 @@
+---
+title: Lua eXtended
+author: Christophe Delord
+---
+
 # lz4:  Extremely Fast Compression algorithm
 
 ```lua

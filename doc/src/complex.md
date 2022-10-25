@@ -1,3 +1,8 @@
+---
+title: Lua eXtended
+author: Christophe Delord
+---
+
 # complex: math library for complex numbers based on C99
 
 ```lua

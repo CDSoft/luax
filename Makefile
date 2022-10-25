@@ -131,6 +131,7 @@ all: test
 all: $(RUNTIMES)
 all: $(LUAX_BINARIES)
 all: $(BUILD)/luax.tar.xz
+all: doc
 
 ## Delete the build directory
 clean:
@@ -444,16 +445,6 @@ $(BUILD)/luax-%: $(BUILD)/lrun-% $(LUAX_PACKAGES) tools/bundle.lua
 	@chmod +x $@
 
 ###############################################################################
-# Archive
-###############################################################################
-
-$(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES)
-	@$(call cyan,"ARCHIVE",$@)
-	@tar cJf $@ \
-		README.md \
-		-C $(abspath $(BUILD)) $(notdir $(LUAX_BINARIES))
-
-###############################################################################
 # Tests (native only)
 ###############################################################################
 
@@ -481,12 +472,54 @@ $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT): $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(
 
 MARKDOWN_SOURCES = $(wildcard doc/src/*.md)
 MARKDOWN_OUTPUTS = $(patsubst doc/src/%.md,doc/%.md,$(MARKDOWN_SOURCES))
+HTML_OUTPUTS = $(patsubst doc/src/%.md,$(BUILD)/doc/%.html,$(MARKDOWN_SOURCES))
+MD_OUTPUTS = $(patsubst doc/src/%.md,$(BUILD)/doc/%.md,$(MARKDOWN_SOURCES))
 
 doc: README.md
 doc: $(MARKDOWN_OUTPUTS)
+doc: $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD)/doc/index.html
+
+CSS = doc/src/luax.css
+
+PANDOC = panda
+PANDOC += --lua-filter doc/src/fix_links.lua
+PANDOC += --fail-if-warnings
+PANDOC += --table-of-contents --toc-depth=3
+PANDOC += --highlight-style=tango
+PANDOC += --css=$(CSS)
+
+PANDOC_HTML = $(PANDOC) -t html5
+PANDOC_HTML += --embed-resources --standalone
+
+PANDOC_GFM = $(PANDOC) -t gfm
 
 doc/%.md: doc/src/%.md $(LUAX_SOURCES) $(LUAX_RUNTIME)
-	panda -t gfm $< -o $@
+	@$(call cyan,"DOC",$@)
+	@$(PANDOC_GFM) $< -o $@
+
+$(BUILD)/doc/%.md: doc/%.md Makefile
+	@$(call cyan,"DOC",$@)
+	@cp -f $< $@
+
+$(BUILD)/doc/%.html: doc/src/%.md $(LUAX_SOURCES) $(LUAX_RUNTIME) $(CSS)
+	@$(call cyan,"DOC",$@)
+	@mkdir -p $(dir $@)
+	@$(PANDOC_HTML) $< -o $@
+
+$(BUILD)/doc/index.html: $(BUILD)/doc/luax.html
+	@$(call cyan,"DOC",$@)
+	@cp -f $< $@
 
 README.md: doc/src/luax.md doc/src/fix_links.lua
-	panda --lua-filter doc/src/fix_links.lua -t gfm $< -o $@
+	@$(call cyan,"DOC",$@)
+	@$(PANDOC_GFM) $< -o $@
+
+###############################################################################
+# Archive
+###############################################################################
+
+$(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD)/doc/index.html
+	@$(call cyan,"ARCHIVE",$@)
+	@tar cJf $@ \
+		README.md \
+		-C $(abspath $(BUILD)) $(notdir $(LUAX_BINARIES)) doc

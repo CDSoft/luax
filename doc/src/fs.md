@@ -1,3 +1,8 @@
+---
+title: Lua eXtended
+author: Christophe Delord
+---
+
 # fs
 
 `fs` is a File System module. It provides functions to handle files and directory in a portable way.

@@ -1,3 +1,8 @@
+---
+title: Lua eXtended
+author: Christophe Delord
+---
+
 # mathx: complete math library for Lua
 
 ```lua

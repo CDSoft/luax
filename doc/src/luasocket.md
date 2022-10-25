@@ -1,3 +1,8 @@
+---
+title: Lua eXtended
+author: Christophe Delord
+---
+
 # luasocket: Network support for the Lua language
 
 ```lua
