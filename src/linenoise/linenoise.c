@@ -202,7 +202,7 @@ LUAMOD_API int luaopen_linenoise (lua_State *L)
 #ifdef HAS_LINENOISE
     running_in_a_tty = isatty(STDIN_FILENO);
     linenoiseHistorySetMaxLen(LUAX_HISTORY_LEN);
-    linenoiseSetMultiLine(false);
+    linenoiseSetMultiLine(true);
 #endif
     return 1;
 }
