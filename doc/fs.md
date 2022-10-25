@@ -1,4 +1,4 @@
-# fs
+# File System
 
 `fs` is a File System module. It provides functions to handle files and
 directory in a portable way.
@@ -6,6 +6,8 @@ directory in a portable way.
 ``` lua
 local fs = require "fs"
 ```
+
+## Core module (C)
 
 ``` lua
 fs.getcwd()
@@ -27,37 +29,12 @@ returns the list of files and directories in `path` (the default path is
 the current directory).
 
 ``` lua
-fs.walk([path], [reverse])
+fs.glob(pattern)
 ```
 
-returns a list listing directory and file names in `path` and its
-subdirectories (the default path is the current directory). If `reverse`
-is true, the list is built in a reverse order (suitable for recursive
-directory removal)
+returns the list of path names matching a pattern.
 
-``` lua
-fs.mkdir(path)
-```
-
-creates a new directory `path`.
-
-``` lua
-fs.mkdirs(path)
-```
-
-creates a new directory `path` and its parent directories.
-
-``` lua
-fs.rename(old_name, new_name)
-```
-
-renames the file `old_name` to `new_name`.
-
-``` lua
-fs.mv(old_name, new_name)
-```
-
-alias for `fs.rename(old_name, new_name)`.
+*Note*: not implemented on Windows.
 
 ``` lua
 fs.remove(name)
@@ -66,17 +43,10 @@ fs.remove(name)
 deletes the file `name`.
 
 ``` lua
-fs.rm(name)
+fs.rename(old_name, new_name)
 ```
 
-alias for `fs.remove(name)`.
-
-``` lua
-fs.rmdir(path, [params])
-```
-
-deletes the directory `path` (recursively if `params.recursive` is
-`true`.
+renames the file `old_name` to `new_name`.
 
 ``` lua
 fs.copy(source_name, target_name)
@@ -86,22 +56,10 @@ copies file `source_name` to `target_name`. The attributes and times are
 preserved.
 
 ``` lua
-fs.is_file(name)
+fs.mkdir(path)
 ```
 
-returns `true` if `name` is a file.
-
-``` lua
-fs.is_dir(name)
-```
-
-returns `true` if `name` is a directory.
-
-``` lua
-fs.findpath(name)
-```
-
-returns the full path of `name` if `name` is found in `$PATH` or `nil`.
+creates a new directory `path`.
 
 ``` lua
 fs.stat(name)
@@ -186,25 +144,6 @@ fs.absname(path)
 return the absolute path name of path.
 
 ``` lua
-fs.join(...)
-```
-
-return a path name made of several path components (separated by
-`fs.sep`).
-
-``` lua
-fs.with_tmpfile(f)
-```
-
-calls `f(tmp)` where `tmp` is the name of a temporary file.
-
-``` lua
-fs.with_tmpdir(f)
-```
-
-calls `f(tmp)` where `tmp` is the name of a temporary directory.
-
-``` lua
 fs.sep
 ```
 
@@ -218,3 +157,75 @@ fs.aR, fs.aW, fs.aX
 ```
 
 are the User/Group/Other/All Read/Write/eXecute mask for `fs.chmod`.
+
+## Additional functions (Lua)
+
+``` lua
+fs.join(...)
+```
+
+return a path name made of several path components (separated by
+`fs.sep`).
+
+``` lua
+fs.is_file(name)
+```
+
+returns `true` if `name` is a file.
+
+``` lua
+fs.is_dir(name)
+```
+
+returns `true` if `name` is a directory.
+
+``` lua
+fs.findpath(name)
+```
+
+returns the full path of `name` if `name` is found in `$PATH` or `nil`.
+
+``` lua
+fs.mkdirs(path)
+```
+
+creates a new directory `path` and its parent directories.
+
+``` lua
+fs.mv(old_name, new_name)
+```
+
+alias for `fs.rename(old_name, new_name)`.
+
+``` lua
+fs.rm(name)
+```
+
+alias for `fs.remove(name)`.
+
+``` lua
+fs.rmdir(path, [params])
+```
+
+deletes the directory `path` and its content recursively.
+
+``` lua
+fs.walk([path], [reverse])
+```
+
+returns a list listing directory and file names in `path` and its
+subdirectories (the default path is the current directory). If `reverse`
+is true, the list is built in a reverse order (suitable for recursive
+directory removal)
+
+``` lua
+fs.with_tmpfile(f)
+```
+
+calls `f(tmp)` where `tmp` is the name of a temporary file.
+
+``` lua
+fs.with_tmpdir(f)
+```
+
+calls `f(tmp)` where `tmp` is the name of a temporary directory.

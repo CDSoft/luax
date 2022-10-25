@@ -17,6 +17,14 @@
  * http://cdelord.fr/luax
  */
 
+/***************************************************************************@@@
+# sys: System module
+
+```lua
+local sys = require "sys"
+```
+@@@*/
+
 #include "sys.h"
 
 #include "lua.h"
@@ -33,6 +41,23 @@ static inline void set_string(lua_State *L, const char *name, const char *val)
     lua_pushstring(L, val);
     lua_setfield(L, -2, name);
 }
+
+/*@@@
+```lua
+sys.os
+```
+`"linux"`, `"macos"` or `"windows"`.
+
+```lua
+sys.arch
+```
+`"x86_64"`, `"i386"` or `"aarch64"`.
+
+```lua
+sys.abi
+```
+`"musl"` or `"gnu"`.
+@@@*/
 
 LUAMOD_API int luaopen_sys (lua_State *L)
 {

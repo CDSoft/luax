@@ -18,9 +18,20 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
--- functions added to the string package
+--[[------------------------------------------------------------------------@@@
+## String methods
+
+The `lz4` functions are also available as `string` methods:
+@@@]]
 
 local lz4 = require "lz4"
+
+--[[@@@
+```lua
+s:lz4_compress()        == lz4.compress(s)
+s:lz4_decompress()      == lz4.decompress(s)
+```
+@@@]]
 
 function string.lz4_compress(s, ...) return lz4.compress(s, ...) end
 function string.lz4_decompress(s, ...) return lz4.decompress(s, ...) end

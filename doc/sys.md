@@ -4,8 +4,20 @@
 local sys = require "sys"
 ```
 
-**`sys.os`** is `"linux"`, `"macos"` or `"windows"`.
+``` lua
+sys.os
+```
 
-**`sys.arch`** is `"x86_64"`, `"i386"` or `"aarch64"`.
+`"linux"`, `"macos"` or `"windows"`.
 
-**`sys.abi`** is `"musl"` or `"gnu"`.
+``` lua
+sys.arch
+```
+
+`"x86_64"`, `"i386"` or `"aarch64"`.
+
+``` lua
+sys.abi
+```
+
+`"musl"` or `"gnu"`.

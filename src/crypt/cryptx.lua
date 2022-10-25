@@ -18,9 +18,32 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
--- functions added to the string package
+--[[------------------------------------------------------------------------@@@
+## String methods
+
+Some functions of the `crypt` package are added to the string module:
+
+@@@]]
 
 local crypt = require "crypt"
+
+--[[@@@
+```lua
+s:hex_encode()          == crypt.hex_encode(s)
+s:hex_decode()          == crypt.hex_decode(s)
+s:base64_encode()       == crypt.base64_encode(s)
+s:base64_decode()       == crypt.base64_decode(s)
+s:base64url_encode()    == crypt.base64url_encode(s)
+s:base64url_decode()    == crypt.base64url_decode(s)
+s:crc32()               == crypt.crc32(s)
+s:crc64()               == crypt.crc64(s)
+s:rc4(key, drop)        == crypt.crc64(s, key, drop)
+s:sha256()              == crypt.sha256(s)
+s:hmac(key)             == crypt.hmac(s, key)
+s:aes_encrypt(key)      == crypt.aes_encrypt(s, key)
+s:aes_decrypt(key)      == crypt.aes_decrypt(s, key)
+```
+@@@]]
 
 function string.hex_encode(s) return crypt.hex_encode(s) end
 function string.hex_decode(s) return crypt.hex_decode(s) end

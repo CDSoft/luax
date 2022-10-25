@@ -17,6 +17,14 @@
  * http://cdelord.fr/luax
  */
 
+/***************************************************************************@@@
+# ps: Process management module
+
+```lua
+local ps = require "ps"
+```
+@@@*/
+
 #include "ps.h"
 
 #include "tools.h"
@@ -42,12 +50,26 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
+/*@@@
+```lua
+ps.sleep(n)
+```
+sleeps for `n` seconds.
+@@@*/
+
 static int ps_sleep(lua_State *L)
 {
     double t = luaL_checknumber(L, 1);
     usleep((useconds_t)(t * 1e6));
     return 0;
 }
+
+/*@@@
+```lua
+ps.time()
+```
+returns the current time in seconds (the resolution is OS dependant).
+@@@*/
 
 static inline lua_Number gettime(void)
 {
@@ -71,6 +93,13 @@ static int ps_time(lua_State *L)
     lua_pushnumber(L, gettime());
     return 1;
 }
+
+/*@@@
+```lua
+ps.profile(func)
+```
+executes `func` and returns its execution time in seconds.
+@@@*/
 
 static int ps_profile(lua_State *L)
 {

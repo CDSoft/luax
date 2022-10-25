@@ -497,7 +497,7 @@ doc/%.md: doc/src/%.md $(LUAX_SOURCES) $(LUAX_RUNTIME)
 	@$(call cyan,"DOC",$@)
 	@$(PANDOC_GFM) $< -o $@
 
-$(BUILD)/doc/%.md: doc/%.md Makefile
+$(BUILD)/doc/%.md: doc/%.md
 	@$(call cyan,"DOC",$@)
 	@cp -f $< $@
 

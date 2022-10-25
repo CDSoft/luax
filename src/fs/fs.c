@@ -17,6 +17,18 @@
  * http://cdelord.fr/luax
  */
 
+/***************************************************************************@@@
+# File System
+
+`fs` is a File System module. It provides functions to handle files and directory in a portable way.
+
+```lua
+local fs = require "fs"
+```
+
+## Core module (C)
+@@@*/
+
 #include "fs.h"
 
 #include "tools.h"
@@ -47,6 +59,13 @@
 #define FS_PATHSIZE 1024
 #define FS_BUFSIZE  (64*1024)
 
+/*@@@
+```lua
+fs.getcwd()
+```
+returns the current working directory.
+@@@*/
+
 static int fs_getcwd(lua_State *L)
 {
     char path[FS_PATHSIZE+1];
@@ -54,11 +73,26 @@ static int fs_getcwd(lua_State *L)
     return 1;
 }
 
+/*@@@
+```lua
+fs.chdir(path)
+```
+changes the current directory to `path`.
+@@@*/
+
 static int fs_chdir(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 1);
     return bl_pushresult(L, chdir(path) == 0, path);
 }
+
+/*@@@
+```lua
+fs.dir([path])
+```
+returns the list of files and directories in
+`path` (the default path is the current directory).
+@@@*/
 
 static int fs_dir(lua_State *L)
 {
@@ -96,6 +130,15 @@ static int fs_dir(lua_State *L)
         return bl_pushresult(L, 0, path);
     }
 }
+
+/*@@@
+```lua
+fs.glob(pattern)
+```
+returns the list of path names matching a pattern.
+
+*Note*: not implemented on Windows.
+@@@*/
 
 #ifdef _WIN32
 
@@ -146,6 +189,13 @@ static int fs_glob(lua_State *L)
 
 #endif
 
+/*@@@
+```lua
+fs.remove(name)
+```
+deletes the file `name`.
+@@@*/
+
 static int fs_remove(lua_State *L)
 {
     const char *filename = luaL_checkstring(L, 1);
@@ -160,12 +210,27 @@ static int fs_remove(lua_State *L)
     return bl_pushresult(L, remove(filename) == 0, filename);
 }
 
+/*@@@
+```lua
+fs.rename(old_name, new_name)
+```
+renames the file `old_name` to `new_name`.
+@@@*/
+
 static int fs_rename(lua_State *L)
 {
     const char *fromname = luaL_checkstring(L, 1);
     const char *toname = luaL_checkstring(L, 2);
     return bl_pushresult(L, rename(fromname, toname) == 0, fromname);
 }
+
+/*@@@
+```lua
+fs.copy(source_name, target_name)
+```
+copies file `source_name` to `target_name`.
+The attributes and times are preserved.
+@@@*/
 
 static int fs_copy(lua_State *L)
 {
@@ -218,6 +283,13 @@ static int fs_copy(lua_State *L)
         toname);
 }
 
+/*@@@
+```lua
+fs.mkdir(path)
+```
+creates a new directory `path`.
+@@@*/
+
 static int fs_mkdir(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 1);
@@ -227,6 +299,23 @@ static int fs_mkdir(lua_State *L)
     return bl_pushresult(L, mkdir(path, 0755) == 0, path);
 #endif
 }
+
+/*@@@
+```lua
+fs.stat(name)
+```
+reads attributes of the file `name`. Attributes are:
+
+- `name`: name
+- `type`: `"file"` or `"directory"`
+- `size`: size in bytes
+- `mtime`, `atime`, `ctime`: modification, access and creation times.
+- `mode`: file permissions
+- `uR`, `uW`, `uX`: user Read/Write/eXecute permissions
+- `gR`, `gW`, `gX`: group Read/Write/eXecute permissions
+- `oR`, `oW`, `oX`: other Read/Write/eXecute permissions
+- `aR`, `aW`, `aX`: anybody Read/Write/eXecute permissions
+@@@*/
 
 static inline void set_string(lua_State *L, const char *name, const char *val)
 {
@@ -276,6 +365,16 @@ static int fs_stat(lua_State *L)
         return bl_pushresult(L, 0, path);
     }
 }
+
+/*@@@
+```lua
+fs.inode(name)
+```
+reads device and inode attributes of the file `name`.
+Attributes are:
+
+- `dev`, `ino`: device and inode numbers
+@@@*/
 
 #ifdef _WIN32
 
@@ -349,6 +448,20 @@ static int fs_inode(lua_State *L)
     }
 }
 
+/*@@@
+```lua
+fs.chmod(name, other_file_name)
+```
+sets file `name` permissions as
+file `other_file_name` (string containing the name of another file).
+
+```lua
+fs.chmod(name, bit1, ..., bitn)
+```
+sets file `name` permissions as
+`bit1` or ... or `bitn` (integers).
+@@@*/
+
 static int fs_chmod(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 1);
@@ -376,6 +489,25 @@ static int fs_chmod(lua_State *L)
     return bl_pushresult(L, chmod(path, mode) == 0, path);
 }
 
+/*@@@
+```lua
+fs.touch(name)
+```
+sets the access time and the modification time of
+file `name` with the current time.
+
+```lua
+fs.touch(name, number)
+```
+sets the access time and the modification
+time of file `name` with `number`.
+
+```lua
+fs.touch(name, other_name)
+```
+sets the access time and the
+modification time of file `name` with the times of file `other_name`.
+@@@*/
 static int fs_touch(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 1);
@@ -410,6 +542,13 @@ static int fs_touch(lua_State *L)
     return bl_pushresult(L, utime(path, &t) == 0, path);
 }
 
+/*@@@
+```lua
+fs.basename(path)
+```
+return the last component of path.
+@@@*/
+
 static int fs_basename(lua_State *L)
 {
     char *path = safe_strdup(luaL_checkstring(L, 1));
@@ -418,6 +557,13 @@ static int fs_basename(lua_State *L)
     return 1;
 }
 
+/*@@@
+```lua
+fs.dirname(path)
+```
+return all but the last component of path.
+@@@*/
+
 static int fs_dirname(lua_State *L)
 {
     char *path = safe_strdup(luaL_checkstring(L, 1));
@@ -425,6 +571,13 @@ static int fs_dirname(lua_State *L)
     free(path);
     return 1;
 }
+
+/*@@@
+```lua
+fs.realpath(path)
+```
+return the resolved path name of path.
+@@@*/
 
 static int fs_realpath(lua_State *L)
 {
@@ -440,6 +593,13 @@ static int fs_realpath(lua_State *L)
 #endif
     return 1;
 }
+
+/*@@@
+```lua
+fs.absname(path)
+```
+return the absolute path name of path.
+@@@*/
 
 static int fs_absname(lua_State *L)
 {
@@ -483,6 +643,21 @@ static const luaL_Reg fslib[] =
     {"copy",        fs_copy},
     {NULL, NULL}
 };
+
+/*@@@
+```lua
+fs.sep
+```
+is the directory separator.
+
+```lua
+fs.uR, fs.uW, fs.uX
+fs.gR, fs.gW, fs.gX
+fs.oR, fs.oW, fs.oX
+fs.aR, fs.aW, fs.aX
+```
+are the User/Group/Other/All Read/Write/eXecute mask for `fs.chmod`.
+@@@*/
 
 LUAMOD_API int luaopen_fs(lua_State *L)
 {

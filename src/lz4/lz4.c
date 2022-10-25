@@ -17,6 +17,20 @@
  * http://cdelord.fr/luax
  */
 
+/***************************************************************************@@@
+# lz4:  Extremely Fast Compression algorithm
+
+```lua
+local lz4 = require "lz4"
+```
+
+LZ4 is an extremely fast compression algorithm by Yann Collet.
+
+The source code in on Github: <https://github.com/lz4/lz4>.
+
+More information on <https://www.lz4.org>.
+@@@*/
+
 #include "lz4.h"
 #include "lz4hc.h"
 #include "lz4frame.h"
@@ -27,9 +41,14 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-/******************************************************************************
- * LZ4 compression preferences
- ******************************************************************************/
+/***************************************************************************@@@
+## LZ4 compression preferences
+
+The compression preferences are hard coded and not configurable:
+
+- maximal compression level
+- compression ratio prefered to decompression speed
+@@@*/
 
 static const LZ4F_preferences_t preferences = {
     .frameInfo = LZ4F_INIT_FRAMEINFO,
@@ -39,9 +58,9 @@ static const LZ4F_preferences_t preferences = {
     .reserved = {0u, 0u, 0u},
 };
 
-/******************************************************************************
- * LZ4 frame compression
- ******************************************************************************/
+/***************************************************************************@@@
+## LZ4 frame compression
+@@@*/
 
 const char *lz4_compress(const char *src, const size_t src_len, char **dst, size_t *dst_len)
 {
@@ -60,6 +79,15 @@ const char *lz4_compress(const char *src, const size_t src_len, char **dst, size
     return NULL; /* no error */
 }
 
+/*@@@
+```lua
+lz4.compress(data)
+```
+compresses `data` with LZ4 (highest compression level).
+The compressed data is an LZ4 frame that can be stored in a file and
+decompressed by the `lz4` command line utility.
+@@@*/
+
 static int compress(lua_State *L)
 {
     const char *srcBuffer = luaL_checkstring(L, 1);
@@ -76,9 +104,9 @@ static int compress(lua_State *L)
     return 1;
 }
 
-/******************************************************************************
- * LZ4 frame decompression
- ******************************************************************************/
+/***************************************************************************@@@
+## LZ4 frame decompression
+@@@*/
 
 #define MIN_DECOMPRESSION_BUFFER_SIZE 4096
 
@@ -129,6 +157,15 @@ const char *lz4_decompress(const char *src, const size_t src_len, char **dst, si
     *dst_len = dstOffset;
     return NULL; /* no error */
 }
+
+/*@@@
+```lua
+lz4.decompress(data)
+```
+decompresses `data` with LZ4.
+`data` shall be an LZ4 frame and
+can be the content of a file produced by the `lz4` command line utility.
+@@@*/
 
 static int decompress(lua_State *L)
 {

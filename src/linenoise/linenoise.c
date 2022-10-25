@@ -17,6 +17,13 @@
  * http://cdelord.fr/luax
  */
 
+/***************************************************************************@@@
+# linenoise: light readline alternative
+
+[linenoise](https://github.com/antirez/linenoise)
+is a small self-contained alternative to readline and libedit.
+@@@*/
+
 #include "linenoise.h"
 
 #include <stdbool.h>
@@ -42,6 +49,13 @@
 static int mask_mode = 0;
 static bool running_in_a_tty = true;
 #endif
+
+/*@@@
+```lua
+linenoise.read(prompt)
+```
+prints `prompt` and returns the string entered by the user.
+@@@*/
 
 static int linenoise_read(lua_State *L)
 {
@@ -73,6 +87,14 @@ static int linenoise_read(lua_State *L)
     return 1;
 }
 
+/*@@@
+```lua
+linenoise.read_mask(prompt)
+```
+is the same as `linenoise.read(prompt)`
+but the characters are not echoed but replaced with `*`.
+@@@*/
+
 static int linenoise_read_mask(lua_State *L)
 {
 #ifdef HAS_LINENOISE
@@ -87,6 +109,13 @@ static int linenoise_read_mask(lua_State *L)
 #endif
     return n;
 }
+
+/*@@@
+```lua
+linenoise.add(line)
+```
+adds `line` to the current history.
+@@@*/
 
 static int linenoise_history_add(lua_State *L)
 {
@@ -105,6 +134,13 @@ static int linenoise_history_add(lua_State *L)
     return 0;
 }
 
+/*@@@
+```lua
+linenoise.set_len(len)
+```
+sets the maximal history length to `len`.
+@@@*/
+
 static int linenoise_history_set_len(lua_State *L)
 {
 #ifdef HAS_LINENOISE
@@ -115,6 +151,13 @@ static int linenoise_history_set_len(lua_State *L)
 #endif
     return 0;
 }
+
+/*@@@
+```lua
+linenoise.save(filename)
+```
+saves the history to the file `filename`.
+@@@*/
 
 static int linenoise_history_save(lua_State *L)
 {
@@ -129,6 +172,13 @@ static int linenoise_history_save(lua_State *L)
     return 0;
 }
 
+/*@@@
+```lua
+linenoise.load(filename)
+```
+loads the history from the file `filename`.
+@@@*/
+
 static int linenoise_history_load(lua_State *L)
 {
 #ifdef HAS_LINENOISE
@@ -142,6 +192,13 @@ static int linenoise_history_load(lua_State *L)
     return 0;
 }
 
+/*@@@
+```lua
+linenoise.clear()
+```
+clears the screen.
+@@@*/
+
 static int linenoise_clear_screen(lua_State *L __attribute__((unused)))
 {
 #ifdef HAS_LINENOISE
@@ -153,6 +210,13 @@ static int linenoise_clear_screen(lua_State *L __attribute__((unused)))
     return 0;
 }
 
+/*@@@
+```lua
+linenoise.multi_line(ml)
+```
+enable/disable the multi line mode (enabled by default).
+@@@*/
+
 static int linenoise_set_multi_line(lua_State *L)
 {
 #ifdef HAS_LINENOISE
@@ -163,6 +227,13 @@ static int linenoise_set_multi_line(lua_State *L)
 #endif
     return 0;
 }
+
+/*@@@
+```lua
+linenoise.mask(b)
+```
+enable/disable the mask mode.
+@@@*/
 
 static int linenoise_mask_mode(lua_State *L)
 {

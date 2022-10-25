@@ -1,22 +1,59 @@
 # linenoise: light readline alternative
 
-**linenoise.read(prompt)** prints `prompt` and returns the string
-entered by the user.
+[linenoise](https://github.com/antirez/linenoise) is a small
+self-contained alternative to readline and libedit.
 
-**linenoise.read_mask(prompt)** is the same as
-**linenoise.read(prompt)** the the characters are not echoed but
-replaced with `*`.
+``` lua
+linenoise.read(prompt)
+```
 
-**linenoise.add(line)** adds `line` to the current history.
+prints `prompt` and returns the string entered by the user.
 
-**linenoise.set_len(len)** sets the maximal history length to `len`.
+``` lua
+linenoise.read_mask(prompt)
+```
 
-**linenoise.save(filename)** saves the history to the file `filename`.
+is the same as `linenoise.read(prompt)` but the characters are not
+echoed but replaced with `*`.
 
-**linenoise.load(filename)** loads the history from the file `filename`.
+``` lua
+linenoise.add(line)
+```
 
-**linenoise.clear()** clears the screen.
+adds `line` to the current history.
 
-**linenoise.multi_line(ml)** enable/disable the multi line mode.
+``` lua
+linenoise.set_len(len)
+```
 
-**linenoise.mask(b)** enable/disable the mask mode.
+sets the maximal history length to `len`.
+
+``` lua
+linenoise.save(filename)
+```
+
+saves the history to the file `filename`.
+
+``` lua
+linenoise.load(filename)
+```
+
+loads the history from the file `filename`.
+
+``` lua
+linenoise.clear()
+```
+
+clears the screen.
+
+``` lua
+linenoise.multi_line(ml)
+```
+
+enable/disable the multi line mode (enabled by default).
+
+``` lua
+linenoise.mask(b)
+```
+
+enable/disable the mask mode.

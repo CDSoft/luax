@@ -17,6 +17,17 @@
  * http://cdelord.fr/luax
  */
 
+/***************************************************************************@@@
+# crypt: cryptography module
+
+```lua
+local crypt = require "crypt"
+```
+
+`crypt` provides cryptography functions.
+
+@@@*/
+
 #include "crypt.h"
 
 #include "tools.h"
@@ -46,11 +57,17 @@
 #include <windows.h>
 #endif
 
-/******************************************************************************
- * Random number generator
- ******************************************************************************/
+/***************************************************************************@@@
+## Random number generator
 
-/* https://en.wikipedia.org/wiki/Linear_congruential_generator */
+The LuaX pseudorandom number generator is a
+[linear congruential generator](https://en.wikipedia.org/wiki/Linear_congruential_generator).
+This generator is not a cryptographically secure pseudorandom number generator.
+It can be used as a repeatable generator (e.g. for repeatable tests).
+
+LuaX has a global generator (with a global seed)
+and can instantiate independant generators with their own seeds.
+@@@*/
 
 #define PRNG_MT "prng"
 
@@ -97,7 +114,17 @@ static inline uint64_t prng_default_seed(void)
     return ((uint64_t)time(NULL) + (uint64_t)t.tv_sec + (uint64_t)t.tv_usec) * (uint64_t)getpid();
 }
 
-/* Lua interface to low level random functions */
+/***************************************************************************@@@
+### Random number generator instance
+@@@*/
+
+/*@@@
+```lua
+local rng = crypt.prng(seed)
+```
+returns a random number generator starting from the optional seed `seed`.
+This object has three methods: `srand(seed)`, `rand([bytes])` and `frand()`.
+@@@*/
 
 static int crypt_prng(lua_State *L)
 {
@@ -110,6 +137,14 @@ static int crypt_prng(lua_State *L)
     return 1;
 }
 
+/*@@@
+```lua
+rng:srand([seed])
+```
+sets the seed of the PRNG.
+The default seed is a number based on the current time and the process id.
+@@@*/
+
 static int crypt_prng_srand(lua_State *L)
 {
     t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
@@ -119,6 +154,18 @@ static int crypt_prng_srand(lua_State *L)
     prng_srand(prng, seed);
     return 0;
 }
+
+/*@@@
+```lua
+rng:rand()
+```
+returns a random integral number between `0` and `crypt.RAND_MAX`.
+
+```lua
+rng:rand(bytes)
+```
+returns a string with `bytes` random bytes.
+@@@*/
 
 static int crypt_prng_rand(lua_State *L)
 {
@@ -138,6 +185,13 @@ static int crypt_prng_rand(lua_State *L)
     }
 }
 
+/*@@@
+```lua
+rng:frand()
+```
+returns a random floating point number between `0.0` and `1.0`.
+@@@*/
+
 static int crypt_prng_frand(lua_State *L)
 {
     t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
@@ -153,9 +207,19 @@ static const luaL_Reg prng_funcs[] =
     {NULL, NULL}
 };
 
-/* global random number generator */
+/***************************************************************************@@@
+### Global random number generator
+@@@*/
 
 static t_prng prng;
+
+/*@@@
+```lua
+crypt.srand([seed])
+```
+sets the seed of the global PRNG.
+The default seed is a number based on the current time and the process id.
+@@@*/
 
 static int crypt_srand(lua_State *L)
 {
@@ -163,6 +227,18 @@ static int crypt_srand(lua_State *L)
     prng_srand(&prng, seed);
     return 0;
 }
+
+/*@@@
+```lua
+crypt.rand()
+```
+returns a random integral number between `0` and `crypt.RAND_MAX`.
+
+```lua
+crypt.rand(bytes)
+```
+returns a string with `bytes` random bytes.
+@@@*/
 
 static int crypt_rand(lua_State *L)
 {
@@ -181,15 +257,25 @@ static int crypt_rand(lua_State *L)
     return 1;
 }
 
+/*@@@
+```lua
+crypt.frand()
+```
+returns a random floating point number between `0.0` and `1.0`.
+@@@*/
+
 static int crypt_frand(lua_State *L)
 {
     lua_pushnumber(L, prng_frand(&prng));
     return 1;
 }
 
-/******************************************************************************
- * Hex
- ******************************************************************************/
+/***************************************************************************@@@
+## Hexadecimal encoding
+
+The hexadecimal encoder transforms a string into a string
+where bytes are coded with hexadecimal digits.
+@@@*/
 
 static const char hex_map[] = "0123456789ABCDEF";
 
@@ -236,6 +322,13 @@ static void hex_decode(const char *hex, size_t n_in, char **plain_out, size_t *n
     *n_out = p;
 }
 
+/*@@@
+```lua
+crypt.hex_encode(data)
+```
+encodes `data` in hexa.
+@@@*/
+
 static int crypt_hex_encode(lua_State *L)
 {
     const char *plain = luaL_checkstring(L, 1);
@@ -247,6 +340,13 @@ static int crypt_hex_encode(lua_State *L)
     free(hex);
     return 1;
 }
+
+/*@@@
+```lua
+crypt.hex_decode(data)
+```
+decodes the hexa `data`.
+@@@*/
 
 static int crypt_hex_decode(lua_State *L)
 {
@@ -260,11 +360,12 @@ static int crypt_hex_decode(lua_State *L)
     return 1;
 }
 
-/******************************************************************************
- * Base64
- ******************************************************************************/
+/***************************************************************************@@@
+## Base64 encoding
 
-/* https://fr.wikipedia.org/wiki/Base64 */
+The base64 encoder transforms a string with non printable characters
+into a printable string (see <https://en.wikipedia.org/wiki/Base64>)
+@@@*/
 
 static const unsigned char base64_map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                           "abcdefghijklmnopqrstuvwxyz"
@@ -386,6 +487,13 @@ static void base64_decode(const unsigned char *rev, const unsigned char *b64, si
     *n_out = p;
 }
 
+/*@@@
+```lua
+crypt.base64_encode(data)
+```
+encodes `data` in base64.
+@@@*/
+
 static int crypt_base64_encode(lua_State *L)
 {
     const unsigned char *plain = (const unsigned char *)luaL_checkstring(L, 1);
@@ -397,6 +505,13 @@ static int crypt_base64_encode(lua_State *L)
     free(b64);
     return 1;
 }
+
+/*@@@
+```lua
+crypt.base64_decode(data)
+```
+decodes the base64 `data`.
+@@@*/
 
 static int crypt_base64_decode(lua_State *L)
 {
@@ -410,6 +525,13 @@ static int crypt_base64_decode(lua_State *L)
     return 1;
 }
 
+/*@@@
+```lua
+crypt.base64url_encode(data)
+```
+encodes `data` in base64url.
+@@@*/
+
 static int crypt_base64url_encode(lua_State *L)
 {
     const unsigned char *plain = (const unsigned char *)luaL_checkstring(L, 1);
@@ -421,6 +543,13 @@ static int crypt_base64url_encode(lua_State *L)
     free(b64);
     return 1;
 }
+
+/*@@@
+```lua
+crypt.base64url_decode(data)
+```
+decodes the base64url `data`.
+@@@*/
 
 static int crypt_base64url_decode(lua_State *L)
 {
@@ -434,11 +563,12 @@ static int crypt_base64url_decode(lua_State *L)
     return 1;
 }
 
-/******************************************************************************
- * CRC32
- ******************************************************************************/
+/***************************************************************************@@@
+## CRC32 hash
 
-/* Generated by pycrc (crc-32) */
+The CRC-32 algorithm has been generated by [pycrc](https://pycrc.org/)
+with the `crc-32` algorithm.
+@@@*/
 
 static const uint32_t crc32_table[] =
 {
@@ -486,6 +616,13 @@ static uint32_t crc32(const char *s, size_t n)
     return crc ^ 0xFFFFFFFF;
 }
 
+/*@@@
+```lua
+crypt.crc32(data)
+```
+computes the CRC32 of `data`.
+@@@*/
+
 static int crypt_crc32(lua_State *L)
 {
     const char *s = luaL_checkstring(L, 1);
@@ -495,11 +632,12 @@ static int crypt_crc32(lua_State *L)
     return 1;
 }
 
-/******************************************************************************
- * CRC64
- ******************************************************************************/
+/***************************************************************************@@@
+## CRC64 hash
 
-/* Generated by pycrc (crc-64-xz) */
+The CRC-64 algorithm has been generated by [pycrc](https://pycrc.org/)
+with the `crc-64-xz` algorithm.
+@@@*/
 
 static const uint64_t crc64_table[] =
 {
@@ -579,6 +717,13 @@ static uint64_t crc64(const char *s, size_t n)
     return crc ^ 0xFFFFFFFFFFFFFFFF;
 }
 
+/*@@@
+```lua
+crypt.crc64(data)
+```
+computes the CRC64 of `data`.
+@@@*/
+
 static int crypt_crc64(lua_State *L)
 {
     const char *s = luaL_checkstring(L, 1);
@@ -588,9 +733,12 @@ static int crypt_crc64(lua_State *L)
     return 1;
 }
 
-/******************************************************************************
- * Encryption (RC4)
- ******************************************************************************/
+/***************************************************************************@@@
+## RC4 encryption
+
+RC4 is a stream cipher (see <https://en.wikipedia.org/wiki/RC4>).
+It is design to be fast and simple.
+@@@*/
 
 /* https://en.wikipedia.org/wiki/RC4 */
 
@@ -645,6 +793,15 @@ const char *rc4_runtime(const char *input, size_t input_len, char **output, size
     return NULL;
 }
 
+/*@@@
+```lua
+crypt.rc4(data, key, [drop])
+```
+encrypts/decrypts `data` using the RC4Drop
+algorithm and the encryption key `key` (drops the first `drop` encryption
+steps, the default value of `drop` is 768).
+@@@*/
+
 static int crypt_rc4(lua_State *L)
 {
     const char *key = NULL;     /* default key to encrypt the runtime payload */
@@ -684,11 +841,11 @@ static int crypt_rc4(lua_State *L)
     return 1;
 }
 
-/******************************************************************************
- * TinyCrypt functions
- ******************************************************************************/
+/***************************************************************************@@@
+## TinyCrypt library
 
-/* see https://github.com/intel/tinycrypt */
+The `crypt` contains functions from [TinyCrypt](https://github.com/intel/tinycrypt).
+@@@*/
 
 #ifdef _WIN32
 
@@ -704,6 +861,17 @@ int default_CSPRNG(uint8_t *dest, unsigned int size) {
 }
 
 #endif
+
+/***************************************************************************@@@
+### SHA256 hash
+@@@*/
+
+/*@@@
+```lua
+crypt.sha256(data)
+```
+returns the SHA256 digest of `data`.
+@@@*/
 
 static int crypt_tinycrypt_sha256(lua_State *L)
 {
@@ -726,6 +894,17 @@ static int crypt_tinycrypt_sha256(lua_State *L)
     lua_pushlstring(L, (char *)digest, sizeof(digest));
     return 1;
 }
+
+/***************************************************************************@@@
+### HMAC-SHA256 hash
+@@@*/
+
+/*@@@
+```lua
+crypt.hmac(data, key)
+```
+returns the HMAC-SHA256 digest of `data` using `key` as a key.
+@@@*/
 
 static int crypt_tinycrypt_hmac(lua_State *L)
 {
@@ -756,7 +935,20 @@ static int crypt_tinycrypt_hmac(lua_State *L)
     return 1;
 }
 
+/***************************************************************************@@@
+### HMAC-SHA256 random number generator
+@@@*/
+
 #define HMAC_PRNG_MT "hmac_prng"
+
+/*@@@
+```lua
+crypt.hmac_prng(personalization)
+```
+returns a HMAC PRNG initialized with
+`personalization` (32 bytes or more) and some OS dependant entropy.
+This object has three methods: `srand(seed)`, `rand([bytes])` and `frand()`.
+@@@*/
 
 static int crypt_tinycrypt_hmac_prng(lua_State *L)
 {
@@ -839,7 +1031,20 @@ static const luaL_Reg hmac_prng_funcs[] =
     {NULL, NULL},
 };
 
+/***************************************************************************@@@
+### CTR random number generator
+@@@*/
+
 #define CTR_PRNG_MT "ctr_prng"
+
+/*@@@
+```lua
+crypt.ctr_prng(personalization)
+```
+returns a CTR PRNG initialized with
+`personalization` (32 bytes of more) and some OS dependant entropy.
+This object has three methods: `srand(seed)`, `rand([bytes])` and `frand()`.
+@@@*/
 
 static int crypt_tinycrypt_ctr_prng(lua_State *L)
 {
@@ -922,6 +1127,10 @@ static const luaL_Reg ctr_prng_funcs[] =
     {NULL, NULL},
 };
 
+/***************************************************************************@@@
+### AES-128 encryption
+@@@*/
+
 static inline uint32_t littleendian(uint32_t n)
 {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
@@ -996,6 +1205,13 @@ const char *aes_encrypt_runtime(const uint8_t *plaintext, const size_t plaintext
     return aes_encrypt(plaintext, plaintext_len, (const uint8_t *)LUAX_CRYPT_KEY, sizeof(LUAX_CRYPT_KEY)-1, encrypted, encrypted_len);
 }
 
+/*@@@
+```lua
+crypt.aes_encrypt(data, key)
+```
+encrypts `data` using the AES-128-CBC algorithm and the encryption key `key`.
+@@@*/
+
 static int crypt_tinycrypt_aes128_encrypt(lua_State *L)
 {
     const uint8_t *plaintext = (const uint8_t *)luaL_checkstring(L, 1);
@@ -1027,6 +1243,13 @@ static int crypt_tinycrypt_aes128_encrypt(lua_State *L)
     free(encrypted);
     return 1;
 }
+
+/*@@@
+```lua
+crypt.aes_decrypt(data, key)
+```
+decrypts `data` using the AES-128-CBC algorithm and the encryption key `key`.
+@@@*/
 
 static const char *aes_decrypt(const uint8_t *encrypted, const size_t encrypted_len, const uint8_t *key, const size_t key_len, uint8_t **decrypted_buffer, uint8_t **decrypted, size_t *decrypted_len)
 {

@@ -18,6 +18,10 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+--[[------------------------------------------------------------------------@@@
+## Additional functions (Lua)
+@@@]]
+
 local fs = require "fs"
 
 local sys = require "sys"
@@ -25,19 +29,48 @@ local sys = require "sys"
 local flatten = require"fun".flatten
 local map = require"fun".map
 
+--[[@@@
+```lua
+fs.join(...)
+```
+return a path name made of several path components
+(separated by `fs.sep`).
+@@@]]
+
 function fs.join(...)
     return table.concat({...}, fs.sep)
 end
+
+--[[@@@
+```lua
+fs.is_file(name)
+```
+returns `true` if `name` is a file.
+@@@]]
 
 function fs.is_file(name)
     local stat = fs.stat(name)
     return stat ~= nil and stat.type == "file"
 end
 
+--[[@@@
+```lua
+fs.is_dir(name)
+```
+returns `true` if `name` is a directory.
+@@@]]
+
 function fs.is_dir(name)
     local stat = fs.stat(name)
     return stat ~= nil and stat.type == "directory"
 end
+
+--[[@@@
+```lua
+fs.findpath(name)
+```
+returns the full path of `name` if `name` is found in `$PATH` or `nil`.
+@@@]]
 
 function fs.findpath(name)
     for _, path in ipairs(os.getenv("PATH"):split(sys.os == "windows" and ";" or ":")) do
@@ -47,22 +80,59 @@ function fs.findpath(name)
     return nil, "not found in $PATH"
 end
 
+--[[@@@
+```lua
+fs.mkdirs(path)
+```
+creates a new directory `path` and its parent directories.
+@@@]]
+
 function fs.mkdirs(path)
     if path == "" or fs.stat(path) then return end
     fs.mkdirs(fs.dirname(path))
     fs.mkdir(path)
 end
 
+--[[@@@
+```lua
+fs.mv(old_name, new_name)
+```
+alias for `fs.rename(old_name, new_name)`.
+@@@]]
+
 fs.mv = fs.rename
 
+--[[@@@
+```lua
+fs.rm(name)
+```
+alias for `fs.remove(name)`.
+@@@]]
+
 fs.rm = fs.remove
+
+--[[@@@
+```lua
+fs.rmdir(path, [params])
+```
+deletes the directory `path` and its content recursively.
+@@@]]
 
 function fs.rmdir(path)
     map(fs.rm, fs.walk(path, true))
     return fs.rm(path)
 end
 
--- fs.walk(path) iterates over the file names in path and its subdirectories
+--[[@@@
+```lua
+fs.walk([path], [reverse])
+```
+returns a list listing directory and
+file names in `path` and its subdirectories (the default path is the current
+directory). If `reverse` is true, the list is built in a reverse order
+(suitable for recursive directory removal)
+@@@]]
+
 function fs.walk(path, reverse)
     if type(path) == "boolean" and reverse == nil then
         path, reverse = nil, path
@@ -94,11 +164,25 @@ function fs.walk(path, reverse)
     return flatten(reverse and {acc_files, acc_dirs} or {acc_dirs, acc_files})
 end
 
+--[[@@@
+```lua
+fs.with_tmpfile(f)
+```
+calls `f(tmp)` where `tmp` is the name of a temporary file.
+@@@]]
+
 function fs.with_tmpfile(f)
     local tmp = os.tmpname()
     f(tmp)
     fs.rm(tmp)
 end
+
+--[[@@@
+```lua
+fs.with_tmpdir(f)
+```
+calls `f(tmp)` where `tmp` is the name of a temporary directory.
+@@@]]
 
 function fs.with_tmpdir(f)
     local tmp = os.tmpname()

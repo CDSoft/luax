@@ -4,10 +4,20 @@
 local ps = require "ps"
 ```
 
-**`ps.sleep(n)`** sleeps for `n` seconds.
+``` lua
+ps.sleep(n)
+```
 
-**`ps.time()`** returns the current time in seconds (the resolution is
-OS dependant).
+sleeps for `n` seconds.
 
-**`ps.profile(func)`** executes `func` and returns its execution time in
-seconds.
+``` lua
+ps.time()
+```
+
+returns the current time in seconds (the resolution is OS dependant).
+
+``` lua
+ps.profile(func)
+```
+
+executes `func` and returns its execution time in seconds.
