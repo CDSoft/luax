@@ -268,6 +268,7 @@ update-linenoise: $(BUILD)/$(LINENOISE_ARCHIVE)
 	       -e 's/malloc(/safe_malloc(/'                                     \
 	       -e 's/realloc(/safe_realloc(/'                                   \
 	       -e 's/\(#include "linenoise.h"\)/\1\n\n#include "tools.h"/'      \
+	       -e 's/TCSAFLUSH/TCSADRAIN/'                                      \
 	       src/linenoise/linenoise/linenoise.c
 
 $(BUILD)/$(LINENOISE_ARCHIVE):
