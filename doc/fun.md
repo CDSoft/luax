@@ -427,6 +427,12 @@ F.uncurry(f)
 > uncurry(f)(x, …) calls f(x)(…)
 
 ``` lua
+F.call(f, ...)
+```
+
+> calls `f(...)`
+
+``` lua
 F.until_(p, f, x)
 ```
 

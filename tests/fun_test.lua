@@ -305,6 +305,9 @@ local function miscellaneous_functions()
     local s2 = function(a) return function(b) return a+b end end
     eq(F.uncurry(s2)(1, 2), 3)
 
+    eq({F.call(s3, 10, 11, 12)}, {33})
+    eq({F.call(h, 10, 11)}, {11, 13})
+
     local p = function(x) return x > 1000 end
     local d = function(x) return x*2 end
     eq(F.until_(p, d, 1), 1024)

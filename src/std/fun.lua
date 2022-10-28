@@ -749,6 +749,17 @@ end
 
 --[[@@@
 ```lua
+F.call(f, ...)
+```
+> calls `f(...)`
+@@@]]
+
+function F.call(f, ...)
+    return f(...)
+end
+
+--[[@@@
+```lua
 F.until_(p, f, x)
 ```
 > yields the result of applying f until p holds.

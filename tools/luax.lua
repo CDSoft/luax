@@ -419,4 +419,4 @@ end
 actions[#actions+1] = compiler_mode and run_compiler or run_interpretor
 
 -- run actions
-F(actions):map(function(action) action() end)
+F.map(F.call, actions)
