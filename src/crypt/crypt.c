@@ -91,10 +91,22 @@ static inline uint32_t prng_rand(t_prng *prng)
     return prng->seed >> 32ULL;
 }
 
-static inline double prng_frand(t_prng *prng)
+static inline int64_t prng_rand_int_range(t_prng *prng, int64_t a, int64_t b)
+{
+    const int64_t n = prng_rand(prng);
+    return n % (b-a+1) + a;
+}
+
+static inline double prng_randf(t_prng *prng)
 {
     const uint32_t x = prng_rand(prng);
     return (double)x / (double)(CRYPT_MAX_RAND + 1);
+}
+
+static inline double prng_rand_float_range(t_prng *prng, double a, double b)
+{
+    const double x = prng_rand(prng);
+    return x*(b-a)/(double)(CRYPT_MAX_RAND + 1) + a;
 }
 
 static inline char *prng_block(t_prng *prng, size_t size)
@@ -123,7 +135,7 @@ static inline uint64_t prng_default_seed(void)
 local rng = crypt.prng(seed)
 ```
 returns a random number generator starting from the optional seed `seed`.
-This object has three methods: `srand(seed)`, `rand([bytes])` and `frand()`.
+This object has four methods: `srand(seed)`, `rand([m, [n]])`, `rands([bytes])` and `randf([a, [b]])`.
 @@@*/
 
 static int crypt_prng(lua_State *L)
@@ -162,9 +174,14 @@ rng:rand()
 returns a random integral number between `0` and `crypt.RAND_MAX`.
 
 ```lua
-rng:rand(bytes)
+rng:rand(m)
 ```
-returns a string with `bytes` random bytes.
+returns a random integral number between `1` and `m`.
+
+```lua
+rng:rand(m, n)
+```
+returns a random integral number between `m` and `n`.
 @@@*/
 
 static int crypt_prng_rand(lua_State *L)
@@ -172,11 +189,18 @@ static int crypt_prng_rand(lua_State *L)
     t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
     if (lua_type(L, 2) == LUA_TNUMBER)
     {
-        const size_t bytes = (size_t)luaL_checkinteger(L, 2);
-        char *buffer = prng_block(prng, bytes);
-        lua_pushlstring(L, buffer, bytes);
-        free(buffer);
-        return 1;
+        const lua_Integer m = luaL_checkinteger(L, 2);
+        if (lua_type(L, 3) == LUA_TNUMBER)
+        {
+            const lua_Integer n = luaL_checkinteger(L, 3);
+            lua_pushinteger(L, prng_rand_int_range(prng, m, n));
+            return 1;
+        }
+        else
+        {
+            lua_pushinteger(L, prng_rand_int_range(prng, 1, m));
+            return 1;
+        }
     }
     else
     {
@@ -187,15 +211,60 @@ static int crypt_prng_rand(lua_State *L)
 
 /*@@@
 ```lua
-rng:frand()
+rng:randf()
 ```
 returns a random floating point number between `0.0` and `1.0`.
+
+```lua
+rng:randf(a)
+```
+returns a random floating point number between `0.0` and `a`.
+
+```lua
+rng:randf(a, b)
+```
+returns a random floating point number between `a` and `b`.
 @@@*/
 
-static int crypt_prng_frand(lua_State *L)
+static int crypt_prng_randf(lua_State *L)
 {
     t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
-    lua_pushnumber(L, prng_frand(prng));
+    if (lua_type(L, 2) == LUA_TNUMBER)
+    {
+        const lua_Number a = luaL_checknumber(L, 2);
+        if (lua_type(L, 3) == LUA_TNUMBER)
+        {
+            const lua_Number b = luaL_checknumber(L, 3);
+            lua_pushnumber(L, prng_rand_float_range(prng, a, b));
+            return 1;
+        }
+        else
+        {
+            lua_pushnumber(L, prng_rand_float_range(prng, 0, a));
+            return 1;
+        }
+    }
+    else
+    {
+        lua_pushnumber(L, prng_randf(prng));
+        return 1;
+    }
+}
+
+/*@@@
+```lua
+rng:rands(bytes)
+```
+returns a string with `bytes` random bytes.
+@@@*/
+
+static int crypt_prng_rands(lua_State *L)
+{
+    t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
+    const size_t bytes = (size_t)luaL_checkinteger(L, 2);
+    char *buffer = prng_block(prng, bytes);
+    lua_pushlstring(L, buffer, bytes);
+    free(buffer);
     return 1;
 }
 
@@ -203,7 +272,8 @@ static const luaL_Reg prng_funcs[] =
 {
     {"srand", crypt_prng_srand},
     {"rand", crypt_prng_rand},
-    {"frand", crypt_prng_frand},
+    {"randf", crypt_prng_randf},
+    {"rands", crypt_prng_rands},
     {NULL, NULL}
 };
 
@@ -223,7 +293,9 @@ The default seed is a number based on the current time and the process id.
 
 static int crypt_srand(lua_State *L)
 {
-    const uint64_t seed = (uint64_t)luaL_checkinteger(L, 1);
+    const uint64_t seed = lua_type(L, 1) == LUA_TNUMBER
+        ? (uint64_t)luaL_checkinteger(L, 1)
+        : prng_default_seed();
     prng_srand(&prng, seed);
     return 0;
 }
@@ -235,20 +307,32 @@ crypt.rand()
 returns a random integral number between `0` and `crypt.RAND_MAX`.
 
 ```lua
-crypt.rand(bytes)
+crypt.rand(m)
 ```
-returns a string with `bytes` random bytes.
+returns a random integral number between `1` and `m`.
+
+```lua
+crypt.rand(m, n)
+```
+returns a random integral number between `m` and `n`.
 @@@*/
 
 static int crypt_rand(lua_State *L)
 {
     if (lua_type(L, 1) == LUA_TNUMBER)
     {
-        const size_t bytes = (size_t)luaL_checkinteger(L, 1);
-        char *buffer = prng_block(&prng, bytes);
-        lua_pushlstring(L, buffer, bytes);
-        free(buffer);
-        return 1;
+        const lua_Integer m = luaL_checkinteger(L, 1);
+        if (lua_type(L, 2) == LUA_TNUMBER)
+        {
+            const lua_Integer n = luaL_checkinteger(L, 2);
+            lua_pushinteger(L, prng_rand_int_range(&prng, m, n));
+            return 1;
+        }
+        else
+        {
+            lua_pushinteger(L, prng_rand_int_range(&prng, 1, m));
+            return 1;
+        }
     }
     else
     {
@@ -259,14 +343,58 @@ static int crypt_rand(lua_State *L)
 
 /*@@@
 ```lua
-crypt.frand()
+crypt.randf()
 ```
 returns a random floating point number between `0.0` and `1.0`.
+
+```lua
+crypt.randf(a)
+```
+returns a random floating point number between `0.0` and `a`.
+
+```lua
+crypt.randf(a, b)
+```
+returns a random floating point number between `a` and `b`.
 @@@*/
 
-static int crypt_frand(lua_State *L)
+static int crypt_randf(lua_State *L)
 {
-    lua_pushnumber(L, prng_frand(&prng));
+    if (lua_type(L, 1) == LUA_TNUMBER)
+    {
+        const lua_Number a = luaL_checknumber(L, 1);
+        if (lua_type(L, 2) == LUA_TNUMBER)
+        {
+            const lua_Number b = luaL_checknumber(L, 2);
+            lua_pushnumber(L, prng_rand_float_range(&prng, a, b));
+            return 1;
+        }
+        else
+        {
+            lua_pushnumber(L, prng_rand_float_range(&prng, 0, a));
+            return 1;
+        }
+    }
+    else
+    {
+        lua_pushnumber(L, prng_randf(&prng));
+        return 1;
+    }
+}
+
+/*@@@
+```lua
+crypt.rands(bytes)
+```
+returns a string with `bytes` random bytes.
+@@@*/
+
+static int crypt_rands(lua_State *L)
+{
+    const size_t bytes = (size_t)luaL_checkinteger(L, 1);
+    char *buffer = prng_block(&prng, bytes);
+    lua_pushlstring(L, buffer, bytes);
+    free(buffer);
     return 1;
 }
 
@@ -985,41 +1113,80 @@ static int crypt_tinycrypt_hmac_prng_seed(lua_State *L)
 static int crypt_tinycrypt_hmac_prng_rand(lua_State *L)
 {
     struct tc_hmac_prng_struct *h = luaL_checkudata(L, 1, HMAC_PRNG_MT);
+    lua_Integer m;
+    lua_Integer n;
     if (lua_type(L, 2) == LUA_TNUMBER)
     {
-        const size_t bytes = (size_t)luaL_checkinteger(L, 2);
-        char *buffer = safe_malloc(bytes);
-        if (tc_hmac_prng_generate((uint8_t *)buffer, (unsigned int)bytes, h) != TC_CRYPTO_SUCCESS)
+        if (lua_type(L, 3) == LUA_TNUMBER)
         {
-            free(buffer);
-            return bl_pusherror(L, "tc_hmac_prng_generate failed");
+            m = luaL_checkinteger(L, 2);
+            n = luaL_checkinteger(L, 3);
         }
-        lua_pushlstring(L, buffer, bytes);
-        free(buffer);
-        return 1;
+        else
+        {
+            m = 1;
+            n = luaL_checkinteger(L, 2);
+        }
     }
     else
     {
-        lua_Integer n;
-        if (tc_hmac_prng_generate((uint8_t *)&n, (unsigned int)sizeof(n), h) != TC_CRYPTO_SUCCESS)
-        {
-            return bl_pusherror(L, "tc_hmac_prng_generate failed");
-        }
-
-        lua_pushinteger(L, n);
-        return 1;
+        m = 0;
+        n = CRYPT_MAX_RAND;
     }
-}
-
-static int crypt_tinycrypt_hmac_prng_frand(lua_State *L)
-{
-    struct tc_hmac_prng_struct *h = luaL_checkudata(L, 1, HMAC_PRNG_MT);
-    uint32_t n;
-    if (tc_hmac_prng_generate((uint8_t *)&n, (unsigned int)sizeof(n), h) != TC_CRYPTO_SUCCESS)
+    uint64_t r;
+    if (tc_hmac_prng_generate((uint8_t *)&r, (unsigned int)sizeof(r), h) != TC_CRYPTO_SUCCESS)
     {
         return bl_pusherror(L, "tc_hmac_prng_generate failed");
     }
-    lua_pushnumber(L, (double)n / (double)(1ULL<<(8*sizeof(uint32_t))));
+    lua_pushinteger(L, (lua_Integer)(r % (uint64_t)(n-m+1)) + m);
+    return 1;
+}
+
+static int crypt_tinycrypt_hmac_prng_randf(lua_State *L)
+{
+    struct tc_hmac_prng_struct *h = luaL_checkudata(L, 1, HMAC_PRNG_MT);
+    lua_Number a;
+    lua_Number b;
+    if (lua_type(L, 2) == LUA_TNUMBER)
+    {
+        if (lua_type(L, 3) == LUA_TNUMBER)
+        {
+            a = luaL_checknumber(L, 2);
+            b = luaL_checknumber(L, 3);
+        }
+        else
+        {
+            a = 0.0;
+            b = luaL_checknumber(L, 2);
+        }
+    }
+    else
+    {
+        a = 0.0;
+        b = 1.0;
+    }
+    uint64_t r;
+    if (tc_hmac_prng_generate((uint8_t *)&r, (unsigned int)sizeof(r), h) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_hmac_prng_generate failed");
+    }
+    r = r % (CRYPT_MAX_RAND + 1);
+    lua_pushnumber(L, (double)r * (b-a) / (CRYPT_MAX_RAND + 1) + a);
+    return 1;
+}
+
+static int crypt_tinycrypt_hmac_prng_rands(lua_State *L)
+{
+    struct tc_hmac_prng_struct *h = luaL_checkudata(L, 1, HMAC_PRNG_MT);
+    const size_t bytes = (size_t)luaL_checkinteger(L, 2);
+    char *buffer = safe_malloc(bytes);
+    if (tc_hmac_prng_generate((uint8_t *)buffer, (unsigned int)bytes, h) != TC_CRYPTO_SUCCESS)
+    {
+        free(buffer);
+        return bl_pusherror(L, "tc_hmac_prng_generate failed");
+    }
+    lua_pushlstring(L, buffer, bytes);
+    free(buffer);
     return 1;
 }
 
@@ -1027,7 +1194,8 @@ static const luaL_Reg hmac_prng_funcs[] =
 {
     {"seed", crypt_tinycrypt_hmac_prng_seed},
     {"rand", crypt_tinycrypt_hmac_prng_rand},
-    {"frand", crypt_tinycrypt_hmac_prng_frand},
+    {"randf", crypt_tinycrypt_hmac_prng_randf},
+    {"rands", crypt_tinycrypt_hmac_prng_rands},
     {NULL, NULL},
 };
 
@@ -1081,41 +1249,80 @@ static int crypt_tinycrypt_ctr_prng_seed(lua_State *L)
 static int crypt_tinycrypt_ctr_prng_rand(lua_State *L)
 {
     TCCtrPrng_t *h = luaL_checkudata(L, 1, CTR_PRNG_MT);
+    lua_Integer m;
+    lua_Integer n;
     if (lua_type(L, 2) == LUA_TNUMBER)
     {
-        const size_t bytes = (size_t)luaL_checkinteger(L, 2);
-        char *buffer = safe_malloc(bytes);
-        if (tc_ctr_prng_generate(h, NULL, 0, (uint8_t *)buffer, (unsigned int)bytes) != TC_CRYPTO_SUCCESS)
+        if (lua_type(L, 3) == LUA_TNUMBER)
         {
-            free(buffer);
-            return bl_pusherror(L, "tc_ctr_prng_generate failed");
+            m = luaL_checkinteger(L, 2);
+            n = luaL_checkinteger(L, 3);
         }
-        lua_pushlstring(L, buffer, bytes);
-        free(buffer);
-        return 1;
+        else
+        {
+            m = 1;
+            n = luaL_checkinteger(L, 2);
+        }
     }
     else
     {
-        lua_Integer n;
-        if (tc_ctr_prng_generate(h, NULL, 0, (uint8_t *)&n, (unsigned int)sizeof(n)) != TC_CRYPTO_SUCCESS)
-        {
-            return bl_pusherror(L, "tc_ctr_prng_generate failed");
-        }
-
-        lua_pushinteger(L, n);
-        return 1;
+        m = 0;
+        n = CRYPT_MAX_RAND;
     }
-}
-
-static int crypt_tinycrypt_ctr_prng_frand(lua_State *L)
-{
-    TCCtrPrng_t *h = luaL_checkudata(L, 1, CTR_PRNG_MT);
-    uint32_t n;
-    if (tc_ctr_prng_generate(h, NULL, 0, (uint8_t *)&n, (unsigned int)sizeof(n)) != TC_CRYPTO_SUCCESS)
+    uint64_t r;
+    if (tc_ctr_prng_generate(h, NULL, 0, (uint8_t *)&r, (unsigned int)sizeof(r)) != TC_CRYPTO_SUCCESS)
     {
         return bl_pusherror(L, "tc_ctr_prng_generate failed");
     }
-    lua_pushnumber(L, (double)n / (double)(1ULL<<(8*sizeof(uint32_t))));
+    lua_pushinteger(L, (lua_Integer)(r % (uint64_t)(n-m+1)) + m);
+    return 1;
+}
+
+static int crypt_tinycrypt_ctr_prng_randf(lua_State *L)
+{
+    TCCtrPrng_t *h = luaL_checkudata(L, 1, CTR_PRNG_MT);
+    lua_Number a;
+    lua_Number b;
+    if (lua_type(L, 2) == LUA_TNUMBER)
+    {
+        if (lua_type(L, 3) == LUA_TNUMBER)
+        {
+            a = luaL_checknumber(L, 2);
+            b = luaL_checknumber(L, 3);
+        }
+        else
+        {
+            a = 0.0;
+            b = luaL_checknumber(L, 2);
+        }
+    }
+    else
+    {
+        a = 0.0;
+        b = 1.0;
+    }
+    uint64_t r;
+    if (tc_ctr_prng_generate(h, NULL, 0, (uint8_t *)&r, (unsigned int)sizeof(r)) != TC_CRYPTO_SUCCESS)
+    {
+        return bl_pusherror(L, "tc_ctr_prng_generate failed");
+    }
+    r = r % (CRYPT_MAX_RAND + 1);
+    lua_pushnumber(L, (double)r * (b-a) / (CRYPT_MAX_RAND + 1) + a);
+    return 1;
+}
+
+static int crypt_tinycrypt_ctr_prng_rands(lua_State *L)
+{
+    TCCtrPrng_t *h = luaL_checkudata(L, 1, CTR_PRNG_MT);
+    const size_t bytes = (size_t)luaL_checkinteger(L, 2);
+    char *buffer = safe_malloc(bytes);
+    if (tc_ctr_prng_generate(h, NULL, 0, (uint8_t *)buffer, (unsigned int)bytes) != TC_CRYPTO_SUCCESS)
+    {
+        free(buffer);
+        return bl_pusherror(L, "tc_ctr_prng_generate failed");
+    }
+    lua_pushlstring(L, buffer, bytes);
+    free(buffer);
     return 1;
 }
 
@@ -1123,7 +1330,8 @@ static const luaL_Reg ctr_prng_funcs[] =
 {
     {"seed", crypt_tinycrypt_ctr_prng_seed},
     {"rand", crypt_tinycrypt_ctr_prng_rand},
-    {"frand", crypt_tinycrypt_ctr_prng_frand},
+    {"randf", crypt_tinycrypt_ctr_prng_randf},
+    {"rands", crypt_tinycrypt_ctr_prng_rands},
     {NULL, NULL},
 };
 
@@ -1357,7 +1565,8 @@ static const luaL_Reg crypt_module[] =
     /* LuaX functions */
     {"srand", crypt_srand},
     {"rand", crypt_rand},
-    {"frand", crypt_frand},
+    {"randf", crypt_randf},
+    {"rands", crypt_rands},
     {"prng", crypt_prng},
     {"hex_encode", crypt_hex_encode},
     {"hex_decode", crypt_hex_decode},

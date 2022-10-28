@@ -36,7 +36,7 @@ return function()
         eq(crypt.hex_decode(y), x)
         eq(z:hex_decode(), x)
         for _ = 1, 1000 do
-            local s = crypt.rand(256)
+            local s = crypt.rands(256)
             eq(s:hex_encode():hex_decode(), s)
         end
     end
@@ -73,7 +73,7 @@ return function()
             eq(string.char(i):base64_encode():base64_decode(), string.char(i))
         end
         for i = 1, 1000 do
-            local s = crypt.rand(256 + i%3)
+            local s = crypt.rands(256 + i%3)
             eq(s:base64_encode():base64_decode(), s)
             eq(s:base64url_encode():base64url_decode(), s)
             eq(s:base64url_encode(), s:base64_encode():gsub("+", "-"):gsub("/", "_"))
@@ -105,8 +105,8 @@ return function()
             eq(crypt.rc4(y, key), y:rc4(key))
             eq(x:rc4(key):rc4(key), x)
             for _ = 1, 1000 do
-                local s = crypt.rand(256)
-                local k = crypt.rand(256)
+                local s = crypt.rands(256)
+                local k = crypt.rands(256)
                 eq(s:rc4(k):rc4(k), s)
             end
         end
@@ -121,15 +121,15 @@ return function()
             eq(crypt.rc4(y, key, drop), y:rc4(key, drop))
             eq(x:rc4(key, drop):rc4(key, drop), x)
             for _ = 1, 1000 do
-                local s = crypt.rand(256)
-                local k = crypt.rand(256)
+                local s = crypt.rands(256)
+                local k = crypt.rands(256)
                 eq(s:rc4(k, drop):rc4(k, drop), s)
             end
         end
         do
             for _ = 1, 1000 do
-                local s = crypt.rand(256)
-                local k = crypt.rand(256)
+                local s = crypt.rands(256)
+                local k = crypt.rands(256)
                 local drop = crypt.rand() % 4096
                 eq(s:rc4(k, drop):rc4(k, drop), s)
             end
@@ -157,18 +157,26 @@ return function()
             ne(x, y)
         end
         for _ = 1, 1000 do
-            local x = crypt.frand()                             eq(type(x), "number") eq(math.type(x), "float")
-            local y = crypt.frand()                             eq(type(y), "number") eq(math.type(y), "float")
+            local x = crypt.randf()                             eq(type(x), "number") eq(math.type(x), "float")
+            local y = crypt.randf()                             eq(type(y), "number") eq(math.type(y), "float")
             bounded(x, 0.0, 1.0)
             bounded(y, 0.0, 1.0)
             ne(x, y)
         end
         for _ = 1, 1000 do
-            local x = crypt.rand(16)                            eq(type(x), "string")
-            local y = crypt.rand(16)                            eq(type(y), "string")
+            local x = crypt.rands(16)                           eq(type(x), "string")
+            local y = crypt.rands(16)                           eq(type(y), "string")
             eq(#x, 16)
             eq(#y, 16)
             ne(x, y)
+        end
+        for _ = 1, 1000 do
+            bounded(crypt.rand(), 0, crypt.RAND_MAX)
+            bounded(crypt.rand(15), 1, 15)
+            bounded(crypt.rand(5, 15), 5, 15)
+            bounded(crypt.randf(), 0.0, 1.0)
+            bounded(crypt.randf(3.5), 0.0, 3.5)
+            bounded(crypt.randf(2.5, 3.5), 2.5, 3.5)
         end
     end
     do
@@ -181,16 +189,24 @@ return function()
             local x3 = r3:rand()                                eq(type(x2), "number") eq(math.type(x3), "integer")
             eq(x1, x2)
             ne(x1, x3)
-            local s1 = r1:rand(32)                              eq(type(s1), "string") eq(#s1, 32)
-            local s2 = r2:rand(32)                              eq(type(s2), "string") eq(#s2, 32)
-            local s3 = r3:rand(32)                              eq(type(s3), "string") eq(#s3, 32)
+            local s1 = r1:rands(32)                             eq(type(s1), "string") eq(#s1, 32)
+            local s2 = r2:rands(32)                             eq(type(s2), "string") eq(#s2, 32)
+            local s3 = r3:rands(32)                             eq(type(s3), "string") eq(#s3, 32)
             eq(s1, s2)
             ne(s1, s3)
-            local f1 = r1:frand()                               eq(type(f1), "number") eq(math.type(f1), "float")
-            local f2 = r2:frand()                               eq(type(f2), "number") eq(math.type(f2), "float")
-            local f3 = r3:frand()                               eq(type(f3), "number") eq(math.type(f3), "float")
+            local f1 = r1:randf()                               eq(type(f1), "number") eq(math.type(f1), "float")
+            local f2 = r2:randf()                               eq(type(f2), "number") eq(math.type(f2), "float")
+            local f3 = r3:randf()                               eq(type(f3), "number") eq(math.type(f3), "float")
             eq(f1, f2)
             ne(f1, f3)
+        end
+        for _ = 1, 1000 do
+            bounded(r1:rand(), 0, crypt.RAND_MAX)
+            bounded(r1:rand(15), 1, 15)
+            bounded(r1:rand(5, 15), 5, 15)
+            bounded(r1:randf(), 0.0, 1.0)
+            bounded(r1:randf(3.5), 0.0, 3.5)
+            bounded(r1:randf(2.5, 3.5), 2.5, 3.5)
         end
     end
 
@@ -213,7 +229,7 @@ return function()
         eq(bytes(crypt.sha256(("\x41"):rep(1000))), { 0xc2, 0xe6, 0x86, 0x82, 0x34, 0x89, 0xce, 0xd2, 0x01, 0x7f, 0x60, 0x59, 0xb8, 0xb2, 0x39, 0x31, 0x8b, 0x63, 0x64, 0xf6, 0xdc, 0xd8, 0x35, 0xd0, 0xa5, 0x19, 0x10, 0x5a, 0x1e, 0xad, 0xd6, 0xe4 })
         eq(bytes(crypt.sha256(("\x55"):rep(1005))), { 0xf4, 0xd6, 0x2d, 0xde, 0xc0, 0xf3, 0xdd, 0x90, 0xea, 0x13, 0x80, 0xfa, 0x16, 0xa5, 0xff, 0x8d, 0xc4, 0xc5, 0x4b, 0x21, 0x74, 0x06, 0x50, 0xf2, 0x4a, 0xfc, 0x41, 0x20, 0x90, 0x35, 0x52, 0xb0 })
         for _ = 1, 1000 do
-            local s = crypt.rand(crypt.rand()%1024)
+            local s = crypt.rands(crypt.rand()%1024)
             eq(s:sha256(), crypt.sha256(s))
         end
     end
@@ -259,8 +275,8 @@ return function()
             { 0x9b, 0x09, 0xff, 0xa7, 0x1b, 0x94, 0x2f, 0xcb, 0x27, 0x63, 0x5f, 0xbc, 0xd5, 0xb0, 0xe9, 0x44, 0xbf, 0xdc, 0x63, 0x64, 0x4f, 0x07, 0x13, 0x93, 0x8a, 0x7f, 0x51, 0x53, 0x5c, 0x3a, 0x35, 0xe2 }
         )
         for _ = 1, 1000 do
-            local k = crypt.rand(crypt.rand()%1024)
-            local s = crypt.rand(crypt.rand()%1024)
+            local k = crypt.rands(crypt.rand()%1024)
+            local s = crypt.rands(crypt.rand()%1024)
             eq(s:hmac(k), crypt.hmac(s, k))
         end
     end
@@ -275,18 +291,28 @@ return function()
             ne(x1, x2)
             ne(x1, x3)
             ne(x2, x3)
-            local s1 = r1:rand(32)                              eq(type(s1), "string") eq(#s1, 32)
-            local s2 = r2:rand(32)                              eq(type(s2), "string") eq(#s2, 32)
-            local s3 = r3:rand(32)                              eq(type(s3), "string") eq(#s3, 32)
+            local s1 = r1:rands(32)                             eq(type(s1), "string") eq(#s1, 32)
+            local s2 = r2:rands(32)                             eq(type(s2), "string") eq(#s2, 32)
+            local s3 = r3:rands(32)                             eq(type(s3), "string") eq(#s3, 32)
             ne(s1, s2)
             ne(s1, s3)
             ne(s2, s3)
-            local f1 = r1:frand()                               eq(type(f1), "number") eq(math.type(f1), "float")
-            local f2 = r2:frand()                               eq(type(f2), "number") eq(math.type(f2), "float")
-            local f3 = r3:frand()                               eq(type(f3), "number") eq(math.type(f3), "float")
+            local f1 = r1:randf()                               eq(type(f1), "number") eq(math.type(f1), "float")
+            local f2 = r2:randf()                               eq(type(f2), "number") eq(math.type(f2), "float")
+            local f3 = r3:randf()                               eq(type(f3), "number") eq(math.type(f3), "float")
             ne(f1, f2)
             ne(f1, f3)
             ne(f2, f3)
+        end
+        for _ = 1, 1000 do
+            bounded(r1:rand(), 0, crypt.RAND_MAX)
+            bounded(r1:rand(15), 1, 15)
+            bounded(r1:rand(5, 15), 5, 15)
+            bounded(r1:rand(-5, 15), -5, 15)
+            bounded(r1:randf(), 0.0, 1.0)
+            bounded(r1:randf(3.5), 0.0, 3.5)
+            bounded(r1:randf(2.5, 3.5), 2.5, 3.5)
+            bounded(r1:randf(-2.5, 3.5), -2.5, 3.5)
         end
     end
     do
@@ -300,25 +326,35 @@ return function()
             ne(x1, x2)
             ne(x1, x3)
             ne(x2, x3)
-            local s1 = r1:rand(32)                              eq(type(s1), "string") eq(#s1, 32)
-            local s2 = r2:rand(32)                              eq(type(s2), "string") eq(#s2, 32)
-            local s3 = r3:rand(32)                              eq(type(s3), "string") eq(#s3, 32)
+            local s1 = r1:rands(32)                             eq(type(s1), "string") eq(#s1, 32)
+            local s2 = r2:rands(32)                             eq(type(s2), "string") eq(#s2, 32)
+            local s3 = r3:rands(32)                             eq(type(s3), "string") eq(#s3, 32)
             ne(s1, s2)
             ne(s1, s3)
             ne(s2, s3)
-            local f1 = r1:frand()                               eq(type(f1), "number") eq(math.type(f1), "float")
-            local f2 = r2:frand()                               eq(type(f2), "number") eq(math.type(f2), "float")
-            local f3 = r3:frand()                               eq(type(f3), "number") eq(math.type(f3), "float")
+            local f1 = r1:randf()                               eq(type(f1), "number") eq(math.type(f1), "float")
+            local f2 = r2:randf()                               eq(type(f2), "number") eq(math.type(f2), "float")
+            local f3 = r3:randf()                               eq(type(f3), "number") eq(math.type(f3), "float")
             ne(f1, f2)
             ne(f1, f3)
             ne(f2, f3)
+        end
+        for _ = 1, 1000 do
+            bounded(r1:rand(), 0, crypt.RAND_MAX)
+            bounded(r1:rand(15), 1, 15)
+            bounded(r1:rand(5, 15), 5, 15)
+            bounded(r1:rand(-5, 15), -5, 15)
+            bounded(r1:randf(), 0.0, 1.0)
+            bounded(r1:randf(3.5), 0.0, 3.5)
+            bounded(r1:randf(2.5, 3.5), 2.5, 3.5)
+            bounded(r1:randf(-2.5, 3.5), -2.5, 3.5)
         end
     end
     do
         do
             for _ = 1, 1000 do
-                local x = crypt.rand(crypt.rand()%256)
-                local key = crypt.rand(crypt.rand()%256)
+                local x = crypt.rands(crypt.rand()%256)
+                local key = crypt.rands(crypt.rand()%256)
                 local y1 = crypt.aes_encrypt(x, key)
                 local y2 = crypt.aes_encrypt(x, key)
                 local z1 = crypt.aes_decrypt(y1, key)
@@ -332,8 +368,8 @@ return function()
         end
         do
             for _ = 1, 1000 do
-                local x = crypt.rand(crypt.rand()%256)
-                local key = crypt.rand(crypt.rand()%256)
+                local x = crypt.rands(crypt.rand()%256)
+                local key = crypt.rands(crypt.rand()%256)
                 local y1 = x:aes_encrypt(key)
                 local y2 = x:aes_encrypt(key)
                 local z1 = crypt.aes_decrypt(y1, key)
@@ -347,8 +383,8 @@ return function()
         end
         do
             for _ = 1, 1000 do
-                local x = crypt.rand(crypt.rand()%256)
-                local key = crypt.rand(crypt.rand()%256)
+                local x = crypt.rands(crypt.rand()%256)
+                local key = crypt.rands(crypt.rand()%256)
                 local y1 = crypt.aes_encrypt(x, key)
                 local y2 = crypt.aes_encrypt(x, key)
                 local z1 = y1:aes_decrypt(key)

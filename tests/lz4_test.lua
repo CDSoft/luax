@@ -43,7 +43,7 @@ return function()
     end
     do
         for i = 1, 256 do
-            local s = crypt.rand(i*1024)
+            local s = crypt.rands(i*1024)
             local z = lz4.compress(s)
             assert(#z > #s) -- uncompressible random data
             ne(z, s)

@@ -24,8 +24,8 @@ local rng = crypt.prng(seed)
 ```
 
 returns a random number generator starting from the optional seed
-`seed`. This object has three methods: `srand(seed)`, `rand([bytes])`
-and `frand()`.
+`seed`. This object has four methods: `srand(seed)`, `rand([m, [n]])`,
+`rands([bytes])` and `randf([a, [b]])`.
 
 ``` lua
 rng:srand([seed])
@@ -41,16 +41,40 @@ rng:rand()
 returns a random integral number between `0` and `crypt.RAND_MAX`.
 
 ``` lua
-rng:rand(bytes)
+rng:rand(m)
 ```
 
-returns a string with `bytes` random bytes.
+returns a random integral number between `1` and `m`.
 
 ``` lua
-rng:frand()
+rng:rand(m, n)
+```
+
+returns a random integral number between `m` and `n`.
+
+``` lua
+rng:randf()
 ```
 
 returns a random floating point number between `0.0` and `1.0`.
+
+``` lua
+rng:randf(a)
+```
+
+returns a random floating point number between `0.0` and `a`.
+
+``` lua
+rng:randf(a, b)
+```
+
+returns a random floating point number between `a` and `b`.
+
+``` lua
+rng:rands(bytes)
+```
+
+returns a string with `bytes` random bytes.
 
 ### Global random number generator
 
@@ -68,16 +92,40 @@ crypt.rand()
 returns a random integral number between `0` and `crypt.RAND_MAX`.
 
 ``` lua
-crypt.rand(bytes)
+crypt.rand(m)
 ```
 
-returns a string with `bytes` random bytes.
+returns a random integral number between `1` and `m`.
 
 ``` lua
-crypt.frand()
+crypt.rand(m, n)
+```
+
+returns a random integral number between `m` and `n`.
+
+``` lua
+crypt.randf()
 ```
 
 returns a random floating point number between `0.0` and `1.0`.
+
+``` lua
+crypt.randf(a)
+```
+
+returns a random floating point number between `0.0` and `a`.
+
+``` lua
+crypt.randf(a, b)
+```
+
+returns a random floating point number between `a` and `b`.
+
+``` lua
+crypt.rands(bytes)
+```
+
+returns a string with `bytes` random bytes.
 
 ## Hexadecimal encoding
 
