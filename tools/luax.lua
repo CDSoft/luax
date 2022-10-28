@@ -24,12 +24,12 @@ local I = require "I"
 local F = require "fun"
 
 local welcome = I(_G)(sys)[[
- _               __  __  |  Documentation: http://cdelord.fr/luax
+ _               __  __  |  http://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |
 | |  | | | |/ _` |\  /   |  Version $(_LUAX_VERSION)
 | |__| |_| | (_| |/  \   |  Powered by $(_VERSION)
 |_____\__,_|\__,_/_/\_\  |
-                         |  $(os:cap()) $(arch) $(abi) build
+                         |  $(os:cap()) $(arch) $(abi)
 ]]
 
 local usage = I(_G){fs=fs}[==[
