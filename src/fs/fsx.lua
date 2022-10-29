@@ -26,8 +26,7 @@ local fs = require "fs"
 
 local sys = require "sys"
 
-local flatten = require"fun".flatten
-local map = require"fun".map
+local F = require "fun"
 
 --[[@@@
 ```lua
@@ -119,7 +118,7 @@ deletes the directory `path` and its content recursively.
 @@@]]
 
 function fs.rmdir(path)
-    map(fs.rm, fs.walk(path, true))
+    fs.walk(path, true):map(fs.rm)
     return fs.rm(path)
 end
 
@@ -161,7 +160,7 @@ function fs.walk(path, reverse)
             end
         end
     end
-    return flatten(reverse and {acc_files, acc_dirs} or {acc_dirs, acc_files})
+    return F.flatten(reverse and {acc_files, acc_dirs} or {acc_dirs, acc_files})
 end
 
 --[[@@@

@@ -21,5 +21,8 @@
 
 #include "lua.h"
 
+/* set the fun module metatable to the table at the top of the stack */
+void set_fun_metatable(lua_State *L);
+
 /* C module registration function */
 LUAMOD_API int luaopen_std(lua_State *L);

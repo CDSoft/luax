@@ -31,6 +31,7 @@ local fs = require "fs"
 
 #include "fs.h"
 
+#include "std/std.h"
 #include "tools.h"
 
 #ifdef _WIN32
@@ -123,6 +124,7 @@ static int fs_dir(lua_State *L)
             lua_rawseti(L, -2, ++n);
         }
         closedir(dir);
+        set_fun_metatable(L);
         return 1;
     }
     else
@@ -179,6 +181,7 @@ static int fs_glob(lua_State *L)
             lua_rawseti(L, -2, i);
         }
         globfree(&globres);
+        set_fun_metatable(L);
         return 1;
     }
     else
@@ -358,6 +361,7 @@ static int fs_stat(lua_State *L)
         set_boolean(L, "oR", buf.st_mode & S_IROTH);
         set_boolean(L, "oW", buf.st_mode & S_IWOTH);
         set_boolean(L, "oX", buf.st_mode & S_IXOTH);
+        set_fun_metatable(L);
         return 1;
     }
     else

@@ -63,10 +63,14 @@ return function()
     fs.mkdirs(fs.join(tmp, "level1", "level2", "level3"))
     eq(fs.is_dir(fs.join(tmp, "level1", "level2", "level3")), true)
 
-    eq(sort(fs.dir()),{"bar","bar.txt","foo","foo.txt", "level1"})
-    eq(sort(fs.dir(".")),{"bar","bar.txt","foo","foo.txt", "level1"})
+    eq(fs.dir():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
+    eq(fs.dir("."):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
+    if sys.os == "linux" then
+        eq(fs.glob():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
+        eq(fs.glob("*.txt"):sort(),{"bar.txt","foo.txt"})
+    end
     fs.chdir(cwd)
-    eq(sort(fs.dir(tmp)),{"bar","bar.txt","foo","foo.txt", "level1"})
+    eq(fs.dir(tmp):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
     fs.chdir(tmp)
 
     local function test_files(f, testfiles, reverse)
