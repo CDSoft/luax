@@ -27,6 +27,7 @@ end
 
 function dump(t)
     if (getmetatable(t) or {}).imag then return t:tostring() end
+    if (getmetatable(t) or {}).__tostring then return ("%q"):format(t:tostring()) end
     if type(t) ~= "table" then return ("%q"):format(t) end
     if is_a_list(t) then
         local s = {}

@@ -32,23 +32,23 @@ require "test"
 
 local function basic_data_types()
 
-    eq(F.op.and_(false, false), false)
-    eq(F.op.and_(false, true), false)
-    eq(F.op.and_(true, false), false)
-    eq(F.op.and_(true, true), true)
+    eq(F.op.land(false, false), false)
+    eq(F.op.land(false, true), false)
+    eq(F.op.land(true, false), false)
+    eq(F.op.land(true, true), true)
 
-    eq(F.op.or_(false, false), false)
-    eq(F.op.or_(false, true), true)
-    eq(F.op.or_(true, false), true)
-    eq(F.op.or_(true, true), true)
+    eq(F.op.lor(false, false), false)
+    eq(F.op.lor(false, true), true)
+    eq(F.op.lor(true, false), true)
+    eq(F.op.lor(true, true), true)
 
-    eq(F.op.xor_(false, false), false)
-    eq(F.op.xor_(false, true), true)
-    eq(F.op.xor_(true, false), true)
-    eq(F.op.xor_(true, true), false)
+    eq(F.op.lxor(false, false), false)
+    eq(F.op.lxor(false, true), true)
+    eq(F.op.lxor(true, false), true)
+    eq(F.op.lxor(true, true), false)
 
-    eq(F.op.not_(false), true)
-    eq(F.op.not_(true), false)
+    eq(F.op.lnot(false), true)
+    eq(F.op.lnot(true), false)
 
     for a = 0, 255 do
         for b = 0, 255 do
@@ -88,9 +88,9 @@ local function basic_type_classes()
     eq(F.op.ne(1,1), false)
     eq(F.op.ne(1,2), true)
 
-    eq(F.compare(1, 0), 1)
-    eq(F.compare(1, 1), 0)
-    eq(F.compare(1, 2), -1)
+    eq(F.comp(1, 0), 1)
+    eq(F.comp(1, 1), 0)
+    eq(F.comp(1, 2), -1)
 
     eq(F.op.lt(1, 0), false)
     eq(F.op.lt(1, 1), false)
@@ -118,6 +118,32 @@ local function basic_type_classes()
 
     eq(F.succ(42), 43)
     eq(F.pred(42), 41)
+
+    eq(F.op.ueq({1,2}, {1,2}), true)
+    eq(F.op.ueq({1,2}, {1,3}), false)
+
+    eq(F.op.une({1,2}, {1,2}), false)
+    eq(F.op.une({1,2}, {1,3}), true)
+
+    eq(F.op.ult({1,2}, {1,1}), false)
+    eq(F.op.ult({1,2}, {1,2}), false)
+    eq(F.op.ult({1,2}, {1,3}), true)
+
+    eq(F.op.ule({1,2}, {1,1}), false)
+    eq(F.op.ule({1,2}, {1,2}), true)
+    eq(F.op.ule({1,2}, {1,3}), true)
+
+    eq(F.op.ugt({1,2}, {1,1}), true)
+    eq(F.op.ugt({1,2}, {1,2}), false)
+    eq(F.op.ugt({1,2}, {1,3}), false)
+
+    eq(F.op.uge({1,2}, {1,1}), true)
+    eq(F.op.uge({1,2}, {1,2}), true)
+    eq(F.op.uge({1,2}, {1,3}), false)
+
+    eq(F.ucomp({1,2}, {1,1}), 1)
+    eq(F.ucomp({1,2}, {1,2}), 0)
+    eq(F.ucomp({1,2}, {1,3}), -1)
 
 end
 
@@ -327,15 +353,18 @@ local function miscellaneous_functions()
     local function fib(n) return n <= 1 and imath.new(n) or fib(n-1) + fib(n-2) end
     fib = F.memo1(fib)
 
-    eq(fib(0):tostring(), "0")
-    eq(fib(1):tostring(), "1")
-    eq(fib(2):tostring(), "1")
-    eq(fib(3):tostring(), "2")
-    eq(fib(4):tostring(), "3")
-    eq(fib(5):tostring(), "5")
-    eq(fib(6):tostring(), "8")
-    local dt = ps.profile(function() eq(fib(100):tostring(), "354224848179261915075") end) -- this should be fast because of memoization
-    assert(dt < 0.1, "memoized fibonacci suite is too long")
+    eq(fib(0), imath.new"0")
+    eq(fib(1), imath.new"1")
+    eq(fib(2), imath.new"1")
+    eq(fib(3), imath.new"2")
+    eq(fib(4), imath.new"3")
+    eq(fib(5), imath.new"5")
+    eq(fib(6), imath.new"8")
+
+    local fib100
+    local dt = ps.profile(function() fib100 = fib(100) end) -- this should be fast because of memoization
+    assert(dt < 1.0, "the memoized fibonacci suite takes too much time")
+    eq(fib100, imath.new"354224848179261915075")
 
 end
 
@@ -352,6 +381,15 @@ local function convert_to_and_from_string()
     eq(F.read("42"), 42)
     eq(F.read("{1, 3, x=2}"), {1, x=2, 3})
     eq(F.read("{1, 3, p={x=1.5, y=2.5}, x=2}"), {1, 3, p={x=1.5, y=2.5}, x=2})
+
+    local t = {
+        [{1,1}]   = 1,
+        [{1,2}]   = 2,
+        [{1,2,3}] = 3,
+        [{2,1}]   = 4,
+        [{2,2}]   = 5,
+    }
+    eq(F.show(t), "{[{1, 1}]=1, [{1, 2}]=2, [{1, 2, 3}]=3, [{2, 1}]=4, [{2, 2}]=5}")
 
 end
 
@@ -789,25 +827,25 @@ local function table_reductions()
     eq(F.foldk(h, "Map:", {x="a", y="bbb"}), "Map:xaybbb")
     eq(F{x="a", y="bbb"}:foldk(h, "Map:"), "Map:xaybbb")
 
-    eq(F.and_{true,  true,  true }, true)
-    eq(F.and_{false, true,  true }, false)
-    eq(F.and_{true,  false, true }, false)
-    eq(F.and_{true,  false, false}, false)
+    eq(F.land{true,  true,  true }, true)
+    eq(F.land{false, true,  true }, false)
+    eq(F.land{true,  false, true }, false)
+    eq(F.land{true,  false, false}, false)
 
-    eq(F{true,  true,  true }:and_(), true)
-    eq(F{false, true,  true }:and_(), false)
-    eq(F{true,  false, true }:and_(), false)
-    eq(F{true,  false, false}:and_(), false)
+    eq(F{true,  true,  true }:land(), true)
+    eq(F{false, true,  true }:land(), false)
+    eq(F{true,  false, true }:land(), false)
+    eq(F{true,  false, false}:land(), false)
 
-    eq(F.or_{false, false, false}, false)
-    eq(F.or_{true,  false, false}, true)
-    eq(F.or_{false, true,  false}, true)
-    eq(F.or_{false, false, true }, true)
+    eq(F.lor{false, false, false}, false)
+    eq(F.lor{true,  false, false}, true)
+    eq(F.lor{false, true,  false}, true)
+    eq(F.lor{false, false, true }, true)
 
-    eq(F{false, false, false}:or_(), false)
-    eq(F{true,  false, false}:or_(), true)
-    eq(F{false, true,  false}:or_(), true)
-    eq(F{false, false, true }:or_(), true)
+    eq(F{false, false, false}:lor(), false)
+    eq(F{true,  false, false}:lor(), true)
+    eq(F{false, true,  false}:lor(), true)
+    eq(F{false, false, true }:lor(), true)
 
     local function le(n) return function(k) return k <= n end end
     local function ge(n) return function(k) return k >= n end end

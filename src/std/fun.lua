@@ -72,45 +72,236 @@ end
 ## Standard types, and related functions
 @@@]]
 
+local has_mathx, mathx = pcall(require, "mathx")
+
+local type_rank = {
+    ["nil"]         = 0,
+    ["number"]      = 1,
+    ["string"]      = 2,
+    ["boolean"]     = 3,
+    ["table"]       = 4,
+    ["function"]    = 5,
+    ["thread"]      = 6,
+    ["userdata"]    = 7,
+}
+
+local function universal_eq(a, b)
+    local ta, tb = type(a), type(b)
+    if ta ~= tb then return false end
+    if ta == "nil" then return true end
+    if ta == "table" then
+        local ks = F.merge{a, b}:keys()
+        for i = 1, #ks do
+            local k = ks[i]
+            if not universal_eq(a[k], b[k]) then return false end
+        end
+        return true
+    end
+    return a == b
+end
+
+local function universal_ne(a, b)
+    local ta, tb = type(a), type(b)
+    if ta ~= tb then return true end
+    if ta == "nil" then return false end
+    if ta == "table" then
+        local ks = F.merge{a, b}:keys()
+        for i = 1, #ks do
+            local k = ks[i]
+            if universal_ne(a[k], b[k]) then return true end
+        end
+        return false
+    end
+    return a ~= b
+end
+
+local function universal_lt(a, b)
+    local ta, tb = type(a), type(b)
+    if ta ~= tb then return type_rank[ta] < type_rank[tb] end
+    if ta == "nil" then return false end
+    if ta == "number" or ta == "string" or ta == "boolean" then return a < b end
+    if ta == "table" then
+        local ks = F.merge{a, b}:keys()
+        for i = 1, #ks do
+            local k = ks[i]
+            local ak = a[k]
+            local bk = b[k]
+            if not universal_eq(ak, bk) then return universal_lt(ak, bk) end
+        end
+        return false
+    end
+    return tostring(a) < tostring(b)
+end
+
+local function universal_le(a, b)
+    local ta, tb = type(a), type(b)
+    if ta ~= tb then return type_rank[ta] <= type_rank[tb] end
+    if ta == "nil" then return true end
+    if ta == "number" or ta == "string" or ta == "boolean" then return a <= b end
+    if ta == "table" then
+        local ks = F.merge{a, b}:keys()
+        for i = 1, #ks do
+            local k = ks[i]
+            local ak = a[k]
+            local bk = b[k]
+            if not universal_eq(ak, bk) then return universal_le(ak, bk) end
+        end
+        return true
+    end
+    return tostring(a) <= tostring(b)
+end
+
+local function universal_gt(a, b)
+    local ta, tb = type(a), type(b)
+    if ta ~= tb then return type_rank[ta] > type_rank[tb] end
+    if ta == "nil" then return false end
+    if ta == "number" or ta == "string" or ta == "boolean" then return a > b end
+    if ta == "table" then
+        local ks = F.merge{a, b}:keys()
+        for i = 1, #ks do
+            local k = ks[i]
+            local ak = a[k]
+            local bk = b[k]
+            if not universal_eq(ak, bk) then return universal_gt(ak, bk) end
+        end
+        return false
+    end
+    return tostring(a) > tostring(b)
+end
+
+local function universal_ge(a, b)
+    local ta, tb = type(a), type(b)
+    if ta ~= tb then return type_rank[ta] >= type_rank[tb] end
+    if ta == "nil" then return true end
+    if ta == "number" or ta == "string" or ta == "boolean" then return a >= b end
+    if ta == "table" then
+        local ks = F.merge{a, b}:keys()
+        for i = 1, #ks do
+            local k = ks[i]
+            local ak = a[k]
+            local bk = b[k]
+            if not universal_eq(ak, bk) then return universal_ge(ak, bk) end
+        end
+        return true
+    end
+    return tostring(a) >= tostring(b)
+end
+
+--[[------------------------------------------------------------------------@@@
+### Operators
+@@@]]
+
 F.op = {}
 
-local has_mathx, mathx = pcall(require, "mathx")
+--[[@@@
+```lua
+F.op.land(a, b)             -- a and b
+F.op.lor(a, b)              -- a or b
+F.op.lxor(a, b)             -- (a and not b) or (b and not a)
+F.op.lnot(a)                -- not a
+```
+> Logical operators
+@@@]]
+
+F.op.land = function(a, b) return a and b end
+F.op.lor = function(a, b) return a or b end
+F.op.lxor = function(a, b) return (a and not b) or (b and not a) end
+F.op.lnot = function(a) return not a end
+
+--[[@@@
+```lua
+F.op.band(a, b)             -- a & b
+F.op.bor(a, b)              -- a | b
+F.op.bxor(a, b)             -- a ~ b
+F.op.bnot(a)                -- ~a
+F.op.shl(a, b)              -- a << b
+F.op.shr(a, b)              -- a >> b
+```
+> Bitwise operators
+@@@]]
+
+F.op.band = function(a, b) return a & b end
+F.op.bor = function(a, b) return a | b end
+F.op.bxor = function(a, b) return a ~ b end
+F.op.bnot = function(a) return ~a end
+F.op.shl = function(a, b) return a << b end
+F.op.shr = function(a, b) return a >> b end
+
+--[[@@@
+```lua
+F.op.eq(a, b)               -- a == b
+F.op.ne(a, b)               -- a ~= b
+F.op.lt(a, b)               -- a < b
+F.op.le(a, b)               -- a <= b
+F.op.gt(a, b)               -- a > b
+F.op.ge(a, b)               -- a >= b
+```
+> Comparison operators
+@@@]]
+
+F.op.eq = function(a, b) return a == b end
+F.op.ne = function(a, b) return a ~= b end
+F.op.lt = function(a, b) return a < b end
+F.op.le = function(a, b) return a <= b end
+F.op.gt = function(a, b) return a > b end
+F.op.ge = function(a, b) return a >= b end
+
+--[[@@@
+```lua
+F.op.ueq(a, b)              -- a == b  (†)
+F.op.une(a, b)              -- a ~= b  (†)
+F.op.ult(a, b)              -- a < b   (†)
+F.op.ule(a, b)              -- a <= b  (†)
+F.op.ugt(a, b)              -- a > b   (†)
+F.op.uge(a, b)              -- a >= b  (†)
+```
+> Universal comparison operators ((†) comparisons on elements of possibly different Lua types)
+@@@]]
+
+F.op.ueq = universal_eq
+F.op.une = universal_ne
+F.op.ult = universal_lt
+F.op.ule = universal_le
+F.op.ugt = universal_gt
+F.op.uge = universal_ge
+
+--[[@@@
+```lua
+F.op.add(a, b)              -- a + b
+F.op.sub(a, b)              -- a - b
+F.op.mul(a, b)              -- a * b
+F.op.div(a, b)              -- a / b
+F.op.idiv(a, b)             -- a // b
+F.op.mod(a, b)              -- a % b
+F.op.neg(a)                 -- -a
+F.op.pow(a, b)              -- a ^ b
+```
+> Arithmetic operators
+@@@]]
+
+F.op.add = function(a, b) return a + b end
+F.op.sub = function(a, b) return a - b end
+F.op.mul = function(a, b) return a * b end
+F.op.div = function(a, b) return a / b end
+F.op.idiv = function(a, b) return a // b end
+F.op.mod = function(a, b) return a % b end
+F.op.neg = function(a) return -a end
+F.op.pow = function(a, b) return a ^ b end
+
+--[[@@@
+```lua
+F.op.concat(a, b)           -- a .. b
+F.op.len(a)                 -- #a
+```
+> String/list operators
+@@@]]
+
+F.op.concat = function(a, b) return a..b end
+F.op.len = function(a) return #a end
 
 --[[------------------------------------------------------------------------@@@
 ### Basic data types
 @@@]]
-
---[[@@@
-```lua
-F.op.and_(a, b)
-```
-> Boolean and
-@@@]]
-function F.op.and_(a, b) return a and b end
-
---[[@@@
-```lua
-F.op.or_(a, b)
-```
-> Boolean or
-@@@]]
-function F.op.or_(a, b) return a or b end
-
---[[@@@
-```lua
-F.op.xor_(a, b)
-```
-> Boolean xor
-@@@]]
-function F.op.xor_(a, b) return (a and not b) or (b and not a) end
-
---[[@@@
-```lua
-F.op.not_(a)
-```
-> Boolean not
-@@@]]
-function F.op.not_(a) return not a end
 
 --[[@@@
 ```lua
@@ -135,54 +326,6 @@ function F.default(def, x)
     return x
 end
 
---[[@@@
-```lua
-F.op.band(a, b)
-```
-> Bitwise and
-@@@]]
-function F.op.band(a, b) return a & b end
-
---[[@@@
-```lua
-F.op.bor(a, b)
-```
-> Bitwise or
-@@@]]
-function F.op.bor(a, b) return a | b end
-
---[[@@@
-```lua
-F.op.bxor(a, b)
-```
-> Bitwise xor
-@@@]]
-function F.op.bxor(a, b) return a ~ b end
-
---[[@@@
-```lua
-F.op.bnot(a)
-```
-> Bitwise not
-@@@]]
-function F.op.bnot(a) return ~a end
-
---[[@@@
-```lua
-F.op.shl(a, b)
-```
-> Bitwise left shift
-@@@]]
-function F.op.shl(a, b) return a << b end
-
---[[@@@
-```lua
-F.op.shr(a, b)
-```
-> Bitwise right shift
-@@@]]
-function F.op.shr(a, b) return a >> b end
-
 --[[------------------------------------------------------------------------@@@
 #### Tuples
 @@@]]
@@ -191,7 +334,7 @@ function F.op.shr(a, b) return a >> b end
 ```lua
 F.fst(ab)
 ```
-> Extract the first component of a pair.
+> Extract the first component of a list.
 @@@]]
 function F.fst(xs) return xs[1] end
 
@@ -199,7 +342,7 @@ function F.fst(xs) return xs[1] end
 ```lua
 F.snd(ab)
 ```
-> Extract the second component of a pair.
+> Extract the second component of a list.
 @@@]]
 function F.snd(xs) return xs[2] end
 
@@ -207,7 +350,7 @@ function F.snd(xs) return xs[2] end
 ```lua
 F.trd(ab)
 ```
-> Extract the third component of a pair.
+> Extract the third component of a list.
 @@@]]
 function F.trd(xs) return xs[3] end
 
@@ -217,27 +360,12 @@ function F.trd(xs) return xs[3] end
 
 --[[@@@
 ```lua
-F.op.eq(a, b)
-```
-> Equality
-@@@]]
-function F.op.eq(a, b) return a == b end
-
---[[@@@
-```lua
-F.op.ne(a, b)
-```
-> Inequality
-@@@]]
-function F.op.ne(a, b) return a ~= b end
-
---[[@@@
-```lua
-F.compare(a, b)
+F.comp(a, b)
 ```
 > Comparison (-1, 0, 1)
 @@@]]
-function F.compare(a, b)
+
+function F.comp(a, b)
     if a < b then return -1 end
     if a > b then return 1 end
     return 0
@@ -245,35 +373,16 @@ end
 
 --[[@@@
 ```lua
-F.op.lt(a, b)
+F.ucomp(a, b)
 ```
-> a < b
+> Comparison (-1, 0, 1) (using universal comparison operators)
 @@@]]
-function F.op.lt(a, b) return a < b end
 
---[[@@@
-```lua
-F.op.le(a, b)
-```
-> a <= b
-@@@]]
-function F.op.le(a, b) return a <= b end
-
---[[@@@
-```lua
-F.op.gt(a, b)
-```
-> a > b
-@@@]]
-function F.op.gt(a, b) return a > b end
-
---[[@@@
-```lua
-F.op.ge(a, b)
-```
-> a >= b
-@@@]]
-function F.op.ge(a, b) return a >= b end
+function F.ucomp(a, b)
+    if universal_lt(a, b) then return -1 end
+    if universal_gt(a, b) then return 1 end
+    return 0
+end
 
 --[[@@@
 ```lua
@@ -317,60 +426,10 @@ function F.pred(a) return a - 1 end
 
 --[[@@@
 ```lua
-F.op.add(a, b)
-```
-> a + b
-@@@]]
-function F.op.add(a, b) return a + b end
-
---[[@@@
-```lua
-F.op.sub(a, b)
-```
-> a - b
-@@@]]
-function F.op.sub(a, b) return a - b end
-
---[[@@@
-```lua
-F.op.mul(a, b)
-```
-> a * b
-@@@]]
-function F.op.mul(a, b) return a * b end
-
---[[@@@
-```lua
-F.op.div(a, b)
-```
-> a / b
-@@@]]
-function F.op.div(a, b) return a / b end
-
---[[@@@
-```lua
-F.op.idiv(a, b)
-```
-> a // b
-@@@]]
-function F.op.idiv(a, b) return a // b end
-
---[[@@@
-```lua
-F.op.mod(a, b)
-```
-> a % b
-@@@]]
-function F.op.mod(a, b) return a % b end
-
---[[@@@
-```lua
 F.negate(a)
-F.op.neg(a)
 ```
 > -a
 @@@]]
-function F.op.neg(a) return -a end
 function F.negate(a) return -a end
 
 --[[@@@
@@ -387,7 +446,7 @@ F.signum(a)
 ```
 > sign of a (-1, 0 or +1)
 @@@]]
-function F.signum(a) return F.compare(a, 0) end
+function F.signum(a) return F.comp(a, 0) end
 
 --[[@@@
 ```lua
@@ -471,7 +530,6 @@ F.pi
 F.exp(x)
 F.log(x), F.log(x, base)
 F.sqrt(x)
-F.op.pow(x, y)
 F.sin(x)
 F.cos(x)
 F.tan(x)
@@ -493,7 +551,6 @@ F.log = math.log
 F.log10 = function(x) return math.log(x, 10) end
 F.log2 = function(x) return math.log(x, 2) end
 F.sqrt = math.sqrt
-F.op.pow = function(x, y) return x^y end
 F.sin = math.sin
 F.cos = math.cos
 F.tan = math.tan
@@ -791,22 +848,6 @@ function F.error_without_stack_trace(message, level) err(message, level, false) 
 
 --[[@@@
 ```lua
-F.op.concat(a, b)
-```
-> Lua concatenation operator
-@@@]]
-function F.op.concat(a, b) return a..b end
-
---[[@@@
-```lua
-F.op.len(a)
-```
-> Lua length operator
-@@@]]
-function F.op.len(a) return #a end
-
---[[@@@
-```lua
 F.prefix(pre)
 ```
 > returns a function that adds the prefix pre to a string
@@ -891,7 +932,7 @@ function F.show(x, int_fmt, float_fmt)
                     n = n + 1
                 end
                 for k, v in F.pairs(val) do
-                    if type(k) == "number" or math.type(k) == "integer" then
+                    if type(k) == "number" and math.type(k) == "integer" then
                         if k < 1 or k > #val then
                             emit(("[%d]="):format(k))
                             fmt(v)
@@ -899,7 +940,12 @@ function F.show(x, int_fmt, float_fmt)
                             n = n + 1
                         end
                     else
-                        emit(("%s="):format(k))
+                        if type(k) == "string" and k:match "^[%w_]+$" then
+                            emit(k)
+                        else
+                            emit "[" fmt(k) emit "]"
+                        end
+                        emit("=")
                         fmt(v)
                         emit ", "
                         n = n + 1
@@ -1135,19 +1181,19 @@ end)
 
 --[[@@@
 ```lua
-F.pairs(t, [compare])
-t:pairs([compare])
-F.ipairs(xs, [compare])
-xs:ipairs([compare])
+F.pairs(t, [comp_lt])
+t:pairs([comp_lt])
+F.ipairs(xs, [comp_lt])
+xs:ipairs([comp_lt])
 ```
 > behave like the Lua `pairs` and `ipairs` iterators.
-> `F.pairs` sorts keys using the function `compare` or the standard Lua `<=` operator.
+> `F.pairs` sorts keys using the function `comp_lt` or the universal `<=` operator (`F.op.ult`).
 @@@]]
 
 register1 "ipairs" (ipairs)
 
-register1 "pairs" (function(t, compare)
-    local kvs = F.items(t, compare)
+register1 "pairs" (function(t, comp_lt)
+    local kvs = F.items(t, comp_lt)
     local i = 0
     return function()
         if i < #kvs then
@@ -1159,36 +1205,33 @@ end)
 
 --[[@@@
 ```lua
-F.keys(t, [compare])
-t:keys([compare])
-F.values(t, [compare])
-t:values([compare])
-F.items(t, [compare])
-t:items([compare])
+F.keys(t, [comp_lt])
+t:keys([comp_lt])
+F.values(t, [comp_lt])
+t:values([comp_lt])
+F.items(t, [comp_lt])
+t:items([comp_lt])
 ```
 > returns the list of keys, values or pairs of keys/values (same order than F.pairs).
 @@@]]
 
-register1 "keys" (function(t, compare)
-    compare = compare or function(k1, k2)
-        local t1, t2 = type(k1), type(k2)
-        if t1 == t2 then return k1 < k2 else return t1 < t2 end
-    end
+register1 "keys" (function(t, comp_lt)
+    comp_lt = comp_lt or universal_lt
     local ks = {}
     for k, _ in pairs(t) do ks[#ks+1] = k end
-    table.sort(ks, compare)
+    table.sort(ks, comp_lt)
     return F(ks)
 end)
 
-register1 "values" (function(t, compare)
-    local ks = F.keys(t, compare)
+register1 "values" (function(t, comp_lt)
+    local ks = F.keys(t, comp_lt)
     local vs = {}
     for i = 1, #ks do vs[i] = t[ks[i]] end
     return F(vs)
 end)
 
-register1 "items" (function(t, compare)
-    local ks = F.keys(t, compare)
+register1 "items" (function(t, comp_lt)
+    local ks = F.keys(t, comp_lt)
     local kvs = {}
     for i = 1, #ks do
         local k = ks[i]
@@ -1436,21 +1479,21 @@ end)
 
 --[[@@@
 ```lua
-F.group(xs, [compare])
-xs:group([compare])
+F.group(xs, [comp_eq])
+xs:group([comp_eq])
 ```
 > Returns a list of lists such that the concatenation of the result is equal to the argument. Moreover, each sublist in the result contains only equal elements.
 @@@]]
 
-register1 "group" (function(xs, compare)
-    compare = compare or function(a, b) return a == b end
+register1 "group" (function(xs, comp_eq)
+    comp_eq = comp_eq or F.op.eq
     local yss = {}
     if #xs == 0 then return setmt(yss) end
     local y = xs[1]
     local ys = {y}
     for i = 2, #xs do
         local x = xs[i]
-        if compare(x, y) then
+        if comp_eq(x, y) then
             ys[#ys+1] = x
         else
             yss[#yss+1] = ys
@@ -1558,7 +1601,7 @@ end)
 --[[@@@
 ```lua
 F.has_prefix(xs, prefix)
-xs:has_prefix_(prefix)
+xs:has_prefix(prefix)
 ```
 > Returns `true` iff `xs` starts with `prefix`
 @@@]]
@@ -1593,13 +1636,13 @@ seq:is_subsequence_of(xs)
 > Returns `true` if all the elements of the first list occur, in order, in the second. The elements do not have to occur consecutively.
 @@@]]
 
-register1 "is_subsequence_of" (function(seq, xs, compare)
-    compare = compare or function (a, b) return a == b end
+register1 "is_subsequence_of" (function(seq, xs, comp_eq)
+    comp_eq = comp_eq or F.op.eq
     local i = 1
     local j = 1
     while j <= #xs do
         if i > #seq then return true end
-        if compare(xs[j], seq[i]) then
+        if comp_eq(xs[j], seq[i]) then
             i = i+1
         end
         j = j+1
@@ -1624,14 +1667,14 @@ end)
 
 --[[@@@
 ```lua
-F.map_contains(t1, t2, [compare])
-t1:map_contains(t2, [compare])
+F.map_contains(t1, t2, [comp_eq])
+t1:map_contains(t2, [comp_eq])
 ```
 > returns true if all keys in t2 are in t1.
 @@@]]
 
-register1 "map_contains" (function(t1, t2, compare)
-    return F.is_submap_of(t2, t1, compare)
+register1 "map_contains" (function(t1, t2, comp_eq)
+    return F.is_submap_of(t2, t1, comp_eq)
 end)
 
 --[[@@@
@@ -1654,14 +1697,14 @@ end)
 
 --[[@@@
 ```lua
-F.map_strictly_contains(t1, t2, [compare])
-t1:map_strictly_contains(t2, [compare])
+F.map_strictly_contains(t1, t2, [comp_eq])
+t1:map_strictly_contains(t2, [comp_eq])
 ```
 > returns true if all keys in t2 are in t1.
 @@@]]
 
-register1 "map_strictly_contains" (function(t1, t2, compare)
-    return F.is_proper_submap_of(t2, t1, compare)
+register1 "map_strictly_contains" (function(t1, t2, comp_eq)
+    return F.is_proper_submap_of(t2, t1, comp_eq)
 end)
 
 --[[------------------------------------------------------------------------@@@
@@ -1670,48 +1713,48 @@ end)
 
 --[[@@@
 ```lua
-F.elem(x, xs, [compare])
-xs:elem(x, [compare])
+F.elem(x, xs, [comp_eq])
+xs:elem(x, [comp_eq])
 ```
-> Returns `true` if x occurs in xs (using the optional compare function).
+> Returns `true` if x occurs in xs (using the optional comp_eq function).
 @@@]]
 
-register2 "elem" (function(x, xs, compare)
-    compare = compare or function(a, b) return a == b end
+register2 "elem" (function(x, xs, comp_eq)
+    comp_eq = comp_eq or F.op.eq
     for i = 1, #xs do
-        if compare(xs[i], x) then return true end
+        if comp_eq(xs[i], x) then return true end
     end
     return false
 end)
 
 --[[@@@
 ```lua
-F.not_elem(x, xs, [compare])
-xs:not_elem(x, [compare])
+F.not_elem(x, xs, [comp_eq])
+xs:not_elem(x, [comp_eq])
 ```
-> Returns `true` if x does not occur in xs (using the optional compare function).
+> Returns `true` if x does not occur in xs (using the optional comp_eq function).
 @@@]]
 
 register2 "not_elem" (function(x, xs)
-    compare = compare or function(a, b) return a == b end
+    comp_eq = comp_eq or F.op.eq
     for i = 1, #xs do
-        if compare(xs[i], x) then return false end
+        if comp_eq(xs[i], x) then return false end
     end
     return true
 end)
 
 --[[@@@
 ```lua
-F.lookup(x, xys, [compare])
-xys:lookup(x, [compare])
+F.lookup(x, xys, [comp_eq])
+xys:lookup(x, [comp_eq])
 ```
-> Looks up a key `x` in an association list (using the optional compare function).
+> Looks up a key `x` in an association list (using the optional comp_eq function).
 @@@]]
 
-register2 "lookup" (function(x, xys, compare)
-    compare = compare or function(a, b) return a == b end
+register2 "lookup" (function(x, xys, comp_eq)
+    comp_eq = comp_eq or F.op.eq
     for i = 1, #xys do
-        if compare(xys[i][1], x) then return xys[i][2] end
+        if comp_eq(xys[i][1], x) then return xys[i][2] end
     end
     return nil
 end)
@@ -2175,26 +2218,26 @@ end)
 
 --[[@@@
 ```lua
-F.and_(bs)
-bs:and_()
+F.land(bs)
+bs:land()
 ```
 > Returns the conjunction of a container of booleans.
 @@@]]
 
-register1 "and_" (function(bs)
+register1 "land" (function(bs)
     for i = 1, #bs do if not bs[i] then return false end end
     return true
 end)
 
 --[[@@@
 ```lua
-F.or_(bs)
-bs:or_()
+F.lor(bs)
+bs:lor()
 ```
 > Returns the disjunction of a container of booleans.
 @@@]]
 
-register1 "or_" (function(bs)
+register1 "lor" (function(bs)
     for i = 1, #bs do if bs[i] then return true end end
     return false
 end)
@@ -2255,36 +2298,36 @@ end)
 
 --[[@@@
 ```lua
-F.maximum(xs, [compare])
-xs:maximum([compare])
+F.maximum(xs, [comp_lt])
+xs:maximum([comp_lt])
 ```
 > The largest element of a non-empty structure, according to the optional comparison function.
 @@@]]
 
-register1 "maximum" (function(xs, compare)
+register1 "maximum" (function(xs, comp_lt)
     if #xs == 0 then return nil end
-    compare = compare or function(a, b) return a < b end
+    comp_lt = comp_lt or F.op.lt
     local max = xs[1]
     for i = 2, #xs do
-        if not compare(xs[i], max) then max = xs[i] end
+        if not comp_lt(xs[i], max) then max = xs[i] end
     end
     return max
 end)
 
 --[[@@@
 ```lua
-F.minimum(xs, [compare])
-xs:minimum([compare])
+F.minimum(xs, [comp_lt])
+xs:minimum([comp_lt])
 ```
 > The least element of a non-empty structure, according to the optional comparison function.
 @@@]]
 
-register1 "minimum" (function(xs, compare)
+register1 "minimum" (function(xs, comp_lt)
     if #xs == 0 then return nil end
-    compare = compare or function(a, b) return a < b end
+    comp_lt = comp_lt or F.op.lt
     local min = xs[1]
     for i = 2, #xs do
-        if compare(xs[i], min) then min = xs[i] end
+        if comp_lt(xs[i], min) then min = xs[i] end
     end
     return min
 end)
@@ -2390,20 +2433,20 @@ register2 "zip_with" (function(f, xss) return F.zip(xss, f) end)
 
 --[[@@@
 ```lua
-F.nub(xs, [compare])
-xs:nub([compare])
+F.nub(xs, [comp_eq])
+xs:nub([comp_eq])
 ```
-> Removes duplicate elements from a list. In particular, it keeps only the first occurrence of each element, according to the optional compare function.
+> Removes duplicate elements from a list. In particular, it keeps only the first occurrence of each element, according to the optional comp_eq function.
 @@@]]
 
-register1 "nub" (function(xs, compare)
-    compare = compare or function(a, b) return a == b end
+register1 "nub" (function(xs, comp_eq)
+    comp_eq = comp_eq or F.op.eq
     local ys = {}
     for i = 1, #xs do
         local x = xs[i]
         local found = false
         for j = 1, #ys do
-            if compare(x, ys[j]) then found = true; break end
+            if comp_eq(x, ys[j]) then found = true; break end
         end
         if not found then ys[#ys+1] = x end
     end
@@ -2412,18 +2455,18 @@ end)
 
 --[[@@@
 ```lua
-F.delete(x, xs, [compare])
-xs:delete(x, [compare])
+F.delete(x, xs, [comp_eq])
+xs:delete(x, [comp_eq])
 ```
-> Removes the first occurrence of x from its list argument, according to the optional compare function.
+> Removes the first occurrence of x from its list argument, according to the optional comp_eq function.
 @@@]]
 
-register2 "delete" (function(x, xs, compare)
-    compare = compare or function(a, b) return a == b end
+register2 "delete" (function(x, xs, comp_eq)
+    comp_eq = comp_eq or F.op.eq
     local ys = {}
     local i = 1
     while i <= #xs do
-        if compare(xs[i], x) then break end
+        if comp_eq(xs[i], x) then break end
         ys[#ys+1] = xs[i]
         i = i+1
     end
@@ -2437,21 +2480,21 @@ end)
 
 --[[@@@
 ```lua
-F.difference(xs, ys, [compare])
-xs:difference(ys, [compare])
+F.difference(xs, ys, [comp_eq])
+xs:difference(ys, [comp_eq])
 ```
-> Returns the list difference. In `difference(xs, ys)`{.lua} the first occurrence of each element of ys in turn (if any) has been removed from xs, according to the optional compare function.
+> Returns the list difference. In `difference(xs, ys)`{.lua} the first occurrence of each element of ys in turn (if any) has been removed from xs, according to the optional comp_eq function.
 @@@]]
 
-register1 "difference" (function(xs, ys, compare)
-    compare = compare or function(a, b) return a == b end
+register1 "difference" (function(xs, ys, comp_eq)
+    comp_eq = comp_eq or F.op.eq
     local zs = {}
     ys = {table.unpack(ys)}
     for i = 1, #xs do
         local x = xs[i]
         local found = false
         for j = 1, #ys do
-            if compare(ys[j], x) then
+            if comp_eq(ys[j], x) then
                 found = true
                 table.remove(ys, j)
                 break
@@ -2464,20 +2507,20 @@ end)
 
 --[[@@@
 ```lua
-F.union(xs, ys, [compare])
-xs:union(ys, [compare])
+F.union(xs, ys, [comp_eq])
+xs:union(ys, [comp_eq])
 ```
-> Returns the list union of the two lists. Duplicates, and elements of the first list, are removed from the the second list, but if the first list contains duplicates, so will the result, according to the optional compare function.
+> Returns the list union of the two lists. Duplicates, and elements of the first list, are removed from the the second list, but if the first list contains duplicates, so will the result, according to the optional comp_eq function.
 @@@]]
 
-register1 "union" (function(xs, ys, compare)
-    compare = compare or function(a, b) return a == b end
+register1 "union" (function(xs, ys, comp_eq)
+    comp_eq = comp_eq or F.op.eq
     local zs = {table.unpack(xs)}
     for i = 1, #ys do
         local y = ys[i]
         local found = false
         for j = 1, #zs do
-            if compare(y, zs[j]) then found = true; break end
+            if comp_eq(y, zs[j]) then found = true; break end
         end
         if not found then zs[#zs+1] = y end
     end
@@ -2486,20 +2529,20 @@ end)
 
 --[[@@@
 ```lua
-F.intersection(xs, ys, [compare])
-xs:intersection(ys, [compare])
+F.intersection(xs, ys, [comp_eq])
+xs:intersection(ys, [comp_eq])
 ```
-> Returns the list intersection of two lists. If the first list contains duplicates, so will the result, according to the optional compare function.
+> Returns the list intersection of two lists. If the first list contains duplicates, so will the result, according to the optional comp_eq function.
 @@@]]
 
-register1 "intersection" (function(xs, ys, compare)
-    compare = compare or function(a, b) return a == b end
+register1 "intersection" (function(xs, ys, comp_eq)
+    comp_eq = comp_eq or F.op.eq
     local zs = {}
     for i = 1, #xs do
         local x = xs[i]
         local found = false
         for j = 1, #ys do
-            if compare(x, ys[j]) then found = true; break end
+            if comp_eq(x, ys[j]) then found = true; break end
         end
         if found then zs[#zs+1] = x end
     end
@@ -2728,32 +2771,32 @@ end)
 
 --[[@@@
 ```lua
-F.sort(xs, [compare])
-xs:sort([compare])
+F.sort(xs, [comp_lt])
+xs:sort([comp_lt])
 ```
-> Sorts xs from lowest to highest, according to the optional compare function.
+> Sorts xs from lowest to highest, according to the optional comp_lt function.
 @@@]]
 
-register1 "sort" (function(xs, compare)
+register1 "sort" (function(xs, comp_lt)
     local ys = {}
     for i = 1, #xs do ys[i] = xs[i] end
-    table.sort(ys, compare)
+    table.sort(ys, comp_lt)
     return F(ys)
 end)
 
 --[[@@@
 ```lua
-F.sort_on(f, xs, [compare])
-xs:sort_on(f, [compare])
+F.sort_on(f, xs, [comp_lt])
+xs:sort_on(f, [comp_lt])
 ```
-> Sorts a list by comparing the results of a key function applied to each element, according to the optional compare function.
+> Sorts a list by comparing the results of a key function applied to each element, according to the optional comp_lt function.
 @@@]]
 
-register2 "sort_on" (function(f, xs, compare)
-    compare = compare or function(a, b) return a < b end
+register2 "sort_on" (function(f, xs, comp_lt)
+    comp_lt = comp_lt or F.op.lt
     local ys = {}
     for i = 1, #xs do ys[i] = {f(xs[i]), xs[i]} end
-    table.sort(ys, function(a, b) return compare(a[1], b[1]) end)
+    table.sort(ys, function(a, b) return comp_lt(a[1], b[1]) end)
     local zs = {}
     for i = 1, #ys do zs[i] = ys[i][2] end
     return F(zs)
@@ -2761,17 +2804,17 @@ end)
 
 --[[@@@
 ```lua
-F.insert(x, xs, [compare])
-xs:insert(x, [compare])
+F.insert(x, xs, [comp_lt])
+xs:insert(x, [comp_lt])
 ```
-> Inserts the element into the list at the first position where it is less than or equal to the next element, according to the optional compare function.
+> Inserts the element into the list at the first position where it is less than or equal to the next element, according to the optional comp_lt function.
 @@@]]
 
-register2 "insert" (function(x, xs, compare)
-    compare = compare or function(a, b) return a < b end
+register2 "insert" (function(x, xs, comp_lt)
+    comp_lt = comp_lt or F.op.lt
     local ys = {}
     local i = 1
-    while i <= #xs and not compare(x, xs[i]) do
+    while i <= #xs and not comp_lt(x, xs[i]) do
         ys[#ys+1] = xs[i]
         i = i+1
     end

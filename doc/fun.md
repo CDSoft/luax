@@ -14,31 +14,72 @@ languages, especially by these Haskell modules:
 
 ## Standard types, and related functions
 
+### Operators
+
+``` lua
+F.op.land(a, b)             -- a and b
+F.op.lor(a, b)              -- a or b
+F.op.lxor(a, b)             -- (a and not b) or (b and not a)
+F.op.lnot(a)                -- not a
+```
+
+> Logical operators
+
+``` lua
+F.op.band(a, b)             -- a & b
+F.op.bor(a, b)              -- a | b
+F.op.bxor(a, b)             -- a ~ b
+F.op.bnot(a)                -- ~a
+F.op.shl(a, b)              -- a << b
+F.op.shr(a, b)              -- a >> b
+```
+
+> Bitwise operators
+
+``` lua
+F.op.eq(a, b)               -- a == b
+F.op.ne(a, b)               -- a ~= b
+F.op.lt(a, b)               -- a < b
+F.op.le(a, b)               -- a <= b
+F.op.gt(a, b)               -- a > b
+F.op.ge(a, b)               -- a >= b
+```
+
+> Comparison operators
+
+``` lua
+F.op.ueq(a, b)              -- a == b  (†)
+F.op.une(a, b)              -- a ~= b  (†)
+F.op.ult(a, b)              -- a < b   (†)
+F.op.ule(a, b)              -- a <= b  (†)
+F.op.ugt(a, b)              -- a > b   (†)
+F.op.uge(a, b)              -- a >= b  (†)
+```
+
+> Universal comparison operators ((†) comparisons on elements of
+> possibly different Lua types)
+
+``` lua
+F.op.add(a, b)              -- a + b
+F.op.sub(a, b)              -- a - b
+F.op.mul(a, b)              -- a * b
+F.op.div(a, b)              -- a / b
+F.op.idiv(a, b)             -- a // b
+F.op.mod(a, b)              -- a % b
+F.op.neg(a)                 -- -a
+F.op.pow(a, b)              -- a ^ b
+```
+
+> Arithmetic operators
+
+``` lua
+F.op.concat(a, b)           -- a .. b
+F.op.len(a)                 -- #a
+```
+
+> String/list operators
+
 ### Basic data types
-
-``` lua
-F.op.and_(a, b)
-```
-
-> Boolean and
-
-``` lua
-F.op.or_(a, b)
-```
-
-> Boolean or
-
-``` lua
-F.op.xor_(a, b)
-```
-
-> Boolean xor
-
-``` lua
-F.op.not_(a)
-```
-
-> Boolean not
 
 ``` lua
 F.maybe(b, f, a)
@@ -52,105 +93,39 @@ F.default(def, x)
 
 > Returns x if x is not nil, otherwise def
 
-``` lua
-F.op.band(a, b)
-```
-
-> Bitwise and
-
-``` lua
-F.op.bor(a, b)
-```
-
-> Bitwise or
-
-``` lua
-F.op.bxor(a, b)
-```
-
-> Bitwise xor
-
-``` lua
-F.op.bnot(a)
-```
-
-> Bitwise not
-
-``` lua
-F.op.shl(a, b)
-```
-
-> Bitwise left shift
-
-``` lua
-F.op.shr(a, b)
-```
-
-> Bitwise right shift
-
 #### Tuples
 
 ``` lua
 F.fst(ab)
 ```
 
-> Extract the first component of a pair.
+> Extract the first component of a list.
 
 ``` lua
 F.snd(ab)
 ```
 
-> Extract the second component of a pair.
+> Extract the second component of a list.
 
 ``` lua
 F.trd(ab)
 ```
 
-> Extract the third component of a pair.
+> Extract the third component of a list.
 
 ### Basic type classes
 
 ``` lua
-F.op.eq(a, b)
-```
-
-> Equality
-
-``` lua
-F.op.ne(a, b)
-```
-
-> Inequality
-
-``` lua
-F.compare(a, b)
+F.comp(a, b)
 ```
 
 > Comparison (-1, 0, 1)
 
 ``` lua
-F.op.lt(a, b)
+F.ucomp(a, b)
 ```
 
-> a \< b
-
-``` lua
-F.op.le(a, b)
-```
-
-> a \<= b
-
-``` lua
-F.op.gt(a, b)
-```
-
-> a \> b
-
-``` lua
-F.op.ge(a, b)
-```
-
-> a \>= b
+> Comparison (-1, 0, 1) (using universal comparison operators)
 
 ``` lua
 F.max(a, b)
@@ -181,44 +156,7 @@ F.pred(a)
 #### Numeric type classes
 
 ``` lua
-F.op.add(a, b)
-```
-
-> a + b
-
-``` lua
-F.op.sub(a, b)
-```
-
-> a - b
-
-``` lua
-F.op.mul(a, b)
-```
-
-> a \* b
-
-``` lua
-F.op.div(a, b)
-```
-
-> a / b
-
-``` lua
-F.op.idiv(a, b)
-```
-
-> a // b
-
-``` lua
-F.op.mod(a, b)
-```
-
-> a % b
-
-``` lua
 F.negate(a)
-F.op.neg(a)
 ```
 
 > -a
@@ -284,7 +222,6 @@ F.pi
 F.exp(x)
 F.log(x), F.log(x, base)
 F.sqrt(x)
-F.op.pow(x, y)
 F.sin(x)
 F.cos(x)
 F.tan(x)
@@ -447,18 +384,6 @@ F.error_without_stack_trace(message, level)
 > stack trace).
 
 ``` lua
-F.op.concat(a, b)
-```
-
-> Lua concatenation operator
-
-``` lua
-F.op.len(a)
-```
-
-> Lua length operator
-
-``` lua
 F.prefix(pre)
 ```
 
@@ -578,22 +503,23 @@ kvs:from_list()
 ## Iterators
 
 ``` lua
-F.pairs(t, [compare])
-t:pairs([compare])
-F.ipairs(xs, [compare])
-xs:ipairs([compare])
+F.pairs(t, [comp_lt])
+t:pairs([comp_lt])
+F.ipairs(xs, [comp_lt])
+xs:ipairs([comp_lt])
 ```
 
 > behave like the Lua `pairs` and `ipairs` iterators. `F.pairs` sorts
-> keys using the function `compare` or the standard Lua `<=` operator.
+> keys using the function `comp_lt` or the universal `<=` operator
+> (`F.op.ult`).
 
 ``` lua
-F.keys(t, [compare])
-t:keys([compare])
-F.values(t, [compare])
-t:values([compare])
-F.items(t, [compare])
-t:items([compare])
+F.keys(t, [comp_lt])
+t:keys([comp_lt])
+F.values(t, [comp_lt])
+t:values([comp_lt])
+F.items(t, [comp_lt])
+t:items([comp_lt])
 ```
 
 > returns the list of keys, values or pairs of keys/values (same order
@@ -705,8 +631,8 @@ xs:strip_suffix(suffix)
 > Drops the given suffix from a list.
 
 ``` lua
-F.group(xs, [compare])
-xs:group([compare])
+F.group(xs, [comp_eq])
+xs:group([comp_eq])
 ```
 
 > Returns a list of lists such that the concatenation of the result is
@@ -752,7 +678,7 @@ infix:is_infix_of(xs)
 
 ``` lua
 F.has_prefix(xs, prefix)
-xs:has_prefix_(prefix)
+xs:has_prefix(prefix)
 ```
 
 > Returns `true` iff `xs` starts with `prefix`
@@ -787,8 +713,8 @@ t1:is_submap_of(t2)
 > returns true if all keys in t1 are in t2.
 
 ``` lua
-F.map_contains(t1, t2, [compare])
-t1:map_contains(t2, [compare])
+F.map_contains(t1, t2, [comp_eq])
+t1:map_contains(t2, [comp_eq])
 ```
 
 > returns true if all keys in t2 are in t1.
@@ -802,8 +728,8 @@ t1:is_proper_submap_of(t2)
 > different.
 
 ``` lua
-F.map_strictly_contains(t1, t2, [compare])
-t1:map_strictly_contains(t2, [compare])
+F.map_strictly_contains(t1, t2, [comp_eq])
+t1:map_strictly_contains(t2, [comp_eq])
 ```
 
 > returns true if all keys in t2 are in t1.
@@ -811,27 +737,27 @@ t1:map_strictly_contains(t2, [compare])
 ## Searching
 
 ``` lua
-F.elem(x, xs, [compare])
-xs:elem(x, [compare])
+F.elem(x, xs, [comp_eq])
+xs:elem(x, [comp_eq])
 ```
 
-> Returns `true` if x occurs in xs (using the optional compare
+> Returns `true` if x occurs in xs (using the optional comp_eq
 > function).
 
 ``` lua
-F.not_elem(x, xs, [compare])
-xs:not_elem(x, [compare])
+F.not_elem(x, xs, [comp_eq])
+xs:not_elem(x, [comp_eq])
 ```
 
-> Returns `true` if x does not occur in xs (using the optional compare
+> Returns `true` if x does not occur in xs (using the optional comp_eq
 > function).
 
 ``` lua
-F.lookup(x, xys, [compare])
-xys:lookup(x, [compare])
+F.lookup(x, xys, [comp_eq])
+xys:lookup(x, [comp_eq])
 ```
 
-> Looks up a key `x` in an association list (using the optional compare
+> Looks up a key `x` in an association list (using the optional comp_eq
 > function).
 
 ``` lua
@@ -1066,15 +992,15 @@ t:foldk(f, x)
 > Left-associative fold of a table (in the order given by F.pairs).
 
 ``` lua
-F.and_(bs)
-bs:and_()
+F.land(bs)
+bs:land()
 ```
 
 > Returns the conjunction of a container of booleans.
 
 ``` lua
-F.or_(bs)
-bs:or_()
+F.lor(bs)
+bs:lor()
 ```
 
 > Returns the disjunction of a container of booleans.
@@ -1110,16 +1036,16 @@ xs:product()
 > Returns the product of the numbers of a structure.
 
 ``` lua
-F.maximum(xs, [compare])
-xs:maximum([compare])
+F.maximum(xs, [comp_lt])
+xs:maximum([comp_lt])
 ```
 
 > The largest element of a non-empty structure, according to the
 > optional comparison function.
 
 ``` lua
-F.minimum(xs, [compare])
-xs:minimum([compare])
+F.minimum(xs, [comp_lt])
+xs:minimum([comp_lt])
 ```
 
 > The least element of a non-empty structure, according to the optional
@@ -1176,48 +1102,48 @@ xss:zip_with(f)
 ## Set operations
 
 ``` lua
-F.nub(xs, [compare])
-xs:nub([compare])
+F.nub(xs, [comp_eq])
+xs:nub([comp_eq])
 ```
 
 > Removes duplicate elements from a list. In particular, it keeps only
 > the first occurrence of each element, according to the optional
-> compare function.
+> comp_eq function.
 
 ``` lua
-F.delete(x, xs, [compare])
-xs:delete(x, [compare])
+F.delete(x, xs, [comp_eq])
+xs:delete(x, [comp_eq])
 ```
 
 > Removes the first occurrence of x from its list argument, according to
-> the optional compare function.
+> the optional comp_eq function.
 
 ``` lua
-F.difference(xs, ys, [compare])
-xs:difference(ys, [compare])
+F.difference(xs, ys, [comp_eq])
+xs:difference(ys, [comp_eq])
 ```
 
 > Returns the list difference. In `difference(xs, ys)` the first
 > occurrence of each element of ys in turn (if any) has been removed
-> from xs, according to the optional compare function.
+> from xs, according to the optional comp_eq function.
 
 ``` lua
-F.union(xs, ys, [compare])
-xs:union(ys, [compare])
+F.union(xs, ys, [comp_eq])
+xs:union(ys, [comp_eq])
 ```
 
 > Returns the list union of the two lists. Duplicates, and elements of
 > the first list, are removed from the the second list, but if the first
 > list contains duplicates, so will the result, according to the
-> optional compare function.
+> optional comp_eq function.
 
 ``` lua
-F.intersection(xs, ys, [compare])
-xs:intersection(ys, [compare])
+F.intersection(xs, ys, [comp_eq])
+xs:intersection(ys, [comp_eq])
 ```
 
 > Returns the list intersection of two lists. If the first list contains
-> duplicates, so will the result, according to the optional compare
+> duplicates, so will the result, according to the optional comp_eq
 > function.
 
 ## Table operations
@@ -1315,29 +1241,29 @@ t1:table_compose(t2)
 ## Ordered lists
 
 ``` lua
-F.sort(xs, [compare])
-xs:sort([compare])
+F.sort(xs, [comp_lt])
+xs:sort([comp_lt])
 ```
 
-> Sorts xs from lowest to highest, according to the optional compare
+> Sorts xs from lowest to highest, according to the optional comp_lt
 > function.
 
 ``` lua
-F.sort_on(f, xs, [compare])
-xs:sort_on(f, [compare])
+F.sort_on(f, xs, [comp_lt])
+xs:sort_on(f, [comp_lt])
 ```
 
 > Sorts a list by comparing the results of a key function applied to
-> each element, according to the optional compare function.
+> each element, according to the optional comp_lt function.
 
 ``` lua
-F.insert(x, xs, [compare])
-xs:insert(x, [compare])
+F.insert(x, xs, [comp_lt])
+xs:insert(x, [comp_lt])
 ```
 
 > Inserts the element into the list at the first position where it is
 > less than or equal to the next element, according to the optional
-> compare function.
+> comp_lt function.
 
 ## Miscellaneous functions
 
