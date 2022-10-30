@@ -1365,6 +1365,27 @@ local function string_functions()
 end
 
 ---------------------------------------------------------------------
+-- String interpolation
+---------------------------------------------------------------------
+
+local function string_interpolation()
+
+    eq(("foo = $(foo); 1 + 1 = $(1+1)"):I{}, "foo = $(foo); 1 + 1 = 2")
+    eq(("foo = $(foo); 1 + 1 = $(1+1)"):I{bar="aaa"}, "foo = $(foo); 1 + 1 = 2")
+    eq(("foo = $(foo); 1 + 1 = $(1+1)"):I{foo="aaa"}, "foo = aaa; 1 + 1 = 2")
+    eq(("foo = $(foo); 1 + 1 = $(1+1)"):I{foo="aaa", bar="bbb"}, "foo = aaa; 1 + 1 = 2")
+
+    local I = F.I
+
+    eq(I{}"foo = $(foo); 1 + 1 = $(1+1)", "foo = $(foo); 1 + 1 = 2")
+    eq(I{bar="aaa"}"foo = $(foo); 1 + 1 = $(1+1)", "foo = $(foo); 1 + 1 = 2")
+    eq(I{foo="aaa"}"foo = $(foo); 1 + 1 = $(1+1)", "foo = aaa; 1 + 1 = 2")
+    eq(I{foo="aaa", bar="bbb"}"foo = $(foo); 1 + 1 = $(1+1)", "foo = aaa; 1 + 1 = 2")
+    eq(I{foo="aaa"}{bar="bbb"}"foo = $(foo); 1 + 1 = $(1+1); bar = $(bar)", "foo = aaa; 1 + 1 = 2; bar = bbb")
+
+end
+
+---------------------------------------------------------------------
 -- run all tests
 ---------------------------------------------------------------------
 
@@ -1395,5 +1416,6 @@ return function()
 
     -- string functions
     string_functions()
+    string_interpolation()
 
 end

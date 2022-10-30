@@ -3380,6 +3380,49 @@ function string.cap(s)
     return s:head():upper()..s:tail():lower()
 end
 
+--[[------------------------------------------------------------------------@@@
+## String interpolation
+@@@]]
+
+--[[@@@
+```lua
+string.I(s, t)
+s:I(t)
+```
+> interpolates expressions in the string `s` by replacing `$(...)` with
+  the value of `...` in the environment defined by the table `t`.
+@@@]]
+
+function string.I(s, t)
+    return (s:gsub("%$(%b())", function(x)
+        local y = ((assert(load("return "..x, nil, "t", t)))())
+        if type(y) == "table" then y = tostring(y) end
+        return y
+    end))
+end
+
+--[[@@@
+```lua
+F.I(t)
+```
+> returns a string interpolator that replaces `$(...)` with
+  the value of `...` in the environment defined by the table `t`.
+  An interpolator can be given another table
+  to build a new interpolator with new values.
+@@@]]
+
+function Interpolator(t)
+    return function(x)
+        if type(x) == "table" then return Interpolator(F.merge{t, x}) end
+        if type(x) == "string" then return string.I(x, t) end
+        error("An interpolator expects a table or a string")
+    end
+end
+
+function F.I(t)
+    return Interpolator(F.clone(t))
+end
+
 -------------------------------------------------------------------------------
 -- module
 -------------------------------------------------------------------------------

@@ -1554,3 +1554,21 @@ s:cap()
 
 > Capitalizes a string. The first character is upper case, other are
 > lower case.
+
+## String interpolation
+
+``` lua
+string.I(s, t)
+s:I(t)
+```
+
+> interpolates expressions in the string `s` by replacing `$(...)` with
+> the value of `...` in the environment defined by the table `t`.
+
+``` lua
+F.I(t)
+```
+
+> returns a string interpolator that replaces `$(...)` with the value of
+> `...` in the environment defined by the table `t`. An interpolator can
+> be given another table to build a new interpolator with new values.

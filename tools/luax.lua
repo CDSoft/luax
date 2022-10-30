@@ -20,10 +20,10 @@ http://cdelord.fr/luax
 
 local fs = require "fs"
 local sys = require "sys"
-local I = require "I"
 local F = require "fun"
+local I = F.I(_G)
 
-local welcome = I(_G)(sys)[[
+local welcome = I(sys)[[
  _               __  __  |  http://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |
 | |  | | | |/ _` |\  /   |  Version $(_LUAX_VERSION)
@@ -32,7 +32,7 @@ local welcome = I(_G)(sys)[[
                          |  $(os:cap()) $(arch) $(abi)
 ]]
 
-local usage = I(_G){fs=fs}[==[
+local usage = I{fs=fs}[==[
 usage: $(fs.basename(arg[0])) [options] [script [args]]
 
 General options:

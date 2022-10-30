@@ -27,7 +27,6 @@ require "require_test"()
 
 -- luax libraries
 require "fun_test"()
-require "I_test"()
 require "sys_test"()
 require "fs_test"()
 require "ps_test"()
