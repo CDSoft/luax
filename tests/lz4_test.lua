@@ -32,25 +32,25 @@ return function()
     do
         for i = 1, 256 do
             local s = ("a"):rep(i*1024)
-            local z = lz4.compress(s)
+            local z = lz4.lz4(s)
             assert(#z < #s/20)
             ne(z, s)
-            eq(z, s:lz4_compress())
-            local t = lz4.decompress(z)
+            eq(z, s:lz4())
+            local t = lz4.unlz4(z)
             eq(t, s)
-            eq(z:lz4_decompress(), t)
+            eq(z:unlz4(), t)
         end
     end
     do
         for i = 1, 256 do
             local s = crypt.rands(i*1024)
-            local z = lz4.compress(s)
+            local z = lz4.lz4(s)
             assert(#z > #s) -- uncompressible random data
             ne(z, s)
-            eq(z, s:lz4_compress())
-            local t = lz4.decompress(z)
+            eq(z, s:lz4())
+            local t = lz4.unlz4(z)
             eq(t, s)
-            eq(z:lz4_decompress(), t)
+            eq(z:unlz4(), t)
         end
     end
 end

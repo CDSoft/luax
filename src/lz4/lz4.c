@@ -189,8 +189,8 @@ static int decompress(lua_State *L)
 
 static const luaL_Reg lz4_module[] =
 {
-    {"compress", compress},
-    {"decompress", decompress},
+    {"lz4", compress},
+    {"unlz4", decompress},
     {NULL, NULL}
 };
 

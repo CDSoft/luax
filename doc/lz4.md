@@ -41,6 +41,6 @@ the content of a file produced by the `lz4` command line utility.
 The `lz4` functions are also available as `string` methods:
 
 ``` lua
-s:lz4_compress()        == lz4.compress(s)
-s:lz4_decompress()      == lz4.decompress(s)
+s:lz4()         == lz4.lz4(s)
+s:unlz4()       == lz4.unlz4(s)
 ```

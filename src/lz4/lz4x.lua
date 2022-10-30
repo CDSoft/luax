@@ -28,10 +28,10 @@ local lz4 = require "lz4"
 
 --[[@@@
 ```lua
-s:lz4_compress()        == lz4.compress(s)
-s:lz4_decompress()      == lz4.decompress(s)
+s:lz4()         == lz4.lz4(s)
+s:unlz4()       == lz4.unlz4(s)
 ```
 @@@]]
 
-function string.lz4_compress(s, ...) return lz4.compress(s, ...) end
-function string.lz4_decompress(s, ...) return lz4.decompress(s, ...) end
+function string.lz4(s, ...)     return lz4.lz4(s, ...) end
+function string.unlz4(s, ...)   return lz4.unlz4(s, ...) end
