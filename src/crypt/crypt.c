@@ -452,7 +452,7 @@ static void hex_decode(const char *hex, size_t n_in, char **plain_out, size_t *n
 
 /*@@@
 ```lua
-crypt.hex_encode(data)
+crypt.hex(data)
 ```
 encodes `data` in hexa.
 @@@*/
@@ -471,7 +471,7 @@ static int crypt_hex_encode(lua_State *L)
 
 /*@@@
 ```lua
-crypt.hex_decode(data)
+crypt.unhex(data)
 ```
 decodes the hexa `data`.
 @@@*/
@@ -617,7 +617,7 @@ static void base64_decode(const unsigned char *rev, const unsigned char *b64, si
 
 /*@@@
 ```lua
-crypt.base64_encode(data)
+crypt.base64(data)
 ```
 encodes `data` in base64.
 @@@*/
@@ -636,7 +636,7 @@ static int crypt_base64_encode(lua_State *L)
 
 /*@@@
 ```lua
-crypt.base64_decode(data)
+crypt.unbase64(data)
 ```
 decodes the base64 `data`.
 @@@*/
@@ -655,7 +655,7 @@ static int crypt_base64_decode(lua_State *L)
 
 /*@@@
 ```lua
-crypt.base64url_encode(data)
+crypt.base64url(data)
 ```
 encodes `data` in base64url.
 @@@*/
@@ -674,7 +674,7 @@ static int crypt_base64url_encode(lua_State *L)
 
 /*@@@
 ```lua
-crypt.base64url_decode(data)
+crypt.unbase64url(data)
 ```
 decodes the base64url `data`.
 @@@*/
@@ -924,6 +924,7 @@ const char *rc4_runtime(const char *input, size_t input_len, char **output, size
 /*@@@
 ```lua
 crypt.rc4(data, key, [drop])
+crypt.unrc4(data, key, [drop])      -- note that unrc4 == rc4
 ```
 encrypts/decrypts `data` using the RC4Drop
 algorithm and the encryption key `key` (drops the first `drop` encryption
@@ -1415,7 +1416,7 @@ const char *aes_encrypt_runtime(const uint8_t *plaintext, const size_t plaintext
 
 /*@@@
 ```lua
-crypt.aes_encrypt(data, key)
+crypt.aes(data, key)
 ```
 encrypts `data` using the AES-128-CBC algorithm and the encryption key `key`.
 @@@*/
@@ -1454,7 +1455,7 @@ static int crypt_tinycrypt_aes128_encrypt(lua_State *L)
 
 /*@@@
 ```lua
-crypt.aes_decrypt(data, key)
+crypt.unaes(data, key)
 ```
 decrypts `data` using the AES-128-CBC algorithm and the encryption key `key`.
 @@@*/
@@ -1568,13 +1569,14 @@ static const luaL_Reg crypt_module[] =
     {"randf", crypt_randf},
     {"rands", crypt_rands},
     {"prng", crypt_prng},
-    {"hex_encode", crypt_hex_encode},
-    {"hex_decode", crypt_hex_decode},
-    {"base64_encode", crypt_base64_encode},
-    {"base64_decode", crypt_base64_decode},
-    {"base64url_encode", crypt_base64url_encode},
-    {"base64url_decode", crypt_base64url_decode},
+    {"hex", crypt_hex_encode},
+    {"unhex", crypt_hex_decode},
+    {"base64", crypt_base64_encode},
+    {"unbase64", crypt_base64_decode},
+    {"base64url", crypt_base64url_encode},
+    {"unbase64url", crypt_base64url_decode},
     {"rc4", crypt_rc4},
+    {"unrc4", crypt_rc4},   /* unrc4 == rc4 */
     {"crc32", crypt_crc32},
     {"crc64", crypt_crc64},
 
@@ -1583,8 +1585,8 @@ static const luaL_Reg crypt_module[] =
     {"hmac", crypt_tinycrypt_hmac},
     {"hmac_prng", crypt_tinycrypt_hmac_prng},
     {"ctr_prng", crypt_tinycrypt_ctr_prng},
-    {"aes_encrypt", crypt_tinycrypt_aes128_encrypt},
-    {"aes_decrypt", crypt_tinycrypt_aes128_decrypt},
+    {"aes", crypt_tinycrypt_aes128_encrypt},
+    {"unaes", crypt_tinycrypt_aes128_decrypt},
 
     {NULL, NULL}
 };

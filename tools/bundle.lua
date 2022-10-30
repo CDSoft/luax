@@ -129,7 +129,7 @@ function bundle.bundle(arg)
     local payload = require"lz4".compress(plain.get())
 
     if format == "binary" then
-        payload = require"crypt".aes_encrypt(payload)
+        payload = require"crypt".aes(payload)
         local chunk = Bundle()
         local header = header_format:pack(#payload, bundle.magic)
         chunk.emit(payload)

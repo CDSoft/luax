@@ -29,54 +29,54 @@ require "test"
 return function()
     do
         local x = "foobarbaz"
-        local y = crypt.hex_encode(x)
-        local z = x:hex_encode()
+        local y = crypt.hex(x)
+        local z = x:hex()
         eq(y, "666F6F62617262617A")
         eq(y, z)
-        eq(crypt.hex_decode(y), x)
-        eq(z:hex_decode(), x)
+        eq(crypt.unhex(y), x)
+        eq(z:unhex(), x)
         for _ = 1, 1000 do
             local s = crypt.rands(256)
-            eq(s:hex_encode():hex_decode(), s)
+            eq(s:hex():unhex(), s)
         end
     end
     do
         do
             local x = "foobarbaz"
-            local y = crypt.base64_encode(x)
-            local z = x:base64_encode()
+            local y = crypt.base64(x)
+            local z = x:base64()
             eq(y, "Zm9vYmFyYmF6")
             eq(y, z)
-            eq(crypt.base64_decode(y), x)
-            eq(z:base64_decode(), x)
+            eq(crypt.unbase64(y), x)
+            eq(z:unbase64(), x)
         end
         do
             local x = "foobarbaz1"
-            local y = crypt.base64_encode(x)
-            local z = x:base64_encode()
+            local y = crypt.base64(x)
+            local z = x:base64()
             eq(y, "Zm9vYmFyYmF6MQ==")
             eq(y, z)
-            eq(crypt.base64_decode(y), x)
-            eq(z:base64_decode(), x)
+            eq(crypt.unbase64(y), x)
+            eq(z:unbase64(), x)
         end
         do
             local x = "foobarbaz12"
-            local y = crypt.base64_encode(x)
-            local z = x:base64_encode()
+            local y = crypt.base64(x)
+            local z = x:base64()
             eq(y, "Zm9vYmFyYmF6MTI=")
             eq(y, z)
-            eq(crypt.base64_decode(y), x)
-            eq(z:base64_decode(), x)
+            eq(crypt.unbase64(y), x)
+            eq(z:unbase64(), x)
         end
-        eq((""):base64_encode():base64_decode(), "")
+        eq((""):base64():unbase64(), "")
         for i = 0, 255 do
-            eq(string.char(i):base64_encode():base64_decode(), string.char(i))
+            eq(string.char(i):base64():unbase64(), string.char(i))
         end
         for i = 1, 1000 do
             local s = crypt.rands(256 + i%3)
-            eq(s:base64_encode():base64_decode(), s)
-            eq(s:base64url_encode():base64url_decode(), s)
-            eq(s:base64url_encode(), s:base64_encode():gsub("+", "-"):gsub("/", "_"))
+            eq(s:base64():unbase64(), s)
+            eq(s:base64url():unbase64url(), s)
+            eq(s:base64url(), s:base64():gsub("+", "-"):gsub("/", "_"))
         end
     end
     do
@@ -98,32 +98,32 @@ return function()
             local x = "foobar!"
             local key = "rc4key"
             local y = crypt.rc4(x, key)
-            local z = crypt.rc4(y, key)
+            local z = crypt.unrc4(y, key)
             ne(y, x)
             eq(z, x)
             eq(crypt.rc4(x, key), x:rc4(key))
-            eq(crypt.rc4(y, key), y:rc4(key))
-            eq(x:rc4(key):rc4(key), x)
+            eq(crypt.unrc4(y, key), y:unrc4(key))
+            eq(x:rc4(key):unrc4(key), x)
             for _ = 1, 1000 do
                 local s = crypt.rands(256)
                 local k = crypt.rands(256)
-                eq(s:rc4(k):rc4(k), s)
+                eq(s:rc4(k):unrc4(k), s)
             end
         end
         for drop = 0, 10 do
             local x = "foobar!"
             local key = "rc4key"
             local y = crypt.rc4(x, key, drop)
-            local z = crypt.rc4(y, key, drop)
+            local z = crypt.unrc4(y, key, drop)
             ne(y, x)
             eq(z, x)
             eq(crypt.rc4(x, key, drop), x:rc4(key, drop))
-            eq(crypt.rc4(y, key, drop), y:rc4(key, drop))
-            eq(x:rc4(key, drop):rc4(key, drop), x)
+            eq(crypt.unrc4(y, key, drop), y:unrc4(key, drop))
+            eq(x:rc4(key, drop):unrc4(key, drop), x)
             for _ = 1, 1000 do
                 local s = crypt.rands(256)
                 local k = crypt.rands(256)
-                eq(s:rc4(k, drop):rc4(k, drop), s)
+                eq(s:rc4(k, drop):unrc4(k, drop), s)
             end
         end
         do
@@ -131,7 +131,7 @@ return function()
                 local s = crypt.rands(256)
                 local k = crypt.rands(256)
                 local drop = crypt.rand() % 4096
-                eq(s:rc4(k, drop):rc4(k, drop), s)
+                eq(s:rc4(k, drop):unrc4(k, drop), s)
             end
         end
     end
@@ -355,10 +355,10 @@ return function()
             for _ = 1, 1000 do
                 local x = crypt.rands(crypt.rand()%256)
                 local key = crypt.rands(crypt.rand()%256)
-                local y1 = crypt.aes_encrypt(x, key)
-                local y2 = crypt.aes_encrypt(x, key)
-                local z1 = crypt.aes_decrypt(y1, key)
-                local z2 = crypt.aes_decrypt(y2, key)
+                local y1 = crypt.aes(x, key)
+                local y2 = crypt.aes(x, key)
+                local z1 = crypt.unaes(y1, key)
+                local z2 = crypt.unaes(y2, key)
                 ne(y1, x)
                 ne(y2, x)
                 ne(y1, y2)
@@ -370,10 +370,10 @@ return function()
             for _ = 1, 1000 do
                 local x = crypt.rands(crypt.rand()%256)
                 local key = crypt.rands(crypt.rand()%256)
-                local y1 = x:aes_encrypt(key)
-                local y2 = x:aes_encrypt(key)
-                local z1 = crypt.aes_decrypt(y1, key)
-                local z2 = crypt.aes_decrypt(y2, key)
+                local y1 = x:aes(key)
+                local y2 = x:aes(key)
+                local z1 = crypt.unaes(y1, key)
+                local z2 = crypt.unaes(y2, key)
                 ne(y1, x)
                 ne(y2, x)
                 ne(y1, y2)
@@ -385,10 +385,10 @@ return function()
             for _ = 1, 1000 do
                 local x = crypt.rands(crypt.rand()%256)
                 local key = crypt.rands(crypt.rand()%256)
-                local y1 = crypt.aes_encrypt(x, key)
-                local y2 = crypt.aes_encrypt(x, key)
-                local z1 = y1:aes_decrypt(key)
-                local z2 = y2:aes_decrypt(key)
+                local y1 = crypt.aes(x, key)
+                local y2 = crypt.aes(x, key)
+                local z1 = y1:unaes(key)
+                local z2 = y2:unaes(key)
                 ne(y1, x)
                 ne(y2, x)
                 ne(y1, y2)

@@ -29,35 +29,37 @@ local crypt = require "crypt"
 
 --[[@@@
 ```lua
-s:hex_encode()          == crypt.hex_encode(s)
-s:hex_decode()          == crypt.hex_decode(s)
-s:base64_encode()       == crypt.base64_encode(s)
-s:base64_decode()       == crypt.base64_decode(s)
-s:base64url_encode()    == crypt.base64url_encode(s)
-s:base64url_decode()    == crypt.base64url_decode(s)
-s:crc32()               == crypt.crc32(s)
-s:crc64()               == crypt.crc64(s)
-s:rc4(key, drop)        == crypt.crc64(s, key, drop)
-s:sha256()              == crypt.sha256(s)
-s:hmac(key)             == crypt.hmac(s, key)
-s:aes_encrypt(key)      == crypt.aes_encrypt(s, key)
-s:aes_decrypt(key)      == crypt.aes_decrypt(s, key)
+s:hex()             == crypt.hex(s)
+s:unhex()           == crypt.unhex(s)
+s:base64()          == crypt.base64(s)
+s:unbase64()        == crypt.unbase64(s)
+s:base64url()       == crypt.base64url(s)
+s:unbase64url()     == crypt.unbase64url(s)
+s:crc32()           == crypt.crc32(s)
+s:crc64()           == crypt.crc64(s)
+s:rc4(key, drop)    == crypt.rc4(s, key, drop)
+s:unrc4(key, drop)  == crypt.unrc4(s, key, drop)
+s:sha256()          == crypt.sha256(s)
+s:hmac(key)         == crypt.hmac(s, key)
+s:aes(key)          == crypt.aes(s, key)
+s:unaes(key)        == crypt.unaes(s, key)
 ```
 @@@]]
 
-function string.hex_encode(s) return crypt.hex_encode(s) end
-function string.hex_decode(s) return crypt.hex_decode(s) end
-function string.base64_encode(s) return crypt.base64_encode(s) end
-function string.base64_decode(s) return crypt.base64_decode(s) end
-function string.base64url_encode(s) return crypt.base64url_encode(s) end
-function string.base64url_decode(s) return crypt.base64url_decode(s) end
-function string.rc4(s, k, d) return crypt.rc4(s, k, d) end
-function string.crc32(s) return crypt.crc32(s) end
-function string.crc64(s) return crypt.crc64(s) end
+function string.hex(s)          return crypt.hex(s) end
+function string.unhex(s)        return crypt.unhex(s) end
+function string.base64(s)       return crypt.base64(s) end
+function string.unbase64(s)     return crypt.unbase64(s) end
+function string.base64url(s)    return crypt.base64url(s) end
+function string.unbase64url(s)  return crypt.unbase64url(s) end
+function string.rc4(s, k, d)    return crypt.rc4(s, k, d) end
+function string.unrc4(s, k, d)  return crypt.unrc4(s, k, d) end
+function string.crc32(s)        return crypt.crc32(s) end
+function string.crc64(s)        return crypt.crc64(s) end
 
 -- TinyCrypt functions
 
-function string.sha256(s) return crypt.sha256(s) end
-function string.hmac(s, k) return crypt.hmac(s, k) end
-function string.aes_encrypt(s, k) return crypt.aes_encrypt(s, k) end
-function string.aes_decrypt(s, k) return crypt.aes_decrypt(s, k) end
+function string.sha256(s)       return crypt.sha256(s) end
+function string.hmac(s, k)      return crypt.hmac(s, k) end
+function string.aes(s, k)       return crypt.aes(s, k) end
+function string.unaes(s, k)     return crypt.unaes(s, k) end

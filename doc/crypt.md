@@ -133,13 +133,13 @@ The hexadecimal encoder transforms a string into a string where bytes
 are coded with hexadecimal digits.
 
 ``` lua
-crypt.hex_encode(data)
+crypt.hex(data)
 ```
 
 encodes `data` in hexa.
 
 ``` lua
-crypt.hex_decode(data)
+crypt.unhex(data)
 ```
 
 decodes the hexa `data`.
@@ -150,25 +150,25 @@ The base64 encoder transforms a string with non printable characters
 into a printable string (see <https://en.wikipedia.org/wiki/Base64>)
 
 ``` lua
-crypt.base64_encode(data)
+crypt.base64(data)
 ```
 
 encodes `data` in base64.
 
 ``` lua
-crypt.base64_decode(data)
+crypt.unbase64(data)
 ```
 
 decodes the base64 `data`.
 
 ``` lua
-crypt.base64url_encode(data)
+crypt.base64url(data)
 ```
 
 encodes `data` in base64url.
 
 ``` lua
-crypt.base64url_decode(data)
+crypt.unbase64url(data)
 ```
 
 decodes the base64url `data`.
@@ -202,6 +202,7 @@ design to be fast and simple.
 
 ``` lua
 crypt.rc4(data, key, [drop])
+crypt.unrc4(data, key, [drop])      -- note that unrc4 == rc4
 ```
 
 encrypts/decrypts `data` using the RC4Drop algorithm and the encryption
@@ -252,14 +253,14 @@ and some OS dependant entropy. This object has three methods:
 ### AES-128 encryption
 
 ``` lua
-crypt.aes_encrypt(data, key)
+crypt.aes(data, key)
 ```
 
 encrypts `data` using the AES-128-CBC algorithm and the encryption key
 `key`.
 
 ``` lua
-crypt.aes_decrypt(data, key)
+crypt.unaes(data, key)
 ```
 
 decrypts `data` using the AES-128-CBC algorithm and the encryption key
@@ -270,17 +271,18 @@ decrypts `data` using the AES-128-CBC algorithm and the encryption key
 Some functions of the `crypt` package are added to the string module:
 
 ``` lua
-s:hex_encode()          == crypt.hex_encode(s)
-s:hex_decode()          == crypt.hex_decode(s)
-s:base64_encode()       == crypt.base64_encode(s)
-s:base64_decode()       == crypt.base64_decode(s)
-s:base64url_encode()    == crypt.base64url_encode(s)
-s:base64url_decode()    == crypt.base64url_decode(s)
-s:crc32()               == crypt.crc32(s)
-s:crc64()               == crypt.crc64(s)
-s:rc4(key, drop)        == crypt.crc64(s, key, drop)
-s:sha256()              == crypt.sha256(s)
-s:hmac(key)             == crypt.hmac(s, key)
-s:aes_encrypt(key)      == crypt.aes_encrypt(s, key)
-s:aes_decrypt(key)      == crypt.aes_decrypt(s, key)
+s:hex()             == crypt.hex(s)
+s:unhex()           == crypt.unhex(s)
+s:base64()          == crypt.base64(s)
+s:unbase64()        == crypt.unbase64(s)
+s:base64url()       == crypt.base64url(s)
+s:unbase64url()     == crypt.unbase64url(s)
+s:crc32()           == crypt.crc32(s)
+s:crc64()           == crypt.crc64(s)
+s:rc4(key, drop)    == crypt.rc4(s, key, drop)
+s:unrc4(key, drop)  == crypt.unrc4(s, key, drop)
+s:sha256()          == crypt.sha256(s)
+s:hmac(key)         == crypt.hmac(s, key)
+s:aes(key)          == crypt.aes(s, key)
+s:unaes(key)        == crypt.unaes(s, key)
 ```
