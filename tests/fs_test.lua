@@ -168,6 +168,8 @@ return function()
     eq(err:gsub(":.*", ": ..."), "/foo: ...")
 
     local a, b, c = "aaa", "bb", "ccc"
+    eq(fs.join(a, b, c), "aaa/bb/ccc")
+    eq(fs.join(a, fs.sep..b, c), "/bb/ccc")
     eq(fs.dirname(fs.join(a,b,c)), fs.join(a,b))
     eq(fs.basename(fs.join(a,b,c)), fs.join(c))
     eq({fs.splitext("path/with.dots/file.with_ext")},     {"path/with.dots/file", ".with_ext"})

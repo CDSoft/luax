@@ -171,7 +171,8 @@ fs.join(...)
 ```
 
 return a path name made of several path components (separated by
-`fs.sep`).
+`fs.sep`). If a coomponent is absolute, the previous components are
+removed.
 
 ``` lua
 fs.is_file(name)

@@ -34,10 +34,20 @@ fs.join(...)
 ```
 return a path name made of several path components
 (separated by `fs.sep`).
+If a coomponent is absolute, the previous components are removed.
 @@@]]
 
 function fs.join(...)
-    return table.concat({...}, fs.sep)
+    --return table.concat({...}, fs.sep)
+    local ps = {}
+    for _, p in ipairs({...}) do
+        if p:match("^"..fs.sep) then
+            ps = {p}
+        else
+            ps[#ps+1] = p
+        end
+    end
+    return table.concat(ps, fs.sep)
 end
 
 --[[@@@
