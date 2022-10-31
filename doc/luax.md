@@ -130,8 +130,8 @@ and [lapp](http://cdelord.fr/lapp).
 
 - [LuaX interactive usage](repl.md): improved Lua REPL
 - [fun](fun.md): functional programming inspired function
-- [I](I.md): string interpolation
 - [fs](fs.md): file system management
+- [sh](sh.md): shell command execution
 - [mathx](mathx.md): complete math library for Lua
 - [imath](imath.md): arbitrary precision integer and rational arithmetic
   library

@@ -198,4 +198,6 @@ return function()
 
     eq(fs.rmdir(tmp), true)
 
+    fs.chdir(cwd)
+
 end
