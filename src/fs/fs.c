@@ -578,6 +578,35 @@ static int fs_dirname(lua_State *L)
 
 /*@@@
 ```lua
+fs.splitext(path)
+```
+return the name without the extension and the extension.
+@@@*/
+
+static int fs_splitext(lua_State *L)
+{
+    const char *path = luaL_checkstring(L, 1);
+    const size_t len = (size_t)lua_rawlen(L, 1);
+    for (size_t i = len-1; i > 0; i--)
+    {
+        if (path[i] == '.' && path[i-1] != '/' && path[i-1] != '\\')
+        {
+            lua_pushlstring(L, path, i);
+            lua_pushlstring(L, &path[i], len-i);
+            return 2;
+        }
+        if (path[i] == '/' || path[i] == '\\')
+        {
+            break;
+        }
+    }
+    lua_pushlstring(L, path, len);
+    lua_pushlstring(L, "", 0);
+    return 2;
+}
+
+/*@@@
+```lua
 fs.realpath(path)
 ```
 return the resolved path name of path.
@@ -631,6 +660,7 @@ static const luaL_Reg fslib[] =
 {
     {"basename",    fs_basename},
     {"dirname",     fs_dirname},
+    {"splitext",    fs_splitext},
     {"absname",     fs_absname},
     {"realpath",    fs_realpath},
     {"getcwd",      fs_getcwd},

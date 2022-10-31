@@ -132,6 +132,12 @@ fs.dirname(path)
 return all but the last component of path.
 
 ``` lua
+fs.splitext(path)
+```
+
+return the name without the extension and the extension.
+
+``` lua
 fs.realpath(path)
 ```
 
