@@ -101,13 +101,25 @@ calls `inspect(x)` to build a human readable
 representation of `x` (see the `inspect` package).
 @@@]]
 
-luax.inspect = require "inspect"
+local inspect = require "inspect"
+
+local remove_all_metatables = function(item, path)
+  if path[#path] ~= inspect.METATABLE then return item end
+end
+
+local default_options = {
+    process = remove_all_metatables,
+}
+
+function luax.inspect(x, options)
+    return inspect(x, F.merge{default_options, options})
+end
 
 --[[@@@
 ```lua
 luax.printi(x)
 ```
-prints `inspect(x)`.
+prints `inspect(x)` (without the metatables).
 @@@]]
 
 function luax.printi(x)

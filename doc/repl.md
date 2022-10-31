@@ -53,4 +53,4 @@ the `inspect` package).
 luax.printi(x)
 ```
 
-prints `inspect(x)`.
+prints `inspect(x)` (without the metatables).
