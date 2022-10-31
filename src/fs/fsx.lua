@@ -182,8 +182,9 @@ calls `f(tmp)` where `tmp` is the name of a temporary file.
 
 function fs.with_tmpfile(f)
     local tmp = os.tmpname()
-    f(tmp)
+    local ret = {f(tmp)}
     fs.rm(tmp)
+    return table.unpack(ret)
 end
 
 --[[@@@
@@ -197,6 +198,7 @@ function fs.with_tmpdir(f)
     local tmp = os.tmpname()
     fs.rm(tmp)
     fs.mkdir(tmp)
-    f(tmp)
+    local ret = {f(tmp)}
     fs.rmdir(tmp)
+    return table.unpack(ret)
 end
