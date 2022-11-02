@@ -20,8 +20,8 @@
 CRYPT_KEY ?= LuaX
 
 BUILD = .build
-ZIG_CACHE = $(BUILD)/zig-cache
 ZIG_INSTALL = .zig
+ZIG_CACHE = $(ZIG_INSTALL)/zig-cache
 
 RELEASE = release-small
 
@@ -354,11 +354,7 @@ $(INSTALL_PATH)/luax-%: $(BUILD)/luax-%
 # Search for or install a zig compiler
 ###############################################################################
 
-ifeq ($(shell which zig 2>/dev/null),)
 ZIG := $(ZIG_INSTALL)/zig
-else
-ZIG := $(shell which zig)
-endif
 
 ZIG_VERSION = 0.9.1
 ZIG_URL = https://ziglang.org/download/$(ZIG_VERSION)/zig-$(OS)-$(ARCH)-$(ZIG_VERSION).tar.xz
