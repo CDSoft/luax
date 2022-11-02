@@ -38,16 +38,15 @@ If a coomponent is absolute, the previous components are removed.
 @@@]]
 
 function fs.join(...)
-    --return table.concat({...}, fs.sep)
-    local ps = {}
-    for _, p in ipairs({...}) do
-        if p:match("^"..fs.sep) then
-            ps = {p}
-        else
-            ps[#ps+1] = p
-        end
+    local function add_path(ps, p)
+        if p:match("^"..fs.sep) then return F{p} end
+        ps[#ps+1] = p
+        return ps
     end
-    return table.concat(ps, fs.sep)
+    return F{...}
+        :flatten()
+        :fold(add_path, F{})
+        :str(fs.sep)
 end
 
 --[[@@@
@@ -82,11 +81,12 @@ returns the full path of `name` if `name` is found in `$PATH` or `nil`.
 @@@]]
 
 function fs.findpath(name)
-    for _, path in ipairs(os.getenv("PATH"):split(sys.os == "windows" and ";" or ":")) do
-        local full_path = fs.join(path, name)
-        if fs.is_file(full_path) then return full_path end
-    end
-    return nil, "not found in $PATH"
+    local function exists_in(path) return fs.is_file(fs.join(path, name)) end
+    local path = os.getenv("PATH")
+        :split(sys.os == "windows" and ";" or ":")
+        :find(exists_in)
+    if path then return fs.join(path, name) end
+    return nil, name..": not found in $PATH"
 end
 
 --[[@@@

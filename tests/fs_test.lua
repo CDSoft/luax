@@ -194,6 +194,13 @@ return function()
     eq(fs.realpath("\\foo"), nil) -- unknown file
     eq(fs.realpath("Z:foo"), nil) -- unknown file
 
+    if sys.os == "linux" then
+        eq(fs.findpath("sh"), "/usr/bin/sh")
+        local path, msg = fs.findpath("a_name_that_is_likely_not_found")
+        eq(path, nil)
+        eq(msg, "a_name_that_is_likely_not_found: not found in $PATH")
+    end
+
     eq(fs.sep, sys.os == "windows" and "\\" or "/")
 
     eq(fs.rmdir(tmp), true)
