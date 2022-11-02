@@ -236,3 +236,15 @@ fs.with_tmpdir(f)
 ```
 
 calls `f(tmp)` where `tmp` is the name of a temporary directory.
+
+``` lua
+fs.read(filename)
+```
+
+returns the content of the file `filename`.
+
+``` lua
+fs.write(filename, ...)
+```
+
+write `...` to the file `filename`.

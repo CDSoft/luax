@@ -202,3 +202,31 @@ function fs.with_tmpdir(f)
     fs.rmdir(tmp)
     return table.unpack(ret)
 end
+
+--[[@@@
+```lua
+fs.read(filename)
+```
+returns the content of the file `filename`.
+@@@]]
+
+function fs.read(name)
+    local f = assert(io.open(name, "r"))
+    local content = assert(f:read("a"))
+    f:close()
+    return content
+end
+
+--[[@@@
+```lua
+fs.write(filename, ...)
+```
+write `...` to the file `filename`.
+@@@]]
+
+function fs.write(name, ...)
+    local content = F{...}:flatten():str()
+    local f = assert(io.open(name, "w"))
+    assert(f:write(content))
+    f:close()
+end

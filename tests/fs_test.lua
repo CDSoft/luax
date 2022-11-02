@@ -203,6 +203,9 @@ return function()
 
     eq(fs.sep, sys.os == "windows" and "\\" or "/")
 
+    fs.write(fs.join(tmp, "new_file"), "content of the new file", "...", {"a", {"b", "c"}})
+    eq(fs.read(fs.join(tmp, "new_file")), "content of the new file...abc")
+
     eq(fs.rmdir(tmp), true)
 
     fs.chdir(cwd)
