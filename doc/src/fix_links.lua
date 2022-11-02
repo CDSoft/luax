@@ -48,8 +48,8 @@ end
 if FORMAT == "html5" then
 
     function Link(el)
-                       el.target = el.target:gsub("%.md$", ".html")
-                return el
+        el.target = el.target:gsub("%.md$", ".html")
+        return el
     end
 
 end
