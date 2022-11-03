@@ -159,11 +159,11 @@ pub fn build(b: *std.build.Builder) !void {
     const runtime_name = std.os.getenv("RUNTIME_NAME");
     const runtime = std.os.getenv("RUNTIME");
 
-    const ARCH = (try std.fmt.allocPrint(page, "{s}", .{tagName(target.cpu_arch)}));
-    const OS = (try std.fmt.allocPrint(page, "{s}", .{tagName(target.os_tag)}));
-    const ABI = (try std.fmt.allocPrint(page, "{s}", .{tagName(target.abi)}));
+    const ARCH = (try std.fmt.allocPrint(page, "{?s}", .{tagName(target.cpu_arch)}));
+    const OS = (try std.fmt.allocPrint(page, "{?s}", .{tagName(target.os_tag)}));
+    const ABI = (try std.fmt.allocPrint(page, "{?s}", .{tagName(target.abi)}));
 
-    const exe_name = try std.fmt.allocPrint(page, "{s}-{s}-{s}-{s}", .{runtime_name, ARCH, OS, ABI});
+    const exe_name = try std.fmt.allocPrint(page, "{?s}-{s}-{s}-{s}", .{runtime_name, ARCH, OS, ABI});
 
     const exe = b.addExecutable(exe_name, null);
     exe.single_threaded = true;
@@ -172,11 +172,11 @@ pub fn build(b: *std.build.Builder) !void {
     exe.setBuildMode(mode);
     exe.linkLibC();
     exe.install();
-    exe.addIncludeDir(src_path);
-    exe.addIncludeDir(build_path);
-    exe.addIncludeDir(lua_src);
-    exe.addIncludeDir(tinycrypt_src);
-    exe.addIncludeDir(lz4_src);
+    exe.addIncludePath(src_path);
+    exe.addIncludePath(build_path);
+    exe.addIncludePath(lua_src);
+    exe.addIncludePath(tinycrypt_src);
+    exe.addIncludePath(lz4_src);
     exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
@@ -198,7 +198,8 @@ pub fn build(b: *std.build.Builder) !void {
         "-Wno-used-but-marked-unused",
         "-Wno-documentation",
         "-Wno-documentation-unknown-command",
-        try std.fmt.allocPrint(page, "-DRUNTIME={s}", .{runtime}),
+        "-Wno-declaration-after-statement",
+        try std.fmt.allocPrint(page, "-DRUNTIME={?s}", .{runtime}),
         try std.fmt.allocPrint(page, "-DLUAX_ARCH=\"{s}\"", .{ARCH}),
         try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),
         try std.fmt.allocPrint(page, "-DLUAX_ABI=\"{s}\"", .{ABI}),
@@ -218,6 +219,7 @@ pub fn build(b: *std.build.Builder) !void {
         });
         exe.linkSystemLibraryName("ws2_32");
         exe.linkSystemLibraryName("advapi32");
+        //exe.linkSystemLibraryName("mingwthrd");
     } else {
         exe.addCSourceFiles(&linux_third_party_c_files, &[_][]const u8 {
             "-std=gnu11",
