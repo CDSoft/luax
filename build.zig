@@ -138,6 +138,11 @@ const windows_third_party_c_files = [_][]const u8 {
     "src/socket/luasocket/wsocket.c",
 };
 
+fn tagName(opt: anytype) ?[]const u8 {
+    if (opt)|x| { return @tagName(x); }
+    return null;
+}
+
 pub fn build(b: *std.build.Builder) !void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
@@ -154,9 +159,9 @@ pub fn build(b: *std.build.Builder) !void {
     const runtime_name = std.os.getenv("RUNTIME_NAME");
     const runtime = std.os.getenv("RUNTIME");
 
-    const ARCH = (try std.fmt.allocPrint(page, "{s}", .{target.cpu_arch}))[5..];
-    const OS = (try std.fmt.allocPrint(page, "{s}", .{target.os_tag}))[4..];
-    const ABI = (try std.fmt.allocPrint(page, "{s}", .{target.abi}))[4..];
+    const ARCH = (try std.fmt.allocPrint(page, "{s}", .{tagName(target.cpu_arch)}));
+    const OS = (try std.fmt.allocPrint(page, "{s}", .{tagName(target.os_tag)}));
+    const ABI = (try std.fmt.allocPrint(page, "{s}", .{tagName(target.abi)}));
 
     const exe_name = try std.fmt.allocPrint(page, "{s}-{s}-{s}-{s}", .{runtime_name, ARCH, OS, ABI});
 
@@ -210,7 +215,6 @@ pub fn build(b: *std.build.Builder) !void {
             "-std=gnu11",
             "-Os",
             "-Wno-documentation",
-            if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
         });
         exe.linkSystemLibraryName("ws2_32");
         exe.linkSystemLibraryName("advapi32");
@@ -219,7 +223,7 @@ pub fn build(b: *std.build.Builder) !void {
             "-std=gnu11",
             "-Os",
             "-Wno-documentation",
-            if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
+            "-DLUA_USE_POSIX",
         });
     }
 }
