@@ -211,10 +211,11 @@ returns the content of the file `filename`.
 @@@]]
 
 function fs.read(name)
-    local f = assert(io.open(name, "r"))
-    local content = assert(f:read("a"))
+    local f, oerr = io.open(name, "r")
+    if not f then return f, oerr end
+    local content, rerr = f:read("a")
     f:close()
-    return content
+    return content, rerr
 end
 
 --[[@@@
@@ -226,7 +227,9 @@ write `...` to the file `filename`.
 
 function fs.write(name, ...)
     local content = F{...}:flatten():str()
-    local f = assert(io.open(name, "w"))
-    assert(f:write(content))
+    local f, oerr = io.open(name, "w")
+    if not f then return f, oerr end
+    local ok, werr = f:write(content)
     f:close()
+    return ok, werr
 end
