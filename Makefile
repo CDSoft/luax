@@ -490,18 +490,19 @@ PANDOC_HTML += --embed-resources --standalone
 
 PANDOC_GFM = $(PANDOC) -t gfm
 
-doc/%.md: doc/src/%.md $(LUAX_SOURCES) $(LUAX_RUNTIME)
+doc/%.md: doc/src/%.md
 	@$(call cyan,"DOC",$@)
-	@$(PANDOC_GFM) $< -o $@
+	@mkdir -p $(BUILD)/doc/src/
+	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD)/doc/src/$(notdir $@).d $(PANDOC_GFM) $< -o $@
 
 $(BUILD)/doc/%.md: doc/%.md
 	@$(call cyan,"DOC",$@)
 	@cp -f $< $@
 
-$(BUILD)/doc/%.html: doc/src/%.md $(LUAX_SOURCES) $(LUAX_RUNTIME) $(CSS)
+$(BUILD)/doc/%.html: doc/src/%.md $(CSS)
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(dir $@)
-	@$(PANDOC_HTML) $< -o $@
+	@PANDA_TARGET=$@ $(PANDOC_HTML) $< -o $@
 
 $(BUILD)/doc/index.html: $(BUILD)/doc/luax.html
 	@$(call cyan,"DOC",$@)
@@ -509,7 +510,10 @@ $(BUILD)/doc/index.html: $(BUILD)/doc/luax.html
 
 README.md: doc/src/luax.md doc/src/fix_links.lua
 	@$(call cyan,"DOC",$@)
-	@$(PANDOC_GFM) $< -o $@
+	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD)/doc/src/$(notdir $@).d $(PANDOC_GFM) $< -o $@
+
+-include $(BUILD)/doc/*.d
+-include $(BUILD)/doc/src/*.d
 
 ###############################################################################
 # Archive
