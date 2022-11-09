@@ -63,7 +63,7 @@ else
 EXT :=
 endif
 
-.DEFAULT_GOAL := test
+.DEFAULT_GOAL := compile
 
 ###############################################################################
 # Help
@@ -125,9 +125,13 @@ help:
 .SECONDARY:
 
 .PHONY: all
+.PHONY: compile
+.PHONY: test
+
+## Compile LuaX for the host
+compile: $(BUILD)/luax
 
 ## Compile LuaX for Linux, MacOS and Windows
-all: test
 all: $(RUNTIMES)
 all: $(LUAX_BINARIES)
 all: $(BUILD)/luax.tar.xz
@@ -434,6 +438,10 @@ $(BUILD)/lrun-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_
 ###############################################################################
 
 LUAX_PACKAGES := tools/luax.lua tools/bundle.lua $(BUILD)/targets.lua
+
+$(BUILD)/luax: $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
+	@$(call cyan,"CP",$@)
+	@cp -f $< $@
 
 $(BUILD)/luax-%: $(BUILD)/lrun-% $(LUAX_PACKAGES) tools/bundle.lua
 	@$(call cyan,"BUNDLE",$@)
