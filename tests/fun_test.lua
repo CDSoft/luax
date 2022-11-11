@@ -810,9 +810,13 @@ local function table_reductions()
 
     local xs = F{10, 20, 30, 40}
     local function f(a, b) return a+b end
+    local function fi(a, i, b) return i+a+b end
 
     eq(F.fold(f, 1, xs), 101)
     eq(xs:fold(f, 1), 101)
+
+    eq(F.foldi(fi, 1, xs), 111)
+    eq(xs:foldi(fi, 1), 111)
 
     eq(F.fold1(f, xs), 100)
     eq(xs:fold1(f), 100)

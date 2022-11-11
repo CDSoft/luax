@@ -2161,12 +2161,27 @@ end)
 F.fold(f, x, xs)
 xs:fold(f, x)
 ```
-> Left-associative fold of a list.
+> Left-associative fold of a list (`f(...f(f(x, xs[1]), xs[2]), ...)`).
 @@@]]
 
 register3 "fold" (function(fzx, z, xs)
     for i = 1, #xs do
         z = fzx(z, xs[i])
+    end
+    return z
+end)
+
+--[[@@@
+```lua
+F.foldi(f, x, xs)
+xs:foldi(f, x)
+```
+> Left-associative fold of a list (`f(...f(f(x, 1, xs[1]), 2, xs[2]), ...)`).
+@@@]]
+
+register3 "foldi" (function(fzx, z, xs)
+    for i = 1, #xs do
+        z = fzx(z, i, xs[i])
     end
     return z
 end)
