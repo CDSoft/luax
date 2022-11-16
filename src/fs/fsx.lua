@@ -128,43 +128,84 @@ deletes the directory `path` and its content recursively.
 @@@]]
 
 function fs.rmdir(path)
-    fs.walk(path, true):map(fs.rm)
+    fs.walk(path, {reverse=true}):map(fs.rm)
     return fs.rm(path)
 end
 
 --[[@@@
 ```lua
-fs.walk([path], [reverse])
+fs.walk([path], [{reverse=true|false, links=true|false, cross=true|false}])
 ```
 returns a list listing directory and
 file names in `path` and its subdirectories (the default path is the current
-directory). If `reverse` is true, the list is built in a reverse order
-(suitable for recursive directory removal)
+directory).
+
+Options:
+
+- `reverse`: the list is built in a reverse order
+  (suitable for recursive directory removal)
+- `links`: follow symbolic links
+- `cross`: walk across several devices
+- `func`: function applied to the current file or directory.
+  `func` takes two parameters (path of the file or directory and the stat object returned by `fs.stat`)
+  and returns a boolean (to continue or not walking recursively through the subdirectories)
+  and a value (e.g. the name of the file) to be added to the listed returned by `walk`.
 @@@]]
 
-function fs.walk(path, reverse)
-    if type(path) == "boolean" and reverse == nil then
-        path, reverse = nil, path
-    end
+function fs.walk(path, options)
+    options = options or {}
+    local reverse = options.reverse
+    local follow_links = options.links
+    local cross_device = options.cross
+    local func = options.func or function(name, _) return true, name end
     local dirs = {path or "."}
     local acc_files = {}
     local acc_dirs = {}
+    local seen = {}
+    local dev0 = nil
+    local function already_seen(name)
+        local inode = fs.inode(name)
+        if not inode then return true end
+        dev0 = dev0 or inode.dev
+        if dev0 ~= inode.dev and not cross_device then
+            return true
+        end
+        if not seen[inode.dev] then
+            seen[inode.dev] = {[inode]=true}
+            return false
+        end
+        if not seen[inode.dev][inode.ino] then
+            seen[inode.dev][inode.ino] = true
+            return false
+        end
+        return true
+    end
     while #dirs > 0 do
         local dir = table.remove(dirs)
-        local names = fs.dir(dir)
-        if names then
-            table.sort(names)
-            for i = 1, #names do
-                local name = dir..fs.sep..names[i]
-                local stat = fs.stat(name)
-                if stat then
-                    if stat.type == "directory" then
-                        dirs[#dirs+1] = name
-                        if reverse then acc_dirs = {name, acc_dirs}
-                        else acc_dirs[#acc_dirs+1] = name
+        if not already_seen(dir) then
+            local names = fs.dir(dir)
+            if names then
+                table.sort(names)
+                for i = 1, #names do
+                    local name = dir..fs.sep..names[i]
+                    local stat = fs.stat(name)
+                    if stat then
+                        if stat.type == "directory" or (follow_links and stat.type == "link")then
+                            local continue, new_name = func(name, stat)
+                            if continue then
+                                dirs[#dirs+1] = name
+                            end
+                            if new_name then
+                                if reverse then acc_dirs = {new_name, acc_dirs}
+                                else acc_dirs[#acc_dirs+1] = new_name
+                                end
+                            end
+                        else
+                            local _, new_name = func(name, stat)
+                            if new_name then
+                                acc_files[#acc_files+1] = new_name
+                            end
                         end
-                    else
-                        acc_files[#acc_files+1] = name
                     end
                 end
             end

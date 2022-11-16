@@ -47,7 +47,7 @@ return function()
 
     local tmp = fs.join(cwd, ".build", "test", "fs")
     eq(tmp, cwd..fs.sep..".build"..fs.sep.."test"..fs.sep.."fs")
-    F.map(fs.remove, fs.walk(tmp, true))
+    F.map(fs.remove, fs.walk(tmp, {reverse=true}))
     fs.remove(tmp)
 
     fs.mkdirs(tmp)
@@ -74,10 +74,9 @@ return function()
     fs.chdir(tmp)
 
     local function test_files(f, testfiles, reverse)
-        eq(f(reverse), F.map(function(name) return F.prefix"."(name:gsub("/", fs.sep)) end, testfiles))
-        eq(f(".", reverse), F.map(function(name) return F.prefix"."(name:gsub("/", fs.sep)) end, testfiles))
+        eq(f(".", {reverse=reverse}), F.map(function(name) return F.prefix"."(name:gsub("/", fs.sep)) end, testfiles))
         fs.chdir(cwd)
-        eq(f(tmp, reverse), F.map(function(name) return F.prefix(tmp)(name:gsub("/", fs.sep)) end, testfiles))
+        eq(f(tmp, {reverse=reverse}), F.map(function(name) return F.prefix(tmp)(name:gsub("/", fs.sep)) end, testfiles))
         fs.chdir(tmp)
     end
 
