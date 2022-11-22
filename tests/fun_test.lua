@@ -493,6 +493,8 @@ local function table_extraction()
     eq(F(t):init(), {"a", "b"})
     eq({F.uncons(t)}, {"a", {"b","c"}})
     eq({F(t):uncons()}, {"a", {"b","c"}})
+    eq({F.unpack(t)}, {"a", "b", "c"})
+    eq({F(t):unpack()}, {"a", "b", "c"})
 
     local xs = F{10, 20, 30, 40}
 

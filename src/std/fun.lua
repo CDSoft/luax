@@ -1292,6 +1292,16 @@ register1 "uncons" (function(xs) return F.head(xs), F.tail(xs) end)
 
 --[[@@@
 ```lua
+F.unpack(xs, [ i, [j] ])
+xs:unpack([ i, [j] ])
+```
+> returns the elements of xs between indices i and j
+@@@]]
+
+register1 "unpack" (table.unpack)
+
+--[[@@@
+```lua
 F.take(n, xs)
 xs:take(n)
 ```
