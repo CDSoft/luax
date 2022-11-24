@@ -129,7 +129,7 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl)
 and [lapp](http://cdelord.fr/lapp).
 
 - [LuaX interactive usage](doc/repl.md): improved Lua REPL
-- [fun](doc/fun.md): functional programming inspired function
+- [fun](doc/fun.md): functional programming inspired functions
 - [fs](doc/fs.md): file system management
 - [sh](doc/sh.md): shell command execution
 - [mathx](doc/mathx.md): complete math library for Lua

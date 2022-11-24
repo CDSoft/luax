@@ -2061,7 +2061,7 @@ end)
 F.mapi(f, xs)
 xs:mapi(f)
 ```
-> maps `f` to the elements of `xs` and returns `{f(i, xs[1]), f(i, xs[2]), ...}`
+> maps `f` to the elements of `xs` and returns `{f(1, xs[1]), f(2, xs[2]), ...}`
 @@@]]
 
 register2 "mapi" (function(f, xs)

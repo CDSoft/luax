@@ -554,6 +554,13 @@ xs:uncons()
 > returns the head and the tail of a list.
 
 ``` lua
+F.unpack(xs, [ i, [j] ])
+xs:unpack([ i, [j] ])
+```
+
+> returns the elements of xs between indices i and j
+
+``` lua
 F.take(n, xs)
 xs:take(n)
 ```
@@ -909,7 +916,7 @@ xs:mapi(f)
 ```
 
 > maps `f` to the elements of `xs` and returns
-> `{f(i, xs[1]), f(i, xs[2]), ...}`
+> `{f(1, xs[1]), f(2, xs[2]), ...}`
 
 ``` lua
 F.mapt(f, t)
@@ -968,7 +975,15 @@ F.fold(f, x, xs)
 xs:fold(f, x)
 ```
 
-> Left-associative fold of a list.
+> Left-associative fold of a list (`f(...f(f(x, xs[1]), xs[2]), ...)`).
+
+``` lua
+F.foldi(f, x, xs)
+xs:foldi(f, x)
+```
+
+> Left-associative fold of a list
+> (`f(...f(f(x, 1, xs[1]), 2, xs[2]), ...)`).
 
 ``` lua
 F.fold1(f, xs)

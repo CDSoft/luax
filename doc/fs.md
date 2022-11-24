@@ -217,13 +217,24 @@ fs.rmdir(path, [params])
 deletes the directory `path` and its content recursively.
 
 ``` lua
-fs.walk([path], [reverse])
+fs.walk([path], [{reverse=true|false, links=true|false, cross=true|false}])
 ```
 
 returns a list listing directory and file names in `path` and its
-subdirectories (the default path is the current directory). If `reverse`
-is true, the list is built in a reverse order (suitable for recursive
-directory removal)
+subdirectories (the default path is the current directory).
+
+Options:
+
+- `reverse`: the list is built in a reverse order (suitable for
+  recursive directory removal)
+- `links`: follow symbolic links
+- `cross`: walk across several devices
+- `func`: function applied to the current file or directory. `func`
+  takes two parameters (path of the file or directory and the stat
+  object returned by `fs.stat`) and returns a boolean (to continue or
+  not walking recursively through the subdirectories) and a value
+  (e.g. the name of the file) to be added to the listed returned by
+  `walk`.
 
 ``` lua
 fs.with_tmpfile(f)
