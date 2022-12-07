@@ -331,6 +331,14 @@ local function miscellaneous_functions()
     local s2 = function(a) return function(b) return a+b end end
     eq(F.uncurry(s2)(1, 2), 3)
 
+    local s5 = function(a, b, c, d, e) return a+b+c+d+e end
+    eq(F.partial(s5)(1, 2, 3, 4, 5), 15)
+    eq(F.partial(s5, 1)(2, 3, 4, 5), 15)
+    eq(F.partial(s5, 1, 2)(3, 4, 5), 15)
+    eq(F.partial(s5, 1, 2, 3)(4, 5), 15)
+    eq(F.partial(s5, 1, 2, 3, 4)(5), 15)
+    eq(F.partial(s5, 1, 2, 3, 4, 5)(), 15)
+
     eq({F.call(s3, 10, 11, 12)}, {33})
     eq({F.call(h, 10, 11)}, {11, 13})
 

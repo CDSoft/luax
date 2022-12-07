@@ -364,6 +364,12 @@ F.uncurry(f)
 > uncurry(f)(x, …) calls f(x)(…)
 
 ``` lua
+F.partial(f, ...)
+```
+
+> F.partial(f, xs)(ys) calls f(xs..ys)
+
+``` lua
 F.call(f, ...)
 ```
 

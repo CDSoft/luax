@@ -806,6 +806,37 @@ end
 
 --[[@@@
 ```lua
+F.partial(f, ...)
+```
+> F.partial(f, xs)(ys) calls f(xs..ys)
+@@@]]
+function F.partial(f, ...)
+    local n = select("#", ...)
+    if n == 1 then
+        local x1 = ...
+        return function(...)
+            return f(x1, ...)
+        end
+    elseif n == 2 then
+        local x1, x2 = ...
+        return function(...)
+            return f(x1, x2, ...)
+        end
+    elseif n == 3 then
+        local x1, x2, x3 = ...
+        return function(...)
+            return f(x1, x2, x3, ...)
+        end
+    else
+        local xs = F{...}
+        return function(...)
+            return f((xs..{...}):unpack())
+        end
+    end
+end
+
+--[[@@@
+```lua
 F.call(f, ...)
 ```
 > calls `f(...)`
