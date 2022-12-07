@@ -70,6 +70,50 @@ local function basic_data_types()
     eq(F.default(42, nil), 42)
     eq(F.default(42, 43), 43)
 
+    eq(F.case(42) {
+        { 41, "41" },
+        { 42, "42" },
+        { 43, "43" },
+    }, "42")
+    eq(F.case(44) {
+        { 41, "41" },
+        { 42, "42" },
+        { 43, "43" },
+    }, nil)
+    eq(F.case(42) {
+        { function(x) assert(x==42); return 41 end, "41" },
+        { function(x) assert(x==42); return 42 end, "42" },
+        { function(x) assert(x==42); return 43 end, "43" },
+    }, "42")
+    eq(F.case(44) {
+        { function(x) assert(x==44); return 41 end, "41" },
+        { function(x) assert(x==44); return 42 end, "42" },
+        { function(x) assert(x==44); return 43 end, "43" },
+    }, nil)
+    eq(F.case(44) {
+        { function(x) assert(x==44); return 41 end, "41" },
+        { function(x) assert(x==44); return 42 end, "42" },
+        { function(x) assert(x==44); return 43 end, "43" },
+        { F.otherwise, "other" },
+    }, "other")
+
+    eq(F.when {
+        { function() return false end, "41" },
+        { function() return true end, "42" },
+        { function() return false end, "43" },
+    }, "42")
+    eq(F.when {
+        { function() return false end, "41" },
+        { function() return false end, "42" },
+        { function() return false end, "43" },
+    }, nil)
+    eq(F.when {
+        { function() return false end, "41" },
+        { function() return false end, "42" },
+        { function() return false end, "43" },
+        { F.otherwise, "other" },
+    }, "other")
+
     eq(F.fst{4,5,6}, 4)
     eq(F.snd{4,5,6}, 5)
     eq(F.thd{4,5,6}, 6)

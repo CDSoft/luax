@@ -93,6 +93,37 @@ F.default(def, x)
 
 > Returns x if x is not nil, otherwise def
 
+``` lua
+F.case(x) {
+    { t1, v1 },
+    ...
+    { tn, vn }
+}
+```
+
+> returns the first `vi` such that `ti == x`. If `ti` is a function, it
+> is applied to `x` and the test becomes `ti(x) == x`. If `vi` is a
+> function, the value returned by `F.case` is `vi(x)`.
+
+``` lua
+F.when {
+    { t1, v1 },
+    ...
+    { tn, vn }
+}
+```
+
+> returns the first `vi` such that `ti` is true. If `ti` is a function,
+> the test becomes `ti()`. If `vi` is a function, the value returned by
+> `F.when` is `vi()`.
+
+``` lua
+F.otherwise
+```
+
+> `F.otherwise` is used with `F.case` and `F.when` to add a default
+> branch.
+
 #### Tuples
 
 ``` lua
