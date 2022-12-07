@@ -72,7 +72,7 @@ local function basic_data_types()
 
     eq(F.fst{4,5,6}, 4)
     eq(F.snd{4,5,6}, 5)
-    eq(F.trd{4,5,6}, 6)
+    eq(F.thd{4,5,6}, 6)
 
 end
 

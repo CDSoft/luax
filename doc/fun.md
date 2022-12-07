@@ -108,7 +108,7 @@ F.snd(ab)
 > Extract the second component of a list.
 
 ``` lua
-F.trd(ab)
+F.thd(ab)
 ```
 
 > Extract the third component of a list.

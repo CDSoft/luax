@@ -348,11 +348,11 @@ function F.snd(xs) return xs[2] end
 
 --[[@@@
 ```lua
-F.trd(ab)
+F.thd(ab)
 ```
 > Extract the third component of a list.
 @@@]]
-function F.trd(xs) return xs[3] end
+function F.thd(xs) return xs[3] end
 
 --[[------------------------------------------------------------------------@@@
 ### Basic type classes
