@@ -1139,6 +1139,34 @@ local function table_operations()
     eq(F.table_compose({a=1,b=2}, {x="a", y="b", z="c"}), {x=1, y=2})
     eq(F{a=1,b=2}:table_compose{x="a", y="b", z="c"}, {x=1, y=2})
 
+    eq(F.Nil(), nil)
+    eq(tostring(F.Nil), "Nil")
+
+    local t1 = F{
+        x = 1,
+        y = 2,
+        t = 6,
+        p = {x=3, y=4, t=9},
+    }
+    local patch = {
+        y = 22,
+        z = 33,
+        t = F.Nil,
+        p = {y=44, z=77, t=F.Nil},
+        q = {"a", "b"},
+    }
+    local t2 = {
+        x = 1,
+        y = 22,
+        z = 33,
+        p = {x=3, y=44, z=77},
+        q = {"a", "b"},
+    }
+    eq(F.patch(t1, {}), t1)
+    eq(t1:patch({}), t1)
+    eq(F.patch(t1, patch), t2)
+    eq(t1:patch(patch), t2)
+
 end
 
 ---------------------------------------------------------------------

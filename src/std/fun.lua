@@ -2881,6 +2881,52 @@ register1 "table_compose" (function(t1, t2)
     return F(t)
 end)
 
+--[[@@@
+```lua
+F.Nil
+```
+> `F.Nil` is a singleton used to represent `nil` (see `F.patch`)
+@@@]]
+local Nil = setmetatable({}, {
+    __call = F.const(nil),
+    __tostring = F.const "Nil",
+})
+F.Nil = Nil
+
+--[[@@@
+```lua
+F.patch(t1, t2)
+t1:patch(t2)
+```
+> returns a copy of `t1` where some fields are replaced by values from `t2`.
+Keys not found in `t2` are not modified.
+If `t2` contains `F.Nil` then the corresponding key is removed from `t1`.
+Unmodified subtrees are not cloned but returned as is (common subtrees are shared).
+@@@]]
+
+local function patch(t1, t2)
+    if t2 == nil then return t1 end -- value not patched
+    if t2 == Nil then return nil end -- remove t1
+    if type(t1) ~= "table" then return t2 end -- replace a scalar field by a scalar or a table
+    if type(t2) ~= "table" then return t2 end -- a scalar replaces a scalar or a table
+    local t = {}
+    -- patch fields from t1 with values from t2
+    for k, v1 in pairs(t1) do
+        local v2 = t2[k]
+        t[k] = patch(v1, v2)
+    end
+    -- add new values from t2
+    for k, v2 in pairs(t2) do
+        local v1 = t1[k]
+        if v1 == nil then
+            t[k] = v2
+        end
+    end
+    return setmt(t)
+end
+
+register1 "patch" (patch)
+
 --[[------------------------------------------------------------------------@@@
 ## Ordered lists
 @@@]]
