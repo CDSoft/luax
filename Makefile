@@ -27,8 +27,11 @@ RELEASE = release-small
 
 # Linux
 TARGETS += x86_64-linux-musl
+TARGETS += x86_64-linux-gnu
 TARGETS += i386-linux-musl
+TARGETS += i386-linux-gnu
 TARGETS += aarch64-linux-musl
+TARGETS += aarch64-linux-gnu
 
 # Windows
 TARGETS += x86_64-windows-gnu
@@ -52,11 +55,7 @@ LUAX_CONFIG := $(BUILD)/luax_config.h
 
 ARCH := $(shell uname -m)
 OS   := $(shell uname -s | tr A-Z a-z)
-ifeq ($(OS),linux)
-LIBC := musl
-else
 LIBC := gnu
-endif
 ifeq ($(OS),windows)
 EXT := .exe
 else

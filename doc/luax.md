@@ -54,6 +54,11 @@ The Linux and Raspberry Pi binaries are linked statically with
 [musl](https://musl.libc.org/) and are not dynamic executables. They
 should work on any Linux distributions.
 
+**Warning**: There are Linux binaries linked with musl and glibc. The
+musl binaries are platform independent but can not load shared
+libraries. The glibc binaries can load shared libraries but may depend
+on some specific glibc versions on the host.
+
 ## Usage
 
 `luax` is very similar to `lua` and adds more options to compile
@@ -112,10 +117,13 @@ $ luax -t x86_64-macos-gnu main.lua lib1.lua lib2.lua -o executable
 
 # Available targets
 $ luax -t list
+aarch64-linux-gnu   <path to>/luax-aarch64-linux-gnu
 aarch64-linux-musl  <path to>/luax-aarch64-linux-musl
 aarch64-macos-gnu   <path to>/luax-aarch64-macos-gnu
+i386-linux-gnu      <path to>/luax-i386-linux-gnu
 i386-linux-musl     <path to>/luax-i386-linux-musl
 i386-windows-gnu    <path to>/luax-i386-windows-gnu.exe
+x86_64-linux-gnu    <path to>/luax-x86_64-linux-gnu
 x86_64-linux-musl   <path to>/luax-x86_64-linux-musl
 x86_64-macos-gnu    <path to>/luax-x86_64-macos-gnu
 x86_64-windows-gnu  <path to>/luax-x86_64-windows-gnu.exe

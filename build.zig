@@ -184,6 +184,7 @@ pub fn build(b: *std.build.Builder) !void {
         "-Wall",
         "-Wextra",
         if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
+        if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_DLOPEN",
     });
     exe.addCSourceFiles(&luax_c_files, &[_][]const u8 {
         "-std=gnu11",
@@ -203,12 +204,14 @@ pub fn build(b: *std.build.Builder) !void {
         try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),
         try std.fmt.allocPrint(page, "-DLUAX_ABI=\"{s}\"", .{ABI}),
         if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
+        if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_DLOPEN",
     });
     exe.addCSourceFiles(&third_party_c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
         "-Wno-documentation",
         if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
+        if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_DLOPEN",
     });
     if (target.os_tag == std.Target.Os.Tag.windows) {
         exe.addCSourceFiles(&windows_third_party_c_files, &[_][]const u8 {
@@ -224,6 +227,7 @@ pub fn build(b: *std.build.Builder) !void {
             "-Os",
             "-Wno-documentation",
             "-DLUA_USE_POSIX",
+            "-DLUA_USE_DLOPEN",
         });
     }
 }
