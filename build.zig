@@ -62,9 +62,14 @@ const lua_c_files = [_][]const u8 {
     "lua/lzio.c",
 };
 
+const luax_main_c_files = [_][]const u8 {
+    // LuaX runtime
+    "src/main.c",
+};
+
 const luax_c_files = [_][]const u8 {
     // LuaX runtime
-    "src/run.c",
+    "src/runtime.c",
     "src/tools.c",
     "src/std/std.c",
     "src/fs/fs.c",
@@ -143,6 +148,14 @@ fn tagName(opt: anytype) ?[]const u8 {
     return null;
 }
 
+fn isStatic(static: ?[]const u8) bool {
+    if (static) |value| {
+        return value[0] == '1';
+    } else {
+        return false;
+    }
+}
+
 pub fn build(b: *std.build.Builder) !void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
@@ -158,6 +171,7 @@ pub fn build(b: *std.build.Builder) !void {
 
     const runtime_name = std.os.getenv("RUNTIME_NAME");
     const runtime = std.os.getenv("RUNTIME");
+    const static = std.os.getenv("STATIC");
 
     const ARCH = (try std.fmt.allocPrint(page, "{s}", .{tagName(target.cpu_arch)}));
     const OS = (try std.fmt.allocPrint(page, "{s}", .{tagName(target.os_tag)}));
@@ -165,28 +179,32 @@ pub fn build(b: *std.build.Builder) !void {
 
     const exe_name = try std.fmt.allocPrint(page, "{s}-{s}-{s}-{s}", .{runtime_name, ARCH, OS, ABI});
 
-    const exe = b.addExecutable(exe_name, null);
-    exe.single_threaded = true;
-    exe.strip = true;
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-    exe.linkLibC();
-    exe.install();
-    exe.addIncludeDir(src_path);
-    exe.addIncludeDir(build_path);
-    exe.addIncludeDir(lua_src);
-    exe.addIncludeDir(tinycrypt_src);
-    exe.addIncludeDir(lz4_src);
-    exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
+    ///////////////////////////////////////////////////////////////////////////
+    // Shared library
+    ///////////////////////////////////////////////////////////////////////////
+
+    const lib_shared = b.addSharedLibrary(exe_name, null, .{.unversioned=.{}});
+    lib_shared.single_threaded = true;
+    lib_shared.strip = true;
+    lib_shared.setTarget(target);
+    lib_shared.setBuildMode(mode);
+    lib_shared.linkLibC();
+    lib_shared.addIncludeDir(src_path);
+    lib_shared.addIncludeDir(build_path);
+    lib_shared.addIncludeDir(lua_src);
+    lib_shared.addIncludeDir(tinycrypt_src);
+    lib_shared.addIncludeDir(lz4_src);
+    lib_shared.addCSourceFiles(&lua_c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
         "-Werror",
         "-Wall",
         "-Wextra",
-        if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
-        if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_DLOPEN",
+        if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
+        if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
+        //if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_BUILD_AS_DLL" else "",
     });
-    exe.addCSourceFiles(&luax_c_files, &[_][]const u8 {
+    lib_shared.addCSourceFiles(&luax_c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
         "-Werror",
@@ -203,31 +221,149 @@ pub fn build(b: *std.build.Builder) !void {
         try std.fmt.allocPrint(page, "-DLUAX_ARCH=\"{s}\"", .{ARCH}),
         try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),
         try std.fmt.allocPrint(page, "-DLUAX_ABI=\"{s}\"", .{ABI}),
-        if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
-        if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_DLOPEN",
+        "-DLUA_LIB",
+        if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
+        if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
+        //if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_BUILD_AS_DLL" else "",
     });
-    exe.addCSourceFiles(&third_party_c_files, &[_][]const u8 {
+    lib_shared.addCSourceFiles(&third_party_c_files, &[_][]const u8 {
         "-std=gnu11",
         "-Os",
         "-Wno-documentation",
-        if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_POSIX",
-        if (target.os_tag == std.Target.Os.Tag.windows) "" else "-DLUA_USE_DLOPEN",
+        "-DLUA_LIB",
+        if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
+        if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
+        //if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_BUILD_AS_DLL" else "",
     });
     if (target.os_tag == std.Target.Os.Tag.windows) {
-        exe.addCSourceFiles(&windows_third_party_c_files, &[_][]const u8 {
+        lib_shared.addCSourceFiles(&windows_third_party_c_files, &[_][]const u8 {
             "-std=gnu11",
             "-Os",
             "-Wno-documentation",
+            //"-DLUA_BUILD_AS_DLL",
         });
-        exe.linkSystemLibraryName("ws2_32");
-        exe.linkSystemLibraryName("advapi32");
+        lib_shared.linkSystemLibraryName("ws2_32");
+        lib_shared.linkSystemLibraryName("advapi32");
     } else {
-        exe.addCSourceFiles(&linux_third_party_c_files, &[_][]const u8 {
+        lib_shared.addCSourceFiles(&linux_third_party_c_files, &[_][]const u8 {
             "-std=gnu11",
             "-Os",
             "-Wno-documentation",
-            "-DLUA_USE_POSIX",
-            "-DLUA_USE_DLOPEN",
+            if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
+            if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
         });
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Static library
+    ///////////////////////////////////////////////////////////////////////////
+
+    const lib_static = b.addStaticLibrary(exe_name, null);
+    lib_static.single_threaded = true;
+    lib_static.strip = true;
+    lib_static.setTarget(target);
+    lib_static.setBuildMode(mode);
+    lib_static.linkLibC();
+    lib_static.addIncludeDir(src_path);
+    lib_static.addIncludeDir(build_path);
+    lib_static.addIncludeDir(lua_src);
+    lib_static.addIncludeDir(tinycrypt_src);
+    lib_static.addIncludeDir(lz4_src);
+    lib_static.addCSourceFiles(&lua_c_files, &[_][]const u8 {
+        "-std=gnu11",
+        "-Os",
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+        if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
+        if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
+    });
+    lib_static.addCSourceFiles(&luax_c_files, &[_][]const u8 {
+        "-std=gnu11",
+        "-Os",
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+        "-Weverything",
+        "-Wno-padded",
+        "-Wno-reserved-identifier",
+        "-Wno-disabled-macro-expansion",
+        "-Wno-used-but-marked-unused",
+        "-Wno-documentation",
+        "-Wno-documentation-unknown-command",
+        try std.fmt.allocPrint(page, "-DRUNTIME={s}", .{runtime}),
+        try std.fmt.allocPrint(page, "-DLUAX_ARCH=\"{s}\"", .{ARCH}),
+        try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),
+        try std.fmt.allocPrint(page, "-DLUAX_ABI=\"{s}\"", .{ABI}),
+        "-DLUA_LIB",
+        if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
+        if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
+    });
+    lib_static.addCSourceFiles(&third_party_c_files, &[_][]const u8 {
+        "-std=gnu11",
+        "-Os",
+        "-Wno-documentation",
+        "-DLUA_LIB",
+        if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
+        if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
+    });
+    if (target.os_tag == std.Target.Os.Tag.windows) {
+        lib_static.addCSourceFiles(&windows_third_party_c_files, &[_][]const u8 {
+            "-std=gnu11",
+            "-Os",
+            "-Wno-documentation",
+        });
+        lib_static.linkSystemLibraryName("ws2_32");
+        lib_static.linkSystemLibraryName("advapi32");
+    } else {
+        lib_static.addCSourceFiles(&linux_third_party_c_files, &[_][]const u8 {
+            "-std=gnu11",
+            "-Os",
+            "-Wno-documentation",
+            if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
+            if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
+        });
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // LuaX executable
+    ///////////////////////////////////////////////////////////////////////////
+
+    const exe = b.addExecutable(exe_name, null);
+    exe.single_threaded = true;
+    exe.strip = true;
+    exe.setTarget(target);
+    exe.setBuildMode(mode);
+    exe.linkLibC();
+    exe.install();
+    exe.addIncludeDir(build_path);
+    exe.addIncludeDir(lua_src);
+    if (isStatic(static)) {
+        exe.linkLibrary(lib_static);
+    } else {
+        exe.linkLibrary(lib_shared);
+        exe.addRPath("$ORIGIN:$ORIGIN/lib:$ORIGIN/../lib");
+    }
+    exe.addCSourceFiles(&luax_main_c_files, &[_][]const u8 {
+        "-std=gnu11",
+        "-Os",
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+        "-Weverything",
+        "-Wno-padded",
+        "-Wno-reserved-identifier",
+        "-Wno-disabled-macro-expansion",
+        "-Wno-used-but-marked-unused",
+        "-Wno-documentation",
+        "-Wno-documentation-unknown-command",
+        try std.fmt.allocPrint(page, "-DRUNTIME={s}", .{runtime}),
+        try std.fmt.allocPrint(page, "-DLUAX_ARCH=\"{s}\"", .{ARCH}),
+        try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),
+        try std.fmt.allocPrint(page, "-DLUAX_ABI=\"{s}\"", .{ABI}),
+        if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
+        if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
+        //if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_BUILD_AS_DLL" else "",
+    });
+
 }

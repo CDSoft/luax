@@ -41,8 +41,8 @@ TARGETS += i386-windows-gnu
 TARGETS += x86_64-macos-gnu
 TARGETS += aarch64-macos-gnu
 
-RUNTIMES = $(patsubst %-windows-gnu,%-windows-gnu.exe,$(patsubst %,$(BUILD)/lrun-%,$(TARGETS)))
-LUAX_BINARIES := $(patsubst $(BUILD)/lrun-%,$(BUILD)/luax-%,$(RUNTIMES))
+RUNTIMES = $(patsubst %-windows-gnu,%-windows-gnu.exe,$(patsubst %,$(BUILD)/luaxruntime-%,$(TARGETS)))
+LUAX_BINARIES := $(patsubst $(BUILD)/luaxruntime-%,$(BUILD)/luax-%,$(RUNTIMES))
 
 LUA = $(BUILD)/lua0-$(ARCH)-$(OS)-$(LIBC)
 LUA_SOURCES := $(sort $(wildcard lua/*))
@@ -352,6 +352,7 @@ $(INSTALL_PATH)/luax-%: $(BUILD)/luax-%
 	@$(call cyan,"INSTALL",$@)
 	@test -n "$(INSTALL_PATH)" || (echo "No installation path found" && false)
 	@install $< $@
+	@ldd $@ 2>/dev/null | awk '$$1~/libluaxruntime/ { print $$3 }' | xargs -ri install {} $(dir $@)
 
 ###############################################################################
 # Search for or install a zig compiler
@@ -383,7 +384,7 @@ export LUA_PATH := ./?.lua
 
 $(LUA): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
 	@$(call cyan,"ZIG",$@)
-	@RUNTIME_NAME=lua0 RUNTIME=0 $(ZIG) build \
+	@RUNTIME_NAME=lua0 RUNTIME=0 STATIC=1 $(ZIG) build \
 		--cache-dir $(ZIG_CACHE) \
 		--prefix $(dir $@) --prefix-exe-dir "" \
 		-D$(RELEASE) \
@@ -421,14 +422,14 @@ $(LUAX_RUNTIME_BUNDLE): $(LUA) $(LUAX_RUNTIME) tools/bundle.lua tools/build_bund
 # Runtimes
 ###############################################################################
 
-$(BUILD)/lrun-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
+$(BUILD)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
-	@RUNTIME_NAME=lrun RUNTIME=1 $(ZIG) build \
+	@RUNTIME_NAME=luaxruntime RUNTIME=1 STATIC=$(shell echo $(notdir $@) | grep -c "windows\|macos\|musl") $(ZIG) build \
 		--cache-dir $(ZIG_CACHE) \
 		--prefix $(dir $@) --prefix-exe-dir "" \
 		-D$(RELEASE) \
-		-Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD)/lrun-%,%,$@)) \
+		-Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD)/luaxruntime-%,%,$@)) \
 		--build-file build.zig
 	@touch $@
 
@@ -442,7 +443,7 @@ $(BUILD)/luax: $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"CP",$@)
 	@cp -f $< $@
 
-$(BUILD)/luax-%: $(BUILD)/lrun-% $(LUAX_PACKAGES) tools/bundle.lua
+$(BUILD)/luax-%: $(BUILD)/luaxruntime-% $(LUAX_PACKAGES) tools/bundle.lua
 	@$(call cyan,"BUNDLE",$@)
 	@( cat $(word 1,$^) && $(LUA) tools/bundle.lua $(LUAX_PACKAGES) ) > $@.tmp
 	@mv $@.tmp $@
@@ -528,6 +529,10 @@ README.md: doc/src/luax.md doc/src/fix_links.lua
 
 $(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD)/doc/index.html
 	@$(call cyan,"ARCHIVE",$@)
-	@tar cJf $@ \
-		README.md \
-		-C $(abspath $(BUILD)) $(notdir $(LUAX_BINARIES)) doc
+	@rm -rf $(BUILD)/tar && mkdir -p $(BUILD)/tar
+	@cp README.md $(BUILD)/tar
+	@cp $(LUAX_BINARIES) $(BUILD)/tar
+	@mkdir -p $(BUILD)/tar/doc
+	@cp $(BUILD)/doc/*.{md,html} $(BUILD)/tar/doc
+	@ldd $(LUAX_BINARIES) 2>/dev/null | awk '$$1~/libluaxruntime/ { print $$3 }' | xargs -ri cp {} $(BUILD)/tar
+	@tar cJf $@ -C $(abspath $(BUILD)/tar) .

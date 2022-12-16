@@ -17,6 +17,8 @@
  * http://cdelord.fr/luax
  */
 
+#include "runtime.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -93,18 +95,6 @@ static void createargtable(lua_State *L, const char **argv, int argc, int shift)
         lua_rawseti(L, -2, i);
     }
     lua_setglobal(L, "arg");
-}
-
-static void get_exe(const char *arg0, char *name, size_t name_size)
-{
-#ifdef _WIN32
-    const DWORD n = GetModuleFileName(NULL, name, name_size);
-    if (n == 0) error(arg0, "Can not be found");
-#else
-    const ssize_t n = readlink("/proc/self/exe", name, name_size);
-    if (n < 0) perror(arg0);
-#endif
-    name[n] = '\0';
 }
 
 #if RUNTIME == 1
@@ -191,15 +181,8 @@ static int run_buffer(lua_State *L, char *buffer, size_t size, const char *name,
 
 #endif
 
-int main(int argc, const char *argv[])
+lua_State *luax_newstate(int argc, const char *argv[])
 {
-    char exe[1024];
-    get_exe(argv[0], exe, sizeof(exe));
-
-    /**************************************************************************
-     * Lua state
-     **************************************************************************/
-
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
     createargtable(L, argv, argc, 0);
@@ -221,12 +204,12 @@ int main(int argc, const char *argv[])
     free(rt_chunk);
 #endif
 
+    return L;
+}
+
+int luax_run(lua_State *L, const char *exe, const char *argv[])
+{
 #if RUNTIME == 1
-
-    /**************************************************************************
-     * Lua payload execution
-     **************************************************************************/
-
     FILE *f = fopen(exe, "rb");
     if (f == NULL) perror(exe);
 
@@ -254,40 +237,10 @@ int main(int argc, const char *argv[])
     lua_close(L);
 
     return status;
-
 #else
-
-    /**************************************************************************
-     * Lua script execution (bootstrap interpretor with no LuaX runtime and payload)
-     **************************************************************************/
-
-    if (argc == 3 && strcmp(argv[1], "-e") == 0)
-    {
-        if (luaL_dostring(L, argv[2]) != LUA_OK)
-        {
-            error(argv[0], lua_tostring(L, -1));
-        }
-    }
-    else if (argc > 1)
-    {
-        luaL_dostring(L, "arg[0] = arg[1]; table.remove(arg, 1)");
-        if (luaL_dofile(L, argv[1]) != LUA_OK)
-        {
-            error(argv[0], lua_tostring(L, -1));
-        }
-    }
-    else
-    {
-        const char *name = basename(exe);
-        fprintf(stderr, "usage:\n"
-                        "\t%s -e 'Lua expression'\n"
-                        "\t%s script.lua\n",
-                        name, name);
-        exit(EXIT_FAILURE);
-    }
-
-    return EXIT_SUCCESS;
-
+    (void)L;
+    (void)exe;
+    error(argv[0], "No runtime");
+    return 0;
 #endif
-
 }

@@ -1290,6 +1290,23 @@ t1:table_compose(t2)
 > Relate the keys of one map to the values of the other, by using the
 > values of the former as keys for lookups in the latter.
 
+``` lua
+F.Nil
+```
+
+> `F.Nil` is a singleton used to represent `nil` (see `F.patch`)
+
+``` lua
+F.patch(t1, t2)
+t1:patch(t2)
+```
+
+> returns a copy of `t1` where some fields are replaced by values from
+> `t2`. Keys not found in `t2` are not modified. If `t2` contains
+> `F.Nil` then the corresponding key is removed from `t1`. Unmodified
+> subtrees are not cloned but returned as is (common subtrees are
+> shared).
+
 ## Ordered lists
 
 ``` lua
