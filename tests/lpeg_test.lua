@@ -22,6 +22,8 @@ http://cdelord.fr/luax
 -- lpeg
 ---------------------------------------------------------------------
 
+if not _LUAX_VERSION then return function() end end
+
 return function()
     assert(require "lpeg")
     assert(require "re")

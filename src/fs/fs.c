@@ -361,6 +361,9 @@ static int fs_stat(lua_State *L)
         set_boolean(L, "oR", buf.st_mode & S_IROTH);
         set_boolean(L, "oW", buf.st_mode & S_IWOTH);
         set_boolean(L, "oX", buf.st_mode & S_IXOTH);
+        set_boolean(L, "aR", buf.st_mode & (S_IRUSR|S_IRGRP|S_IROTH));
+        set_boolean(L, "aW", buf.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH));
+        set_boolean(L, "aX", buf.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH));
         set_fun_metatable(L);
         return 1;
     }

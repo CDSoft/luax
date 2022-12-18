@@ -134,12 +134,124 @@ local target = nil
 
 local luax_loaded = false
 
-local function load_luax()
-    if not luax_loaded then
-        -- luax functions loaded at the top level in interactive mode only
-        local luax = require "luax"
-        for k, v in pairs(luax) do _ENV[k] = v end
-        luax_loaded = true
+--[[------------------------------------------------------------------------@@@
+# LuaX interactive usage
+
+The `luax` repl provides a few functions for the interactive mode.
+
+In interactive mode, these functions are available as global functions.
+`pretty`{.lua} is used by the LuaX REPL to print results.
+@@@]]
+
+local function populate_repl()
+
+    -- luax functions loaded at the top level in interactive mode only
+
+    if luax_loaded then return end
+    luax_loaded = true
+
+    local float_format = "%s"
+    local int_format = "%s"
+
+--[[@@@
+```lua
+luax.F
+```
+is the `fun` module.
+@@@]]
+
+    _ENV.F = F
+
+--[[@@@
+```lua
+luax.fs
+```
+is the `fs` module.
+@@@]]
+
+    _ENV.fs = fs
+
+--[[@@@
+```lua
+luax.pretty(x)
+```
+returns a string representing `x` with nice formatting for tables and numbers.
+@@@]]
+
+    function _ENV.pretty(x, int_fmt, float_fmt)
+        return F.show(x, int_fmt or int_format, float_fmt or float_format)
+    end
+
+--[[@@@
+```lua
+luax.precision(len, frac)
+```
+changes the format of floats. `len` is the
+total number of characters and `frac` the number of decimals after the floating
+point (`frac` can be `nil`). `len` can also be a string (custom format string)
+or `nil` (to reset the float format). `b` can be `10` (decimal numbers), `16`
+(hexadecimal numbers), `8` (octal numbers), a custom format string or `nil` (to
+reset the integer format).
+@@@]]
+
+    function _ENV.precision(len, frac)
+        float_format =
+            type(len) == "string"                               and len
+            or type(len) == "number" and type(frac) == "number" and ("%%%s.%sf"):format(len, frac)
+            or type(len) == "number" and frac == nil            and ("%%%sf"):format(len, frac)
+            or "%s"
+    end
+
+--[[@@@
+```lua
+luax.base(b)
+```
+changes the format of integers. `b` can be `10` (decimal
+numbers), `16` (hexadecimal numbers), `8` (octal numbers), a custom format
+string or `nil` (to reset the integer format).
+@@@]]
+
+    function _ENV.base(b)
+        int_format =
+            type(b) == "string" and b
+            or b == 10          and "%s"
+            or b == 16          and "0x%x"
+            or b == 8           and "0o%o"
+            or "%s"
+    end
+
+    local inspect = require "inspect"
+
+    local remove_all_metatables = function(item, path)
+        if path[#path] ~= inspect.METATABLE then return item end
+    end
+
+    local default_options = {
+        process = remove_all_metatables,
+    }
+
+--[[@@@
+```lua
+luax.inspect(x)
+```
+calls `inspect(x)` to build a human readable
+representation of `x` (see the `inspect` package).
+@@@]]
+
+
+    function _ENV.inspect(x, options)
+        return inspect(x, F.merge{default_options, options})
+    end
+
+--[[@@@
+```lua
+luax.printi(x)
+```
+prints `inspect(x)` (without the metatables).
+@@@]]
+
+    function _ENV.printi(x)
+        print(inspect.inspect(x))
     end
 end
 
@@ -155,7 +267,7 @@ do
             if stat == nil then wrong_arg(a) end
             actions[#actions+1] = function()
                 assert(stat)
-                load_luax()
+                populate_repl()
                 local chunk, msg = load(stat, "=(command line)")
                 if not chunk then
                     io.stderr:write(("%s: %s\n"):format(arg[0], msg))
@@ -236,7 +348,7 @@ local function run_interpretor()
 
     -- scripts
 
-    load_luax()
+    populate_repl()
 
     if #args >= 1 then
         arg = {}

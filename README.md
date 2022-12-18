@@ -155,6 +155,14 @@ and [lapp](http://cdelord.fr/lapp).
 - [luasocket](doc/luasocket.md): Network support for the Lua language
 - [inspect](doc/inspect.md): Human-readable representation of Lua tables
 
+## Pure Lua modules
+
+Some modules have been reimplemented in pure Lua (no LuaX dependency).
+The script `lib/luax.lua` can be reused in pure Lua programs:
+
+- [luax.lua](doc/luax.lua.md): `fun`, `fs`, `sh`, `ps`, `sys`
+  reimplemented in pure Lua
+
 ## License
 
     luax is free software: you can redistribute it and/or modify

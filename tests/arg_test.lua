@@ -26,5 +26,5 @@ require "test"
 
 return function()
     -- TODO: how to check arg[0]?
-    eq(arg, {[0]=arg[0], "Lua", "is", "great"})
+    eq(arg, {[-3]=arg[-3], [-2]=arg[-2], [-1]=arg[-1], [0]=arg[0], "Lua", "is", "great"})
 end

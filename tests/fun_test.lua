@@ -197,7 +197,7 @@ end
 
 local function numeric_type_classes()
 
-    local mathx = require "mathx"
+    local mathx = _LUAX_VERSION and require "mathx"
 
     eq(F.op.add(3, 4), 7)
     eq(F.op.sub(3, 4), -1)
@@ -287,12 +287,14 @@ local function numeric_type_classes()
             eq(F.acos(x), math.acos(x))
         end
         eq(F.atan(x), math.atan(x))
-        eq(F.sinh(x), mathx.sinh(x))
-        eq(F.cosh(x), mathx.cosh(x))
-        eq(F.tanh(x), mathx.tanh(x))
-        eq(F.asinh(x), mathx.asinh(x))
-        if x >= 1 then eq(F.acosh(x), mathx.acosh(x)) end
-        if -1 <= x and x <= 1 then eq(F.atanh(x), mathx.atanh(x)) end
+        if mathx then
+            eq(F.sinh(x), mathx.sinh(x))
+            eq(F.cosh(x), mathx.cosh(x))
+            eq(F.tanh(x), mathx.tanh(x))
+            eq(F.asinh(x), mathx.asinh(x))
+            if x >= 1 then eq(F.acosh(x), mathx.acosh(x)) end
+            if -1 <= x and x <= 1 then eq(F.atanh(x), mathx.atanh(x)) end
+        end
     end
 
     eq({F.proper_fraction(10.25)}, {10, 0.25})
@@ -324,18 +326,20 @@ local function numeric_type_classes()
     eq(F.floor(11.5), 11)
     eq(F.floor(-11.5), -12)
 
-    eq(F.is_nan(42), false)
-    eq(F.is_nan(0/0), true)
-    eq(F.is_nan(1/0), false)
-    eq(F.is_infinite(42), false)
-    eq(F.is_infinite(0/0), false)
-    eq(F.is_infinite(1/0), true)
-    eq(F.is_normalized(1), true)
-    eq(F.is_normalized(0x1p-1024), false)           assert(0x1p-1024 > 0)
-    eq(F.is_denormalized(1), false)
-    eq(F.is_denormalized(0x1p-1024), true)
-    eq(F.is_negative_zero(-0x0p0), true)
-    eq(F.is_negative_zero(0x0p0), false)
+    if mathx then
+        eq(F.is_nan(42), false)
+        eq(F.is_nan(0/0), true)
+        eq(F.is_nan(1/0), false)
+        eq(F.is_infinite(42), false)
+        eq(F.is_infinite(0/0), false)
+        eq(F.is_infinite(1/0), true)
+        eq(F.is_normalized(1), true)
+        eq(F.is_normalized(0x1p-1024), false)           assert(0x1p-1024 > 0)
+        eq(F.is_denormalized(1), false)
+        eq(F.is_denormalized(0x1p-1024), true)
+        eq(F.is_negative_zero(-0x0p0), true)
+        eq(F.is_negative_zero(0x0p0), false)
+    end
 
     eq(F.even(12), true)
     eq(F.even(13), false)
@@ -399,7 +403,7 @@ local function miscellaneous_functions()
     eq(F.prefix("ab")("cd"), "abcd")
     eq(F.suffix("ab")("cd"), "cdab")
 
-    local imath = require "imath"
+    local imath = _LUAX_VERSION and require "imath" or {new=tonumber}
     local ps = require "ps"
 
     local function fib(n) return n <= 1 and imath.new(n) or fib(n-1) + fib(n-2) end
@@ -416,7 +420,9 @@ local function miscellaneous_functions()
     local fib100
     local dt = ps.profile(function() fib100 = fib(100) end) -- this should be fast because of memoization
     assert(dt < 1.0, "the memoized fibonacci suite takes too much time")
-    eq(fib100, imath.new"354224848179261915075")
+    if _LUAX_VERSION then
+        eq(fib100, imath.new"354224848179261915075")
+    end
 
 end
 

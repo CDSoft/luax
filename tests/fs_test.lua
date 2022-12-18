@@ -46,38 +46,49 @@ return function()
     eq(fs.rm, fs.remove)
 
     local tmp = fs.join(cwd, ".build", "test", "fs")
+    local in_tmp = F.curry(fs.join)(tmp)
     eq(tmp, cwd..fs.sep..".build"..fs.sep.."test"..fs.sep.."fs")
     F.map(fs.remove, fs.walk(tmp, {reverse=true}))
     fs.remove(tmp)
 
     fs.mkdirs(tmp)
-    assert(fs.chdir(tmp))
-    eq(fs.getcwd(), fs.absname(tmp))
-    eq(fs.getcwd(), fs.realpath(tmp))
+    if _LUAX_VERSION then
+        assert(fs.chdir(tmp))
+        eq(fs.getcwd(), fs.absname(tmp))
+        eq(fs.getcwd(), fs.realpath(tmp))
+    end
 
-    fs.mkdir "foo"
-    fs.mkdir "bar"
-    fs.mkdir "bar/baz"
-    F.map(createfile, {"foo.txt", "bar.txt", "foo/foo.txt", "bar/bar.txt", "bar/baz/baz.txt"})
+    fs.mkdir(in_tmp "foo")
+    fs.mkdir(in_tmp "bar")
+    fs.mkdir(in_tmp "bar/baz")
+    F.map(createfile, F{"foo.txt", "bar.txt", "foo/foo.txt", "bar/bar.txt", "bar/baz/baz.txt"}:map(in_tmp))
 
     fs.mkdirs(fs.join(tmp, "level1", "level2", "level3"))
     eq(fs.is_dir(fs.join(tmp, "level1", "level2", "level3")), true)
 
-    eq(fs.dir():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
-    eq(fs.dir("."):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
-    if sys.os == "linux" then
+    eq(fs.dir(tmp):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
+    if _LUAX_VERSION then
+        eq(fs.dir():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
+        eq(fs.dir("."):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
+    end
+    if sys.os == "linux" and _LUAX_VERSION then
         eq(fs.glob():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         eq(fs.glob("*.txt"):sort(),{"bar.txt","foo.txt"})
     end
-    fs.chdir(cwd)
-    eq(fs.dir(tmp):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
-    fs.chdir(tmp)
+    if _LUAX_VERSION then
+        fs.chdir(cwd)
+        eq(fs.dir(tmp):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
+        fs.chdir(tmp)
+    end
 
     local function test_files(f, testfiles, reverse)
-        eq(f(".", {reverse=reverse}), F.map(function(name) return F.prefix"."(name:gsub("/", fs.sep)) end, testfiles))
-        fs.chdir(cwd)
+        if _LUAX_VERSION then
+            eq(f(".", {reverse=reverse}), F.map(function(name) return F.prefix"."(name:gsub("/", fs.sep)) end, testfiles))
+            fs.chdir(cwd)
+            eq(f(tmp, {reverse=reverse}), F.map(function(name) return F.prefix(tmp)(name:gsub("/", fs.sep)) end, testfiles))
+            fs.chdir(tmp)
+        end
         eq(f(tmp, {reverse=reverse}), F.map(function(name) return F.prefix(tmp)(name:gsub("/", fs.sep)) end, testfiles))
-        fs.chdir(tmp)
     end
 
     test_files(fs.walk, {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/foo.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
@@ -86,12 +97,12 @@ return function()
     test_files(fs.walk, {"/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt","/bar/baz","/level1/level2/level3","/level1/level2","/level1","/foo","/bar"}, true)
 
     local content1 = "Lua is great!!!"
-    local f1 = assert(io.open(fs.join(tmp, "f1.txt"), "w"))
+    local f1 = assert(io.open(fs.join(tmp, "f1.txt"), "wb"))
     f1:write(content1)
     f1:close()
     fs.copy(fs.join(tmp, "f1.txt"), fs.join(tmp, "f2.txt"))
-    local f2 = assert(io.open(fs.join(tmp, "f2.txt"), "r"))
-    local content2 = f2:read("*a")
+    local f2 = assert(io.open(fs.join(tmp, "f2.txt"), "rb"))
+    local content2 = f2:read("a")
     f2:close()
     eq(content2, content1)
     test_files(fs.walk, {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/f1.txt","/f2.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
@@ -164,7 +175,9 @@ return function()
 
     local ok, err = fs.touch("/foo")
     eq(ok, nil)
-    eq(err:gsub(":.*", ": ..."), "/foo: ...")
+    if _LUAX_VERSION then
+        eq(err:gsub(":.*", ": ..."), "/foo: ...")
+    end
 
     local a, b, c = "aaa", "bb", "ccc"
     eq(fs.join(a, b, c), "aaa/bb/ccc")
@@ -180,18 +193,31 @@ return function()
     eq({fs.splitext("file.with_ext")},     {"file", ".with_ext"})
     eq({fs.splitext("file_without_ext")},  {"file_without_ext", ""})
     eq({fs.splitext(".file_without_ext")}, {".file_without_ext", ""})
-    eq(fs.absname("."), fs.join(tmp, "."))
+    if _LUAX_VERSION then
+        eq(fs.absname("."), fs.join(tmp, "."))
+    end
     eq(fs.absname(tmp), tmp)
-    eq(fs.absname("foo"), fs.join(tmp, "foo"))
+    if _LUAX_VERSION then
+        eq(fs.absname("foo"), fs.join(tmp, "foo"))
+    end
     eq(fs.absname("/foo"), "/foo")
     eq(fs.absname("\\foo"), "\\foo")
     eq(fs.absname("Z:foo"), "Z:foo")
-    eq(fs.realpath("."), tmp)
+    if _LUAX_VERSION then
+        eq(fs.realpath("."), tmp)
+    end
     eq(fs.realpath(tmp), tmp)
-    eq(fs.realpath("foo"), fs.join(tmp, "foo"))
-    eq(fs.realpath("/foo"), nil) -- unknown file
-    eq(fs.realpath("\\foo"), nil) -- unknown file
-    eq(fs.realpath("Z:foo"), nil) -- unknown file
+    if _LUAX_VERSION then
+        eq(fs.realpath("foo"), fs.join(tmp, "foo"))
+    end
+    if _LUAX_VERSION then
+        eq(fs.realpath("/foo"), nil) -- unknown file
+        eq(fs.realpath("\\foo"), nil) -- unknown file
+        eq(fs.realpath("Z:foo"), nil) -- unknown file
+    else
+        eq(fs.realpath("/foo"), "/foo") -- unknown file
+        eq(fs.realpath("\\foo"), fs.join(cwd, "foo")) -- unknown file
+    end
 
     if sys.os == "linux" then
         eq(fs.findpath("sh"), "/usr/bin/sh")
@@ -207,6 +233,8 @@ return function()
 
     eq(fs.rmdir(tmp), true)
 
-    fs.chdir(cwd)
+    if _LUAX_VERSION then
+        fs.chdir(cwd)
+    end
 
 end

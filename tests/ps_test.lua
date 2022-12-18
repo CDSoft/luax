@@ -24,23 +24,32 @@ http://cdelord.fr/luax
 
 local ps = require "ps"
 
+local eps = _LUAX_VERSION and 0.001 or 1
+
 local function sleep_test(n)
     local t0 = ps.time()
     ps.sleep(n)
     local t1 = ps.time()
     local dt = t1 - t0
-    assert(n <= dt and dt <= n+0.001, ("Expected delay: %f, actual delay: %f"):format(n, dt))
+    assert(n <= dt and dt <= n+eps, ("Expected delay: %f, actual delay: %f"):format(n, dt))
 end
 
 local function profile_test(n)
     local dt, err = ps.profile(function() ps.sleep(n) end)
     assert(dt, err)
-    assert(n <= dt and dt <= n+0.001, ("Expected delay: %f, actual delay: %f"):format(n, dt))
+    assert(n <= dt and dt <= n+eps, ("Expected delay: %f, actual delay: %f"):format(n, dt))
 end
 
 return function()
-    sleep_test(0)
-    sleep_test(0.142)
-    profile_test(0)
-    profile_test(0.142)
+    if _LUAX_VERSION then
+        sleep_test(0)
+        sleep_test(0.142)
+        profile_test(0)
+        profile_test(0.142)
+    else
+        sleep_test(0)
+        sleep_test(2)
+        profile_test(0)
+        profile_test(2)
+    end
 end

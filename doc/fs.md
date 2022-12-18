@@ -171,7 +171,7 @@ fs.join(...)
 ```
 
 return a path name made of several path components (separated by
-`fs.sep`). If a coomponent is absolute, the previous components are
+`fs.sep`). If a component is absolute, the previous components are
 removed.
 
 ``` lua

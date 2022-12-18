@@ -103,6 +103,7 @@ function bundle.bundle(arg)
         plain.emit(("assert(load(%q, %q, 't'))()\n"):format(script_source, "@"..script.path))
     end
     plain.emit "local libs = {\n"
+    plain.emit("luax = function() end,\n") -- the luax module does nothing in the luax runtime
     for i = main and 2 or 1, #scripts do
         -- add non autoexec scripts to the libs table used by the require function
         if not scripts[i].autoexec then

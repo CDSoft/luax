@@ -44,7 +44,8 @@ TARGETS += aarch64-macos-gnu
 RUNTIMES = $(patsubst %-windows-gnu,%-windows-gnu.exe,$(patsubst %,$(BUILD)/luaxruntime-%,$(TARGETS)))
 LUAX_BINARIES := $(patsubst $(BUILD)/luaxruntime-%,$(BUILD)/luax-%,$(RUNTIMES))
 
-LUA = $(BUILD)/lua0-$(ARCH)-$(OS)-$(LIBC)
+LUA = $(BUILD)/lua
+LUAX0 = $(BUILD)/lua0-$(ARCH)-$(OS)-$(LIBC)
 LUA_SOURCES := $(sort $(wildcard lua/*))
 
 LUAX_SOURCES := $(sort $(shell find src -name "*.[ch]"))
@@ -382,7 +383,17 @@ $(ZIG_ARCHIVE):
 # avoid being polluted by user definitions
 export LUA_PATH := ./?.lua
 
-$(LUA): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
+$(LUA): $(ZIG) $(LUA_SOURCES) build-lua.zig
+	@$(call cyan,"ZIG",$@)
+	@$(ZIG) build \
+		--cache-dir $(ZIG_CACHE) \
+		--prefix $(dir $@) --prefix-exe-dir "" \
+		-D$(RELEASE) \
+		-Dtarget=$(ARCH)-$(OS)-$(LIBC) \
+		--build-file build-lua.zig
+	@touch $@
+
+$(LUAX0): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
 	@$(call cyan,"ZIG",$@)
 	@RUNTIME_NAME=lua0 RUNTIME=0 STATIC=1 $(ZIG) build \
 		--cache-dir $(ZIG_CACHE) \
@@ -413,9 +424,9 @@ $(BUILD)/targets.lua:
 	@echo "return ('$(sort $(TARGETS))'):words()" > $@.tmp
 	@mv $@.tmp $@
 
-$(LUAX_RUNTIME_BUNDLE): $(LUA) $(LUAX_RUNTIME) tools/bundle.lua tools/build_bundle_args.lua
+$(LUAX_RUNTIME_BUNDLE): $(LUAX0) $(LUAX_RUNTIME) tools/bundle.lua tools/build_bundle_args.lua
 	@$(call cyan,"BUNDLE",$(@))
-	@$(LUA) tools/bundle.lua -nomain -ascii $(shell $(LUA) tools/build_bundle_args.lua $(LUAX_RUNTIME)) > $@.tmp
+	@$(LUAX0) tools/bundle.lua -nomain -ascii $(shell $(LUAX0) tools/build_bundle_args.lua $(LUAX_RUNTIME)) > $@.tmp
 	@mv $@.tmp $@
 
 ###############################################################################
@@ -445,7 +456,7 @@ $(BUILD)/luax: $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 
 $(BUILD)/luax-%: $(BUILD)/luaxruntime-% $(LUAX_PACKAGES) tools/bundle.lua
 	@$(call cyan,"BUNDLE",$@)
-	@( cat $(word 1,$^) && $(LUA) tools/bundle.lua $(LUAX_PACKAGES) ) > $@.tmp
+	@( cat $(word 1,$^) && $(LUAX0) tools/bundle.lua $(LUAX_PACKAGES) ) > $@.tmp
 	@mv $@.tmp $@
 	@chmod +x $@
 
@@ -458,9 +469,10 @@ $(BUILD)/luax-%: $(BUILD)/luaxruntime-% $(LUAX_PACKAGES) tools/bundle.lua
 TEST_SOURCES := tests/main.lua $(sort $(filter-out test/main.lua,$(wildcard tests/*.lua)))
 
 ## Run LuaX tests
-test: $(BUILD)/test.ok
+test: $(BUILD)/test-luax.ok
+test: $(BUILD)/test-lua.ok
 
-$(BUILD)/test.ok: $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
+$(BUILD)/test-luax.ok: $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"TEST",$^)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) $< Lua is great
 	@touch $@
@@ -468,6 +480,11 @@ $(BUILD)/test.ok: $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT): $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(TEST_SOURCES)
 	@$(call cyan,"BUNDLE",$@)
 	@$(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -o $@ $(TEST_SOURCES)
+
+$(BUILD)/test-lua.ok: $(LUA) lib/luax.lua $(TEST_SOURCES)
+	@$(call cyan,"TEST",$(firstword $(TEST_SOURCES)))
+	@ARCH=$(ARCH) OS=$(OS) LIBC=lua LUA_PATH="lib/?.lua;tests/?.lua" $(LUA) -l luax $(firstword $(TEST_SOURCES)) Lua is great
+	@touch $@
 
 ###############################################################################
 # Documentation
@@ -535,4 +552,5 @@ $(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) $(HTML_OUTPUTS) $(MD_OUTPUTS) $
 	@mkdir -p $(BUILD)/tar/doc
 	@cp $(BUILD)/doc/*.{md,html} $(BUILD)/tar/doc
 	@ldd $(LUAX_BINARIES) 2>/dev/null | awk '$$1~/libluaxruntime/ { print $$3 }' | xargs -ri cp {} $(BUILD)/tar
+	@cp lib/luax.lua $(BUILD)/tar
 	@tar cJf $@ -C $(abspath $(BUILD)/tar) .

@@ -22,6 +22,8 @@ http://cdelord.fr/luax
 -- complex
 ---------------------------------------------------------------------
 
+if not _LUAX_VERSION then return function() end end
+
 return function()
     local complex = require "complex"
     local i = complex.I

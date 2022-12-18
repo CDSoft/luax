@@ -34,7 +34,7 @@ fs.join(...)
 ```
 return a path name made of several path components
 (separated by `fs.sep`).
-If a coomponent is absolute, the previous components are removed.
+If a component is absolute, the previous components are removed.
 @@@]]
 
 function fs.join(...)
@@ -190,7 +190,7 @@ function fs.walk(path, options)
                     local name = dir..fs.sep..names[i]
                     local stat = fs.stat(name)
                     if stat then
-                        if stat.type == "directory" or (follow_links and stat.type == "link")then
+                        if stat.type == "directory" or (follow_links and stat.type == "link") then
                             local continue, new_name = func(name, stat)
                             if continue then
                                 dirs[#dirs+1] = name

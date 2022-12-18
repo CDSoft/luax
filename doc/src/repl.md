@@ -3,5 +3,5 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-:::{doc="src/luax/luax.lua"}
+:::{doc="tools/luax.lua"}
 :::

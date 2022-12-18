@@ -18,6 +18,8 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+if not _LUAX_VERSION then return function() end end
+
 return function()
 
     local inspect = require "inspect"
