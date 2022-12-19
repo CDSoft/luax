@@ -353,7 +353,7 @@ $(INSTALL_PATH)/luax-%: $(BUILD)/luax-%
 	@$(call cyan,"INSTALL",$@)
 	@test -n "$(INSTALL_PATH)" || (echo "No installation path found" && false)
 	@install $< $@
-	@ldd $@ 2>/dev/null | awk '$$1~/libluaxruntime/ { print $$3 }' | xargs -ri install {} $(dir $@)
+	@lddtree $@ 2>/dev/null | awk '$$1~/libluaxruntime/ { print $$3 }' | xargs -ri install {} $(dir $@)
 
 ###############################################################################
 # Search for or install a zig compiler
@@ -551,6 +551,6 @@ $(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) $(HTML_OUTPUTS) $(MD_OUTPUTS) $
 	@cp $(LUAX_BINARIES) $(BUILD)/tar
 	@mkdir -p $(BUILD)/tar/doc
 	@cp $(BUILD)/doc/*.{md,html} $(BUILD)/tar/doc
-	@ldd $(LUAX_BINARIES) 2>/dev/null | awk '$$1~/libluaxruntime/ { print $$3 }' | xargs -ri cp {} $(BUILD)/tar
+	@lddtree $(LUAX_BINARIES) 2>/dev/null | awk '$$1~/libluaxruntime/ { print $$3 }' | xargs -ri cp {} $(BUILD)/tar
 	@cp lib/luax.lua $(BUILD)/tar
 	@tar cJf $@ -C $(abspath $(BUILD)/tar) .
