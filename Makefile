@@ -353,7 +353,6 @@ $(INSTALL_PATH)/luax-%: $(BUILD)/luax-%
 	@$(call cyan,"INSTALL",$@)
 	@test -n "$(INSTALL_PATH)" || (echo "No installation path found" && false)
 	@install $< $@
-	@tools/find_runtime.sh $< | xargs -ri install {} $(dir $@)
 
 ###############################################################################
 # Search for or install a zig compiler
@@ -395,7 +394,7 @@ $(LUA): $(ZIG) $(LUA_SOURCES) build-lua.zig
 
 $(LUAX0): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
 	@$(call cyan,"ZIG",$@)
-	@RUNTIME_NAME=lua0 RUNTIME=0 STATIC=1 $(ZIG) build \
+	@RUNTIME_NAME=lua0 RUNTIME=0 $(ZIG) build \
 		--cache-dir $(ZIG_CACHE) \
 		--prefix $(dir $@) --prefix-exe-dir "" \
 		-D$(RELEASE) \
@@ -436,15 +435,12 @@ $(LUAX_RUNTIME_BUNDLE): $(LUAX0) $(LUAX_RUNTIME) tools/bundle.lua tools/build_bu
 $(BUILD)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
-	@RUNTIME_NAME=luaxruntime RUNTIME=1 STATIC=$(shell echo $(notdir $@) | grep -c "windows\|macos\|musl") $(ZIG) build \
+	@RUNTIME_NAME=luaxruntime RUNTIME=1 $(ZIG) build \
 		--cache-dir $(ZIG_CACHE) \
 		--prefix $(dir $@) --prefix-exe-dir "" \
 		-D$(RELEASE) \
 		-Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD)/luaxruntime-%,%,$@)) \
 		--build-file build.zig
-	@case "`scanelf -BF '%b' $@`" in \
-	   (LAZY*) patchelf --set-rpath "`patchelf --print-rpath $@ | sed 's#^$(realpath $(ZIG_INSTALL))[^:]*:##'`" $@ ;; \
-	 esac
 	@touch $@
 
 ###############################################################################
@@ -554,6 +550,5 @@ $(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) $(HTML_OUTPUTS) $(MD_OUTPUTS) $
 	@cp $(LUAX_BINARIES) $(BUILD)/tar
 	@mkdir -p $(BUILD)/tar/doc
 	@cp $(BUILD)/doc/*.{md,html} $(BUILD)/tar/doc
-	@tools/find_runtime.sh $(LUAX_BINARIES) | xargs -ri cp {} $(BUILD)/tar
 	@cp lib/luax.lua $(BUILD)/tar
 	@tar cJf $@ -C $(abspath $(BUILD)/tar) .

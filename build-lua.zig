@@ -75,6 +75,7 @@ pub fn build(b: *std.build.Builder) !void {
     const exe = b.addExecutable(exe_name, null);
     exe.single_threaded = true;
     exe.strip = true;
+    exe.rdynamic = true;
     exe.setTarget(target);
     exe.setBuildMode(mode);
     exe.linkLibC();
