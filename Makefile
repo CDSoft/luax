@@ -435,12 +435,13 @@ $(LUAX_RUNTIME_BUNDLE): $(LUAX0) $(LUAX_RUNTIME) tools/bundle.lua tools/build_bu
 $(BUILD)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
-	@RUNTIME_NAME=luaxruntime RUNTIME=1 $(ZIG) build \
+	@RUNTIME_NAME=luaxruntime LIB_NAME=luax RUNTIME=1 $(ZIG) build \
 		--cache-dir $(ZIG_CACHE) \
 		--prefix $(dir $@) --prefix-exe-dir "" \
 		-D$(RELEASE) \
 		-Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD)/luaxruntime-%,%,$@)) \
 		--build-file build.zig
+	@find $(BUILD)/lib -name "libluax*" | while read lib; do mv $$lib `echo $$lib | sed 's/libluax/luax/'`; done
 	@touch $@
 
 ###############################################################################
@@ -469,20 +470,26 @@ TEST_SOURCES := tests/main.lua $(sort $(filter-out test/main.lua,$(wildcard test
 
 ## Run LuaX tests
 test: $(BUILD)/test-luax.ok
+test: $(BUILD)/test-lib.ok
 test: $(BUILD)/test-lua.ok
 
 $(BUILD)/test-luax.ok: $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
-	@$(call cyan,"TEST",$^)
-	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) $< Lua is great
+	@$(call cyan,"TEST",Luax executable: $^)
+	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=static $< Lua is great
 	@touch $@
 
 $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT): $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(TEST_SOURCES)
 	@$(call cyan,"BUNDLE",$@)
 	@$(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -o $@ $(TEST_SOURCES)
 
+$(BUILD)/test-lib.ok: $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC) $(TEST_SOURCES) $(LUA)
+	@$(call cyan,"TEST",Shared library: $(BUILD)/lib/luax-$(ARCH)-$(OS)-$(LIBC))
+	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=dynamic LUA_CPATH="$(BUILD)/lib/?.so" LUA_PATH="tests/?.lua" $(LUA) -l luax-$(ARCH)-$(OS)-$(LIBC) $(firstword $(TEST_SOURCES)) Lua is great
+	@touch $@
+
 $(BUILD)/test-lua.ok: $(LUA) lib/luax.lua $(TEST_SOURCES)
-	@$(call cyan,"TEST",$(firstword $(TEST_SOURCES)))
-	@ARCH=$(ARCH) OS=$(OS) LIBC=lua LUA_PATH="lib/?.lua;tests/?.lua" $(LUA) -l luax $(firstword $(TEST_SOURCES)) Lua is great
+	@$(call cyan,"TEST",Vanilla Lua interpretor: $(firstword $(TEST_SOURCES)))
+	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="lib/?.lua;tests/?.lua" $(LUA) -l luax $(firstword $(TEST_SOURCES)) Lua is great
 	@touch $@
 
 ###############################################################################
@@ -548,6 +555,7 @@ $(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) $(HTML_OUTPUTS) $(MD_OUTPUTS) $
 	@rm -rf $(BUILD)/tar && mkdir -p $(BUILD)/tar
 	@cp README.md $(BUILD)/tar
 	@cp $(LUAX_BINARIES) $(BUILD)/tar
+	@cp -r $(BUILD)/lib $(BUILD)/tar
 	@mkdir -p $(BUILD)/tar/doc
 	@cp $(BUILD)/doc/*.{md,html} $(BUILD)/tar/doc
 	@cp lib/luax.lua $(BUILD)/tar

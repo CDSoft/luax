@@ -157,6 +157,30 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 - [luasocket](luasocket.md): Network support for the Lua language
 - [inspect](inspect.md): Human-readable representation of Lua tables
 
+## Shared libraries
+
+LuaX is also available as a shared library. This shared library is a Lua module
+that can be loaded with `require`. It provides the same modules than the LuaX
+executable and can be used by a regular Lua interpretor (e.g.: lua, pandoc,
+...).
+
+E.g.:
+
+```
+$ lua -l luax-x86_64-linux-gnu
+Lua 5.4.4  Copyright (C) 1994-2022 Lua.org, PUC-Rio
+> F = require "fun"
+> F.range(100):sum()
+5050
+> F.show({x=1, y=2})
+{x=1, y=2}
+> F.show({x=1, y=2}, {indent=4})
+{
+    x = 1,
+    y = 2,
+}
+```
+
 ## Pure Lua modules
 
 Some modules have been reimplemented in pure Lua (no LuaX dependency).
