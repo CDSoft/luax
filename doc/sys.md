@@ -21,3 +21,9 @@ sys.abi
 ```
 
 `"musl"` or `"gnu"`.
+
+``` lua
+sys.type
+```
+
+`"static"`, `"dynamic"` or `"lua"`

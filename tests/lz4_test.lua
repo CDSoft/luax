@@ -22,7 +22,7 @@ http://cdelord.fr/luax
 -- lz4
 ---------------------------------------------------------------------
 
-if not _LUAX_VERSION then return function() end end
+if on "lua" then return function() end end
 
 local lz4 = require "lz4"
 

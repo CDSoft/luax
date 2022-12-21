@@ -4279,9 +4279,15 @@ sys.arch
 sys.abi
 ```
 `"lua"`.
+
+```lua
+sys.type
+```
+`"lua"`
 @@@]]
 
 sys.abi = "lua"
+sys.type = "lua"
 
 setmetatable(sys, {
     __index = function(_, param)
@@ -4290,7 +4296,7 @@ setmetatable(sys, {
             sys.os = os
             return os
         elseif param == "arch" then
-            local arch = sh.read("uname", "-m")
+            local arch = sh.read("uname", "-m"):trim()
             sys.arch = arch
             return arch
         end

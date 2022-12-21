@@ -22,11 +22,6 @@ local fs = require "fs"
 local sys = require "sys"
 local F = require "fun"
 
-local function sort(t)
-    table.sort(t)
-    return t
-end
-
 local function createfile(name)
     assert(io.open(name, "w")):close()
 end
@@ -52,7 +47,7 @@ return function()
     fs.remove(tmp)
 
     fs.mkdirs(tmp)
-    if _LUAX_VERSION then
+    if on{"static", "dynamic"} then
         assert(fs.chdir(tmp))
         eq(fs.getcwd(), fs.absname(tmp))
         eq(fs.getcwd(), fs.realpath(tmp))
@@ -67,22 +62,22 @@ return function()
     eq(fs.is_dir(fs.join(tmp, "level1", "level2", "level3")), true)
 
     eq(fs.dir(tmp):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
-    if _LUAX_VERSION then
+    if on{"static", "dynamic"} then
         eq(fs.dir():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         eq(fs.dir("."):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
     end
-    if sys.os == "linux" and _LUAX_VERSION then
+    if sys.os == "linux" and on{"static", "dynamic"} then
         eq(fs.glob():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         eq(fs.glob("*.txt"):sort(),{"bar.txt","foo.txt"})
     end
-    if _LUAX_VERSION then
+    if on{"static", "dynamic"} then
         fs.chdir(cwd)
         eq(fs.dir(tmp):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         fs.chdir(tmp)
     end
 
     local function test_files(f, testfiles, reverse)
-        if _LUAX_VERSION then
+        if on{"static", "dynamic"} then
             eq(f(".", {reverse=reverse}), F.map(function(name) return F.prefix"."(name:gsub("/", fs.sep)) end, testfiles))
             fs.chdir(cwd)
             eq(f(tmp, {reverse=reverse}), F.map(function(name) return F.prefix(tmp)(name:gsub("/", fs.sep)) end, testfiles))
@@ -175,7 +170,7 @@ return function()
 
     local ok, err = fs.touch("/foo")
     eq(ok, nil)
-    if _LUAX_VERSION then
+    if on{"static", "dynamic"} then
         eq(err:gsub(":.*", ": ..."), "/foo: ...")
     end
 
@@ -193,24 +188,24 @@ return function()
     eq({fs.splitext("file.with_ext")},     {"file", ".with_ext"})
     eq({fs.splitext("file_without_ext")},  {"file_without_ext", ""})
     eq({fs.splitext(".file_without_ext")}, {".file_without_ext", ""})
-    if _LUAX_VERSION then
+    if on{"static", "dynamic"} then
         eq(fs.absname("."), fs.join(tmp, "."))
     end
     eq(fs.absname(tmp), tmp)
-    if _LUAX_VERSION then
+    if on{"static", "dynamic"} then
         eq(fs.absname("foo"), fs.join(tmp, "foo"))
     end
     eq(fs.absname("/foo"), "/foo")
     eq(fs.absname("\\foo"), "\\foo")
     eq(fs.absname("Z:foo"), "Z:foo")
-    if _LUAX_VERSION then
+    if on{"static", "dynamic"} then
         eq(fs.realpath("."), tmp)
     end
     eq(fs.realpath(tmp), tmp)
-    if _LUAX_VERSION then
+    if on{"static", "dynamic"} then
         eq(fs.realpath("foo"), fs.join(tmp, "foo"))
     end
-    if _LUAX_VERSION then
+    if on{"static", "dynamic"} then
         eq(fs.realpath("/foo"), nil) -- unknown file
         eq(fs.realpath("\\foo"), nil) -- unknown file
         eq(fs.realpath("Z:foo"), nil) -- unknown file
@@ -233,7 +228,7 @@ return function()
 
     eq(fs.rmdir(tmp), true)
 
-    if _LUAX_VERSION then
+    if on{"static", "dynamic"} then
         fs.chdir(cwd)
     end
 

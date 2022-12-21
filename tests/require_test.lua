@@ -25,7 +25,7 @@ http://cdelord.fr/luax
 return function()
     local lib = require "lib"
     local traceback = lib.hello "World":gsub("\t", "    ")
-    local expected_traceback = _LUAX_VERSION
+    local expected_traceback = on "static"
         and [[
 @lib.lua says: Hello World
 Traceback test

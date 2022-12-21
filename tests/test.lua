@@ -19,6 +19,11 @@ http://cdelord.fr/luax
 --]]
 
 local F = require "fun"
+local sys = require "sys"
+
+function on(types)
+    return F.flatten{types}:any(F.curry(F.op.eq)(sys.type))
+end
 
 local function is_a_list(t)
     for k, _ in pairs(t) do

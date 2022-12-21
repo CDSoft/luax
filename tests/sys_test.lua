@@ -25,5 +25,8 @@ http://cdelord.fr/luax
 local sys = require "sys"
 
 return function()
+    eq(sys.arch, os.getenv "ARCH")
     eq(sys.os,   os.getenv "OS")
+    eq(sys.abi,  os.getenv "LIBC")
+    eq(sys.type, os.getenv "TYPE")
 end

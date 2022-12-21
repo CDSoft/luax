@@ -1944,6 +1944,12 @@ sys.abi
 
 `"lua"`.
 
+``` lua
+sys.type
+```
+
+`"lua"`
+
 # ps: Process management module
 
 ``` lua
