@@ -432,9 +432,14 @@ end
 
 local function convert_to_and_from_string()
 
+    local opt = {indent = 2}
+
     eq(F.show(42), "42")
+    eq(F.show(42, opt), "42")
     eq(F.show({1, x=2, 3}), "{1, 3, x=2}")
+    eq(F.show({1, x=2, 3}, opt), "{1, 3,\n  x = 2,\n}")
     eq(F.show({1, x=2, 3, p={x=1.5, y=2.5}}), "{1, 3, p={x=1.5, y=2.5}, x=2}")
+    eq(F.show({1, x=2, 3, p={x=1.5, y=2.5}}, opt), "{1, 3,\n  p = {\n    x = 1.5,\n    y = 2.5,\n  },\n  x = 2,\n}")
 
     eq(F.read("42"), 42)
     eq(F.read("{1, 3, x=2}"), {1, x=2, 3})
@@ -448,6 +453,7 @@ local function convert_to_and_from_string()
         [{2,2}]   = 5,
     }
     eq(F.show(t), "{[{1, 1}]=1, [{1, 2}]=2, [{1, 2, 3}]=3, [{2, 1}]=4, [{2, 2}]=5}")
+    eq(F.show(t, opt), "{\n  [{1, 1}] = 1,\n  [{1, 2}] = 2,\n  [{1, 2, 3}] = 3,\n  [{2, 1}] = 4,\n  [{2, 2}] = 5,\n}")
 
 end
 

@@ -443,13 +443,17 @@ F.memo1(f)
 ### Converting to string
 
 ``` lua
-F.show(x, [int_fmt, float_fmt])
+F.show(x, [opt])
 ```
 
-> Convert x to a string (luax.pretty)
+> Convert x to a string
 >
-> `int_fmt` and `float_fmt` are optional and defines the format used by
-> integers and floating point numbers (the default format is `%s`).
+> `opt` is an optional table that customizes the output string:
+>
+> - `opt.int`: integer format
+> - `opt.flt`: floating point number format
+> - `opt.indent`: number of spaces use to indent tables (`nil` for a
+>   single line output)
 
 ### Converting from string
 

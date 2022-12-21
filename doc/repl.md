@@ -3,29 +3,29 @@
 The `luax` repl provides a few functions for the interactive mode.
 
 In interactive mode, these functions are available as global functions.
-`pretty` is used by the LuaX REPL to print results.
+`show` is used by the LuaX REPL to print results.
 
 ``` lua
-luax.F
+F
 ```
 
 is the `fun` module.
 
 ``` lua
-luax.fs
+fs
 ```
 
 is the `fs` module.
 
 ``` lua
-luax.pretty(x)
+show(x)
 ```
 
 returns a string representing `x` with nice formatting for tables and
 numbers.
 
 ``` lua
-luax.precision(len, frac)
+precision(len, frac)
 ```
 
 changes the format of floats. `len` is the total number of characters
@@ -36,7 +36,7 @@ be `nil`). `len` can also be a string (custom format string) or `nil`
 `nil` (to reset the integer format).
 
 ``` lua
-luax.base(b)
+base(b)
 ```
 
 changes the format of integers. `b` can be `10` (decimal numbers), `16`
@@ -44,14 +44,26 @@ changes the format of integers. `b` can be `10` (decimal numbers), `16`
 `nil` (to reset the integer format).
 
 ``` lua
-luax.inspect(x)
+indent(i)
+```
+
+indents tables (`i` spaces). If `i` is `nil`, tables are not indented.
+
+``` lua
+prints(x)
+```
+
+prints `show(x)`
+
+``` lua
+inspect(x)
 ```
 
 calls `inspect(x)` to build a human readable representation of `x` (see
 the `inspect` package).
 
 ``` lua
-luax.printi(x)
+printi(x)
 ```
 
 prints `inspect(x)` (without the metatables).

@@ -140,7 +140,7 @@ local luax_loaded = false
 The `luax` repl provides a few functions for the interactive mode.
 
 In interactive mode, these functions are available as global functions.
-`pretty`{.lua} is used by the LuaX REPL to print results.
+`show`{.lua} is used by the LuaX REPL to print results.
 @@@]]
 
 local function populate_repl()
@@ -150,12 +150,11 @@ local function populate_repl()
     if luax_loaded then return end
     luax_loaded = true
 
-    local float_format = "%s"
-    local int_format = "%s"
+    local show_opt = F{}
 
 --[[@@@
 ```lua
-luax.F
+F
 ```
 is the `fun` module.
 @@@]]
@@ -164,7 +163,7 @@ is the `fun` module.
 
 --[[@@@
 ```lua
-luax.fs
+fs
 ```
 is the `fs` module.
 @@@]]
@@ -173,18 +172,18 @@ is the `fs` module.
 
 --[[@@@
 ```lua
-luax.pretty(x)
+show(x)
 ```
 returns a string representing `x` with nice formatting for tables and numbers.
 @@@]]
 
-    function _ENV.pretty(x, int_fmt, float_fmt)
-        return F.show(x, int_fmt or int_format, float_fmt or float_format)
+    function _ENV.show(x, opt)
+        return F.show(x, show_opt:patch(opt))
     end
 
 --[[@@@
 ```lua
-luax.precision(len, frac)
+precision(len, frac)
 ```
 changes the format of floats. `len` is the
 total number of characters and `frac` the number of decimals after the floating
@@ -195,7 +194,7 @@ reset the integer format).
 @@@]]
 
     function _ENV.precision(len, frac)
-        float_format =
+        show_opt.flt =
             type(len) == "string"                               and len
             or type(len) == "number" and type(frac) == "number" and ("%%%s.%sf"):format(len, frac)
             or type(len) == "number" and frac == nil            and ("%%%sf"):format(len, frac)
@@ -204,7 +203,7 @@ reset the integer format).
 
 --[[@@@
 ```lua
-luax.base(b)
+base(b)
 ```
 changes the format of integers. `b` can be `10` (decimal
 numbers), `16` (hexadecimal numbers), `8` (octal numbers), a custom format
@@ -212,13 +211,43 @@ string or `nil` (to reset the integer format).
 @@@]]
 
     function _ENV.base(b)
-        int_format =
+        show_opt.int =
             type(b) == "string" and b
             or b == 10          and "%s"
             or b == 16          and "0x%x"
             or b == 8           and "0o%o"
             or "%s"
     end
+
+--[[@@@
+```lua
+indent(i)
+```
+indents tables (`i` spaces). If `i` is `nil`, tables are not indented.
+@@@]]
+
+    function _ENV.indent(i)
+        show_opt.indent = i
+    end
+
+--[[@@@
+```lua
+prints(x)
+```
+prints `show(x)`
+@@@]]
+
+    function _ENV.prints(x)
+        print(show(x))
+    end
+
+--[[@@@
+```lua
+inspect(x)
+```
+calls `inspect(x)` to build a human readable
+representation of `x` (see the `inspect` package).
+@@@]]
 
     local inspect = require "inspect"
 
@@ -230,22 +259,13 @@ string or `nil` (to reset the integer format).
         process = remove_all_metatables,
     }
 
---[[@@@
-```lua
-luax.inspect(x)
-```
-calls `inspect(x)` to build a human readable
-representation of `x` (see the `inspect` package).
-@@@]]
-
-
     function _ENV.inspect(x, options)
         return inspect(x, F.merge{default_options, options})
     end
 
 --[[@@@
 ```lua
-luax.printi(x)
+printi(x)
 ```
 prints `inspect(x)` (without the metatables).
 @@@]]
@@ -253,6 +273,7 @@ prints `inspect(x)` (without the metatables).
     function _ENV.printi(x)
         print(inspect.inspect(x))
     end
+
 end
 
 do
@@ -278,7 +299,7 @@ do
                 local ok = table.remove(res, 1)
                 if ok then
                     if #res > 0 then
-                        print(table.unpack(F.map(pretty, res)))
+                        print(table.unpack(F.map(show, res)))
                     end
                 else
                     os.exit(1)
@@ -370,7 +391,7 @@ local function run_interpretor()
         local ok = table.remove(res, 1)
         if ok then
             if #res > 0 then
-                print(table.unpack(F.map(pretty, res)))
+                print(table.unpack(F.map(show, res)))
             end
         else
             os.exit(1)
@@ -398,7 +419,7 @@ local function run_interpretor()
             local res = table.pack(xpcall(chunk, traceback))
             local ok = table.remove(res, 1)
             if ok then
-                if res ~= nil then print(table.unpack(F.map(pretty, res))) end
+                if res ~= nil then print(table.unpack(F.map(show, res))) end
             end
             return "done"
         end

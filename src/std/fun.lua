@@ -983,18 +983,26 @@ end
 
 --[[@@@
 ```lua
-F.show(x, [int_fmt, float_fmt])
+F.show(x, [opt])
 ```
-> Convert x to a string (luax.pretty)
+> Convert x to a string
 >
-> `int_fmt` and `float_fmt` are optional and defines the format used by integers and floating point numbers
-> (the default format is `%s`).
+> `opt` is an optional table that customizes the output string:
+>
+>   - `opt.int`: integer format
+>   - `opt.flt`: floating point number format
+>   - `opt.indent`: number of spaces use to indent tables (`nil` for a single line output)
 @@@]]
 
-function F.show(x, int_fmt, float_fmt)
+local default_show_options = {
+    int = "%s",
+    flt = "%s",
+    indent = nil,
+}
 
-    int_fmt = int_fmt or "%s"
-    float_fmt = float_fmt or "%s"
+function F.show(x, opt)
+
+    opt = F.merge{default_show_options, opt}
 
     local tokens = {}
     local function emit(token) tokens[#tokens+1] = token end
@@ -1009,48 +1017,53 @@ function F.show(x, int_fmt, float_fmt)
         end
     end
 
+    local tabs = 0
+
     local function fmt(val)
         if type(val) == "table" then
             if in_stack(val) then
                 emit "{...}" -- recursive table
             else
                 push(val)
+                local need_nl = false
                 emit "{"
+                if opt.indent then tabs = tabs + opt.indent end
                 local n = 0
                 for i = 1, #val do
                     fmt(val[i])
                     emit ", "
                     n = n + 1
                 end
+                local first_field = true
                 for k, v in F.pairs(val) do
-                    if type(k) == "number" and math.type(k) == "integer" then
-                        if k < 1 or k > #val then
-                            emit(("[%d]="):format(k))
-                            fmt(v)
-                            emit ", "
-                            n = n + 1
-                        end
-                    else
+                    if not (type(k) == "number" and math.type(k) == "integer" and 1 <= k and k <= #val) then
+                        if first_field and opt.indent and n > 1 then drop() emit "," end
+                        first_field = false
+                        need_nl = opt.indent ~= nil
+                        if opt.indent then emit "\n" emit((" "):rep(tabs)) end
                         if type(k) == "string" and k:match "^[%w_]+$" then
                             emit(k)
                         else
                             emit "[" fmt(k) emit "]"
                         end
-                        emit("=")
+                        if opt.indent then emit " = " else emit "=" end
                         fmt(v)
-                        emit ", "
+                        if opt.indent then emit "," else emit ", " end
                         n = n + 1
                     end
                 end
-                if n > 0 then drop() end
+                if n > 0 and not need_nl then drop() end
+                if need_nl then emit "\n" end
+                if opt.indent then tabs = tabs - opt.indent end
+                if opt.indent and need_nl then emit((" "):rep(tabs)) end
                 emit "}"
                 pop()
             end
         elseif type(val) == "number" then
             if math.type(val) == "integer" then
-                emit(int_fmt:format(val))
+                emit(opt.int:format(val))
             elseif math.type(val) == "float" then
-                emit(float_fmt:format(val))
+                emit(opt.flt:format(val))
             else
                 emit(("%s"):format(val))
             end
