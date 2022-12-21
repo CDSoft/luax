@@ -189,6 +189,7 @@ pub fn build(b: *std.build.Builder) !void {
     lib_shared.setTarget(target);
     lib_shared.setBuildMode(mode);
     lib_shared.linkLibC();
+    lib_shared.install();
     lib_shared.addIncludeDir(src_path);
     lib_shared.addIncludeDir(build_path);
     lib_shared.addIncludeDir(lua_src);
@@ -342,7 +343,9 @@ pub fn build(b: *std.build.Builder) !void {
         exe.linkLibrary(lib_static);
     } else {
         exe.linkLibrary(lib_shared);
-        exe.addRPath("$ORIGIN:$ORIGIN/lib:$ORIGIN/../lib");
+        exe.addRPath("$ORIGIN");
+        exe.addRPath("$ORIGIN/lib");
+        exe.addRPath("$ORIGIN/../lib");
     }
     exe.addCSourceFiles(&luax_main_c_files, &[_][]const u8 {
         "-std=gnu11",

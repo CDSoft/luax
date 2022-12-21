@@ -353,7 +353,7 @@ $(INSTALL_PATH)/luax-%: $(BUILD)/luax-%
 	@$(call cyan,"INSTALL",$@)
 	@test -n "$(INSTALL_PATH)" || (echo "No installation path found" && false)
 	@install $< $@
-	@lddtree $@ 2>/dev/null | awk '$$1~/libluaxruntime/ { print $$3 }' | xargs -ri install {} $(dir $@)
+	@tools/find_runtime.sh $< | xargs -ri install {} $(dir $@)
 
 ###############################################################################
 # Search for or install a zig compiler
@@ -442,6 +442,9 @@ $(BUILD)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) 
 		-D$(RELEASE) \
 		-Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD)/luaxruntime-%,%,$@)) \
 		--build-file build.zig
+	@case "`scanelf -BF '%b' $@`" in \
+	   (LAZY*) patchelf --set-rpath "`patchelf --print-rpath $@ | sed 's#^$(realpath $(ZIG_INSTALL))[^:]*:##'`" $@ ;; \
+	 esac
 	@touch $@
 
 ###############################################################################
@@ -551,6 +554,6 @@ $(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) $(HTML_OUTPUTS) $(MD_OUTPUTS) $
 	@cp $(LUAX_BINARIES) $(BUILD)/tar
 	@mkdir -p $(BUILD)/tar/doc
 	@cp $(BUILD)/doc/*.{md,html} $(BUILD)/tar/doc
-	@lddtree $(LUAX_BINARIES) 2>/dev/null | awk '$$1~/libluaxruntime/ { print $$3 }' | xargs -ri cp {} $(BUILD)/tar
+	@tools/find_runtime.sh $(LUAX_BINARIES) | xargs -ri cp {} $(BUILD)/tar
 	@cp lib/luax.lua $(BUILD)/tar
 	@tar cJf $@ -C $(abspath $(BUILD)/tar) .
