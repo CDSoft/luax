@@ -101,6 +101,13 @@ scripts:
 
     Lua and Compilation options can not be mixed.
 
+    Environment variables:
+
+      LUA_INIT_5_4, LUA_INIT
+                        code executed before handling command line options
+                        and scripts (not in compilation mode).
+                        When LUA_INIT_5_4 is defined, LUA_INIT is ignored.
+
 When compiling scripts (options `-t` and `-o`), the main script shall be
 the first one. Other scripts are libraries that can be loaded by the
 main script.

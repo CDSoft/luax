@@ -32,7 +32,12 @@ local welcome = I(sys)[[
                          |  $(os:cap()) $(arch) $(abi)
 ]]
 
-local usage = I{fs=fs}[==[
+local LUA_INIT = F{
+    "LUA_INIT_" .. _VERSION:words()[2]:gsub("%.", "_"),
+    "LUA_INIT",
+}
+
+local usage = I{fs=fs,init=LUA_INIT}[==[
 usage: $(fs.basename(arg[0])) [options] [script [args]]
 
 General options:
@@ -69,6 +74,13 @@ Scripts for compilation:
   -autoexec-none    cancel -autoexec-all
 
 Lua and Compilation options can not be mixed.
+
+Environment variables:
+
+  $(init[1]), $(init[2])
+                    code executed before handling command line options
+                    and scripts (not in compilation mode).
+                    When $(init[1]) is defined, $(init[2]) is ignored.
 ]==]
 
 local function print_welcome()
@@ -127,12 +139,20 @@ local interpretor_mode = false
 local compiler_mode = false
 local interactive = #arg == 0
 local run_stdin = false
-local actions = {}
 local args = {}
 local output = nil
 local target = nil
 
 local luax_loaded = false
+
+local actions = setmetatable({
+        actions = F{}
+    }, {
+    __index = {
+        add = function(self, action) self.actions[#self.actions+1] = action end,
+        run = function(self) self.actions:map(F.call) end,
+    },
+})
 
 --[[------------------------------------------------------------------------@@@
 # LuaX interactive usage
@@ -276,6 +296,32 @@ prints `inspect(x)` (without the metatables).
 
 end
 
+local function run_lua_init()
+    if compiler_mode then return end
+    LUA_INIT
+        : filter(function(var) return os.getenv(var) ~= nil end)
+        : take(1)
+        : map(function(var)
+            local code = assert(os.getenv(var))
+            local filename = code:match "^@(.*)"
+            local chunk, chunk_err
+            if filename then
+                chunk, chunk_err = loadfile(filename)
+            else
+                chunk, chunk_err = load(code, "="..var)
+            end
+            if not chunk then
+                print(chunk_err)
+                os.exit(1)
+            end
+            if chunk and not xpcall(chunk, traceback) then
+                os.exit(1)
+            end
+        end)
+end
+
+actions:add(run_lua_init)
+
 do
     local i = 1
     -- Scan options
@@ -286,7 +332,7 @@ do
             i = i+1
             local stat = arg[i]
             if stat == nil then wrong_arg(a) end
-            actions[#actions+1] = function()
+            actions:add(function()
                 assert(stat)
                 populate_repl()
                 local chunk, msg = load(stat, "=(command line)")
@@ -304,7 +350,7 @@ do
                 else
                     os.exit(1)
                 end
-            end
+            end)
         elseif a == '-i' then
             interpretor_mode = true
             interactive = true
@@ -313,10 +359,10 @@ do
             i = i+1
             local lib = arg[i]
             if lib == nil then wrong_arg(a) end
-            actions[#actions+1] = function()
+            actions:add(function()
                 assert(lib)
                 _G[lib] = require(lib)
-            end
+            end)
         elseif a == '-o' then
             compiler_mode = true
             i = i+1
@@ -537,6 +583,8 @@ local function run_compiler()
 
 end
 
+interpretor_mode = interpretor_mode or not compiler_mode
+
 if interpretor_mode and compiler_mode then
     err "Lua options and compiler options can not be mixed"
 end
@@ -549,7 +597,6 @@ if interactive and run_stdin then
     err "Interactive mode and stdin execution are incompatible"
 end
 
-actions[#actions+1] = compiler_mode and run_compiler or run_interpretor
+actions:add(compiler_mode and run_compiler or run_interpretor)
 
--- run actions
-F.map(F.call, actions)
+actions:run()
