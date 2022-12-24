@@ -166,12 +166,12 @@ function bundle.combine(target, scripts)
     return runtime..chunk, chunk
 end
 
-local function called_by(f)
-    for level = 2, 10 do
-        local caller = debug.getinfo(level, "f")
-        if caller == nil then return false end
-        if caller.func == f then return true end
-    end
+local function called_by(f, level)
+    level = level or 1
+    local caller = debug.getinfo(level, "f")
+    if caller == nil then return false end
+    if caller.func == f then return true end
+    return called_by(f, level+1)
 end
 
 if called_by(require) then return bundle end

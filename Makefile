@@ -408,7 +408,7 @@ $(LUAX0): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
 
 CRYPT_KEY_HASH := $(shell echo -n $(CRYPT_KEY) | sha512sum -b | cut -d" " -f1 | sed 's/\(..\)/\\x\1/g')
 
-$(LUAX_CONFIG): $(wildcard .git/refs/tags) $(wildcard .git/index) tools/bundle.lua
+$(LUAX_CONFIG): $(wildcard .git/refs/tags) $(wildcard .git/index)
 	@$(call cyan,"GEN",$@)
 	@mkdir -p $(dir $@)
 	@(  set -eu;                                                                                \
@@ -441,7 +441,7 @@ $(BUILD)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) 
 		-D$(RELEASE) \
 		-Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD)/luaxruntime-%,%,$@)) \
 		--build-file build.zig
-	@find $(BUILD)/lib -name "libluax*" | while read lib; do mv $$lib `echo $$lib | sed 's/libluax/luax/'`; done
+	@find $(BUILD)/lib -name "libluax*" | while read lib; do mv "$$lib" "`echo $$lib | sed 's/libluax/luax/'`"; done
 	@touch $@
 
 ###############################################################################
@@ -456,9 +456,9 @@ $(BUILD)/luax: $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 
 $(BUILD)/luax-%: $(BUILD)/luaxruntime-% $(LUAX_PACKAGES) tools/bundle.lua
 	@$(call cyan,"BUNDLE",$@)
-	@( cat $(word 1,$^) && $(LUAX0) tools/bundle.lua $(LUAX_PACKAGES) ) > $@.tmp
+	@cp $< $@.tmp
+	@$(LUAX0) tools/bundle.lua $(LUAX_PACKAGES) >> $@.tmp
 	@mv $@.tmp $@
-	@chmod +x $@
 
 ###############################################################################
 # Tests (native only)
