@@ -676,15 +676,11 @@ F.round(x)
 > returns the nearest integer to x; the even integer if x is equidistant between two integers
 @@@]]
 
-if has_mathx then
-    function F.round(x)
-        return mathx.round(x)
-    end
-else
-    function F.round(x)
+F.round = has_mathx
+    and mathx.round
+    or function(x)
         return x >= 0 and math.floor(x + 0.5) or math.ceil(x - 0.5)
     end
-end
 
 --[[@@@
 ```lua
@@ -824,7 +820,7 @@ F.const(...)
 @@@]]
 function F.const(...)
     local val = {...}
-    return function()
+    return function(...)
         return table.unpack(val)
     end
 end
@@ -1869,7 +1865,7 @@ xs:not_elem(x, [comp_eq])
 > Returns `true` if x does not occur in xs (using the optional comp_eq function).
 @@@]]
 
-register2 "not_elem" (function(x, xs)
+register2 "not_elem" (function(x, xs, comp_eq)
     comp_eq = comp_eq or F.op.eq
     for i = 1, #xs do
         if comp_eq(xs[i], x) then return false end

@@ -68,10 +68,10 @@ function bundle.bundle(arg)
         elseif arg[i] == "-ascii" then          format = "ascii"
         elseif arg[i] == "-autoload" then       autoload_next = true
         elseif arg[i] == "-autoload-all" then   autoload_all = true
-        elseif arg[i] == "-autoload-none" then  autoload_none = false
+        elseif arg[i] == "-autoload-none" then  autoload_all = false
         elseif arg[i] == "-autoexec" then       autoexec_next = true
         elseif arg[i] == "-autoexec-all" then   autoexec_all = true
-        elseif arg[i] == "-autoexec-none" then  autoexec_none = false
+        elseif arg[i] == "-autoexec-none" then  autoexec_all = false
         else
             local local_path, dest_path = arg[i]:match "(.-):(.*)"
             local_path = local_path or arg[i]

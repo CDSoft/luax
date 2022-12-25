@@ -32,7 +32,7 @@ local function is_a_list(t)
     return true
 end
 
-function dump(t)
+local function dump(t)
     if (getmetatable(t) or {}).imag then return t:tostring() end
     if (getmetatable(t) or {}).__tostring then return ("%q"):format(tostring(t)) end
     if type(t) ~= "table" then return ("%q"):format(t) end

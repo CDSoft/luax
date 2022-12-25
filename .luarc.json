@@ -1,0 +1,13 @@
+{
+    "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
+    "Lua.diagnostics.globals": [
+        "pandoc",
+        "PANDOC_STATE",
+        "FORMAT",
+        "on",
+        "eq",
+        "ne",
+        "bounded"
+    ],
+    "Lua.workspace.checkThirdParty": false
+}
