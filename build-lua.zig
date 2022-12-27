@@ -80,8 +80,8 @@ pub fn build(b: *std.build.Builder) !void {
     exe.setBuildMode(mode);
     exe.linkLibC();
     exe.install();
-    exe.addIncludeDir(build_path);
-    exe.addIncludeDir(lua_src);
+    exe.addIncludePath(build_path);
+    exe.addIncludePath(lua_src);
     exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
         "-std=gnu11",
         "-O3",

@@ -47,8 +47,8 @@ TARGETS += x86_64-windows-gnu
 TARGETS += i386-windows-gnu
 
 # MacOS
-TARGETS += x86_64-macos-gnu
-TARGETS += aarch64-macos-gnu
+TARGETS += x86_64-macos-none
+TARGETS += aarch64-macos-none
 
 RUNTIMES = $(patsubst %-windows-gnu,%-windows-gnu.exe,$(TARGETS:%=$(BUILD_TMP)/luaxruntime-%))
 LUAX_BINARIES := $(RUNTIMES:$(BUILD_TMP)/luaxruntime-%=$(BUILD_BIN)/luax-%)
@@ -459,8 +459,9 @@ $(PREFIX)/bin/luax-pandoc: $(LUAX_PANDOC)
 
 ZIG := $(ZIG_INSTALL)/zig
 
-ZIG_VERSION = 0.9.1
+ZIG_VERSION = 0.10.1
 ZIG_URL = https://ziglang.org/download/$(ZIG_VERSION)/zig-$(OS)-$(ARCH)-$(ZIG_VERSION).tar.xz
+
 ZIG_ARCHIVE = $(BUILD_TMP)/$(notdir $(ZIG_URL))
 
 $(ZIG_INSTALL)/zig: $(ZIG_ARCHIVE)
@@ -510,7 +511,7 @@ $(LUAX0): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG_H) build.zig
 $(BUILD_TMP)/blake3: tools/blake3.zig $(ZIG)
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
-	@$(ZIG) build-exe $< -fsingle-threaded --strip --cache-dir $(ZIG_CACHE) -femit-bin=$@
+	@$(ZIG) build-exe $< -fsingle-threaded -fstrip --cache-dir $(ZIG_CACHE) -femit-bin=$@
 
 $(LUAX_CONFIG_H): $(wildcard .git/refs/tags) $(wildcard .git/index) $(BUILD_TMP)/blake3
 	@$(call cyan,"GEN",$@)

@@ -152,12 +152,14 @@ pub fn build(b: *std.build.Builder) !void {
     const library_name = std.os.getenv("LIB_NAME");
     const runtime = std.os.getenv("RUNTIME");
 
-    const ARCH = (try std.fmt.allocPrint(page, "{s}", .{tagName(target.cpu_arch)}));
-    const OS = (try std.fmt.allocPrint(page, "{s}", .{tagName(target.os_tag)}));
-    const ABI = (try std.fmt.allocPrint(page, "{s}", .{tagName(target.abi)}));
+    const ARCH = (try std.fmt.allocPrint(page, "{?s}", .{tagName(target.cpu_arch)}));
+    const OS = (try std.fmt.allocPrint(page, "{?s}", .{tagName(target.os_tag)}));
+    const ABI = (try std.fmt.allocPrint(page, "{?s}", .{tagName(target.abi)}));
 
-    const exe_name = try std.fmt.allocPrint(page, "{s}-{s}-{s}-{s}", .{runtime_name, ARCH, OS, ABI});
-    const lib_name = try std.fmt.allocPrint(page, "{s}-{s}-{s}-{s}", .{library_name, ARCH, OS, ABI});
+    const exe_name = try std.fmt.allocPrint(page, "{?s}-{s}-{s}-{s}", .{runtime_name, ARCH, OS, ABI});
+    const lib_name = try std.fmt.allocPrint(page, "{?s}-{s}-{s}-{s}", .{library_name, ARCH, OS, ABI});
+
+    const dynamic = if (target.abi)|abi| !std.Target.Abi.isMusl(abi) else true;
 
     ///////////////////////////////////////////////////////////////////////////
     // LuaX executable
@@ -166,15 +168,15 @@ pub fn build(b: *std.build.Builder) !void {
     const exe = b.addExecutable(exe_name, null);
     exe.single_threaded = true;
     exe.strip = true;
-    exe.rdynamic = true;
+    exe.rdynamic = dynamic;
     exe.setTarget(target);
     exe.setBuildMode(mode);
     exe.linkLibC();
     exe.install();
-    exe.addIncludeDir(src_path);
-    exe.addIncludeDir(lz4_src);
-    exe.addIncludeDir(build_path);
-    exe.addIncludeDir(lua_src);
+    exe.addIncludePath(src_path);
+    exe.addIncludePath(lz4_src);
+    exe.addIncludePath(build_path);
+    exe.addIncludePath(lua_src);
     exe.addCSourceFiles(&luax_main_c_files, &[_][]const u8 {
         "-std=gnu11",
         "-O3",
@@ -188,7 +190,8 @@ pub fn build(b: *std.build.Builder) !void {
         "-Wno-used-but-marked-unused",
         "-Wno-documentation",
         "-Wno-documentation-unknown-command",
-        try std.fmt.allocPrint(page, "-DRUNTIME={s}", .{runtime}),
+        "-Wno-declaration-after-statement",
+        try std.fmt.allocPrint(page, "-DRUNTIME={?s}", .{runtime}),
         try std.fmt.allocPrint(page, "-DLUAX_ARCH=\"{s}\"", .{ARCH}),
         try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),
         try std.fmt.allocPrint(page, "-DLUAX_ABI=\"{s}\"", .{ABI}),
@@ -218,7 +221,8 @@ pub fn build(b: *std.build.Builder) !void {
         "-Wno-used-but-marked-unused",
         "-Wno-documentation",
         "-Wno-documentation-unknown-command",
-        try std.fmt.allocPrint(page, "-DRUNTIME={s}", .{runtime}),
+        "-Wno-declaration-after-statement",
+        try std.fmt.allocPrint(page, "-DRUNTIME={?s}", .{runtime}),
         try std.fmt.allocPrint(page, "-DLUAX_ARCH=\"{s}\"", .{ARCH}),
         try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),
         try std.fmt.allocPrint(page, "-DLUAX_ABI=\"{s}\"", .{ABI}),
@@ -256,19 +260,20 @@ pub fn build(b: *std.build.Builder) !void {
     // Shared library
     ///////////////////////////////////////////////////////////////////////////
 
+    if (dynamic) {
     if (library_name) |_| {
 
-    const lib_shared = b.addSharedLibrary(lib_name, null, .{.unversioned=.{}});
+    const lib_shared = b.addSharedLibrary(lib_name, null, .{.unversioned={}});
     lib_shared.single_threaded = true;
     lib_shared.strip = true;
     lib_shared.setTarget(target);
     lib_shared.setBuildMode(mode);
     lib_shared.linkLibC();
     lib_shared.install();
-    lib_shared.addIncludeDir(src_path);
-    lib_shared.addIncludeDir(build_path);
-    lib_shared.addIncludeDir(lua_src);
-    lib_shared.addIncludeDir(lz4_src);
+    lib_shared.addIncludePath(src_path);
+    lib_shared.addIncludePath(build_path);
+    lib_shared.addIncludePath(lua_src);
+    lib_shared.addIncludePath(lz4_src);
     if (target.os_tag != std.Target.Os.Tag.linux) {
         lib_shared.addCSourceFiles(&lua_c_files, &[_][]const u8 {
             "-std=gnu11",
@@ -294,7 +299,8 @@ pub fn build(b: *std.build.Builder) !void {
         "-Wno-used-but-marked-unused",
         "-Wno-documentation",
         "-Wno-documentation-unknown-command",
-        try std.fmt.allocPrint(page, "-DRUNTIME={s}", .{runtime}),
+        "-Wno-declaration-after-statement",
+        try std.fmt.allocPrint(page, "-DRUNTIME={?s}", .{runtime}),
         try std.fmt.allocPrint(page, "-DLUAX_ARCH=\"{s}\"", .{ARCH}),
         try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),
         try std.fmt.allocPrint(page, "-DLUAX_ABI=\"{s}\"", .{ABI}),
@@ -331,6 +337,7 @@ pub fn build(b: *std.build.Builder) !void {
         });
     }
 
+    }
     }
 
 }
