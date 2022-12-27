@@ -35,11 +35,11 @@ TARGETS += aarch64-linux-gnu
 
 # Windows
 TARGETS += x86_64-windows-gnu
-TARGETS += i386-windows-gnu
+#TARGETS += i386-windows-gnu
 
 # MacOS
-TARGETS += x86_64-macos-gnu
-TARGETS += aarch64-macos-gnu
+TARGETS += x86_64-macos-none
+TARGETS += aarch64-macos-none
 
 RUNTIMES = $(patsubst %-windows-gnu,%-windows-gnu.exe,$(patsubst %,$(BUILD)/luaxruntime-%,$(TARGETS)))
 LUAX_BINARIES := $(patsubst $(BUILD)/luaxruntime-%,$(BUILD)/luax-%,$(RUNTIMES))
@@ -335,7 +335,8 @@ $(INSTALL_PATH)/luax-%: $(BUILD)/luax-%
 
 ZIG := $(ZIG_INSTALL)/zig
 
-ZIG_VERSION = 0.9.1
+#ZIG_VERSION = 0.9.1
+ZIG_VERSION = 0.10.0
 ZIG_URL = https://ziglang.org/download/$(ZIG_VERSION)/zig-$(OS)-$(ARCH)-$(ZIG_VERSION).tar.xz
 ZIG_ARCHIVE = $(BUILD)/$(notdir $(ZIG_URL))
 
