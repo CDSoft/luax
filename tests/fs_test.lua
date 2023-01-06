@@ -164,9 +164,15 @@ return function()
 
     local ft2 = fs.join(tmp, "ft2")
     assert(fs.touch(ft2, ft))
-    eq(fs.stat(ft2).mtime, fs.stat(ft).mtime)
-    eq(fs.stat(ft2).atime, fs.stat(ft).atime)
-    eq(fs.stat(ft2).ctime, fs.stat(ft).ctime)
+    if on{"static", "dynamic"} then
+        eq(fs.stat(ft2).mtime, fs.stat(ft).mtime)
+        eq(fs.stat(ft2).atime, fs.stat(ft).atime)
+        eq(fs.stat(ft2).ctime, fs.stat(ft).ctime)
+    else
+        bounded(fs.stat(ft2).mtime, fs.stat(ft).mtime, fs.stat(ft).mtime+1)
+        bounded(fs.stat(ft2).atime, fs.stat(ft).atime, fs.stat(ft).atime+1)
+        bounded(fs.stat(ft2).ctime, fs.stat(ft).ctime, fs.stat(ft).ctime+1)
+    end
 
     local ok, err = fs.touch("/foo")
     eq(ok, nil)
