@@ -3717,8 +3717,12 @@ fs.getcwd()
 returns the current working directory.
 @@@]]
 
+if pandoc then
+fs.getcwd = pandoc.system.get_working_directory
+else
 function fs.getcwd()
     return sh.read "pwd" : trim()
+end
 end
 
 function fs.chdir()
@@ -3733,8 +3737,12 @@ returns the list of files and directories in
 `path` (the default path is the current directory).
 @@@]]
 
+if pandoc then
+fs.dir = F.compose{F, pandoc.system.list_directory}
+else
 function fs.dir(path)
     return sh.read("ls", path) : lines() : sort()
+end
 end
 
 --[[@@@
@@ -3793,8 +3801,12 @@ fs.mkdir(path)
 creates a new directory `path`.
 @@@]]
 
+if pandoc then
+fs.mkdir = pandoc.system.make_directory
+else
 function fs.mkdir(path)
     return sh.run("mkdir", path)
+end
 end
 
 --[[@@@
@@ -3948,8 +3960,12 @@ fs.basename(path)
 return the last component of path.
 @@@]]
 
+if pandoc then
+fs.basename = pandoc.path.filename
+else
 function fs.basename(path)
     return sh.read("basename", path) : trim()
+end
 end
 
 --[[@@@
@@ -3959,8 +3975,12 @@ fs.dirname(path)
 return all but the last component of path.
 @@@]]
 
+if pandoc then
+fs.dirname = pandoc.path.directory
+else
 function fs.dirname(path)
     return sh.read("dirname", path) : trim()
+end
 end
 
 --[[@@@
@@ -3970,12 +3990,21 @@ fs.splitext(path)
 return the name without the extension and the extension.
 @@@]]
 
+if pandoc then
+function fs.splitext(path)
+    if fs.basename(path):match "^%." then
+        return path, ""
+    end
+    return pandoc.path.split_extension(path)
+end
+else
 function fs.splitext(path)
     local name, ext = path:match("^(.*)(%.[^/\\]-)$")
     if name and ext and #name > 0 and not name:has_suffix(fs.sep) then
         return name, ext
     end
     return path, ""
+end
 end
 
 --[[@@@
@@ -3985,8 +4014,12 @@ fs.realpath(path)
 return the resolved path name of path.
 @@@]]
 
+if pandoc then
+fs.realpath = pandoc.path.normalize
+else
 function fs.realpath(path)
     return sh.read("realpath", path) : trim()
+end
 end
 
 --[[@@@
@@ -4010,6 +4043,11 @@ return a path name made of several path components
 If a component is absolute, the previous components are removed.
 @@@]]
 
+if pandoc then
+function fs.join(...)
+    return pandoc.path.join(F.flatten{...})
+end
+else
 function fs.join(...)
     local function add_path(ps, p)
         if p:match("^"..fs.sep) then return F{p} end
@@ -4020,6 +4058,7 @@ function fs.join(...)
         :flatten()
         :fold(add_path, F{})
         :str(fs.sep)
+end
 end
 
 --[[@@@
@@ -4069,8 +4108,14 @@ fs.mkdirs(path)
 creates a new directory `path` and its parent directories.
 @@@]]
 
+if pandoc then
+function fs.mkdirs(path)
+    return pandoc.system.make_directory(path, true)
+end
+else
 function fs.mkdirs(path)
     return sh.run("mkdir", "-p", path)
+end
 end
 
 --[[@@@
@@ -4098,9 +4143,16 @@ fs.rmdir(path, [params])
 deletes the directory `path` and its content recursively.
 @@@]]
 
+if pandoc then
+function fs.rmdir(path)
+    pandoc.system.remove_directory(path, true)
+    return true
+end
+else
 function fs.rmdir(path)
     fs.walk(path, {reverse=true}):map(fs.rm)
     return fs.rm(path)
+end
 end
 
 --[[@@@

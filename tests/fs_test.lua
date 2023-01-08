@@ -215,6 +215,9 @@ return function()
         eq(fs.realpath("/foo"), nil) -- unknown file
         eq(fs.realpath("\\foo"), nil) -- unknown file
         eq(fs.realpath("Z:foo"), nil) -- unknown file
+    elseif pandoc then
+        eq(fs.realpath("/foo"), "/foo") -- unknown file
+        eq(fs.realpath("\\foo"), "\\foo") -- unknown file
     else
         eq(fs.realpath("/foo"), "/foo") -- unknown file
         eq(fs.realpath("\\foo"), fs.join(cwd, "foo")) -- unknown file

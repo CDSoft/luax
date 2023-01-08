@@ -18,6 +18,9 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+-- load the luax metapackage in Pandoc (does nothing in LuaX)
+require "luax"
+
 -- Check the test environment first
 require "test_test"()
 
@@ -37,3 +40,6 @@ require "complex_test"()
 require "socket_test"()
 require "inspect_test"()
 require "lz4_test"()
+
+-- explicit exit to close the Pandoc Lua reader
+os.exit(0)

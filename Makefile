@@ -472,6 +472,9 @@ TEST_SOURCES := tests/main.lua $(sort $(filter-out test/main.lua,$(wildcard test
 test: $(BUILD)/test-luax.ok
 test: $(BUILD)/test-lib.ok
 test: $(BUILD)/test-lua.ok
+ifeq ($(OS)-$(ARCH),linux-x86_64)
+test: $(BUILD)/test-pandoc.ok
+endif
 
 $(BUILD)/test-luax.ok: $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"TEST",Luax executable: $^)
@@ -490,6 +493,11 @@ $(BUILD)/test-lib.ok: $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC) $(TEST_SOURCES) $(LUA)
 $(BUILD)/test-lua.ok: $(LUA) lib/luax.lua $(TEST_SOURCES)
 	@$(call cyan,"TEST",Vanilla Lua interpretor: $(firstword $(TEST_SOURCES)))
 	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="lib/?.lua;tests/?.lua" $(LUA) -l luax $(firstword $(TEST_SOURCES)) Lua is great
+	@touch $@
+
+$(BUILD)/test-pandoc.ok: lib/luax.lua $(TEST_SOURCES)
+	@$(call cyan,"TEST",Pandoc Lua interpretor: $(firstword $(TEST_SOURCES)))
+	ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="lib/?.lua;tests/?.lua" pandoc -f $(firstword $(TEST_SOURCES)) </dev/null
 	@touch $@
 
 ###############################################################################
