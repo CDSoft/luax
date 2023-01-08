@@ -65,58 +65,33 @@ endif
 
 .DEFAULT_GOAL := compile
 
+# include a reduced version of makex to install LuaX test dependencies
+include makex.mk
+
 ###############################################################################
 # Help
 ###############################################################################
 
-RED    := $(shell tput -Txterm setaf 1)
-GREEN  := $(shell tput -Txterm setaf 2)
-YELLOW := $(shell tput -Txterm setaf 3)
-BLUE   := $(shell tput -Txterm setaf 4)
-CYAN   := $(shell tput -Txterm setaf 6)
-RESET  := $(shell tput -Txterm sgr0)
+red   = printf "${RED}[%s]${NORMAL} %s\n" "$1" "$2"
+green = printf "${GREEN}[%s]${NORMAL} %s\n" "$1" "$2"
+blue  = printf "${BLUE}[%s]${NORMAL} %s\n" "$1" "$2"
+cyan  = printf "${CYAN}[%s]${NORMAL} %s\n" "$1" "$2"
 
-red   = printf "${RED}[%s]${RESET} %s\n" "$1" "$2"
-green = printf "${GREEN}[%s]${RESET} %s\n" "$1" "$2"
-blue  = printf "${BLUE}[%s]${RESET} %s\n" "$1" "$2"
-cyan  = printf "${CYAN}[%s]${RESET} %s\n" "$1" "$2"
-
-COMMAND := ${YELLOW}
-TARGET  := ${GREEN}
-TEXT    := ${YELLOW}
-
-TARGET_MAX_CHAR_NUM = 20
-
-## Show this help
-help:
-	@echo '${CYAN}Lua${RESET} e${CYAN}X${RESET}tended'
+welcome:
+	@echo '${CYAN}Lua${NORMAL} e${CYAN}X${NORMAL}tended'
 	@echo 'Copyright (C) 2021-2022 Christophe Delord (http://cdelord.fr/luax)'
 	@echo ''
-	@echo '${CYAN}luax${RESET} is a Lua interpretor and REPL based on Lua 5.4.4'
+	@echo '${CYAN}luax${NORMAL} is a Lua interpretor and REPL based on Lua 5.4.4'
 	@echo 'augmented with some useful packages.'
-	@echo '${CYAN}luax${RESET} can also produces standalone executables from Lua scripts.'
+	@echo '${CYAN}luax${NORMAL} can also produces standalone executables from Lua scripts.'
 	@echo ''
-	@echo '${CYAN}luax${RESET} runs on several platforms with no dependency:'
+	@echo '${CYAN}luax${NORMAL} runs on several platforms with no dependency:'
 	@echo ''
 	@echo '- Linux (x86_64, i386, aarch64)'
 	@echo '- MacOS (x86_64, aarch64)'
 	@echo '- Windows (x86_64, i386)'
 	@echo ''
-	@echo '${CYAN}luax${RESET} can cross-compile scripts from and to any of these platforms.'
-	@echo ''
-	@echo 'Usage:'
-	@echo '  ${COMMAND}make${RESET} ${TARGET}<target>${RESET}'
-	@echo ''
-	@echo 'Targets:'
-	@awk '/^[a-zA-Z\-_0-9]+:/ { \
-		helpMessage = match(lastLine, /^## (.*)/); \
-		if (helpMessage) { \
-			helpCommand = substr($$1, 0, index($$1, ":")-1); \
-			helpMessage = substr(lastLine, RSTART + 3, RLENGTH); \
-			printf "  ${TARGET}%-$(TARGET_MAX_CHAR_NUM)s${RESET} ${TEXT}%s${RESET}\n", helpCommand, helpMessage; \
-		} \
-	} \
-	{ lastLine = $$0 }' $(MAKEFILE_LIST)
+	@echo '${CYAN}luax${NORMAL} can cross-compile scripts from and to any of these platforms.'
 
 ###############################################################################
 # All
@@ -142,7 +117,7 @@ clean:
 	rm -rf $(BUILD)
 
 ## Delete the build directory and the downloaded Zig compiler
-mrproper: clean
+mrproper: clean makex-clean
 	rm -rf $(ZIG_INSTALL)
 
 ###############################################################################
@@ -495,9 +470,9 @@ $(BUILD)/test-lua.ok: $(LUA) lib/luax.lua $(TEST_SOURCES)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="lib/?.lua;tests/?.lua" $(LUA) -l luax $(firstword $(TEST_SOURCES)) Lua is great
 	@touch $@
 
-$(BUILD)/test-pandoc.ok: lib/luax.lua $(TEST_SOURCES)
+$(BUILD)/test-pandoc.ok: lib/luax.lua $(TEST_SOURCES) | $(PANDOC)
 	@$(call cyan,"TEST",Pandoc Lua interpretor: $(firstword $(TEST_SOURCES)))
-	ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="lib/?.lua;tests/?.lua" pandoc -f $(firstword $(TEST_SOURCES)) </dev/null
+	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="lib/?.lua;tests/?.lua" $(PANDOC) -f $(firstword $(TEST_SOURCES)) </dev/null
 	@touch $@
 
 ###############################################################################
@@ -517,39 +492,37 @@ doc: $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD)/doc/index.html
 
 CSS = doc/src/luax.css
 
-PANDOC = panda
-PANDOC += --lua-filter doc/src/fix_links.lua
-PANDOC += --fail-if-warnings
-PANDOC += --table-of-contents --toc-depth=3
-PANDOC += --highlight-style=tango
-PANDOC += --css=$(CSS)
+PANDA_OPT += --lua-filter doc/src/fix_links.lua
+PANDA_OPT += --fail-if-warnings
 
-PANDOC_HTML = $(PANDOC) -t html5
-PANDOC_HTML += --embed-resources --standalone
+PANDA_HTML_OPT += --embed-resources --standalone
+PANDA_HTML_OPT += --css=$(CSS)
+PANDA_HTML_OPT += --table-of-contents --toc-depth=3
+PANDA_HTML_OPT += --highlight-style=tango
 
-PANDOC_GFM = $(PANDOC) -t gfm
+PANDA_GFM_OPT = $(PANDA_OPT)
 
-doc/%.md: doc/src/%.md
+doc/%.md: doc/src/%.md | $(PANDA)
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(BUILD)/doc/src/
-	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD)/doc/src/$(notdir $@).d $(PANDOC_GFM) $< -o $@
+	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD)/doc/src/$(notdir $@).d $(PANDA_GFM) $(PANDA_GFM_OPT) $< -o $@
 
 $(BUILD)/doc/%.md: doc/%.md
 	@$(call cyan,"DOC",$@)
 	@cp -f $< $@
 
-$(BUILD)/doc/%.html: doc/src/%.md $(CSS)
+$(BUILD)/doc/%.html: doc/src/%.md $(CSS) | $(PANDA)
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(dir $@)
-	@PANDA_TARGET=$@ $(PANDOC_HTML) $< -o $@
+	@PANDA_TARGET=$@ $(PANDA_HTML) $(PANDA_HTML_OPT) $< -o $@
 
 $(BUILD)/doc/index.html: $(BUILD)/doc/luax.html
 	@$(call cyan,"DOC",$@)
 	@cp -f $< $@
 
-README.md: doc/src/luax.md doc/src/fix_links.lua
+README.md: doc/src/luax.md doc/src/fix_links.lua | $(PANDA)
 	@$(call cyan,"DOC",$@)
-	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD)/doc/src/$(notdir $@).d $(PANDOC_GFM) $< -o $@
+	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD)/doc/src/$(notdir $@).d $(PANDA_GFM) $(PANDA_GFM_OPT) $< -o $@
 
 -include $(BUILD)/doc/*.d
 -include $(BUILD)/doc/src/*.d
