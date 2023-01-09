@@ -232,8 +232,10 @@ return function()
 
     eq(fs.sep, sys.os == "windows" and "\\" or "/")
 
-    fs.write(fs.join(tmp, "new_file"), "content of the new file", "...", {"a", {"b", "c"}})
-    eq(fs.read(fs.join(tmp, "new_file")), "content of the new file...abc")
+    fs.write    (fs.join(tmp, "new_file_txt"), "content of the new file\r\n", "...", {"a", {"b", "c"}})
+    fs.write_bin(fs.join(tmp, "new_file_bin"), "content of the new file\r\n", "...", {"a", {"b", "c"}})
+    eq(fs.read    (fs.join(tmp, "new_file_txt")), "content of the new file\r\n...abc")
+    eq(fs.read_bin(fs.join(tmp, "new_file_bin")), "content of the new file\r\n...abc")
 
     eq(fs.rmdir(tmp), true)
 

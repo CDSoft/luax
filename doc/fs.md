@@ -252,10 +252,22 @@ calls `f(tmp)` where `tmp` is the name of a temporary directory.
 fs.read(filename)
 ```
 
-returns the content of the file `filename`.
+returns the content of the text file `filename`.
 
 ``` lua
 fs.write(filename, ...)
 ```
 
-write `...` to the file `filename`.
+write `...` to the text file `filename`.
+
+``` lua
+fs.read_bin(filename)
+```
+
+returns the content of the binary file `filename`.
+
+``` lua
+fs.write_bin(filename, ...)
+```
+
+write `...` to the binary file `filename`.
