@@ -197,7 +197,7 @@ F.op = {}
 ```lua
 F.op.land(a, b)             -- a and b
 F.op.lor(a, b)              -- a or b
-F.op.lxor(a, b)             -- (a and not b) or (b and not a)
+F.op.lxor(a, b)             -- (not a and b) or (not b and a)
 F.op.lnot(a)                -- not a
 ```
 > Logical operators
@@ -205,7 +205,7 @@ F.op.lnot(a)                -- not a
 
 F.op.land = function(a, b) return a and b end
 F.op.lor = function(a, b) return a or b end
-F.op.lxor = function(a, b) return (a and not b) or (b and not a) end
+F.op.lxor = function(a, b) return (not a and b) or (not b and a) end
 F.op.lnot = function(a) return not a end
 
 --[[@@@

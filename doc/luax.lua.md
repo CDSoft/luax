@@ -36,7 +36,7 @@ languages, especially by these Haskell modules:
 ``` lua
 F.op.land(a, b)             -- a and b
 F.op.lor(a, b)              -- a or b
-F.op.lxor(a, b)             -- (a and not b) or (b and not a)
+F.op.lxor(a, b)             -- (not a and b) or (not b and a)
 F.op.lnot(a)                -- not a
 ```
 

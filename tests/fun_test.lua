@@ -50,6 +50,24 @@ local function basic_data_types()
     eq(F.op.lnot(false), true)
     eq(F.op.lnot(true), false)
 
+    eq(F.op.land(nil, nil), nil)
+    eq(F.op.land(nil, 2), nil)
+    eq(F.op.land(1, nil), nil)
+    eq(F.op.land(1, 2), 2)
+
+    eq(F.op.lor(nil, nil), nil)
+    eq(F.op.lor(nil, 2), 2)
+    eq(F.op.lor(1, nil), 1)
+    eq(F.op.lor(1, 2), 1)
+
+    eq(F.op.lxor(nil, nil), nil)
+    eq(F.op.lxor(nil, 2), 2)
+    eq(F.op.lxor(1, nil), 1)
+    eq(F.op.lxor(1, 2), false)
+
+    eq(F.op.lnot(nil), true)
+    eq(F.op.lnot(1), false)
+
     for a = 0, 255 do
         for b = 0, 255 do
             eq(F.op.band(a, b), a & b)
