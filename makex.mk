@@ -106,12 +106,12 @@ help: welcome
 	@echo ''
 	@echo 'Targets:'
 	@awk '/^[a-zA-Z\-_0-9]+:/ { \
-		helpMessage = match(lastLine, /^## (.*)/); \
-		if (helpMessage) { \
-			helpCommand = substr($$1, 0, index($$1, ":")-1); \
-			helpMessage = substr(lastLine, RSTART + 3, RLENGTH); \
-			printf "  ${TARGET_COLOR}%-$(MAKEX_HELP_TARGET_MAX_LEN)s${NORMAL} ${TEXT_COLOR}%s${NORMAL}\n", helpCommand, helpMessage; \
-		} \
+	    helpMessage = match(lastLine, /^## (.*)/); \
+	    if (helpMessage) { \
+	        helpCommand = substr($$1, 0, index($$1, ":")-1); \
+	        helpMessage = substr(lastLine, RSTART + 3, RLENGTH); \
+	        printf "  ${TARGET_COLOR}%-$(MAKEX_HELP_TARGET_MAX_LEN)s${NORMAL} ${TEXT_COLOR}%s${NORMAL}\n", helpCommand, helpMessage; \
+	    } \
 	} \
 	{ lastLine = $$0 }' $(MAKEFILE_LIST)
 
@@ -163,9 +163,9 @@ $(PANDOC): | $(MAKEX_CACHE) $(MAKEX_CACHE)/pandoc $(dir $(PANDOC))
 	@echo "$(MAKEX_COLOR)[MAKEX]$(NORMAL) $(TEXT_COLOR)install Pandoc$(NORMAL)"
 	@test -f $(@) \
 	|| \
-	( 	wget -c $(PANDOC_URL) -O $(MAKEX_CACHE)/pandoc/$(notdir $(PANDOC_URL)) \
-		&& tar -C $(MAKEX_CACHE)/pandoc -xzf $(MAKEX_CACHE)/pandoc/$(notdir $(PANDOC_URL)) \
-		&& cp -P $(MAKEX_CACHE)/pandoc/pandoc-$(PANDOC_VERSION)/bin/* $(dir $@) \
+	(   wget -c $(PANDOC_URL) -O $(MAKEX_CACHE)/pandoc/$(notdir $(PANDOC_URL)) \
+	    && tar -C $(MAKEX_CACHE)/pandoc -xzf $(MAKEX_CACHE)/pandoc/$(notdir $(PANDOC_URL)) \
+	    && cp -P $(MAKEX_CACHE)/pandoc/pandoc-$(PANDOC_VERSION)/bin/* $(dir $@) \
 	)
 
 makex-install: makex-install-pandoc
@@ -189,14 +189,14 @@ $(PANDA): | $(PANDOC) $(MAKEX_CACHE) $(dir $(PANDA))
 	@echo "$(MAKEX_COLOR)[MAKEX]$(NORMAL) $(TEXT_COLOR)install Panda$(NORMAL)"
 	@test -f $(@) \
 	|| \
-	(	(	test -d $(MAKEX_CACHE)/panda \
-			&& ( cd $(MAKEX_CACHE)/panda && git pull ) \
-			|| git clone $(PANDA_URL) $(MAKEX_CACHE)/panda \
-		) \
-		&& cd $(MAKEX_CACHE)/panda \
-		&& git checkout $(PANDA_VERSION) \
-		&& make install-all PREFIX=$(realpath $(dir $@)) \
-		&& sed -i 's#^pandoc #$(PANDOC) #' $@ \
+	(   (   test -d $(MAKEX_CACHE)/panda \
+	        && ( cd $(MAKEX_CACHE)/panda && git pull ) \
+	        || git clone $(PANDA_URL) $(MAKEX_CACHE)/panda \
+	    ) \
+	    && cd $(MAKEX_CACHE)/panda \
+	    && git checkout $(PANDA_VERSION) \
+	    && make install-all PREFIX=$(realpath $(dir $@)) \
+	    && sed -i 's#^pandoc #$(PANDOC) #' $@ \
 	)
 
 makex-install: makex-install-panda
