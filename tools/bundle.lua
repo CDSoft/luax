@@ -22,6 +22,10 @@ http://cdelord.fr/luax
 
 local bundle = {}
 
+local fs = require "fs"
+local lz4 = require "lz4"
+local crypt = require "crypt"
+
 bundle.magic = string.unpack("<I4", "LuaX")
 
 local header_format = "<I4I4"
@@ -44,10 +48,6 @@ local function Bundle()
     function self.emit(s) fragments[#fragments+1] = s end
     function self.get() return table.concat(fragments) end
     return self
-end
-
-local function basename(path)
-    return path:gsub(".-([^/\\]+)$", "%1")
 end
 
 local function strip_ext(path)
@@ -77,8 +77,8 @@ function bundle.bundle(arg)
             local_path = local_path or arg[i]
             scripts[#scripts+1] = {
                 local_path = local_path,
-                path = dest_path or basename(local_path),
-                name = dest_path and strip_ext(dest_path) or basename(strip_ext(local_path)),
+                path = dest_path or fs.basename(local_path),
+                name = dest_path and strip_ext(dest_path) or fs.basename(strip_ext(local_path)),
                 autoload = autoload_next or autoload_all,
                 autoexec = autoexec_next or autoexec_all,
             }
@@ -127,10 +127,10 @@ function bundle.bundle(arg)
     end
     plain.emit "end\n"
 
-    local payload = require"lz4".lz4(plain.get())
+    local payload = lz4.lz4(plain.get())
 
     if format == "binary" then
-        payload = require"crypt".aes(payload)
+        payload = crypt.aes(payload)
         local chunk = Bundle()
         local header = header_format:pack(#payload, bundle.magic)
         chunk.emit(payload)
@@ -139,7 +139,7 @@ function bundle.bundle(arg)
     end
 
     if format == "ascii" then
-        payload = require"crypt".rc4(payload)
+        payload = crypt.rc4(payload)
         local hex = Bundle()
         local _ = payload:gsub(".", function(c)
             hex.emit(("'\\x%02X',"):format(c:byte()))

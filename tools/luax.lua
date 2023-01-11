@@ -22,6 +22,7 @@ local fs = require "fs"
 local sys = require "sys"
 local F = require "fun"
 local I = F.I(_G)
+local targets = require "targets"
 
 local welcome = I(sys)[[
  _               __  __  |  http://cdelord.fr/luax
@@ -106,7 +107,7 @@ local function findpath(name)
 end
 
 local function print_targets()
-    F(require "targets"):map(function(target)
+    targets:map(function(target)
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..target..ext(target))
         print(("%-20s%s%s"):format(target, compiler, fs.is_file(compiler) and "" or " [NOT FOUND]"))
     end)
@@ -536,7 +537,7 @@ local function run_compiler()
     end
 
     -- Compile scripts for each targets
-    local valid_targets = F.from_set(F.const(true), require "targets")
+    local valid_targets = F.from_set(F.const(true), targets)
     local compilers = {}
     local function rmext(compiler_target, name) return name:gsub(ext(compiler_target):gsub("%.", "%%.").."$", "") end
     F(target == "all" and valid_targets:keys() or target and {target} or {}):map(function(compiler_target)
