@@ -462,6 +462,16 @@ local function convert_to_and_from_string()
     eq(F.read("42"), 42)
     eq(F.read("{1, 3, x=2}"), {1, x=2, 3})
     eq(F.read("{1, 3, p={x=1.5, y=2.5}, x=2}"), {1, 3, p={x=1.5, y=2.5}, x=2})
+    do
+        local sts, msg = F.read("syntax error")
+        eq(sts, nil)
+        eq(msg, [[[string "return syntax error"]:1: <eof> expected near 'error']])
+    end
+    do
+        local sts, msg = F.read("0+{}")
+        eq(sts, nil)
+        eq(msg, [[[string "return 0+{}"]:1: attempt to perform arithmetic on a table value]])
+    end
 
     local t = {
         [{1,1}]   = 1,

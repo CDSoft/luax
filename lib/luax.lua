@@ -1107,7 +1107,11 @@ F.read(s)
 @@@]]
 
 function F.read(s)
-    return assert(load("return "..s))()
+    local chunk, msg = load("return "..s)
+    if chunk == nil then return nil, msg end
+    local status, value = pcall(chunk)
+    if not status then return nil, value end
+    return value
 end
 
 --[[------------------------------------------------------------------------@@@
