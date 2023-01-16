@@ -86,7 +86,7 @@ static const char *arg0(lua_State *L)
     return luaL_checkstring(L, -1);
 }
 
-static void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
+void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
 {
     char *rc4_buffer = NULL;
     size_t rc4_buffer_len = 0;

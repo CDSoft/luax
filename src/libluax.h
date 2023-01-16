@@ -22,6 +22,9 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
+#include <stdlib.h>
+
 LUAMOD_API int luaopen_luax(lua_State *L);
 
+void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len);
 int run_buffer(lua_State *L, char *buffer, size_t size, const char *name);

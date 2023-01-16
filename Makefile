@@ -381,7 +381,12 @@ $(LUAX0): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
 # Code generation
 ###############################################################################
 
-CRYPT_KEY_HASH := $(shell echo -n $(CRYPT_KEY) | sha512sum -b | cut -d" " -f1 | sed 's/\(..\)/\\x\1/g')
+CRYPT_KEY_HASH := $(shell \
+	echo -n $(CRYPT_KEY) \
+	| cksum -a blake2b --untagged \
+	| cut -d" " -f1 \
+	| sed 's/\(..\)/\\x\1/g' \
+)
 
 $(LUAX_CONFIG): $(wildcard .git/refs/tags) $(wildcard .git/index)
 	@$(call cyan,"GEN",$@)

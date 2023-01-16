@@ -127,26 +127,17 @@ function bundle.bundle(arg)
     end
     plain.emit "end\n"
 
-    local payload = lz4.lz4(plain.get())
+    local payload = crypt.rc4(lz4.lz4(plain.get()))
 
     if format == "binary" then
-        payload = crypt.aes(payload)
-        local chunk = Bundle()
-        local header = header_format:pack(#payload, bundle.magic)
-        chunk.emit(payload)
-        chunk.emit(header)
-        return chunk.get()
+        return payload .. header_format:pack(#payload, bundle.magic)
     end
 
     if format == "ascii" then
-        payload = crypt.rc4(payload)
-        local hex = Bundle()
-        local _ = payload:gsub(".", function(c)
-            hex.emit(("'\\x%02X',"):format(c:byte()))
-        end)
-        hex.emit "\n"
-        return hex:get()
+        return crypt.hex(payload):gsub("..", "'\\x%0',") .. "\n"
     end
+
+    error(format..": invalid format")
 
 end
 

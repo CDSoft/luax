@@ -63,28 +63,6 @@ static void createargtable(lua_State *L, const char **argv, int argc, int shift)
 
 #if RUNTIME == 1
 
-static void decode_payload(const char *input, size_t input_len, char **output, size_t *output_len)
-{
-    char *decrypted_buffer = NULL;
-    char *decrypted = NULL;
-    size_t decrypted_len = 0;
-
-    const char *err = aes_decrypt_runtime((const uint8_t *)input, input_len, (uint8_t **)&decrypted_buffer, (uint8_t **)&decrypted, &decrypted_len);
-    if (err != NULL)
-    {
-        fprintf(stderr, "Runtime error: %s\n", err);
-        exit(EXIT_FAILURE);
-    }
-
-    err = lz4_decompress(decrypted, decrypted_len, output, output_len);
-    free(decrypted_buffer);
-    if (err != NULL)
-    {
-        fprintf(stderr, "Runtime error: %s\n", err);
-        exit(EXIT_FAILURE);
-    }
-}
-
 static inline uint32_t littleendian(uint32_t n)
 {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
@@ -126,7 +104,7 @@ int luax_run(lua_State *L, const char *exe, const char *argv[])
     fclose(f);
     char *decoded_chunk = NULL;
     size_t decoded_chunk_len = 0;
-    decode_payload(chunk, header.size, &decoded_chunk, &decoded_chunk_len);
+    decode_runtime(chunk, header.size, &decoded_chunk, &decoded_chunk_len);
     free(chunk);
     const int status = run_buffer(L, decoded_chunk, decoded_chunk_len, "=");
     free(decoded_chunk);
