@@ -65,7 +65,7 @@ endif
 
 .DEFAULT_GOAL := compile
 
-# include a reduced version of makex to install LuaX test dependencies
+# include makex to install LuaX doc and test dependencies
 include makex.mk
 
 ###############################################################################
