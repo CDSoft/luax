@@ -134,6 +134,7 @@ mrproper: clean makex-clean
 .PHONY: update-luasocket
 .PHONY: update-lpeg
 .PHONY: update-inspect
+.PHONY: update-serpent
 .PHONY: update-tinycrypt
 .PHONY: update-lz4
 
@@ -169,6 +170,10 @@ INSPECT_VERSION = master
 INSPECT_ARCHIVE = inspect-$(INSPECT_VERSION).zip
 INSPECT_URL = https://github.com/kikito/inspect.lua/archive/refs/heads/$(INSPECT_VERSION).zip
 
+SERPENT_VERSION = master
+SERPENT_ARCHIVE = serpent-$(SERPENT_VERSION).zip
+SERPENT_URL = https://github.com/pkulchenko/serpent/archive/refs/heads/$(SERPENT_VERSION).zip
+
 TINYCRYPT_VERSION = master
 TINYCRYPT_ARCHIVE = tinycrypt-$(TINYCRYPT_VERSION).zip
 TINYCRYPT_URL = https://github.com/intel/tinycrypt/archive/refs/heads/$(TINYCRYPT_VERSION).zip
@@ -187,6 +192,7 @@ update: update-linenoise
 update: update-luasocket
 update: update-lpeg
 update: update-inspect
+update: update-serpent
 update: update-tinycrypt
 update: update-lz4
 
@@ -281,6 +287,15 @@ update-inspect: $(BUILD)/$(INSPECT_ARCHIVE)
 $(BUILD)/$(INSPECT_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(INSPECT_URL) -O $@
+
+## Update serpent sources
+update-serpent: $(BUILD)/$(SERPENT_ARCHIVE)
+	rm -f src/serpent/serpent.lua
+	unzip -j $< '*/serpent.lua' -d src/serpent
+
+$(BUILD)/$(SERPENT_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(SERPENT_URL) -O $@
 
 ## Update tinycrypt sources
 update-tinycrypt: $(BUILD)/$(TINYCRYPT_ARCHIVE)

@@ -161,6 +161,7 @@ and [lapp](http://cdelord.fr/lapp).
 - [linenoise](doc/linenoise.md): light readline alternative
 - [luasocket](doc/luasocket.md): Network support for the Lua language
 - [inspect](doc/inspect.md): Human-readable representation of Lua tables
+- [serpent](doc/serpent.md): Lua serializer and pretty printer
 
 ## Shared libraries
 
@@ -230,6 +231,9 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
 - **[inspect](https://github.com/kikito/inspect.lua)**: Human-readable
   representation of Lua tables ([MIT
   license](https://github.com/kikito/inspect.lua/blob/master/MIT-LICENSE.txt))
+- **[serpent](https://github.com/pkulchenko/serpent)**: Lua serializer
+  and pretty printer. ([MIT
+  license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))
 - **[TinyCrypt](https://github.com/intel/tinycrypt)**: tinycrypt is a
   library of cryptographic algorithms with a focus on small, simple
   implementation

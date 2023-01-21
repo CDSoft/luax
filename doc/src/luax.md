@@ -163,6 +163,7 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 - [linenoise](linenoise.md): light readline alternative
 - [luasocket](luasocket.md): Network support for the Lua language
 - [inspect](inspect.md): Human-readable representation of Lua tables
+- [serpent](serpent.md): Lua serializer and pretty printer
 
 ## Shared libraries
 
@@ -225,13 +226,16 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
 * **[luasocket](https://github.com/diegonehab/luasocket)**: Network support for
   the Lua language ([LuaSocket 3.0
   license](https://github.com/diegonehab/luasocket/blob/master/LICENSE))
-* **[linenoise](https://github.com/antirez/linenoise)**:  A small
-  self-contained alternative to readline and libedit ([BSD-2-Clause
+* **[linenoise](https://github.com/antirez/linenoise)**: A small self-contained
+  alternative to readline and libedit ([BSD-2-Clause
   license](https://github.com/antirez/linenoise/blob/master/LICENSE))
-* **[inspect](https://github.com/kikito/inspect.lua)**:  Human-readable
+* **[inspect](https://github.com/kikito/inspect.lua)**: Human-readable
   representation of Lua tables ([MIT
   license](https://github.com/kikito/inspect.lua/blob/master/MIT-LICENSE.txt))
-* **[TinyCrypt](https://github.com/intel/tinycrypt)**:  tinycrypt is a library
+* **[serpent](https://github.com/pkulchenko/serpent)**: Lua serializer and
+  pretty printer. ([MIT
+  license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))
+* **[TinyCrypt](https://github.com/intel/tinycrypt)**: tinycrypt is a library
   of cryptographic algorithms with a focus on small, simple implementation
   ([License](https://github.com/intel/tinycrypt/blob/master/LICENSE))
 * **[LZ4](https://github.com/lz4/lz4)**: Extremely Fast Compression algorithm

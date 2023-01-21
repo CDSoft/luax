@@ -39,6 +39,7 @@ require "lpeg_test"()
 require "complex_test"()
 require "socket_test"()
 require "inspect_test"()
+require "serpent_test"()
 require "lz4_test"()
 
 -- explicit exit to close the Pandoc Lua reader
