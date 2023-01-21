@@ -54,11 +54,11 @@
 # LETTER
 #     shortcut to panda with some default parameters
 #     to generate a letter
-# STACK
-#     path to the stack executable
-#     (see https://docs.haskellstack.org/en/stable/)
-# STACK_CMD
-#     stack command that sets stack-root and resolver
+# GHCUP, GHC, CABAL, STACK
+#     path to the ghcup, ghc, cabal, stack executables
+#     (see https://www.haskell.org/ghcup/)
+# GHC_CMD, CABAL_CMD, STACK_CMD
+#     ghc, cabal and stack commands executed through ghcup
 #
 # It also adds some targets:
 #
@@ -74,8 +74,8 @@
 #     install pandoc
 # makex-install-panda
 #     install panda
-# makex-install-stack
-#     install stack
+# makex-install-ghcup
+#     install ghcup
 # help
 #     runs the `welcome` target (user defined)
 #     and lists the targets with their documentation
@@ -116,11 +116,14 @@ PANDOC_LETTER_VERSION = master
 # PANDA_VERSION is a tag or branch name in the Panda repository
 PANDA_VERSION ?= master
 
-# STACK_LTS is the Haskell stack LTS version
-STACK_LTS ?= lts-20.5
+# GHCUP_INSTALL_BASE_PREFIX is the base of ghcup
+GHCUP_INSTALL_BASE_PREFIX ?= $(MAKEX_INSTALL_PATH)/haskell
 
-# STACK_VERSION is the version of stack
-STACK_VERSION ?= 2.9.1
+# HASKELL_GHC_VERSION is the ghc version to install
+HASKELL_GHC_VERSION ?= recommended
+
+# HASKELL_CABAL_VERSION is the cabal version to install
+HASKELL_CABAL_VERSION ?= recommended
 
 #}}}
 
@@ -379,38 +382,37 @@ makex-install: makex-install-panda
 makex-install-panda: $(PANDA)
 
 ###########################################################################
-# Haskell Stack
+# Haskell (via GHCup)
 ###########################################################################
 
-ifeq ($(MAKEX_OS)-$(MAKEX_ARCH),Linux-x86_64)
-STACK_ARCHIVE = stack-$(STACK_VERSION)-linux-x86_64.tar.gz
-endif
+GHCUP = $(GHCUP_INSTALL_BASE_PREFIX)/.ghcup/bin/ghcup
+GHC = $(dir $(GHCUP))/ghc
+CABAL = $(dir $(GHCUP))/cabal
+STACK = $(dir $(GHCUP))/stack
 
-STACK_URL = https://github.com/commercialhaskell/stack/releases/download/v$(STACK_VERSION)/$(STACK_ARCHIVE)
-STACK = $(MAKEX_INSTALL_PATH)/stack/$(STACK_VERSION)/stack
+export PATH := $(dir $(GHCUP)):$(HOME)/.cabal:$(PATH)
 
-export PATH := $(dir $(STACK)):$(PATH)
+export GHCUP_INSTALL_BASE_PREFIX
+export GHCUP_SKIP_UPDATE_CHECK=yes
 
-check_stack_architecture:
-	@test -n "$(STACK_ARCHIVE)" \
-	|| (echo "$(BG_RED)ERROR$(NORMAL)$(RED): $(MAKEX_OS)-$(MAKEX_ARCH): Unknown archivecture, can not install stack$(NORMAL)"; false)
-
-$(dir $(STACK)) $(MAKEX_CACHE)/stack:
-	@mkdir -p $@
-
-$(STACK): check_stack_architecture | $(MAKEX_CACHE)/stack $(dir $(STACK))
-	@echo "$(MAKEX_COLOR)[MAKEX]$(NORMAL) $(TEXT_COLOR)install Haskell Stack$(NORMAL)"
+$(GHCUP) $(GHC) $(CABAL) $(STACK):
+	@echo "$(MAKEX_COLOR)[MAKEX]$(NORMAL) $(TEXT_COLOR)install GHCup (ghc, cabal, stack and hls)$(NORMAL)"
 	@test -f $@ \
 	|| \
-	(   wget $(STACK_URL) -O $(MAKEX_CACHE)/stack/$(notdir $(STACK_URL)) \
-	    && tar -C $(MAKEX_CACHE)/stack -xzf $(MAKEX_CACHE)/stack/$(notdir $(STACK_URL)) \
-	    && cp $(MAKEX_CACHE)/stack/stack-$(STACK_VERSION)-linux-x86_64/stack $@ \
+	(   export GHCUP_INSTALL_BASE_PREFIX="$(GHCUP_INSTALL_BASE_PREFIX)"; \
+	    export BOOTSTRAP_HASKELL_NONINTERACTIVE=yes; \
+	    export BOOTSTRAP_HASKELL_GHC_VERSION=$(HASKELL_GHC_VERSION); \
+	    export BOOTSTRAP_HASKELL_CABAL_VERSION=$(HASKELL_CABAL_VERSION); \
+	    export BOOTSTRAP_HASKELL_INSTALL_HLS=yes; \
+	    curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh \
 	)
 
-STACK_CMD = $(STACK) --stack-root=$(dir $(STACK))/.stack --resolver=$(STACK_LTS)
+GHC_CMD   = $(GHCUP) run ghc --
+CABAL_CMD = $(GHCUP) run cabal --
+STACK_CMD = $(GHCUP) run stack -- --stack-root=$(GHCUP_INSTALL_BASE_PREFIX)/.stack
 
-makex-install: makex-install-stack
-makex-install-stack: $(STACK)
+makex-install: makex-install-ghcup
+makex-install-ghcup: $(GHCUP)
 
 ###########################################################################
 # Panda shortcuts
