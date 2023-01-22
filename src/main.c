@@ -54,7 +54,7 @@ int main(int argc, const char *argv[])
 
 #else
 
-    /* Lua script execution (bootstrap interpretor with no LuaX runtime and payload) */
+    /* Lua script execution (bootstrap interpreter with no LuaX runtime and payload) */
 
     if (argc == 3 && strcmp(argv[1], "-e") == 0)
     {

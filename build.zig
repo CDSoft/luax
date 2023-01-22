@@ -25,7 +25,7 @@ const src_path = "src";
 const build_path = ".build";
 
 const lua_c_files = [_][]const u8 {
-    // Lua interpretor
+    // Lua interpreter
     "lua/lapi.c",
     "lua/lauxlib.c",
     "lua/lbaselib.c",

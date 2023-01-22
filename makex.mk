@@ -24,7 +24,7 @@
 # makex defines some make variable that can be used to execute makex tools:
 #
 # LUAX
-#     path to the LuaX interpretor (see https://github.com/CDSoft/luax)
+#     path to the LuaX interpreter (see https://github.com/CDSoft/luax)
 # UPP
 #     path to the upp executable (see https://github.com/CDSoft/upp)
 # PANDA

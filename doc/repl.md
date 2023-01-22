@@ -2,32 +2,32 @@
 
 The LuaX REPL can be run in various environments:
 
-- the full featured LuaX interpretor based on the LuaX runtime
-- the reduced version running on a vanilla Lua interpretor
+- the full featured LuaX interpreter based on the LuaX runtime
+- the reduced version running on a vanilla Lua interpreter
 
-## Full featured LuaX interpretor
+## Full featured LuaX interpreter
 
-### Self-contained interpretor
+### Self-contained interpreter
 
 ``` sh
 $ luax
 ```
 
-### Shared library usable with a standard Lua interpretor
+### Shared library usable with a standard Lua interpreter
 
 ``` sh
 $ LUA_CPATH="lib/?.so" lua -l luax-x86_64-linux-gnu
 ```
 
-## Reduced version for vanilla Lua interpretors
+## Reduced version for vanilla Lua interpreters
 
-### LuaX with a vanilla Lua interpretor
+### LuaX with a vanilla Lua interpreter
 
 ``` sh
 lua luaxcli.lua
 ```
 
-### LuaX with the Pandoc Lua interpretor
+### LuaX with the Pandoc Lua interpreter
 
 ``` sh
 pandoc lua luaxcli.lua
@@ -51,7 +51,7 @@ Pandoc (Meta {unMeta = fromList []}) [Para [Emph [Str "Pandoc"],Space,Str "is",S
 ```
 
 Note that [rlwrap](https://github.com/hanslub42/rlwrap) can be used to
-give nice edition facilities to the Pandoc Lua interpretor.
+give nice edition facilities to the Pandoc Lua interpreter.
 
 ## Additional modules
 

@@ -1,6 +1,6 @@
 # Lua eXtended
 
-`luax` is a Lua interpretor and REPL based on Lua 5.4.4, augmented with
+`luax` is a Lua interpreter and REPL based on Lua 5.4.4, augmented with
 some useful packages. `luax` can also produces standalone executables
 from Lua scripts.
 
@@ -166,7 +166,7 @@ and [lapp](http://cdelord.fr/lapp).
 
 LuaX is also available as a shared library. This shared library is a Lua
 module that can be loaded with `require`. It provides the same modules
-than the LuaX executable and can be used by a regular Lua interpretor
+than the LuaX executable and can be used by a regular Lua interpreter
 (e.g.: lua, pandoc, …).
 
 E.g.:

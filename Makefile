@@ -90,7 +90,7 @@ welcome:
 	@echo '${CYAN}Lua${NORMAL} e${CYAN}X${NORMAL}tended'
 	@echo 'Copyright (C) 2021-2022 Christophe Delord (http://cdelord.fr/luax)'
 	@echo ''
-	@echo '${CYAN}luax${NORMAL} is a Lua interpretor and REPL based on Lua 5.4.4'
+	@echo '${CYAN}luax${NORMAL} is a Lua interpreter and REPL based on Lua 5.4.4'
 	@echo 'augmented with some useful packages.'
 	@echo '${CYAN}luax${NORMAL} can also produces standalone executables from Lua scripts.'
 	@echo ''
@@ -375,7 +375,7 @@ $(ZIG_ARCHIVE):
 	@test -f $@ || wget $(ZIG_URL) -O $@
 
 ###############################################################################
-# Native Lua interpretor
+# Native Lua interpreter
 ###############################################################################
 
 # avoid being polluted by user definitions
@@ -526,22 +526,22 @@ $(BUILD)/test-lib.ok: $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC) $(TEST_SOURCES) $(LUA)
 	@touch $@
 
 $(BUILD)/test-lua.ok: $(LUA) lib/luax.lua $(TEST_SOURCES)
-	@$(call cyan,"TEST",Vanilla Lua interpretor: $(firstword $(TEST_SOURCES)))
+	@$(call cyan,"TEST",Vanilla Lua interpreter: $(firstword $(TEST_SOURCES)))
 	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="lib/?.lua;tests/?.lua" $(LUA) -l luax $(firstword $(TEST_SOURCES)) Lua is great
 	@touch $@
 
 $(BUILD)/test-lua-luaxcli.ok: $(LUA) $(LUAX_CLI) $(TEST_SOURCES)
-	@$(call cyan,"TEST",Vanilla Lua interpretor + $(notdir $(LUAX_CLI)): $(firstword $(TEST_SOURCES)))
+	@$(call cyan,"TEST",Vanilla Lua interpreter + $(notdir $(LUAX_CLI)): $(firstword $(TEST_SOURCES)))
 	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="tests/?.lua" $(LUA) $(LUAX_CLI) $(firstword $(TEST_SOURCES)) Lua is great
 	@touch $@
 
 $(BUILD)/test-pandoc.ok: lib/luax.lua $(TEST_SOURCES) | $(PANDOC)
-	@$(call cyan,"TEST",Pandoc Lua interpretor: $(firstword $(TEST_SOURCES)))
+	@$(call cyan,"TEST",Pandoc Lua interpreter: $(firstword $(TEST_SOURCES)))
 	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="lib/?.lua;tests/?.lua" $(PANDOC) -f $(firstword $(TEST_SOURCES)) </dev/null
 	@touch $@
 
 $(BUILD)/test-pandoc-luaxcli.ok: $(LUAX_CLI) $(TEST_SOURCES) | $(PANDOC)
-	@$(call cyan,"TEST",Pandoc Lua interpretor + $(notdir $(LUAX_CLI)): $(firstword $(TEST_SOURCES)))
+	@$(call cyan,"TEST",Pandoc Lua interpreter + $(notdir $(LUAX_CLI)): $(firstword $(TEST_SOURCES)))
 	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="tests/?.lua" $(PANDOC) lua $(LUAX_CLI) $(firstword $(TEST_SOURCES)) </dev/null
 	@touch $@
 

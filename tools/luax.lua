@@ -142,7 +142,7 @@ end
 
 -- Read options
 
-local interpretor_mode = false
+local interpreter_mode = false
 local compiler_mode = false
 local interactive = #arg == 0
 local run_stdin = false
@@ -166,32 +166,32 @@ local actions = setmetatable({
 
 The LuaX REPL can be run in various environments:
 
-- the full featured LuaX interpretor based on the LuaX runtime
-- the reduced version running on a vanilla Lua interpretor
+- the full featured LuaX interpreter based on the LuaX runtime
+- the reduced version running on a vanilla Lua interpreter
 
-## Full featured LuaX interpretor
+## Full featured LuaX interpreter
 
-### Self-contained interpretor
+### Self-contained interpreter
 
 ``` sh
 $ luax
 ```
 
-### Shared library usable with a standard Lua interpretor
+### Shared library usable with a standard Lua interpreter
 
 ``` sh
 $ LUA_CPATH="lib/?.so" lua -l luax-x86_64-linux-gnu
 ```
 
-## Reduced version for vanilla Lua interpretors
+## Reduced version for vanilla Lua interpreters
 
-### LuaX with a vanilla Lua interpretor
+### LuaX with a vanilla Lua interpreter
 
 ``` sh
 lua luaxcli.lua
 ```
 
-### LuaX with the Pandoc Lua interpretor
+### LuaX with the Pandoc Lua interpreter
 
 ``` sh
 pandoc lua luaxcli.lua
@@ -216,7 +216,7 @@ Pandoc (Meta {unMeta = fromList []}) [Para [Emph [Str "Pandoc"],Space,Str "is",S
 ```
 
 Note that [rlwrap](https://github.com/hanslub42/rlwrap)
-can be used to give nice edition facilities to the Pandoc Lua interpretor.
+can be used to give nice edition facilities to the Pandoc Lua interpreter.
 
 @@@]=]
 
@@ -403,7 +403,7 @@ do
     while i <= #arg do
         local a = arg[i]
         if a == '-e' then
-            interpretor_mode = true
+            interpreter_mode = true
             i = i+1
             local stat = arg[i]
             if stat == nil then wrong_arg(a) end
@@ -427,10 +427,10 @@ do
                 end
             end)
         elseif a == '-i' then
-            interpretor_mode = true
+            interpreter_mode = true
             interactive = true
         elseif a == '-l' then
-            interpretor_mode = true
+            interpreter_mode = true
             i = i+1
             local lib = arg[i]
             if lib == nil then wrong_arg(a) end
@@ -488,7 +488,7 @@ do
     end
 end
 
-local function run_interpretor()
+local function run_interpreter()
 
     -- scripts
 
@@ -661,9 +661,9 @@ local function run_compiler()
 
 end
 
-interpretor_mode = interpretor_mode or not compiler_mode
+interpreter_mode = interpreter_mode or not compiler_mode
 
-if interpretor_mode and compiler_mode then
+if interpreter_mode and compiler_mode then
     err "Lua options and compiler options can not be mixed"
 end
 
@@ -675,7 +675,7 @@ if interactive and run_stdin then
     err "Interactive mode and stdin execution are incompatible"
 end
 
-actions:add(compiler_mode and run_compiler or run_interpretor)
+actions:add(compiler_mode and run_compiler or run_interpreter)
 
 actions:run()
 
