@@ -70,6 +70,8 @@ else
 EXT :=
 endif
 
+LUAX_CLI = $(BUILD)/luaxcli.lua
+
 .DEFAULT_GOAL := compile
 
 # include makex to install LuaX doc and test dependencies
@@ -473,6 +475,25 @@ $(BUILD)/luax-%: $(BUILD)/luaxruntime-% $(LUAX_PACKAGES) tools/bundle.lua
 	@mv $@.tmp $@
 
 ###############################################################################
+# luax CLI (e.g. for lua or pandoc)
+###############################################################################
+
+$(LUAX_CLI): lib/luax.lua tools/luax.lua Makefile
+	@(  echo "#!/usr/bin/env lua";                  \
+	    echo "";                                    \
+	    echo "_LUAX_VERSION = '$(LUAX_VERSION)'";   \
+	    echo "";                                    \
+	    echo "--{{{ lib/luax.lua";                  \
+	    echo "do";                                  \
+	    cat lib/luax.lua;                           \
+	    echo "end";                                 \
+	    echo "--}}}";                               \
+	    echo "";                                    \
+	    cat tools/luax.lua;                         \
+	) > $@.tmp
+	@mv $@.tmp $@
+
+###############################################################################
 # Tests (native only)
 ###############################################################################
 
@@ -484,8 +505,10 @@ TEST_SOURCES := tests/main.lua $(sort $(filter-out test/main.lua,$(wildcard test
 test: $(BUILD)/test-luax.ok
 test: $(BUILD)/test-lib.ok
 test: $(BUILD)/test-lua.ok
+test: $(BUILD)/test-lua-luaxcli.ok
 ifeq ($(OS)-$(ARCH),linux-x86_64)
 test: $(BUILD)/test-pandoc.ok
+test: $(BUILD)/test-pandoc-luaxcli.ok
 endif
 
 $(BUILD)/test-luax.ok: $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
@@ -507,9 +530,19 @@ $(BUILD)/test-lua.ok: $(LUA) lib/luax.lua $(TEST_SOURCES)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="lib/?.lua;tests/?.lua" $(LUA) -l luax $(firstword $(TEST_SOURCES)) Lua is great
 	@touch $@
 
+$(BUILD)/test-lua-luaxcli.ok: $(LUA) $(LUAX_CLI) $(TEST_SOURCES)
+	@$(call cyan,"TEST",Vanilla Lua interpretor + $(notdir $(LUAX_CLI)): $(firstword $(TEST_SOURCES)))
+	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="tests/?.lua" $(LUA) $(LUAX_CLI) $(firstword $(TEST_SOURCES)) Lua is great
+	@touch $@
+
 $(BUILD)/test-pandoc.ok: lib/luax.lua $(TEST_SOURCES) | $(PANDOC)
 	@$(call cyan,"TEST",Pandoc Lua interpretor: $(firstword $(TEST_SOURCES)))
 	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="lib/?.lua;tests/?.lua" $(PANDOC) -f $(firstword $(TEST_SOURCES)) </dev/null
+	@touch $@
+
+$(BUILD)/test-pandoc-luaxcli.ok: $(LUAX_CLI) $(TEST_SOURCES) | $(PANDOC)
+	@$(call cyan,"TEST",Pandoc Lua interpretor + $(notdir $(LUAX_CLI)): $(firstword $(TEST_SOURCES)))
+	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="tests/?.lua" $(PANDOC) lua $(LUAX_CLI) $(firstword $(TEST_SOURCES)) </dev/null
 	@touch $@
 
 ###############################################################################
@@ -568,7 +601,7 @@ README.md: doc/src/luax.md doc/src/fix_links.lua | $(PANDA)
 # Archive
 ###############################################################################
 
-$(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD)/doc/index.html
+$(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) lib/luax.lua $(LUAX_CLI) $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD)/doc/index.html
 	@$(call cyan,"ARCHIVE",$@)
 	@rm -rf $(BUILD)/tar && mkdir -p $(BUILD)/tar
 	@cp README.md $(BUILD)/tar
@@ -577,4 +610,5 @@ $(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) $(HTML_OUTPUTS) $(MD_OUTPUTS) $
 	@mkdir -p $(BUILD)/tar/doc
 	@cp $(BUILD)/doc/*.{md,html} $(BUILD)/tar/doc
 	@cp lib/luax.lua $(BUILD)/tar
+	@cp $(LUAX_CLI) $(BUILD)/tar
 	@tar cJf $@ -C $(abspath $(BUILD)/tar) .

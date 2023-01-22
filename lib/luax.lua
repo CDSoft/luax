@@ -4438,13 +4438,40 @@ end
 
 --}}}
 
+--{{{ fake linenoise module
+
+local linenoise = {}
+
+function linenoise.read(prompt)
+    io.stdout:write(prompt)
+    io.stdout:flush()
+    return io.stdin:read "l"
+end
+
+linenoise.read_mask = linenoise.read
+
+linenoise.add = F.const()
+linenoise.set_len = F.const()
+linenoise.save = F.const()
+linenoise.load = F.const()
+linenoise.multi_line = F.const()
+linenoise.mask = F.const()
+
+function linenoise.clear()
+    io.stdout:write "\x1b[1;1H\x1b[2J"
+end
+
+--}}}
+
 --{{{ luax module
 local libs = {
+    luax = function() end,
     fun = function() return fun end,
     sh = function() return sh end,
     fs = function() return fs end,
     ps = function() return ps end,
     sys = function() return sys end,
+    linenoise = function() return linenoise end,
 }
 
 table.insert(package.searchers, 1, function(name) return libs[name] end)

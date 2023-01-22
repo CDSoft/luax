@@ -84,3 +84,12 @@ Got     : %s
 Expected: [%s, %s]
 ]]):format(x, a, b), 2)
 end
+
+function startswith(a, b)
+    if a:sub(1, #b) == b then return end
+    error(([[
+
+Got     : %s
+Expected: %s
+]]):format(dump(a), dump(b)), 2)
+end

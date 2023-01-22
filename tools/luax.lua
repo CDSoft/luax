@@ -22,15 +22,16 @@ local fs = require "fs"
 local sys = require "sys"
 local F = require "fun"
 local I = F.I(_G)
-local config = require "luax_config"
 
-local welcome = I(sys)[[
+local has_compiler = pcall(require, "bundle")
+
+local welcome = I{sys=sys}[[
  _               __  __  |  http://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |
 | |  | | | |/ _` |\  /   |  Version $(_LUAX_VERSION)
 | |__| |_| | (_| |/  \   |  Powered by $(_VERSION)
-|_____\__,_|\__,_/_/\_\  |
-                         |  $(os:cap()) $(arch) $(abi)
+|_____\__,_|\__,_/_/\_\  |$(PANDOC_VERSION and "  and Pandoc "..tostring(PANDOC_VERSION) or "")
+                         |  $(sys.os:cap()) $(sys.arch) $(sys.abi)
 ]]
 
 local LUA_INIT = F{
@@ -38,7 +39,8 @@ local LUA_INIT = F{
     "LUA_INIT",
 }
 
-local usage = I{fs=fs,init=LUA_INIT}[==[
+local usage = F.unlines(F.flatten {
+    I{fs=fs}[==[
 usage: $(fs.basename(arg[0])) [options] [script [args]]
 
 General options:
@@ -52,7 +54,8 @@ Lua options:
   -l name           require library 'name' into global 'name'
   -                 stop handling options and execute stdin
                     (incompatible with -i)
-
+]==],
+    has_compiler and [==[
 Compilation options:
   -t target         name of the targetted platform
   -t all            compile for all available targets
@@ -75,7 +78,8 @@ Scripts for compilation:
   -autoexec-none    cancel -autoexec-all
 
 Lua and Compilation options can not be mixed.
-
+]==] or {},
+    I{init=LUA_INIT}[==[
 Environment variables:
 
   $(init[1]), $(init[2])
@@ -83,6 +87,7 @@ Environment variables:
                     and scripts (not in compilation mode).
                     When $(init[1]) is defined, $(init[2]) is ignored.
 ]==]
+    })
 
 local function print_welcome()
     print(welcome)
@@ -107,6 +112,7 @@ local function findpath(name)
 end
 
 local function print_targets()
+    local config = require "luax_config"
     F(config.targets):map(function(target)
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..target..ext(target))
         print(("%-20s%s%s"):format(target, compiler, fs.is_file(compiler) and "" or " [NOT FOUND]"))
@@ -155,8 +161,68 @@ local actions = setmetatable({
     },
 })
 
---[[------------------------------------------------------------------------@@@
+--[=[-----------------------------------------------------------------------@@@
 # LuaX interactive usage
+
+The LuaX REPL can be run in various environments:
+
+- the full featured LuaX interpretor based on the LuaX runtime
+- the reduced version running on a vanilla Lua interpretor
+
+## Full featured LuaX interpretor
+
+### Self-contained interpretor
+
+``` sh
+$ luax
+```
+
+### Shared library usable with a standard Lua interpretor
+
+``` sh
+$ LUA_CPATH="lib/?.so" lua -l luax-x86_64-linux-gnu
+```
+
+## Reduced version for vanilla Lua interpretors
+
+### LuaX with a vanilla Lua interpretor
+
+``` sh
+lua luaxcli.lua
+```
+
+### LuaX with the Pandoc Lua interpretor
+
+``` sh
+pandoc lua luaxcli.lua
+```
+
+The integration with Pandoc is interresting
+to debug Pandoc Lua filters and inspect Pandoc AST.
+E.g.:
+
+``` sh
+$ rlwrap pandoc lua luaxcli.lua
+
+ _               __  __  |  http://cdelord.fr/luax
+| |   _   _  __ _\ \/ /  |
+| |  | | | |/ _` |\  /   |  Version 1.13.1
+| |__| |_| | (_| |/  \   |  Powered by Lua 5.4
+|_____\__,_|\__,_/_/\_\  |  and Pandoc 3.0
+                         |  Linux x86_64 lua
+
+>> pandoc.read "*Pandoc* is **great**!"
+Pandoc (Meta {unMeta = fromList []}) [Para [Emph [Str "Pandoc"],Space,Str "is",Space,Strong [Str "great"],Str "!"]]
+```
+
+Note that [rlwrap](https://github.com/hanslub42/rlwrap)
+can be used to give nice edition facilities to the Pandoc Lua interpretor.
+
+@@@]=]
+
+--[[@@@
+
+## Additional modules
 
 The `luax` repl provides a few functions for the interactive mode.
 
@@ -270,18 +336,22 @@ calls `inspect(x)` to build a human readable
 representation of `x` (see the `inspect` package).
 @@@]]
 
-    local inspect = require "inspect"
+    local inspect = pcall(require, "inspect")
 
-    local remove_all_metatables = function(item, path)
-        if path[#path] ~= inspect.METATABLE then return item end
-    end
+    if inspect then
 
-    local default_options = {
-        process = remove_all_metatables,
-    }
+        local remove_all_metatables = function(item, path)
+            if path[#path] ~= inspect.METATABLE then return item end
+        end
 
-    function _ENV.inspect(x, options)
-        return inspect(x, F.merge{default_options, options})
+        local default_options = {
+            process = remove_all_metatables,
+        }
+
+        function _ENV.inspect(x, options)
+            return inspect(x, F.merge{default_options, options})
+        end
+
     end
 
 --[[@@@
@@ -291,8 +361,12 @@ printi(x)
 prints `inspect(x)` (without the metatables).
 @@@]]
 
-    function _ENV.printi(x)
-        print(inspect.inspect(x))
+    if inspect then
+
+        function _ENV.printi(x)
+            print(inspect.inspect(x))
+        end
+
     end
 
 end
@@ -364,12 +438,12 @@ do
                 assert(lib)
                 _G[lib] = require(lib)
             end)
-        elseif a == '-o' then
+        elseif has_compiler and a == '-o' then
             compiler_mode = true
             i = i+1
             if output then wrong_arg(a) end
             output = arg[i]
-        elseif a == '-t' then
+        elseif has_compiler and a == '-t' then
             compiler_mode = true
             i = i+1
             if target then wrong_arg(a) end
@@ -392,8 +466,10 @@ do
             -- this is not an option but a file (stdin) to execute
             args[#args+1] = arg[i]
             break
-        elseif a == '-autoload' or a == '-autoload-all' or a == '-autoload-none'
-            or a == '-autoexec' or a == '-autoexec-all' or a == '-autoexec-none' then
+        elseif has_compiler and
+            (  a == '-autoload' or a == '-autoload-all' or a == '-autoload-none'
+            or a == '-autoexec' or a == '-autoexec-all' or a == '-autoexec-none'
+            ) then
             -- this is an option for the compiler
             compiler_mode = true
             break
@@ -537,6 +613,7 @@ local function run_compiler()
     end
 
     -- Compile scripts for each targets
+    local config = require "luax_config"
     local valid_targets = F.from_set(F.const(true), config.targets)
     local compilers = {}
     local function rmext(compiler_target, name) return name:gsub(ext(compiler_target):gsub("%.", "%%.").."$", "") end
@@ -601,3 +678,5 @@ end
 actions:add(compiler_mode and run_compiler or run_interpretor)
 
 actions:run()
+
+-- vim: set ts=4 sw=4 foldmethod=marker :
