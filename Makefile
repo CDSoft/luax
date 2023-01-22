@@ -19,6 +19,11 @@
 # Default encryption key for the Lua chunks in compiled applications
 CRYPT_KEY ?= LuaX
 
+# magic id for LuaX chunks
+LUAX_VERSION := $(shell git describe --tags || echo undefined)
+LUAX_URL ?= https://github.com/CDSoft/luax
+LUAX_MAGIC_ID ?= LuaX $(LUAX_VERSION) - $(LUAX_URL)
+
 BUILD = .build
 ZIG_INSTALL = .zig
 ZIG_CACHE = $(ZIG_INSTALL)/zig-cache
@@ -41,8 +46,8 @@ TARGETS += i386-windows-gnu
 TARGETS += x86_64-macos-gnu
 TARGETS += aarch64-macos-gnu
 
-RUNTIMES = $(patsubst %-windows-gnu,%-windows-gnu.exe,$(patsubst %,$(BUILD)/luaxruntime-%,$(TARGETS)))
-LUAX_BINARIES := $(patsubst $(BUILD)/luaxruntime-%,$(BUILD)/luax-%,$(RUNTIMES))
+RUNTIMES = $(patsubst %-windows-gnu,%-windows-gnu.exe,$(TARGETS:%=$(BUILD)/luaxruntime-%))
+LUAX_BINARIES := $(RUNTIMES:$(BUILD)/luaxruntime-%=$(BUILD)/luax-%)
 
 LUA = $(BUILD)/lua
 LUAX0 = $(BUILD)/lua0-$(ARCH)-$(OS)-$(LIBC)
@@ -52,7 +57,9 @@ LUAX_SOURCES := $(sort $(shell find src -name "*.[ch]"))
 
 LUAX_RUNTIME := $(sort $(shell find src -name "*.lua"))
 LUAX_RUNTIME_BUNDLE := $(BUILD)/lua_runtime_bundle.dat
-LUAX_CONFIG := $(BUILD)/luax_config.h
+
+LUAX_CONFIG_H := $(BUILD)/luax_config.h
+LUAX_CONFIG_LUA := $(BUILD)/luax_config.lua
 
 ARCH := $(shell uname -m)
 OS   := $(shell uname -s | tr A-Z a-z)
@@ -325,7 +332,7 @@ $(BUILD)/$(LZ4_ARCHIVE):
 ###############################################################################
 
 INSTALL_PATH := $(firstword $(wildcard $(PREFIX) $(HOME)/.local/bin $(HOME)/bin))
-INSTALLED_LUAX_BINARIES := $(patsubst $(BUILD)/%,$(INSTALL_PATH)/%,$(LUAX_BINARIES))
+INSTALLED_LUAX_BINARIES := $(LUAX_BINARIES:$(BUILD)/%=$(INSTALL_PATH)/%)
 
 ## Install LuaX (for the host only)
 install: $(INSTALL_PATH)/luax$(EXT)
@@ -382,7 +389,7 @@ $(LUA): $(ZIG) $(LUA_SOURCES) build-lua.zig
 		--build-file build-lua.zig
 	@touch $@
 
-$(LUAX0): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
+$(LUAX0): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG_H) build.zig
 	@$(call cyan,"ZIG",$@)
 	@RUNTIME_NAME=lua0 RUNTIME=0 $(ZIG) build \
 		--cache-dir $(ZIG_CACHE) \
@@ -403,31 +410,40 @@ CRYPT_KEY_HASH := $(shell \
 	| sed 's/\(..\)/\\x\1/g' \
 )
 
-$(LUAX_CONFIG): $(wildcard .git/refs/tags) $(wildcard .git/index)
+$(LUAX_CONFIG_H): $(wildcard .git/refs/tags) $(wildcard .git/index) Makefile
 	@$(call cyan,"GEN",$@)
 	@mkdir -p $(dir $@)
-	@(  set -eu;                                                                                \
-	    echo "#pragma once";                                                                    \
-	    echo "#define LUAX_VERSION \"`git describe --tags || echo undefined`\"";                \
-	    echo "#define LUAX_CRYPT_KEY \"$(CRYPT_KEY_HASH)\"";                                    \
+	@(  set -eu;                                                \
+	    echo "#pragma once";                                    \
+	    echo "#define LUAX_VERSION \"$(LUAX_VERSION)\"";        \
+	    echo "#define LUAX_CRYPT_KEY \"$(CRYPT_KEY_HASH)\"";    \
+	    echo "#define LUAX_MAGIC_ID \"$(LUAX_MAGIC_ID)\"";      \
 	) > $@.tmp
 	@mv $@.tmp $@
 
-$(BUILD)/targets.lua:
+$(LUAX_CONFIG_LUA): $(wildcard .git/refs/tags) $(wildcard .git/index) Makefile
 	@$(call cyan,"GEN",$@)
-	@echo "return ('$(sort $(TARGETS))'):words()" > $@.tmp
+	@mkdir -p $(dir $@)
+	@(  set -eu;                                                \
+	    echo "return {";                                        \
+		echo "    magic_id = \"$(LUAX_MAGIC_ID)\",";            \
+		echo "    targets = {$(sort $(TARGETS:%='%',))},";      \
+		echo "}";                                               \
+	) > $@.tmp
 	@mv $@.tmp $@
 
-$(LUAX_RUNTIME_BUNDLE): $(LUAX0) $(LUAX_RUNTIME) tools/bundle.lua tools/build_bundle_args.lua
+$(LUAX_RUNTIME_BUNDLE): $(LUAX0) $(LUAX_RUNTIME) tools/bundle.lua tools/build_bundle_args.lua $(LUAX_CONFIG_LUA)
 	@$(call cyan,"BUNDLE",$(@))
-	@$(LUAX0) tools/bundle.lua -nomain -ascii $(shell $(LUAX0) tools/build_bundle_args.lua $(LUAX_RUNTIME)) > $@.tmp
+	@LUA_PATH="$(LUA_PATH);$(dir $(LUAX_CONFIG_LUA))/?.lua" \
+	$(LUAX0) tools/bundle.lua -nomain -ascii \
+	    $(shell $(LUAX0) tools/build_bundle_args.lua $(LUAX_CONFIG_LUA) $(LUAX_RUNTIME)) > $@.tmp
 	@mv $@.tmp $@
 
 ###############################################################################
 # Runtimes
 ###############################################################################
 
-$(BUILD)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG) build.zig
+$(BUILD)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG_H) build.zig
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
 	@RUNTIME_NAME=luaxruntime LIB_NAME=luax RUNTIME=1 $(ZIG) build \
@@ -443,7 +459,7 @@ $(BUILD)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) 
 # luax
 ###############################################################################
 
-LUAX_PACKAGES := tools/luax.lua tools/bundle.lua $(BUILD)/targets.lua
+LUAX_PACKAGES := tools/luax.lua tools/bundle.lua $(LUAX_CONFIG_LUA)
 
 $(BUILD)/luax: $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"CP",$@)
@@ -452,7 +468,8 @@ $(BUILD)/luax: $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 $(BUILD)/luax-%: $(BUILD)/luaxruntime-% $(LUAX_PACKAGES) tools/bundle.lua
 	@$(call cyan,"BUNDLE",$@)
 	@cp $< $@.tmp
-	@$(LUAX0) tools/bundle.lua $(LUAX_PACKAGES) >> $@.tmp
+	@LUA_PATH="$(LUA_PATH);$(dir $(LUAX_CONFIG_LUA))/?.lua" \
+	$(LUAX0) tools/bundle.lua $(LUAX_PACKAGES) >> $@.tmp
 	@mv $@.tmp $@
 
 ###############################################################################
@@ -502,9 +519,9 @@ $(BUILD)/test-pandoc.ok: lib/luax.lua $(TEST_SOURCES) | $(PANDOC)
 .PHONY: doc
 
 MARKDOWN_SOURCES = $(wildcard doc/src/*.md)
-MARKDOWN_OUTPUTS = $(patsubst doc/src/%.md,doc/%.md,$(MARKDOWN_SOURCES))
-HTML_OUTPUTS = $(patsubst doc/src/%.md,$(BUILD)/doc/%.html,$(MARKDOWN_SOURCES))
-MD_OUTPUTS = $(patsubst doc/src/%.md,$(BUILD)/doc/%.md,$(MARKDOWN_SOURCES))
+MARKDOWN_OUTPUTS = $(MARKDOWN_SOURCES:doc/src/%.md=doc/%.md)
+HTML_OUTPUTS = $(MARKDOWN_SOURCES:doc/src/%.md=$(BUILD)/doc/%.html)
+MD_OUTPUTS = $(MARKDOWN_SOURCES:doc/src/%.md=$(BUILD)/doc/%.md)
 
 doc: README.md
 doc: $(MARKDOWN_OUTPUTS)

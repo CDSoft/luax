@@ -25,10 +25,11 @@ local bundle = {}
 local fs = require "fs"
 local lz4 = require "lz4"
 local crypt = require "crypt"
+local config = require "luax_config"
 
-bundle.magic = string.unpack("<I4", "LuaX")
+bundle.magic = "\0"..config.magic_id.."\0"
 
-local header_format = "<I4I4"
+local header_format = ("<I4c%d"):format(#bundle.magic)
 
 local function read(name)
     local f = io.open(name)

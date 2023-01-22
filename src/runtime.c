@@ -40,14 +40,16 @@
 #include "crypt/crypt.h"
 #include "lz4/lz4.h"
 
-typedef struct
+#if RUNTIME == 1
+typedef char t_magic[1+sizeof(LUAX_MAGIC_ID)];
+
+typedef struct __attribute__((__packed__))
 {
     uint32_t size;
-    char magic[4];
+    t_magic magic;
 } t_header;
 
-#if RUNTIME == 1
-static const char magic[4] = "LuaX";
+static const t_magic magic = "\0"LUAX_MAGIC_ID;
 #endif
 
 static void createargtable(lua_State *L, const char **argv, int argc, int shift)
@@ -92,7 +94,7 @@ int luax_run(lua_State *L, const char *exe, const char *argv[])
     fseek(f, -(long)sizeof(header), SEEK_END);
     if (fread(&header, sizeof(header), 1, f) != 1) perror(argv[0]);
     header.size = littleendian(header.size);
-    if (strncmp(header.magic, magic, sizeof(magic)) != 0)
+    if (memcmp(header.magic, magic, sizeof(magic)) != 0)
     {
         /* The runtime contains no application */
         error(argv[0], "LuaX application not found");
