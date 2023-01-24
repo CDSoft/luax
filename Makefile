@@ -384,21 +384,21 @@ export LUA_PATH := ./?.lua
 $(LUA): $(ZIG) $(LUA_SOURCES) build-lua.zig
 	@$(call cyan,"ZIG",$@)
 	@$(ZIG) build \
-		--cache-dir $(ZIG_CACHE) \
-		--prefix $(dir $@) --prefix-exe-dir "" \
-		-D$(RELEASE) \
-		-Dtarget=$(ARCH)-$(OS)-$(LIBC) \
-		--build-file build-lua.zig
+	    --cache-dir $(ZIG_CACHE) \
+	    --prefix $(dir $@) --prefix-exe-dir "" \
+	    -D$(RELEASE) \
+	    -Dtarget=$(ARCH)-$(OS)-$(LIBC) \
+	    --build-file build-lua.zig
 	@touch $@
 
 $(LUAX0): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG_H) build.zig
 	@$(call cyan,"ZIG",$@)
 	@RUNTIME_NAME=lua0 RUNTIME=0 $(ZIG) build \
-		--cache-dir $(ZIG_CACHE) \
-		--prefix $(dir $@) --prefix-exe-dir "" \
-		-D$(RELEASE) \
-		-Dtarget=$(ARCH)-$(OS)-$(LIBC) \
-		--build-file build.zig
+	    --cache-dir $(ZIG_CACHE) \
+	    --prefix $(dir $@) --prefix-exe-dir "" \
+	    -D$(RELEASE) \
+	    -Dtarget=$(ARCH)-$(OS)-$(LIBC) \
+	    --build-file build.zig
 	@touch $@
 
 ###############################################################################
@@ -428,9 +428,9 @@ $(LUAX_CONFIG_LUA): $(wildcard .git/refs/tags) $(wildcard .git/index) Makefile
 	@mkdir -p $(dir $@)
 	@(  set -eu;                                                \
 	    echo "return {";                                        \
-		echo "    magic_id = \"$(LUAX_MAGIC_ID)\",";            \
-		echo "    targets = {$(sort $(TARGETS:%='%',))},";      \
-		echo "}";                                               \
+	    echo "    magic_id = \"$(LUAX_MAGIC_ID)\",";            \
+	    echo "    targets = {$(sort $(TARGETS:%='%',))},";      \
+	    echo "}";                                               \
 	) > $@.tmp
 	@mv $@.tmp $@
 
@@ -449,11 +449,11 @@ $(BUILD)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) 
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
 	@RUNTIME_NAME=luaxruntime LIB_NAME=luax RUNTIME=1 $(ZIG) build \
-		--cache-dir $(ZIG_CACHE) \
-		--prefix $(dir $@) --prefix-exe-dir "" \
-		-D$(RELEASE) \
-		-Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD)/luaxruntime-%,%,$@)) \
-		--build-file build.zig
+	    --cache-dir $(ZIG_CACHE) \
+	    --prefix $(dir $@) --prefix-exe-dir "" \
+	    -D$(RELEASE) \
+	    -Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD)/luaxruntime-%,%,$@)) \
+	    --build-file build.zig
 	@find $(BUILD)/lib -name "libluax*" | while read lib; do mv "$$lib" "`echo $$lib | sed 's/libluax/luax/'`"; done
 	@touch $@
 
