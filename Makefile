@@ -405,20 +405,18 @@ $(LUAX0): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG_H) build.zig
 # Code generation
 ###############################################################################
 
-CRYPT_KEY_HASH := $(shell \
-	echo -n $(CRYPT_KEY) \
-	| cksum -a blake2b --untagged \
-	| cut -d" " -f1 \
-	| sed 's/\(..\)/\\x\1/g' \
-)
+$(BUILD)/blake3: tools/blake3.zig $(ZIG)
+	@$(call cyan,"ZIG",$@)
+	@mkdir -p $(dir $@)
+	@$(ZIG) build-exe $< -fsingle-threaded --strip --cache-dir $(ZIG_CACHE) -femit-bin=$@
 
-$(LUAX_CONFIG_H): $(wildcard .git/refs/tags) $(wildcard .git/index) Makefile
+$(LUAX_CONFIG_H): $(wildcard .git/refs/tags) $(wildcard .git/index) $(BUILD)/blake3 Makefile
 	@$(call cyan,"GEN",$@)
 	@mkdir -p $(dir $@)
 	@(  set -eu;                                                \
 	    echo "#pragma once";                                    \
 	    echo "#define LUAX_VERSION \"$(LUAX_VERSION)\"";        \
-	    echo "#define LUAX_CRYPT_KEY \"$(CRYPT_KEY_HASH)\"";    \
+	    echo "#define LUAX_CRYPT_KEY \"`echo -n $(CRYPT_KEY) | $(BUILD)/blake3`\"";     \
 	    echo "#define LUAX_MAGIC_ID \"$(LUAX_MAGIC_ID)\"";      \
 	) > $@.tmp
 	@mv $@.tmp $@
