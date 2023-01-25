@@ -477,7 +477,8 @@ $(BUILD)/luax-%: $(BUILD)/luaxruntime-% $(LUAX_PACKAGES) tools/bundle.lua
 ###############################################################################
 
 $(LUAX_CLI): lib/luax.lua tools/luax.lua Makefile
-	@(  echo "#!/usr/bin/env lua";                  \
+	@(  set -eu;                                    \
+	    echo "#!/usr/bin/env lua";                  \
 	    echo "";                                    \
 	    echo "_LUAX_VERSION = '$(LUAX_VERSION)'";   \
 	    echo "";                                    \
