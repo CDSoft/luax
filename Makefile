@@ -501,7 +501,9 @@ TEST_SOURCES := tests/main.lua $(sort $(filter-out test/main.lua,$(wildcard test
 
 ## Run LuaX tests
 test: $(BUILD)/test-luax.ok
+ifeq ($(LIBC),gnu)
 test: $(BUILD)/test-lib.ok
+endif
 test: $(BUILD)/test-lua.ok
 test: $(BUILD)/test-lua-luaxcli.ok
 ifeq ($(OS)-$(ARCH),linux-x86_64)
