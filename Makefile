@@ -301,6 +301,9 @@ $(BUILD)/$(INSPECT_ARCHIVE):
 update-serpent: $(BUILD)/$(SERPENT_ARCHIVE)
 	rm -f src/serpent/serpent.lua
 	unzip -j $< '*/serpent.lua' -d src/serpent
+	sed -i -e 's/(loadstring or load)/load/g'                   \
+	       -e '/^ *if setfenv then setfenv(f, env) end *$$/d'   \
+	       src/serpent/serpent.lua
 
 $(BUILD)/$(SERPENT_ARCHIVE):
 	@mkdir -p $(dir $@)

@@ -120,7 +120,7 @@ local function s(t, opts)
       seen[t] = insref or spath
       if opts.nocode then return tag.."function() --[[..skipped..]] end"..comment(t, level) end
       local ok, res = pcall(string.dump, t)
-      local func = ok and "((loadstring or load)("..safestr(res)..",'@serialized'))"..comment(t, level)
+      local func = ok and "(load("..safestr(res)..",'@serialized'))"..comment(t, level)
       return tag..(func or globerr(t, level))
     else return tag..safestr(t) end -- handle all other types
   end
@@ -137,10 +137,9 @@ local function deserialize(data, opts)
         __index = function(t,k) return t end,
         __call = function(t,...) error("cannot call functions") end
       })
-  local f, res = (loadstring or load)('return '..data, nil, nil, env)
-  if not f then f, res = (loadstring or load)(data, nil, nil, env) end
+  local f, res = load('return '..data, nil, nil, env)
+  if not f then f, res = load(data, nil, nil, env) end
   if not f then return f, res end
-  if setfenv then setfenv(f, env) end
   return pcall(f)
 end
 
