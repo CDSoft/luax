@@ -202,7 +202,7 @@ MAKEX_OS := $(shell uname -s)
 ###########################################################################
 
 LUAX_URL = https://github.com/CDSoft/luax
-LUAX = $(MAKEX_INSTALL_PATH)/luax/$(LUAX_VERSION)/luax
+LUAX = $(MAKEX_INSTALL_PATH)/luax/$(LUAX_VERSION)/bin/luax
 
 export PATH := $(dir $(LUAX)):$(PATH)
 
@@ -219,7 +219,7 @@ $(LUAX): | $(MAKEX_CACHE) $(dir $(LUAX))
 	    ) \
 	    && cd $(MAKEX_CACHE)/luax \
 	    && git checkout $(LUAX_VERSION) \
-	    && make install-all PREFIX=$(realpath $(dir $@)) \
+	    && make install-all PREFIX=$(realpath $(dir $@)/..) \
 	)
 
 makex-install: makex-install-luax
@@ -230,7 +230,7 @@ makex-install-luax: $(LUAX)
 ###########################################################################
 
 UPP_URL = https://github.com/CDSoft/upp
-UPP = $(MAKEX_INSTALL_PATH)/upp/$(UPP_VERSION)/upp
+UPP = $(MAKEX_INSTALL_PATH)/upp/$(UPP_VERSION)/bin/upp
 
 export PATH := $(dir $(UPP)):$(PATH)
 
@@ -247,7 +247,7 @@ $(UPP): | $(LUAX) $(MAKEX_CACHE) $(dir $(UPP))
 	    ) \
 	    && cd $(MAKEX_CACHE)/upp \
 	    && git checkout $(UPP_VERSION) \
-	    && make install LUAX=$(LUAX) PREFIX=$(realpath $(dir $@)) \
+	    && make install LUAX=$(LUAX) PREFIX=$(realpath $(dir $@)/..) \
 	)
 
 makex-install: makex-install-upp
@@ -355,7 +355,7 @@ makex-install-pandoc: $(PANDOC)
 ###########################################################################
 
 PANDA_URL = https://github.com/CDSoft/panda
-PANDA = $(MAKEX_INSTALL_PATH)/pandoc/$(PANDOC_VERSION)/panda/$(PANDA_VERSION)/panda
+PANDA = $(MAKEX_INSTALL_PATH)/pandoc/$(PANDOC_VERSION)/panda/$(PANDA_VERSION)/bin/panda
 
 export PATH := $(dir $(PANDA)):$(PATH)
 
@@ -374,7 +374,7 @@ $(PANDA): | $(PANDOC) $(MAKEX_CACHE) $(dir $(PANDA)) $(PANDA_CACHE)
 	    ) \
 	    && cd $(MAKEX_CACHE)/panda \
 	    && git checkout $(PANDA_VERSION) \
-	    && make install-all PREFIX=$(realpath $(dir $@)) \
+	    && make install-all PREFIX=$(realpath $(dir $@)/..) \
 	    && sed -i 's#^pandoc #$(PANDOC) #' $@ \
 	)
 

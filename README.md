@@ -23,15 +23,15 @@ $ cd luax
 $ make                  # compile and test
 ```
 
-**Note**: `make` will download a Zig compiler if necessary.
+**Note**: `make` will download a Zig compiler.
 
 ## Installation
 
 ### Installation of luax for the current host only
 
 ``` sh
-$ make install                  # install luax to ~/.local/bin or ~/bin
-$ make install PREFIX=/usr/bin  # install luax to /usr/bin
+$ make install              # install luax to ~/.local/bin or ~/bin
+$ make install PREFIX=/usr  # install luax to /usr/bin
 ```
 
 `luax` is a single autonomous executable. It does not need to be
@@ -40,9 +40,33 @@ installed and can be copied anywhere you want.
 ### Installation of luax for all supported platforms (cross compilation support)
 
 ``` sh
-$ make install-all                  # install luax to ~/.local/bin or ~/bin
-$ make install-all PREFIX=/usr/bin  # install luax to /usr/bin
+$ make install-all              # install luax to ~/.local/bin or ~/bin
+$ make install-all PREFIX=/usr  # install luax to /usr/bin
 ```
+
+### LuaX artifacts
+
+`make install` and `make install-all` install:
+
+- `$PREFIX/bin/luax`: symbolic link to the LuaX binary for the host
+
+- `$PREFIX/bin/luax-<ARCH>-<OS>-<LIBC>`: LuaX binary for a specific
+  platform
+
+- `$PREFIX/bin/luaxcli.lua`: a pure Lua REPL reimplementing some LuaX
+  libraries, usable in any Lua 5.4 interpreter (e.g.: lua, pandoc lua,
+  …)
+
+- `$PREFIX/lib/luax-<ARCH>-<OS>-<LIBC>.so`: Linux LuaX shared libraries
+
+- `$PREFIX/lib/luax-<ARCH>-<OS>-<LIBC>.dylib`: MacOS LuaX shared
+  libraries
+
+- `$PREFIX/lib/luax-<ARCH>-<OS>-<LIBC>.dll`: Windows LuaX shared
+  libraries
+
+- `$PREFIX/lib/luax.lua`: a pure Lua reimplementation of some LuaX
+  libraries, usable in any Lua 5.4 interpreter.
 
 ## Precompiled binaries
 

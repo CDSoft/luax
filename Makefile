@@ -336,25 +336,40 @@ $(BUILD)/$(LZ4_ARCHIVE):
 # Installation
 ###############################################################################
 
-INSTALL_PATH := $(firstword $(wildcard $(PREFIX) $(HOME)/.local/bin $(HOME)/bin))
-INSTALLED_LUAX_BINARIES := $(LUAX_BINARIES:$(BUILD)/%=$(INSTALL_PATH)/%)
+PREFIX := $(firstword $(wildcard $(PREFIX) $(HOME)/.local $(HOME)))
+INSTALLED_LUAX_BINARIES := $(LUAX_BINARIES:$(BUILD)/%=$(PREFIX)/bin/%)
 
 ## Install LuaX (for the host only)
-install: $(INSTALL_PATH)/luax$(EXT)
+install: $(PREFIX)/bin/luax$(EXT)
+install: $(PREFIX)/bin/luaxcli.lua
+install: $(PREFIX)/lib/luax.lua
 
 ## Install LuaX for Linux, MacOS and Windows
 install-all: install
 install-all: $(INSTALLED_LUAX_BINARIES)
 
-$(INSTALL_PATH)/luax$(EXT): $(INSTALL_PATH)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
+$(PREFIX)/bin/luax$(EXT): $(PREFIX)/bin/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"SYMLINK",$< -> $@)
-	@test -n "$(INSTALL_PATH)" || (echo "No installation path found" && false)
 	@cd $(dir $@) && ln -sf $(notdir $<) $(notdir $@)
 
-$(INSTALL_PATH)/luax-%: $(BUILD)/luax-%
+$(PREFIX)/bin/luax-%: $(BUILD)/luax-%
 	@$(call cyan,"INSTALL",$@)
-	@test -n "$(INSTALL_PATH)" || (echo "No installation path found" && false)
+	@test -n "$(PREFIX)" || (echo "No installation path found" && false)
+	@mkdir -p $(dir $@) $(dir $@)/../lib
 	@install $< $@
+	@find $(BUILD)/lib/ -name "$(patsubst %.exe,%,$(notdir $<)).*" -exec cp {} $(PREFIX)/lib/ \;
+
+$(PREFIX)/bin/luaxcli.lua: $(LUAX_CLI)
+	@$(call cyan,"INSTALL",$@)
+	@test -n "$(PREFIX)" || (echo "No installation path found" && false)
+	@mkdir -p $(dir $@)
+	@install $< $@
+
+$(PREFIX)/lib/luax.lua: lib/luax.lua
+	@$(call cyan,"INSTALL",$@)
+	@test -n "$(PREFIX)" || (echo "No installation path found" && false)
+	@mkdir -p $(dir $@)
+	@cp $< $@
 
 ###############################################################################
 # Search for or install a zig compiler
