@@ -401,6 +401,7 @@ export LUA_PATH := ./?.lua
 
 $(LUA): $(ZIG) $(LUA_SOURCES) build-lua.zig
 	@$(call cyan,"ZIG",$@)
+	@mkdir -p $(dir $@)
 	@$(ZIG) build \
 	    --cache-dir $(ZIG_CACHE) \
 	    --prefix $(dir $@) --prefix-exe-dir "" \
@@ -411,6 +412,7 @@ $(LUA): $(ZIG) $(LUA_SOURCES) build-lua.zig
 
 $(LUAX0): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG_H) build.zig
 	@$(call cyan,"ZIG",$@)
+	@mkdir -p $(dir $@)
 	@RUNTIME_NAME=lua0 RUNTIME=0 $(ZIG) build \
 	    --cache-dir $(ZIG_CACHE) \
 	    --prefix $(dir $@) --prefix-exe-dir "" \
@@ -452,6 +454,7 @@ $(LUAX_CONFIG_LUA): $(wildcard .git/refs/tags) $(wildcard .git/index) Makefile
 
 $(LUAX_RUNTIME_BUNDLE): $(LUAX0) $(LUAX_RUNTIME) tools/bundle.lua tools/build_bundle_args.lua $(LUAX_CONFIG_LUA)
 	@$(call cyan,"BUNDLE",$(@))
+	@mkdir -p $(dir $@)
 	@LUA_PATH="$(LUA_PATH);$(dir $(LUAX_CONFIG_LUA))/?.lua" \
 	$(LUAX0) tools/bundle.lua -nomain -ascii \
 	    $(shell $(LUAX0) tools/build_bundle_args.lua $(LUAX_CONFIG_LUA) $(LUAX_RUNTIME)) > $@.tmp
@@ -495,6 +498,7 @@ $(BUILD)/luax-%: $(BUILD)/luaxruntime-% $(LUAX_PACKAGES) tools/bundle.lua
 ###############################################################################
 
 $(LUAX_CLI): lib/luax.lua tools/luax.lua Makefile
+	@mkdir -p $(dir $@)
 	@(  set -eu;                                    \
 	    echo "#!/usr/bin/env lua";                  \
 	    echo "";                                    \
@@ -598,6 +602,7 @@ doc/%.md: doc/src/%.md | $(PANDA)
 
 $(BUILD)/doc/%.md: doc/%.md
 	@$(call cyan,"DOC",$@)
+	@mkdir -p $(dir $@)
 	@cp -f $< $@
 
 $(BUILD)/doc/%.html: doc/src/%.md $(CSS) | $(PANDA)
@@ -607,6 +612,7 @@ $(BUILD)/doc/%.html: doc/src/%.md $(CSS) | $(PANDA)
 
 $(BUILD)/doc/index.html: $(BUILD)/doc/luax.html
 	@$(call cyan,"DOC",$@)
+	@mkdir -p $(dir $@)
 	@cp -f $< $@
 
 README.md: doc/src/luax.md doc/src/fix_links.lua | $(PANDA)
