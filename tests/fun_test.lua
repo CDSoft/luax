@@ -133,8 +133,13 @@ local function basic_data_types()
     }, "other")
 
     eq(F.fst{4,5,6}, 4)
+    eq(F{4,5,6}:fst(), 4)
     eq(F.snd{4,5,6}, 5)
+    eq(F{4,5,6}:snd(), 5)
     eq(F.thd{4,5,6}, 6)
+    eq(F{4,5,6}:thd(), 6)
+    eq(F.nth(4, {4,5,6,7,8}), 7)
+    eq(F{4,5,6,7,8}:nth(4), 7)
 
 end
 

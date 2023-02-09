@@ -25,6 +25,8 @@
 #
 # LUAX
 #     path to the LuaX interpreter (see https://github.com/CDSoft/luax)
+# PLUA
+#     path to the PLua interpreter (see https://github.com/CDSoft/plua)
 # UPP
 #     path to the upp executable (see https://github.com/CDSoft/upp)
 # PANDA
@@ -54,6 +56,8 @@
 # LETTER
 #     shortcut to panda with some default parameters
 #     to generate a letter
+# LSVG
+#     path to the lsvg executable (see https://github.com/CDSoft/lsvg)
 # GHCUP, GHC, CABAL, STACK
 #     path to the ghcup, ghc, cabal, stack executables
 #     (see https://www.haskell.org/ghcup/)
@@ -68,12 +72,16 @@
 #     install all makex tools
 # makex-install-luax
 #     install luax
+# makex-install-plua
+#     install plua
 # makex-install-upp
 #     install upp
 # makex-install-pandoc
 #     install pandoc
 # makex-install-panda
 #     install panda
+# makex-install-lsvg
+#     install lsvg
 # makex-install-ghcup
 #     install ghcup
 # help
@@ -99,11 +107,14 @@ MAKEX_HELP_TARGET_MAX_LEN ?= 20
 # LUAX_VERSION is a tag or branch name in the LuaX repository
 LUAX_VERSION ?= master
 
+# PLUA_VERSION is a tag or branch name in the LuaX repository
+PLUA_VERSION ?= master
+
 # UPP_VERSION is a tag or branch name in the upp repository
 UPP_VERSION ?= master
 
 # PANDOC_VERSION is the version number of pandoc
-PANDOC_VERSION ?= 3.0
+PANDOC_VERSION ?= 3.0.1
 
 # PANDOC_LATEX_TEMPLATE_VERSION is a tag or branch name in the
 # pandoc-latex-template repository
@@ -115,6 +126,9 @@ PANDOC_LETTER_VERSION = master
 
 # PANDA_VERSION is a tag or branch name in the Panda repository
 PANDA_VERSION ?= master
+
+# LSVG_VERSION is a tag or branch name in the lsvg repository
+LSVG_VERSION ?= master
 
 # GHCUP_INSTALL_BASE_PREFIX is the base of ghcup
 GHCUP_INSTALL_BASE_PREFIX ?= $(MAKEX_INSTALL_PATH)/haskell
@@ -224,6 +238,35 @@ $(LUAX): | $(MAKEX_CACHE) $(dir $(LUAX))
 
 makex-install: makex-install-luax
 makex-install-luax: $(LUAX)
+
+###########################################################################
+# PLua
+###########################################################################
+
+PLUA_URL = https://github.com/CDSoft/plua
+PLUA = $(MAKEX_INSTALL_PATH)/pandoc/$(PANDOC_VERSION)/plua/$(PLUA_VERSION)/bin/plua
+PLUAC = $(MAKEX_INSTALL_PATH)/pandoc/$(PANDOC_VERSION)/plua/$(PLUA_VERSION)/bin/pluac
+
+export PATH := $(dir $(PLUA)):$(PATH)
+
+$(dir $(PLUA)):
+	@mkdir -p $@
+
+$(PLUA) $(PLUAC) &: | $(PANDOC) $(PANDA) $(MAKEX_CACHE) $(dir $(PLUA))
+	@echo "$(MAKEX_COLOR)[MAKEX]$(NORMAL) $(TEXT_COLOR)install PLua$(NORMAL)"
+	@test -f $(@) \
+	|| \
+	(   (   test -d $(MAKEX_CACHE)/plua \
+	        && ( cd $(MAKEX_CACHE)/plua && git pull ) \
+	        || git clone $(PLUA_URL) $(MAKEX_CACHE)/plua \
+	    ) \
+	    && cd $(MAKEX_CACHE)/plua \
+	    && git checkout $(PLUA_VERSION) \
+	    && make install PREFIX=$(realpath $(dir $@)/..) \
+	)
+
+makex-install: makex-install-plua
+makex-install-plua: $(PLUA) $(PLUAC)
 
 ###########################################################################
 # UPP
@@ -380,6 +423,34 @@ $(PANDA): | $(PANDOC) $(MAKEX_CACHE) $(dir $(PANDA)) $(PANDA_CACHE)
 
 makex-install: makex-install-panda
 makex-install-panda: $(PANDA)
+
+###########################################################################
+# lsvg
+###########################################################################
+
+LSVG_URL = https://github.com/CDSoft/lsvg
+LSVG = $(MAKEX_INSTALL_PATH)/lsvg/$(LSVG_VERSION)/bin/lsvg
+
+export PATH := $(dir $(LSVG)):$(PATH)
+
+$(dir $(LSVG)):
+	@mkdir -p $@
+
+$(LSVG): | $(LUAX) $(MAKEX_CACHE) $(dir $(LSVG))
+	@echo "$(MAKEX_COLOR)[MAKEX]$(NORMAL) $(TEXT_COLOR)install lsvg$(NORMAL)"
+	@test -f $(@) \
+	|| \
+	(   (   test -d $(MAKEX_CACHE)/lsvg \
+	        && ( cd $(MAKEX_CACHE)/lsvg && git pull ) \
+	        || git clone $(LSVG_URL) $(MAKEX_CACHE)/lsvg \
+	    ) \
+	    && cd $(MAKEX_CACHE)/lsvg \
+	    && git checkout $(LSVG_VERSION) \
+	    && make install PREFIX=$(realpath $(dir $@)/..) \
+	)
+
+makex-install: makex-install-lsvg
+makex-install-lsvg: $(LSVG)
 
 ###########################################################################
 # Haskell (via GHCup)

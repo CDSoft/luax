@@ -412,27 +412,39 @@ F.otherwise = otherwise
 
 --[[@@@
 ```lua
-F.fst(ab)
+F.fst(xs)
+xs:fst()
 ```
 > Extract the first component of a list.
 @@@]]
-function F.fst(xs) return xs[1] end
+register1 "fst" (function(xs) return xs[1] end)
 
 --[[@@@
 ```lua
-F.snd(ab)
+F.snd(xs)
+xs:snd()
 ```
 > Extract the second component of a list.
 @@@]]
-function F.snd(xs) return xs[2] end
+register1 "snd" (function(xs) return xs[2] end)
 
 --[[@@@
 ```lua
-F.thd(ab)
+F.thd(xs)
+xs:thd()
 ```
 > Extract the third component of a list.
 @@@]]
-function F.thd(xs) return xs[3] end
+register1 "thd" (function(xs) return xs[3] end)
+
+--[[@@@
+```lua
+F.nth(n, xs)
+xs:nth(n)
+```
+> Extract the n-th component of a list.
+@@@]]
+register2 "nth" (function(n, xs) return xs[n] end)
 
 --[[------------------------------------------------------------------------@@@
 ### Basic type classes
@@ -516,7 +528,7 @@ function F.negate(a) return -a end
 ```lua
 F.abs(a)
 ```
-> -a
+> absolute value of a
 @@@]]
 function F.abs(a) if a < 0 then return -a else return a end end
 
@@ -651,9 +663,9 @@ end
 F.proper_fraction(x)
 ```
 > returns a pair (n,f) such that x = n+f, and:
-
-  - n is an integral number with the same sign as x; and
-  - f is a fraction with the same type and sign as x, and with absolute value less than 1.
+>
+> - n is an integral number with the same sign as x
+> - f is a fraction with the same type and sign as x, and with absolute value less than 1.
 @@@]]
 function F.proper_fraction(x)
     return math.modf(x)
@@ -1131,7 +1143,7 @@ F(t)
 --[[@@@
 ```lua
 F.clone(t)
-f:clone()
+t:clone()
 ```
 > `F.clone(t)` clones the first level of `t`.
 @@@]]
@@ -1145,7 +1157,7 @@ end)
 --[[@@@
 ```lua
 F.deep_clone(t)
-f:deep_clone()
+t:deep_clone()
 ```
 > `F.deep_clone(t)` recursively clones `t`.
 @@@]]
@@ -3431,7 +3443,7 @@ end
 
 --[[@@@
 ```lua
-string.has_infix(s, infix, s)
+string.has_infix(s, infix)
 s:has_infix(infix)
 ```
 > Returns `true` iff the second string is contained, wholly and intact, anywhere within the first.
@@ -3591,7 +3603,9 @@ s:I(t)
 function string.I(s, t)
     return (s:gsub("%$(%b())", function(x)
         local y = ((assert(load("return "..x, nil, "t", t)))())
-        if type(y) == "table" then y = tostring(y) end
+        if type(y) == "table" or type(y) == "userdata" then
+            y = tostring(y)
+        end
         return y
     end))
 end
@@ -3606,7 +3620,7 @@ F.I(t)
   to build a new interpolator with new values.
 @@@]]
 
-function Interpolator(t)
+local function Interpolator(t)
     return function(x)
         if type(x) == "table" then return Interpolator(F.merge{t, x}) end
         if type(x) == "string" then return string.I(x, t) end
