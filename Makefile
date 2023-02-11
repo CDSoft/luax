@@ -142,6 +142,7 @@ mrproper: clean makex-clean
 .PHONY: update-linenoise
 .PHONY: update-luasocket
 .PHONY: update-lpeg
+.PHONY: update-argparse
 .PHONY: update-inspect
 .PHONY: update-serpent
 .PHONY: update-tinycrypt
@@ -175,6 +176,10 @@ LPEG_VERSION = 1.0.2
 LPEG_ARCHIVE = lpeg-$(LPEG_VERSION).tar.gz
 LPEG_URL = http://www.inf.puc-rio.br/~roberto/lpeg/$(LPEG_ARCHIVE)
 
+ARGPARSE_VERSION = master
+ARGPARSE_ARCHIVE = argparse-$(ARGPARSE_VERSION).zip
+ARGPARSE_URL = https://github.com/mpeterv/argparse/archive/refs/heads/$(ARGPARSE_VERSION).zip
+
 INSPECT_VERSION = master
 INSPECT_ARCHIVE = inspect-$(INSPECT_VERSION).zip
 INSPECT_URL = https://github.com/kikito/inspect.lua/archive/refs/heads/$(INSPECT_VERSION).zip
@@ -200,6 +205,7 @@ update: update-lmathx
 update: update-linenoise
 update: update-luasocket
 update: update-lpeg
+update: update-argparse
 update: update-inspect
 update: update-serpent
 update: update-tinycrypt
@@ -287,6 +293,15 @@ update-lpeg: $(BUILD)/$(LPEG_ARCHIVE)
 $(BUILD)/$(LPEG_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(LPEG_URL) -O $@
+
+## Update argparse sources
+update-argparse: $(BUILD)/$(ARGPARSE_ARCHIVE)
+	rm -f src/argparse/argparse.lua
+	unzip -j -o $< '*/argparse.lua' -d src/argparse
+
+$(BUILD)/$(ARGPARSE_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(ARGPARSE_URL) -O $@
 
 ## Update inspect sources
 update-inspect: $(BUILD)/$(INSPECT_ARCHIVE)

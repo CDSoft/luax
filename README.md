@@ -184,6 +184,7 @@ and [lapp](http://cdelord.fr/lapp).
 - [lpeg](doc/lpeg.md): Parsing Expression Grammars For Lua
 - [linenoise](doc/linenoise.md): light readline alternative
 - [luasocket](doc/luasocket.md): Network support for the Lua language
+- [argparse](doc/argparse.md): Feature-rich command line parser for Lua
 - [inspect](doc/inspect.md): Human-readable representation of Lua tables
 - [serpent](doc/serpent.md): Lua serializer and pretty printer
 
@@ -264,3 +265,6 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
   ([License](https://github.com/intel/tinycrypt/blob/master/LICENSE))
 - **[LZ4](https://github.com/lz4/lz4)**: Extremely Fast Compression
   algorithm ([License](https://github.com/lz4/lz4/blob/dev/lib/LICENSE))
+- **[Argparse](https://github.com/mpeterv/argparse)**: a feature-rich
+  command line parser for Lua ([MIT
+  license](https://github.com/mpeterv/argparse/blob/master/LICENSE))
