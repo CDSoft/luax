@@ -1698,8 +1698,7 @@ sh.write(...)(data)
 ```
 
 Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
-When `sh.read` succeeds, it returns the content of stdout. Otherwise it
-returns the error identified by `io.popen`.
+`sh.write` returns the same values returned by `os.execute`.
 
 # File System
 

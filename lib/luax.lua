@@ -3681,7 +3681,8 @@ Otherwise it returns the error identified by `io.popen`.
 
 function sh.read(...)
     local cmd = F.flatten{...}:unwords()
-    local p = assert(io.popen(cmd, "r"))
+    local p, popen_err = io.popen(cmd, "r")
+    if not p then return p, popen_err end
     local out = p:read("a")
     local ok, exit, ret = p:close()
     if ok then
@@ -3696,14 +3697,14 @@ end
 sh.write(...)(data)
 ```
 Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
-When `sh.read` succeeds, it returns the content of stdout.
-Otherwise it returns the error identified by `io.popen`.
+`sh.write` returns the same values returned by `os.execute`.
 @@@]]
 
 function sh.write(...)
     local cmd = F.flatten{...}:unwords()
     return function(data)
-        local p = assert(io.popen(cmd, "w"))
+        local p, popen_err = io.popen(cmd, "w")
+        if not p then return p, popen_err end
         p:write(data)
         return p:close()
     end
