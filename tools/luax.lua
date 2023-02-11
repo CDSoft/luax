@@ -129,15 +129,17 @@ local function wrong_arg(a)
 end
 
 local function traceback(message)
-    local trace = {"luax: "..message.."\n"}
-    local luax = 0
-    for _, line in ipairs(debug.traceback():lines()) do
-        if line:match "^%s+luax.lua:" then luax = luax + 1
-        elseif luax < 2 then table.insert(trace, line.."\n")
+    local trace = F.flatten {
+        "luax: "..message,
+        debug.traceback():lines(),
+    }
+    local pos = 1
+    trace:mapi(function(i, line)
+        if line:trim() == "[C]: in function 'xpcall'" then
+            pos = i-1
         end
-    end
-    table.remove(trace)
-    io.stderr:write(table.concat(trace))
+    end)
+    io.stderr:write(trace:take(pos):unlines())
 end
 
 -- Read options
