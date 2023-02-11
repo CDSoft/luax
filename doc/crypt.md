@@ -20,58 +20,58 @@ independant generators with their own seeds.
 ### Random number generator instance
 
 ``` lua
-local rng = crypt.prng(seed)
+local rng = crypt.prng([seed])
 ```
 
 returns a random number generator starting from the optional seed
-`seed`. This object has four methods: `srand(seed)`, `rand([m, [n]])`,
-`rands([bytes])` and `randf([a, [b]])`.
+`seed`. This object has four methods: `seed([seed])`, `int([m, [n]])`,
+`float([a, [b]])` and `str(n)`.
 
 ``` lua
-rng:srand([seed])
+rng:seed([seed])
 ```
 
 sets the seed of the PRNG. The default seed is a number based on the
 current time and the process id.
 
 ``` lua
-rng:rand()
+rng:int()
 ```
 
 returns a random integral number between `0` and `crypt.RAND_MAX`.
 
 ``` lua
-rng:rand(m)
+rng:int(m)
 ```
 
-returns a random integral number between `1` and `m`.
+returns a random integral number between `0` and `m`.
 
 ``` lua
-rng:rand(m, n)
+rng:int(m, n)
 ```
 
 returns a random integral number between `m` and `n`.
 
 ``` lua
-rng:randf()
+rng:float()
 ```
 
 returns a random floating point number between `0.0` and `1.0`.
 
 ``` lua
-rng:randf(a)
+rng:float(a)
 ```
 
 returns a random floating point number between `0.0` and `a`.
 
 ``` lua
-rng:randf(a, b)
+rng:float(a, b)
 ```
 
 returns a random floating point number between `a` and `b`.
 
 ``` lua
-rng:rands(bytes)
+rng:str(bytes)
 ```
 
 returns a string with `bytes` random bytes.
@@ -79,50 +79,50 @@ returns a string with `bytes` random bytes.
 ### Global random number generator
 
 ``` lua
-crypt.srand([seed])
+crypt.seed([seed])
 ```
 
 sets the seed of the global PRNG. The default seed is a number based on
 the current time and the process id.
 
 ``` lua
-crypt.rand()
+crypt.int()
 ```
 
 returns a random integral number between `0` and `crypt.RAND_MAX`.
 
 ``` lua
-crypt.rand(m)
+crypt.int(m)
 ```
 
-returns a random integral number between `1` and `m`.
+returns a random integral number between `0` and `m`.
 
 ``` lua
-crypt.rand(m, n)
+crypt.int(m, n)
 ```
 
 returns a random integral number between `m` and `n`.
 
 ``` lua
-crypt.randf()
+crypt.float()
 ```
 
 returns a random floating point number between `0.0` and `1.0`.
 
 ``` lua
-crypt.randf(a)
+crypt.float(a)
 ```
 
 returns a random floating point number between `0.0` and `a`.
 
 ``` lua
-crypt.randf(a, b)
+crypt.float(a, b)
 ```
 
 returns a random floating point number between `a` and `b`.
 
 ``` lua
-crypt.rands(bytes)
+crypt.str(bytes)
 ```
 
 returns a string with `bytes` random bytes.
@@ -237,8 +237,8 @@ crypt.hmac_prng(personalization)
 ```
 
 returns a HMAC PRNG initialized with `personalization` (32 bytes or
-more) and some OS dependant entropy. This object has three methods:
-`srand(seed)`, `rand([bytes])` and `frand()`.
+more) and some OS dependant entropy. This object has four methods:
+`seed([seed])`, `int([m, [n]])`, `float([a, [b]])` and `str(n)`.
 
 ### CTR random number generator
 
@@ -248,7 +248,7 @@ crypt.ctr_prng(personalization)
 
 returns a CTR PRNG initialized with `personalization` (32 bytes of more)
 and some OS dependant entropy. This object has three methods:
-`srand(seed)`, `rand([bytes])` and `frand()`.
+`seed(seed)`, `int([bytes])` and `frand()`.
 
 ### AES-128 encryption
 

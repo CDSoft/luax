@@ -127,22 +127,32 @@ F.otherwise
 #### Tuples
 
 ``` lua
-F.fst(ab)
+F.fst(xs)
+xs:fst()
 ```
 
 > Extract the first component of a list.
 
 ``` lua
-F.snd(ab)
+F.snd(xs)
+xs:snd()
 ```
 
 > Extract the second component of a list.
 
 ``` lua
-F.thd(ab)
+F.thd(xs)
+xs:thd()
 ```
 
 > Extract the third component of a list.
+
+``` lua
+F.nth(n, xs)
+xs:nth(n)
+```
+
+> Extract the n-th component of a list.
 
 ### Basic type classes
 
@@ -196,7 +206,7 @@ F.negate(a)
 F.abs(a)
 ```
 
-> -a
+> absolute value of a
 
 ``` lua
 F.signum(a)
@@ -274,10 +284,10 @@ F.proper_fraction(x)
 ```
 
 > returns a pair (n,f) such that x = n+f, and:
-
-- n is an integral number with the same sign as x; and
-- f is a fraction with the same type and sign as x, and with absolute
-  value less than 1.
+>
+> - n is an integral number with the same sign as x
+> - f is a fraction with the same type and sign as x, and with absolute
+>   value less than 1.
 
 ``` lua
 F.truncate(x)
@@ -477,14 +487,14 @@ F(t)
 
 ``` lua
 F.clone(t)
-f:clone()
+t:clone()
 ```
 
 > `F.clone(t)` clones the first level of `t`.
 
 ``` lua
 F.deep_clone(t)
-f:deep_clone()
+t:deep_clone()
 ```
 
 > `F.deep_clone(t)` recursively clones `t`.
@@ -1552,7 +1562,7 @@ infix:is_infix_of(s)
 > anywhere within the second.
 
 ``` lua
-string.has_infix(s, infix, s)
+string.has_infix(s, infix)
 s:has_infix(infix)
 ```
 
