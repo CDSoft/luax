@@ -114,7 +114,10 @@ PLUA_VERSION ?= master
 UPP_VERSION ?= master
 
 # PANDOC_VERSION is the version number of pandoc
-PANDOC_VERSION ?= 3.0.1
+PANDOC_VERSION ?= 3.1
+
+# PANDOC_CLI_VERSION is the version number of pandoc-cli
+PANDOC_CLI_VERSION ?= 0.1
 
 # PANDOC_LATEX_TEMPLATE_VERSION is a tag or branch name in the
 # pandoc-latex-template repository
@@ -210,6 +213,39 @@ $(MAKEX_CACHE) $(MAKEX_INSTALL_PATH):
 
 MAKEX_ARCH := $(shell uname -m)
 MAKEX_OS := $(shell uname -s)
+
+###########################################################################
+# Haskell (via GHCup)
+###########################################################################
+
+GHCUP = $(GHCUP_INSTALL_BASE_PREFIX)/.ghcup/bin/ghcup
+GHC = $(dir $(GHCUP))/ghc
+CABAL = $(dir $(GHCUP))/cabal
+STACK = $(dir $(GHCUP))/stack
+
+export PATH := $(dir $(GHCUP)):$(HOME)/.cabal:$(PATH)
+
+export GHCUP_INSTALL_BASE_PREFIX
+export GHCUP_SKIP_UPDATE_CHECK=yes
+
+$(GHCUP) $(GHC) $(CABAL) $(STACK):
+	@echo "$(MAKEX_COLOR)[MAKEX]$(NORMAL) $(TEXT_COLOR)install GHCup (ghc, cabal, stack and hls)$(NORMAL)"
+	@test -f $@ \
+	|| \
+	(   export GHCUP_INSTALL_BASE_PREFIX="$(GHCUP_INSTALL_BASE_PREFIX)"; \
+	    export BOOTSTRAP_HASKELL_NONINTERACTIVE=yes; \
+	    export BOOTSTRAP_HASKELL_GHC_VERSION=$(HASKELL_GHC_VERSION); \
+	    export BOOTSTRAP_HASKELL_CABAL_VERSION=$(HASKELL_CABAL_VERSION); \
+	    export BOOTSTRAP_HASKELL_INSTALL_HLS=yes; \
+	    curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh \
+	)
+
+GHC_CMD   = $(GHCUP) run ghc --
+CABAL_CMD = $(GHCUP) run cabal --
+STACK_CMD = $(GHCUP) run stack -- --stack-root=$(GHCUP_INSTALL_BASE_PREFIX)/.stack
+
+makex-install: makex-install-ghcup
+makex-install-ghcup: $(GHCUP)
 
 ###########################################################################
 # LuaX
@@ -362,33 +398,18 @@ $(PANAM_CSS): | $(MAKEX_CACHE) $(dir $(PANAM_CSS))
 # Pandoc
 ###########################################################################
 
-ifeq ($(MAKEX_OS)-$(MAKEX_ARCH),Linux-x86_64)
-PANDOC_ARCHIVE = pandoc-$(PANDOC_VERSION)-linux-amd64.tar.gz
-endif
-ifeq ($(MAKEX_OS)-$(MAKEX_ARCH),Linux-aarch64)
-PANDOC_ARCHIVE = pandoc-$(PANDOC_VERSION)-linux-arm64.tar.gz
-endif
-
-PANDOC_URL = https://github.com/jgm/pandoc/releases/download/$(PANDOC_VERSION)/$(PANDOC_ARCHIVE)
 PANDOC = $(MAKEX_INSTALL_PATH)/pandoc/$(PANDOC_VERSION)/pandoc
 
 export PATH := $(dir $(PANDOC)):$(PATH)
 
-check_pandoc_architecture:
-	@test -n "$(PANDOC_ARCHIVE)" \
-	|| (echo "$(BG_RED)ERROR$(NORMAL)$(RED): $(MAKEX_OS)-$(MAKEX_ARCH): Unknown archivecture, can not install pandoc$(NORMAL)"; false)
-
 $(dir $(PANDOC)) $(MAKEX_CACHE)/pandoc:
 	@mkdir -p $@
 
-$(PANDOC): check_pandoc_architecture | $(MAKEX_CACHE) $(MAKEX_CACHE)/pandoc $(dir $(PANDOC)) $(PANDOC_LATEX_TEMPLATE) $(PANDOC_LETTER) $(PANAM_CSS)
+$(PANDOC): | $(MAKEX_CACHE) $(MAKEX_CACHE)/pandoc $(dir $(PANDOC)) $(PANDOC_LATEX_TEMPLATE) $(PANDOC_LETTER) $(PANAM_CSS) $(CABAL)
 	@echo "$(MAKEX_COLOR)[MAKEX]$(NORMAL) $(TEXT_COLOR)install Pandoc$(NORMAL)"
 	@test -f $(@) \
 	|| \
-	(   wget -c $(PANDOC_URL) -O $(MAKEX_CACHE)/pandoc/$(notdir $(PANDOC_URL)) \
-	    && tar -C $(MAKEX_CACHE)/pandoc -xzf $(MAKEX_CACHE)/pandoc/$(notdir $(PANDOC_URL)) \
-	    && cp -P $(MAKEX_CACHE)/pandoc/pandoc-$(PANDOC_VERSION)/bin/* $(dir $@) \
-	)
+	$(CABAL) install pandoc-$(PANDOC_VERSION) pandoc-cli-$(PANDOC_CLI_VERSION) --install-method=copy --installdir=$(dir $@)
 
 makex-install: makex-install-pandoc
 makex-install-pandoc: $(PANDOC)
@@ -451,39 +472,6 @@ $(LSVG): | $(LUAX) $(MAKEX_CACHE) $(dir $(LSVG))
 
 makex-install: makex-install-lsvg
 makex-install-lsvg: $(LSVG)
-
-###########################################################################
-# Haskell (via GHCup)
-###########################################################################
-
-GHCUP = $(GHCUP_INSTALL_BASE_PREFIX)/.ghcup/bin/ghcup
-GHC = $(dir $(GHCUP))/ghc
-CABAL = $(dir $(GHCUP))/cabal
-STACK = $(dir $(GHCUP))/stack
-
-export PATH := $(dir $(GHCUP)):$(HOME)/.cabal:$(PATH)
-
-export GHCUP_INSTALL_BASE_PREFIX
-export GHCUP_SKIP_UPDATE_CHECK=yes
-
-$(GHCUP) $(GHC) $(CABAL) $(STACK):
-	@echo "$(MAKEX_COLOR)[MAKEX]$(NORMAL) $(TEXT_COLOR)install GHCup (ghc, cabal, stack and hls)$(NORMAL)"
-	@test -f $@ \
-	|| \
-	(   export GHCUP_INSTALL_BASE_PREFIX="$(GHCUP_INSTALL_BASE_PREFIX)"; \
-	    export BOOTSTRAP_HASKELL_NONINTERACTIVE=yes; \
-	    export BOOTSTRAP_HASKELL_GHC_VERSION=$(HASKELL_GHC_VERSION); \
-	    export BOOTSTRAP_HASKELL_CABAL_VERSION=$(HASKELL_CABAL_VERSION); \
-	    export BOOTSTRAP_HASKELL_INSTALL_HLS=yes; \
-	    curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh \
-	)
-
-GHC_CMD   = $(GHCUP) run ghc --
-CABAL_CMD = $(GHCUP) run cabal --
-STACK_CMD = $(GHCUP) run stack -- --stack-root=$(GHCUP_INSTALL_BASE_PREFIX)/.stack
-
-makex-install: makex-install-ghcup
-makex-install-ghcup: $(GHCUP)
 
 ###########################################################################
 # Panda shortcuts
