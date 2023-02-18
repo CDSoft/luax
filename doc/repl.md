@@ -3,7 +3,7 @@
 The LuaX REPL can be run in various environments:
 
 - the full featured LuaX interpreter based on the LuaX runtime
-- the reduced version running on a vanilla Lua interpreter
+- the reduced version running on a plain Lua interpreter
 
 ## Full featured LuaX interpreter
 
@@ -19,32 +19,32 @@ $ luax
 $ LUA_CPATH="lib/?.so" lua -l luax-x86_64-linux-gnu
 ```
 
-## Reduced version for vanilla Lua interpreters
+## Reduced version for plain Lua interpreters
 
-### LuaX with a vanilla Lua interpreter
+### LuaX with a plain Lua interpreter
 
 ``` sh
-lua luaxcli.lua
+lua luax-lua.lua
 ```
 
 ### LuaX with the Pandoc Lua interpreter
 
 ``` sh
-pandoc lua luaxcli.lua
+pandoc lua luax-lua.lua
 ```
 
 The integration with Pandoc is interresting to debug Pandoc Lua filters
 and inspect Pandoc AST. E.g.:
 
 ``` sh
-$ rlwrap pandoc lua luaxcli.lua
+$ rlwrap pandoc lua luax-lua.lua
 
  _               __  __  |  http://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |
-| |  | | | |/ _` |\  /   |  Version 1.13.1
-| |__| |_| | (_| |/  \   |  Powered by Lua 5.4
-|_____\__,_|\__,_/_/\_\  |  and Pandoc 3.0
-                         |  Linux x86_64 lua
+| |  | | | |/ _` |\  /   |  Version X.Y
+| |__| |_| | (_| |/  \   |  Powered by Lua X.Y
+|_____\__,_|\__,_/_/\_\  |  and Pandoc X.Y
+                         |  <OS> <ARCH>
 
 >> pandoc.read "*Pandoc* is **great**!"
 Pandoc (Meta {unMeta = fromList []}) [Para [Emph [Str "Pandoc"],Space,Str "is",Space,Strong [Str "great"],Str "!"]]

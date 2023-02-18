@@ -6,5 +6,5 @@ author: Christophe Delord
 :::{doc="src/fs/fs.c"}
 :::
 
-:::{doc="src/fs/fsx.lua"}
+:::{doc="src/fs/fs.lua"}
 :::

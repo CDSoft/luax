@@ -18,29 +18,28 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+--@LOAD
+local _, ps = pcall(require, "_ps")
+ps = _ and ps
 
+if not ps then
+    ps = {}
 
+    function ps.sleep(n)
+        return sh.run("sleep", n)
+    end
 
--- Check the test environment first
-require "test_test"()
+    function ps.time()
+        return os.time()
+    end
 
--- luax builtins
-require "arg_test"()
-require "require_test"()
+    function ps.profile(func)
+        local t0 = os.time()
+        func()
+        local t1 = os.time()
+        return t1 - t0
+    end
 
--- luax libraries
-require "F_test"()
-require "sys_test"()
-require "fs_test"()
-require "sh_test"()
-require "ps_test"()
-require "crypt_test"()
-require "lpeg_test"()
-require "complex_test"()
-require "socket_test"()
-require "inspect_test"()
-require "serpent_test"()
-require "lz4_test"()
+end
 
--- explicit exit to close the Pandoc Lua reader
-os.exit(0)
+return ps

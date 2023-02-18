@@ -22,7 +22,7 @@ http://cdelord.fr/luax
 -- lz4
 ---------------------------------------------------------------------
 
-if on "lua" then return function() end end
+if on { "lua", "pandoc" } then return function() end end
 
 local lz4 = require "lz4"
 

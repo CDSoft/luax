@@ -18,20 +18,8 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
---[[------------------------------------------------------------------------@@@
-## String methods
+--@LOAD
+local _, qmath = pcall(require, "_qmath")
+qmath = _ and qmath
 
-The `lz4` functions are also available as `string` methods:
-@@@]]
-
-local lz4 = require "lz4"
-
---[[@@@
-```lua
-s:lz4()         == lz4.lz4(s)
-s:unlz4()       == lz4.unlz4(s)
-```
-@@@]]
-
-function string.lz4(s, ...)     return lz4.lz4(s, ...) end
-function string.unlz4(s, ...)   return lz4.unlz4(s, ...) end
+return qmath

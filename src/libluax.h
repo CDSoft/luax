@@ -28,3 +28,6 @@ LUAMOD_API int luaopen_luax(lua_State *L);
 
 void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len);
 int run_buffer(lua_State *L, char *buffer, size_t size, const char *name);
+
+__attribute__((__noreturn__))
+void luax_run(lua_State *L, const char *exe);

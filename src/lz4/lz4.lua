@@ -18,29 +18,28 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+--[[------------------------------------------------------------------------@@@
+## String methods
 
+The `lz4` functions are also available as `string` methods:
+@@@]]
 
+--@LOAD
+local _, lz4 = pcall(require, "_lz4")
+lz4 = _ and lz4
 
--- Check the test environment first
-require "test_test"()
+if lz4 then
 
--- luax builtins
-require "arg_test"()
-require "require_test"()
+--[[@@@
+```lua
+s:lz4()         == lz4.lz4(s)
+s:unlz4()       == lz4.unlz4(s)
+```
+@@@]]
 
--- luax libraries
-require "F_test"()
-require "sys_test"()
-require "fs_test"()
-require "sh_test"()
-require "ps_test"()
-require "crypt_test"()
-require "lpeg_test"()
-require "complex_test"()
-require "socket_test"()
-require "inspect_test"()
-require "serpent_test"()
-require "lz4_test"()
+    function string.lz4(s, ...)     return lz4.lz4(s, ...) end
+    function string.unlz4(s, ...)   return lz4.unlz4(s, ...) end
 
--- explicit exit to close the Pandoc Lua reader
-os.exit(0)
+end
+
+return lz4

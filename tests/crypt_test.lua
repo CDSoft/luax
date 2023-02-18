@@ -22,8 +22,6 @@ http://cdelord.fr/luax
 -- crypt
 ---------------------------------------------------------------------
 
---if on "lua" then return function() end end
-
 local crypt = require "crypt"
 
 require "test"
@@ -220,6 +218,7 @@ return function()
     -- TinyCrypt tests
     if on{"static", "dynamic"} then
         local function bytes(s)
+            s = s:unhex()
             local bs = table.pack(s:byte(1, #s))
             bs.n = nil
             return bs
@@ -405,5 +404,35 @@ return function()
                 end
             end
         end
+    end
+
+    -- Pandoc tests
+    if on "pandoc" then
+
+        -- Encryption tests
+        do
+            eq(crypt.sha1("abc"), "a9993e364706816aba3e25717850c26c9cd0d89d")
+            eq(crypt.sha1(""), "da39a3ee5e6b4b0d3255bfef95601890afd80709")
+            eq(crypt.sha1("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"), "84983e441c3bd26ebaae4aa1f95129e5e54670f1")
+            for _ = 1, 100 do
+                local s = prng:str(prng:int()%1024)
+                eq(s:sha1(), crypt.sha1(s))
+            end
+        end
+        do
+            do
+                for _ = 1, 100 do
+                    local x = prng:str(prng:int(1, 256))
+                    local key = prng:str(prng:int(1, 256))
+                    local y = crypt.rc4(x, key)
+                    local z = crypt.unrc4(y, key)
+                    ne({y:byte(1, -1)}, {x:byte(1, -1)})
+                    eq({z:byte(1, -1)}, {x:byte(1, -1)})
+                    eq({y:byte(1, -1)}, {x:rc4(key):byte(1, -1)})
+                    eq({z:byte(1, -1)}, {y:unrc4(key):byte(1, -1)})
+                end
+            end
+        end
+
     end
 end

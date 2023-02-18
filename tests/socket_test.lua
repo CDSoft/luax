@@ -22,7 +22,7 @@ http://cdelord.fr/luax
 -- luasocket
 ---------------------------------------------------------------------
 
-if on "lua" then return function() end end
+if on { "lua", "pandoc" } then return function() end end
 
 local sys = require "sys"
 

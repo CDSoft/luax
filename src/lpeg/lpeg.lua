@@ -18,29 +18,7 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+--@LOAD
+local lpeg = require "_lpeg"
 
-
-
--- Check the test environment first
-require "test_test"()
-
--- luax builtins
-require "arg_test"()
-require "require_test"()
-
--- luax libraries
-require "F_test"()
-require "sys_test"()
-require "fs_test"()
-require "sh_test"()
-require "ps_test"()
-require "crypt_test"()
-require "lpeg_test"()
-require "complex_test"()
-require "socket_test"()
-require "inspect_test"()
-require "serpent_test"()
-require "lz4_test"()
-
--- explicit exit to close the Pandoc Lua reader
-os.exit(0)
+return lpeg

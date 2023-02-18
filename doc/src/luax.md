@@ -53,11 +53,12 @@ $ make install-all PREFIX=/usr  # install luax to /usr/bin
 
 `make install` and `make install-all` install:
 
+- `$PREFIX/bin/luax-env`: script to update `PATH` and `LUA_CPATH` to be sources in `.bashrc` or `.zshrc`
 - `$PREFIX/bin/luax`: symbolic link to the LuaX binary for the host
 - `$PREFIX/bin/luax-<ARCH>-<OS>-<LIBC>`: LuaX binary for a specific platform
-- `$PREFIX/bin/luaxcli.lua`: a pure Lua REPL reimplementing some LuaX
+- `$PREFIX/bin/luax-pandoc`: LuaX run in a Pandoc Lua interpreter
+- `$PREFIX/bin/luax-lua.lua`: a pure Lua REPL reimplementing some LuaX
   libraries, usable in any Lua 5.4 interpreter (e.g.: lua, pandoc lua, ...)
-
 - `$PREFIX/lib/luax-<ARCH>-<OS>-<LIBC>.so`: Linux LuaX shared libraries
 - `$PREFIX/lib/luax-<ARCH>-<OS>-<LIBC>.dylib`: MacOS LuaX shared libraries
 - `$PREFIX/lib/luax-<ARCH>-<OS>-<LIBC>.dll`: Windows LuaX shared libraries
@@ -102,21 +103,10 @@ Compilation options:
   -t all            compile for all available targets
   -t list           list available targets
   -o file           name the executable file to create
+  -r                use rlwrap (lua and pandoc targets only)
 
 Scripts for compilation:
   file name         name of a Lua package to add to the binary
-                    (the first one is the main script)
-  -autoload         the next package will be loaded with require
-                    and stored in a global variable of the same name
-                    when the binary starts
-  -autoload-all     all following packages (until -autoload-none)
-                    are loaded with require when the binary starts
-  -autoload-none    cancel -autoload-all
-  -autoexec         the next package will be executed with require
-                    when the binary start
-  -autoexec-all     all following packages (until -autoexec-none)
-                    are executed with require when the binary starts
-  -autoexec-none    cancel -autoexec-all
 
 Lua and Compilation options can not be mixed.
 
@@ -126,20 +116,34 @@ Environment variables:
                     code executed before handling command line options
                     and scripts (not in compilation mode).
                     When LUA_INIT_5_4 is defined, LUA_INIT is ignored.
+
+  PATH              PATH shall contain the bin directory where LuaX
+                    is installed
+
+  LUA_CPATH         LUA_CPATH shall point to the lib directory where
+                    LuaX shared libraries are instaled
+
+PATH and LUA_PATH can be set in .bashrc or .zshrc with « luax env ».
+E.g.: eval $(luax env)
 ```
 
-When compiling scripts (options `-t` and `-o`), the main script shall be the
-first one. Other scripts are libraries that can be loaded by the main script.
+When compiling scripts (options `-t` and `-o`), the scripts shall contain tags
+(e.g. in comments) showing how the script is used by LuaX:
+- `--@MAIN`: main script (must be unique)
+- `--@LOAD`: library that is `require`'d before the main script is run (stored
+  in a global variable)
+- other scripts are libraries that must be explicitly `require`'d by the main
+  script
 
 ### Examples
 
 ``` bash
 # Native compilation (luax is a symlink to the luax binary of the host)
-$ luax main.lua lib1.lua lib2.lua -o executable
+$ luax -o executable main.lua lib1.lua lib2.lua
 $ ./executable      # equivalent to luax main.lua
 
 # Cross compilation to MacOS x86_64
-$ luax -t x86_64-macos-gnu main.lua lib1.lua lib2.lua -o executable
+$ luax -o executable -t x86_64-macos-gnu main.lua lib1.lua lib2.lua
 
 # Available targets
 $ luax -t list
@@ -153,6 +157,8 @@ x86_64-linux-gnu    <path to>/luax-x86_64-linux-gnu
 x86_64-linux-musl   <path to>/luax-x86_64-linux-musl
 x86_64-macos-gnu    <path to>/luax-x86_64-macos-gnu
 x86_64-windows-gnu  <path to>/luax-x86_64-windows-gnu.exe
+lua                 <path to>/lua
+pandoc              <path to>/pandoc
 ```
 
 ## Built-in modules
@@ -163,7 +169,8 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 [lapp](http://cdelord.fr/lapp).
 
 - [LuaX interactive usage](repl.md): improved Lua REPL
-- [fun](fun.md): functional programming inspired functions
+- [F](F.md): functional programming inspired functions
+- [L](L.md): `pandoc.List` module from the Pandoc Lua interpreter
 - [fs](fs.md): file system management
 - [sh](sh.md): shell command execution
 - [mathx](mathx.md): complete math library for Lua
@@ -176,6 +183,7 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 - [lz4](lz4.md): Extremely Fast Compression algorithm
 - [lpeg](lpeg.md): Parsing Expression Grammars For Lua
 - [linenoise](linenoise.md): light readline alternative
+- [prompt](prompt.md): minimalistic readline alternative (to be used with `rlwrap`)
 - [luasocket](luasocket.md): Network support for the Lua language
 - [argparse](argparse.md): Feature-rich command line parser for Lua
 - [inspect](inspect.md): Human-readable representation of Lua tables
@@ -193,7 +201,7 @@ E.g.:
 ```
 $ lua -l luax-x86_64-linux-gnu
 Lua 5.4.4  Copyright (C) 1994-2022 Lua.org, PUC-Rio
-> F = require "fun"
+> F = require "F"
 > F.range(100):sum()
 5050
 > F.show({x=1, y=2})

@@ -253,4 +253,4 @@ _M.send = socket.protect(function(mailt)
     return s:close()
 end)
 
-return _M
+return _M--@NAME=socket.smtp

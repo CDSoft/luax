@@ -22,7 +22,7 @@ const lua_src = "lua";
 const tinycrypt_src = "src/crypt/tinycrypt";
 const lz4_src = "src/lz4/lz4";
 const src_path = "src";
-const build_path = ".build";
+const build_path = ".build/tmp";
 
 const lua_c_files = [_][]const u8 {
     // Lua interpreter
@@ -65,7 +65,6 @@ const lua_c_files = [_][]const u8 {
 const luax_main_c_files = [_][]const u8 {
     // LuaX runtime
     "src/main.c",
-    "src/runtime.c",
 };
 
 const luax_c_files = [_][]const u8 {

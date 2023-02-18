@@ -6,5 +6,5 @@ author: Christophe Delord
 :::{doc="src/crypt/crypt.c"}
 :::
 
-:::{doc="src/crypt/cryptx.lua"}
+:::{doc="src/crypt/crypt.lua"}
 :::

@@ -18,7 +18,7 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
-local F = require "fun"
+local F = require "F"
 local sys = require "sys"
 
 function on(types)

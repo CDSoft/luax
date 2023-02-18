@@ -20,7 +20,7 @@ http://cdelord.fr/luax
 
 local fs = require "fs"
 local sys = require "sys"
-local F = require "fun"
+local F = require "F"
 
 local function createfile(name)
     assert(io.open(name, "w")):close()

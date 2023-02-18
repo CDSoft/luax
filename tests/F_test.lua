@@ -22,7 +22,7 @@ http://cdelord.fr/luax
 -- fun
 ---------------------------------------------------------------------
 
-local F = require "fun"
+local F = require "F"
 
 require "test"
 

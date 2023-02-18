@@ -18,9 +18,11 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+--@MAIN
+
 local fs = require "fs"
 local sys = require "sys"
-local F = require "fun"
+local F = require "F"
 local I = F.I(_G)
 
 local has_compiler = pcall(require, "bundle")
@@ -61,21 +63,10 @@ Compilation options:
   -t all            compile for all available targets
   -t list           list available targets
   -o file           name the executable file to create
+  -r                use rlwrap (lua and pandoc targets only)
 
 Scripts for compilation:
   file name         name of a Lua package to add to the binary
-                    (the first one is the main script)
-  -autoload         the next package will be loaded with require
-                    and stored in a global variable of the same name
-                    when the binary starts
-  -autoload-all     all following packages (until -autoload-none)
-                    are loaded with require when the binary starts
-  -autoload-none    cancel -autoload-all
-  -autoexec         the next package will be executed with require
-                    when the binary start
-  -autoexec-all     all following packages (until -autoexec-none)
-                    are executed with require when the binary starts
-  -autoexec-none    cancel -autoexec-all
 
 Lua and Compilation options can not be mixed.
 ]==] or {},
@@ -86,11 +77,25 @@ Environment variables:
                     code executed before handling command line options
                     and scripts (not in compilation mode).
                     When $(init[1]) is defined, $(init[2]) is ignored.
+
+  PATH              PATH shall contain the bin directory where LuaX
+                    is installed
+
+  LUA_CPATH         LUA_CPATH shall point to the lib directory where
+                    LuaX shared libraries are instaled
+]==],
+    [==[
+PATH and LUA_PATH can be set in .bashrc or .zshrc with « luax env ».
+E.g.: eval $(luax env)
 ]==]
     })
 
+local welcome_already_printed = false
+
 local function print_welcome()
+    if welcome_already_printed then return end
     print(welcome)
+    welcome_already_printed = true
 end
 
 local function print_usage(fmt, ...)
@@ -115,8 +120,21 @@ local function print_targets()
     local config = require "luax_config"
     F(config.targets):map(function(target)
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..target..ext(target))
-        print(("%-20s%s%s"):format(target, compiler, fs.is_file(compiler) and "" or " [NOT FOUND]"))
+        print(("%-20s%s%s"):format(
+            target,
+            compiler:gsub("^"..os.getenv"HOME", "~"),
+            fs.is_file(compiler) and "" or " [NOT FOUND]"
+        ))
     end)
+    local function external(name)
+        local path = fs.findpath(name)
+        print(("%-20s%s%s"):format(
+            name,
+            path and path:gsub("^"..os.getenv"HOME", "~") or name,
+            path and "" or " [NOT FOUND]"))
+    end
+    external "lua"
+    external "pandoc"
 end
 
 local function err(fmt, ...)
@@ -151,6 +169,7 @@ local run_stdin = false
 local args = {}
 local output = nil
 local target = nil
+local rlwrap = false
 
 local luax_loaded = false
 
@@ -169,7 +188,7 @@ local actions = setmetatable({
 The LuaX REPL can be run in various environments:
 
 - the full featured LuaX interpreter based on the LuaX runtime
-- the reduced version running on a vanilla Lua interpreter
+- the reduced version running on a plain Lua interpreter
 
 ## Full featured LuaX interpreter
 
@@ -185,18 +204,18 @@ $ luax
 $ LUA_CPATH="lib/?.so" lua -l luax-x86_64-linux-gnu
 ```
 
-## Reduced version for vanilla Lua interpreters
+## Reduced version for plain Lua interpreters
 
-### LuaX with a vanilla Lua interpreter
+### LuaX with a plain Lua interpreter
 
 ``` sh
-lua luaxcli.lua
+lua luax-lua.lua
 ```
 
 ### LuaX with the Pandoc Lua interpreter
 
 ``` sh
-pandoc lua luaxcli.lua
+pandoc lua luax-lua.lua
 ```
 
 The integration with Pandoc is interresting
@@ -204,14 +223,14 @@ to debug Pandoc Lua filters and inspect Pandoc AST.
 E.g.:
 
 ``` sh
-$ rlwrap pandoc lua luaxcli.lua
+$ rlwrap pandoc lua luax-lua.lua
 
  _               __  __  |  http://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |
-| |  | | | |/ _` |\  /   |  Version 1.13.1
-| |__| |_| | (_| |/  \   |  Powered by Lua 5.4
-|_____\__,_|\__,_/_/\_\  |  and Pandoc 3.0
-                         |  Linux x86_64 lua
+| |  | | | |/ _` |\  /   |  Version X.Y
+| |__| |_| | (_| |/  \   |  Powered by Lua X.Y
+|_____\__,_|\__,_/_/\_\  |  and Pandoc X.Y
+                         |  <OS> <ARCH>
 
 >> pandoc.read "*Pandoc* is **great**!"
 Pandoc (Meta {unMeta = fromList []}) [Para [Emph [Str "Pandoc"],Space,Str "is",Space,Strong [Str "great"],Str "!"]]
@@ -397,6 +416,11 @@ local function run_lua_init()
         end)
 end
 
+if #arg == 1 and arg[1] == "env" then
+    print(require "shell_env"())
+    os.exit()
+end
+
 actions:add(run_lua_init)
 
 do
@@ -454,6 +478,9 @@ do
                 print_targets()
                 os.exit()
             end
+        elseif has_compiler and a == "-r" then
+            compiler_mode = true
+            rlwrap = true
         elseif a == '-v' then
             print_welcome()
             os.exit()
@@ -467,13 +494,6 @@ do
             run_stdin = true
             -- this is not an option but a file (stdin) to execute
             args[#args+1] = arg[i]
-            break
-        elseif has_compiler and
-            (  a == '-autoload' or a == '-autoload-all' or a == '-autoload-none'
-            or a == '-autoexec' or a == '-autoexec-all' or a == '-autoexec-none'
-            ) then
-            -- this is an option for the compiler
-            compiler_mode = true
             break
         elseif a:match "^%-" then
             wrong_arg(a)
@@ -586,40 +606,13 @@ local function run_compiler()
         print(("%-9s: %s"):format(k, fmt:format(...)))
     end
 
-    -- List scripts
-    local head = "scripts"
-    local autoload = false
-    local autoexec = false
-    local autoload_all = false
-    local autoexec_all = false
-    for i = 1, #scripts do
-        if scripts[i] == "-autoload" then autoload = true
-        elseif scripts[i] == "-autoload-all" then autoload_all = true
-        elseif scripts[i] == "-autoload-none" then autoload_all = false
-        elseif scripts[i] == "-autoexec" then autoexec = true
-        elseif scripts[i] == "-autoexec-all" then autoexec_all = true
-        elseif scripts[i] == "-autoexec-none" then autoexec_all = false
-        else
-            if (autoload or autoload_all) and (autoexec or autoexec_all) then
-                err("Can not autoload and autoexec a package")
-            end
-            log(head, "%s%s",
-                (autoload or autoload_all) and "autoload "
-                or (autoexec or autoexec_all) and "autoexec"
-                or "",
-                scripts[i])
-            autoload = false
-            autoexec = false
-        end
-        head = ""
-    end
-
-    -- Compile scripts for each targets
+    -- Check the target parameter
     local config = require "luax_config"
     local valid_targets = F.from_set(F.const(true), config.targets)
     local compilers = {}
     local function rmext(compiler_target, name) return name:gsub(ext(compiler_target):gsub("%.", "%%.").."$", "") end
     F(target == "all" and valid_targets:keys() or target and {target} or {}):map(function(compiler_target)
+        if target == "lua" or target == "pandoc" then return end
         if not valid_targets[compiler_target] then err("Invalid target: %s", compiler_target) end
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..compiler_target..ext(compiler_target))
         if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, compiler_target} end
@@ -629,6 +622,21 @@ local function run_compiler()
         if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, nil} end
     end
 
+    -- luax lib path
+    local luax_lib_path = F.flatten {
+        fs.join(fs.dirname(arg[0]), "luax.lua"),
+        fs.join(fs.dirname(arg[0]), "..", "lib", "luax.lua"),
+        fs.join(fs.dirname(arg[0]), "lib", "luax.lua"),
+    }:filter(fs.is_file):head()
+
+    -- List scripts
+    local head = "scripts"
+    for i = 1, #scripts do
+        log(head, "%s", scripts[i])
+        head = ""
+    end
+
+    -- Compile scripts for each targets
     local function compile_target(current_output, compiler)
         local compiler_exe, compiler_target = table.unpack(compiler)
         if target == "all" then
@@ -657,9 +665,48 @@ local function run_compiler()
         fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
     end
 
+    -- Prepare scripts for a Lua / Pandoc Lua target
+    local function compile_lua(current_output, interpreter)
+        if target == "all" then
+            current_output = current_output.."-"..interpreter:words():head()
+        end
+
+        print()
+        log("interpreter", "%s", interpreter)
+        log("output", "%s", current_output)
+
+        local bundle = require "bundle"
+        local exe, chunk = bundle.combine_lua(luax_lib_path, scripts)
+        exe =
+            F.flatten{
+                "#!/usr/bin/env -S",
+                rlwrap and {"rlwrap -C", fs.basename(current_output)} or {},
+                interpreter, "-l", "luax", "-e", "'sys.bootstrap()'", "--",
+            }:unwords()
+            .."\n"
+            ..exe
+        log("Chunk", "%7d bytes", #chunk)
+        log("Total", "%7d bytes", #exe)
+
+        local f = io.open(current_output, "wb")
+        if f == nil then err("Can not create "..current_output)
+        else
+            f:write(exe)
+            f:close()
+        end
+
+        fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
+    end
+
     F(compilers):map(function(compiler)
         compile_target(output, compiler)
     end)
+    if target == "all" or target == "lua" then
+        compile_lua(output, "lua")
+    end
+    if target == "all" or target == "pandoc" then
+        compile_lua(output, "pandoc lua")
+    end
 
 end
 

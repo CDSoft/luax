@@ -31,6 +31,7 @@ local fs = require "fs"
 
 #include "fs.h"
 
+#include "luaconf.h"
 #include "std/std.h"
 #include "tools.h"
 
@@ -688,6 +689,11 @@ fs.sep
 is the directory separator.
 
 ```lua
+fs.path_sep
+```
+is the path separator in `$LUA_PATH`.
+
+```lua
 fs.uR, fs.uW, fs.uX
 fs.gR, fs.gW, fs.gX
 fs.oR, fs.oW, fs.oX
@@ -701,6 +707,11 @@ LUAMOD_API int luaopen_fs(lua_State *L)
     luaL_newlib(L, fslib);
     /* File separator */
     set_string(L, "sep", LUA_DIRSEP);
+#ifdef _WIN32
+    set_string(L, "path_sep", ";");
+#else
+    set_string(L, "path_sep", ":");
+#endif
     /* File permission bits */
     set_integer(L, "uR", S_IRUSR);
     set_integer(L, "uW", S_IWUSR);

@@ -28,7 +28,7 @@
 
 void set_fun_metatable(lua_State *L)
 {
-    luaL_requiref(L, "fun", NULL, 0);       /* push the fun package */
+    luaL_requiref(L, "F", NULL, 0);       /* push the fun package */
     lua_rotate(L, lua_gettop(L), 2);        /* swap the fun package and the list to pass to fun */
     lua_call(L, 1, 1);                      /* call fun(list) and leave list on the stack */
 }

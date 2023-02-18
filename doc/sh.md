@@ -24,3 +24,11 @@ sh.write(...)(data)
 
 Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
 `sh.write` returns the same values returned by `os.execute`.
+
+``` lua
+sh.pipe(...)(data)
+```
+
+Runs the command `...` with `pandoc.pipe` and feeds `stdin` with `data`.
+When `sh.pipe` succeeds, it returns the content of stdout. Otherwise it
+returns the error identified by `pandoc.pipe`.

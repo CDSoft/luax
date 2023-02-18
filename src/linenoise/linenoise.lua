@@ -18,29 +18,33 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+--@LOAD
+local _, linenoise = pcall(require, "_linenoise")
+linenoise = _ and linenoise
 
+if not linenoise then
 
+    linenoise = {}
 
--- Check the test environment first
-require "test_test"()
+    function linenoise.read(prompt)
+        io.stdout:write(prompt)
+        io.stdout:flush()
+        return io.stdin:read "l"
+    end
 
--- luax builtins
-require "arg_test"()
-require "require_test"()
+    linenoise.read_mask = linenoise.read
 
--- luax libraries
-require "F_test"()
-require "sys_test"()
-require "fs_test"()
-require "sh_test"()
-require "ps_test"()
-require "crypt_test"()
-require "lpeg_test"()
-require "complex_test"()
-require "socket_test"()
-require "inspect_test"()
-require "serpent_test"()
-require "lz4_test"()
+    linenoise.add = F.const()
+    linenoise.set_len = F.const()
+    linenoise.save = F.const()
+    linenoise.load = F.const()
+    linenoise.multi_line = F.const()
+    linenoise.mask = F.const()
 
--- explicit exit to close the Pandoc Lua reader
-os.exit(0)
+    function linenoise.clear()
+        io.stdout:write "\x1b[1;1H\x1b[2J"
+    end
+
+end
+
+return linenoise

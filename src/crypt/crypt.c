@@ -1020,7 +1020,11 @@ static int crypt_tinycrypt_sha256(lua_State *L)
     {
         return bl_pusherror(L, "tc_sha256_final failed");
     }
-    lua_pushlstring(L, (char *)digest, sizeof(digest));
+    char *hex;
+    size_t n_out;
+    hex_encode((char*)digest, TC_SHA256_DIGEST_SIZE, &hex, &n_out);
+    lua_pushlstring(L, hex, n_out);
+    free(hex);
     return 1;
 }
 
@@ -1060,7 +1064,11 @@ static int crypt_tinycrypt_hmac(lua_State *L)
     {
         return bl_pusherror(L, "tc_hmac_final failed");
     }
-    lua_pushlstring(L, (char *)digest, sizeof(digest));
+    char *hex;
+    size_t n_out;
+    hex_encode((char*)digest, TC_SHA256_DIGEST_SIZE, &hex, &n_out);
+    lua_pushlstring(L, hex, n_out);
+    free(hex);
     return 1;
 }
 

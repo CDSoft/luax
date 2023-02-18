@@ -17,8 +17,9 @@
  * http://cdelord.fr/luax
  */
 
-#include "runtime.h"
+#include "libluax.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <libgen.h>
@@ -41,16 +42,30 @@ static void get_exe(const char *arg0, char *name, size_t name_size)
     name[n] = '\0';
 }
 
+static void createargtable(lua_State *L, const char **argv, int argc, int shift)
+{
+    const int narg = argc - 1 - shift;  /* number of positive indices */
+    lua_createtable(L, narg, 1);
+    for (int i = 0; i < argc-shift; i++) {
+        lua_pushstring(L, argv[i+shift]);
+        lua_rawseti(L, -2, i);
+    }
+    lua_setglobal(L, "arg");
+}
+
 int main(int argc, const char *argv[])
 {
     char exe[1024];
     get_exe(argv[0], exe, sizeof(exe));
 
-    lua_State *L = luax_newstate(argc, argv);
+    lua_State *L = luaL_newstate();
+    luaL_openlibs(L);
+    createargtable(L, argv, argc, 0);
+    luaopen_luax(L);
 
 #if RUNTIME == 1
 
-    return luax_run(L, exe, argv);
+    luax_run(L, exe); /* no return */
 
 #else
 

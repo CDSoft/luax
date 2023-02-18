@@ -22,9 +22,9 @@ http://cdelord.fr/luax
 
 local bundle = {}
 
-local fs = require "fs"
-local lz4 = require "lz4"
-local crypt = require "crypt"
+local fs = require "_fs"
+local lz4 = require "_lz4"
+local crypt = require "_crypt"
 local config = require "luax_config"
 
 bundle.magic = "\0"..config.magic_id.."\0"
@@ -58,77 +58,67 @@ end
 function bundle.bundle(arg)
 
     local format = "binary"
-    local main = true
     local scripts = {}
-    local autoload_next = false
-    local autoexec_next = false
-    local autoload_all = false
-    local autoexec_all = false
     for i = 1, #arg do
-        if arg[i] == "-nomain" then             main = false
-        elseif arg[i] == "-ascii" then          format = "ascii"
-        elseif arg[i] == "-autoload" then       autoload_next = true
-        elseif arg[i] == "-autoload-all" then   autoload_all = true
-        elseif arg[i] == "-autoload-none" then  autoload_all = false
-        elseif arg[i] == "-autoexec" then       autoexec_next = true
-        elseif arg[i] == "-autoexec-all" then   autoexec_all = true
-        elseif arg[i] == "-autoexec-none" then  autoexec_all = false
+        if arg[i] == "-binary" then     format = "binary"
+        elseif arg[i] == "-ascii" then  format = "ascii"
+        elseif arg[i] == "-lua" then    format = "lua"
         else
-            local local_path, dest_path = arg[i]:match "(.-):(.*)"
-            local_path = local_path or arg[i]
+            local content = read(arg[i]):gsub("^#![^\n]*", "")
             scripts[#scripts+1] = {
-                local_path = local_path,
-                path = dest_path or fs.basename(local_path),
-                name = dest_path and strip_ext(dest_path) or fs.basename(strip_ext(local_path)),
-                autoload = autoload_next or autoload_all,
-                autoexec = autoexec_next or autoexec_all,
+                path = arg[i],
+                name = content:match("@".."NAME=([%w%._%-]+)") or fs.basename(strip_ext(arg[i])),
+                main = content:match("@".."MAIN"),
+                load = content:match("@".."LOAD"),
+                content = content,
             }
-            autoload_next = false
-            autoexec_next = false
         end
     end
 
     local plain = Bundle()
     plain.emit "do\n"
     local function compile_library(script)
-        local script_source = read(script.local_path):gsub("^#![^\n]*", "")
-        assert(load(script_source, script.local_path, 't'))
-        plain.emit(("[%q] = assert(load(%q, %q, 't')),\n"):format(script.name, script_source, "@"..script.path))
+        assert(load(script.content, script.path, 't'))
+        plain.emit(("[%q] = assert(load(%q, %q, 't')),\n"):format(script.name, script.content, "@"..script.path))
     end
     local function load_library(script)
         plain.emit(("_ENV[%q] = require %q\n"):format(script.name, script.name))
     end
     local function run_script(script)
-        local script_source = read(script.local_path):gsub("^#![^\n]*", "")
-        assert(load(script_source, script.local_path, 't'))
-        plain.emit(("assert(load(%q, %q, 't'))()\n"):format(script_source, "@"..script.path))
+        assert(load(script.content, script.path, 't'))
+        plain.emit(("assert(load(%q, %q, 't'))()\n"):format(script.content, "@"..script.path))
     end
     plain.emit "local libs = {\n"
-    plain.emit("luax = function() end,\n") -- the luax module does nothing in the luax runtime
-    for i = main and 2 or 1, #scripts do
-        -- add non autoexec scripts to the libs table used by the require function
-        if not scripts[i].autoexec then
+    for i = 1, #scripts do
+        -- add non main scripts to the libs table used by the require function
+        if not scripts[i].main then
             compile_library(scripts[i])
         end
     end
     plain.emit "}\n"
-    plain.emit "table.insert(package.searchers, 1, function(name) return libs[name] end)\n"
-    for i = main and 2 or 1, #scripts do
-        if scripts[i].autoload then
-            -- autoload packages are require'd and stored in a global variable
+    plain.emit "table.insert(package.searchers, 2, function(name) return libs[name] end)\n"
+    for i = 1, #scripts do
+        if scripts[i].load then
+            -- load packages are require'd and stored in a global variable
             load_library(scripts[i])
-        elseif scripts[i].autoexec then
-            -- autoexec scripts are executed before main and can not be require'd
-            run_script(scripts[i])
         end
     end
-    if main then
-        -- finally the main script is executed
-        run_script(scripts[1])
+    local nb_main = 0
+    for i = 1, #scripts do
+        if scripts[i].main then
+            -- finally the main script is executed
+            run_script(scripts[i])
+            nb_main = nb_main + 1
+        end
     end
     plain.emit "end\n"
 
-    local payload = crypt.rc4(lz4.lz4(plain.get()))
+    if nb_main > 1 then
+        error("Too many main scripts")
+    end
+
+    local plain_payload = plain.get()
+    local payload = crypt.rc4(lz4.lz4(plain_payload))
 
     if format == "binary" then
         return payload .. header_format:pack(#payload, bundle.magic)
@@ -136,6 +126,10 @@ function bundle.bundle(arg)
 
     if format == "ascii" then
         return crypt.hex(payload):gsub("..", "'\\x%0',") .. "\n"
+    end
+
+    if format == "lua" then
+        return plain_payload
     end
 
     error(format..": invalid format")
@@ -156,6 +150,11 @@ function bundle.combine(target, scripts)
     local runtime = drop_chunk(read(target))
     local chunk = bundle.bundle(scripts)
     return runtime..chunk, chunk
+end
+
+function bundle.combine_lua(luax_lib, scripts)
+    local chunk = bundle.bundle(F.flatten{scripts})
+    return chunk, chunk
 end
 
 local function called_by(f, level)

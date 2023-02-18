@@ -369,3 +369,4 @@ setmetatable(inspect, {
 })
 
 return inspect
+--@LOAD

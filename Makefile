@@ -21,10 +21,14 @@ CRYPT_KEY ?= LuaX
 
 # magic id for LuaX chunks
 LUAX_VERSION := $(shell git describe --tags || echo undefined)
-LUAX_URL ?= https://github.com/CDSoft/luax
-LUAX_MAGIC_ID ?= LuaX $(LUAX_VERSION) - $(LUAX_URL)
+LUAX_MAGIC_ID ?= LuaX
 
 BUILD = .build
+BUILD_BIN = $(BUILD)/bin
+BUILD_LIB = $(BUILD)/lib
+BUILD_TMP = $(BUILD)/tmp
+BUILD_TEST = $(BUILD)/test
+BUILD_DOC = $(BUILD)/doc
 ZIG_INSTALL = .zig
 ZIG_CACHE = $(ZIG_INSTALL)/zig-cache
 
@@ -46,23 +50,40 @@ TARGETS += i386-windows-gnu
 TARGETS += x86_64-macos-gnu
 TARGETS += aarch64-macos-gnu
 
-RUNTIMES = $(patsubst %-windows-gnu,%-windows-gnu.exe,$(TARGETS:%=$(BUILD)/luaxruntime-%))
-LUAX_BINARIES := $(RUNTIMES:$(BUILD)/luaxruntime-%=$(BUILD)/luax-%)
+RUNTIMES = $(patsubst %-windows-gnu,%-windows-gnu.exe,$(TARGETS:%=$(BUILD_TMP)/luaxruntime-%))
+LUAX_BINARIES := $(RUNTIMES:$(BUILD_TMP)/luaxruntime-%=$(BUILD_BIN)/luax-%)
 
-LUA = $(BUILD)/lua
-LUAX0 = $(BUILD)/lua0-$(ARCH)-$(OS)-$(LIBC)
+LUA = $(BUILD_TMP)/lua
+LUAX0 = $(BUILD_TMP)/lua0-$(ARCH)-$(OS)-$(LIBC)
 LUA_SOURCES := $(sort $(wildcard lua/*))
 
 LUAX_SOURCES := $(sort $(shell find src -name "*.[ch]"))
 
 LUAX_RUNTIME := $(sort $(shell find src -name "*.lua"))
-LUAX_RUNTIME_BUNDLE := $(BUILD)/lua_runtime_bundle.dat
+LUAX_RUNTIME_BUNDLE := $(BUILD_TMP)/lua_runtime_bundle.dat
 
-LUAX_CONFIG_H := $(BUILD)/luax_config.h
-LUAX_CONFIG_LUA := $(BUILD)/luax_config.lua
+LIB_LUAX_SOURCES += src/F/F.lua
+LIB_LUAX_SOURCES += src/L/L.lua
+LIB_LUAX_SOURCES += src/argparse/argparse.lua
+LIB_LUAX_SOURCES += src/complex/complex.lua
+LIB_LUAX_SOURCES += src/crypt/crypt.lua
+LIB_LUAX_SOURCES += src/fs/fs.lua
+LIB_LUAX_SOURCES += src/imath/imath.lua
+LIB_LUAX_SOURCES += src/inspect/inspect.lua
+LIB_LUAX_SOURCES += src/linenoise/linenoise.lua
+LIB_LUAX_SOURCES += src/mathx/mathx.lua
+LIB_LUAX_SOURCES += src/prompt/prompt.lua
+LIB_LUAX_SOURCES += src/ps/ps.lua
+LIB_LUAX_SOURCES += src/qmath/qmath.lua
+LIB_LUAX_SOURCES += src/serpent/serpent.lua
+LIB_LUAX_SOURCES += src/sh/sh.lua
+LIB_LUAX_SOURCES += src/sys/sys.lua
 
-ARCH := $(shell uname -m)
-OS   := $(shell uname -s | tr A-Z a-z)
+LUAX_CONFIG_H := $(BUILD_TMP)/luax_config.h
+LUAX_CONFIG_LUA := $(BUILD_TMP)/luax_config.lua
+
+ARCH := $(shell tools/arch.sh)
+OS   := $(shell tools/os.sh)
 LIBC := gnu
 ifeq ($(OS),windows)
 EXT := .exe
@@ -70,7 +91,9 @@ else
 EXT :=
 endif
 
-LUAX_CLI = $(BUILD)/luaxcli.lua
+LUAX_LUA = $(BUILD_BIN)/luax-lua
+
+LUAX_PANDOC = $(BUILD_BIN)/luax-pandoc
 
 .DEFAULT_GOAL := compile
 
@@ -113,7 +136,7 @@ welcome:
 .PHONY: test
 
 ## Compile LuaX for the host
-compile: $(BUILD)/luax
+compile: $(BUILD_BIN)/luax
 
 ## Compile LuaX for Linux, MacOS and Windows
 all: $(RUNTIMES)
@@ -212,55 +235,55 @@ update: update-tinycrypt
 update: update-lz4
 
 ## Update Lua sources
-update-lua: $(BUILD)/$(LUA_ARCHIVE)
+update-lua: $(BUILD_TMP)/$(LUA_ARCHIVE)
 	rm -rf lua
 	mkdir lua
 	tar -xzf $< -C lua --exclude=Makefile --strip-components=2 "lua-$(LUA_VERSION)/src"
 
-$(BUILD)/$(LUA_ARCHIVE):
+$(BUILD_TMP)/$(LUA_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(LUA_URL) -O $@
 
 ## Update lcomplex sources
-update-lcomplex: $(BUILD)/$(LCOMPLEX_ARCHIVE)
+update-lcomplex: $(BUILD_TMP)/$(LCOMPLEX_ARCHIVE)
 	rm -rf src/complex/lcomplex-*
 	tar -xzf $< -C src/complex --exclude=Makefile --exclude=test.lua
 
-$(BUILD)/$(LCOMPLEX_ARCHIVE):
+$(BUILD_TMP)/$(LCOMPLEX_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(LCOMPLEX_URL) -O $@
 
 ## Update limath sources
-update-limath: $(BUILD)/$(LIMATH_ARCHIVE)
+update-limath: $(BUILD_TMP)/$(LIMATH_ARCHIVE)
 	rm -rf src/imath/limath-*
 	tar -xzf $< -C src/imath --exclude=Makefile --exclude=test.lua
 	sed -i 's@"imath.h"@"src/imath.h"@' src/imath/$(shell basename $(LIMATH_ARCHIVE) .tar.gz)/limath.c
 
-$(BUILD)/$(LIMATH_ARCHIVE):
+$(BUILD_TMP)/$(LIMATH_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(LIMATH_URL) -O $@
 
 ## Update lqmath sources
-update-lqmath: $(BUILD)/$(LQMATH_ARCHIVE)
+update-lqmath: $(BUILD_TMP)/$(LQMATH_ARCHIVE)
 	rm -rf src/qmath/lqmath-*
 	tar -xzf $< -C src/qmath --exclude=Makefile --exclude=test.lua
 	sed -i 's@"imrat.h"@"src/imrat.h"@' src/qmath/$(shell basename $(LQMATH_ARCHIVE) .tar.gz)/lqmath.c
 
-$(BUILD)/$(LQMATH_ARCHIVE):
+$(BUILD_TMP)/$(LQMATH_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(LQMATH_URL) -O $@
 
 ## Update lmathx sources
-update-lmathx: $(BUILD)/$(LMATHX_ARCHIVE)
+update-lmathx: $(BUILD_TMP)/$(LMATHX_ARCHIVE)
 	rm -rf src/mathx/mathx
 	tar -xzf $< -C src/mathx --exclude=Makefile --exclude=test.lua
 
-$(BUILD)/$(LMATHX_ARCHIVE):
+$(BUILD_TMP)/$(LMATHX_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(LMATHX_URL) -O $@
 
 ## Update linenoise sources
-update-linenoise: $(BUILD)/$(LINENOISE_ARCHIVE)
+update-linenoise: $(BUILD_TMP)/$(LINENOISE_ARCHIVE)
 	rm -rf src/linenoise/linenoise
 	mkdir src/linenoise/linenoise
 	unzip -j $< -x '*/.gitignore' '*/Makefile' '*/example.c' -d src/linenoise/linenoise
@@ -271,61 +294,70 @@ update-linenoise: $(BUILD)/$(LINENOISE_ARCHIVE)
 	       -e 's/TCSAFLUSH/TCSADRAIN/'                                      \
 	       src/linenoise/linenoise/linenoise.c
 
-$(BUILD)/$(LINENOISE_ARCHIVE):
+$(BUILD_TMP)/$(LINENOISE_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(LINENOISE_URL) -O $@
 
 ## Update luasocket sources
-update-luasocket: $(BUILD)/$(LUASOCKET_ARCHIVE)
+update-luasocket: $(BUILD_TMP)/$(LUASOCKET_ARCHIVE)
 	rm -rf src/socket/luasocket
 	mkdir src/socket/luasocket
 	unzip -j $< 'luasocket-$(LUASOCKET_VERSION)/src/*' -d src/socket/luasocket
+	echo "--@NAME=socket.ftp"     >> src/socket/luasocket/ftp.lua
+	echo "--@NAME=socket.headers" >> src/socket/luasocket/headers.lua
+	echo "--@NAME=socket.http"    >> src/socket/luasocket/http.lua
+	echo "--@NAME=socket.smtp"    >> src/socket/luasocket/smtp.lua
+	echo "--@NAME=socket.tp"      >> src/socket/luasocket/tp.lua
+	echo "--@NAME=socket.url"     >> src/socket/luasocket/url.lua
 
-$(BUILD)/$(LUASOCKET_ARCHIVE):
+$(BUILD_TMP)/$(LUASOCKET_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(LUASOCKET_URL) -O $@
 
 ## Update lpeg sources
-update-lpeg: $(BUILD)/$(LPEG_ARCHIVE)
+update-lpeg: $(BUILD_TMP)/$(LPEG_ARCHIVE)
 	rm -rf src/lpeg/lpeg-*
 	tar xzf $< -C src/lpeg --exclude=HISTORY --exclude=*.gif --exclude=*.html --exclude=makefile --exclude=test.lua
+	echo "--@LOAD" >> src/lpeg/lpeg-1.0.2/re.lua
 
-$(BUILD)/$(LPEG_ARCHIVE):
+$(BUILD_TMP)/$(LPEG_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(LPEG_URL) -O $@
 
 ## Update argparse sources
-update-argparse: $(BUILD)/$(ARGPARSE_ARCHIVE)
+update-argparse: $(BUILD_TMP)/$(ARGPARSE_ARCHIVE)
 	rm -f src/argparse/argparse.lua
 	unzip -j -o $< '*/argparse.lua' -d src/argparse
 
-$(BUILD)/$(ARGPARSE_ARCHIVE):
+$(BUILD_TMP)/$(ARGPARSE_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(ARGPARSE_URL) -O $@
 
 ## Update inspect sources
-update-inspect: $(BUILD)/$(INSPECT_ARCHIVE)
+update-inspect: $(BUILD_TMP)/$(INSPECT_ARCHIVE)
 	rm -f src/inspect/inspect.lua
 	unzip -j $< '*/inspect.lua' -d src/inspect
+	echo "--@LOAD" >> src/inspect/inspect.lua
 
-$(BUILD)/$(INSPECT_ARCHIVE):
+$(BUILD_TMP)/$(INSPECT_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(INSPECT_URL) -O $@
 
 ## Update serpent sources
-update-serpent: $(BUILD)/$(SERPENT_ARCHIVE)
+update-serpent: $(BUILD_TMP)/$(SERPENT_ARCHIVE)
 	rm -f src/serpent/serpent.lua
 	unzip -j $< '*/serpent.lua' -d src/serpent
 	sed -i -e 's/(loadstring or load)/load/g'                   \
 	       -e '/^ *if setfenv then setfenv(f, env) end *$$/d'   \
 	       src/serpent/serpent.lua
+	echo "--@LOAD" >> src/serpent/serpent.lua
 
-$(BUILD)/$(SERPENT_ARCHIVE):
+$(BUILD_TMP)/$(SERPENT_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(SERPENT_URL) -O $@
 
 ## Update tinycrypt sources
-update-tinycrypt: $(BUILD)/$(TINYCRYPT_ARCHIVE)
+update-tinycrypt: $(BUILD_TMP)/$(TINYCRYPT_ARCHIVE)
 	rm -rf src/crypt/tinycrypt
 	mkdir src/crypt/tinycrypt
 	unzip -j $< -x '*/.gitignore' '*/README' '*/Makefile' '*/*.mk' '*/*.rst' '*/tests/*' -d src/crypt/tinycrypt
@@ -333,17 +365,17 @@ update-tinycrypt: $(BUILD)/$(TINYCRYPT_ARCHIVE)
 	mkdir -p src/crypt/tinycrypt/tinycrypt
 	mv src/crypt/tinycrypt/*.h src/crypt/tinycrypt/tinycrypt/
 
-$(BUILD)/$(TINYCRYPT_ARCHIVE):
+$(BUILD_TMP)/$(TINYCRYPT_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(TINYCRYPT_URL) -O $@
 
 ## Update LZ4 sources
-update-lz4: $(BUILD)/$(LZ4_ARCHIVE)
+update-lz4: $(BUILD_TMP)/$(LZ4_ARCHIVE)
 	rm -rf src/lz4/lz4
 	mkdir src/lz4/lz4
 	unzip -j $< '*/lib/*.[ch]' '*/lib/LICENSE' -d src/lz4/lz4
 
-$(BUILD)/$(LZ4_ARCHIVE):
+$(BUILD_TMP)/$(LZ4_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(LZ4_URL) -O $@
 
@@ -352,11 +384,12 @@ $(BUILD)/$(LZ4_ARCHIVE):
 ###############################################################################
 
 PREFIX := $(firstword $(wildcard $(PREFIX) $(HOME)/.local $(HOME)))
-INSTALLED_LUAX_BINARIES := $(LUAX_BINARIES:$(BUILD)/%=$(PREFIX)/bin/%)
+INSTALLED_LUAX_BINARIES := $(LUAX_BINARIES:$(BUILD_BIN)/%=$(PREFIX)/bin/%)
 
 ## Install LuaX (for the host only)
 install: $(PREFIX)/bin/luax$(EXT)
-install: $(PREFIX)/bin/luaxcli.lua
+install: $(PREFIX)/bin/luax-pandoc
+install: $(PREFIX)/bin/luax-lua
 install: $(PREFIX)/lib/luax.lua
 
 ## Install LuaX for Linux, MacOS and Windows
@@ -367,24 +400,30 @@ $(PREFIX)/bin/luax$(EXT): $(PREFIX)/bin/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"SYMLINK",$< -> $@)
 	@cd $(dir $@) && ln -sf $(notdir $<) $(notdir $@)
 
-$(PREFIX)/bin/luax-%: $(BUILD)/luax-%
+$(PREFIX)/bin/luax-%: $(BUILD_BIN)/luax-%
 	@$(call cyan,"INSTALL",$@)
 	@test -n "$(PREFIX)" || (echo "No installation path found" && false)
 	@mkdir -p $(dir $@) $(dir $@)/../lib
 	@install $< $@
-	@find $(BUILD)/lib/ -name "$(patsubst %.exe,%,$(notdir $<)).*" -exec cp {} $(PREFIX)/lib/ \;
+	@find $(BUILD_LIB) -name "$(patsubst %.exe,%,$(notdir $<)).*" -exec cp {} $(PREFIX)/lib/ \;
 
-$(PREFIX)/bin/luaxcli.lua: $(LUAX_CLI)
+$(PREFIX)/bin/luax-lua: $(LUAX_LUA)
 	@$(call cyan,"INSTALL",$@)
 	@test -n "$(PREFIX)" || (echo "No installation path found" && false)
 	@mkdir -p $(dir $@)
 	@install $< $@
 
-$(PREFIX)/lib/luax.lua: lib/luax.lua
+$(PREFIX)/lib/luax.lua: $(BUILD_LIB)/luax.lua
 	@$(call cyan,"INSTALL",$@)
 	@test -n "$(PREFIX)" || (echo "No installation path found" && false)
 	@mkdir -p $(dir $@)
-	@cp $< $@
+	@install $< $@
+
+$(PREFIX)/bin/luax-pandoc: $(LUAX_PANDOC)
+	@$(call cyan,"INSTALL",$@)
+	@test -n "$(PREFIX)" || (echo "No installation path found" && false)
+	@mkdir -p $(dir $@)
+	@install $< $@
 
 ###############################################################################
 # Search for or install a zig compiler
@@ -394,7 +433,7 @@ ZIG := $(ZIG_INSTALL)/zig
 
 ZIG_VERSION = 0.9.1
 ZIG_URL = https://ziglang.org/download/$(ZIG_VERSION)/zig-$(OS)-$(ARCH)-$(ZIG_VERSION).tar.xz
-ZIG_ARCHIVE = $(BUILD)/$(notdir $(ZIG_URL))
+ZIG_ARCHIVE = $(BUILD_TMP)/$(notdir $(ZIG_URL))
 
 $(ZIG_INSTALL)/zig: $(ZIG_ARCHIVE)
 	@$(call cyan,"EXTRACT",$^)
@@ -440,18 +479,18 @@ $(LUAX0): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG_H) build.zig
 # Code generation
 ###############################################################################
 
-$(BUILD)/blake3: tools/blake3.zig $(ZIG)
+$(BUILD_TMP)/blake3: tools/blake3.zig $(ZIG)
 	@$(call cyan,"ZIG",$@)
 	@mkdir -p $(dir $@)
 	@$(ZIG) build-exe $< -fsingle-threaded --strip --cache-dir $(ZIG_CACHE) -femit-bin=$@
 
-$(LUAX_CONFIG_H): $(wildcard .git/refs/tags) $(wildcard .git/index) $(BUILD)/blake3 Makefile
+$(LUAX_CONFIG_H): $(wildcard .git/refs/tags) $(wildcard .git/index) $(BUILD_TMP)/blake3 Makefile
 	@$(call cyan,"GEN",$@)
 	@mkdir -p $(dir $@)
 	@(  set -eu;                                                \
 	    echo "#pragma once";                                    \
 	    echo "#define LUAX_VERSION \"$(LUAX_VERSION)\"";        \
-	    echo "#define LUAX_CRYPT_KEY \"`echo -n $(CRYPT_KEY) | $(BUILD)/blake3`\"";     \
+	    echo "#define LUAX_CRYPT_KEY \"`echo -n $(CRYPT_KEY) | $(BUILD_TMP)/blake3`\"";     \
 	    echo "#define LUAX_MAGIC_ID \"$(LUAX_MAGIC_ID)\"";      \
 	) > $@.tmp
 	@mv $@.tmp $@
@@ -467,67 +506,81 @@ $(LUAX_CONFIG_LUA): $(wildcard .git/refs/tags) $(wildcard .git/index) Makefile
 	) > $@.tmp
 	@mv $@.tmp $@
 
-$(LUAX_RUNTIME_BUNDLE): $(LUAX0) $(LUAX_RUNTIME) tools/bundle.lua tools/build_bundle_args.lua $(LUAX_CONFIG_LUA)
+$(LUAX_RUNTIME_BUNDLE): $(LUAX0) $(LUAX_RUNTIME) tools/bundle.lua $(LUAX_CONFIG_LUA)
 	@$(call cyan,"BUNDLE",$(@))
 	@mkdir -p $(dir $@)
 	@LUA_PATH="$(LUA_PATH);$(dir $(LUAX_CONFIG_LUA))/?.lua" \
-	$(LUAX0) tools/bundle.lua -nomain -ascii \
-	    $(shell $(LUAX0) tools/build_bundle_args.lua $(LUAX_CONFIG_LUA) $(LUAX_RUNTIME)) > $@.tmp
+	$(LUAX0) tools/bundle.lua -ascii $(LUAX_CONFIG_LUA) $(LUAX_RUNTIME) > $@.tmp
 	@mv $@.tmp $@
 
 ###############################################################################
 # Runtimes
 ###############################################################################
 
-$(BUILD)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG_H) build.zig
+$(BUILD_TMP)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG_H) build.zig
 	@$(call cyan,"ZIG",$@)
-	@mkdir -p $(dir $@)
+	@mkdir -p $(dir $@) $(BUILD_LIB)
 	@RUNTIME_NAME=luaxruntime LIB_NAME=luax RUNTIME=1 $(ZIG) build \
 	    --cache-dir $(ZIG_CACHE) \
 	    --prefix $(dir $@) --prefix-exe-dir "" \
 	    -D$(RELEASE) \
-	    -Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD)/luaxruntime-%,%,$@)) \
+	    -Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD_TMP)/luaxruntime-%,%,$@)) \
 	    --build-file build.zig
-	@find $(BUILD)/lib -name "libluax*" | while read lib; do mv "$$lib" "`echo $$lib | sed 's/libluax/luax/'`"; done
+	@find $(BUILD_TMP)/lib -name "*luax*" | while read lib; do mv "$$lib" "$(BUILD_LIB)/`basename $$lib | sed 's/libluax/luax/'`"; done
 	@touch $@
 
 ###############################################################################
 # luax
 ###############################################################################
 
-LUAX_PACKAGES := tools/luax.lua tools/bundle.lua $(LUAX_CONFIG_LUA)
+LUAX_PACKAGES := tools/luax.lua tools/bundle.lua tools/shell_env.lua $(LUAX_CONFIG_LUA)
 
-$(BUILD)/luax: $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
+$(BUILD_BIN)/luax: $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"CP",$@)
 	@cp -f $< $@
 
-$(BUILD)/luax-%: $(BUILD)/luaxruntime-% $(LUAX_PACKAGES) tools/bundle.lua
+$(BUILD_BIN)/luax-%: $(BUILD_TMP)/luaxruntime-% $(LUAX_PACKAGES) tools/bundle.lua $(LUAX0)
 	@$(call cyan,"BUNDLE",$@)
+	@mkdir -p $(dir $@)
 	@cp $< $@.tmp
 	@LUA_PATH="$(LUA_PATH);$(dir $(LUAX_CONFIG_LUA))/?.lua" \
-	$(LUAX0) tools/bundle.lua $(LUAX_PACKAGES) >> $@.tmp
+	$(LUAX0) tools/bundle.lua -binary $(LUAX_PACKAGES) >> $@.tmp
+	@mv $@.tmp $@
+
+$(BUILD_LIB)/luax.lua: $(LUAX0) $(LIB_LUAX_SOURCES)
+	@$(call cyan,"BUNDLE",$@)
+	@mkdir -p $(dir $@)
+	@(  set -eu;                                               \
+	    echo "_LUAX_VERSION = '$(LUAX_VERSION)'";              \
+	    LUA_PATH="$(LUA_PATH);$(dir $(LUAX_CONFIG_LUA))/?.lua" \
+	    $(LUAX0) tools/bundle.lua -lua $(LIB_LUAX_SOURCES);    \
+	) > $@.tmp
 	@mv $@.tmp $@
 
 ###############################################################################
 # luax CLI (e.g. for lua or pandoc)
 ###############################################################################
 
-$(LUAX_CLI): lib/luax.lua tools/luax.lua Makefile
+$(LUAX_LUA): $(BUILD_LIB)/luax.lua tools/luax.lua Makefile
 	@mkdir -p $(dir $@)
 	@(  set -eu;                                    \
 	    echo "#!/usr/bin/env lua";                  \
 	    echo "";                                    \
-	    echo "_LUAX_VERSION = '$(LUAX_VERSION)'";   \
-	    echo "";                                    \
-	    echo "--{{{ lib/luax.lua";                  \
 	    echo "do";                                  \
-	    cat lib/luax.lua;                           \
+	    cat $(BUILD_LIB)/luax.lua;                  \
 	    echo "end";                                 \
-	    echo "--}}}";                               \
 	    echo "";                                    \
 	    cat tools/luax.lua;                         \
 	) > $@.tmp
 	@mv $@.tmp $@
+
+###############################################################################
+# luax-pandoc
+###############################################################################
+
+$(LUAX_PANDOC): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(LUAX_PACKAGES) | $(PANDOC)
+	@$(call cyan,"BUNDLE",$@)
+	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -t pandoc -o $@ $(LUAX_PACKAGES)
 
 ###############################################################################
 # Tests (native only)
@@ -538,49 +591,69 @@ $(LUAX_CLI): lib/luax.lua tools/luax.lua Makefile
 TEST_SOURCES := tests/main.lua $(sort $(filter-out test/main.lua,$(wildcard tests/*.lua)))
 
 ## Run LuaX tests
-test: $(BUILD)/test-luax.ok
+test: $(BUILD_TEST)/test-luax.ok
 ifeq ($(LIBC),gnu)
-test: $(BUILD)/test-lib.ok
+test: $(BUILD_TEST)/test-lib.ok
 endif
-test: $(BUILD)/test-lua.ok
-test: $(BUILD)/test-lua-luaxcli.ok
+test: $(BUILD_TEST)/test-lua.ok
+test: $(BUILD_TEST)/test-lua-luax-lua.ok
 ifeq ($(OS)-$(ARCH),linux-x86_64)
-test: $(BUILD)/test-pandoc.ok
-test: $(BUILD)/test-pandoc-luaxcli.ok
+test: $(BUILD_TEST)/test-pandoc.ok
+test: $(BUILD_TEST)/test-pandoc-luax-lua.ok
+test: $(BUILD_TEST)/test-pandoc-luax-so.ok
 endif
 
-$(BUILD)/test-luax.ok: $(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
+$(BUILD_TEST)/test-luax.ok: $(BUILD_TEST)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"TEST",Luax executable: $^)
-	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=static $< Lua is great
+	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=static \
+	$< Lua is great
 	@touch $@
 
-$(BUILD)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT): $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(TEST_SOURCES)
+$(BUILD_TEST)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(TEST_SOURCES)
 	@$(call cyan,"BUNDLE",$@)
-	@$(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -o $@ $(TEST_SOURCES)
+	@mkdir -p $(dir $@)
+	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -o $@ $(TEST_SOURCES)
 
-$(BUILD)/test-lib.ok: $(BUILD)/luax-$(ARCH)-$(OS)-$(LIBC) $(TEST_SOURCES) $(LUA)
-	@$(call cyan,"TEST",Shared library: $(BUILD)/lib/luax-$(ARCH)-$(OS)-$(LIBC))
-	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=dynamic LUA_CPATH="$(BUILD)/lib/?.so" LUA_PATH="tests/?.lua" $(LUA) -l luax-$(ARCH)-$(OS)-$(LIBC) $(firstword $(TEST_SOURCES)) Lua is great
+$(BUILD_TEST)/test-lib.ok: $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC) $(TEST_SOURCES) $(LUA)
+	@$(call cyan,"TEST",Shared library: $(BUILD_LIB)/luax-$(ARCH)-$(OS)-$(LIBC))
+	@mkdir -p $(dir $@)
+	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=dynamic LUA_CPATH="$(BUILD_LIB)/?.so" LUA_PATH="tests/?.lua" \
+	$(LUA) -l luax-$(ARCH)-$(OS)-$(LIBC) $(firstword $(TEST_SOURCES)) Lua is great
 	@touch $@
 
-$(BUILD)/test-lua.ok: $(LUA) lib/luax.lua $(TEST_SOURCES)
-	@$(call cyan,"TEST",Vanilla Lua interpreter: $(firstword $(TEST_SOURCES)))
-	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="lib/?.lua;tests/?.lua" $(LUA) -l luax $(firstword $(TEST_SOURCES)) Lua is great
+$(BUILD_TEST)/test-lua.ok: $(LUA) $(BUILD_LIB)/luax.lua $(TEST_SOURCES)
+	@$(call cyan,"TEST",Plain Lua interpreter: $(firstword $(TEST_SOURCES)))
+	@mkdir -p $(dir $@)
+	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="$(BUILD_LIB)/?.lua;tests/?.lua" \
+	$(LUA) -l luax $(firstword $(TEST_SOURCES)) Lua is great
 	@touch $@
 
-$(BUILD)/test-lua-luaxcli.ok: $(LUA) $(LUAX_CLI) $(TEST_SOURCES)
-	@$(call cyan,"TEST",Vanilla Lua interpreter + $(notdir $(LUAX_CLI)): $(firstword $(TEST_SOURCES)))
-	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="tests/?.lua" $(LUA) $(LUAX_CLI) $(firstword $(TEST_SOURCES)) Lua is great
+$(BUILD_TEST)/test-lua-luax-lua.ok: $(LUA) $(LUAX_LUA) $(TEST_SOURCES)
+	@$(call cyan,"TEST",Plain Lua interpreter + $(notdir $(LUAX_LUA)): $(firstword $(TEST_SOURCES)))
+	@mkdir -p $(dir $@)
+	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="tests/?.lua" \
+	$(LUA) $(LUAX_LUA) $(firstword $(TEST_SOURCES)) Lua is great
 	@touch $@
 
-$(BUILD)/test-pandoc.ok: lib/luax.lua $(TEST_SOURCES) | $(PANDOC)
+$(BUILD_TEST)/test-pandoc.ok: $(BUILD_LIB)/luax.lua $(TEST_SOURCES) | $(PANDOC)
 	@$(call cyan,"TEST",Pandoc Lua interpreter: $(firstword $(TEST_SOURCES)))
-	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="lib/?.lua;tests/?.lua" $(PANDOC) -f $(firstword $(TEST_SOURCES)) </dev/null
+	@mkdir -p $(dir $@)
+	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=pandoc LUA_PATH="$(BUILD_LIB)/?.lua;tests/?.lua" \
+	$(PANDOC) lua -l luax $(firstword $(TEST_SOURCES)) </dev/null
 	@touch $@
 
-$(BUILD)/test-pandoc-luaxcli.ok: $(LUAX_CLI) $(TEST_SOURCES) | $(PANDOC)
-	@$(call cyan,"TEST",Pandoc Lua interpreter + $(notdir $(LUAX_CLI)): $(firstword $(TEST_SOURCES)))
-	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="tests/?.lua" $(PANDOC) lua $(LUAX_CLI) $(firstword $(TEST_SOURCES)) </dev/null
+$(BUILD_TEST)/test-pandoc-luax-lua.ok: $(LUAX_LUA) $(TEST_SOURCES) | $(PANDOC)
+	@$(call cyan,"TEST",Pandoc Lua interpreter + $(notdir $(LUAX_LUA)): $(firstword $(TEST_SOURCES)))
+	@mkdir -p $(dir $@)
+	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=pandoc LUA_PATH="tests/?.lua" \
+	$(PANDOC) lua $(LUAX_LUA) $(firstword $(TEST_SOURCES)) </dev/null
+	@touch $@
+
+$(BUILD_TEST)/test-pandoc-luax-so.ok: $(BUILD_LIB)/luax.lua $(TEST_SOURCES) | $(PANDOC)
+	@$(call cyan,"TEST",Pandoc Lua interpreter + luax-$(ARCH)-$(OS)-$(LIBC).so: $(firstword $(TEST_SOURCES)))
+	@mkdir -p $(dir $@)
+	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=dynamic LUA_CPATH="$(BUILD_LIB)/?.so" LUA_PATH="tests/?.lua" \
+	$(PANDOC) lua -l luax-$(ARCH)-$(OS)-$(LIBC) $(firstword $(TEST_SOURCES)) </dev/null
 	@touch $@
 
 ###############################################################################
@@ -591,12 +664,12 @@ $(BUILD)/test-pandoc-luaxcli.ok: $(LUAX_CLI) $(TEST_SOURCES) | $(PANDOC)
 
 MARKDOWN_SOURCES = $(wildcard doc/src/*.md)
 MARKDOWN_OUTPUTS = $(MARKDOWN_SOURCES:doc/src/%.md=doc/%.md)
-HTML_OUTPUTS = $(MARKDOWN_SOURCES:doc/src/%.md=$(BUILD)/doc/%.html)
-MD_OUTPUTS = $(MARKDOWN_SOURCES:doc/src/%.md=$(BUILD)/doc/%.md)
+HTML_OUTPUTS = $(MARKDOWN_SOURCES:doc/src/%.md=$(BUILD_DOC)/%.html)
+MD_OUTPUTS = $(MARKDOWN_SOURCES:doc/src/%.md=$(BUILD_DOC)/%.md)
 
 doc: README.md
 doc: $(MARKDOWN_OUTPUTS)
-doc: $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD)/doc/index.html
+doc: $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD_DOC)/index.html
 
 CSS = doc/src/luax.css
 
@@ -612,43 +685,44 @@ PANDA_GFM_OPT = $(PANDA_OPT)
 
 doc/%.md: doc/src/%.md | $(PANDA)
 	@$(call cyan,"DOC",$@)
-	@mkdir -p $(BUILD)/doc/src/
-	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD)/doc/src/$(notdir $@).d $(PANDA_GFM) $(PANDA_GFM_OPT) $< -o $@
+	@mkdir -p $(BUILD_TMP)/doc
+	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD_TMP)/doc/$(notdir $@).d $(PANDA_GFM) $(PANDA_GFM_OPT) $< -o $@
 
-$(BUILD)/doc/%.md: doc/%.md
+$(BUILD_DOC)/%.md: doc/%.md
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(dir $@)
 	@cp -f $< $@
 
-$(BUILD)/doc/%.html: doc/src/%.md $(CSS) | $(PANDA)
+$(BUILD_DOC)/%.html: doc/src/%.md $(CSS) | $(PANDA)
 	@$(call cyan,"DOC",$@)
-	@mkdir -p $(dir $@)
-	@PANDA_TARGET=$@ $(PANDA_HTML) $(PANDA_HTML_OPT) $< -o $@
+	@mkdir -p $(dir $@) $(BUILD_TMP)/doc
+	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD_TMP)/doc/$(notdir $@).d $(PANDA_HTML) $(PANDA_HTML_OPT) $< -o $@
 
-$(BUILD)/doc/index.html: $(BUILD)/doc/luax.html
+$(BUILD_DOC)/index.html: $(BUILD_DOC)/luax.html
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(dir $@)
 	@cp -f $< $@
 
 README.md: doc/src/luax.md doc/src/fix_links.lua | $(PANDA)
 	@$(call cyan,"DOC",$@)
-	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD)/doc/src/$(notdir $@).d $(PANDA_GFM) $(PANDA_GFM_OPT) $< -o $@
+	@mkdir -p $(BUILD_TMP)/doc
+	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD_TMP)/doc/$(notdir $@).d $(PANDA_GFM) $(PANDA_GFM_OPT) $< -o $@
 
--include $(BUILD)/doc/*.d
--include $(BUILD)/doc/src/*.d
+-include $(BUILD_TMP)/doc/*.d
 
 ###############################################################################
 # Archive
 ###############################################################################
 
-$(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) lib/luax.lua $(LUAX_CLI) $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD)/doc/index.html
+$(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) $(BUILD_LIB)/luax.lua $(LUAX_LUA) $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD_DOC)/index.html
 	@$(call cyan,"ARCHIVE",$@)
 	@rm -rf $(BUILD)/tar && mkdir -p $(BUILD)/tar
 	@cp README.md $(BUILD)/tar
-	@cp $(LUAX_BINARIES) $(BUILD)/tar
-	@cp -r $(BUILD)/lib $(BUILD)/tar
+	@cp LICENSE $(BUILD)/tar
+	@mkdir -p $(BUILD)/tar/bin
+	@cp $(LUAX_BINARIES) $(BUILD)/tar/bin
+	@cp $(LUAX_LUA) $(BUILD)/tar/bin
+	@cp -r $(BUILD_LIB) $(BUILD)/tar
 	@mkdir -p $(BUILD)/tar/doc
-	@cp $(BUILD)/doc/*.{md,html} $(BUILD)/tar/doc
-	@cp lib/luax.lua $(BUILD)/tar
-	@cp $(LUAX_CLI) $(BUILD)/tar
+	@cp $(BUILD_DOC)/*.{md,html} $(BUILD)/tar/doc
 	@tar cJf $@ -C $(abspath $(BUILD)/tar) .

@@ -51,39 +51,42 @@
 
 static const luaL_Reg lrun_libs[] = {
     {"std", luaopen_std},
-    {"fs", luaopen_fs},
-    {"ps", luaopen_ps},
-    {"sys", luaopen_sys},
-    {"lpeg", luaopen_lpeg},
-    {"crypt", luaopen_crypt},
-    {"linenoise", luaopen_linenoise},
-    {"mathx", luaopen_mathx},
-    {"imath", luaopen_imath},
-    {"qmath", luaopen_qmath},
-    {"complex", luaopen_complex},
+    {"_fs", luaopen_fs},
+    {"_ps", luaopen_ps},
+    {"_sys", luaopen_sys},
+    {"_lpeg", luaopen_lpeg},
+    {"_crypt", luaopen_crypt},
+    {"_linenoise", luaopen_linenoise},
+    {"_mathx", luaopen_mathx},
+    {"_imath", luaopen_imath},
+    {"_qmath", luaopen_qmath},
+    {"_complex", luaopen_complex},
     {"socket", luaopen_luasocket},
-    {"lz4", luaopen_lz4},
+    {"_lz4", luaopen_lz4},
     {NULL, NULL},
 };
-
 #if RUNTIME == 1
+
+typedef char t_magic[1+sizeof(LUAX_MAGIC_ID)];
+
+typedef struct __attribute__((__packed__))
+{
+    uint32_t size;
+    t_magic magic;
+} t_header;
+
+static const t_magic magic = "\0"LUAX_MAGIC_ID;
 
 static const char runtime_chunk[] = {
 #include "lua_runtime_bundle.dat"
 };
 
-static const char *arg0(lua_State *L)
+static inline uint32_t littleendian(uint32_t n)
 {
-    int type = lua_getglobal(L, "arg");
-    if (type == LUA_TTABLE)
-    {
-        lua_rawgeti(L, -1, 0);
-    }
-    else
-    {
-        lua_pushstring(L, "<LuaX>");
-    }
-    return luaL_checkstring(L, -1);
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    n = __builtin_bswap32(n);
+#endif
+    return n;
 }
 
 void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
@@ -124,6 +127,20 @@ static int traceback(lua_State *L)
     return 0;
 }
 
+static const char *arg0(lua_State *L)
+{
+    int type = lua_getglobal(L, "arg");
+    if (type == LUA_TTABLE)
+    {
+        lua_rawgeti(L, -1, 0);
+    }
+    else
+    {
+        lua_pushstring(L, "<LuaX>");
+    }
+    return luaL_checkstring(L, -1);
+}
+
 int run_buffer(lua_State *L, char *buffer, size_t size, const char *name)
 {
     if (luaL_loadbuffer(L, buffer, size, name) != LUA_OK)
@@ -161,4 +178,48 @@ LUAMOD_API int luaopen_luax(lua_State *L)
 #endif
 
     return 1;
+}
+
+__attribute__((__noreturn__))
+void luax_run(lua_State *L, const char *exe)
+{
+#if RUNTIME == 1
+
+    FILE *f = fopen(exe, "rb");
+    if (f == NULL) perror(exe);
+
+    t_header header;
+    fseek(f, -(long)sizeof(header), SEEK_END);
+    if (fread(&header, sizeof(header), 1, f) != 1) perror(arg0(L));
+    header.size = littleendian(header.size);
+    if (memcmp(header.magic, magic, sizeof(magic)) != 0)
+    {
+        /* The runtime contains no application */
+        error(arg0(L), "LuaX application not found");
+    }
+
+    fseek(f, -(long)(header.size + sizeof(header)), SEEK_END);
+    char *chunk = safe_malloc(header.size);
+    if (fread(chunk, header.size, 1, f) != 1) perror(arg0(L));
+    fclose(f);
+    char *decoded_chunk = NULL;
+    size_t decoded_chunk_len = 0;
+    decode_runtime(chunk, header.size, &decoded_chunk, &decoded_chunk_len);
+    free(chunk);
+    const int status = run_buffer(L, decoded_chunk, decoded_chunk_len, "=");
+    free(decoded_chunk);
+
+    /* exit with os.exit() (calling lua_close(L) from luax.so crashes the Lua interpreter) */
+    lua_getglobal(L, "os");
+    lua_getfield(L, -1, "exit");
+    lua_pushnumber(L, status == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
+    lua_pushboolean(L, 1);
+    lua_call(L, 2, 0);
+
+#else
+    error(exe, "no LuaX runtime");
+#endif
+
+    lua_close(L);
+    exit(EXIT_FAILURE);
 }

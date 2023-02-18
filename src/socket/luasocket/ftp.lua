@@ -327,3 +327,4 @@ _M.get = socket.protect(function(gett)
 end)
 
 return _M
+--@NAME=socket.ftp

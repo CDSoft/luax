@@ -27,12 +27,41 @@ local sys = require "sys"
 
 #include "sys.h"
 
+#include <stdlib.h>
+#include <string.h>
+
+#include "luax_config.h"
+
+#include "crypt/crypt.h"
+#include "lz4/lz4.h"
+
+#include "tools.h"
+
+#include "libluax.h"
+
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
 
+static int sys_bootstrap(lua_State *L)
+{
+    /* Read and execute a chunk in arg[0] */
+
+    /* exe = arg[0] */
+    int type = lua_getglobal(L, "arg");
+    if (type != LUA_TTABLE)
+    {
+        error(NULL, "Can not read arg[0]");
+    }
+    lua_rawgeti(L, -1, 0);
+    const char *exe = luaL_checkstring(L, -1);
+
+    luax_run(L, exe); /* no return */
+}
+
 static const luaL_Reg blsyslib[] =
 {
+    {"bootstrap", sys_bootstrap},
     {NULL, NULL}
 };
 

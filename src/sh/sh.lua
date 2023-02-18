@@ -18,6 +18,8 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+--@LOAD
+
 --[[------------------------------------------------------------------------@@@
 ## Shell
 @@@]]
@@ -29,7 +31,7 @@ local sh = require "sh"
 @@@]]
 local sh = {}
 
-local F = require "fun"
+local F = require "F"
 
 --[[@@@
 ```lua
@@ -81,6 +83,28 @@ function sh.write(...)
         p:write(data)
         return p:close()
     end
+end
+
+if pandoc then
+
+--[[@@@
+```lua
+sh.pipe(...)(data)
+```
+Runs the command `...` with `pandoc.pipe` and feeds `stdin` with `data`.
+When `sh.pipe` succeeds, it returns the content of stdout.
+Otherwise it returns the error identified by `pandoc.pipe`.
+@@@]]
+
+    function sh.pipe(...)
+        local cmd = F.flatten{...}
+        return function(data)
+            local ok, out = pcall(pandoc.pipe, cmd:head(), cmd:tail(), data)
+            if not ok then return nil, out end
+            return out
+        end
+    end
+
 end
 
 return sh

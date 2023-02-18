@@ -22,7 +22,7 @@ http://cdelord.fr/luax
 -- complex
 ---------------------------------------------------------------------
 
-if on "lua" then return function() end end
+if on { "lua", "pandoc" } then return function() end end
 
 return function()
     local complex = require "complex"

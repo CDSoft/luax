@@ -1,7 +1,7 @@
 # Functional programming utilities
 
 ``` lua
-local F = require "fun"
+local F = require "F"
 ```
 
 `fun` provides some useful functions inspired by functional programming

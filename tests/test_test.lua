@@ -26,7 +26,7 @@ return function()
     require "test"
 
     -- current tested binary
-    local known_types = ("static dynamic lua"):words()
+    local known_types = ("static dynamic lua pandoc"):words()
     local found = known_types:map(function(t)
         eq(on{t}, t == os.getenv "TYPE")
         return on{t} and 1 or 0

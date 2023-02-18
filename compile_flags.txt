@@ -14,8 +14,9 @@
 -Wno-declaration-after-statement
 -Isrc
 -Isrc/crypt/tinycrypt
+-Isrc/linenoise
 -Isrc/lz4/lz4
 -Ilua
--I.build
+-I.build/tmp
 -DRUNTIME_NAME=lrun
 -DRUNTIME=1

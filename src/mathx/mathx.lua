@@ -18,6 +18,8 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
--- functions added to the string package
+--@LOAD
+local _, mathx = pcall(require, "_mathx")
+mathx = _ and mathx
 
-require "fun" -- to update the string methods
+return mathx

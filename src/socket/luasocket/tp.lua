@@ -132,3 +132,4 @@ function _M.connect(host, port, timeout, create)
 end
 
 return _M
+--@NAME=socket.tp
