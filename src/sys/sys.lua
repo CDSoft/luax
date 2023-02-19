@@ -29,7 +29,6 @@ if not sys then
     sys.arch = pandoc and pandoc.system.arch
     sys.os = pandoc and pandoc.system.os
     sys.abi = "lua"
-    sys.type = pandoc and "pandoc" or "lua"
 
     setmetatable(sys, {
         __index = function(_, param)

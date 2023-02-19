@@ -18,8 +18,6 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
-if on "lua" then return function() end end
-
 return function()
 
     local serpent = require "serpent"

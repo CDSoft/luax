@@ -18,16 +18,11 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
-local F = require "F"
-local sys = require "sys"
-
-function on(types)
-    return F.flatten{types}:any(F.curry(F.op.eq)(sys.type))
-end
-
 local function is_a_list(t)
     for k, _ in pairs(t) do
         if type(k) ~= "number" then return false end
+        if math.type(k) ~= "integer" then return false end
+        if k < 1 then return false end
     end
     return true
 end

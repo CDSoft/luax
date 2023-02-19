@@ -401,18 +401,6 @@ data:crc64()
 
 computes the CRC64 of `data`.
 
-## SHA1 hash
-
-The SHA1 hash is provided by the `pandoc` module. `crypt.sha1` is just
-an alias for `pandoc.utils.sha1`.
-
-``` lua
-crypt.sha1(data)
-data:sha1()
-```
-
-computes the SHA1 of `data`.
-
 ## RC4 encryption
 
 RC4 is a stream cipher (see <https://en.wikipedia.org/wiki/RC4>). It is
@@ -430,3 +418,15 @@ data:unrc4(key, [drop])
 encrypts/decrypts `data` using the RC4Drop algorithm and the encryption
 key `key` (drops the first `drop` encryption steps, the default value of
 `drop` is 768).
+
+## SHA1 hash
+
+The SHA1 hash is provided by the `pandoc` module. `crypt.sha1` is just
+an alias for `pandoc.utils.sha1`.
+
+``` lua
+crypt.sha1(data)
+data:sha1()
+```
+
+computes the SHA1 of `data`.

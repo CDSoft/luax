@@ -71,7 +71,7 @@ s:unaes(key)        == crypt.unaes(s, key)
 
 end
 
--- Pure Lua / Pandoc Lua implementation
+-- Pure Lua implementation
 if not crypt then
 
     crypt = {}
@@ -417,29 +417,6 @@ computes the CRC64 of `data`.
     string.crc64 = crypt.crc64
 
 --[[------------------------------------------------------------------------@@@
-## SHA1 hash
-
-The SHA1 hash is provided by the `pandoc` module.
-`crypt.sha1` is just an alias for `pandoc.utils.sha1`.
-@@@]]
-
---[[@@@
-```lua
-crypt.sha1(data)
-data:sha1()
-```
-computes the SHA1 of `data`.
-@@@]]
-
-    if pandoc then
-
-        crypt.sha1 = pandoc.utils.sha1
-
-        string.sha1 = crypt.sha1
-
-    end
-
---[[------------------------------------------------------------------------@@@
 ## RC4 encryption
 
 RC4 is a stream cipher (see <https://en.wikipedia.org/wiki/RC4>).
@@ -490,6 +467,29 @@ steps, the default value of `drop` is 768).
 
     string.rc4 = crypt.rc4
     string.unrc4 = crypt.unrc4
+
+end
+
+--[[------------------------------------------------------------------------@@@
+## SHA1 hash
+
+The SHA1 hash is provided by the `pandoc` module.
+`crypt.sha1` is just an alias for `pandoc.utils.sha1`.
+@@@]]
+
+--[[@@@
+```lua
+crypt.sha1(data)
+data:sha1()
+```
+computes the SHA1 of `data`.
+@@@]]
+
+if pandoc then
+
+    crypt.sha1 = pandoc.utils.sha1
+
+    string.sha1 = crypt.sha1
 
 end
 

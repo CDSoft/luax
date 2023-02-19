@@ -25,30 +25,12 @@ http://cdelord.fr/luax
 return function()
     local lib = require "lib"
     local traceback = lib.hello "World":gsub("\t", "    ")
-    local expected_traceback =
-
-        on "static" and [[
-@lib.lua says: Hello World
-Traceback test
-stack traceback:
-    lib.lua:25: in function 'lib.hello'
-    require_test.lua:27: in function 'require_test'
-    main.lua:29: in main chunk]]
-
-        or pandoc and [[
+    local expected_traceback = [[
 @tests/lib.lua says: Hello World
 Traceback test
 stack traceback:
     tests/lib.lua:25: in function 'lib.hello'
     tests/require_test.lua:27: in function 'require_test']]
-
-        or [[
-@tests/lib.lua says: Hello World
-Traceback test
-stack traceback:
-    tests/lib.lua:25: in function 'lib.hello'
-    tests/require_test.lua:27: in function 'require_test'
-    tests/main.lua:29: in main chunk]]
 
     startswith(traceback, expected_traceback)
 

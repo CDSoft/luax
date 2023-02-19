@@ -22,9 +22,9 @@ http://cdelord.fr/luax
 -- lpeg
 ---------------------------------------------------------------------
 
-if on "lua" then return function() end end
-
 return function()
-    assert(require "lpeg")
-    assert(require "re")
+    if sys.abi == "gnu" or sys.abi == "musl" or pandoc then
+        assert(require "lpeg")
+        assert(require "re")
+    end
 end

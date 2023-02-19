@@ -20,3 +20,6 @@
 -I.build/tmp
 -DRUNTIME_NAME=lrun
 -DRUNTIME=1
+-DLUAX_ARCH="x86_64"
+-DLUAX_OS="linux"
+-DLUAX_ABI="gnu"

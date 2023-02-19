@@ -220,7 +220,7 @@ end
 
 local function numeric_type_classes()
 
-    local mathx = on{"static", "dynamic"} and require "mathx"
+    local _, mathx = pcall(require, "mathx")
 
     eq(F.op.add(3, 4), 7)
     eq(F.op.sub(3, 4), -1)
@@ -426,7 +426,8 @@ local function miscellaneous_functions()
     eq(F.prefix("ab")("cd"), "abcd")
     eq(F.suffix("ab")("cd"), "cdab")
 
-    local imath = on{"static", "dynamic"} and require "imath" or {new=tonumber}
+    local has_imath, imath = pcall(require, "imath")
+    imath = imath or {new=tonumber}
     local ps = require "ps"
 
     local function fib(n) return n <= 1 and imath.new(n) or fib(n-1) + fib(n-2) end
@@ -443,7 +444,7 @@ local function miscellaneous_functions()
     local fib100
     local dt = ps.profile(function() fib100 = fib(100) end) -- this should be fast because of memoization
     assert(dt < 1.0, "the memoized fibonacci suite takes too much time")
-    if on{"static", "dynamic"} then
+    if require "imath" then
         eq(fib100, imath.new"354224848179261915075")
     end
 

@@ -86,11 +86,6 @@ sys.arch
 sys.abi
 ```
 `"musl"` or `"gnu"`.
-
-```lua
-sys.type
-```
-`"static"`, `"dynamic"` or `"lua"`
 @@@*/
 
 LUAMOD_API int luaopen_sys (lua_State *L)
@@ -99,6 +94,5 @@ LUAMOD_API int luaopen_sys (lua_State *L)
     set_string(L, "arch", LUAX_ARCH);
     set_string(L, "os", LUAX_OS);
     set_string(L, "abi", LUAX_ABI);
-    set_string(L, "type", LUAX_TYPE);
     return 1;
 }

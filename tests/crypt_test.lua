@@ -76,10 +76,10 @@ return function()
         for i = 1, 1000 do
             local s = prng:str(256 + i%3)
             eq(s:base64():unbase64(), s)
-            if on{"static", "dynamic"} then
+            if sys.abi == "gnu" or sys.abi == "musl" then
                 eq(s:base64url():unbase64url(), s)
             end
-            if on{"static", "dynamic"} then
+            if sys.abi == "gnu" or sys.abi == "musl" then
                 eq(s:base64url(), s:base64():gsub("+", "-"):gsub("/", "_"))
             end
         end
@@ -216,7 +216,7 @@ return function()
     end
 
     -- TinyCrypt tests
-    if on{"static", "dynamic"} then
+    if sys.abi == "gnu" or sys.abi == "musl" then
         local function bytes(s)
             s = s:unhex()
             local bs = table.pack(s:byte(1, #s))
@@ -407,7 +407,7 @@ return function()
     end
 
     -- Pandoc tests
-    if on "pandoc" then
+    if pandoc then
 
         -- Encryption tests
         do

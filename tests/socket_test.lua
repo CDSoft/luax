@@ -22,27 +22,27 @@ http://cdelord.fr/luax
 -- luasocket
 ---------------------------------------------------------------------
 
-if on { "lua", "pandoc" } then return function() end end
-
-local sys = require "sys"
-
 return function()
-    local socket = assert(require "socket")
-    assert(require "socket.core")
-    assert(require "socket.ftp")
-    assert(require "socket.headers")
-    local http = assert(require "socket.http")
-    assert(require "socket.smtp")
-    assert(require "socket.tp")
-    assert(require "socket.url")
-    if sys.os == "linux" then
-        assert(require "socket.unix")
-        assert(require "socket.serial")
-    end
-    assert(require "mime")
-    assert(require "mime.core")
+    if sys.abi == "gnu" then
 
-    local t = assert(http.request"http://time.cdelord.fr/time.php")
-    assert(math.abs(t - os.time() ) < 5*60)
-    assert(math.abs(t - socket.gettime() ) < 5*60)
+        local socket = assert(require "socket")
+        assert(require "socket.core")
+        assert(require "socket.ftp")
+        assert(require "socket.headers")
+        local http = assert(require "socket.http")
+        assert(require "socket.smtp")
+        assert(require "socket.tp")
+        assert(require "socket.url")
+        if sys.os == "linux" then
+            assert(require "socket.unix")
+            assert(require "socket.serial")
+        end
+        assert(require "mime")
+        assert(require "mime.core")
+
+        local t = assert(http.request"http://time.cdelord.fr/time.php")
+        assert(math.abs(t - os.time() ) < 5*60)
+        assert(math.abs(t - socket.gettime() ) < 5*60)
+
+    end
 end

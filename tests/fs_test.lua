@@ -47,7 +47,7 @@ return function()
     fs.remove(tmp)
 
     fs.mkdirs(tmp)
-    if on{"static", "dynamic"} then
+    if sys.abi == "gnu" or sys.abi == "musl" then
         assert(fs.chdir(tmp))
         eq(fs.getcwd(), fs.absname(tmp))
         eq(fs.getcwd(), fs.realpath(tmp))
@@ -62,22 +62,22 @@ return function()
     eq(fs.is_dir(fs.join(tmp, "level1", "level2", "level3")), true)
 
     eq(fs.dir(tmp):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
-    if on{"static", "dynamic"} then
+    if sys.abi == "gnu" or sys.abi == "musl" then
         eq(fs.dir():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         eq(fs.dir("."):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
     end
-    if sys.os == "linux" and on{"static", "dynamic"} then
+    if sys.os == "linux" and (sys.abi == "gnu" or sys.abi == "musl") then
         eq(fs.glob():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         eq(fs.glob("*.txt"):sort(),{"bar.txt","foo.txt"})
     end
-    if on{"static", "dynamic"} then
+    if sys.abi == "gnu" or sys.abi == "musl" then
         fs.chdir(cwd)
         eq(fs.dir(tmp):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         fs.chdir(tmp)
     end
 
     local function test_files(f, testfiles, reverse)
-        if on{"static", "dynamic"} then
+        if sys.abi == "gnu" or sys.abi == "musl" then
             eq(f(".", {reverse=reverse}), F.map(function(name) return F.prefix"."(name:gsub("/", fs.sep)) end, testfiles))
             fs.chdir(cwd)
             eq(f(tmp, {reverse=reverse}), F.map(function(name) return F.prefix(tmp)(name:gsub("/", fs.sep)) end, testfiles))
@@ -164,7 +164,7 @@ return function()
 
     local ft2 = fs.join(tmp, "ft2")
     assert(fs.touch(ft2, ft))
-    if on{"static", "dynamic"} then
+    if sys.abi == "gnu" or sys.abu == "musl" then
         eq(fs.stat(ft2).mtime, fs.stat(ft).mtime)
         eq(fs.stat(ft2).atime, fs.stat(ft).atime)
         eq(fs.stat(ft2).ctime, fs.stat(ft).ctime)
@@ -176,7 +176,7 @@ return function()
 
     local ok, err = fs.touch("/foo")
     eq(ok, nil)
-    if on{"static", "dynamic"} then
+    if sys.abi == "gnu" or sys.abu == "musl" then
         eq(err:gsub(":.*", ": ..."), "/foo: ...")
     end
 
@@ -194,24 +194,24 @@ return function()
     eq({fs.splitext("file.with_ext")},     {"file", ".with_ext"})
     eq({fs.splitext("file_without_ext")},  {"file_without_ext", ""})
     eq({fs.splitext(".file_without_ext")}, {".file_without_ext", ""})
-    if on{"static", "dynamic"} then
+    if sys.abi == "gnu" or sys.abi == "musl" then
         eq(fs.absname("."), fs.join(tmp, "."))
     end
     eq(fs.absname(tmp), tmp)
-    if on{"static", "dynamic"} then
+    if sys.abi == "gnu" or sys.abi == "musl" then
         eq(fs.absname("foo"), fs.join(tmp, "foo"))
     end
     eq(fs.absname("/foo"), "/foo")
     eq(fs.absname("\\foo"), "\\foo")
     eq(fs.absname("Z:foo"), "Z:foo")
-    if on{"static", "dynamic"} then
+    if sys.abi == "gnu" or sys.abi == "musl" then
         eq(fs.realpath("."), tmp)
     end
     eq(fs.realpath(tmp), tmp)
-    if on{"static", "dynamic"} then
+    if sys.abi == "gnu" or sys.abi == "musl" then
         eq(fs.realpath("foo"), fs.join(tmp, "foo"))
     end
-    if on{"static", "dynamic"} then
+    if sys.abi == "gnu" or sys.abi == "musl" then
         eq(fs.realpath("/foo"), nil) -- unknown file
         eq(fs.realpath("\\foo"), nil) -- unknown file
         eq(fs.realpath("Z:foo"), nil) -- unknown file
@@ -239,7 +239,7 @@ return function()
 
     eq(fs.rmdir(tmp), true)
 
-    if on{"static", "dynamic"} then
+    if sys.abi == "gnu" or sys.abi == "musl" then
         fs.chdir(cwd)
     end
 

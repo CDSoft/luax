@@ -24,7 +24,7 @@ http://cdelord.fr/luax
 
 local ps = require "ps"
 
-local eps = on "lua" and 1 or 0.001
+local eps = sys.abi == "lua" and 1 or 0.001
 
 local function sleep_test(n)
     local t0 = ps.time()
@@ -41,7 +41,7 @@ local function profile_test(n)
 end
 
 return function()
-    if on{"static", "dynamic"} then
+    if sys.abi == "gnu" or sys.abi == "musl" then
         sleep_test(0)
         sleep_test(0.142)
         profile_test(0)
