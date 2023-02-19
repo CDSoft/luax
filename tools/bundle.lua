@@ -55,23 +55,80 @@ local function strip_ext(path)
     return path:gsub("%.lua$", "")
 end
 
+local function last_line(s)
+    local last = ""
+    s:gsub("[^\r\n]+", function(line)
+        line = line:gsub("^%s*(.-)%s*$", "%1")
+        if #line > 0 then last = line end
+    end)
+    return last
+end
+
 function bundle.bundle(arg)
 
+    local kind = "prog"
     local format = "binary"
     local scripts = {}
+    local explicit_main = false
     for i = 1, #arg do
-        if arg[i] == "-binary" then     format = "binary"
-        elseif arg[i] == "-ascii" then  format = "ascii"
-        elseif arg[i] == "-lua" then    format = "lua"
+        if arg[i] == "-lib" then kind = "lib"
+        elseif arg[i] == "-binary" then format = "binary"
+        elseif arg[i] == "-ascii"  then format = "ascii"
+        elseif arg[i] == "-lua"    then format = "lua"
         else
             local content = read(arg[i]):gsub("^#![^\n]*", "")
+            local new_name = content:match("@".."NAME=([%w%._%-]+)")
+            local name = new_name or fs.basename(strip_ext(arg[i]))
+            local main = content:match("@".."MAIN")
+            local load = content:match("@".."LOAD")
+            local lib = new_name or load or content:match("@".."LIB")
+            local maybe_main =
+                    not lib
+                and not load
+                and not main
+                and not last_line(content):match "^%s*return"
             scripts[#scripts+1] = {
                 path = arg[i],
-                name = content:match("@".."NAME=([%w%._%-]+)") or fs.basename(strip_ext(arg[i])),
-                main = content:match("@".."MAIN"),
-                load = content:match("@".."LOAD"),
+                name = name,
+                main = main,
+                lib = lib,
+                load = load,
+                maybe_main = maybe_main,
                 content = content,
             }
+            explicit_main = explicit_main or main
+        end
+    end
+
+    local main_scripts = {}
+    if explicit_main then
+        -- If there are explicit main scripts, only keep them
+        for i = 1, #scripts do
+            if scripts[i].main then
+                main_scripts[#main_scripts+1] = scripts[i].path
+            end
+            scripts[i].maybe_main = false
+        end
+    else
+        -- No explicit main, count other plausible main scripts
+        for i = 1, #scripts do
+            if scripts[i].maybe_main then
+                scripts[i].main = true
+                main_scripts[#main_scripts+1] = scripts[i].path
+            end
+        end
+    end
+    if kind == "lib" then
+        -- libraries shall not contain main scripts
+        if #main_scripts > 0 then
+            error "The LuaX runtime shall not contain main scripts"
+        end
+    else
+        -- real LuaX applications shall contain one and only one main script
+        if #main_scripts > 1 then
+            error("Too many main scripts:\n"..table.concat(main_scripts, "\n"))
+        elseif #main_scripts == 0 then
+            error "No main script"
         end
     end
 
@@ -103,19 +160,13 @@ function bundle.bundle(arg)
             load_library(scripts[i])
         end
     end
-    local nb_main = 0
     for i = 1, #scripts do
         if scripts[i].main then
             -- finally the main script is executed
             run_script(scripts[i])
-            nb_main = nb_main + 1
         end
     end
     plain.emit "end\n"
-
-    if nb_main > 1 then
-        error("Too many main scripts")
-    end
 
     local plain_payload = plain.get()
     local payload = crypt.rc4(lz4.lz4(plain_payload))

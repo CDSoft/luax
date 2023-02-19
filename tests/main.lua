@@ -18,8 +18,8 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
-
-
+-- This is the main test script
+-- @MAIN
 
 -- Check the test environment first
 require "test_test"()

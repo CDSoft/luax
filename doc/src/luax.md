@@ -129,11 +129,22 @@ E.g.: eval $(luax env)
 
 When compiling scripts (options `-t` and `-o`), the scripts shall contain tags
 (e.g. in comments) showing how the script is used by LuaX:
+
 - `--@MAIN`: main script (must be unique)
-- `--@LOAD`: library that is `require`'d before the main script is run (stored
-  in a global variable)
-- other scripts are libraries that must be explicitly `require`'d by the main
-  script
+- `--@LOAD`: library that is `require`'d before the main script is run and
+  stored in a global variable
+- `--@LIB`: library that must be explicitly `require`'d by the main script
+- `--@NAME=<new module name>`: library that is `require`'d with `<new module
+  name>` instead of the source filename.
+
+Scripts without tags are classified using a simplistic heuristic:
+
+- if the last non empty line starts with `return` then it is a library (as if
+  it contained a `@LIB` tag)
+- otherwise it is the main script (as if it contained the `@MAIN` tag).
+
+This heuristic should work for most of the Lua scripts but explicit tags are
+recommended.
 
 ### Examples
 
