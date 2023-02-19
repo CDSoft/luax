@@ -17,53 +17,43 @@
  * http://cdelord.fr/luax
  */
 
-/***************************************************************************@@@
-# sys: System module
+/* rt0: Runtime loader */
 
-```lua
-local sys = require "sys"
-```
-@@@*/
+#include "rt0.h"
 
-#include "sys.h"
+#include "tools.h"
+
+#include "libluax.h"
 
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
 
-static const luaL_Reg blsyslib[] =
+__attribute__((__noreturn__))
+static int rt0_run(lua_State *L)
 {
+    /* Read and execute a chunk in arg[0] */
+
+    /* exe = arg[0] */
+    int type = lua_getglobal(L, "arg");
+    if (type != LUA_TTABLE)
+    {
+        error(NULL, "Can not read arg[0]");
+    }
+    lua_rawgeti(L, -1, 0);
+    const char *exe = luaL_checkstring(L, -1);
+
+    luax_run(L, exe); /* no return */
+}
+
+static const luaL_Reg blrt0lib[] =
+{
+    {"run", rt0_run},
     {NULL, NULL}
 };
 
-static inline void set_string(lua_State *L, const char *name, const char *val)
+LUAMOD_API int luaopen_rt0 (lua_State *L)
 {
-    lua_pushstring(L, val);
-    lua_setfield(L, -2, name);
-}
-
-/*@@@
-```lua
-sys.os
-```
-`"linux"`, `"macos"` or `"windows"`.
-
-```lua
-sys.arch
-```
-`"x86_64"`, `"i386"` or `"aarch64"`.
-
-```lua
-sys.abi
-```
-`"musl"` or `"gnu"`.
-@@@*/
-
-LUAMOD_API int luaopen_sys (lua_State *L)
-{
-    luaL_newlib(L, blsyslib);
-    set_string(L, "arch", LUAX_ARCH);
-    set_string(L, "os", LUAX_OS);
-    set_string(L, "abi", LUAX_ABI);
+    luaL_newlib(L, blrt0lib);
     return 1;
 }

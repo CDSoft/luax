@@ -35,6 +35,7 @@
 
 #include "tools.h"
 
+#include "rt0/rt0.h"
 #include "std/std.h"
 #include "fs/fs.h"
 #include "ps/ps.h"
@@ -50,6 +51,7 @@
 #include "lz4/lz4.h"
 
 static const luaL_Reg lrun_libs[] = {
+    {"_rt0", luaopen_rt0},
     {"std", luaopen_std},
     {"_fs", luaopen_fs},
     {"_ps", luaopen_ps},

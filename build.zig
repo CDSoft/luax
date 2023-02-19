@@ -69,6 +69,7 @@ const luax_main_c_files = [_][]const u8 {
 
 const luax_c_files = [_][]const u8 {
     // LuaX library (static and dynamic)
+    "src/rt0/rt0.c",
     "src/libluax.c",
     "src/tools.c",
     "src/std/std.c",

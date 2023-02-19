@@ -681,7 +681,10 @@ local function run_compiler()
             F.flatten{
                 "#!/usr/bin/env -S",
                 rlwrap and {"rlwrap -C", fs.basename(current_output)} or {},
-                interpreter, "-l", "luax", "-e", "'sys.bootstrap()'", "--",
+                interpreter,    -- "lua" or "pandoc lua" interpreter
+                "-l", "luax",   -- load luax-ARCH-OS-... shared library
+                "-l", "rt0",    -- load the LuaX runtime
+                "--",
             }:unwords()
             .."\n"
             ..exe
