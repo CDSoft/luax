@@ -158,18 +158,19 @@ $ luax -o executable -t x86_64-macos-gnu main.lua lib1.lua lib2.lua
 
 # Available targets
 $ luax -t list
-aarch64-linux-gnu   <path to>/luax-aarch64-linux-gnu
-aarch64-linux-musl  <path to>/luax-aarch64-linux-musl
-aarch64-macos-gnu   <path to>/luax-aarch64-macos-gnu
-i386-linux-gnu      <path to>/luax-i386-linux-gnu
-i386-linux-musl     <path to>/luax-i386-linux-musl
-i386-windows-gnu    <path to>/luax-i386-windows-gnu.exe
-x86_64-linux-gnu    <path to>/luax-x86_64-linux-gnu
-x86_64-linux-musl   <path to>/luax-x86_64-linux-musl
-x86_64-macos-gnu    <path to>/luax-x86_64-macos-gnu
-x86_64-windows-gnu  <path to>/luax-x86_64-windows-gnu.exe
-lua                 <path to>/lua
-pandoc              <path to>/pandoc
+aarch64-linux-gnu     <path to>/luax-aarch64-linux-gnu
+aarch64-linux-musl    <path to>/luax-aarch64-linux-musl
+aarch64-macos-gnu     <path to>/luax-aarch64-macos-gnu
+i386-linux-gnu        <path to>/luax-i386-linux-gnu
+i386-linux-musl       <path to>/luax-i386-linux-musl
+i386-windows-gnu      <path to>/luax-i386-windows-gnu.exe
+x86_64-linux-gnu      <path to>/luax-x86_64-linux-gnu
+x86_64-linux-musl     <path to>/luax-x86_64-linux-musl
+x86_64-macos-gnu      <path to>/luax-x86_64-macos-gnu
+x86_64-windows-gnu    <path to>/luax-x86_64-windows-gnu.exe
+lua                   <path to>/lua
+luax                  <path to>/luax
+pandoc                <path to>/pandoc
 ```
 
 ## Built-in modules

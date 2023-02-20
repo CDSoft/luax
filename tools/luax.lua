@@ -116,26 +116,29 @@ local function findpath(name)
     return full_path and fs.realpath(full_path) or name
 end
 
+local external_interpreters = F{
+    lua = "lua",
+    luax = "luax",
+    pandoc = "pandoc lua",
+}
+
 local function print_targets()
     local config = require "luax_config"
     F(config.targets):map(function(target)
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..target..ext(target))
-        print(("%-20s%s%s"):format(
+        print(("%-22s%s%s"):format(
             target,
             compiler:gsub("^"..os.getenv"HOME", "~"),
             fs.is_file(compiler) and "" or " [NOT FOUND]"
         ))
     end)
-    local function external(name)
+    external_interpreters:mapk(function(name)
         local path = fs.findpath(name)
-        print(("%-20s%s%s"):format(
+        print(("%-22s%s%s"):format(
             name,
             path and path:gsub("^"..os.getenv"HOME", "~") or name,
             path and "" or " [NOT FOUND]"))
-    end
-    external "luax"
-    external "lua"
-    external "pandoc"
+    end)
 end
 
 local function err(fmt, ...)
@@ -723,15 +726,11 @@ local function run_compiler()
     F(compilers):map(function(compiler)
         compile_target(output, compiler)
     end)
-    if target == "all" or target == "luax" then
-        compile_lua(output, "luax")
-    end
-    if target == "all" or target == "lua" then
-        compile_lua(output, "lua")
-    end
-    if target == "all" or target == "pandoc" then
-        compile_lua(output, "pandoc lua")
-    end
+    external_interpreters:mapk(function(name, interpreter)
+        if target == "all" or target == name then
+            compile_lua(output, interpreter)
+        end
+    end)
 
 end
 
