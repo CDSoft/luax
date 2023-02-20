@@ -600,7 +600,6 @@ endif
 test: $(BUILD_TEST)/test-lua.ok
 test: $(BUILD_TEST)/test-lua-luax-lua.ok
 ifeq ($(OS)-$(ARCH),linux-x86_64)
-test: $(BUILD_TEST)/test-pandoc.ok
 test: $(BUILD_TEST)/test-pandoc-luax-lua.ok
 test: $(BUILD_TEST)/test-pandoc-luax-so.ok
 endif
@@ -637,25 +636,18 @@ $(BUILD_TEST)/test-lua-luax-lua.ok: $(LUA) $(LUAX_LUA) $(TEST_SOURCES)
 	$(LUA) $(LUAX_LUA) $(TEST_MAIN) Lua is great
 	@touch $@
 
-$(BUILD_TEST)/test-pandoc.ok: $(BUILD_LIB)/luax.lua $(TEST_SOURCES) | $(PANDOC)
-	@$(call cyan,"TEST",Pandoc Lua interpreter: $(TEST_MAIN))
-	@mkdir -p $(dir $@)
-	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=pandoc LUA_PATH="$(BUILD_LIB)/?.lua;tests/?.lua" \
-	$(PANDOC) lua -l luax $(TEST_MAIN) </dev/null
-	@touch $@
-
 $(BUILD_TEST)/test-pandoc-luax-lua.ok: $(LUAX_LUA) $(TEST_SOURCES) | $(PANDOC)
 	@$(call cyan,"TEST",Pandoc Lua interpreter + $(notdir $(LUAX_LUA)): $(TEST_MAIN))
 	@mkdir -p $(dir $@)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=pandoc LUA_PATH="tests/?.lua" \
-	$(PANDOC) lua $(LUAX_LUA) $(TEST_MAIN) </dev/null
+	$(PANDOC) lua $(LUAX_LUA) $(TEST_MAIN) Lua is great
 	@touch $@
 
 $(BUILD_TEST)/test-pandoc-luax-so.ok: $(BUILD_LIB)/luax.lua $(TEST_SOURCES) | $(PANDOC)
 	@$(call cyan,"TEST",Pandoc Lua interpreter + luax-$(ARCH)-$(OS)-$(LIBC).so: $(TEST_MAIN))
 	@mkdir -p $(dir $@)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=dynamic LUA_CPATH="$(BUILD_LIB)/?.so" LUA_PATH="tests/?.lua" \
-	$(PANDOC) lua -l luax-$(ARCH)-$(OS)-$(LIBC) $(TEST_MAIN) </dev/null
+	$(PANDOC) lua -l luax-$(ARCH)-$(OS)-$(LIBC) $(TEST_MAIN) Lua is great
 	@touch $@
 
 ###############################################################################

@@ -133,6 +133,7 @@ local function print_targets()
             path and path:gsub("^"..os.getenv"HOME", "~") or name,
             path and "" or " [NOT FOUND]"))
     end
+    external "luax"
     external "lua"
     external "pandoc"
 end
@@ -503,11 +504,41 @@ do
         end
         i = i+1
     end
+
+    local arg_shift = i
+
     -- scan files/arguments to execute/compile
     while i <= #arg do
         args[#args+1] = arg[i]
         i = i+1
     end
+
+    interpreter_mode = interpreter_mode or not compiler_mode
+
+    if interpreter_mode and compiler_mode then
+        err "Lua options and compiler options can not be mixed"
+    end
+
+    if compiler_mode and not output then
+        err "No output specified"
+    end
+
+    if interactive and run_stdin then
+        err "Interactive mode and stdin execution are incompatible"
+    end
+
+    if interpreter_mode then
+        -- shift arg such that arg[0] is the name of the script to execute
+        local n = #arg
+        for j = 0, n do
+            arg[j-arg_shift] = arg[j]
+        end
+        for j = n-arg_shift+1, n do
+            arg[j] = nil
+        end
+        if arg[0] == "-" then arg[0] = "stdin" end
+    end
+
 end
 
 local function run_interpreter()
@@ -517,10 +548,7 @@ local function run_interpreter()
     populate_repl()
 
     if #args >= 1 then
-        arg = {}
         local script = args[1]
-        arg[0] = script == "-" and "stdin" or script
-        for i = 2, #args do arg[i-1] = args[i] end
         local chunk, msg
         if script == "-" then
             chunk, msg = load(io.stdin:read "*a")
@@ -612,7 +640,7 @@ local function run_compiler()
     local compilers = {}
     local function rmext(compiler_target, name) return name:gsub(ext(compiler_target):gsub("%.", "%%.").."$", "") end
     F(target == "all" and valid_targets:keys() or target and {target} or {}):map(function(compiler_target)
-        if target == "lua" or target == "pandoc" then return end
+        if target == "luax" or target == "lua" or target == "pandoc" then return end
         if not valid_targets[compiler_target] then err("Invalid target: %s", compiler_target) end
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..compiler_target..ext(compiler_target))
         if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, compiler_target} end
@@ -681,9 +709,15 @@ local function run_compiler()
             F.flatten{
                 "#!/usr/bin/env -S",
                 rlwrap and {"rlwrap -C", fs.basename(current_output)} or {},
-                interpreter,    -- "lua" or "pandoc lua" interpreter
-                "-l", "luax",   -- load luax-ARCH-OS-... shared library
-                "-l", "rt0",    -- load the LuaX runtime
+                interpreter,    -- "luax", "lua" or "pandoc lua" interpreter
+
+                -- load luax-ARCH-OS-... shared library (unless the interpreter is already luax)
+                interpreter == "luax" and {} or {"-l", "luax"},
+
+                -- load the LuaX runtime
+                "-l", "rt0",
+
+                -- remaining parameters are given to the main script
                 "--",
             }:unwords()
             .."\n"
@@ -704,6 +738,9 @@ local function run_compiler()
     F(compilers):map(function(compiler)
         compile_target(output, compiler)
     end)
+    if target == "all" or target == "luax" then
+        compile_lua(output, "luax")
+    end
     if target == "all" or target == "lua" then
         compile_lua(output, "lua")
     end
@@ -711,20 +748,6 @@ local function run_compiler()
         compile_lua(output, "pandoc lua")
     end
 
-end
-
-interpreter_mode = interpreter_mode or not compiler_mode
-
-if interpreter_mode and compiler_mode then
-    err "Lua options and compiler options can not be mixed"
-end
-
-if compiler_mode and not output then
-    err "No output specified"
-end
-
-if interactive and run_stdin then
-    err "Interactive mode and stdin execution are incompatible"
 end
 
 actions:add(compiler_mode and run_compiler or run_interpreter)
