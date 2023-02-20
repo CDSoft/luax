@@ -263,24 +263,6 @@ local function populate_repl()
 
 --[[@@@
 ```lua
-F
-```
-is the `fun` module.
-@@@]]
-
-    _ENV.F = F
-
---[[@@@
-```lua
-fs
-```
-is the `fs` module.
-@@@]]
-
-    _ENV.fs = fs
-
---[[@@@
-```lua
 show(x)
 ```
 returns a string representing `x` with nice formatting for tables and numbers.

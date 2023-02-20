@@ -61,18 +61,6 @@ In interactive mode, these functions are available as global functions.
 `show` is used by the LuaX REPL to print results.
 
 ``` lua
-F
-```
-
-is the `fun` module.
-
-``` lua
-fs
-```
-
-is the `fs` module.
-
-``` lua
 show(x)
 ```
 
