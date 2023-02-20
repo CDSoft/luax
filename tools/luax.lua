@@ -686,12 +686,15 @@ local function run_compiler()
         log("output", "%s", current_output)
 
         local bundle = require "bundle"
-        local exe, chunk = bundle.combine_lua(luax_lib_path, scripts)
-        exe =
-            F.flatten{
+        local chunk = bundle.combine_lua(scripts)
+        local exe = F.flatten{
                 "#!/usr/bin/env -S",
+
+                -- call the interpreter with rlwrap (option -r)
                 rlwrap and {"rlwrap -C", fs.basename(current_output)} or {},
-                interpreter,    -- "luax", "lua" or "pandoc lua" interpreter
+
+                -- "luax", "lua" or "pandoc lua" interpreter
+                interpreter,
 
                 -- load luax-ARCH-OS-... shared library (unless the interpreter is already luax)
                 interpreter == "luax" and {} or {"-l", "luax"},
@@ -703,7 +706,7 @@ local function run_compiler()
                 "--",
             }:unwords()
             .."\n"
-            ..exe
+            ..chunk
         log("Chunk", "%7d bytes", #chunk)
         log("Total", "%7d bytes", #exe)
 

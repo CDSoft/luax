@@ -64,6 +64,15 @@ local function last_line(s)
     return last
 end
 
+local function mlstr(code)
+    local n = 0
+    code:gsub("](=*)]", function(s)
+        n = math.max(n, #s+1)
+    end)
+    local eqs = ("="):rep(n)
+    return table.concat{"[", eqs, "[", code, "]", eqs, "]"}
+end
+
 function bundle.bundle(arg)
 
     local kind = "prog"
@@ -134,16 +143,17 @@ function bundle.bundle(arg)
 
     local plain = Bundle()
     plain.emit "do\n"
+    plain.emit "local function lib(path, src) return assert(load(src, '@'..path, 't')) end\n"
     local function compile_library(script)
         assert(load(script.content, script.path, 't'))
-        plain.emit(("[%q] = assert(load(%q, %q, 't')),\n"):format(script.name, script.content, "@"..script.path))
+        plain.emit(("[%q] = lib(%q, %s),\n"):format(script.name, script.path, mlstr(script.content)))
     end
     local function load_library(script)
         plain.emit(("_ENV[%q] = require %q\n"):format(script.name, script.name))
     end
     local function run_script(script)
         assert(load(script.content, script.path, 't'))
-        plain.emit(("assert(load(%q, %q, 't'))()\n"):format(script.content, "@"..script.path))
+        plain.emit(("lib(%q, %s)()\n"):format(script.path, mlstr(script.content)))
     end
     plain.emit "local libs = {\n"
     for i = 1, #scripts do
@@ -203,9 +213,9 @@ function bundle.combine(target, scripts)
     return runtime..chunk, chunk
 end
 
-function bundle.combine_lua(luax_lib, scripts)
+function bundle.combine_lua(scripts)
     local chunk = bundle.bundle(F.flatten{scripts})
-    return chunk, chunk
+    return chunk
 end
 
 local function called_by(f, level)

@@ -548,7 +548,7 @@ $(BUILD_BIN)/luax-%: $(BUILD_TMP)/luaxruntime-% $(LUAX_PACKAGES) tools/bundle.lu
 	$(LUAX0) tools/bundle.lua -binary $(LUAX_PACKAGES) >> $@.tmp
 	@mv $@.tmp $@
 
-$(BUILD_LIB)/luax.lua: $(LUAX0) $(LIB_LUAX_SOURCES)
+$(BUILD_LIB)/luax.lua: $(LUAX0) $(LIB_LUAX_SOURCES) tools/bundle.lua $(LUAX0)
 	@$(call cyan,"BUNDLE",$@)
 	@mkdir -p $(dir $@)
 	@(  set -eu;                                                    \
