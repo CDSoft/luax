@@ -48,8 +48,6 @@ $ make install-all PREFIX=/usr  # install luax to /usr/bin
 
 `make install` and `make install-all` install:
 
-- `$PREFIX/bin/luax-env`: script to update `PATH` and `LUA_CPATH` to be
-  sources in `.bashrc` or `.zshrc`
 - `$PREFIX/bin/luax`: symbolic link to the LuaX binary for the host
 - `$PREFIX/bin/luax-<ARCH>-<OS>-<LIBC>`: LuaX binary for a specific
   platform
