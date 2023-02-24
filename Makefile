@@ -527,7 +527,7 @@ $(BUILD_TMP)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUND
 	    -D$(RELEASE) \
 	    -Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD_TMP)/luaxruntime-%,%,$@)) \
 	    --build-file build.zig
-	@find $(BUILD_TMP)/lib -name "*luax*" | while read lib; do mv "$$lib" "$(BUILD_LIB)/`basename $$lib | sed 's/libluax/luax/'`"; done
+	@find $(BUILD_TMP)/lib -name "*luax*" | while read lib; do mv "$$lib" "$(BUILD_LIB)/`basename $$lib | sed s/^luax-/libluax-/`"; done
 	@touch $@
 
 ###############################################################################
@@ -562,26 +562,16 @@ $(BUILD_LIB)/luax.lua: $(LUAX0) $(LIB_LUAX_SOURCES) tools/bundle.lua $(LUAX0)
 # luax CLI (e.g. for lua or pandoc)
 ###############################################################################
 
-$(LUAX_LUA): $(BUILD_LIB)/luax.lua tools/luax.lua Makefile
-	@mkdir -p $(dir $@)
-	@(  set -eu;                                    \
-	    echo "#!/usr/bin/env lua";                  \
-	    echo "";                                    \
-	    echo "do";                                  \
-	    cat $(BUILD_LIB)/luax.lua;                  \
-	    echo "end";                                 \
-	    echo "";                                    \
-	    cat tools/luax.lua;                         \
-	) > $@.tmp
-	@mv $@.tmp $@
+$(LUAX_LUA): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua
+	$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -r -t lua -o $@ tools/luax.lua
 
 ###############################################################################
 # luax-pandoc
 ###############################################################################
 
-$(LUAX_PANDOC): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(LUAX_PACKAGES) | $(PANDOC)
+$(LUAX_PANDOC): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua | $(PANDOC)
 	@$(call cyan,"BUNDLE",$@)
-	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -t pandoc -o $@ $(LUAX_PACKAGES)
+	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -r -t pandoc -o $@ tools/luax.lua
 
 ###############################################################################
 # Tests (native only)
@@ -601,7 +591,9 @@ test: $(BUILD_TEST)/test-lua.ok
 test: $(BUILD_TEST)/test-lua-luax-lua.ok
 ifeq ($(OS)-$(ARCH),linux-x86_64)
 test: $(BUILD_TEST)/test-pandoc-luax-lua.ok
+ifeq ($(PANDOC_DYNAMIC_LINK),yes)
 test: $(BUILD_TEST)/test-pandoc-luax-so.ok
+endif
 endif
 
 $(BUILD_TEST)/test-luax.ok: $(BUILD_TEST)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
@@ -616,10 +608,10 @@ $(BUILD_TEST)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-
 	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -o $@ $(TEST_SOURCES)
 
 $(BUILD_TEST)/test-lib.ok: $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC) $(TEST_SOURCES) $(LUA)
-	@$(call cyan,"TEST",Shared library: $(BUILD_LIB)/luax-$(ARCH)-$(OS)-$(LIBC))
+	@$(call cyan,"TEST",Shared library: $(BUILD_LIB)/libluax-$(ARCH)-$(OS)-$(LIBC))
 	@mkdir -p $(dir $@)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=dynamic LUA_CPATH="$(BUILD_LIB)/?.so" LUA_PATH="tests/?.lua" \
-	$(LUA) -l luax-$(ARCH)-$(OS)-$(LIBC) $(TEST_MAIN) Lua is great
+	$(LUA) -l libluax-$(ARCH)-$(OS)-$(LIBC) $(TEST_MAIN) Lua is great
 	@touch $@
 
 $(BUILD_TEST)/test-lua.ok: $(LUA) $(BUILD_LIB)/luax.lua $(TEST_SOURCES)
@@ -632,23 +624,27 @@ $(BUILD_TEST)/test-lua.ok: $(LUA) $(BUILD_LIB)/luax.lua $(TEST_SOURCES)
 $(BUILD_TEST)/test-lua-luax-lua.ok: $(LUA) $(LUAX_LUA) $(TEST_SOURCES)
 	@$(call cyan,"TEST",Plain Lua interpreter + $(notdir $(LUAX_LUA)): $(TEST_MAIN))
 	@mkdir -p $(dir $@)
-	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="tests/?.lua" \
-	$(LUA) $(LUAX_LUA) $(TEST_MAIN) Lua is great
+	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="$(BUILD_LIB)/?.lua;tests/?.lua" \
+	$(LUAX_LUA) $(TEST_MAIN) Lua is great
 	@touch $@
 
-$(BUILD_TEST)/test-pandoc-luax-lua.ok: $(LUAX_LUA) $(TEST_SOURCES) | $(PANDOC)
-	@$(call cyan,"TEST",Pandoc Lua interpreter + $(notdir $(LUAX_LUA)): $(TEST_MAIN))
+$(BUILD_TEST)/test-pandoc-luax-lua.ok: $(BUILD)/lib/luax.lua $(TEST_SOURCES) | $(PANDOC)
+	@$(call cyan,"TEST",Pandoc Lua interpreter + $(notdir $(BUILD)/lib/luax.lua): $(TEST_MAIN))
 	@mkdir -p $(dir $@)
-	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=pandoc LUA_PATH="tests/?.lua" \
-	$(PANDOC) lua $(LUAX_LUA) $(TEST_MAIN) Lua is great
+	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=pandoc LUA_PATH="$(BUILD_LIB)/?.lua;tests/?.lua" \
+	$(PANDOC) lua -l luax $(TEST_MAIN) Lua is great
 	@touch $@
+
+ifeq ($(PANDOC_DYNAMIC_LINK),yes)
 
 $(BUILD_TEST)/test-pandoc-luax-so.ok: $(BUILD_LIB)/luax.lua $(TEST_SOURCES) | $(PANDOC)
-	@$(call cyan,"TEST",Pandoc Lua interpreter + luax-$(ARCH)-$(OS)-$(LIBC).so: $(TEST_MAIN))
+	@$(call cyan,"TEST",Pandoc Lua interpreter + libluax-$(ARCH)-$(OS)-$(LIBC).so: $(TEST_MAIN))
 	@mkdir -p $(dir $@)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=dynamic LUA_CPATH="$(BUILD_LIB)/?.so" LUA_PATH="tests/?.lua" \
-	$(PANDOC) lua -l luax-$(ARCH)-$(OS)-$(LIBC) $(TEST_MAIN) Lua is great
+	$(PANDOC) lua -l libluax-$(ARCH)-$(OS)-$(LIBC) $(TEST_MAIN) Lua is great
 	@touch $@
+
+endif
 
 ###############################################################################
 # Documentation
@@ -708,7 +704,7 @@ README.md: doc/src/luax.md doc/src/fix_links.lua | $(PANDA)
 # Archive
 ###############################################################################
 
-$(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) $(BUILD_LIB)/luax.lua $(LUAX_LUA) $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD_DOC)/index.html
+$(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) $(BUILD_LIB)/luax.lua $(LUAX_LUA) $(LUAX_PANDOC) $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD_DOC)/index.html
 	@$(call cyan,"ARCHIVE",$@)
 	@rm -rf $(BUILD)/tar && mkdir -p $(BUILD)/tar
 	@cp README.md $(BUILD)/tar

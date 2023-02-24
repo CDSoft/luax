@@ -23,7 +23,7 @@ http://cdelord.fr/luax
 ---------------------------------------------------------------------
 
 return function()
-    if sys.abi == "gnu" or sys.abi == "musl" or pandoc then
+    if sys.abi == "gnu" or sys.abi == "musl" then
         assert(require "lpeg")
         assert(require "re")
     end

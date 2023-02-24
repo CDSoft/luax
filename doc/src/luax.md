@@ -56,11 +56,11 @@ $ make install-all PREFIX=/usr  # install luax to /usr/bin
 - `$PREFIX/bin/luax`: symbolic link to the LuaX binary for the host
 - `$PREFIX/bin/luax-<ARCH>-<OS>-<LIBC>`: LuaX binary for a specific platform
 - `$PREFIX/bin/luax-pandoc`: LuaX run in a Pandoc Lua interpreter
-- `$PREFIX/bin/luax-lua.lua`: a pure Lua REPL reimplementing some LuaX
-  libraries, usable in any Lua 5.4 interpreter (e.g.: lua, pandoc lua, ...)
-- `$PREFIX/lib/luax-<ARCH>-<OS>-<LIBC>.so`: Linux LuaX shared libraries
-- `$PREFIX/lib/luax-<ARCH>-<OS>-<LIBC>.dylib`: MacOS LuaX shared libraries
-- `$PREFIX/lib/luax-<ARCH>-<OS>-<LIBC>.dll`: Windows LuaX shared libraries
+- `$PREFIX/bin/luax-lua`: a pure Lua REPL reimplementing some LuaX libraries,
+  usable in any Lua 5.4 interpreter (e.g.: lua, pandoc lua, ...)
+- `$PREFIX/lib/libluax-<ARCH>-<OS>-<LIBC>.so`: Linux LuaX shared libraries
+- `$PREFIX/lib/libluax-<ARCH>-<OS>-<LIBC>.dylib`: MacOS LuaX shared libraries
+- `$PREFIX/lib/libluax-<ARCH>-<OS>-<LIBC>.dll`: Windows LuaX shared libraries
 - `$PREFIX/lib/luax.lua`: a pure Lua reimplementation of some LuaX libraries,
   usable in any Lua 5.4 interpreter.
 
@@ -119,10 +119,14 @@ Environment variables:
   PATH              PATH shall contain the bin directory where LuaX
                     is installed
 
-  LUA_CPATH         LUA_CPATH shall point to the lib directory where
-                    LuaX shared libraries are instaled
+  LUA_PATH          LUA_PATH shall point to the lib directory where
+                    the Lua implementation of LuaX lbraries are installed
 
-PATH and LUA_PATH can be set in .bashrc or .zshrc with « luax env ».
+  LUA_CPATH         LUA_CPATH shall point to the lib directory where
+                    LuaX shared libraries are instlaled
+
+PATH, LUA_PATH and LUA_CPATH can be set in .bashrc or .zshrc
+with « luax env ».
 E.g.: eval $(luax env)
 ```
 
@@ -157,19 +161,27 @@ $ luax -o executable -t x86_64-macos-gnu main.lua lib1.lua lib2.lua
 
 # Available targets
 $ luax -t list
-aarch64-linux-gnu     <path to>/luax-aarch64-linux-gnu
-aarch64-linux-musl    <path to>/luax-aarch64-linux-musl
-aarch64-macos-gnu     <path to>/luax-aarch64-macos-gnu
-i386-linux-gnu        <path to>/luax-i386-linux-gnu
-i386-linux-musl       <path to>/luax-i386-linux-musl
-i386-windows-gnu      <path to>/luax-i386-windows-gnu.exe
-x86_64-linux-gnu      <path to>/luax-x86_64-linux-gnu
-x86_64-linux-musl     <path to>/luax-x86_64-linux-musl
-x86_64-macos-gnu      <path to>/luax-x86_64-macos-gnu
-x86_64-windows-gnu    <path to>/luax-x86_64-windows-gnu.exe
-lua                   <path to>/lua
-luax                  <path to>/luax
-pandoc                <path to>/pandoc
+Targets producing standalone LuaX executables:
+    aarch64-linux-gnu     path/luax-aarch64-linux-gnu
+    aarch64-linux-musl    path/luax-aarch64-linux-musl
+    aarch64-macos-gnu     path/luax-aarch64-macos-gnu
+    i386-linux-gnu        path/luax-i386-linux-gnu
+    i386-linux-musl       path/luax-i386-linux-musl
+    i386-windows-gnu      path/luax-i386-windows-gnu.exe
+    x86_64-linux-gnu      path/luax-x86_64-linux-gnu
+    x86_64-linux-musl     path/luax-x86_64-linux-musl
+    x86_64-macos-gnu      path/luax-x86_64-macos-gnu
+    x86_64-windows-gnu    path/luax-x86_64-windows-gnu.exe
+
+Targets based on an external Lua interpreter:
+    lua                   path/lua
+    lua-lua               path/lua
+    lua-luax              path/lua
+    luax                  path/luax
+    luax-luax             path/luax
+    pandoc                path/pandoc
+    pandoc-lua            path/pandoc
+    pandoc-luax           path/pandoc
 ```
 
 ## Built-in modules

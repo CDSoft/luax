@@ -21,25 +21,29 @@ http://cdelord.fr/luax
 local function shell_env()
 
     local path = os.getenv "PATH" or ""
+    local lua_path = os.getenv "LUA_PATH" or ""
     local lua_cpath = os.getenv "LUA_CPATH" or ""
 
     local exe = fs.is_file(arg[0]) and arg[0] or fs.findpath(arg[0])
 
     local bin = fs.realpath(fs.dirname(exe))
-    local lib = fs.join(
-        fs.dirname(bin), "lib",
+    local lib_lua = fs.join(fs.dirname(bin), "lib", "?.lua")
+    local lib_so = fs.join(fs.dirname(bin), "lib",
            sys.os == "linux"   and "?-"..sys.arch.."-linux-gnu.so"
         or sys.os == "macos"   and "?-"..sys.arch.."-macos-gnu.dylib"
         or sys.os == "windows" and "?-"..sys.arch.."-windows-gnu.dll"
     )
 
-    return F{
+    return F.flatten{
         path:split(fs.path_sep):elem(bin)
             and ('# PATH already contains %s'):format(bin)
             or ('PATH="%s%s$PATH"; export PATH'):format(bin, fs.path_sep),
-        lua_cpath:split";":elem(lib)
-            and ('# LUA_CPATH already contains %s'):format(lib)
-            or ('LUA_CPATH="%s;$LUA_CPATH"; export LUA_CPATH'):format(lib),
+        lua_path:split";":elem(lib_lua)
+            and ('# LUA_PATH already contains %s'):format(lib_lua)
+            or ('LUA_PATH="%s;$LUA_PATH"; export LUA_PATH'):format(lib_lua),
+        lua_cpath:split";":elem(lib_so)
+            and ('# LUA_CPATH already contains %s'):format(lib_so)
+            or ('LUA_CPATH="%s;$LUA_CPATH"; export LUA_CPATH'):format(lib_so),
     } : unlines()
 end
 

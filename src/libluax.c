@@ -160,7 +160,7 @@ int run_buffer(lua_State *L, char *buffer, size_t size, const char *name)
 
 #endif
 
-LUAMOD_API int luaopen_luax(lua_State *L)
+LUAMOD_API int luaopen_libluax(lua_State *L)
 {
     for (const luaL_Reg *lib = lrun_libs; lib->func != NULL; lib++)
     {

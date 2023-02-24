@@ -142,7 +142,6 @@ function bundle.bundle(arg)
     end
 
     local plain = Bundle()
-    plain.emit "do\n"
     plain.emit "local function lib(path, src) return assert(load(src, '@'..path, 't')) end\n"
     local function compile_library(script)
         assert(load(script.content, script.path, 't'))
@@ -155,15 +154,17 @@ function bundle.bundle(arg)
         assert(load(script.content, script.path, 't'))
         plain.emit(("lib(%q, %s)()\n"):format(script.path, mlstr(script.content)))
     end
-    plain.emit "local libs = {\n"
-    for i = 1, #scripts do
-        -- add non main scripts to the libs table used by the require function
-        if not scripts[i].main then
-            compile_library(scripts[i])
+    if #scripts > 1 then -- there are libs
+        plain.emit "local libs = {\n"
+        for i = 1, #scripts do
+            -- add non main scripts to the libs table used by the require function
+            if not scripts[i].main then
+                compile_library(scripts[i])
+            end
         end
+        plain.emit "}\n"
+        plain.emit "table.insert(package.searchers, 2, function(name) return libs[name] end)\n"
     end
-    plain.emit "}\n"
-    plain.emit "table.insert(package.searchers, 2, function(name) return libs[name] end)\n"
     for i = 1, #scripts do
         if scripts[i].load then
             -- load packages are require'd and stored in a global variable
@@ -176,7 +177,6 @@ function bundle.bundle(arg)
             run_script(scripts[i])
         end
     end
-    plain.emit "end\n"
 
     local plain_payload = plain.get()
     local payload = crypt.rc4(lz4.lz4(plain_payload))

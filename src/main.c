@@ -61,7 +61,7 @@ int main(int argc, const char *argv[])
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
     createargtable(L, argv, argc, 0);
-    luaopen_luax(L);
+    luaopen_libluax(L);
 
 #if RUNTIME == 1
 

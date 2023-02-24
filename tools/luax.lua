@@ -81,11 +81,15 @@ Environment variables:
   PATH              PATH shall contain the bin directory where LuaX
                     is installed
 
+  LUA_PATH          LUA_PATH shall point to the lib directory where
+                    the Lua implementation of LuaX lbraries are installed
+
   LUA_CPATH         LUA_CPATH shall point to the lib directory where
-                    LuaX shared libraries are instaled
+                    LuaX shared libraries are installed
 ]==],
     [==[
-PATH and LUA_PATH can be set in .bashrc or .zshrc with « luax env ».
+PATH, LUA_PATH and LUA_CPATH can be set in .bashrc or .zshrc
+with « luax env ».
 E.g.: eval $(luax env)
 ]==]
     })
@@ -117,26 +121,36 @@ local function findpath(name)
 end
 
 local external_interpreters = F{
-    lua = "lua",
-    luax = "luax",
-    pandoc = "pandoc lua",
+    ["lua"]          = { interpreter="lua",        format="-lua",    library="-l luax",    loader="" },
+    ["lua-lua"]      = { interpreter="lua",        format="-lua",    library="-l luax",    loader="" },
+    ["lua-luax"]     = { interpreter="lua",        format="-binary", library="-l libluax", loader="-l rt0" },
+    ["luax"]         = { interpreter="luax",       format="-binary", library="-l libluax", loader="-l rt0" },
+    ["luax-luax"]    = { interpreter="luax",       format="-binary", library="-l libluax", loader="-l rt0" },
+    ["pandoc"]       = { interpreter="pandoc lua", format="-lua",    library="-l luax",    loader="" },
+    ["pandoc-lua"]   = { interpreter="pandoc lua", format="-lua",    library="-l luax",    loader="" },
+    ["pandoc-luax"]  = { interpreter="pandoc lua", format="-binary", library="-l libluax", loader="-l rt0" },
 }
 
 local function print_targets()
+    print "Targets producing standalone LuaX executables:"
     local config = require "luax_config"
     F(config.targets):map(function(target)
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..target..ext(target))
-        print(("%-22s%s%s"):format(
+        print(("    %-22s%s%s"):format(
             target,
             compiler:gsub("^"..os.getenv"HOME", "~"),
             fs.is_file(compiler) and "" or " [NOT FOUND]"
         ))
     end)
-    external_interpreters:mapk(function(name)
-        local path = fs.findpath(name)
-        print(("%-22s%s%s"):format(
+    print ""
+    print "Targets based on an external Lua interpreter:"
+    external_interpreters:items():map(function(name_def)
+        local name, def = F.unpack(name_def)
+        local exe = def.interpreter:words():head()
+        local path = fs.findpath(exe)
+        print(("    %-22s%s%s"):format(
             name,
-            path and path:gsub("^"..os.getenv"HOME", "~") or name,
+            path and path:gsub("^"..os.getenv"HOME", "~") or exe,
             path and "" or " [NOT FOUND]"))
     end)
 end
@@ -343,22 +357,18 @@ calls `inspect(x)` to build a human readable
 representation of `x` (see the `inspect` package).
 @@@]]
 
-    local inspect = pcall(require, "inspect")
+    local inspect = require "inspect"
 
-    if inspect then
+    local remove_all_metatables = function(item, path)
+        if path[#path] ~= inspect.METATABLE then return item end
+    end
 
-        local remove_all_metatables = function(item, path)
-            if path[#path] ~= inspect.METATABLE then return item end
-        end
+    local default_options = {
+        process = remove_all_metatables,
+    }
 
-        local default_options = {
-            process = remove_all_metatables,
-        }
-
-        function _ENV.inspect(x, options)
-            return inspect(x, F.merge{default_options, options})
-        end
-
+    function _ENV.inspect(x, options)
+        return inspect(x, F.merge{default_options, options})
     end
 
 --[[@@@
@@ -402,9 +412,15 @@ local function run_lua_init()
         end)
 end
 
+local has_shell_env, shell_env = pcall(require, "shell_env")
 if #arg == 1 and arg[1] == "env" then
-    print(require "shell_env"())
-    os.exit()
+    if has_shell_env then
+        print(shell_env())
+        os.exit()
+    else
+        print("use « luax env » instead")
+        os.exit(1)
+    end
 end
 
 actions:add(run_lua_init)
@@ -625,7 +641,7 @@ local function run_compiler()
     local compilers = {}
     local function rmext(compiler_target, name) return name:gsub(ext(compiler_target):gsub("%.", "%%.").."$", "") end
     F(target == "all" and valid_targets:keys() or target and {target} or {}):map(function(compiler_target)
-        if target == "luax" or target == "lua" or target == "pandoc" then return end
+        if external_interpreters[target] then return end
         if not valid_targets[compiler_target] then err("Invalid target: %s", compiler_target) end
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..compiler_target..ext(compiler_target))
         if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, compiler_target} end
@@ -679,17 +695,17 @@ local function run_compiler()
     end
 
     -- Prepare scripts for a Lua / Pandoc Lua target
-    local function compile_lua(current_output, interpreter)
+    local function compile_lua(current_output, name, interpreter)
         if target == "all" then
-            current_output = current_output.."-"..interpreter:words():head()
+            current_output = current_output.."-"..name:words():head()
         end
 
         print()
-        log("interpreter", "%s", interpreter)
+        log("interpreter", "%s", name)
         log("output", "%s", current_output)
 
         local bundle = require "bundle"
-        local chunk = bundle.combine_lua(scripts)
+        local chunk = bundle.combine_lua{interpreter.format, scripts}
         local exe = F.flatten{
                 "#!/usr/bin/env -S",
 
@@ -697,13 +713,13 @@ local function run_compiler()
                 rlwrap and {"rlwrap -C", fs.basename(current_output)} or {},
 
                 -- "luax", "lua" or "pandoc lua" interpreter
-                interpreter,
+                interpreter.interpreter,
 
-                -- load luax-ARCH-OS-... shared library (unless the interpreter is already luax)
-                interpreter == "luax" and {} or {"-l", "luax"},
+                -- load luax library (.lua or .so)
+                interpreter.library,
 
                 -- load the LuaX runtime
-                "-l", "rt0",
+                interpreter.loader,
 
                 -- remaining parameters are given to the main script
                 "--",
@@ -728,7 +744,7 @@ local function run_compiler()
     end)
     external_interpreters:mapk(function(name, interpreter)
         if target == "all" or target == name then
-            compile_lua(output, interpreter)
+            compile_lua(output, name, interpreter)
         end
     end)
 
