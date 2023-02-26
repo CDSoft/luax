@@ -25,13 +25,80 @@ http://cdelord.fr/luax
 require "test"
 
 return function()
-    -- TODO: how to check arg[0]?
-    eq(arg, {
-        [-4] = arg[-4],
-        [-3] = arg[-3],
-        [-2] = arg[-2],
-        [-1] = arg[-1],
-        [0] = arg[0],
-        "Lua", "is", "great"
-    })
+    local test_num = tonumber(os.getenv "TEST_NUM")
+
+    if test_num == 1 then
+        eq(arg, {
+            [0] = ".build/test/test-"..sys.arch.."-"..sys.os.."-"..sys.abi,
+            "Lua", "is", "great"
+        })
+        assert(sys.abi == "gnu")
+        assert(not pandoc)
+        assert(crypt.sha256)
+        assert(not crypt.sha1)
+
+    elseif test_num == 2 then
+        eq(arg, {
+            [-3] = ".build/tmp/lua",
+            [-2] = "-l", [-1] = "libluax-"..sys.arch.."-"..sys.os.."-"..sys.abi,
+            [0] = "tests/main.lua",
+            "Lua", "is", "great"
+        })
+        assert(sys.abi == "gnu")
+        assert(not pandoc)
+        assert(crypt.sha256)
+        assert(not crypt.sha1)
+
+    elseif test_num == 3 then
+        eq(arg, {
+            [-3] = ".build/tmp/lua",
+            [-2] = "-l", [-1] = "luax",
+            [0] = "tests/main.lua",
+            "Lua", "is", "great"
+        })
+        assert(sys.abi == "lua")
+        assert(not pandoc)
+        assert(not crypt.sha256)
+        assert(not crypt.sha1)
+
+    elseif test_num == 4 then
+        eq(arg, {
+            [-4] = "lua",
+            [-3] = "-l", [-2] = "luax",
+            [-1] = ".build/bin/luax-lua",
+            [0] = "tests/main.lua",
+            "Lua", "is", "great"
+        })
+        assert(sys.abi == "lua")
+        assert(not pandoc)
+        assert(not crypt.sha256)
+        assert(not crypt.sha1)
+
+    elseif test_num == 5 then
+        eq(arg, {
+            [-3] = "pandoc lua",
+            [-2] = "-l", [-1] = "luax",
+            [0] = "tests/main.lua",
+            "Lua", "is", "great"
+        })
+        assert(sys.abi == "lua")
+        assert(pandoc)
+        assert(not crypt.sha256)
+        assert(crypt.sha1)
+
+    elseif test_num == 6 then
+        eq(arg, {
+            [-3] = "pandoc lua",
+            [-2] = "-l", [-1] = "libluax-"..sys.arch.."-"..sys.os.."-"..sys.abi,
+            [0] = "tests/main.lua",
+            "Lua", "is", "great"
+        })
+        assert(sys.abi == "gnu")
+        assert(pandoc)
+        assert(crypt.sha256)
+        assert(crypt.sha1)
+
+    else
+        error("Invalid test number: "..test_num)
+    end
 end
