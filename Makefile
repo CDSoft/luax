@@ -569,7 +569,7 @@ $(LUAX_LUA): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua
 # luax-pandoc
 ###############################################################################
 
-$(LUAX_PANDOC): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua | $(PANDOC)
+$(LUAX_PANDOC): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua
 	@$(call cyan,"BUNDLE",$@)
 	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -r -t pandoc -o $@ tools/luax.lua
 
@@ -699,21 +699,21 @@ $(BUILD_TEST)/ext-luax-luax.ok: tests/external_interpreters.lua $(BUILD_BIN)/lua
 	TARGET=luax-luax $(patsubst %.ok,%,$@) Lua is great
 	@touch $@
 
-$(BUILD_TEST)/ext-pandoc.ok: tests/external_interpreters.lua $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
+$(BUILD_TEST)/ext-pandoc.ok: tests/external_interpreters.lua $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) | $(PANDOC)
 	@$(call cyan,"TEST",luax -t pandoc: $<)
 	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -t pandoc -o $(patsubst %.ok,%,$@) $<
 	@eval `$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) env`; \
 	TARGET=pandoc $(patsubst %.ok,%,$@) Lua is great
 	@touch $@
 
-$(BUILD_TEST)/ext-pandoc-lua.ok: tests/external_interpreters.lua $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
+$(BUILD_TEST)/ext-pandoc-lua.ok: tests/external_interpreters.lua $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) | $(PANDOC)
 	@$(call cyan,"TEST",luax -t pandoc-lua: $<)
 	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -t pandoc-lua -o $(patsubst %.ok,%,$@) $<
 	@eval `$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) env`; \
 	TARGET=pandoc-lua $(patsubst %.ok,%,$@) Lua is great
 	@touch $@
 
-$(BUILD_TEST)/ext-pandoc-luax.ok: tests/external_interpreters.lua $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
+$(BUILD_TEST)/ext-pandoc-luax.ok: tests/external_interpreters.lua $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) | $(PANDOC)
 	@$(call cyan,"TEST",luax -t pandoc-luax: $<)
 	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -t pandoc-luax -o $(patsubst %.ok,%,$@) $<
 	@eval `$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) env`; \
