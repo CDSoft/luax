@@ -405,7 +405,7 @@ $(PREFIX)/bin/luax-%: $(BUILD_BIN)/luax-%
 	@test -n "$(PREFIX)" || (echo "No installation path found" && false)
 	@mkdir -p $(dir $@) $(dir $@)/../lib
 	@install $< $@
-	@find $(BUILD_LIB) -name "$(patsubst %.exe,%,$(notdir $<)).*" -exec cp {} $(PREFIX)/lib/ \;
+	@find $(BUILD_LIB) -name "lib$(patsubst %.exe,%,$(notdir $<)).*" -exec cp {} $(PREFIX)/lib/ \;
 
 $(PREFIX)/bin/luax-lua: $(LUAX_LUA)
 	@$(call cyan,"INSTALL",$@)
