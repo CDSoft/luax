@@ -100,10 +100,12 @@ scripts:
 
     Compilation options:
       -t target         name of the targetted platform
-      -t all            compile for all available targets
+      -t all            compile for all available LuaX targets
       -t list           list available targets
+      -t list-luax      list available targets (native LuaX targets)
+      -t list-lua       list available targets (Lua/Pandoc targets)
       -o file           name the executable file to create
-      -r                use rlwrap (lua and pandoc targets only)
+      -r                use rlwrap (Lua/Pandoc targets only)
 
     Scripts for compilation:
       file name         name of a Lua package to add to the binary
@@ -124,7 +126,7 @@ scripts:
                         the Lua implementation of LuaX lbraries are installed
 
       LUA_CPATH         LUA_CPATH shall point to the lib directory where
-                        LuaX shared libraries are instlaled
+                        LuaX shared libraries are installed
 
     PATH, LUA_PATH and LUA_CPATH can be set in .bashrc or .zshrc
     with « luax env ».
@@ -163,6 +165,7 @@ $ luax -o executable -t x86_64-macos-gnu main.lua lib1.lua lib2.lua
 # Available targets
 $ luax -t list
 Targets producing standalone LuaX executables:
+
     aarch64-linux-gnu     path/luax-aarch64-linux-gnu
     aarch64-linux-musl    path/luax-aarch64-linux-musl
     aarch64-macos-gnu     path/luax-aarch64-macos-gnu
@@ -175,6 +178,7 @@ Targets producing standalone LuaX executables:
     x86_64-windows-gnu    path/luax-x86_64-windows-gnu.exe
 
 Targets based on an external Lua interpreter:
+
     lua                   path/lua
     lua-lua               path/lua
     lua-luax              path/lua

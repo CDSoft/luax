@@ -60,10 +60,12 @@ Lua options:
     has_compiler and [==[
 Compilation options:
   -t target         name of the targetted platform
-  -t all            compile for all available targets
+  -t all            compile for all available LuaX targets
   -t list           list available targets
+  -t list-luax      list available targets (native LuaX targets)
+  -t list-lua       list available targets (Lua/Pandoc targets)
   -o file           name the executable file to create
-  -r                use rlwrap (lua and pandoc targets only)
+  -r                use rlwrap (Lua/Pandoc targets only)
 
 Scripts for compilation:
   file name         name of a Lua package to add to the binary
@@ -132,7 +134,7 @@ local external_interpreters = F{
 }
 
 local function print_targets()
-    print "Targets producing standalone LuaX executables:"
+    print "Targets producing standalone LuaX executables:\n"
     local config = require "luax_config"
     F(config.targets):map(function(target)
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..target..ext(target))
@@ -143,7 +145,7 @@ local function print_targets()
         ))
     end)
     print ""
-    print "Targets based on an external Lua interpreter:"
+    print "Targets based on an external Lua interpreter:\n"
     external_interpreters:items():map(function(name_def)
         local name, def = F.unpack(name_def)
         local exe = def.interpreter:words():head()
@@ -153,6 +155,15 @@ local function print_targets()
             path and path:gsub("^"..os.getenv"HOME", "~") or exe,
             path and "" or " [NOT FOUND]"))
     end)
+end
+
+local function print_luax_targets()
+    local config = require "luax_config"
+    F(config.targets):map(print)
+end
+
+local function print_lua_targets()
+    external_interpreters:keys():map(print)
 end
 
 local function err(fmt, ...)
@@ -476,10 +487,9 @@ do
             i = i+1
             if target then wrong_arg(a) end
             target = arg[i]
-            if target == "list" then
-                print_targets()
-                os.exit()
-            end
+            if target == "list" then print_targets() os.exit() end
+            if target == "list-luax" then print_luax_targets() os.exit() end
+            if target == "list-lua" then print_lua_targets() os.exit() end
         elseif has_compiler and a == "-r" then
             compiler_mode = true
             rlwrap = true
@@ -641,7 +651,7 @@ local function run_compiler()
     local compilers = {}
     local function rmext(compiler_target, name) return name:gsub(ext(compiler_target):gsub("%.", "%%.").."$", "") end
     F(target == "all" and valid_targets:keys() or target and {target} or {}):map(function(compiler_target)
-        if external_interpreters[target] then return end
+        if external_interpreters[compiler_target] then return end
         if not valid_targets[compiler_target] then err("Invalid target: %s", compiler_target) end
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..compiler_target..ext(compiler_target))
         if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, compiler_target} end
@@ -650,13 +660,6 @@ local function run_compiler()
         local compiler = findpath(arg[0])
         if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, nil} end
     end
-
-    -- luax lib path
-    local luax_lib_path = F.flatten {
-        fs.join(fs.dirname(arg[0]), "luax.lua"),
-        fs.join(fs.dirname(arg[0]), "..", "lib", "luax.lua"),
-        fs.join(fs.dirname(arg[0]), "lib", "luax.lua"),
-    }:filter(fs.is_file):head()
 
     -- List scripts
     local head = "scripts"
@@ -696,10 +699,6 @@ local function run_compiler()
 
     -- Prepare scripts for a Lua / Pandoc Lua target
     local function compile_lua(current_output, name, interpreter)
-        if target == "all" then
-            current_output = current_output.."-"..name:words():head()
-        end
-
         print()
         log("interpreter", "%s", name)
         log("output", "%s", current_output)
@@ -743,7 +742,7 @@ local function run_compiler()
         compile_target(output, compiler)
     end)
     external_interpreters:mapk(function(name, interpreter)
-        if target == "all" or target == name then
+        if target == name then
             compile_lua(output, name, interpreter)
         end
     end)
