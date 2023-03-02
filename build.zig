@@ -81,6 +81,7 @@ const luax_c_files = [_][]const u8 {
     "src/linenoise/linenoise.c",
     "src/socket/luasocket.c",
     "src/lz4/lz4.c",
+    "src/term/term.c",
 };
 
 const third_party_c_files = [_][]const u8 {

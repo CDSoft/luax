@@ -211,6 +211,7 @@ and [lapp](http://cdelord.fr/lapp).
 - [complex](complex.md): math library for complex numbers based on C99
 - [ps](ps.md): Process management module
 - [sys](sys.md): System module
+- [term](term.md): Terminal manipulation module
 - [crypt](crypt.md): cryptography module
 - [lz4](lz4.md): Extremely Fast Compression algorithm
 - [lpeg](lpeg.md): Parsing Expression Grammars For Lua

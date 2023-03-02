@@ -212,6 +212,7 @@ and [lapp](http://cdelord.fr/lapp).
   C99
 - [ps](doc/ps.md): Process management module
 - [sys](doc/sys.md): System module
+- [term](doc/term.md): Terminal manipulation module
 - [crypt](doc/crypt.md): cryptography module
 - [lz4](doc/lz4.md): Extremely Fast Compression algorithm
 - [lpeg](doc/lpeg.md): Parsing Expression Grammars For Lua

@@ -49,6 +49,7 @@
 #include "linenoise/linenoise.h"
 #include "socket/luasocket.h"
 #include "lz4/lz4.h"
+#include "term/term.h"
 
 static const luaL_Reg lrun_libs[] = {
     {"_rt0", luaopen_rt0},
@@ -65,6 +66,7 @@ static const luaL_Reg lrun_libs[] = {
     {"_complex", luaopen_complex},
     {"socket", luaopen_luasocket},
     {"_lz4", luaopen_lz4},
+    {"_term", luaopen_term},
     {NULL, NULL},
 };
 #if RUNTIME == 1
