@@ -52,7 +52,8 @@ General options:
 
 Lua options:
   -e stat           execute string 'stat'
-  -i                enter interactive mode after executing 'script'
+  -i                enter interactive mode after executing
+                    'script'
   -l name           require library 'name' into global 'name'
   -                 stop handling options and execute stdin
                     (incompatible with -i)
@@ -62,8 +63,8 @@ Compilation options:
   -t target         name of the targetted platform
   -t all            compile for all available LuaX targets
   -t list           list available targets
-  -t list-luax      list available targets (native LuaX targets)
-  -t list-lua       list available targets (Lua/Pandoc targets)
+  -t list-luax      list available native LuaX targets
+  -t list-lua       list available Lua/Pandoc targets
   -o file           name the executable file to create
   -r                use rlwrap (Lua/Pandoc targets only)
 
@@ -76,18 +77,20 @@ Lua and Compilation options can not be mixed.
 Environment variables:
 
   $(init[1]), $(init[2])
-                    code executed before handling command line options
-                    and scripts (not in compilation mode).
-                    When $(init[1]) is defined, $(init[2]) is ignored.
+                    code executed before handling command line
+                    options and scripts (not in compilation
+                    mode). When $(init[1]) is defined,
+                    $(init[2]) is ignored.
 
-  PATH              PATH shall contain the bin directory where LuaX
-                    is installed
+  PATH              PATH shall contain the bin directory where
+                    LuaX is installed
 
-  LUA_PATH          LUA_PATH shall point to the lib directory where
-                    the Lua implementation of LuaX lbraries are installed
+  LUA_PATH          LUA_PATH shall point to the lib directory
+                    where the Lua implementation of LuaX
+                    lbraries are installed
 
-  LUA_CPATH         LUA_CPATH shall point to the lib directory where
-                    LuaX shared libraries are installed
+  LUA_CPATH         LUA_CPATH shall point to the lib directory
+                    where LuaX shared libraries are installed
 ]==],
     [==[
 PATH, LUA_PATH and LUA_CPATH can be set in .bashrc or .zshrc
