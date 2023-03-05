@@ -32,3 +32,10 @@ sh.pipe(...)(data)
 Runs the command `...` with `pandoc.pipe` and feeds `stdin` with `data`.
 When `sh.pipe` succeeds, it returns the content of stdout. Otherwise it
 returns the error identified by `pandoc.pipe`.
+
+``` lua
+sh(...)
+```
+
+`sh` can be called as a function. `sh(...)` is a shortcut to
+`sh.read(...)`.

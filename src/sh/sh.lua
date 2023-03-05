@@ -107,4 +107,14 @@ Otherwise it returns the error identified by `pandoc.pipe`.
 
 end
 
+--[[@@@
+``` lua
+sh(...)
+```
+`sh` can be called as a function. `sh(...)` is a shortcut to `sh.read(...)`.
+@@@]]
+setmetatable(sh, {
+    __call = function(_, ...) return sh.read(...) end,
+})
+
 return sh

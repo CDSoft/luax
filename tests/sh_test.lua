@@ -42,6 +42,8 @@ return function()
         eq(ret, 1)
     end
 
+    eq(sh "echo Hello", "Hello\n")
+    eq(sh{"echo", "Hello"}, "Hello\n")
     eq(sh.read{"echo", "Hello"}, "Hello\n")
     eq(sh.read{"true"}, "")
     eq(sh.read"true", "")
