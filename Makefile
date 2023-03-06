@@ -485,7 +485,7 @@ $(BUILD_TMP)/blake3: tools/blake3.zig $(ZIG)
 	@mkdir -p $(dir $@)
 	@$(ZIG) build-exe $< -fsingle-threaded --strip --cache-dir $(ZIG_CACHE) -femit-bin=$@
 
-$(LUAX_CONFIG_H): $(wildcard .git/refs/tags) $(wildcard .git/index) $(BUILD_TMP)/blake3 Makefile
+$(LUAX_CONFIG_H): $(wildcard .git/refs/tags) $(wildcard .git/index) $(BUILD_TMP)/blake3
 	@$(call cyan,"GEN",$@)
 	@mkdir -p $(dir $@)
 	@(  set -eu;                                                \
@@ -496,7 +496,7 @@ $(LUAX_CONFIG_H): $(wildcard .git/refs/tags) $(wildcard .git/index) $(BUILD_TMP)
 	) > $@.tmp
 	@mv $@.tmp $@
 
-$(LUAX_CONFIG_LUA): $(wildcard .git/refs/tags) $(wildcard .git/index) Makefile
+$(LUAX_CONFIG_LUA): $(wildcard .git/refs/tags) $(wildcard .git/index)
 	@$(call cyan,"GEN",$@)
 	@mkdir -p $(dir $@)
 	@(  set -eu;                                                \
