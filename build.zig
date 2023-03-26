@@ -193,7 +193,7 @@ pub fn build(b: *std.build.Builder) !void {
     exe.addIncludeDir(lua_src);
     exe.addCSourceFiles(&luax_main_c_files, &[_][]const u8 {
         "-std=gnu11",
-        "-Os",
+        "-O3",
         "-Werror",
         "-Wall",
         "-Wextra",
@@ -214,7 +214,7 @@ pub fn build(b: *std.build.Builder) !void {
     });
     exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
         "-std=gnu11",
-        "-Os",
+        "-O3",
         "-Werror",
         "-Wall",
         "-Wextra",
@@ -223,7 +223,7 @@ pub fn build(b: *std.build.Builder) !void {
     });
     exe.addCSourceFiles(&luax_c_files, &[_][]const u8 {
         "-std=gnu11",
-        "-Os",
+        "-O3",
         "-Werror",
         "-Wall",
         "-Wextra",
@@ -244,7 +244,7 @@ pub fn build(b: *std.build.Builder) !void {
     });
     exe.addCSourceFiles(&third_party_c_files, &[_][]const u8 {
         "-std=gnu11",
-        "-Os",
+        "-O3",
         "-Wno-documentation",
         "-DLUA_LIB",
         if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
@@ -253,7 +253,7 @@ pub fn build(b: *std.build.Builder) !void {
     if (target.os_tag == std.Target.Os.Tag.windows) {
         exe.addCSourceFiles(&windows_third_party_c_files, &[_][]const u8 {
             "-std=gnu11",
-            "-Os",
+            "-O3",
             "-Wno-documentation",
         });
         exe.linkSystemLibraryName("ws2_32");
@@ -261,7 +261,7 @@ pub fn build(b: *std.build.Builder) !void {
     } else {
         exe.addCSourceFiles(&linux_third_party_c_files, &[_][]const u8 {
             "-std=gnu11",
-            "-Os",
+            "-O3",
             "-Wno-documentation",
             if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
             if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
@@ -289,7 +289,7 @@ pub fn build(b: *std.build.Builder) !void {
     if (target.os_tag != std.Target.Os.Tag.linux) {
         lib_shared.addCSourceFiles(&lua_c_files, &[_][]const u8 {
             "-std=gnu11",
-            "-Os",
+            "-O3",
             "-Werror",
             "-Wall",
             "-Wextra",
@@ -300,7 +300,7 @@ pub fn build(b: *std.build.Builder) !void {
     }
     lib_shared.addCSourceFiles(&luax_c_files, &[_][]const u8 {
         "-std=gnu11",
-        "-Os",
+        "-O3",
         "-Werror",
         "-Wall",
         "-Wextra",
@@ -322,7 +322,7 @@ pub fn build(b: *std.build.Builder) !void {
     });
     lib_shared.addCSourceFiles(&third_party_c_files, &[_][]const u8 {
         "-std=gnu11",
-        "-Os",
+        "-O3",
         "-Wno-documentation",
         "-DLUA_LIB",
         if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
@@ -332,7 +332,7 @@ pub fn build(b: *std.build.Builder) !void {
     if (target.os_tag == std.Target.Os.Tag.windows) {
         lib_shared.addCSourceFiles(&windows_third_party_c_files, &[_][]const u8 {
             "-std=gnu11",
-            "-Os",
+            "-O3",
             "-Wno-documentation",
             //"-DLUA_BUILD_AS_DLL",
         });
@@ -341,7 +341,7 @@ pub fn build(b: *std.build.Builder) !void {
     } else {
         lib_shared.addCSourceFiles(&linux_third_party_c_files, &[_][]const u8 {
             "-std=gnu11",
-            "-Os",
+            "-O3",
             "-Wno-documentation",
             if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
             if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",

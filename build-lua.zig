@@ -84,7 +84,7 @@ pub fn build(b: *std.build.Builder) !void {
     exe.addIncludeDir(lua_src);
     exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
         "-std=gnu11",
-        "-Os",
+        "-O3",
         "-Werror",
         "-Wall",
         "-Wextra",
