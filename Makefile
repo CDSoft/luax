@@ -193,7 +193,7 @@ LINENOISE_ARCHIVE = linenoise-$(LINENOISE_VERSION).zip
 LINENOISE_URL = https://github.com/antirez/linenoise/archive/refs/heads/$(LINENOISE_VERSION).zip
 
 LUASOCKET_VERSION = 3.1.0
-LUASOCKET_ARCHIVE = luasocket-$(VERSION).zip
+LUASOCKET_ARCHIVE = luasocket-$(LUASOCKET_VERSION).zip
 LUASOCKET_URL = https://github.com/lunarmodules/luasocket/archive/refs/tags/v$(LUASOCKET_VERSION).zip
 
 LPEG_VERSION = 1.0.2
