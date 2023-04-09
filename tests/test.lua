@@ -49,6 +49,15 @@ local function same(a, b)
     if getmetatable(a) and getmetatable(a).__index and getmetatable(a).__index.imag
         and getmetatable(b) and getmetatable(b).__index and getmetatable(b).__index.imag
         then return (a-b):abs() < 1e-12 end
+    if ta == "number" then
+        -- absolute error for "small" numbers
+        if math.max(math.abs(a), math.abs(b)) < 1000 then return math.abs(a-b) < 1e-12 end
+        -- infinite numbers
+        if a >= 1/0 and b >= 1/0 then return true end
+        if a <= -1/0 and b <= -1/0 then return true end
+        -- relative error for large numbers
+        return math.abs((a-b)/b) < 1e-6
+    end
     if ta ~= "table" then return a == b end
     local function contains(a, b)
         for k, v in pairs(b) do

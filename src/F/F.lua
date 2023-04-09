@@ -74,7 +74,7 @@ end
 ## Standard types, and related functions
 @@@]]
 
-local has_mathx, mathx = pcall(require, "_mathx")
+local mathx = require "mathx"
 
 local type_rank = {
     ["nil"]         = 0,
@@ -634,14 +634,12 @@ F.tan = math.tan
 F.asin = math.asin
 F.acos = math.acos
 F.atan = math.atan
-if has_mathx then
-    F.sinh = mathx.sinh
-    F.cosh = mathx.cosh
-    F.tanh = mathx.tanh
-    F.asinh = mathx.asinh
-    F.acosh = mathx.acosh
-    F.atanh = mathx.atanh
-end
+F.sinh = mathx.sinh
+F.cosh = mathx.cosh
+F.tanh = mathx.tanh
+F.asinh = mathx.asinh
+F.acosh = mathx.acosh
+F.atanh = mathx.atanh
 
 --[[@@@
 ```lua
@@ -673,11 +671,7 @@ F.round(x)
 > returns the nearest integer to x; the even integer if x is equidistant between two integers
 @@@]]
 
-F.round = has_mathx
-    and mathx.round
-    or function(x)
-        return x >= 0 and math.floor(x + 0.5) or math.ceil(x - 0.5)
-    end
+F.round = mathx.round
 
 --[[@@@
 ```lua
@@ -706,9 +700,7 @@ F.is_nan(x)
 > True if the argument is an IEEE "not-a-number" (NaN) value
 @@@]]
 
-if has_mathx then
-    F.is_nan = mathx.isnan
-end
+F.is_nan = mathx.isnan
 
 --[[@@@
 ```lua
@@ -717,9 +709,7 @@ F.is_infinite(x)
 > True if the argument is an IEEE infinity or negative infinity
 @@@]]
 
-if has_mathx then
-    F.is_infinite = mathx.isinf
-end
+F.is_infinite = mathx.isinf
 
 --[[@@@
 ```lua
@@ -728,10 +718,8 @@ F.is_normalized(x)
 > True if the argument is represented in normalized format
 @@@]]
 
-if has_mathx then
-    function F.is_normalized(x)
-        return mathx.isnormal(x)
-    end
+function F.is_normalized(x)
+    return mathx.isnormal(x)
 end
 
 --[[@@@
@@ -741,10 +729,8 @@ F.is_denormalized(x)
 > True if the argument is too small to be represented in normalized format
 @@@]]
 
-if has_mathx then
-    function F.is_denormalized(x)
-        return not mathx.isnormal(x)
-    end
+function F.is_denormalized(x)
+    return not mathx.isnormal(x)
 end
 
 --[[@@@
@@ -754,10 +740,8 @@ F.is_negative_zero(x)
 > True if the argument is an IEEE negative zero
 @@@]]
 
-if has_mathx then
-    function F.is_negative_zero(x)
-        return mathx.copysign(1, x) < 0
-    end
+function F.is_negative_zero(x)
+    return mathx.copysign(1, x) < 0
 end
 
 --[[@@@

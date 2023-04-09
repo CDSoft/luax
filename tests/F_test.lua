@@ -220,7 +220,7 @@ end
 
 local function numeric_type_classes()
 
-    local _, mathx = pcall(require, "mathx")
+    local mathx = require "mathx"
 
     eq(F.op.add(3, 4), 7)
     eq(F.op.sub(3, 4), -1)
@@ -310,14 +310,12 @@ local function numeric_type_classes()
             eq(F.acos(x), math.acos(x))
         end
         eq(F.atan(x), math.atan(x))
-        if mathx then
-            eq(F.sinh(x), mathx.sinh(x))
-            eq(F.cosh(x), mathx.cosh(x))
-            eq(F.tanh(x), mathx.tanh(x))
-            eq(F.asinh(x), mathx.asinh(x))
-            if x >= 1 then eq(F.acosh(x), mathx.acosh(x)) end
-            if -1 <= x and x <= 1 then eq(F.atanh(x), mathx.atanh(x)) end
-        end
+        eq(F.sinh(x), mathx.sinh(x))
+        eq(F.cosh(x), mathx.cosh(x))
+        eq(F.tanh(x), mathx.tanh(x))
+        eq(F.asinh(x), mathx.asinh(x))
+        if x >= 1 then eq(F.acosh(x), mathx.acosh(x)) end
+        if -1 <= x and x <= 1 then eq(F.atanh(x), mathx.atanh(x)) end
     end
 
     eq({F.proper_fraction(10.25)}, {10, 0.25})
@@ -349,13 +347,13 @@ local function numeric_type_classes()
     eq(F.floor(11.5), 11)
     eq(F.floor(-11.5), -12)
 
-    if mathx then
-        eq(F.is_nan(42), false)
-        eq(F.is_nan(0/0), true)
-        eq(F.is_nan(1/0), false)
-        eq(F.is_infinite(42), false)
-        eq(F.is_infinite(0/0), false)
-        eq(F.is_infinite(1/0), true)
+    eq(F.is_nan(42), false)
+    eq(F.is_nan(0/0), true)
+    eq(F.is_nan(1/0), false)
+    eq(F.is_infinite(42), false)
+    eq(F.is_infinite(0/0), false)
+    eq(F.is_infinite(1/0), true)
+    if sys.abi ~= "lua" then
         eq(F.is_normalized(1), true)
         eq(F.is_normalized(0x1p-1024), false)           assert(0x1p-1024 > 0)
         eq(F.is_denormalized(1), false)
