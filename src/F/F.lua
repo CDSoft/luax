@@ -341,7 +341,10 @@ If `ti` is a function, it is applied to `x` and the test becomes `ti(x) == x`.
 If `vi` is a function, the value returned by `F.case` is `vi(x)`.
 @@@]]
 
-local otherwise = {}
+local otherwise = setmetatable({}, {
+    __call = function(_) return true end,
+    __tostring = function(_) return "otherwise" end,
+})
 
 function F.case(val)
     return function(cases)
@@ -2915,8 +2918,8 @@ F.Nil
 > `F.Nil` is a singleton used to represent `nil` (see `F.patch`)
 @@@]]
 local Nil = setmetatable({}, {
-    __call = F.const(nil),
-    __tostring = F.const "Nil",
+    __call = function(_) return nil end,
+    __tostring = function(_) return "Nil" end,
 })
 F.Nil = Nil
 
