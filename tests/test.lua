@@ -46,7 +46,9 @@ local function same(a, b)
     local ta = type(a)
     local tb = type(b)
     if ta ~= tb then return false end
-    if (getmetatable(a) or {}).imag and (getmetatable(a) or {}).imag then return (a-b):abs() < 1e-12 end
+    if getmetatable(a) and getmetatable(a).__index and getmetatable(a).__index.imag
+        and getmetatable(b) and getmetatable(b).__index and getmetatable(b).__index.imag
+        then return (a-b):abs() < 1e-12 end
     if ta ~= "table" then return a == b end
     local function contains(a, b)
         for k, v in pairs(b) do
