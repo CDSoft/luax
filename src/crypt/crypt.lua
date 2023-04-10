@@ -176,7 +176,7 @@ The implementation has been taken from
 <https://lua-users.org/wiki/BaseSixtyFour>.
 @@@]]
 
-    local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+    local b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 --[[@@@
 ```lua
@@ -195,7 +195,7 @@ encodes `data` in base64.
             if (#x < 6) then return '' end
             local c=0
             for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
-            return b:sub(c+1,c+1)
+            return b64chars:sub(c+1,c+1)
         end)..({ '', '==', '=' })[#s%3+1])
     end
 
@@ -215,10 +215,10 @@ decodes the base64 `data`.
 @@@]]
 
     function crypt.unbase64(s)
-        s = string.gsub(s, '[^'..b..'=]', '')
+        s = string.gsub(s, '[^'..b64chars..'=]', '')
         return (s:gsub('.', function(x)
             if (x == '=') then return '' end
-            local r,f='',(b:find(x)-1)
+            local r,f='',(b64chars:find(x)-1)
             for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
             return r;
         end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)

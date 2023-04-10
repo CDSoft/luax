@@ -59,9 +59,9 @@ local function same(a, b)
         return math.abs((a-b)/b) < 1e-6
     end
     if ta ~= "table" then return a == b end
-    local function contains(a, b)
-        for k, v in pairs(b) do
-            if not same(a[k], v) then return false end
+    local function contains(x, y)
+        for k, v in pairs(y) do
+            if not same(x[k], v) then return false end
         end
         return true
     end

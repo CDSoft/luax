@@ -284,9 +284,9 @@ return function()
             end
         end
         if sys.abi ~= "lua" then
-            local r1 = crypt.hmac_prng(("42"):rep(32))
-            local r2 = crypt.hmac_prng(("42"):rep(32))
-            local r3 = crypt.hmac_prng(("43"):rep(32))
+            local r1 = assert(crypt.hmac_prng(("42"):rep(32)))
+            local r2 = assert(crypt.hmac_prng(("42"):rep(32)))
+            local r3 = assert(crypt.hmac_prng(("43"):rep(32)))
             for _ = 1, 1000 do
                 local x1 = r1:int()                                eq(type(x1), "number") eq(math.type(x1), "integer")
                 local x2 = r2:int()                                eq(type(x2), "number") eq(math.type(x2), "integer")
@@ -319,9 +319,9 @@ return function()
             end
         end
         if sys.abi ~= "lua" then
-            local r1 = crypt.ctr_prng(("42"):rep(32))
-            local r2 = crypt.ctr_prng(("42"):rep(32))
-            local r3 = crypt.ctr_prng(("43"):rep(32))
+            local r1 = assert(crypt.ctr_prng(("42"):rep(32)))
+            local r2 = assert(crypt.ctr_prng(("42"):rep(32)))
+            local r3 = assert(crypt.ctr_prng(("43"):rep(32)))
             for _ = 1, 1000 do
                 local x1 = r1:int()                                eq(type(x1), "number") eq(math.type(x1), "integer")
                 local x2 = r2:int()                                eq(type(x2), "number") eq(math.type(x2), "integer")

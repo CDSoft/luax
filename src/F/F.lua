@@ -532,7 +532,7 @@ F.quot(a, b)
 > integer division truncated toward zero
 @@@]]
 function F.quot(a, b)
-    local q, r = F.quot_rem(a, b)
+    local q, _ = F.quot_rem(a, b)
     return q
 end
 
@@ -543,7 +543,7 @@ F.rem(a, b)
 > integer remainder satisfying quot(a, b)*b + rem(a, b) == a, 0 <= rem(a, b) < abs(b)
 @@@]]
 function F.rem(a, b)
-    local q, r = F.quot_rem(a, b)
+    local _, r = F.quot_rem(a, b)
     return r
 end
 
@@ -566,7 +566,7 @@ F.div(a, b)
 > integer division truncated toward negative infinity
 @@@]]
 function F.div(a, b)
-    local q, r = F.div_mod(a, b)
+    local q, _ = F.div_mod(a, b)
     return q
 end
 
@@ -577,7 +577,7 @@ F.mod(a, b)
 > integer modulus satisfying div(a, b)*b + mod(a, b) == a, 0 <= mod(a, b) < abs(b)
 @@@]]
 function F.mod(a, b)
-    local q, r = F.div_mod(a, b)
+    local _, r = F.div_mod(a, b)
     return r
 end
 
@@ -801,7 +801,7 @@ F.const(...)
 @@@]]
 function F.const(...)
     local val = {...}
-    return function(...)
+    return function(...) ---@diagnostic disable-line:unused-vararg
         return table.unpack(val)
     end
 end
@@ -1221,19 +1221,19 @@ xs:flatten()
 @@@]]
 
 register1 "flatten" (function(xs)
-    local ys = {}
-    local function f(xs)
-        for i = 1, #xs do
-            local x = xs[i]
+    local zs = {}
+    local function f(ys)
+        for i = 1, #ys do
+            local x = ys[i]
             if type(x) == "table" then
                 f(x)
             else
-                ys[#ys+1] = x
+                zs[#zs+1] = x
             end
         end
     end
     f(xs)
-    return setmt(ys)
+    return setmt(zs)
 end)
 
 --[[@@@

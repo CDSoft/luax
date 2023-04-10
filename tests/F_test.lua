@@ -424,12 +424,11 @@ local function miscellaneous_functions()
     eq(F.prefix("ab")("cd"), "abcd")
     eq(F.suffix("ab")("cd"), "cdab")
 
-    local has_imath, imath = pcall(require, "imath")
-    imath = imath or {new=tonumber}
+    local imath = require "imath" or {new=tonumber}
     local ps = require "ps"
 
     local function fib(n) return n <= 1 and imath.new(n) or fib(n-1) + fib(n-2) end
-    fib = F.memo1(fib)
+    fib = F.memo1(fib) ---@diagnostic disable-line:cast-local-type
 
     eq(fib(0), imath.new"0")
     eq(fib(1), imath.new"1")
@@ -769,10 +768,10 @@ local function table_searching()
     eq(F{1,2,3,4,5}:filter(function(x) return x%2==0 end), {2,4})
     eq(F{}:filter(function(x) return x%2==0 end), {})
 
-    eq(F.filteri(function(i, x) return i%2==0 end, {11,21,31,41,51}), {21,41})
-    eq(F.filteri(function(i, x) return i%2==0 end, {}), {})
-    eq(F{11,21,31,41,51}:filteri(function(i, x) return i%2==0 end), {21,41})
-    eq(F{}:filteri(function(i, x) return i%2==0 end), {})
+    eq(F.filteri(function(i, _) return i%2==0 end, {11,21,31,41,51}), {21,41})
+    eq(F.filteri(function(i, _) return i%2==0 end, {}), {})
+    eq(F{11,21,31,41,51}:filteri(function(i, _) return i%2==0 end), {21,41})
+    eq(F{}:filteri(function(i, _) return i%2==0 end), {})
 
     eq(F.filtert(function(x) return x%2==0 end, {x=1,y=2,z=3,t=4}), {y=2,t=4})
     eq(F{x=1,y=2,z=3,t=4}:filtert(function(x) return x%2==0 end), {y=2,t=4})
@@ -949,7 +948,6 @@ local function table_reductions()
     eq(F{false, true,  false}:lor(), true)
     eq(F{false, false, true }:lor(), true)
 
-    local function le(n) return function(k) return k <= n end end
     local function ge(n) return function(k) return k >= n end end
 
     eq(F.any(ge(40), xs), true)
