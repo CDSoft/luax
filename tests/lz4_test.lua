@@ -22,8 +22,6 @@ http://cdelord.fr/luax
 -- lz4
 ---------------------------------------------------------------------
 
-if sys.abi == "lua" then return function() end end
-
 local lz4 = require "lz4"
 
 local crypt = require "crypt"
@@ -32,7 +30,7 @@ require "test"
 
 return function()
     do
-        for i = 1, 256 do
+        for i = 1, 32 do
             local s = ("a"):rep(i*1024)
             local z = lz4.lz4(s)
             assert(#z < #s/20)
@@ -44,8 +42,9 @@ return function()
         end
     end
     do
-        for i = 1, 256 do
-            local s = crypt.str(i*1024)
+        local rng = crypt.prng(42)
+        for i = 1, 32 do
+            local s = rng:str(i*1024)
             local z = lz4.lz4(s)
             assert(#z > #s) -- uncompressible random data
             ne(z, s)

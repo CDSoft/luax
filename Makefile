@@ -79,6 +79,7 @@ LIB_LUAX_SOURCES += src/serpent/serpent.lua
 LIB_LUAX_SOURCES += src/sh/sh.lua
 LIB_LUAX_SOURCES += src/sys/sys.lua
 LIB_LUAX_SOURCES += src/term/term.lua
+LIB_LUAX_SOURCES += src/lz4/lz4.lua
 
 LUAX_CONFIG_H := $(BUILD_TMP)/luax_config.h
 LUAX_CONFIG_LUA := $(BUILD_TMP)/luax_config.lua

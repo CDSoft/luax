@@ -28,7 +28,28 @@ The `lz4` functions are also available as `string` methods:
 local _, lz4 = pcall(require, "_lz4")
 lz4 = _ and lz4
 
-if lz4 then
+if not lz4 then
+
+    lz4 = {}
+
+    local fs = require "fs"
+    local sh = require "sh"
+
+    function lz4.lz4(s)
+        return fs.with_tmpfile(function(tmp)
+            assert(sh.write("lz4 -q -z -12 -f -", tmp)(s))
+            return fs.read_bin(tmp)
+        end)
+    end
+
+    function lz4.unlz4(s)
+        return fs.with_tmpfile(function(tmp)
+            assert(sh.write("lz4 -q -d -f -", tmp)(s))
+            return fs.read_bin(tmp)
+        end)
+    end
+
+end
 
 --[[@@@
 ```lua
@@ -37,9 +58,7 @@ s:unlz4()       == lz4.unlz4(s)
 ```
 @@@]]
 
-    function string.lz4(s, ...)     return lz4.lz4(s, ...) end
-    function string.unlz4(s, ...)   return lz4.unlz4(s, ...) end
-
-end
+function string.lz4(s)      return lz4.lz4(s) end
+function string.unlz4(s)    return lz4.unlz4(s) end
 
 return lz4
