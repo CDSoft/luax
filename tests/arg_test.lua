@@ -34,8 +34,6 @@ return function()
         })
         assert(sys.abi == "gnu")
         assert(not pandoc)
-        assert(crypt.sha256)
-        assert(not crypt.sha1)
 
     elseif test_num == 2 then
         eq(arg, {
@@ -46,8 +44,6 @@ return function()
         })
         assert(sys.abi == "gnu")
         assert(not pandoc)
-        assert(crypt.sha256)
-        assert(not crypt.sha1)
 
     elseif test_num == 3 then
         eq(arg, {
@@ -58,8 +54,6 @@ return function()
         })
         assert(sys.abi == "lua")
         assert(not pandoc)
-        assert(not crypt.sha256)
-        assert(not crypt.sha1)
 
     elseif test_num == 4 then
         eq(arg, {
@@ -71,8 +65,6 @@ return function()
         })
         assert(sys.abi == "lua")
         assert(not pandoc)
-        assert(not crypt.sha256)
-        assert(not crypt.sha1)
 
     elseif test_num == 5 then
         eq(arg, {
@@ -83,8 +75,6 @@ return function()
         })
         assert(sys.abi == "lua")
         assert(pandoc)
-        assert(not crypt.sha256)
-        assert(crypt.sha1)
 
     elseif test_num == 6 then
         eq(arg, {
@@ -95,8 +85,6 @@ return function()
         })
         assert(sys.abi == "gnu")
         assert(pandoc)
-        assert(crypt.sha256)
-        assert(crypt.sha1)
 
     else
         error("Invalid test number: "..test_num)

@@ -76,12 +76,8 @@ return function()
         for i = 1, 1000 do
             local s = prng:str(256 + i%3)
             eq(s:base64():unbase64(), s)
-            if sys.abi == "gnu" or sys.abi == "musl" then
-                eq(s:base64url():unbase64url(), s)
-            end
-            if sys.abi == "gnu" or sys.abi == "musl" then
-                eq(s:base64url(), s:base64():gsub("+", "-"):gsub("/", "_"))
-            end
+            eq(s:base64url():unbase64url(), s)
+            eq(s:base64url(), s:base64():gsub("+", "-"):gsub("/", "_"))
         end
     end
     do
@@ -216,7 +212,7 @@ return function()
     end
 
     -- TinyCrypt tests
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    do
         local function bytes(s)
             s = s:unhex()
             local bs = table.pack(s:byte(1, #s))
@@ -235,12 +231,12 @@ return function()
             eq(bytes(crypt.sha256(("\x00"):rep(1000))), { 0x54, 0x1b, 0x3e, 0x9d, 0xaa, 0x09, 0xb2, 0x0b, 0xf8, 0x5f, 0xa2, 0x73, 0xe5, 0xcb, 0xd3, 0xe8, 0x01, 0x85, 0xaa, 0x4e, 0xc2, 0x98, 0xe7, 0x65, 0xdb, 0x87, 0x74, 0x2b, 0x70, 0x13, 0x8a, 0x53 })
             eq(bytes(crypt.sha256(("\x41"):rep(1000))), { 0xc2, 0xe6, 0x86, 0x82, 0x34, 0x89, 0xce, 0xd2, 0x01, 0x7f, 0x60, 0x59, 0xb8, 0xb2, 0x39, 0x31, 0x8b, 0x63, 0x64, 0xf6, 0xdc, 0xd8, 0x35, 0xd0, 0xa5, 0x19, 0x10, 0x5a, 0x1e, 0xad, 0xd6, 0xe4 })
             eq(bytes(crypt.sha256(("\x55"):rep(1005))), { 0xf4, 0xd6, 0x2d, 0xde, 0xc0, 0xf3, 0xdd, 0x90, 0xea, 0x13, 0x80, 0xfa, 0x16, 0xa5, 0xff, 0x8d, 0xc4, 0xc5, 0x4b, 0x21, 0x74, 0x06, 0x50, 0xf2, 0x4a, 0xfc, 0x41, 0x20, 0x90, 0x35, 0x52, 0xb0 })
-            for _ = 1, 1000 do
+            for _ = 1, sys.abi=="lua" and 10 or 1000 do
                 local s = crypt.str(crypt.int()%1024)
                 eq(s:sha256(), crypt.sha256(s))
             end
         end
-        do
+        if sys.abi ~= "lua" then
             local function hmac_test(key, data, expected)
                 key = string.char(table.unpack(key))
                 data = string.char(table.unpack(data))
@@ -287,7 +283,7 @@ return function()
                 eq(s:hmac(k), crypt.hmac(s, k))
             end
         end
-        do
+        if sys.abi ~= "lua" then
             local r1 = crypt.hmac_prng(("42"):rep(32))
             local r2 = crypt.hmac_prng(("42"):rep(32))
             local r3 = crypt.hmac_prng(("43"):rep(32))
@@ -322,7 +318,7 @@ return function()
                 bounded(r1:float(-2.5, 3.5), -2.5, 3.5)
             end
         end
-        do
+        if sys.abi ~= "lua" then
             local r1 = crypt.ctr_prng(("42"):rep(32))
             local r2 = crypt.ctr_prng(("42"):rep(32))
             local r3 = crypt.ctr_prng(("43"):rep(32))
@@ -359,7 +355,7 @@ return function()
         end
         do
             do
-                for _ = 1, 1000 do
+                for _ = 1, sys.abi=="lua" and 10 or 1000 do
                     local x = crypt.str(crypt.int()%256)
                     local key = crypt.str(crypt.int()%256)
                     local y1 = crypt.aes(x, key)
@@ -368,13 +364,13 @@ return function()
                     local z2 = crypt.unaes(y2, key)
                     ne(y1, x)
                     ne(y2, x)
-                    ne(y1, y2)
+                    if sys.abi ~= "lua" then ne(y1, y2) end
                     eq(z1, x)
                     eq(z2, x)
                 end
             end
             do
-                for _ = 1, 1000 do
+                for _ = 1, sys.abi=="lua" and 10 or 1000 do
                     local x = crypt.str(crypt.int()%256)
                     local key = crypt.str(crypt.int()%256)
                     local y1 = x:aes(key)
@@ -383,13 +379,13 @@ return function()
                     local z2 = crypt.unaes(y2, key)
                     ne(y1, x)
                     ne(y2, x)
-                    ne(y1, y2)
+                    if sys.abi ~= "lua" then ne(y1, y2) end
                     eq(z1, x)
                     eq(z2, x)
                 end
             end
             do
-                for _ = 1, 1000 do
+                for _ = 1, sys.abi=="lua" and 10 or 1000 do
                     local x = crypt.str(crypt.int()%256)
                     local key = crypt.str(crypt.int()%256)
                     local y1 = crypt.aes(x, key)
@@ -398,7 +394,7 @@ return function()
                     local z2 = y2:unaes(key)
                     ne(y1, x)
                     ne(y2, x)
-                    ne(y1, y2)
+                    if sys.abi ~= "lua" then ne(y1, y2) end
                     eq(z1, x)
                     eq(z2, x)
                 end
@@ -406,33 +402,4 @@ return function()
         end
     end
 
-    -- Pandoc tests
-    if pandoc then
-
-        -- Encryption tests
-        do
-            eq(crypt.sha1("abc"), "a9993e364706816aba3e25717850c26c9cd0d89d")
-            eq(crypt.sha1(""), "da39a3ee5e6b4b0d3255bfef95601890afd80709")
-            eq(crypt.sha1("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"), "84983e441c3bd26ebaae4aa1f95129e5e54670f1")
-            for _ = 1, 100 do
-                local s = prng:str(prng:int()%1024)
-                eq(s:sha1(), crypt.sha1(s))
-            end
-        end
-        do
-            do
-                for _ = 1, 100 do
-                    local x = prng:str(prng:int(1, 256))
-                    local key = prng:str(prng:int(1, 256))
-                    local y = crypt.rc4(x, key)
-                    local z = crypt.unrc4(y, key)
-                    ne({y:byte(1, -1)}, {x:byte(1, -1)})
-                    eq({z:byte(1, -1)}, {x:byte(1, -1)})
-                    eq({y:byte(1, -1)}, {x:rc4(key):byte(1, -1)})
-                    eq({z:byte(1, -1)}, {y:unrc4(key):byte(1, -1)})
-                end
-            end
-        end
-
-    end
 end

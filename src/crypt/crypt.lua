@@ -22,59 +22,14 @@ http://cdelord.fr/luax
 local _, crypt = pcall(require, "_crypt")
 crypt = _ and crypt
 
--- Additional definitions for the C implementation
-if crypt then
-
---[[------------------------------------------------------------------------@@@
-## String methods
-
-Some functions of the `crypt` package are added to the string module:
-
-@@@]]
-
---[[@@@
-```lua
-s:hex()             == crypt.hex(s)
-s:unhex()           == crypt.unhex(s)
-s:base64()          == crypt.base64(s)
-s:unbase64()        == crypt.unbase64(s)
-s:base64url()       == crypt.base64url(s)
-s:unbase64url()     == crypt.unbase64url(s)
-s:crc32()           == crypt.crc32(s)
-s:crc64()           == crypt.crc64(s)
-s:rc4(key, drop)    == crypt.rc4(s, key, drop)
-s:unrc4(key, drop)  == crypt.unrc4(s, key, drop)
-s:sha256()          == crypt.sha256(s)
-s:hmac(key)         == crypt.hmac(s, key)
-s:aes(key)          == crypt.aes(s, key)
-s:unaes(key)        == crypt.unaes(s, key)
-```
-@@@]]
-
-    function string.hex(s)          return crypt.hex(s) end
-    function string.unhex(s)        return crypt.unhex(s) end
-    function string.base64(s)       return crypt.base64(s) end
-    function string.unbase64(s)     return crypt.unbase64(s) end
-    function string.base64url(s)    return crypt.base64url(s) end
-    function string.unbase64url(s)  return crypt.unbase64url(s) end
-    function string.rc4(s, k, d)    return crypt.rc4(s, k, d) end
-    function string.unrc4(s, k, d)  return crypt.unrc4(s, k, d) end
-    function string.crc32(s)        return crypt.crc32(s) end
-    function string.crc64(s)        return crypt.crc64(s) end
-
-    -- TinyCrypt functions
-
-    function string.sha256(s)       return crypt.sha256(s) end
-    function string.hmac(s, k)      return crypt.hmac(s, k) end
-    function string.aes(s, k)       return crypt.aes(s, k) end
-    function string.unaes(s, k)     return crypt.unaes(s, k) end
-
-end
 
 -- Pure Lua implementation
 if not crypt then
 
     crypt = {}
+
+    ---@diagnostic disable:unused-vararg
+    local function ni(f) return function(...) error(f.." not implemented") end end
 
 --[[@@@
 ``` lua
@@ -169,6 +124,13 @@ returns a string with `n` random bytes.
         return concat(bs)
     end
 
+    -- global random number generator
+    local _rng = crypt.prng()
+    function crypt.seed(...) return _rng:seed(...) end
+    function crypt.int(...) return _rng:int(...) end
+    function crypt.float(...) return _rng:float(...) end
+    function crypt.str(...) return _rng:str(...) end
+
 --[[------------------------------------------------------------------------@@@
 ## Hexadecimal encoding
 
@@ -237,7 +199,12 @@ encodes `data` in base64.
         end)..({ '', '==', '=' })[#s%3+1])
     end
 
+    function crypt.base64url(s)
+        return crypt.base64(s):gsub("+", "-"):gsub("/", "_")
+    end
+
     string.base64 = crypt.base64
+    string.base64url = crypt.base64url
 
 --[[@@@
 ```lua
@@ -262,7 +229,12 @@ decodes the base64 `data`.
         end))
     end
 
+    function crypt.unbase64url(s)
+        return crypt.unbase64(s:gsub("-", "+"):gsub("_", "/"))
+    end
+
     string.unbase64 = crypt.unbase64
+    string.unbase64url = crypt.unbase64url
 
 --[[------------------------------------------------------------------------@@@
 ## CRC32 hash
@@ -468,29 +440,81 @@ steps, the default value of `drop` is 768).
     string.rc4 = crypt.rc4
     string.unrc4 = crypt.unrc4
 
+    function crypt.sha256(s)
+        return fs.with_tmpfile(function(tmp)
+            assert(sh.write("sha256sum >", tmp)(s))
+            return fs.read_bin(tmp):words():head()
+        end)
+    end
+
+    crypt.hmac = ni "hmac"
+    crypt.hmac_prng = ni "hmac_prng"
+    crypt.ctr_prng = ni "ctr_prng"
+
+    function crypt.aes(s, key)
+        return fs.with_tmpfile(function(tmp)
+            local iv = crypt.prng(42):str(16):hex()
+            local k = (key..("\0"):rep(16-#key)):take(16):hex()
+            assert(sh.write("openssl aes-128-cbc", "-K", k, "-iv", iv, "-nosalt", "-in", "-", "-out", tmp)(s))
+            return fs.read_bin(tmp)
+        end)
+    end
+
+    function crypt.unaes(s, key)
+        return fs.with_tmpfile(function(tmp)
+            local iv = crypt.prng(42):str(16):hex()
+            local k = (key..("\0"):rep(16-#key)):take(16):hex()
+            assert(sh.write("openssl aes-128-cbc -d", "-K", k, "-iv", iv, "-nosalt", "-in", "-", "-out", tmp)(s))
+            return fs.read_bin(tmp)
+        end)
+    end
+
 end
 
---[[------------------------------------------------------------------------@@@
-## SHA1 hash
+-- Additional definitions for the C implementation
 
-The SHA1 hash is provided by the `pandoc` module.
-`crypt.sha1` is just an alias for `pandoc.utils.sha1`.
+--[[------------------------------------------------------------------------@@@
+## String methods
+
+Some functions of the `crypt` package are added to the string module:
+
 @@@]]
 
 --[[@@@
 ```lua
-crypt.sha1(data)
-data:sha1()
+s:hex()             == crypt.hex(s)
+s:unhex()           == crypt.unhex(s)
+s:base64()          == crypt.base64(s)
+s:unbase64()        == crypt.unbase64(s)
+s:base64url()       == crypt.base64url(s)
+s:unbase64url()     == crypt.unbase64url(s)
+s:crc32()           == crypt.crc32(s)
+s:crc64()           == crypt.crc64(s)
+s:rc4(key, drop)    == crypt.rc4(s, key, drop)
+s:unrc4(key, drop)  == crypt.unrc4(s, key, drop)
+s:sha256()          == crypt.sha256(s)
+s:hmac(key)         == crypt.hmac(s, key)
+s:aes(key)          == crypt.aes(s, key)
+s:unaes(key)        == crypt.unaes(s, key)
 ```
-computes the SHA1 of `data`.
 @@@]]
 
-if pandoc then
+function string.hex(s)          return crypt.hex(s) end
+function string.unhex(s)        return crypt.unhex(s) end
+function string.base64(s)       return crypt.base64(s) end
+function string.unbase64(s)     return crypt.unbase64(s) end
+function string.base64url(s)    return crypt.base64url(s) end
+function string.unbase64url(s)  return crypt.unbase64url(s) end
+function string.rc4(s, k, d)    return crypt.rc4(s, k, d) end
+function string.unrc4(s, k, d)  return crypt.unrc4(s, k, d) end
+function string.crc32(s)        return crypt.crc32(s) end
+function string.crc64(s)        return crypt.crc64(s) end
 
-    crypt.sha1 = pandoc.utils.sha1
+-- TinyCrypt functions
 
-    string.sha1 = crypt.sha1
-
-end
+function string.sha256(s)       return crypt.sha256(s) end
+function string.hmac(s, k)      return crypt.hmac(s, k) end
+function string.aes(s, k)       return crypt.aes(s, k) end
+function string.unaes(s, k)     return crypt.unaes(s, k) end
 
 return crypt
