@@ -257,7 +257,8 @@ static int Lpow(lua_State *L)			/** pow(x,y) */
  if (b<0)
  {
   b=-b;
-  report(L,mp_rat_recip(a,a),0);
+  report(L,mp_rat_recip(a,c),0);
+  return report(L,mp_rat_expt(c,b,c),1);
  }
  return report(L,mp_rat_expt(a,b,c),1);
 }

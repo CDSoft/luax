@@ -270,6 +270,7 @@ update-lqmath: $(BUILD_TMP)/$(LQMATH_ARCHIVE)
 	rm -rf src/qmath/lqmath-*
 	tar -xzf $< -C src/qmath --exclude=Makefile --exclude=test.lua
 	sed -i 's@"imrat.h"@"src/imrat.h"@' src/qmath/$(shell basename $(LQMATH_ARCHIVE) .tar.gz)/lqmath.c
+	patch -p1 < src/qmath/qmath.patch
 
 $(BUILD_TMP)/$(LQMATH_ARCHIVE):
 	@mkdir -p $(dir $@)
