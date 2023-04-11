@@ -115,7 +115,7 @@ static int ps_profile(lua_State *L)
         }
         else
         {
-            return bl_pusherror(L, "ps.profile argument shall be callable (?)");
+            return bl_pusherror(L, "ps.profile argument failed");
         }
     }
     else

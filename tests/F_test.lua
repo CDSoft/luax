@@ -424,10 +424,15 @@ local function miscellaneous_functions()
     eq(F.prefix("ab")("cd"), "abcd")
     eq(F.suffix("ab")("cd"), "cdab")
 
-    local imath = require "imath" or {new=tonumber}
+    local imath = require "imath"
     local ps = require "ps"
 
-    local function fib(n) return n <= 1 and imath.new(n) or fib(n-1) + fib(n-2) end
+    local fibcount = 0
+    local function fib(n)
+        fibcount = fibcount+1
+        assert(fibcount < 1000000, "The memoized fib function still takes to much time")
+        return n <= 1 and imath.new(n) or fib(n-1) + fib(n-2)
+    end
     fib = F.memo1(fib) ---@diagnostic disable-line:cast-local-type
 
     eq(fib(0), imath.new"0")
@@ -439,11 +444,10 @@ local function miscellaneous_functions()
     eq(fib(6), imath.new"8")
 
     local fib100
-    local dt = ps.profile(function() fib100 = fib(100) end) -- this should be fast because of memoization
+    local dt, err = ps.profile(function() fib100 = fib(100) end) -- this should be fast because of memoization
+    assert(dt, err)
     assert(dt < 1.0, "the memoized fibonacci suite takes too much time")
-    if require "imath" then
-        eq(fib100, imath.new"354224848179261915075")
-    end
+    eq(fib100, imath.new"354224848179261915075")
 
 end
 
