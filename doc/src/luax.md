@@ -246,10 +246,11 @@ Lua 5.4.4  Copyright (C) 1994-2022 Lua.org, PUC-Rio
 
 ## Pure Lua modules
 
-Some modules have been reimplemented in pure Lua (no LuaX dependency).
-The script `lib/luax.lua` can be reused in pure Lua programs:
+LuaX modules also provides a pure Lua implementation (no LuaX dependency). The
+script `lib/luax.lua` can be reused in pure Lua programs:
 
-- [luax.lua](luax.lua.md): `fun`, `fs`, `sh`, `ps`, `sys` reimplemented in pure Lua
+- [luax.lua](luax.lua.md): LuaX modules reimplemented in pure Lua (except
+  LuaSocket)
 
 ## License
 

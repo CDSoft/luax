@@ -40,13 +40,6 @@ if not fs then
         fs.path_sep = fs.sep == '\\' and ";" or ":"
     end
 
---[[@@@
-```lua
-fs.getcwd()
-```
-returns the current working directory.
-@@@]]
-
     if pandoc then
         fs.getcwd = pandoc.system.get_working_directory
     else
@@ -54,14 +47,6 @@ returns the current working directory.
             return sh.read "pwd" : trim()
         end
     end
-
---[[@@@
-```lua
-fs.dir([path])
-```
-returns the list of files and directories in
-`path` (the default path is the current directory).
-@@@]]
 
     if pandoc then
         fs.dir = F.compose{F, pandoc.system.list_directory}
@@ -71,35 +56,13 @@ returns the list of files and directories in
         end
     end
 
---[[@@@
-```lua
-fs.remove(name)
-```
-deletes the file `name`.
-@@@]]
-
     function fs.remove(name)
         return os.remove(name)
     end
 
---[[@@@
-```lua
-fs.rename(old_name, new_name)
-```
-renames the file `old_name` to `new_name`.
-@@@]]
-
     function fs.rename(old_name, new_name)
         return os.rename(old_name, new_name)
     end
-
---[[@@@
-```lua
-fs.copy(source_name, target_name)
-```
-copies file `source_name` to `target_name`.
-The attributes and times are preserved.
-@@@]]
 
     function fs.copy(source_name, target_name)
         local from, err_from = io.open(source_name, "rb")
@@ -120,13 +83,6 @@ The attributes and times are preserved.
         to:close()
     end
 
---[[@@@
-```lua
-fs.mkdir(path)
-```
-creates a new directory `path`.
-@@@]]
-
     if pandoc then
         fs.mkdir = pandoc.system.make_directory
     else
@@ -134,23 +90,6 @@ creates a new directory `path`.
             return sh.run("mkdir", path)
         end
     end
-
---[[@@@
-```lua
-fs.stat(name)
-```
-reads attributes of the file `name`. Attributes are:
-
-- `name`: name
-- `type`: `"file"` or `"directory"`
-- `size`: size in bytes
-- `mtime`, `atime`, `ctime`: modification, access and creation times.
-- `mode`: file permissions
-- `uR`, `uW`, `uX`: user Read/Write/eXecute permissions
-- `gR`, `gW`, `gX`: group Read/Write/eXecute permissions
-- `oR`, `oW`, `oX`: other Read/Write/eXecute permissions
-- `aR`, `aW`, `aX`: anybody Read/Write/eXecute permissions
-@@@]]
 
     local S_IRUSR = 1 << 8
     local S_IWUSR = 1 << 7
@@ -204,16 +143,6 @@ reads attributes of the file `name`. Attributes are:
         }
     end
 
---[[@@@
-```lua
-fs.inode(name)
-```
-reads device and inode attributes of the file `name`.
-Attributes are:
-
-- `dev`, `ino`: device and inode numbers
-@@@]]
-
     function fs.inode(name)
         local st = sh.read("LANG=C", "stat", "-L", "-c '%d;%i'", name, "2>/dev/null")
         if not st then return nil, "cannot stat "..name end
@@ -224,20 +153,6 @@ Attributes are:
         }
     end
 
---[[@@@
-```lua
-fs.chmod(name, other_file_name)
-```
-sets file `name` permissions as
-file `other_file_name` (string containing the name of another file).
-
-```lua
-fs.chmod(name, bit1, ..., bitn)
-```
-sets file `name` permissions as
-`bit1` or ... or `bitn` (integers).
-@@@]]
-
     function fs.chmod(name, ...)
         local mode = {...}
         if type(mode[1]) == "string" then
@@ -246,26 +161,6 @@ sets file `name` permissions as
             return sh.run("chmod", ("%o"):format(F(mode):fold(F.op.bor, 0)), name)
         end
     end
-
---[[@@@
-```lua
-fs.touch(name)
-```
-sets the access time and the modification time of
-file `name` with the current time.
-
-```lua
-fs.touch(name, number)
-```
-sets the access time and the modification
-time of file `name` with `number`.
-
-```lua
-fs.touch(name, other_name)
-```
-sets the access time and the
-modification time of file `name` with the times of file `other_name`.
-@@@]]
 
     function fs.touch(name, opt)
         if opt == nil then
@@ -279,13 +174,6 @@ modification time of file `name` with the times of file `other_name`.
         end
     end
 
---[[@@@
-```lua
-fs.basename(path)
-```
-return the last component of path.
-@@@]]
-
     if pandoc then
         fs.basename = pandoc.path.filename
     else
@@ -294,13 +182,6 @@ return the last component of path.
         end
     end
 
---[[@@@
-```lua
-fs.dirname(path)
-```
-return all but the last component of path.
-@@@]]
-
     if pandoc then
         fs.dirname = pandoc.path.directory
     else
@@ -308,13 +189,6 @@ return all but the last component of path.
             return sh.read("dirname", path) : trim()
         end
     end
-
---[[@@@
-```lua
-fs.splitext(path)
-```
-return the name without the extension and the extension.
-@@@]]
 
     if pandoc then
         function fs.splitext(path)
@@ -333,13 +207,6 @@ return the name without the extension and the extension.
         end
     end
 
---[[@@@
-```lua
-fs.realpath(path)
-```
-return the resolved path name of path.
-@@@]]
-
     if pandoc then
         fs.realpath = pandoc.path.normalize
     else
@@ -348,24 +215,10 @@ return the resolved path name of path.
         end
     end
 
---[[@@@
-```lua
-fs.absname(path)
-```
-return the absolute path name of path.
-@@@]]
-
     function fs.absname(path)
         if path:match "^[/\\]" or path:match "^.:" then return path end
         return fs.getcwd()..fs.sep..path
     end
-
---[[@@@
-```lua
-fs.mkdirs(path)
-```
-creates a new directory `path` and its parent directories.
-@@@]]
 
     if pandoc then
         function fs.mkdirs(path)

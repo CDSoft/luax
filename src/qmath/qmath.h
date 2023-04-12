@@ -32,7 +32,7 @@ Lua](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/#lqmath).
 `qmath` is a rational number library for Lua based on
 [imath](https://github.com/creachadair/imath).
 
-qmath library:
+## Standard qmath library
 
     __add(x,y)          abs(x)              neg(x)
     __div(x,y)          add(x,y)            new(x,[d])
