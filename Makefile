@@ -183,7 +183,7 @@ LCOMPLEX_URL = https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$(LCOMPLEX_ARCHIVE
 LIMATH_ARCHIVE = limath-104.tar.gz
 LIMATH_URL = https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$(LIMATH_ARCHIVE)
 
-LQMATH_ARCHIVE = lqmath-104.tar.gz
+LQMATH_ARCHIVE = lqmath-105.tar.gz
 LQMATH_URL = https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$(LQMATH_ARCHIVE)
 
 LMATHX_ARCHIVE = lmathx.tar.gz
@@ -270,7 +270,6 @@ update-lqmath: $(BUILD_TMP)/$(LQMATH_ARCHIVE)
 	rm -rf src/qmath/lqmath-*
 	tar -xzf $< -C src/qmath --exclude=Makefile --exclude=test.lua
 	sed -i 's@"imrat.h"@"src/imrat.h"@' src/qmath/$(shell basename $(LQMATH_ARCHIVE) .tar.gz)/lqmath.c
-	patch -p1 < src/qmath/qmath.patch
 
 $(BUILD_TMP)/$(LQMATH_ARCHIVE):
 	@mkdir -p $(dir $@)
