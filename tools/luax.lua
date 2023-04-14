@@ -710,7 +710,7 @@ local function run_compiler()
         log("output", "%s", current_output)
 
         local function findscript(script_name)
-            return fs.join(fs.dirname(findpath(arg[0])), "..", "lib", script_name)
+            return fs.join(fs.dirname(fs.dirname(findpath(arg[0]))), "lib", script_name)
         end
         local luax_scripts = F.map(findscript, interpreter.scripts)
 
