@@ -564,7 +564,7 @@ $(BUILD_LIB)/luax.lua: $(LUAX0) $(LIB_LUAX_SOURCES) tools/bundle.lua $(LUAX0)
 # luax CLI (e.g. for lua or pandoc)
 ###############################################################################
 
-$(LUAX_LUA): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua
+$(LUAX_LUA): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(BUILD_LIB)/luax.lua
 	@$(call cyan,"BUNDLE",$@)
 	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -r -t lua -o $@ tools/luax.lua
 
@@ -572,7 +572,7 @@ $(LUAX_LUA): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua
 # luax-pandoc
 ###############################################################################
 
-$(LUAX_PANDOC): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua
+$(LUAX_PANDOC): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(BUILD_LIB)/luax.lua
 	@$(call cyan,"BUNDLE",$@)
 	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -r -t pandoc -o $@ tools/luax.lua
 
