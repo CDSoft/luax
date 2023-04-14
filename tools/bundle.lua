@@ -144,14 +144,14 @@ function bundle.bundle(arg)
     local plain = Bundle()
     plain.emit "local function lib(path, src) return assert(load(src, '@'..path, 't')) end\n"
     local function compile_library(script)
-        assert(load(script.content, script.path, 't'))
+        assert(load(script.content, "@"..script.path, 't'))
         plain.emit(("[%q] = lib(%q, %s),\n"):format(script.name, script.path, mlstr(script.content)))
     end
     local function load_library(script)
         plain.emit(("_ENV[%q] = require %q\n"):format(script.name, script.name))
     end
     local function run_script(script)
-        assert(load(script.content, script.path, 't'))
+        assert(load(script.content, "@"..script.path, 't'))
         plain.emit(("lib(%q, %s)()\n"):format(script.path, mlstr(script.content)))
     end
     if #scripts > 1 then -- there are libs
