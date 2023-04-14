@@ -57,8 +57,7 @@ return function()
 
     elseif test_num == 4 then
         eq(arg, {
-            [-4] = "lua",
-            [-3] = "-l", [-2] = "luax",
+            [-2] = "lua",
             [-1] = ".build/bin/luax-lua",
             [0] = "tests/main.lua",
             "Lua", "is", "great"

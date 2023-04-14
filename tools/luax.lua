@@ -126,14 +126,11 @@ local function findpath(name)
 end
 
 local external_interpreters = F{
-    ["lua"]          = { interpreter="lua",        format="-lua",    library="-l luax",    loader="" },
-    ["lua-lua"]      = { interpreter="lua",        format="-lua",    library="-l luax",    loader="" },
-    ["lua-luax"]     = { interpreter="lua",        format="-binary", library="-l libluax", loader="-l rt0" },
-    ["luax"]         = { interpreter="luax",       format="-binary", library={},           loader="-l rt0" },
-    ["luax-luax"]    = { interpreter="luax",       format="-binary", library={},           loader="-l rt0" },
-    ["pandoc"]       = { interpreter="pandoc lua", format="-lua",    library="-l luax",    loader="" },
-    ["pandoc-lua"]   = { interpreter="pandoc lua", format="-lua",    library="-l luax",    loader="" },
-    ["pandoc-luax"]  = { interpreter="pandoc lua", format="-binary", library="-l libluax", loader="-l rt0" },
+    ["lua"]          = { interpreter="lua",        format="-lua",    library="",           loader="",       scripts={"luax.lua"} },
+    ["lua-luax"]     = { interpreter="lua",        format="-binary", library="-l libluax", loader="-l rt0", scripts={} },
+    ["luax"]         = { interpreter="luax",       format="-binary", library={},           loader="-l rt0", scripts={} },
+    ["pandoc"]       = { interpreter="pandoc lua", format="-lua",    library="",           loader="",       scripts={"luax.lua"} },
+    ["pandoc-luax"]  = { interpreter="pandoc lua", format="-binary", library="-l libluax", loader="-l rt0", scripts={} },
 }
 
 local function print_targets()
@@ -706,8 +703,13 @@ local function run_compiler()
         log("interpreter", "%s", name)
         log("output", "%s", current_output)
 
+        local function findscript(script_name)
+            return fs.join(fs.dirname(findpath(arg[0])), "..", "lib", script_name)
+        end
+        local luax_scripts = F.map(findscript, interpreter.scripts)
+
         local bundle = require "bundle"
-        local chunk = bundle.combine_lua{interpreter.format, scripts}
+        local chunk = bundle.combine_lua{interpreter.format, F.concat{luax_scripts, scripts}}
         local exe = F.flatten{
                 "#!/usr/bin/env -S",
 

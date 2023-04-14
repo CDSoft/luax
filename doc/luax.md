@@ -183,12 +183,9 @@ Targets producing standalone LuaX executables:
 Targets based on an external Lua interpreter:
 
     lua                   path/lua
-    lua-lua               path/lua
     lua-luax              path/lua
     luax                  path/luax
-    luax-luax             path/luax
     pandoc                path/pandoc
-    pandoc-lua            path/pandoc
     pandoc-luax           path/pandoc
 ```
 
