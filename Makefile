@@ -566,7 +566,7 @@ $(BUILD_LIB)/luax.lua: $(LUAX0) $(LIB_LUAX_SOURCES) tools/bundle.lua $(LUAX0)
 
 $(LUAX_LUA): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(BUILD_LIB)/luax.lua
 	@$(call cyan,"BUNDLE",$@)
-	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -r -t lua -o $@ tools/luax.lua
+	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -r -t lua -o $@ tools/luax.lua
 
 ###############################################################################
 # luax-pandoc
@@ -574,7 +574,7 @@ $(LUAX_LUA): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(BUIL
 
 $(LUAX_PANDOC): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(BUILD_LIB)/luax.lua
 	@$(call cyan,"BUNDLE",$@)
-	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -r -t pandoc -o $@ tools/luax.lua
+	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -r -t pandoc -o $@ tools/luax.lua
 
 ###############################################################################
 # Tests (native only)
@@ -609,7 +609,7 @@ $(BUILD_TEST)/test-luax.ok: $(BUILD_TEST)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 $(BUILD_TEST)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) $(TEST_SOURCES)
 	@$(call cyan,"BUNDLE",$@)
 	@mkdir -p $(dir $@)
-	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -o $@ $(TEST_SOURCES)
+	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -o $@ $(TEST_SOURCES)
 
 $(BUILD_TEST)/test-lib.ok: $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC) $(TEST_SOURCES) $(LUA)
 	@$(call cyan,"TEST",Shared library: $(BUILD_LIB)/libluax-$(ARCH)-$(OS)-$(LIBC))
@@ -666,35 +666,35 @@ endif
 
 $(BUILD_TEST)/ext-lua.ok: tests/external_interpreters.lua $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"TEST",luax -t lua: $<)
-	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -t lua -o $(patsubst %.ok,%,$@) $<
+	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -t lua -o $(patsubst %.ok,%,$@) $<
 	@eval `$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) env`; \
 	TARGET=lua $(patsubst %.ok,%,$@) Lua is great
 	@touch $@
 
 $(BUILD_TEST)/ext-lua-luax.ok: tests/external_interpreters.lua $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"TEST",luax -t lua-luax: $<)
-	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -t lua-luax -o $(patsubst %.ok,%,$@) $<
+	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -t lua-luax -o $(patsubst %.ok,%,$@) $<
 	@eval `$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) env`; \
 	TARGET=lua-luax $(patsubst %.ok,%,$@) Lua is great
 	@touch $@
 
 $(BUILD_TEST)/ext-luax.ok: tests/external_interpreters.lua $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"TEST",luax -t luax: $<)
-	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -t luax -o $(patsubst %.ok,%,$@) $<
+	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -t luax -o $(patsubst %.ok,%,$@) $<
 	@eval `$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) env`; \
 	TARGET=luax $(patsubst %.ok,%,$@) Lua is great
 	@touch $@
 
 $(BUILD_TEST)/ext-pandoc.ok: tests/external_interpreters.lua $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) | $(PANDOC)
 	@$(call cyan,"TEST",luax -t pandoc: $<)
-	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -t pandoc -o $(patsubst %.ok,%,$@) $<
+	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -t pandoc -o $(patsubst %.ok,%,$@) $<
 	@eval `$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) env`; \
 	TARGET=pandoc $(patsubst %.ok,%,$@) Lua is great
 	@touch $@
 
 $(BUILD_TEST)/ext-pandoc-luax.ok: tests/external_interpreters.lua $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) | $(PANDOC)
 	@$(call cyan,"TEST",luax -t pandoc-luax: $<)
-	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -t pandoc-luax -o $(patsubst %.ok,%,$@) $<
+	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -t pandoc-luax -o $(patsubst %.ok,%,$@) $<
 	@eval `$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) env`; \
 	TARGET=pandoc-luax $(patsubst %.ok,%,$@) Lua is great
 	@touch $@

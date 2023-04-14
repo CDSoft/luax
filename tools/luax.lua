@@ -67,6 +67,7 @@ Compilation options:
   -t list-lua       list available Lua/Pandoc targets
   -o file           name the executable file to create
   -r                use rlwrap (Lua/Pandoc targets only)
+  -q                quiet compilation (error messages only)
 
 Scripts for compilation:
   file name         name of a Lua package to add to the binary
@@ -199,6 +200,7 @@ local args = {}
 local output = nil
 local target = nil
 local rlwrap = false
+local quiet = false
 
 local luax_loaded = false
 
@@ -493,6 +495,9 @@ do
         elseif has_compiler and a == "-r" then
             compiler_mode = true
             rlwrap = true
+        elseif a == '-q' then
+            compiler_mode = true
+            quiet = true
         elseif a == '-v' then
             print_welcome()
             os.exit()
@@ -634,7 +639,7 @@ end
 
 local function run_compiler()
 
-    print_welcome()
+    if not quiet then print_welcome() end
 
     local scripts = args
 
@@ -642,6 +647,7 @@ local function run_compiler()
     if output == nil then err "No output specified (option -o)" end
 
     local function log(k, fmt, ...)
+        if quiet then return end
         print(("%-9s: %s"):format(k, fmt:format(...)))
     end
 
@@ -678,7 +684,7 @@ local function run_compiler()
             current_output = rmext(compiler_target, current_output)..ext(compiler_target)
         end
 
-        print()
+        if not quiet then print() end
         log("compiler", "%s", compiler_exe)
         log("output", "%s", current_output)
 
@@ -699,7 +705,7 @@ local function run_compiler()
 
     -- Prepare scripts for a Lua / Pandoc Lua target
     local function compile_lua(current_output, name, interpreter)
-        print()
+        if not quiet then print() end
         log("interpreter", "%s", name)
         log("output", "%s", current_output)
 
