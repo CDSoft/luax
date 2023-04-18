@@ -127,10 +127,10 @@ local function findpath(name)
 end
 
 local external_interpreters = F{
-    ["lua"]          = { interpreter="lua",        format="-lua",    library="",           loader="",       scripts={"luax.lua"} },
+    ["lua"]          = { interpreter="lua",        format="-lua",    library={},           loader={},       scripts={"luax.lua"} },
     ["lua-luax"]     = { interpreter="lua",        format="-binary", library="-l libluax", loader="-l rt0", scripts={} },
     ["luax"]         = { interpreter="luax",       format="-binary", library={},           loader="-l rt0", scripts={} },
-    ["pandoc"]       = { interpreter="pandoc lua", format="-lua",    library="",           loader="",       scripts={"luax.lua"} },
+    ["pandoc"]       = { interpreter="pandoc lua", format="-lua",    library={},           loader={},       scripts={"luax.lua"} },
     ["pandoc-luax"]  = { interpreter="pandoc lua", format="-binary", library="-l libluax", loader="-l rt0", scripts={} },
 }
 
@@ -715,7 +715,7 @@ local function run_compiler()
         local luax_scripts = F.map(findscript, interpreter.scripts)
 
         local bundle = require "bundle"
-        local chunk = bundle.combine_lua{interpreter.format, F.concat{luax_scripts, scripts}}
+        local chunk = bundle.combine_lua{interpreter.format, luax_scripts, scripts}
         local exe = F.flatten{
                 "#!/usr/bin/env -S",
 
