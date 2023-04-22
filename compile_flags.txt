@@ -12,6 +12,7 @@
 -Werror=implicit-fallthrough
 -Werror=missing-prototypes
 -Wno-declaration-after-statement
+-Wno-unsafe-buffer-usage
 -Isrc
 -Isrc/crypt/tinycrypt
 -Isrc/linenoise
