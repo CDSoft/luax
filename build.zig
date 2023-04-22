@@ -19,7 +19,6 @@
 const std = @import("std");
 
 const lua_src = "lua";
-const tinycrypt_src = "src/crypt/tinycrypt";
 const lz4_src = "src/lz4/lz4";
 const src_path = "src";
 const build_path = ".build/tmp";
@@ -77,6 +76,7 @@ const luax_c_files = [_][]const u8 {
     "src/ps/ps.c",
     "src/sys/sys.c",
     "src/crypt/crypt.c",
+    "src/crypt/sha1.c",
     "src/complex/complex.c",
     "src/linenoise/linenoise.c",
     "src/socket/luasocket.c",
@@ -110,21 +110,6 @@ const third_party_c_files = [_][]const u8 {
     "src/socket/luasocket/tcp.c",
     "src/socket/luasocket/timeout.c",
     "src/socket/luasocket/udp.c",
-    "src/crypt/tinycrypt/aes_decrypt.c",
-    "src/crypt/tinycrypt/aes_encrypt.c",
-    "src/crypt/tinycrypt/cbc_mode.c",
-    "src/crypt/tinycrypt/ccm_mode.c",
-    "src/crypt/tinycrypt/cmac_mode.c",
-    "src/crypt/tinycrypt/ctr_mode.c",
-    "src/crypt/tinycrypt/ctr_prng.c",
-    "src/crypt/tinycrypt/ecc.c",
-    "src/crypt/tinycrypt/ecc_dh.c",
-    "src/crypt/tinycrypt/ecc_dsa.c",
-    "src/crypt/tinycrypt/ecc_platform_specific.c",
-    "src/crypt/tinycrypt/hmac.c",
-    "src/crypt/tinycrypt/hmac_prng.c",
-    "src/crypt/tinycrypt/sha256.c",
-    "src/crypt/tinycrypt/utils.c",
     "src/lz4/lz4/lz4.c",
     "src/lz4/lz4/lz4file.c",
     "src/lz4/lz4/lz4frame.c",
@@ -187,7 +172,6 @@ pub fn build(b: *std.build.Builder) !void {
     exe.linkLibC();
     exe.install();
     exe.addIncludeDir(src_path);
-    exe.addIncludeDir(tinycrypt_src);
     exe.addIncludeDir(lz4_src);
     exe.addIncludeDir(build_path);
     exe.addIncludeDir(lua_src);
@@ -284,7 +268,6 @@ pub fn build(b: *std.build.Builder) !void {
     lib_shared.addIncludeDir(src_path);
     lib_shared.addIncludeDir(build_path);
     lib_shared.addIncludeDir(lua_src);
-    lib_shared.addIncludeDir(tinycrypt_src);
     lib_shared.addIncludeDir(lz4_src);
     if (target.os_tag != std.Target.Os.Tag.linux) {
         lib_shared.addCSourceFiles(&lua_c_files, &[_][]const u8 {

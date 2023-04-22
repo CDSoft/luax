@@ -209,62 +209,15 @@ encrypts/decrypts `data` using the RC4Drop algorithm and the encryption
 key `key` (drops the first `drop` encryption steps, the default value of
 `drop` is 768).
 
-## TinyCrypt library
+### SHA-1 hash
 
-The `crypt` contains functions from
-[TinyCrypt](https://github.com/intel/tinycrypt).
-
-### SHA256 hash
+See https://www.rfc-editor.org/rfc/rfc3174
 
 ``` lua
-crypt.sha256(data)
+crypt.sha1(data)
 ```
 
-returns the SHA256 digest of `data`.
-
-### HMAC-SHA256 hash
-
-``` lua
-crypt.hmac(data, key)
-```
-
-returns the HMAC-SHA256 digest of `data` using `key` as a key.
-
-### HMAC-SHA256 random number generator
-
-``` lua
-crypt.hmac_prng(personalization)
-```
-
-returns a HMAC PRNG initialized with `personalization` (32 bytes or
-more) and some OS dependant entropy. This object has four methods:
-`seed([seed])`, `int([m, [n]])`, `float([a, [b]])` and `str(n)`.
-
-### CTR random number generator
-
-``` lua
-crypt.ctr_prng(personalization)
-```
-
-returns a CTR PRNG initialized with `personalization` (32 bytes of more)
-and some OS dependant entropy. This object has three methods:
-`seed(seed)`, `int([bytes])` and `frand()`.
-
-### AES-128 encryption
-
-``` lua
-crypt.aes(data, key)
-```
-
-encrypts `data` using the AES-128-CBC algorithm and the encryption key
-`key`.
-
-``` lua
-crypt.unaes(data, key)
-```
-
-decrypts `data` using the AES-128-CBC algorithm and the encryption key
-`key`.
+returns a SHA-1 digest of \`data
 
 ## String methods
 
@@ -281,8 +234,5 @@ s:crc32()           == crypt.crc32(s)
 s:crc64()           == crypt.crc64(s)
 s:rc4(key, drop)    == crypt.rc4(s, key, drop)
 s:unrc4(key, drop)  == crypt.unrc4(s, key, drop)
-s:sha256()          == crypt.sha256(s)
-s:hmac(key)         == crypt.hmac(s, key)
-s:aes(key)          == crypt.aes(s, key)
-s:unaes(key)        == crypt.unaes(s, key)
+s:sha1()            == crypt.sha1(s)
 ```

@@ -170,7 +170,6 @@ mrproper: clean makex-clean
 .PHONY: update-argparse
 .PHONY: update-inspect
 .PHONY: update-serpent
-.PHONY: update-tinycrypt
 .PHONY: update-lz4
 
 LUA_VERSION = 5.4.4
@@ -213,10 +212,6 @@ SERPENT_VERSION = master
 SERPENT_ARCHIVE = serpent-$(SERPENT_VERSION).zip
 SERPENT_URL = https://github.com/pkulchenko/serpent/archive/refs/heads/$(SERPENT_VERSION).zip
 
-TINYCRYPT_VERSION = master
-TINYCRYPT_ARCHIVE = tinycrypt-$(TINYCRYPT_VERSION).zip
-TINYCRYPT_URL = https://github.com/intel/tinycrypt/archive/refs/heads/$(TINYCRYPT_VERSION).zip
-
 LZ4_VERSION = release
 LZ4_ARCHIVE = lz4-$(LZ4_VERSION).zip
 LZ4_URL = https://github.com/lz4/lz4/archive/refs/heads/$(LZ4_VERSION).zip
@@ -233,7 +228,6 @@ update: update-lpeg
 update: update-argparse
 update: update-inspect
 update: update-serpent
-update: update-tinycrypt
 update: update-lz4
 
 ## Update Lua sources
@@ -357,19 +351,6 @@ update-serpent: $(BUILD_TMP)/$(SERPENT_ARCHIVE)
 $(BUILD_TMP)/$(SERPENT_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(SERPENT_URL) -O $@
-
-## Update tinycrypt sources
-update-tinycrypt: $(BUILD_TMP)/$(TINYCRYPT_ARCHIVE)
-	rm -rf src/crypt/tinycrypt
-	mkdir src/crypt/tinycrypt
-	unzip -j $< -x '*/.gitignore' '*/README' '*/Makefile' '*/*.mk' '*/*.rst' '*/tests/*' -d src/crypt/tinycrypt
-	find src/crypt/tinycrypt/*.[ch] -exec sed -i 's#<\(tinycrypt/.*\)>#"\1"#' {} \;
-	mkdir -p src/crypt/tinycrypt/tinycrypt
-	mv src/crypt/tinycrypt/*.h src/crypt/tinycrypt/tinycrypt/
-
-$(BUILD_TMP)/$(TINYCRYPT_ARCHIVE):
-	@mkdir -p $(dir $@)
-	wget $(TINYCRYPT_URL) -O $@
 
 ## Update LZ4 sources
 update-lz4: $(BUILD_TMP)/$(LZ4_ARCHIVE)

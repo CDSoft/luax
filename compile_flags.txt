@@ -14,7 +14,6 @@
 -Wno-declaration-after-statement
 -Wno-unsafe-buffer-usage
 -Isrc
--Isrc/crypt/tinycrypt
 -Isrc/linenoise
 -Isrc/lz4/lz4
 -Ilua

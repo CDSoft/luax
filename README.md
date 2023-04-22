@@ -293,10 +293,6 @@ programs:
 - **[serpent](https://github.com/pkulchenko/serpent)**: Lua serializer
   and pretty printer. ([MIT
   license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))
-- **[TinyCrypt](https://github.com/intel/tinycrypt)**: tinycrypt is a
-  library of cryptographic algorithms with a focus on small, simple
-  implementation
-  ([License](https://github.com/intel/tinycrypt/blob/master/LICENSE))
 - **[LZ4](https://github.com/lz4/lz4)**: Extremely Fast Compression
   algorithm ([License](https://github.com/lz4/lz4/blob/dev/lib/LICENSE))
 - **[Argparse](https://github.com/mpeterv/argparse)**: a feature-rich
