@@ -127,11 +127,13 @@ local function findpath(name)
 end
 
 local external_interpreters = F{
-    ["lua"]          = { interpreter="lua",        format="-lua",    library={},           loader={},       scripts={"luax.lua"} },
-    ["lua-luax"]     = { interpreter="lua",        format="-binary", library="-l libluax", loader="-l rt0", scripts={} },
-    ["luax"]         = { interpreter="luax",       format="-binary", library={},           loader="-l rt0", scripts={} },
-    ["pandoc"]       = { interpreter="pandoc lua", format="-lua",    library={},           loader={},       scripts={"luax.lua"} },
-    ["pandoc-luax"]  = { interpreter="pandoc lua", format="-binary", library="-l libluax", loader="-l rt0", scripts={} },
+    -- Only the Lua format can be used with external interpreters
+    -- to avoid incompatibilities between the payload and the interpreter.
+    ["lua"]          = { interpreter="lua",        format="-lua", library={},           loader={}, scripts={"luax.lua"} },
+    ["lua-luax"]     = { interpreter="lua",        format="-lua", library="-l libluax", loader={}, scripts={} },
+    ["luax"]         = { interpreter="luax",       format="-lua", library={},           loader={}, scripts={} },
+    ["pandoc"]       = { interpreter="pandoc lua", format="-lua", library={},           loader={}, scripts={"luax.lua"} },
+    ["pandoc-luax"]  = { interpreter="pandoc lua", format="-lua", library="-l libluax", loader={}, scripts={} },
 }
 
 local function print_targets()
