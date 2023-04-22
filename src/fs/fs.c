@@ -652,7 +652,7 @@ static int fs_absname(lua_State *L)
     }
     if (getcwd(path, FS_PATHSIZE) == NULL)
     {
-        bl_pusherror(L, "getcwd failure");
+        return bl_pusherror(L, "getcwd failure");
     }
     strncat(path, LUA_DIRSEP, FS_PATHSIZE-strlen(path));
     strncat(path, name, FS_PATHSIZE-strlen(path));
