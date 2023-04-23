@@ -140,9 +140,21 @@ return function()
             eq(crypt.sha1 "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "84983e441c3bd26ebaae4aa1f95129e5e54670f1")
             eq(crypt.sha1 "a", "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8")
             eq(crypt.sha1 "0123456701234567012345670123456701234567012345670123456701234567", "e0c094e867ef46c350ef54a7f59dd60bed92ae83")
+            ne(crypt.sha1 "aa", crypt.sha1 "ab")
             for _ = 1, sys.abi=="lua" and 10 or 1000 do
                 local s = crypt.str(crypt.int()%1024)
                 eq(s:sha1(), crypt.sha1(s))
+            end
+        end
+        do
+            eq(crypt.hash "abc", "cb4c8381f780cbd2")
+            eq(crypt.hash "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "ccf85c25fd40b59f")
+            eq(crypt.hash "a", "c7e49f6a0a944b08")
+            eq(crypt.hash "0123456701234567012345670123456701234567012345670123456701234567", "d97bdf31cf8cda13")
+            ne(crypt.hash "aa", crypt.hash "ab")
+            for _ = 1, sys.abi=="lua" and 10 or 1000 do
+                local s = crypt.str(crypt.int()%1024)
+                eq(s:hash(), crypt.hash(s))
             end
         end
     end
@@ -152,11 +164,11 @@ return function()
         local done = false
         while not done and i < 10000 do
             i = i+1
-            local x = prng:int() % 100                        eq(type(x), "number") eq(math.type(x), "integer")
+            local x = prng:int(0, 100)                        eq(type(x), "number") eq(math.type(x), "integer")
             bounded(x, 0, 100)
             str[x] = true
             done = true
-            for y = 0, 99 do done = done and str[y] end
+            for y = 0, 100 do done = done and str[y] end
         end
         eq(done, true)
         bounded(i, 100, 2000)
@@ -218,6 +230,34 @@ return function()
             bounded(r1:float(), 0.0, 1.0)
             bounded(r1:float(3.5), 0.0, 3.5)
             bounded(r1:float(2.5, 3.5), 2.5, 3.5)
+        end
+    end
+    do
+        -- compare C and Lua prng implemenrations
+        local r = crypt.prng(1337, 12)
+        local xs = F.range(16):map(function(_) return r:int() end)
+        eq(xs, {
+            1306753901, 4044912387, 1648085481, 2633988900, 4079560644, 3769468295, 3245996943, 1721887037,
+            3063376457, 2280948516, 2012680803, 3957139778, 3740370758, 2086760861, 3024349504, 434537368,
+        })
+        eq(crypt.hash "Hello World!", "b2e381f8a79a747b")
+        do
+            -- test setting the seed after initialization
+            local r1 = crypt.prng(666)
+            local r2 = crypt.prng()
+            F.range(100):map(function(_) ne(r1:int(), r2:int()) end)
+            r1 = crypt.prng(666)
+            r2:seed(666)
+            F.range(100):map(function(_) eq(r1:int(), r2:int()) end)
+        end
+        do
+            -- test setting the seed and inc after initialization
+            local r1 = crypt.prng(666, 42)
+            local r2 = crypt.prng(666)
+            F.range(100):map(function(_) ne(r1:int(), r2:int()) end)
+            r1 = crypt.prng(666, 42)
+            r2:seed(666, 42)
+            F.range(100):map(function(_) eq(r1:int(), r2:int()) end)
         end
     end
 

@@ -20,19 +20,21 @@ independant generators with their own seeds.
 ### Random number generator instance
 
 ``` lua
-local rng = crypt.prng([seed])
+local rng = crypt.prng([seed, [inc]])
 ```
 
 returns a random number generator starting from the optional seed
 `seed`. This object has four methods: `seed([seed])`, `int([m, [n]])`,
-`float([a, [b]])` and `str(n)`.
+`float([a, [b]])` and `str(n)`. `inc` is the increment of the internal
+state. Different `inc` values produce different generators.
 
 ``` lua
-rng:seed([seed])
+rng:seed([seed, [inc]])
 ```
 
 sets the seed of the PRNG. The default seed is a number based on the
-current time and the process id.
+current time and the process id. `inc` is the increment of the internal
+state. Different `inc` values produce different generators.
 
 ``` lua
 rng:int()
@@ -79,11 +81,12 @@ returns a string with `bytes` random bytes.
 ### Global random number generator
 
 ``` lua
-crypt.seed([seed])
+crypt.seed([seed, [inc]])
 ```
 
 sets the seed of the global PRNG. The default seed is a number based on
-the current time and the process id.
+the current time and the process id. `inc` is the increment of the
+internal state. Different `inc` values produce different generators.
 
 ``` lua
 crypt.int()
@@ -217,7 +220,16 @@ See https://www.rfc-editor.org/rfc/rfc3174
 crypt.sha1(data)
 ```
 
-returns a SHA-1 digest of \`data
+returns a SHA-1 digest of `data`.
+
+### Fast PRNG-base hash
+
+``` lua
+crypt.hash(data)
+```
+
+returns digest of `data` based on the LuaX PRNG (not suitable for
+cryptographic usage).
 
 ## String methods
 
@@ -235,4 +247,5 @@ s:crc64()           == crypt.crc64(s)
 s:rc4(key, drop)    == crypt.rc4(s, key, drop)
 s:unrc4(key, drop)  == crypt.unrc4(s, key, drop)
 s:sha1()            == crypt.sha1(s)
+s:hash()            == crypt.hash(s)
 ```

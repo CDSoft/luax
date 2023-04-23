@@ -65,24 +65,34 @@ and can instantiate independant generators with their own seeds.
 
 #define PRNG_MT "prng"
 
+/* https://www.pcg-random.org/download.html */
+
 typedef struct
 {
-    uint64_t seed;
+    uint64_t state;
+    uint64_t inc;
 } t_prng;
 
 #define CRYPT_RAND_MAX 0xFFFFFFFFULL
 
 /* Low level random functions */
 
-static inline void prng_seed(t_prng *prng, uint64_t seed)
+static inline void prng_advance(t_prng *prng)
 {
-    prng->seed = seed;
+    // Advance internal state
+    prng->state = prng->state * 6364136223846793005ULL + prng->inc;
 }
 
 static inline uint32_t prng_int(t_prng *prng)
 {
-    prng->seed = 6364136223846793005*prng->seed + 1;
-    return prng->seed >> 32ULL;
+    const uint64_t oldstate = prng->state;
+    // Advance internal state
+    prng_advance(prng);
+    prng->state = oldstate * 6364136223846793005ULL + prng->inc;
+    // Calculate output function (XSH RR), uses old state for max ILP
+    const uint32_t xorshifted = (uint32_t)(((oldstate >> 18u) ^ oldstate) >> 27u);
+    const uint32_t rot = oldstate >> 59u;
+    return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
 }
 
 static inline int64_t prng_int_range(t_prng *prng, int64_t a, int64_t b)
@@ -113,6 +123,15 @@ static inline char *prng_str(t_prng *prng, size_t size)
     return buffer;
 }
 
+static inline void prng_seed(t_prng *prng, uint64_t state, uint64_t inc)
+{
+    prng->state = state;
+    prng->inc = inc | 1;
+    /* drop the first values */
+    prng_advance(prng);
+    prng_advance(prng);
+}
+
 static inline uint64_t prng_default_seed(void)
 {
     struct timeval t;
@@ -126,10 +145,11 @@ static inline uint64_t prng_default_seed(void)
 
 /*@@@
 ```lua
-local rng = crypt.prng([seed])
+local rng = crypt.prng([seed, [inc]])
 ```
 returns a random number generator starting from the optional seed `seed`.
 This object has four methods: `seed([seed])`, `int([m, [n]])`, `float([a, [b]])` and `str(n)`.
+`inc` is the increment of the internal state. Different `inc` values produce different generators.
 @@@*/
 
 static int crypt_prng(lua_State *L)
@@ -138,17 +158,21 @@ static int crypt_prng(lua_State *L)
     const uint64_t seed = lua_type(L, 1) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 1)
         : prng_default_seed();
+    const uint64_t inc = lua_type(L, 2) == LUA_TNUMBER
+        ? (uint64_t)luaL_checkinteger(L, 2)
+        : 1;
     luaL_setmetatable(L, PRNG_MT);
-    prng_seed(prng, seed);
+    prng_seed(prng, seed, inc);
     return 1;
 }
 
 /*@@@
 ```lua
-rng:seed([seed])
+rng:seed([seed, [inc]])
 ```
 sets the seed of the PRNG.
 The default seed is a number based on the current time and the process id.
+`inc` is the increment of the internal state. Different `inc` values produce different generators.
 @@@*/
 
 static int crypt_prng_seed(lua_State *L)
@@ -157,7 +181,10 @@ static int crypt_prng_seed(lua_State *L)
     const uint64_t seed = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
         : prng_default_seed();
-    prng_seed(prng, seed);
+    const uint64_t inc = lua_type(L, 3) == LUA_TNUMBER
+        ? (uint64_t)luaL_checkinteger(L, 3)
+        : prng->inc;
+    prng_seed(prng, seed, inc);
     return 0;
 }
 
@@ -279,10 +306,11 @@ static t_prng prng;
 
 /*@@@
 ```lua
-crypt.seed([seed])
+crypt.seed([seed, [inc]])
 ```
 sets the seed of the global PRNG.
 The default seed is a number based on the current time and the process id.
+`inc` is the increment of the internal state. Different `inc` values produce different generators.
 @@@*/
 
 static int crypt_seed(lua_State *L)
@@ -290,7 +318,10 @@ static int crypt_seed(lua_State *L)
     const uint64_t seed = lua_type(L, 1) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 1)
         : prng_default_seed();
-    prng_seed(&prng, seed);
+    const uint64_t inc = lua_type(L, 2) == LUA_TNUMBER
+        ? (uint64_t)luaL_checkinteger(L, 2)
+        : prng.inc;
+    prng_seed(&prng, seed, inc);
     return 0;
 }
 
@@ -1012,7 +1043,7 @@ See https://www.rfc-editor.org/rfc/rfc3174
 ```lua
 crypt.sha1(data)
 ```
-returns a SHA-1 digest of `data
+returns a SHA-1 digest of `data`.
 @@@*/
 
 static int crypt_sha1(lua_State *L)
@@ -1044,6 +1075,59 @@ static int crypt_sha1(lua_State *L)
     return 1;
 }
 
+/***************************************************************************@@@
+### Fast PRNG-base hash
+
+@@@*/
+
+/*@@@
+```lua
+crypt.hash(data)
+```
+returns digest of `data` based on the LuaX PRNG (not suitable for cryptographic usage).
+@@@*/
+
+static inline uint64_t prng_hash(const char *input, size_t input_size)
+{
+    uint64_t state1 = 0xA5A5A5A5A5A5A5A5;
+    uint64_t state2 = ~state1;
+    state1 = state1 * 6364136223846793005ULL + 1; state2 = state2 * 6364136223846793005ULL + 1;
+    state1 = state1 * 6364136223846793005ULL + 1; state2 = state2 * 6364136223846793005ULL + 1;
+    for (size_t i = 0; i < input_size; i++)
+    {
+        uint64_t inc = ((uint64_t)input[i] << 1) | 1;
+        state1 = state1 * 6364136223846793005ULL + inc; state2 = state2 * 6364136223846793005ULL + inc;
+    }
+    state1 = state1 * 6364136223846793005ULL + 1; state2 = state2 * 6364136223846793005ULL + 1;
+    const uint32_t xorshifted1 = (uint32_t)(((state1 >> 18u) ^ state1) >> 27u);
+    const uint32_t xorshifted2 = (uint32_t)(((state2 >> 18u) ^ state2) >> 27u);
+    const uint32_t rot1 = state1 >> 59u;
+    const uint32_t rot2 = state2 >> 59u;
+    const uint32_t hash1 = (xorshifted1 >> rot1) | (xorshifted1 << ((-rot1) & 31));
+    const uint32_t hash2 = (xorshifted2 >> rot2) | (xorshifted2 << ((-rot2) & 31));
+    return (((uint64_t)hash1) << 32) | hash2;
+}
+
+static int crypt_hash(lua_State *L)
+{
+    const char *data = (const char *)luaL_checkstring(L, 1);
+    const size_t datalen = (size_t)lua_rawlen(L, 1);
+
+    const uint64_t hash = prng_hash(data, datalen);
+
+    char hex[2*sizeof(hash)];
+
+    for (size_t i = 0; i < sizeof(hash); i++)
+    {
+        const char c = (char)((hash >> (i*8)) & 0xFF);
+        hex[2*i+0] = hex_map[(c>>4)&0xF];
+        hex[2*i+1] = hex_map[(c>>0)&0xF];
+    }
+
+    lua_pushlstring(L, (const char *)hex, sizeof(hex));
+    return 1;
+}
+
 /******************************************************************************
  * Crypt package
  ******************************************************************************/
@@ -1067,6 +1151,7 @@ static const luaL_Reg crypt_module[] =
     {"crc32", crypt_crc32},
     {"crc64", crypt_crc64},
     {"sha1", crypt_sha1},
+    {"hash", crypt_hash},
 
     {NULL, NULL}
 };
@@ -1087,7 +1172,7 @@ LUAMOD_API int luaopen_crypt(lua_State *L)
     lua_pushvalue(L, -2);
     lua_settable(L, -3);
 
-    prng_seed(&prng, prng_default_seed());
+    prng_seed(&prng, prng_default_seed(), 1);
 
     /* module initialization */
 

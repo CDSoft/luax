@@ -47,14 +47,26 @@ if not crypt then
 
     crypt.RAND_MAX = RAND_MAX
 
-    function crypt.prng(seed)
-        seed = seed or random(RAND_MAX)
-        return setmetatable({seed=seed}, prng_mt)
+    function crypt.prng(seed, inc)
+        local self = setmetatable({}, prng_mt)
+        self:seed(seed or random(0), inc)
+        return self
+    end
+
+    function prng_mt.__index:seed(seed, inc)
+        self.state = assert(seed, "seed parameter missing")
+        self.inc = (inc or 1) | 1
+        self.state = 6364136223846793005*self.state + self.inc
+        self.state = 6364136223846793005*self.state + self.inc
     end
 
     function prng_mt.__index:int(a, b)
-        self.seed = 6364136223846793005*self.seed + 1
-        local r = self.seed >> 32
+        local oldstate = self.state
+        self.state = 6364136223846793005*self.state + self.inc
+        local xorshifted = (((oldstate >> 18) ~ oldstate) >> 27) & 0xFFFFFFFF
+        local rot = oldstate >> 59;
+        local r = ((xorshifted >> rot) | (xorshifted << ((-rot) & 31))) & 0xFFFFFFFF
+
         if not a then return r end
         if not b then return r % (a+1) end
         return r % (b-a+1) + a
@@ -297,6 +309,25 @@ if not crypt then
         end
     end
 
+    function crypt.hash(s)
+        local state1 = 0xA5A5A5A5A5A5A5A5
+        local state2 = ~state1
+        state1 = state1 * 6364136223846793005 + 1; state2 = state2 * 6364136223846793005 + 1
+        state1 = state1 * 6364136223846793005 + 1; state2 = state2 * 6364136223846793005 + 1
+        for i = 1, #s do
+            local inc = (byte(s, i) << 1) | 1
+            state1 = state1 * 6364136223846793005 + inc; state2 = state2 * 6364136223846793005 + inc
+        end
+        state1 = state1 * 6364136223846793005 + 1; state2 = state2 * 6364136223846793005 + 1
+        local xorshifted1 = (((state1 >> 18) ~ state1) >> 27) & 0xFFFFFFFF
+        local xorshifted2 = (((state2 >> 18) ~ state2) >> 27) & 0xFFFFFFFF
+        local rot1 = state1 >> 59
+        local rot2 = state2 >> 59
+        local hash1 = ((xorshifted1 >> rot1) | (xorshifted1 << ((-rot1) & 31))) & 0xFFFFFFFF
+        local hash2 = ((xorshifted2 >> rot2) | (xorshifted2 << ((-rot2) & 31))) & 0xFFFFFFFF
+        return ("<I8"):pack((hash1 << 32) | hash2):hex()
+    end
+
 end
 
 -- Additional definitions for the C implementation
@@ -321,6 +352,7 @@ s:crc64()           == crypt.crc64(s)
 s:rc4(key, drop)    == crypt.rc4(s, key, drop)
 s:unrc4(key, drop)  == crypt.unrc4(s, key, drop)
 s:sha1()            == crypt.sha1(s)
+s:hash()            == crypt.hash(s)
 ```
 @@@]]
 
@@ -333,6 +365,7 @@ function string.unbase64url(s)  return crypt.unbase64url(s) end
 function string.rc4(s, k, d)    return crypt.rc4(s, k, d) end
 function string.unrc4(s, k, d)  return crypt.unrc4(s, k, d) end
 function string.sha1(s)         return crypt.sha1(s) end
+function string.hash(s)         return crypt.hash(s) end
 function string.crc32(s)        return crypt.crc32(s) end
 function string.crc64(s)        return crypt.crc64(s) end
 
