@@ -310,22 +310,13 @@ if not crypt then
     end
 
     function crypt.hash(s)
-        local state1 = 0xA5A5A5A5A5A5A5A5
-        local state2 = ~state1
-        state1 = state1 * 6364136223846793005 + 1; state2 = state2 * 6364136223846793005 + 1
-        state1 = state1 * 6364136223846793005 + 1; state2 = state2 * 6364136223846793005 + 1
+        local hash = 1844674407370955155*10+7
+        hash = hash * 6364136223846793005 + 1
         for i = 1, #s do
-            local inc = (byte(s, i) << 1) | 1
-            state1 = state1 * 6364136223846793005 + inc; state2 = state2 * 6364136223846793005 + inc
+            local c = byte(s, i)
+            hash = hash * 6364136223846793005 + ((c << 1) | 1)
         end
-        state1 = state1 * 6364136223846793005 + 1; state2 = state2 * 6364136223846793005 + 1
-        local xorshifted1 = (((state1 >> 18) ~ state1) >> 27) & 0xFFFFFFFF
-        local xorshifted2 = (((state2 >> 18) ~ state2) >> 27) & 0xFFFFFFFF
-        local rot1 = state1 >> 59
-        local rot2 = state2 >> 59
-        local hash1 = ((xorshifted1 >> rot1) | (xorshifted1 << ((-rot1) & 31))) & 0xFFFFFFFF
-        local hash2 = ((xorshifted2 >> rot2) | (xorshifted2 << ((-rot2) & 31))) & 0xFFFFFFFF
-        return ("<I8"):pack((hash1 << 32) | hash2):hex()
+        return ("<I8"):pack(hash):hex()
     end
 
 end

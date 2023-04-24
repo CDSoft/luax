@@ -88,7 +88,6 @@ static inline uint32_t prng_int(t_prng *prng)
     const uint64_t oldstate = prng->state;
     // Advance internal state
     prng_advance(prng);
-    prng->state = oldstate * 6364136223846793005ULL + prng->inc;
     // Calculate output function (XSH RR), uses old state for max ILP
     const uint32_t xorshifted = (uint32_t)(((oldstate >> 18u) ^ oldstate) >> 27u);
     const uint32_t rot = oldstate >> 59u;
@@ -1089,23 +1088,15 @@ returns digest of `data` based on the LuaX PRNG (not suitable for cryptographic 
 
 static inline uint64_t prng_hash(const char *input, size_t input_size)
 {
-    uint64_t state1 = 0xA5A5A5A5A5A5A5A5;
-    uint64_t state2 = ~state1;
-    state1 = state1 * 6364136223846793005ULL + 1; state2 = state2 * 6364136223846793005ULL + 1;
-    state1 = state1 * 6364136223846793005ULL + 1; state2 = state2 * 6364136223846793005ULL + 1;
+    /* 2^64-59 = 18446744073709551557 */
+    register uint64_t hash = 18446744073709551557ULL;
+    hash = hash * 6364136223846793005ULL + 1;
     for (size_t i = 0; i < input_size; i++)
     {
-        uint64_t inc = ((uint64_t)input[i] << 1) | 1;
-        state1 = state1 * 6364136223846793005ULL + inc; state2 = state2 * 6364136223846793005ULL + inc;
+        const uint64_t c = (uint64_t)input[i];
+        hash = hash * 6364136223846793005ULL + ((c << 1) | 1);
     }
-    state1 = state1 * 6364136223846793005ULL + 1; state2 = state2 * 6364136223846793005ULL + 1;
-    const uint32_t xorshifted1 = (uint32_t)(((state1 >> 18u) ^ state1) >> 27u);
-    const uint32_t xorshifted2 = (uint32_t)(((state2 >> 18u) ^ state2) >> 27u);
-    const uint32_t rot1 = state1 >> 59u;
-    const uint32_t rot2 = state2 >> 59u;
-    const uint32_t hash1 = (xorshifted1 >> rot1) | (xorshifted1 << ((-rot1) & 31));
-    const uint32_t hash2 = (xorshifted2 >> rot2) | (xorshifted2 << ((-rot2) & 31));
-    return (((uint64_t)hash1) << 32) | hash2;
+    return hash;
 }
 
 static int crypt_hash(lua_State *L)

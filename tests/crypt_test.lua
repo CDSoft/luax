@@ -147,10 +147,12 @@ return function()
             end
         end
         do
-            eq(crypt.hash "abc", "cb4c8381f780cbd2")
-            eq(crypt.hash "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "ccf85c25fd40b59f")
-            eq(crypt.hash "a", "c7e49f6a0a944b08")
-            eq(crypt.hash "0123456701234567012345670123456701234567012345670123456701234567", "d97bdf31cf8cda13")
+            eq(crypt.hash "120852", "00a5b4d21a0a9a00")
+            eq(crypt.hash "abc", "edb12f5147011a98")
+            eq(crypt.hash "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "8a8fb591ad1980ae")
+            eq(crypt.hash "a", "3d6b78f0d6c6494a")
+            eq(crypt.hash "aa", "7c1ddf88b948c824")
+            eq(crypt.hash "0123456701234567012345670123456701234567012345670123456701234567", "22bb9734007a6c16")
             ne(crypt.hash "aa", crypt.hash "ab")
             for _ = 1, sys.abi=="lua" and 10 or 1000 do
                 local s = crypt.str(crypt.int()%1024)
@@ -233,14 +235,14 @@ return function()
         end
     end
     do
-        -- compare C and Lua prng implemenrations
+        -- compare C and Lua prng implementations
         local r = crypt.prng(1337, 12)
         local xs = F.range(16):map(function(_) return r:int() end)
         eq(xs, {
             1306753901, 4044912387, 1648085481, 2633988900, 4079560644, 3769468295, 3245996943, 1721887037,
             3063376457, 2280948516, 2012680803, 3957139778, 3740370758, 2086760861, 3024349504, 434537368,
         })
-        eq(crypt.hash "Hello World!", "b2e381f8a79a747b")
+        eq(crypt.hash "Hello World!", "2016e8306f29f1c0")
         do
             -- test setting the seed after initialization
             local r1 = crypt.prng(666)
