@@ -854,7 +854,7 @@ t:filterk(p)
 > Returns the table of those values that satisfy the predicate p(k, v).
 
 ``` lua
-F.restrictKeys(t, ks)
+F.restrict_keys(t, ks)
 t:restrict_keys(ks)
 ```
 
@@ -894,7 +894,7 @@ t:table_partition_with_key(p)
 > the predicate.
 
 ``` lua
-F.elemIndex(x, xs)
+F.elem_index(x, xs)
 xs:elem_index(x)
 ```
 
@@ -1483,8 +1483,8 @@ s:take_while(p)
 > satisfy p.
 
 ``` lua
-string.dropWhile(s, p)
-s:dropWhile(p)
+string.drop_while(s, p)
+s:drop_while(p)
 ```
 
 > Returns the suffix remaining after `s:take_while(p)`.

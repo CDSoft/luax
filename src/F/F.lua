@@ -1958,7 +1958,7 @@ end)
 
 --[[@@@
 ```lua
-F.restrictKeys(t, ks)
+F.restrict_keys(t, ks)
 t:restrict_keys(ks)
 ```
 > Restrict a map to only those keys found in a list.
@@ -2036,7 +2036,7 @@ end)
 
 --[[@@@
 ```lua
-F.elemIndex(x, xs)
+F.elem_index(x, xs)
 xs:elem_index(x)
 ```
 > Returns the index of the first element in the given list which is equal to the query element.
@@ -3268,8 +3268,8 @@ end
 
 --[[@@@
 ```lua
-string.dropWhile(s, p)
-s:dropWhile(p)
+string.drop_while(s, p)
+s:drop_while(p)
 ```
 > Returns the suffix remaining after `s:take_while(p)`{.lua}.
 @@@]]
