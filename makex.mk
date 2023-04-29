@@ -94,7 +94,7 @@
 MAKEX_INSTALL_PATH ?= /var/tmp/makex
 
 # MAKEX_CACHE is the path where makex tools sources are stored and built
-MAKEX_CACHE ?= /var/tmp/makex/cache
+MAKEX_CACHE ?= $(MAKEX_INSTALL_PATH)/cache
 
 # MAKEX_HELP_TARGET_MAX_LEN is the maximal size of target names
 # used to format the help message
@@ -114,19 +114,19 @@ PANDOC_CLI_VERSION ?= 0.1.1
 
 # PANDOC_DYNAMIC_LINK is "no" to download a statically linked executable
 # or "yes" to compile a dynamically linked executable with cabal
-PANDOC_DYNAMIC_LINK ?= yes
+PANDOC_DYNAMIC_LINK ?= no
 
 # PANDOC_LATEX_TEMPLATE_VERSION is a tag or branch name in the
 # pandoc-latex-template repository
-PANDOC_LATEX_TEMPLATE_VERSION = master
+PANDOC_LATEX_TEMPLATE_VERSION ?= master
 
 # PANDOC_LETTER_VERSION is a tag or branch name in the
 # pandoc-letter repository
-PANDOC_LETTER_VERSION = master
+PANDOC_LETTER_VERSION ?= master
 
 # PANAM_VERSION is a tag or branch name in the
 # pan-am repository
-PANAM_VERSION = master
+PANAM_VERSION ?= master
 
 # PANDA_VERSION is a tag or branch name in the Panda repository
 PANDA_VERSION ?= master
@@ -142,6 +142,20 @@ HASKELL_GHC_VERSION ?= recommended
 
 # HASKELL_CABAL_VERSION is the cabal version to install
 HASKELL_CABAL_VERSION ?= recommended
+
+# RUSTUP_HOME is the rustup installation path
+RUSTUP_HOME ?= $(MAKEX_INSTALL_PATH)/rustup
+
+# CARGO_HOME is the cargo installation path
+CARGO_HOME ?= $(MAKEX_INSTALL_PATH)/cargo
+
+# TYPST_COMPILATION is "no" to download a precompiled executable
+# or "yes" to compile typst with cargo
+TYPST_COMPILATION ?= no
+
+# TYPST_VERSION is a tag or branch name in the
+# typst repository
+TYPST_VERSION ?= v0.3.0
 
 #}}}
 
@@ -247,6 +261,34 @@ STACK_CMD = $(GHCUP) run stack -- --stack-root=$(GHCUP_INSTALL_BASE_PREFIX)/.sta
 
 makex-install: makex-install-ghcup
 makex-install-ghcup: $(GHCUP)
+
+###########################################################################
+# Rust
+###########################################################################
+
+RUSTUP = $(CARGO_HOME)/bin/rustup
+RUSTC = $(CARGO_HOME)/bin/rustc
+CARGO = $(CARGO_HOME)/bin/cargo
+
+export RUSTUP_HOME
+export CARGO_HOME
+
+export PATH := $(dir $(CARGO)):$(PATH)
+
+$(RUSTUP) $(RUSTC) $(CARGO):
+	@echo "$(MAKEX_COLOR)[MAKEX]$(NORMAL) $(TEXT_COLOR)install Rust (rustup, rustc, cargo)$(NORMAL)"
+	@test -f $@ \
+	|| \
+	(   export CARGO_HOME="$(CARGO_HOME)"; \
+	    export RUSTUP_HOME=$(RUSTUP_HOME); \
+	    mkdir -p $(RUSTUP_HOME); \
+	    curl https://sh.rustup.rs -sSf -o $(RUSTUP_HOME)/rustup-install.sh; \
+		chmod +x  $(RUSTUP_HOME)/rustup-install.sh; \
+	    $(RUSTUP_HOME)/rustup-install.sh -y -v --no-modify-path; \
+	)
+
+makex-install: makex-install-rust
+makex-install-rust: $(CARGO)
 
 ###########################################################################
 # LuaX
@@ -451,6 +493,54 @@ $(PANDA): | $(PANDOC) $(MAKEX_CACHE) $(dir $(PANDA)) $(PANDA_CACHE)
 
 makex-install: makex-install-panda
 makex-install-panda: $(PANDA)
+
+###########################################################################
+# Typst
+###########################################################################
+
+TYPST = $(MAKEX_INSTALL_PATH)/typst/$(TYPST_VERSION)/bin/typst
+
+export PATH := $(dir $(TYPST)):$(PATH)
+
+$(dir $(TYPST)) $(MAKEX_CACHE)/typst/$(TYPST_VERSION):
+	@mkdir -p $@
+
+ifeq ($(TYPST_COMPILATION),no)
+
+TYPST_URL = https://github.com/typst/typst/releases/download/$(TYPST_VERSION)/$(TYPST_ARCHIVE)
+
+ifeq ($(MAKEX_OS)-$(MAKEX_ARCH),Linux-x86_64)
+TYPST_ARCHIVE = typst-x86_64-unknown-linux-musl.tar.xz
+endif
+ifeq ($(MAKEX_OS)-$(MAKEX_ARCH),Linux-aarch64)
+TYPST_ARCHIVE = typst-aarch64-unknown-linux-musl.tar.xz
+endif
+
+check_typst_architecture:
+	@test -n "$(TYPST_ARCHIVE)" \
+	|| (echo "$(BG_RED)ERROR$(NORMAL)$(RED): $(MAKEX_OS)-$(MAKEX_ARCH): Unknown archivecture, can not install typst$(NORMAL)"; false)
+
+$(TYPST): check_typst_architecture | $(MAKEX_CACHE) $(MAKEX_CACHE)/typst/$(TYPST_VERSION) $(dir $(TYPST))
+	@echo "$(MAKEX_COLOR)[MAKEX]$(NORMAL) $(TEXT_COLOR)install Typst$(NORMAL)"
+	@test -f $(@) \
+	|| \
+	( wget -c $(TYPST_URL) -O $(MAKEX_CACHE)/typst/$(TYPST_VERSION)/$(notdir $(TYPST_URL)) \
+	    && tar -C $(MAKEX_CACHE)/typst/$(TYPST_VERSION) --strip-components 1 -xJf $(MAKEX_CACHE)/typst/$(TYPST_VERSION)/$(notdir $(TYPST_URL)) \
+	    && cp -P $(MAKEX_CACHE)/typst/$(TYPST_VERSION)/typst $(dir $@) \
+	)
+
+else
+
+$(TYPST): | $(MAKEX_CACHE) $(dir $(TYPST)) $(CARGO)
+	@echo "$(MAKEX_COLOR)[MAKEX]$(NORMAL) $(TEXT_COLOR)install Typst$(NORMAL)"
+	@test -f $(@) \
+	|| \
+	$(CARGO) install --git https://github.com/typst/typst --tag $(TYPST_VERSION) --root $(realpath $(dir $@)/..)
+
+endif
+
+makex-install: makex-install-typst
+makex-install-typst: $(TYPST)
 
 ###########################################################################
 # lsvg

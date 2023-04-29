@@ -100,6 +100,13 @@ LUAX_PANDOC = $(BUILD_BIN)/luax-pandoc
 .DEFAULT_GOAL := compile
 
 # include makex to install LuaX doc and test dependencies
+
+# use a custom makex path to install a custom pandoc version
+MAKEX_INSTALL_PATH = /var/tmp/luax-test
+MAKEX_CACHE = /var/tmp/luax-test/cache
+# force Pandoc recompilation with Cabal to enable Pandoc tests with libluax.so
+PANDOC_DYNAMIC_LINK = yes
+
 include makex.mk
 
 ###############################################################################
