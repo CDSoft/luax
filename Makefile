@@ -209,7 +209,7 @@ LPEG_URL = http://www.inf.puc-rio.br/~roberto/lpeg/$(LPEG_ARCHIVE)
 
 ARGPARSE_VERSION = master
 ARGPARSE_ARCHIVE = argparse-$(ARGPARSE_VERSION).zip
-ARGPARSE_URL = https://github.com/mpeterv/argparse/archive/refs/heads/$(ARGPARSE_VERSION).zip
+ARGPARSE_URL = https://github.com/luarocks/argparse/archive/refs/heads/$(ARGPARSE_VERSION).zip
 
 INSPECT_VERSION = master
 INSPECT_ARCHIVE = inspect-$(INSPECT_VERSION).zip
