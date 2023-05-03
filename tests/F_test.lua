@@ -465,6 +465,8 @@ local function convert_to_and_from_string()
     eq(F.show({1, x=2, 3}, opt), "{1, 3,\n  x = 2,\n}")
     eq(F.show({1, x=2, 3, p={x=1.5, y=2.5}}), "{1, 3, p={x=1.5, y=2.5}, x=2}")
     eq(F.show({1, x=2, 3, p={x=1.5, y=2.5}}, opt), "{1, 3,\n  p = {\n    x = 1.5,\n    y = 2.5,\n  },\n  x = 2,\n}")
+    eq(F{1, x=2, 3, p={x=1.5, y=2.5}}:show(), "{1, 3, p={x=1.5, y=2.5}, x=2}")
+    eq(F{1, x=2, 3, p={x=1.5, y=2.5}}:show(opt), "{1, 3,\n  p = {\n    x = 1.5,\n    y = 2.5,\n  },\n  x = 2,\n}")
 
     eq(F.read("42"), 42)
     eq(F.read("{1, 3, x=2}"), {1, x=2, 3})

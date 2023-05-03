@@ -997,7 +997,7 @@ local default_show_options = {
     indent = nil,
 }
 
-function F.show(x, opt)
+register1 "show" (function(x, opt)
 
     opt = F.merge{default_show_options, opt}
 
@@ -1074,7 +1074,7 @@ function F.show(x, opt)
     fmt(x)
     return table.concat(tokens)
 
-end
+end)
 
 --[[------------------------------------------------------------------------@@@
 ### Converting from string
