@@ -464,7 +464,7 @@ calls `f(tmp)` where `tmp` is the name of a temporary directory.
 
 if pandoc then
     function fs.with_tmpdir(f)
-        return pandoc.system.with_temporary_directory("luax-XXXXXX", f)
+        return pandoc.system.with_temporary_directory("luax", f)
     end
 else
     function fs.with_tmpdir(f)
