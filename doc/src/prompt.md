@@ -3,5 +3,4 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-:::{doc="src/prompt/prompt.lua"}
-:::
+@(doc "src/prompt/prompt.lua")

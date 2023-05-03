@@ -3,5 +3,4 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-:::{doc="src/sys/sys.c"}
-:::
+@(doc "src/sys/sys.c")

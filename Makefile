@@ -99,19 +99,57 @@ LUAX_PANDOC = $(BUILD_BIN)/luax-pandoc
 
 .DEFAULT_GOAL := compile
 
-# include makex to install LuaX doc and test dependencies
+# check if Pandoc is able to load shared libraries
+PANDOC_DYNAMIC_LINK := $(shell (ldd `which pandoc` | grep -q "statically linked") && echo no || echo yes)
 
-# use a custom makex path to install a custom pandoc version
-MAKEX_INSTALL_PATH = /var/tmp/luax-test
-MAKEX_CACHE = /var/tmp/luax-test/cache
-# force Pandoc recompilation with Cabal to enable Pandoc tests with libluax.so
-PANDOC_DYNAMIC_LINK = yes
-
-include makex.mk
+SHELL = /bin/bash
+.SHELLFLAGS = -o pipefail -c
 
 ###############################################################################
 # Help
 ###############################################################################
+
+.PHONY: help welcome
+
+BLACK     := $(shell tput -Txterm setaf 0)
+RED       := $(shell tput -Txterm setaf 1)
+GREEN     := $(shell tput -Txterm setaf 2)
+YELLOW    := $(shell tput -Txterm setaf 3)
+BLUE      := $(shell tput -Txterm setaf 4)
+PURPLE    := $(shell tput -Txterm setaf 5)
+CYAN      := $(shell tput -Txterm setaf 6)
+WHITE     := $(shell tput -Txterm setaf 7)
+BG_BLACK  := $(shell tput -Txterm setab 0)
+BG_RED    := $(shell tput -Txterm setab 1)
+BG_GREEN  := $(shell tput -Txterm setab 2)
+BG_YELLOW := $(shell tput -Txterm setab 3)
+BG_BLUE   := $(shell tput -Txterm setab 4)
+BG_PURPLE := $(shell tput -Txterm setab 5)
+BG_CYAN   := $(shell tput -Txterm setab 6)
+BG_WHITE  := $(shell tput -Txterm setab 7)
+NORMAL    := $(shell tput -Txterm sgr0)
+
+CMD_COLOR    := ${YELLOW}
+TARGET_COLOR := ${GREEN}
+TEXT_COLOR   := ${CYAN}
+TARGET_MAX_LEN := 16
+
+## show this help massage
+help: welcome
+	@echo ''
+	@echo 'Usage:'
+	@echo '  ${CMD_COLOR}make${NORMAL} ${TARGET_COLOR}<target>${NORMAL}'
+	@echo ''
+	@echo 'Targets:'
+	@awk '/^[a-zA-Z\-_0-9]+:/ { \
+	    helpMessage = match(lastLine, /^## (.*)/); \
+	    if (helpMessage) { \
+	        helpCommand = substr($$1, 0, index($$1, ":")-1); \
+	        helpMessage = substr(lastLine, RSTART + 3, RLENGTH); \
+	        printf "  ${TARGET_COLOR}%-$(TARGET_MAX_LEN)s${NORMAL} ${TEXT_COLOR}%s${NORMAL}\n", helpCommand, helpMessage; \
+	    } \
+	} \
+	{ lastLine = $$0 }' $(MAKEFILE_LIST)
 
 red   = printf "${RED}[%s]${NORMAL} %s\n" "$1" "$2"
 green = printf "${GREEN}[%s]${NORMAL} %s\n" "$1" "$2"
@@ -120,7 +158,7 @@ cyan  = printf "${CYAN}[%s]${NORMAL} %s\n" "$1" "$2"
 
 welcome:
 	@echo '${CYAN}Lua${NORMAL} e${CYAN}X${NORMAL}tended'
-	@echo 'Copyright (C) 2021-2022 Christophe Delord (http://cdelord.fr/luax)'
+	@echo 'Copyright (C) 2021-2023 Christophe Delord (http://cdelord.fr/luax)'
 	@echo ''
 	@echo '${CYAN}luax${NORMAL} is a Lua interpreter and REPL based on Lua 5.4.4'
 	@echo 'augmented with some useful packages.'
@@ -158,7 +196,7 @@ clean:
 	rm -rf $(BUILD)
 
 ## Delete the build directory and the downloaded Zig compiler
-mrproper: clean makex-clean
+mrproper: clean
 	rm -rf $(ZIG_INSTALL)
 
 ###############################################################################
@@ -628,7 +666,7 @@ $(BUILD_TEST)/test-pandoc-luax-lua.ok: $(BUILD)/lib/luax.lua $(TEST_SOURCES) | $
 	@mkdir -p $(dir $@)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=pandoc LUA_PATH="$(BUILD_LIB)/?.lua;tests/?.lua" \
 	TEST_NUM=5 \
-	$(PANDOC) lua -l luax $(TEST_MAIN) Lua is great
+	pandoc lua -l luax $(TEST_MAIN) Lua is great
 	@touch $@
 
 $(BUILD_TEST)/test-pandoc-luax-so.ok: $(BUILD_LIB)/luax.lua $(TEST_SOURCES) | $(PANDOC)
@@ -636,7 +674,7 @@ $(BUILD_TEST)/test-pandoc-luax-so.ok: $(BUILD_LIB)/luax.lua $(TEST_SOURCES) | $(
 	@mkdir -p $(dir $@)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=dynamic LUA_CPATH="$(BUILD_LIB)/?.so" LUA_PATH="tests/?.lua" \
 	TEST_NUM=6 \
-	$(PANDOC) lua -l libluax-$(ARCH)-$(OS)-$(LIBC) $(TEST_MAIN) Lua is great
+	pandoc lua -l libluax-$(ARCH)-$(OS)-$(LIBC) $(TEST_MAIN) Lua is great
 	@touch $@
 
 # Tests of external interpreters
@@ -704,40 +742,40 @@ doc: $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD_DOC)/index.html
 
 CSS = doc/src/luax.css
 
-PANDA_OPT += --lua-filter doc/src/fix_links.lua
-PANDA_OPT += --fail-if-warnings
+PANDOC_GFM = pandoc --to gfm
+PANDOC_GFM += --lua-filter doc/src/fix_links.lua
+PANDOC_GFM += --fail-if-warnings
 
-PANDA_HTML_OPT += --embed-resources --standalone
-PANDA_HTML_OPT += --css=$(CSS)
-PANDA_HTML_OPT += --table-of-contents --toc-depth=3
-PANDA_HTML_OPT += --highlight-style=tango
+PANDOC_HTML = pandoc --to html5
+PANDOC_HTML += --embed-resources --standalone
+PANDOC_HTML += --css=$(CSS)
+PANDOC_HTML += --table-of-contents --toc-depth=3
+PANDOC_HTML += --highlight-style=tango
 
-PANDA_GFM_OPT = $(PANDA_OPT)
-
-doc/%.md: doc/src/%.md | $(PANDA)
+doc/%.md: doc/src/%.md
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(BUILD_TMP)/doc
-	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD_TMP)/doc/$(notdir $@).d $(PANDA_GFM) $(PANDA_GFM_OPT) $< -o $@
+	@ypp --MD --MT $@ --MF $(BUILD_TMP)/doc/$(notdir $@).d $< | $(PANDOC_GFM) -o $@
 
 $(BUILD_DOC)/%.md: doc/%.md
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(dir $@)
 	@cp -f $< $@
 
-$(BUILD_DOC)/%.html: doc/src/%.md $(CSS) | $(PANDA)
+$(BUILD_DOC)/%.html: doc/src/%.md $(CSS)
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(dir $@) $(BUILD_TMP)/doc
-	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD_TMP)/doc/$(notdir $@).d $(PANDA_HTML) $(PANDA_HTML_OPT) $< -o $@
+	@ypp --MD --MT $@ --MF $(BUILD_TMP)/doc/$(notdir $@).d $< | $(PANDOC_HTML) -o $@
 
 $(BUILD_DOC)/index.html: $(BUILD_DOC)/luax.html
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(dir $@)
 	@cp -f $< $@
 
-README.md: doc/src/luax.md doc/src/fix_links.lua | $(PANDA)
+README.md: doc/src/luax.md doc/src/fix_links.lua
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(BUILD_TMP)/doc
-	@PANDA_TARGET=$@ PANDA_DEP_FILE=$(BUILD_TMP)/doc/$(notdir $@).d $(PANDA_GFM) $(PANDA_GFM_OPT) $< -o $@
+	@ypp --MD --MT $@ --MF $(BUILD_TMP)/doc/$(notdir $@).d $< | $(PANDOC_GFM) -o $@
 
 -include $(BUILD_TMP)/doc/*.d
 

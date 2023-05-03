@@ -3,5 +3,4 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-:::{doc="src/linenoise/linenoise.c"}
-:::
+@(doc "src/linenoise/linenoise.c")

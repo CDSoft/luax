@@ -3,5 +3,4 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-:::{doc="src/sh/sh.lua"}
-:::
+@(doc "src/sh/sh.lua")

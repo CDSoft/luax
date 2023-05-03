@@ -3,5 +3,4 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-:::{doc="src/socket/luasocket.h"}
-:::
+@(doc "src/socket/luasocket.h")

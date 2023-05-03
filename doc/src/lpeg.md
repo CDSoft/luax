@@ -3,5 +3,4 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-:::{doc="src/lpeg/lpeg.h"}
-:::
+@(doc "src/lpeg/lpeg.h")
