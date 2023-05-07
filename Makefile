@@ -100,7 +100,7 @@ LUAX_PANDOC = $(BUILD_BIN)/luax-pandoc
 .DEFAULT_GOAL := compile
 
 # check if Pandoc is able to load shared libraries
-PANDOC_DYNAMIC_LINK := $(shell (ldd `which pandoc` | grep -q "statically linked") && echo no || echo yes)
+PANDOC_DYNAMIC_LINK := $(shell (ldd `which pandoc` | grep -q "libc.so") 2>/dev/null && echo yes || echo no)
 
 SHELL = /bin/bash
 .SHELLFLAGS = -o pipefail -c
