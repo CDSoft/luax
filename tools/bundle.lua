@@ -161,7 +161,7 @@ function bundle.bundle(arg)
     end
     local function run_script(script)
         assert(load(script.content, "@"..script.path, 't'))
-        plain.emit(("lib(%q, %s)()\n"):format(home_path(script.path), mlstr(script.content)))
+        plain.emit(("return lib(%q, %s)()\n"):format(home_path(script.path), mlstr(script.content)))
     end
     if #scripts > 1 then -- there are libs
         plain.emit "local libs = {\n"
