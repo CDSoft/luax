@@ -94,8 +94,9 @@ EXT :=
 endif
 
 LUAX_LUA = $(BUILD_BIN)/luax-lua
-
 LUAX_PANDOC = $(BUILD_BIN)/luax-pandoc
+
+LIB_LUAX = $(BUILD_LIB)/luax.lua
 
 .DEFAULT_GOAL := compile
 
@@ -188,8 +189,9 @@ compile: $(BUILD_BIN)/luax
 ## Compile LuaX for Linux, MacOS and Windows
 all: $(RUNTIMES)
 all: $(LUAX_BINARIES)
-all: $(BUILD)/luax.tar.xz
-all: doc
+all: $(LUAX_LUA)
+all: $(LUAX_PANDOC)
+all: $(LIB_LUAX)
 
 ## Delete the build directory
 clean:
@@ -441,7 +443,7 @@ $(PREFIX)/bin/luax-lua: $(LUAX_LUA)
 	@mkdir -p $(dir $@)
 	@install $< $@
 
-$(PREFIX)/lib/luax.lua: $(BUILD_LIB)/luax.lua
+$(PREFIX)/lib/luax.lua: $(LIB_LUAX)
 	@$(call cyan,"INSTALL",$@)
 	@test -n "$(PREFIX)" || (echo "No installation path found" && false)
 	@mkdir -p $(dir $@)
@@ -549,7 +551,7 @@ $(LUAX_RUNTIME_BUNDLE): $(LUAX0) $(LUAX_RUNTIME) tools/bundle.lua $(LUAX_CONFIG_
 
 $(BUILD_TMP)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUNDLE) $(LUAX_SOURCES) $(LUAX_CONFIG_H) build.zig
 	@$(call cyan,"ZIG",$@)
-	@mkdir -p $(dir $@) $(BUILD_LIB)
+	@mkdir -p $(dir $@) $(BUILD_LIB) $(BUILD_TMP)/lib
 	@RUNTIME_NAME=luaxruntime LIB_NAME=luax RUNTIME=1 $(ZIG) build \
 	    --cache-dir $(ZIG_CACHE) \
 	    --prefix $(dir $@) --prefix-exe-dir "" \
@@ -577,7 +579,7 @@ $(BUILD_BIN)/luax-%: $(BUILD_TMP)/luaxruntime-% $(LUAX_PACKAGES) tools/bundle.lu
 	$(LUAX0) tools/bundle.lua -binary $(LUAX_PACKAGES) >> $@.tmp
 	@mv $@.tmp $@
 
-$(BUILD_LIB)/luax.lua: $(LUAX0) $(LIB_LUAX_SOURCES) tools/bundle.lua $(LUAX0)
+$(LIB_LUAX): $(LUAX0) $(LIB_LUAX_SOURCES) tools/bundle.lua $(LUAX0)
 	@$(call cyan,"BUNDLE",$@)
 	@mkdir -p $(dir $@)
 	@(  set -eu;                                                    \
@@ -591,7 +593,7 @@ $(BUILD_LIB)/luax.lua: $(LUAX0) $(LIB_LUAX_SOURCES) tools/bundle.lua $(LUAX0)
 # luax CLI (e.g. for lua or pandoc)
 ###############################################################################
 
-$(LUAX_LUA): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(BUILD_LIB)/luax.lua
+$(LUAX_LUA): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(LIB_LUAX)
 	@$(call cyan,"BUNDLE",$@)
 	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -r -t lua -o $@ tools/luax.lua
 
@@ -599,7 +601,7 @@ $(LUAX_LUA): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(BUIL
 # luax-pandoc
 ###############################################################################
 
-$(LUAX_PANDOC): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(BUILD_LIB)/luax.lua
+$(LUAX_PANDOC): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(LIB_LUAX)
 	@$(call cyan,"BUNDLE",$@)
 	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -r -t pandoc -o $@ tools/luax.lua
 
@@ -646,7 +648,7 @@ $(BUILD_TEST)/test-lib.ok: $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC) $(TEST_SOURCE
 	$(LUA) -l libluax-$(ARCH)-$(OS)-$(LIBC) $(TEST_MAIN) Lua is great
 	@touch $@
 
-$(BUILD_TEST)/test-lua.ok: $(LUA) $(BUILD_LIB)/luax.lua $(TEST_SOURCES)
+$(BUILD_TEST)/test-lua.ok: $(LUA) $(LIB_LUAX) $(TEST_SOURCES)
 	@$(call cyan,"TEST",Plain Lua interpreter: $(TEST_MAIN))
 	@mkdir -p $(dir $@)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=lua TYPE=lua LUA_PATH="$(BUILD_LIB)/?.lua;tests/?.lua" \
@@ -670,7 +672,7 @@ $(BUILD_TEST)/test-pandoc-luax-lua.ok: $(BUILD)/lib/luax.lua $(TEST_SOURCES) | $
 	pandoc lua -l luax $(TEST_MAIN) Lua is great
 	@touch $@
 
-$(BUILD_TEST)/test-pandoc-luax-so.ok: $(BUILD_LIB)/luax.lua $(TEST_SOURCES) | $(PANDOC)
+$(BUILD_TEST)/test-pandoc-luax-so.ok: $(LIB_LUAX) $(TEST_SOURCES) | $(PANDOC)
 	@$(call cyan,"TEST",Pandoc Lua interpreter + libluax-$(ARCH)-$(OS)-$(LIBC).so: $(TEST_MAIN))
 	@mkdir -p $(dir $@)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=dynamic LUA_CPATH="$(BUILD_LIB)/?.so" LUA_PATH="tests/?.lua" \
@@ -779,20 +781,3 @@ README.md: doc/src/luax.md doc/src/fix_links.lua
 	@ypp --MD --MT $@ --MF $(BUILD_TMP)/doc/$(notdir $@).d $< | $(PANDOC_GFM) -o $@
 
 -include $(BUILD_TMP)/doc/*.d
-
-###############################################################################
-# Archive
-###############################################################################
-
-$(BUILD)/luax.tar.xz: README.md $(LUAX_BINARIES) $(BUILD_LIB)/luax.lua $(LUAX_LUA) $(LUAX_PANDOC) $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD_DOC)/index.html
-	@$(call cyan,"ARCHIVE",$@)
-	@rm -rf $(BUILD)/tar && mkdir -p $(BUILD)/tar
-	@cp README.md $(BUILD)/tar
-	@cp LICENSE $(BUILD)/tar
-	@mkdir -p $(BUILD)/tar/bin
-	@cp $(LUAX_BINARIES) $(BUILD)/tar/bin
-	@cp $(LUAX_LUA) $(BUILD)/tar/bin
-	@cp -r $(BUILD_LIB) $(BUILD)/tar
-	@mkdir -p $(BUILD)/tar/doc
-	@cp $(BUILD_DOC)/*.{md,html} $(BUILD)/tar/doc
-	@tar cJf $@ -C $(abspath $(BUILD)/tar) .

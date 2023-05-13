@@ -25,10 +25,19 @@ scripts.
 ```sh
 $ git clone https://github.com/CDSoft/luax
 $ cd luax
-$ make                  # compile and test
+$ make              # compile for the host
+$ make all          # compile for all known targets (cross compilation)
+$ make test         # run tests on the host
+$ make doc          # generate LuaX documentation
 ```
 
 **Note**: `make` will download a Zig compiler.
+
+### Precompiled LuaX binaries
+
+In case precompiled binaries are needed (GNU/Linux, MacOS, Windows),
+some can be found at [cdelord.fr/pub](http://cdelord.fr/pub).
+These archives contain LuaX as well as some other softwares more or less related to LuaX.
 
 ## Installation
 
