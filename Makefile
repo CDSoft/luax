@@ -609,10 +609,12 @@ $(LUAX_PANDOC): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(L
 # Tests (native only)
 ###############################################################################
 
-.PHONY: test
+.PHONY: test test-fast
 
 TEST_SOURCES := $(filter-out tests/external_interpreters.lua,$(sort $(wildcard tests/*.lua)))
 TEST_MAIN := tests/main.lua
+
+test-fast: $(BUILD_TEST)/test-luax.ok
 
 ## Run LuaX tests
 test: $(BUILD_TEST)/test-luax.ok

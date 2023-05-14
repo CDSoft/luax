@@ -1236,15 +1236,22 @@ register1 "flatten" (function(xs)
     return setmt(zs)
 end)
 
---[[@@@
+--[=[@@@
 ```lua
-F.str({s1, s2, ... sn}, [separator])
-ss:str([separator])
+F.str({s1, s2, ... sn}, [separator, [last_separator]])
+ss:str([separator, [last_separator]])
 ```
 > concatenates strings (separated with an optional separator) and returns a string.
-@@@]]
+@@@]=]
 
-register1 "str" (table.concat)
+register1 "str" (function(ss, sep, last_sep)
+    if last_sep then
+        if #ss <= 1 then return table.concat(ss) end
+        return table.concat({table.concat(ss, sep, 1, #ss-1), ss[#ss]}, last_sep)
+    else
+        return table.concat(ss, sep)
+    end
+end)
 
 --[[@@@
 ```lua

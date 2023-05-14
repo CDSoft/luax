@@ -529,8 +529,8 @@ xs:flatten()
 > Returns a flat list with all elements recursively taken from xs
 
 ``` lua
-F.str({s1, s2, ... sn}, [separator])
-ss:str([separator])
+F.str({s1, s2, ... sn}, [separator, [last_separator]])
+ss:str([separator, [last_separator]])
 ```
 
 > concatenates strings (separated with an optional separator) and
