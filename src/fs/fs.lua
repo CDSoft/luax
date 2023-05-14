@@ -215,6 +215,10 @@ if not fs then
         end
     end
 
+    function fs.readlink(path)
+        return sh.read("readlink", path) : trim()
+    end
+
     function fs.absname(path)
         if path:match "^[/\\]" or path:match "^.:" then return path end
         return fs.getcwd()..fs.sep..path

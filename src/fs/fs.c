@@ -633,6 +633,31 @@ static int fs_realpath(lua_State *L)
 
 /*@@@
 ```lua
+fs.readlink(path)
+```
+return the content of a symbolic link.
+@@@*/
+
+static int fs_readlink(lua_State *L)
+{
+#ifdef _WIN32
+    return bl_pusherror(L, "readlink not implemented");
+#else
+    const char *path = luaL_checkstring(L, 1);
+    char dest[FS_PATHSIZE+1];
+    const ssize_t n = readlink(path, dest, FS_PATHSIZE);
+    if (n < 0)
+    {
+        return bl_pusherror(L, "readlink failure");
+    }
+    dest[n] = '\0';
+    lua_pushstring(L, dest);
+    return 1;
+#endif
+}
+
+/*@@@
+```lua
 fs.absname(path)
 ```
 return the absolute path name of path.
@@ -667,6 +692,7 @@ static const luaL_Reg fslib[] =
     {"splitext",    fs_splitext},
     {"absname",     fs_absname},
     {"realpath",    fs_realpath},
+    {"readlink",    fs_readlink},
     {"getcwd",      fs_getcwd},
     {"chdir",       fs_chdir},
     {"dir",         fs_dir},

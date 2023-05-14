@@ -144,6 +144,12 @@ fs.realpath(path)
 return the resolved path name of path.
 
 ``` lua
+fs.readlink(path)
+```
+
+return the content of a symbolic link.
+
+``` lua
 fs.absname(path)
 ```
 

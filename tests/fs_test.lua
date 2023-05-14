@@ -52,6 +52,11 @@ return function()
         eq(fs.getcwd(), fs.absname(tmp))
         eq(fs.getcwd(), fs.realpath(tmp))
     end
+    if sys.os == "linux" then
+        sh.run("ln -sf", fs.join(tmp, "linkdest"), fs.join(tmp, "symlink"))
+        eq(fs.readlink(fs.join(tmp, "symlink")), fs.join(tmp, "linkdest"))
+        fs.rm(fs.join(tmp, "symlink"))
+    end
 
     fs.mkdir(in_tmp "foo")
     fs.mkdir(in_tmp "bar")
