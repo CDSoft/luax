@@ -515,7 +515,7 @@ F.abs(a)
 ```
 > absolute value of a
 @@@]]
-function F.abs(a) if a < 0 then return -a else return a end end
+F.abs = math.abs
 
 --[[@@@
 ```lua
@@ -650,19 +650,15 @@ F.proper_fraction(x)
 > - n is an integral number with the same sign as x
 > - f is a fraction with the same type and sign as x, and with absolute value less than 1.
 @@@]]
-function F.proper_fraction(x)
-    return math.modf(x)
-end
+F.proper_fraction = math.modf
 
 --[[@@@
 ```lua
 F.truncate(x)
 ```
-> returns the integer nearest x between zero and x.
+> returns the integer nearest x between zero and x and the fractional part of x.
 @@@]]
-function F.truncate(x)
-    return (math.modf(x))
-end
+F.truncate = math.modf
 
 --[[@@@
 ```lua
@@ -689,9 +685,7 @@ F.floor(x)
 ```
 > returns the greatest integer not greater than x.
 @@@]]
-function F.floor(x)
-    return math.floor(x)
-end
+F.floor = math.floor
 
 --[[@@@
 ```lua
@@ -718,9 +712,7 @@ F.is_normalized(x)
 > True if the argument is represented in normalized format
 @@@]]
 
-function F.is_normalized(x)
-    return mathx.isnormal(x)
-end
+F.is_normalized = mathx.isnormal
 
 --[[@@@
 ```lua

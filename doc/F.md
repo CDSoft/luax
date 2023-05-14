@@ -293,7 +293,8 @@ F.proper_fraction(x)
 F.truncate(x)
 ```
 
-> returns the integer nearest x between zero and x.
+> returns the integer nearest x between zero and x and the fractional
+> part of x.
 
 ``` lua
 F.round(x)
@@ -304,6 +305,7 @@ F.round(x)
 
 ``` lua
 F.ceiling(x)
+F.ceil(x)
 ```
 
 > returns the least integer not less than x.
