@@ -676,12 +676,12 @@ F.round = mathx.round
 --[[@@@
 ```lua
 F.ceiling(x)
+F.ceil(x)
 ```
 > returns the least integer not less than x.
 @@@]]
-function F.ceiling(x)
-    return math.ceil(x)
-end
+F.ceiling = math.ceil
+F.ceil = F.ceiling
 
 --[[@@@
 ```lua
