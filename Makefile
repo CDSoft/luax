@@ -161,7 +161,7 @@ welcome:
 	@echo '${CYAN}Lua${NORMAL} e${CYAN}X${NORMAL}tended'
 	@echo 'Copyright (C) 2021-2023 Christophe Delord (http://cdelord.fr/luax)'
 	@echo ''
-	@echo '${CYAN}luax${NORMAL} is a Lua interpreter and REPL based on Lua 5.4.4'
+	@echo '${CYAN}luax${NORMAL} is a Lua interpreter and REPL based on Lua 5.4'
 	@echo 'augmented with some useful packages.'
 	@echo '${CYAN}luax${NORMAL} can also produces standalone executables from Lua scripts.'
 	@echo ''
@@ -219,7 +219,7 @@ mrproper: clean
 .PHONY: update-serpent
 .PHONY: update-lz4
 
-LUA_VERSION = 5.4.4
+LUA_VERSION = 5.4.6
 LUA_ARCHIVE = lua-$(LUA_VERSION).tar.gz
 LUA_URL = https://www.lua.org/ftp/$(LUA_ARCHIVE)
 

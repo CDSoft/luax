@@ -1,6 +1,6 @@
 # Lua eXtended
 
-`luax` is a Lua interpreter and REPL based on Lua 5.4.4, augmented with
+`luax` is a Lua interpreter and REPL based on Lua 5.4, augmented with
 some useful packages. `luax` can also produces standalone executables
 from Lua scripts.
 
@@ -240,7 +240,7 @@ than the LuaX executable and can be used by a regular Lua interpreter
 E.g.:
 
     $ lua -l luax-x86_64-linux-gnu
-    Lua 5.4.4  Copyright (C) 1994-2022 Lua.org, PUC-Rio
+    Lua 5.4.6  Copyright (C) 1994-2023 Lua.org, PUC-Rio
     > F = require "F"
     > F.range(100):sum()
     5050
