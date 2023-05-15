@@ -282,10 +282,9 @@ programs:
 
 `luax` uses other third party softwares:
 
-- **[Zig 0.9.1](https://ziglang.org/)**: General-purpose programming
-  language and toolchain for maintaining robust, optimal, and reusable
-  software. ([MIT
-  license](https://github.com/ziglang/zig/blob/master/LICENSE))
+- **[Zig](https://ziglang.org/)**: General-purpose programming language
+  and toolchain for maintaining robust, optimal, and reusable software.
+  ([MIT license](https://github.com/ziglang/zig/blob/master/LICENSE))
 - **[Lua 5.4](http://www.lua.org)**: Copyright (C) 1994-2022 Lua.org,
   PUC-Rio ([MIT license](http://www.lua.org/license.html))
 - **[Lpeg](http://www.inf.puc-rio.br/~roberto/lpeg/)**: Parsing
