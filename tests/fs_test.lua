@@ -26,7 +26,7 @@ local function createfile(name)
     assert(io.open(name, "w")):close()
 end
 
-return function()
+local function fs_test(tmp)
     local cwd
     if sys.os == "linux" or sys.os == "macos" then
         cwd = io.popen("pwd"):read("a"):trim()
@@ -40,9 +40,7 @@ return function()
     eq(fs.mv, fs.rename)
     eq(fs.rm, fs.remove)
 
-    local tmp = fs.join(cwd, ".build", "test", "fs")
     local in_tmp = F.curry(fs.join)(tmp)
-    eq(tmp, cwd..fs.sep..".build"..fs.sep.."test"..fs.sep.."fs")
     F.map(fs.remove, fs.walk(tmp, {reverse=true}))
     fs.remove(tmp)
 
@@ -252,4 +250,8 @@ return function()
         fs.chdir(cwd)
     end
 
+end
+
+return function()
+    fs.with_tmpdir(fs_test)
 end

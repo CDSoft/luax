@@ -558,7 +558,8 @@ $(BUILD_TMP)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUND
 	    -D$(RELEASE) \
 	    -Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD_TMP)/luaxruntime-%,%,$@)) \
 	    --build-file build.zig
-	@find $(BUILD_TMP)/lib -name "*luax*" | while read lib; do mv "$$lib" "$(BUILD_LIB)/`basename $$lib | sed s/^luax-/libluax-/`"; done
+	@find $(BUILD_TMP)/lib -name "*luax-$(patsubst %.exe,%,$(patsubst $(BUILD_TMP)/luaxruntime-%,%,$@))*" \
+	    | while read lib; do mv "$$lib" "$(BUILD_LIB)/`basename $$lib | sed s/^luax-/libluax-/`"; done
 	@touch $@
 
 ###############################################################################
@@ -674,7 +675,7 @@ $(BUILD_TEST)/test-pandoc-luax-lua.ok: $(BUILD)/lib/luax.lua $(TEST_SOURCES) | $
 	pandoc lua -l luax $(TEST_MAIN) Lua is great
 	@touch $@
 
-$(BUILD_TEST)/test-pandoc-luax-so.ok: $(LIB_LUAX) $(TEST_SOURCES) | $(PANDOC)
+$(BUILD_TEST)/test-pandoc-luax-so.ok: $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC) $(TEST_SOURCES) | $(PANDOC)
 	@$(call cyan,"TEST",Pandoc Lua interpreter + libluax-$(ARCH)-$(OS)-$(LIBC).so: $(TEST_MAIN))
 	@mkdir -p $(dir $@)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=dynamic LUA_CPATH="$(BUILD_LIB)/?.so" LUA_PATH="tests/?.lua" \
