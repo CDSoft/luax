@@ -35,6 +35,11 @@ some can be found at [cdelord.fr/pub](http://cdelord.fr/pub). These
 archives contain LuaX as well as some other softwares more or less
 related to LuaX.
 
+**Warning**: There are Linux binaries linked with musl and glibc. The
+musl binaries are platform independent but can not load shared
+libraries. The glibc binaries can load shared libraries but may depend
+on some specific glibc versions on the host.
+
 ## Installation
 
 ### Installation of luax for the current host only
@@ -73,21 +78,6 @@ $ make install-all PREFIX=/usr  # install luax to /usr/bin
   libraries
 - `$PREFIX/lib/luax.lua`: a pure Lua reimplementation of some LuaX
   libraries, usable in any Lua 5.4 interpreter.
-
-## Precompiled binaries
-
-It is usually highly recommended to build `luax` from sources. The
-latest binaries are available here:
-[luax.tar.xz](http://cdelord.fr/luax/luax.tar.xz).
-
-The Linux and Raspberry Pi binaries are linked statically with
-[musl](https://musl.libc.org/) and are not dynamic executables. They
-should work on any Linux distributions.
-
-**Warning**: There are Linux binaries linked with musl and glibc. The
-musl binaries are platform independent but can not load shared
-libraries. The glibc binaries can load shared libraries but may depend
-on some specific glibc versions on the host.
 
 ## Usage
 
