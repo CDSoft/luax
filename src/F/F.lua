@@ -1339,7 +1339,7 @@ register1 "items" (function(t, comp_lt)
     local kvs = {}
     for i = 1, #ks do
         local k = ks[i]
-        kvs[i] = {k, t[k]} end
+        kvs[i] = F{k, t[k]} end
     return F(kvs)
 end)
 
