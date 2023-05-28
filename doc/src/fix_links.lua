@@ -43,6 +43,16 @@ if FORMAT == "gfm" then
         end
     end
 
+    function Image(el)
+        if el.src:match"%.svg$" then
+            local new_src = path.join{output_path, "doc", el.src}
+            if file_exists(new_src) then
+                el.src = path.make_relative(new_src, output_path)
+                return el
+            end
+        end
+    end
+
 end
 
 if FORMAT == "html5" then
@@ -52,4 +62,8 @@ if FORMAT == "html5" then
         return el
     end
 
+    function Image(el)
+        el.src = path.join{"doc", el.src}
+        return el
+    end
 end

@@ -742,9 +742,13 @@ MARKDOWN_OUTPUTS = $(MARKDOWN_SOURCES:doc/src/%.md=doc/%.md)
 HTML_OUTPUTS = $(MARKDOWN_SOURCES:doc/src/%.md=$(BUILD_DOC)/%.html)
 MD_OUTPUTS = $(MARKDOWN_SOURCES:doc/src/%.md=$(BUILD_DOC)/%.md)
 
+IMAGES += doc/luax-banner.svg
+IMAGES += doc/luax-logo.svg
+
 doc: README.md
 doc: $(MARKDOWN_OUTPUTS)
 doc: $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD_DOC)/index.html
+doc: $(IMAGES)
 
 CSS = doc/src/luax.css
 
@@ -753,22 +757,23 @@ PANDOC_GFM += --lua-filter doc/src/fix_links.lua
 PANDOC_GFM += --fail-if-warnings
 
 PANDOC_HTML = pandoc --to html5
+PANDOC_HTML += --lua-filter doc/src/fix_links.lua
 PANDOC_HTML += --embed-resources --standalone
 PANDOC_HTML += --css=$(CSS)
 PANDOC_HTML += --table-of-contents --toc-depth=3
 PANDOC_HTML += --highlight-style=tango
 
-doc/%.md: doc/src/%.md
+doc/%.md: doc/src/%.md $(IMAGES)
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(BUILD_TMP)/doc
 	@ypp --MD --MT $@ --MF $(BUILD_TMP)/doc/$(notdir $@).d $< | $(PANDOC_GFM) -o $@
 
-$(BUILD_DOC)/%.md: doc/%.md
+$(BUILD_DOC)/%.md: doc/%.md $(IMAGES)
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(dir $@)
 	@cp -f $< $@
 
-$(BUILD_DOC)/%.html: doc/src/%.md $(CSS)
+$(BUILD_DOC)/%.html: doc/src/%.md $(CSS) doc/src/fix_links.lua $(IMAGES)
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(dir $@) $(BUILD_TMP)/doc
 	@ypp --MD --MT $@ --MF $(BUILD_TMP)/doc/$(notdir $@).d $< | $(PANDOC_HTML) -o $@
@@ -778,9 +783,17 @@ $(BUILD_DOC)/index.html: $(BUILD_DOC)/luax.html
 	@mkdir -p $(dir $@)
 	@cp -f $< $@
 
-README.md: doc/src/luax.md doc/src/fix_links.lua
+README.md: doc/src/luax.md doc/src/fix_links.lua $(IMAGES)
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(BUILD_TMP)/doc
 	@ypp --MD --MT $@ --MF $(BUILD_TMP)/doc/$(notdir $@).d $< | $(PANDOC_GFM) -o $@
+
+doc/luax-banner.svg: doc/luax-logo.lua
+	@$(call cyan,"IMAGE",$@)
+	@lsvg $< $@ -- 1024 192
+
+doc/luax-logo.svg: doc/luax-logo.lua
+	@$(call cyan,"IMAGE",$@)
+	@lsvg $< $@ -- 256 256
 
 -include $(BUILD_TMP)/doc/*.d

@@ -1,3 +1,5 @@
+<img src="doc/luax-banner.svg" style="width:100.0%" />
+
 # Lua eXtended
 
 `luax` is a Lua interpreter and REPL based on Lua 5.4, augmented with

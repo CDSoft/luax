@@ -3,6 +3,8 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
+![](luax-banner.svg){width=100%}
+
 # Lua eXtended
 
 `luax` is a Lua interpreter and REPL based on Lua 5.4, augmented with some
