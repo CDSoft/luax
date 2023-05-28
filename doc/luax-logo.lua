@@ -40,7 +40,7 @@ local ring_width = h*5/64
 local r_moon = r_planet/4 + h*3/128
 local r_orbit = h/2 - h*5/64
 local inclination = 15
-local number_of_stars = 50
+local number_of_stars = 30
 local r_star = h * 4/1024
 
 img {
@@ -95,7 +95,8 @@ local function ring(dir)
         rx = r_ring,
         ry = r_ring*0.33,
         fill_opacity = 0,
-        stroke = dir > 0 and "url(#TopRingGradient)" or "url(#BottomRingGradient)", stroke_width = ring_width,
+        stroke = dir > 0 and "url(#TopRingGradient)" or "url(#BottomRingGradient)",
+        stroke_width = ring_width,
     }
 end
 
@@ -107,15 +108,25 @@ local function sky()
     local star_colors = { "gold", "red", "cyan", "brown" }
     local rnd = crypt.prng(42)
     for _ = 1, number_of_stars do
-        local x = rnd:int(w)
-        local y = rnd:int(h)
-        local l = r_star / (4/10)
+        local x = F.floor(rnd:float(h))
+        local y = F.floor(rnd:float(h))
+        local l = r_star * 2
         local c = star_colors[rnd:int(1, #star_colors)]
-        stars {
-            Circle { cxy=Point(x, y), r=r_star, fill=c },
-            Line { xy1=Point(x, y-l), xy2=Point(x,y+l), stroke=c },
-            Line { xy1=Point(x-l, y), xy2=Point(x+l,y), stroke=c },
-        }
+        -- periodic sky, the square h*h around the planet repeats
+        -- xi = x + i*h + w/2 ∈ [0, w]
+        -- xi > 0 <=> i > (-w/2 - x)/h
+        -- xi < w <=> i < (w - w/2 - x)/h
+        for i = F.floor((-w/2-x)/h), F.ceiling((w/2-x)/h) do
+            local xi = x + i*h + w/2
+            local yi = F.even(i) and y or h-y
+            if xi > 0 and xi < w then
+                stars {
+                    Circle { cxy=Point(xi, yi), r=r_star, fill=c },
+                    Line { xy1=Point(xi, yi-l), xy2=Point(xi,yi+l), stroke=c },
+                    Line { xy1=Point(xi-l, yi), xy2=Point(xi+l,yi), stroke=c },
+                }
+            end
+        end
     end
     return stars
 end
@@ -134,3 +145,14 @@ img {
         ring(1),
     },
 }
+
+if arg[3] then
+    img {
+        Text(arg[3]) {
+            x = w - fh/8, y = h - fh/8,
+            text_anchor = "end",
+            font_size = fh/4,
+            fill = "green",
+        },
+    }
+end

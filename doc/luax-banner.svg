@@ -46,156 +46,480 @@ http://cdelord.fr/luax
             </linearGradient>
         </defs>
     <g stroke-linecap="round" stroke-width="0.56">
-<circle cx="704" cy="106" fill="brown" r="0.75"/>
-<line stroke="brown" x1="704" x2="704" y1="104.12" y2="107.88"/>
-<line stroke="brown" x1="702.12" x2="705.88" y1="106" y2="106"/>
-<circle cx="923" cy="116" fill="brown" r="0.75"/>
-<line stroke="brown" x1="923" x2="923" y1="114.12" y2="117.88"/>
-<line stroke="brown" x1="921.12" x2="924.88" y1="116" y2="116"/>
-<circle cx="353" cy="44" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="353" x2="353" y1="42.12" y2="45.88"/>
-<line stroke="cyan" x1="351.12" x2="354.88" y1="44" y2="44"/>
-<circle cx="701" cy="87" fill="brown" r="0.75"/>
-<line stroke="brown" x1="701" x2="701" y1="85.12" y2="88.88"/>
-<line stroke="brown" x1="699.12" x2="702.88" y1="87" y2="87"/>
-<circle cx="551" cy="135" fill="red" r="0.75"/>
-<line stroke="red" x1="551" x2="551" y1="133.12" y2="136.88"/>
-<line stroke="red" x1="549.12" x2="552.88" y1="135" y2="135"/>
-<circle cx="360" cy="163" fill="gold" r="0.75"/>
-<line stroke="gold" x1="360" x2="360" y1="161.12" y2="164.88"/>
-<line stroke="gold" x1="358.12" x2="361.88" y1="163" y2="163"/>
-<circle cx="317" cy="188" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="317" x2="317" y1="186.12" y2="189.88"/>
-<line stroke="cyan" x1="315.12" x2="318.88" y1="188" y2="188"/>
-<circle cx="620" cy="126" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="620" x2="620" y1="124.12" y2="127.88"/>
-<line stroke="cyan" x1="618.12" x2="621.88" y1="126" y2="126"/>
-<circle cx="185" cy="83" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="185" x2="185" y1="81.12" y2="84.88"/>
-<line stroke="cyan" x1="183.12" x2="186.88" y1="83" y2="83"/>
-<circle cx="692" cy="67" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="692" x2="692" y1="65.12" y2="68.88"/>
-<line stroke="cyan" x1="690.12" x2="693.88" y1="67" y2="67"/>
-<circle cx="585" cy="133" fill="brown" r="0.75"/>
-<line stroke="brown" x1="585" x2="585" y1="131.12" y2="134.88"/>
-<line stroke="brown" x1="583.12" x2="586.88" y1="133" y2="133"/>
-<circle cx="248" cy="102" fill="red" r="0.75"/>
-<line stroke="red" x1="248" x2="248" y1="100.12" y2="103.88"/>
-<line stroke="red" x1="246.12" x2="249.88" y1="102" y2="102"/>
-<circle cx="134" cy="133" fill="gold" r="0.75"/>
-<line stroke="gold" x1="134" x2="134" y1="131.12" y2="134.88"/>
-<line stroke="gold" x1="132.12" x2="135.88" y1="133" y2="133"/>
-<circle cx="816" cy="134" fill="red" r="0.75"/>
-<line stroke="red" x1="816" x2="816" y1="132.12" y2="135.88"/>
-<line stroke="red" x1="814.12" x2="817.88" y1="134" y2="134"/>
-<circle cx="857" cy="122" fill="gold" r="0.75"/>
-<line stroke="gold" x1="857" x2="857" y1="120.12" y2="123.88"/>
-<line stroke="gold" x1="855.12" x2="858.88" y1="122" y2="122"/>
-<circle cx="875" cy="95" fill="red" r="0.75"/>
-<line stroke="red" x1="875" x2="875" y1="93.12" y2="96.88"/>
-<line stroke="red" x1="873.12" x2="876.88" y1="95" y2="95"/>
-<circle cx="224" cy="145" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="224" x2="224" y1="143.12" y2="146.88"/>
-<line stroke="cyan" x1="222.12" x2="225.88" y1="145" y2="145"/>
-<circle cx="417" cy="170" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="417" x2="417" y1="168.12" y2="171.88"/>
-<line stroke="cyan" x1="415.12" x2="418.88" y1="170" y2="170"/>
-<circle cx="900" cy="101" fill="gold" r="0.75"/>
-<line stroke="gold" x1="900" x2="900" y1="99.12" y2="102.88"/>
-<line stroke="gold" x1="898.12" x2="901.88" y1="101" y2="101"/>
-<circle cx="30" cy="162" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="30" x2="30" y1="160.12" y2="163.88"/>
-<line stroke="cyan" x1="28.12" x2="31.88" y1="162" y2="162"/>
-<circle cx="238" cy="93" fill="gold" r="0.75"/>
-<line stroke="gold" x1="238" x2="238" y1="91.12" y2="94.88"/>
-<line stroke="gold" x1="236.12" x2="239.88" y1="93" y2="93"/>
-<circle cx="141" cy="181" fill="brown" r="0.75"/>
-<line stroke="brown" x1="141" x2="141" y1="179.12" y2="182.88"/>
-<line stroke="brown" x1="139.12" x2="142.88" y1="181" y2="181"/>
-<circle cx="344" cy="60" fill="red" r="0.75"/>
-<line stroke="red" x1="344" x2="344" y1="58.12" y2="61.88"/>
-<line stroke="red" x1="342.12" x2="345.88" y1="60" y2="60"/>
-<circle cx="646" cy="69" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="646" x2="646" y1="67.12" y2="70.88"/>
-<line stroke="cyan" x1="644.12" x2="647.88" y1="69" y2="69"/>
-<circle cx="639" cy="110" fill="gold" r="0.75"/>
-<line stroke="gold" x1="639" x2="639" y1="108.12" y2="111.88"/>
-<line stroke="gold" x1="637.12" x2="640.88" y1="110" y2="110"/>
-<circle cx="255" cy="110" fill="brown" r="0.75"/>
-<line stroke="brown" x1="255" x2="255" y1="108.12" y2="111.88"/>
-<line stroke="brown" x1="253.12" x2="256.88" y1="110" y2="110"/>
-<circle cx="872" cy="116" fill="red" r="0.75"/>
-<line stroke="red" x1="872" x2="872" y1="114.12" y2="117.88"/>
-<line stroke="red" x1="870.12" x2="873.88" y1="116" y2="116"/>
-<circle cx="938" cy="153" fill="brown" r="0.75"/>
-<line stroke="brown" x1="938" x2="938" y1="151.12" y2="154.88"/>
-<line stroke="brown" x1="936.12" x2="939.88" y1="153" y2="153"/>
-<circle cx="564" cy="95" fill="brown" r="0.75"/>
-<line stroke="brown" x1="564" x2="564" y1="93.12" y2="96.88"/>
-<line stroke="brown" x1="562.12" x2="565.88" y1="95" y2="95"/>
-<circle cx="866" cy="128" fill="brown" r="0.75"/>
-<line stroke="brown" x1="866" x2="866" y1="126.12" y2="129.88"/>
-<line stroke="brown" x1="864.12" x2="867.88" y1="128" y2="128"/>
-<circle cx="831" cy="111" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="831" x2="831" y1="109.12" y2="112.88"/>
-<line stroke="cyan" x1="829.12" x2="832.88" y1="111" y2="111"/>
-<circle cx="605" cy="28" fill="gold" r="0.75"/>
-<line stroke="gold" x1="605" x2="605" y1="26.12" y2="29.88"/>
-<line stroke="gold" x1="603.12" x2="606.88" y1="28" y2="28"/>
-<circle cx="415" cy="107" fill="gold" r="0.75"/>
-<line stroke="gold" x1="415" x2="415" y1="105.12" y2="108.88"/>
-<line stroke="gold" x1="413.12" x2="416.88" y1="107" y2="107"/>
-<circle cx="343" cy="179" fill="gold" r="0.75"/>
-<line stroke="gold" x1="343" x2="343" y1="177.12" y2="180.88"/>
-<line stroke="gold" x1="341.12" x2="344.88" y1="179" y2="179"/>
-<circle cx="581" cy="93" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="581" x2="581" y1="91.12" y2="94.88"/>
-<line stroke="cyan" x1="579.12" x2="582.88" y1="93" y2="93"/>
-<circle cx="991" cy="6" fill="red" r="0.75"/>
-<line stroke="red" x1="991" x2="991" y1="4.12" y2="7.88"/>
-<line stroke="red" x1="989.12" x2="992.88" y1="6" y2="6"/>
-<circle cx="566" cy="91" fill="brown" r="0.75"/>
-<line stroke="brown" x1="566" x2="566" y1="89.12" y2="92.88"/>
-<line stroke="brown" x1="564.12" x2="567.88" y1="91" y2="91"/>
-<circle cx="134" cy="190" fill="gold" r="0.75"/>
-<line stroke="gold" x1="134" x2="134" y1="188.12" y2="191.88"/>
-<line stroke="gold" x1="132.12" x2="135.88" y1="190" y2="190"/>
-<circle cx="633" cy="98" fill="gold" r="0.75"/>
-<line stroke="gold" x1="633" x2="633" y1="96.12" y2="99.88"/>
-<line stroke="gold" x1="631.12" x2="634.88" y1="98" y2="98"/>
-<circle cx="480" cy="140" fill="red" r="0.75"/>
-<line stroke="red" x1="480" x2="480" y1="138.12" y2="141.88"/>
-<line stroke="red" x1="478.12" x2="481.88" y1="140" y2="140"/>
-<circle cx="6" cy="188" fill="brown" r="0.75"/>
-<line stroke="brown" x1="6" x2="6" y1="186.12" y2="189.88"/>
-<line stroke="brown" x1="4.12" x2="7.88" y1="188" y2="188"/>
-<circle cx="931" cy="17" fill="gold" r="0.75"/>
-<line stroke="gold" x1="931" x2="931" y1="15.12" y2="18.88"/>
-<line stroke="gold" x1="929.12" x2="932.88" y1="17" y2="17"/>
-<circle cx="552" cy="42" fill="gold" r="0.75"/>
-<line stroke="gold" x1="552" x2="552" y1="40.12" y2="43.88"/>
-<line stroke="gold" x1="550.12" x2="553.88" y1="42" y2="42"/>
-<circle cx="969" cy="179" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="969" x2="969" y1="177.12" y2="180.88"/>
-<line stroke="cyan" x1="967.12" x2="970.88" y1="179" y2="179"/>
-<circle cx="170" cy="64" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="170" x2="170" y1="62.12" y2="65.88"/>
-<line stroke="cyan" x1="168.12" x2="171.88" y1="64" y2="64"/>
-<circle cx="711" cy="149" fill="gold" r="0.75"/>
-<line stroke="gold" x1="711" x2="711" y1="147.12" y2="150.88"/>
-<line stroke="gold" x1="709.12" x2="712.88" y1="149" y2="149"/>
-<circle cx="121" cy="39" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="121" x2="121" y1="37.12" y2="40.88"/>
-<line stroke="cyan" x1="119.12" x2="122.88" y1="39" y2="39"/>
-<circle cx="355" cy="28" fill="gold" r="0.75"/>
-<line stroke="gold" x1="355" x2="355" y1="26.12" y2="29.88"/>
-<line stroke="gold" x1="353.12" x2="356.88" y1="28" y2="28"/>
-<circle cx="289" cy="118" fill="gold" r="0.75"/>
-<line stroke="gold" x1="289" x2="289" y1="116.12" y2="119.88"/>
-<line stroke="gold" x1="287.12" x2="290.88" y1="118" y2="118"/>
-<circle cx="827" cy="180" fill="cyan" r="0.75"/>
-<line stroke="cyan" x1="827" x2="827" y1="178.12" y2="181.88"/>
-<line stroke="cyan" x1="825.12" x2="828.88" y1="180" y2="180"/>
+<circle cx="30" cy="102" fill="brown" r="0.75"/>
+<line stroke="brown" x1="30" x2="30" y1="100.5" y2="103.5"/>
+<line stroke="brown" x1="28.5" x2="31.5" y1="102" y2="102"/>
+<circle cx="222" cy="90" fill="brown" r="0.75"/>
+<line stroke="brown" x1="222" x2="222" y1="88.5" y2="91.5"/>
+<line stroke="brown" x1="220.5" x2="223.5" y1="90" y2="90"/>
+<circle cx="414" cy="102" fill="brown" r="0.75"/>
+<line stroke="brown" x1="414" x2="414" y1="100.5" y2="103.5"/>
+<line stroke="brown" x1="412.5" x2="415.5" y1="102" y2="102"/>
+<circle cx="606" cy="90" fill="brown" r="0.75"/>
+<line stroke="brown" x1="606" x2="606" y1="88.5" y2="91.5"/>
+<line stroke="brown" x1="604.5" x2="607.5" y1="90" y2="90"/>
+<circle cx="798" cy="102" fill="brown" r="0.75"/>
+<line stroke="brown" x1="798" x2="798" y1="100.5" y2="103.5"/>
+<line stroke="brown" x1="796.5" x2="799.5" y1="102" y2="102"/>
+<circle cx="990" cy="90" fill="brown" r="0.75"/>
+<line stroke="brown" x1="990" x2="990" y1="88.5" y2="91.5"/>
+<line stroke="brown" x1="988.5" x2="991.5" y1="90" y2="90"/>
+<circle cx="132" cy="14" fill="brown" r="0.75"/>
+<line stroke="brown" x1="132" x2="132" y1="12.5" y2="15.5"/>
+<line stroke="brown" x1="130.5" x2="133.5" y1="14" y2="14"/>
+<circle cx="324" cy="178" fill="brown" r="0.75"/>
+<line stroke="brown" x1="324" x2="324" y1="176.5" y2="179.5"/>
+<line stroke="brown" x1="322.5" x2="325.5" y1="178" y2="178"/>
+<circle cx="516" cy="14" fill="brown" r="0.75"/>
+<line stroke="brown" x1="516" x2="516" y1="12.5" y2="15.5"/>
+<line stroke="brown" x1="514.5" x2="517.5" y1="14" y2="14"/>
+<circle cx="708" cy="178" fill="brown" r="0.75"/>
+<line stroke="brown" x1="708" x2="708" y1="176.5" y2="179.5"/>
+<line stroke="brown" x1="706.5" x2="709.5" y1="178" y2="178"/>
+<circle cx="900" cy="14" fill="brown" r="0.75"/>
+<line stroke="brown" x1="900" x2="900" y1="12.5" y2="15.5"/>
+<line stroke="brown" x1="898.5" x2="901.5" y1="14" y2="14"/>
+<circle cx="141" cy="76" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="141" x2="141" y1="74.5" y2="77.5"/>
+<line stroke="cyan" x1="139.5" x2="142.5" y1="76" y2="76"/>
+<circle cx="333" cy="116" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="333" x2="333" y1="114.5" y2="117.5"/>
+<line stroke="cyan" x1="331.5" x2="334.5" y1="116" y2="116"/>
+<circle cx="525" cy="76" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="525" x2="525" y1="74.5" y2="77.5"/>
+<line stroke="cyan" x1="523.5" x2="526.5" y1="76" y2="76"/>
+<circle cx="717" cy="116" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="717" x2="717" y1="114.5" y2="117.5"/>
+<line stroke="cyan" x1="715.5" x2="718.5" y1="116" y2="116"/>
+<circle cx="909" cy="76" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="909" x2="909" y1="74.5" y2="77.5"/>
+<line stroke="cyan" x1="907.5" x2="910.5" y1="76" y2="76"/>
+<circle cx="175" cy="27" fill="brown" r="0.75"/>
+<line stroke="brown" x1="175" x2="175" y1="25.5" y2="28.5"/>
+<line stroke="brown" x1="173.5" x2="176.5" y1="27" y2="27"/>
+<circle cx="367" cy="165" fill="brown" r="0.75"/>
+<line stroke="brown" x1="367" x2="367" y1="163.5" y2="166.5"/>
+<line stroke="brown" x1="365.5" x2="368.5" y1="165" y2="165"/>
+<circle cx="559" cy="27" fill="brown" r="0.75"/>
+<line stroke="brown" x1="559" x2="559" y1="25.5" y2="28.5"/>
+<line stroke="brown" x1="557.5" x2="560.5" y1="27" y2="27"/>
+<circle cx="751" cy="165" fill="brown" r="0.75"/>
+<line stroke="brown" x1="751" x2="751" y1="163.5" y2="166.5"/>
+<line stroke="brown" x1="749.5" x2="752.5" y1="165" y2="165"/>
+<circle cx="943" cy="27" fill="brown" r="0.75"/>
+<line stroke="brown" x1="943" x2="943" y1="25.5" y2="28.5"/>
+<line stroke="brown" x1="941.5" x2="944.5" y1="27" y2="27"/>
+<circle cx="46" cy="64" fill="red" r="0.75"/>
+<line stroke="red" x1="46" x2="46" y1="62.5" y2="65.5"/>
+<line stroke="red" x1="44.5" x2="47.5" y1="64" y2="64"/>
+<circle cx="238" cy="128" fill="red" r="0.75"/>
+<line stroke="red" x1="238" x2="238" y1="126.5" y2="129.5"/>
+<line stroke="red" x1="236.5" x2="239.5" y1="128" y2="128"/>
+<circle cx="430" cy="64" fill="red" r="0.75"/>
+<line stroke="red" x1="430" x2="430" y1="62.5" y2="65.5"/>
+<line stroke="red" x1="428.5" x2="431.5" y1="64" y2="64"/>
+<circle cx="622" cy="128" fill="red" r="0.75"/>
+<line stroke="red" x1="622" x2="622" y1="126.5" y2="129.5"/>
+<line stroke="red" x1="620.5" x2="623.5" y1="128" y2="128"/>
+<circle cx="814" cy="64" fill="red" r="0.75"/>
+<line stroke="red" x1="814" x2="814" y1="62.5" y2="65.5"/>
+<line stroke="red" x1="812.5" x2="815.5" y1="64" y2="64"/>
+<circle cx="1006" cy="128" fill="red" r="0.75"/>
+<line stroke="red" x1="1006" x2="1006" y1="126.5" y2="129.5"/>
+<line stroke="red" x1="1004.5" x2="1007.5" y1="128" y2="128"/>
+<circle cx="163" cy="156" fill="gold" r="0.75"/>
+<line stroke="gold" x1="163" x2="163" y1="154.5" y2="157.5"/>
+<line stroke="gold" x1="161.5" x2="164.5" y1="156" y2="156"/>
+<circle cx="355" cy="36" fill="gold" r="0.75"/>
+<line stroke="gold" x1="355" x2="355" y1="34.5" y2="37.5"/>
+<line stroke="gold" x1="353.5" x2="356.5" y1="36" y2="36"/>
+<circle cx="547" cy="156" fill="gold" r="0.75"/>
+<line stroke="gold" x1="547" x2="547" y1="154.5" y2="157.5"/>
+<line stroke="gold" x1="545.5" x2="548.5" y1="156" y2="156"/>
+<circle cx="739" cy="36" fill="gold" r="0.75"/>
+<line stroke="gold" x1="739" x2="739" y1="34.5" y2="37.5"/>
+<line stroke="gold" x1="737.5" x2="740.5" y1="36" y2="36"/>
+<circle cx="931" cy="156" fill="gold" r="0.75"/>
+<line stroke="gold" x1="931" x2="931" y1="154.5" y2="157.5"/>
+<line stroke="gold" x1="929.5" x2="932.5" y1="156" y2="156"/>
+<circle cx="177" cy="145" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="177" x2="177" y1="143.5" y2="146.5"/>
+<line stroke="cyan" x1="175.5" x2="178.5" y1="145" y2="145"/>
+<circle cx="369" cy="47" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="369" x2="369" y1="45.5" y2="48.5"/>
+<line stroke="cyan" x1="367.5" x2="370.5" y1="47" y2="47"/>
+<circle cx="561" cy="145" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="561" x2="561" y1="143.5" y2="146.5"/>
+<line stroke="cyan" x1="559.5" x2="562.5" y1="145" y2="145"/>
+<circle cx="753" cy="47" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="753" x2="753" y1="45.5" y2="48.5"/>
+<line stroke="cyan" x1="751.5" x2="754.5" y1="47" y2="47"/>
+<circle cx="945" cy="145" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="945" x2="945" y1="143.5" y2="146.5"/>
+<line stroke="cyan" x1="943.5" x2="946.5" y1="145" y2="145"/>
+<circle cx="150" cy="40" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="150" x2="150" y1="38.5" y2="41.5"/>
+<line stroke="cyan" x1="148.5" x2="151.5" y1="40" y2="40"/>
+<circle cx="342" cy="152" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="342" x2="342" y1="150.5" y2="153.5"/>
+<line stroke="cyan" x1="340.5" x2="343.5" y1="152" y2="152"/>
+<circle cx="534" cy="40" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="534" x2="534" y1="38.5" y2="41.5"/>
+<line stroke="cyan" x1="532.5" x2="535.5" y1="40" y2="40"/>
+<circle cx="726" cy="152" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="726" x2="726" y1="150.5" y2="153.5"/>
+<line stroke="cyan" x1="724.5" x2="727.5" y1="152" y2="152"/>
+<circle cx="918" cy="40" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="918" x2="918" y1="38.5" y2="41.5"/>
+<line stroke="cyan" x1="916.5" x2="919.5" y1="40" y2="40"/>
+<circle cx="67" cy="48" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="67" x2="67" y1="46.5" y2="49.5"/>
+<line stroke="cyan" x1="65.5" x2="68.5" y1="48" y2="48"/>
+<circle cx="259" cy="144" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="259" x2="259" y1="142.5" y2="145.5"/>
+<line stroke="cyan" x1="257.5" x2="260.5" y1="144" y2="144"/>
+<circle cx="451" cy="48" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="451" x2="451" y1="46.5" y2="49.5"/>
+<line stroke="cyan" x1="449.5" x2="452.5" y1="48" y2="48"/>
+<circle cx="643" cy="144" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="643" x2="643" y1="142.5" y2="145.5"/>
+<line stroke="cyan" x1="641.5" x2="644.5" y1="144" y2="144"/>
+<circle cx="835" cy="48" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="835" x2="835" y1="46.5" y2="49.5"/>
+<line stroke="cyan" x1="833.5" x2="836.5" y1="48" y2="48"/>
+<circle cx="28" cy="118" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="28" x2="28" y1="116.5" y2="119.5"/>
+<line stroke="cyan" x1="26.5" x2="29.5" y1="118" y2="118"/>
+<circle cx="220" cy="74" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="220" x2="220" y1="72.5" y2="75.5"/>
+<line stroke="cyan" x1="218.5" x2="221.5" y1="74" y2="74"/>
+<circle cx="412" cy="118" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="412" x2="412" y1="116.5" y2="119.5"/>
+<line stroke="cyan" x1="410.5" x2="413.5" y1="118" y2="118"/>
+<circle cx="604" cy="74" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="604" x2="604" y1="72.5" y2="75.5"/>
+<line stroke="cyan" x1="602.5" x2="605.5" y1="74" y2="74"/>
+<circle cx="796" cy="118" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="796" x2="796" y1="116.5" y2="119.5"/>
+<line stroke="cyan" x1="794.5" x2="797.5" y1="118" y2="118"/>
+<circle cx="988" cy="74" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="988" x2="988" y1="72.5" y2="75.5"/>
+<line stroke="cyan" x1="986.5" x2="989.5" y1="74" y2="74"/>
+<circle cx="102" cy="25" fill="brown" r="0.75"/>
+<line stroke="brown" x1="102" x2="102" y1="23.5" y2="26.5"/>
+<line stroke="brown" x1="100.5" x2="103.5" y1="25" y2="25"/>
+<circle cx="294" cy="167" fill="brown" r="0.75"/>
+<line stroke="brown" x1="294" x2="294" y1="165.5" y2="168.5"/>
+<line stroke="brown" x1="292.5" x2="295.5" y1="167" y2="167"/>
+<circle cx="486" cy="25" fill="brown" r="0.75"/>
+<line stroke="brown" x1="486" x2="486" y1="23.5" y2="26.5"/>
+<line stroke="brown" x1="484.5" x2="487.5" y1="25" y2="25"/>
+<circle cx="678" cy="167" fill="brown" r="0.75"/>
+<line stroke="brown" x1="678" x2="678" y1="165.5" y2="168.5"/>
+<line stroke="brown" x1="676.5" x2="679.5" y1="167" y2="167"/>
+<circle cx="870" cy="25" fill="brown" r="0.75"/>
+<line stroke="brown" x1="870" x2="870" y1="23.5" y2="26.5"/>
+<line stroke="brown" x1="868.5" x2="871.5" y1="25" y2="25"/>
+<circle cx="114" cy="157" fill="red" r="0.75"/>
+<line stroke="red" x1="114" x2="114" y1="155.5" y2="158.5"/>
+<line stroke="red" x1="112.5" x2="115.5" y1="157" y2="157"/>
+<circle cx="306" cy="35" fill="red" r="0.75"/>
+<line stroke="red" x1="306" x2="306" y1="33.5" y2="36.5"/>
+<line stroke="red" x1="304.5" x2="307.5" y1="35" y2="35"/>
+<circle cx="498" cy="157" fill="red" r="0.75"/>
+<line stroke="red" x1="498" x2="498" y1="155.5" y2="158.5"/>
+<line stroke="red" x1="496.5" x2="499.5" y1="157" y2="157"/>
+<circle cx="690" cy="35" fill="red" r="0.75"/>
+<line stroke="red" x1="690" x2="690" y1="33.5" y2="36.5"/>
+<line stroke="red" x1="688.5" x2="691.5" y1="35" y2="35"/>
+<circle cx="882" cy="157" fill="red" r="0.75"/>
+<line stroke="red" x1="882" x2="882" y1="155.5" y2="158.5"/>
+<line stroke="red" x1="880.5" x2="883.5" y1="157" y2="157"/>
+<circle cx="71" cy="166" fill="gold" r="0.75"/>
+<line stroke="gold" x1="71" x2="71" y1="164.5" y2="167.5"/>
+<line stroke="gold" x1="69.5" x2="72.5" y1="166" y2="166"/>
+<circle cx="263" cy="26" fill="gold" r="0.75"/>
+<line stroke="gold" x1="263" x2="263" y1="24.5" y2="27.5"/>
+<line stroke="gold" x1="261.5" x2="264.5" y1="26" y2="26"/>
+<circle cx="455" cy="166" fill="gold" r="0.75"/>
+<line stroke="gold" x1="455" x2="455" y1="164.5" y2="167.5"/>
+<line stroke="gold" x1="453.5" x2="456.5" y1="166" y2="166"/>
+<circle cx="647" cy="26" fill="gold" r="0.75"/>
+<line stroke="gold" x1="647" x2="647" y1="24.5" y2="27.5"/>
+<line stroke="gold" x1="645.5" x2="648.5" y1="26" y2="26"/>
+<circle cx="839" cy="166" fill="gold" r="0.75"/>
+<line stroke="gold" x1="839" x2="839" y1="164.5" y2="167.5"/>
+<line stroke="gold" x1="837.5" x2="840.5" y1="166" y2="166"/>
+<circle cx="127" cy="53" fill="red" r="0.75"/>
+<line stroke="red" x1="127" x2="127" y1="51.5" y2="54.5"/>
+<line stroke="red" x1="125.5" x2="128.5" y1="53" y2="53"/>
+<circle cx="319" cy="139" fill="red" r="0.75"/>
+<line stroke="red" x1="319" x2="319" y1="137.5" y2="140.5"/>
+<line stroke="red" x1="317.5" x2="320.5" y1="139" y2="139"/>
+<circle cx="511" cy="53" fill="red" r="0.75"/>
+<line stroke="red" x1="511" x2="511" y1="51.5" y2="54.5"/>
+<line stroke="red" x1="509.5" x2="512.5" y1="53" y2="53"/>
+<circle cx="703" cy="139" fill="red" r="0.75"/>
+<line stroke="red" x1="703" x2="703" y1="137.5" y2="140.5"/>
+<line stroke="red" x1="701.5" x2="704.5" y1="139" y2="139"/>
+<circle cx="895" cy="53" fill="red" r="0.75"/>
+<line stroke="red" x1="895" x2="895" y1="51.5" y2="54.5"/>
+<line stroke="red" x1="893.5" x2="896.5" y1="53" y2="53"/>
+<circle cx="136" cy="188" fill="gold" r="0.75"/>
+<line stroke="gold" x1="136" x2="136" y1="186.5" y2="189.5"/>
+<line stroke="gold" x1="134.5" x2="137.5" y1="188" y2="188"/>
+<circle cx="328" cy="4" fill="gold" r="0.75"/>
+<line stroke="gold" x1="328" x2="328" y1="2.5" y2="5.5"/>
+<line stroke="gold" x1="326.5" x2="329.5" y1="4" y2="4"/>
+<circle cx="520" cy="188" fill="gold" r="0.75"/>
+<line stroke="gold" x1="520" x2="520" y1="186.5" y2="189.5"/>
+<line stroke="gold" x1="518.5" x2="521.5" y1="188" y2="188"/>
+<circle cx="712" cy="4" fill="gold" r="0.75"/>
+<line stroke="gold" x1="712" x2="712" y1="2.5" y2="5.5"/>
+<line stroke="gold" x1="710.5" x2="713.5" y1="4" y2="4"/>
+<circle cx="904" cy="188" fill="gold" r="0.75"/>
+<line stroke="gold" x1="904" x2="904" y1="186.5" y2="189.5"/>
+<line stroke="gold" x1="902.5" x2="905.5" y1="188" y2="188"/>
+<circle cx="143" cy="26" fill="red" r="0.75"/>
+<line stroke="red" x1="143" x2="143" y1="24.5" y2="27.5"/>
+<line stroke="red" x1="141.5" x2="144.5" y1="26" y2="26"/>
+<circle cx="335" cy="166" fill="red" r="0.75"/>
+<line stroke="red" x1="335" x2="335" y1="164.5" y2="167.5"/>
+<line stroke="red" x1="333.5" x2="336.5" y1="166" y2="166"/>
+<circle cx="527" cy="26" fill="red" r="0.75"/>
+<line stroke="red" x1="527" x2="527" y1="24.5" y2="27.5"/>
+<line stroke="red" x1="525.5" x2="528.5" y1="26" y2="26"/>
+<circle cx="719" cy="166" fill="red" r="0.75"/>
+<line stroke="red" x1="719" x2="719" y1="164.5" y2="167.5"/>
+<line stroke="red" x1="717.5" x2="720.5" y1="166" y2="166"/>
+<circle cx="911" cy="26" fill="red" r="0.75"/>
+<line stroke="red" x1="911" x2="911" y1="24.5" y2="27.5"/>
+<line stroke="red" x1="909.5" x2="912.5" y1="26" y2="26"/>
+<circle cx="156" cy="136" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="156" x2="156" y1="134.5" y2="137.5"/>
+<line stroke="cyan" x1="154.5" x2="157.5" y1="136" y2="136"/>
+<circle cx="348" cy="56" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="348" x2="348" y1="54.5" y2="57.5"/>
+<line stroke="cyan" x1="346.5" x2="349.5" y1="56" y2="56"/>
+<circle cx="540" cy="136" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="540" x2="540" y1="134.5" y2="137.5"/>
+<line stroke="cyan" x1="538.5" x2="541.5" y1="136" y2="136"/>
+<circle cx="732" cy="56" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="732" x2="732" y1="54.5" y2="57.5"/>
+<line stroke="cyan" x1="730.5" x2="733.5" y1="56" y2="56"/>
+<circle cx="924" cy="136" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="924" x2="924" y1="134.5" y2="137.5"/>
+<line stroke="cyan" x1="922.5" x2="925.5" y1="136" y2="136"/>
+<circle cx="107" cy="16" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="107" x2="107" y1="14.5" y2="17.5"/>
+<line stroke="cyan" x1="105.5" x2="108.5" y1="16" y2="16"/>
+<circle cx="299" cy="176" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="299" x2="299" y1="174.5" y2="177.5"/>
+<line stroke="cyan" x1="297.5" x2="300.5" y1="176" y2="176"/>
+<circle cx="491" cy="16" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="491" x2="491" y1="14.5" y2="17.5"/>
+<line stroke="cyan" x1="489.5" x2="492.5" y1="16" y2="16"/>
+<circle cx="683" cy="176" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="683" x2="683" y1="174.5" y2="177.5"/>
+<line stroke="cyan" x1="681.5" x2="684.5" y1="176" y2="176"/>
+<circle cx="875" cy="16" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="875" x2="875" y1="14.5" y2="17.5"/>
+<line stroke="cyan" x1="873.5" x2="876.5" y1="16" y2="16"/>
+<circle cx="2" cy="86" fill="gold" r="0.75"/>
+<line stroke="gold" x1="2" x2="2" y1="84.5" y2="87.5"/>
+<line stroke="gold" x1="0.5" x2="3.5" y1="86" y2="86"/>
+<circle cx="194" cy="106" fill="gold" r="0.75"/>
+<line stroke="gold" x1="194" x2="194" y1="104.5" y2="107.5"/>
+<line stroke="gold" x1="192.5" x2="195.5" y1="106" y2="106"/>
+<circle cx="386" cy="86" fill="gold" r="0.75"/>
+<line stroke="gold" x1="386" x2="386" y1="84.5" y2="87.5"/>
+<line stroke="gold" x1="384.5" x2="387.5" y1="86" y2="86"/>
+<circle cx="578" cy="106" fill="gold" r="0.75"/>
+<line stroke="gold" x1="578" x2="578" y1="104.5" y2="107.5"/>
+<line stroke="gold" x1="576.5" x2="579.5" y1="106" y2="106"/>
+<circle cx="770" cy="86" fill="gold" r="0.75"/>
+<line stroke="gold" x1="770" x2="770" y1="84.5" y2="87.5"/>
+<line stroke="gold" x1="768.5" x2="771.5" y1="86" y2="86"/>
+<circle cx="962" cy="106" fill="gold" r="0.75"/>
+<line stroke="gold" x1="962" x2="962" y1="104.5" y2="107.5"/>
+<line stroke="gold" x1="960.5" x2="963.5" y1="106" y2="106"/>
+<circle cx="57" cy="129" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="57" x2="57" y1="127.5" y2="130.5"/>
+<line stroke="cyan" x1="55.5" x2="58.5" y1="129" y2="129"/>
+<circle cx="249" cy="63" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="249" x2="249" y1="61.5" y2="64.5"/>
+<line stroke="cyan" x1="247.5" x2="250.5" y1="63" y2="63"/>
+<circle cx="441" cy="129" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="441" x2="441" y1="127.5" y2="130.5"/>
+<line stroke="cyan" x1="439.5" x2="442.5" y1="129" y2="129"/>
+<circle cx="633" cy="63" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="633" x2="633" y1="61.5" y2="64.5"/>
+<line stroke="cyan" x1="631.5" x2="634.5" y1="63" y2="63"/>
+<circle cx="825" cy="129" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="825" x2="825" y1="127.5" y2="130.5"/>
+<line stroke="cyan" x1="823.5" x2="826.5" y1="129" y2="129"/>
+<circle cx="1017" cy="63" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="1017" x2="1017" y1="61.5" y2="64.5"/>
+<line stroke="cyan" x1="1015.5" x2="1018.5" y1="63" y2="63"/>
+<circle cx="160" cy="35" fill="gold" r="0.75"/>
+<line stroke="gold" x1="160" x2="160" y1="33.5" y2="36.5"/>
+<line stroke="gold" x1="158.5" x2="161.5" y1="35" y2="35"/>
+<circle cx="352" cy="157" fill="gold" r="0.75"/>
+<line stroke="gold" x1="352" x2="352" y1="155.5" y2="158.5"/>
+<line stroke="gold" x1="350.5" x2="353.5" y1="157" y2="157"/>
+<circle cx="544" cy="35" fill="gold" r="0.75"/>
+<line stroke="gold" x1="544" x2="544" y1="33.5" y2="36.5"/>
+<line stroke="gold" x1="542.5" x2="545.5" y1="35" y2="35"/>
+<circle cx="736" cy="157" fill="gold" r="0.75"/>
+<line stroke="gold" x1="736" x2="736" y1="155.5" y2="158.5"/>
+<line stroke="gold" x1="734.5" x2="737.5" y1="157" y2="157"/>
+<circle cx="928" cy="35" fill="gold" r="0.75"/>
+<line stroke="gold" x1="928" x2="928" y1="33.5" y2="36.5"/>
+<line stroke="gold" x1="926.5" x2="929.5" y1="35" y2="35"/>
+<circle cx="107" cy="123" fill="brown" r="0.75"/>
+<line stroke="brown" x1="107" x2="107" y1="121.5" y2="124.5"/>
+<line stroke="brown" x1="105.5" x2="108.5" y1="123" y2="123"/>
+<circle cx="299" cy="69" fill="brown" r="0.75"/>
+<line stroke="brown" x1="299" x2="299" y1="67.5" y2="70.5"/>
+<line stroke="brown" x1="297.5" x2="300.5" y1="69" y2="69"/>
+<circle cx="491" cy="123" fill="brown" r="0.75"/>
+<line stroke="brown" x1="491" x2="491" y1="121.5" y2="124.5"/>
+<line stroke="brown" x1="489.5" x2="492.5" y1="123" y2="123"/>
+<circle cx="683" cy="69" fill="brown" r="0.75"/>
+<line stroke="brown" x1="683" x2="683" y1="67.5" y2="70.5"/>
+<line stroke="brown" x1="681.5" x2="684.5" y1="69" y2="69"/>
+<circle cx="875" cy="123" fill="brown" r="0.75"/>
+<line stroke="brown" x1="875" x2="875" y1="121.5" y2="124.5"/>
+<line stroke="brown" x1="873.5" x2="876.5" y1="123" y2="123"/>
+<circle cx="48" cy="69" fill="red" r="0.75"/>
+<line stroke="red" x1="48" x2="48" y1="67.5" y2="70.5"/>
+<line stroke="red" x1="46.5" x2="49.5" y1="69" y2="69"/>
+<circle cx="240" cy="123" fill="red" r="0.75"/>
+<line stroke="red" x1="240" x2="240" y1="121.5" y2="124.5"/>
+<line stroke="red" x1="238.5" x2="241.5" y1="123" y2="123"/>
+<circle cx="432" cy="69" fill="red" r="0.75"/>
+<line stroke="red" x1="432" x2="432" y1="67.5" y2="70.5"/>
+<line stroke="red" x1="430.5" x2="433.5" y1="69" y2="69"/>
+<circle cx="624" cy="123" fill="red" r="0.75"/>
+<line stroke="red" x1="624" x2="624" y1="121.5" y2="124.5"/>
+<line stroke="red" x1="622.5" x2="625.5" y1="123" y2="123"/>
+<circle cx="816" cy="69" fill="red" r="0.75"/>
+<line stroke="red" x1="816" x2="816" y1="67.5" y2="70.5"/>
+<line stroke="red" x1="814.5" x2="817.5" y1="69" y2="69"/>
+<circle cx="1008" cy="123" fill="red" r="0.75"/>
+<line stroke="red" x1="1008" x2="1008" y1="121.5" y2="124.5"/>
+<line stroke="red" x1="1006.5" x2="1009.5" y1="123" y2="123"/>
+<circle cx="19" cy="95" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="19" x2="19" y1="93.5" y2="96.5"/>
+<line stroke="cyan" x1="17.5" x2="20.5" y1="95" y2="95"/>
+<circle cx="211" cy="97" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="211" x2="211" y1="95.5" y2="98.5"/>
+<line stroke="cyan" x1="209.5" x2="212.5" y1="97" y2="97"/>
+<circle cx="403" cy="95" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="403" x2="403" y1="93.5" y2="96.5"/>
+<line stroke="cyan" x1="401.5" x2="404.5" y1="95" y2="95"/>
+<circle cx="595" cy="97" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="595" x2="595" y1="95.5" y2="98.5"/>
+<line stroke="cyan" x1="593.5" x2="596.5" y1="97" y2="97"/>
+<circle cx="787" cy="95" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="787" x2="787" y1="93.5" y2="96.5"/>
+<line stroke="cyan" x1="785.5" x2="788.5" y1="95" y2="95"/>
+<circle cx="979" cy="97" fill="cyan" r="0.75"/>
+<line stroke="cyan" x1="979" x2="979" y1="95.5" y2="98.5"/>
+<line stroke="cyan" x1="977.5" x2="980.5" y1="97" y2="97"/>
+<circle cx="127" cy="34" fill="gold" r="0.75"/>
+<line stroke="gold" x1="127" x2="127" y1="32.5" y2="35.5"/>
+<line stroke="gold" x1="125.5" x2="128.5" y1="34" y2="34"/>
+<circle cx="319" cy="158" fill="gold" r="0.75"/>
+<line stroke="gold" x1="319" x2="319" y1="156.5" y2="159.5"/>
+<line stroke="gold" x1="317.5" x2="320.5" y1="158" y2="158"/>
+<circle cx="511" cy="34" fill="gold" r="0.75"/>
+<line stroke="gold" x1="511" x2="511" y1="32.5" y2="35.5"/>
+<line stroke="gold" x1="509.5" x2="512.5" y1="34" y2="34"/>
+<circle cx="703" cy="158" fill="gold" r="0.75"/>
+<line stroke="gold" x1="703" x2="703" y1="156.5" y2="159.5"/>
+<line stroke="gold" x1="701.5" x2="704.5" y1="158" y2="158"/>
+<circle cx="895" cy="34" fill="gold" r="0.75"/>
+<line stroke="gold" x1="895" x2="895" y1="32.5" y2="35.5"/>
+<line stroke="gold" x1="893.5" x2="896.5" y1="34" y2="34"/>
+<circle cx="50" cy="175" fill="brown" r="0.75"/>
+<line stroke="brown" x1="50" x2="50" y1="173.5" y2="176.5"/>
+<line stroke="brown" x1="48.5" x2="51.5" y1="175" y2="175"/>
+<circle cx="242" cy="17" fill="brown" r="0.75"/>
+<line stroke="brown" x1="242" x2="242" y1="15.5" y2="18.5"/>
+<line stroke="brown" x1="240.5" x2="243.5" y1="17" y2="17"/>
+<circle cx="434" cy="175" fill="brown" r="0.75"/>
+<line stroke="brown" x1="434" x2="434" y1="173.5" y2="176.5"/>
+<line stroke="brown" x1="432.5" x2="435.5" y1="175" y2="175"/>
+<circle cx="626" cy="17" fill="brown" r="0.75"/>
+<line stroke="brown" x1="626" x2="626" y1="15.5" y2="18.5"/>
+<line stroke="brown" x1="624.5" x2="627.5" y1="17" y2="17"/>
+<circle cx="818" cy="175" fill="brown" r="0.75"/>
+<line stroke="brown" x1="818" x2="818" y1="173.5" y2="176.5"/>
+<line stroke="brown" x1="816.5" x2="819.5" y1="175" y2="175"/>
+<circle cx="1010" cy="17" fill="brown" r="0.75"/>
+<line stroke="brown" x1="1010" x2="1010" y1="15.5" y2="18.5"/>
+<line stroke="brown" x1="1008.5" x2="1011.5" y1="17" y2="17"/>
+<circle cx="137" cy="182" fill="red" r="0.75"/>
+<line stroke="red" x1="137" x2="137" y1="180.5" y2="183.5"/>
+<line stroke="red" x1="135.5" x2="138.5" y1="182" y2="182"/>
+<circle cx="329" cy="10" fill="red" r="0.75"/>
+<line stroke="red" x1="329" x2="329" y1="8.5" y2="11.5"/>
+<line stroke="red" x1="327.5" x2="330.5" y1="10" y2="10"/>
+<circle cx="521" cy="182" fill="red" r="0.75"/>
+<line stroke="red" x1="521" x2="521" y1="180.5" y2="183.5"/>
+<line stroke="red" x1="519.5" x2="522.5" y1="182" y2="182"/>
+<circle cx="713" cy="10" fill="red" r="0.75"/>
+<line stroke="red" x1="713" x2="713" y1="8.5" y2="11.5"/>
+<line stroke="red" x1="711.5" x2="714.5" y1="10" y2="10"/>
+<circle cx="905" cy="182" fill="red" r="0.75"/>
+<line stroke="red" x1="905" x2="905" y1="180.5" y2="183.5"/>
+<line stroke="red" x1="903.5" x2="906.5" y1="182" y2="182"/>
+<circle cx="190" cy="190" fill="brown" r="0.75"/>
+<line stroke="brown" x1="190" x2="190" y1="188.5" y2="191.5"/>
+<line stroke="brown" x1="188.5" x2="191.5" y1="190" y2="190"/>
+<circle cx="382" cy="2" fill="brown" r="0.75"/>
+<line stroke="brown" x1="382" x2="382" y1="0.5" y2="3.5"/>
+<line stroke="brown" x1="380.5" x2="383.5" y1="2" y2="2"/>
+<circle cx="574" cy="190" fill="brown" r="0.75"/>
+<line stroke="brown" x1="574" x2="574" y1="188.5" y2="191.5"/>
+<line stroke="brown" x1="572.5" x2="575.5" y1="190" y2="190"/>
+<circle cx="766" cy="2" fill="brown" r="0.75"/>
+<line stroke="brown" x1="766" x2="766" y1="0.5" y2="3.5"/>
+<line stroke="brown" x1="764.5" x2="767.5" y1="2" y2="2"/>
+<circle cx="958" cy="190" fill="brown" r="0.75"/>
+<line stroke="brown" x1="958" x2="958" y1="188.5" y2="191.5"/>
+<line stroke="brown" x1="956.5" x2="959.5" y1="190" y2="190"/>
+<circle cx="135" cy="132" fill="brown" r="0.75"/>
+<line stroke="brown" x1="135" x2="135" y1="130.5" y2="133.5"/>
+<line stroke="brown" x1="133.5" x2="136.5" y1="132" y2="132"/>
+<circle cx="327" cy="60" fill="brown" r="0.75"/>
+<line stroke="brown" x1="327" x2="327" y1="58.5" y2="61.5"/>
+<line stroke="brown" x1="325.5" x2="328.5" y1="60" y2="60"/>
+<circle cx="519" cy="132" fill="brown" r="0.75"/>
+<line stroke="brown" x1="519" x2="519" y1="130.5" y2="133.5"/>
+<line stroke="brown" x1="517.5" x2="520.5" y1="132" y2="132"/>
+<circle cx="711" cy="60" fill="brown" r="0.75"/>
+<line stroke="brown" x1="711" x2="711" y1="58.5" y2="61.5"/>
+<line stroke="brown" x1="709.5" x2="712.5" y1="60" y2="60"/>
+<circle cx="903" cy="132" fill="brown" r="0.75"/>
+<line stroke="brown" x1="903" x2="903" y1="130.5" y2="133.5"/>
+<line stroke="brown" x1="901.5" x2="904.5" y1="132" y2="132"/>
+<circle cx="65" cy="183" fill="brown" r="0.75"/>
+<line stroke="brown" x1="65" x2="65" y1="181.5" y2="184.5"/>
+<line stroke="brown" x1="63.5" x2="66.5" y1="183" y2="183"/>
+<circle cx="257" cy="9" fill="brown" r="0.75"/>
+<line stroke="brown" x1="257" x2="257" y1="7.5" y2="10.5"/>
+<line stroke="brown" x1="255.5" x2="258.5" y1="9" y2="9"/>
+<circle cx="449" cy="183" fill="brown" r="0.75"/>
+<line stroke="brown" x1="449" x2="449" y1="181.5" y2="184.5"/>
+<line stroke="brown" x1="447.5" x2="450.5" y1="183" y2="183"/>
+<circle cx="641" cy="9" fill="brown" r="0.75"/>
+<line stroke="brown" x1="641" x2="641" y1="7.5" y2="10.5"/>
+<line stroke="brown" x1="639.5" x2="642.5" y1="9" y2="9"/>
+<circle cx="833" cy="183" fill="brown" r="0.75"/>
+<line stroke="brown" x1="833" x2="833" y1="181.5" y2="184.5"/>
+<line stroke="brown" x1="831.5" x2="834.5" y1="183" y2="183"/>
 </g>
 <g transform="translate(512, 96) rotate(15)">
 <circle cx="57.28" cy="-57.28" fill="url(#MoonGradient)" r="22.5"/>

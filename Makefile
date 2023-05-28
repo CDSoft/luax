@@ -744,6 +744,7 @@ MD_OUTPUTS = $(MARKDOWN_SOURCES:doc/src/%.md=$(BUILD_DOC)/%.md)
 
 IMAGES += doc/luax-banner.svg
 IMAGES += doc/luax-logo.svg
+IMAGES += $(BUILD)/luax-social.png
 
 doc: README.md
 doc: $(MARKDOWN_OUTPUTS)
@@ -788,12 +789,19 @@ README.md: doc/src/luax.md doc/src/fix_links.lua $(IMAGES)
 	@mkdir -p $(BUILD_TMP)/doc
 	@ypp --MD --MT $@ --MF $(BUILD_TMP)/doc/$(notdir $@).d $< | $(PANDOC_GFM) -o $@
 
+URL = cdelord.fr/luax
+
 doc/luax-banner.svg: doc/luax-logo.lua
 	@$(call cyan,"IMAGE",$@)
-	@lsvg $< $@ -- 1024 192
+	@lsvg $< $@ -- 1024 192 # '$(URL)'
 
 doc/luax-logo.svg: doc/luax-logo.lua
 	@$(call cyan,"IMAGE",$@)
-	@lsvg $< $@ -- 256 256
+	@lsvg $< $@ -- 256 256 # '$(URL)'
+
+$(BUILD)/luax-social.png: doc/luax-logo.lua
+	@$(call cyan,"IMAGE",$@)
+	@mkdir -p $(dir $@)
+	@lsvg $< $@ -- 1280 640 '$(URL)'
 
 -include $(BUILD_TMP)/doc/*.d
