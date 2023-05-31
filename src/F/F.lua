@@ -3556,6 +3556,20 @@ function string.cap(s)
 end
 
 --[[------------------------------------------------------------------------@@@
+## String evaluation
+@@@]]
+
+--[[@@@
+```lua
+string.read(s)
+s:read()
+```
+> Convert s to a Lua value (like `F.read`)
+@@@]]
+
+string.read = F.read
+
+--[[------------------------------------------------------------------------@@@
 ## String interpolation
 @@@]]
 

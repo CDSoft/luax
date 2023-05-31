@@ -1640,6 +1640,15 @@ s:cap()
 > Capitalizes a string. The first character is upper case, other are
 > lower case.
 
+## String evaluation
+
+``` lua
+string.read(s)
+s:read()
+```
+
+> Convert s to a Lua value (like `F.read`)
+
 ## String interpolation
 
 ``` lua
