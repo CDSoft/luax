@@ -147,12 +147,12 @@ return function()
             end
         end
         do
-            eq(crypt.hash "120852", "00a5b4d21a0a9a00")
-            eq(crypt.hash "abc", "edb12f5147011a98")
-            eq(crypt.hash "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "8a8fb591ad1980ae")
-            eq(crypt.hash "a", "3d6b78f0d6c6494a")
-            eq(crypt.hash "aa", "7c1ddf88b948c824")
-            eq(crypt.hash "0123456701234567012345670123456701234567012345670123456701234567", "22bb9734007a6c16")
+            eq(crypt.hash "abc", "aad997d90d2fc60c")
+            eq(crypt.hash "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "43b171325717ed36")
+            eq(crypt.hash "a", "ba1cdf88b948c824")
+            eq(crypt.hash "aa", "cdb204b8ec1876e7")
+            eq(crypt.hash "ab", "27b12f5147011a98")
+            eq(crypt.hash "0123456701234567012345670123456701234567012345670123456701234567", "fbc24b87f8801d96")
             ne(crypt.hash "aa", crypt.hash "ab")
             for _ = 1, sys.abi=="lua" and 10 or 1000 do
                 local s = crypt.str(crypt.int()%1024)
@@ -242,7 +242,7 @@ return function()
             1306753901, 4044912387, 1648085481, 2633988900, 4079560644, 3769468295, 3245996943, 1721887037,
             3063376457, 2280948516, 2012680803, 3957139778, 3740370758, 2086760861, 3024349504, 434537368,
         })
-        eq(crypt.hash "Hello World!", "2016e8306f29f1c0")
+        eq(crypt.hash "Hello World!", "a1c3651c1533317c")
         do
             -- test setting the seed after initialization
             local r1 = crypt.prng(666)

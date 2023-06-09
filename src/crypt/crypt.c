@@ -1096,6 +1096,7 @@ static inline uint64_t prng_hash(const char *input, size_t input_size)
         const uint64_t c = (uint64_t)input[i];
         hash = hash * 6364136223846793005ULL + ((c << 1) | 1);
     }
+    hash = hash * 6364136223846793005ULL + 1;
     return hash;
 }
 

@@ -316,6 +316,7 @@ if not crypt then
             local c = byte(s, i)
             hash = hash * 6364136223846793005 + ((c << 1) | 1)
         end
+        hash = hash * 6364136223846793005 + 1
         return ("<I8"):pack(hash):hex()
     end
 
