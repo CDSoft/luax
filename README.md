@@ -12,7 +12,8 @@ from Lua scripts.
 - MacOS (x86_64, aarch64)
 - Windows (x86_64, i386)
 
-`luax` can cross-compile scripts from and to any of these platforms.
+`luax` can « cross-compile[^1] » scripts from and to any of these
+platforms.
 
 ## Compilation
 
@@ -23,7 +24,7 @@ download `luax` (<https://github.com/CDSoft/luax>) and run `make`:
 $ git clone https://github.com/CDSoft/luax
 $ cd luax
 $ make              # compile for the host
-$ make all          # compile for all known targets (cross compilation)
+$ make all          # compile for all known targets (« cross compilation »)
 $ make test         # run tests on the host
 $ make doc          # generate LuaX documentation
 ```
@@ -54,7 +55,7 @@ $ make install PREFIX=/usr  # install luax to /usr/bin
 `luax` is a single autonomous executable. It does not need to be
 installed and can be copied anywhere you want.
 
-### Installation of luax for all supported platforms (cross compilation support)
+### Installation of luax for all supported platforms (« cross compilation » support)
 
 ``` sh
 $ make install-all              # install luax to ~/.local/bin or ~/bin
@@ -164,7 +165,7 @@ are recommended.
 $ luax -o executable main.lua lib1.lua lib2.lua
 $ ./executable      # equivalent to luax main.lua
 
-# Cross compilation to MacOS x86_64
+# « Cross compilation » to MacOS x86_64
 $ luax -o executable -t x86_64-macos-gnu main.lua lib1.lua lib2.lua
 
 # Available targets
@@ -299,3 +300,8 @@ programs:
 - **[Argparse](https://github.com/mpeterv/argparse)**: a feature-rich
   command line parser for Lua ([MIT
   license](https://github.com/mpeterv/argparse/blob/master/LICENSE))
+
+[^1]: `luax` is actually not a « cross compiler ».
+
+    It just bundles Lua scripts with a precompiled LuaX runtime that can
+    be run on the target with no dependency.

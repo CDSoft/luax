@@ -171,7 +171,7 @@ welcome:
 	@echo '- MacOS (x86_64, aarch64)'
 	@echo '- Windows (x86_64, i386)'
 	@echo ''
-	@echo '${CYAN}luax${NORMAL} can cross-compile scripts from and to any of these platforms.'
+	@echo '${CYAN}luax${NORMAL} can « cross-compile » scripts from and to any of these platforms.'
 
 ###############################################################################
 # All
