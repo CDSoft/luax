@@ -144,8 +144,8 @@ When compiling scripts (options `-t` and `-o`), the scripts shall contain tags
 - `--@LOAD`: library that is `require`'d before the main script is run and
   stored in a global variable
 - `--@LIB`: library that must be explicitly `require`'d by the main script
-- `--@NAME=<new module name>`: library that is `require`'d with `<new module
-  name>` instead of the source filename.
+- `--@NAME=<new module name>`: library that is `require`'d with `<new module name>`
+  instead of the source filename.
 
 Scripts without tags are classified using a simplistic heuristic:
 

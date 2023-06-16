@@ -163,7 +163,7 @@ welcome:
 	@echo ''
 	@echo '${CYAN}luax${NORMAL} is a Lua interpreter and REPL based on Lua 5.4'
 	@echo 'augmented with some useful packages.'
-	@echo '${CYAN}luax${NORMAL} can also produces standalone executables from Lua scripts.'
+	@echo '${CYAN}luax${NORMAL} can also produce standalone executables from Lua scripts.'
 	@echo ''
 	@echo '${CYAN}luax${NORMAL} runs on several platforms with no dependency:'
 	@echo ''

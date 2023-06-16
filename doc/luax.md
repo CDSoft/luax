@@ -146,7 +146,7 @@ contain tags (e.g. in comments) showing how the script is used by LuaX:
 - `--@LIB`: library that must be explicitly `require`’d by the main
   script
 - `--@NAME=<new module name>`: library that is `require`’d with
-  `<new module   name>` instead of the source filename.
+  `<new module name>` instead of the source filename.
 
 Scripts without tags are classified using a simplistic heuristic:
 
