@@ -764,7 +764,9 @@ PANDOC_HTML += --css=$(CSS)
 PANDOC_HTML += --table-of-contents --toc-depth=3
 PANDOC_HTML += --highlight-style=tango
 
-doc/%.md: doc/src/%.md $(IMAGES)
+export BUILD_BIN
+
+doc/%.md: doc/src/%.md $(IMAGES) $(BUILD_BIN)/luax
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(BUILD_TMP)/doc
 	@ypp --MD --MT $@ --MF $(BUILD_TMP)/doc/$(notdir $@).d $< | $(PANDOC_GFM) -o $@
@@ -774,7 +776,7 @@ $(BUILD_DOC)/%.md: doc/%.md $(IMAGES)
 	@mkdir -p $(dir $@)
 	@cp -f $< $@
 
-$(BUILD_DOC)/%.html: doc/src/%.md $(CSS) doc/src/fix_links.lua $(IMAGES)
+$(BUILD_DOC)/%.html: doc/src/%.md $(CSS) doc/src/fix_links.lua $(IMAGES) $(BUILD_BIN)/luax
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(dir $@) $(BUILD_TMP)/doc
 	@ypp --MD --MT $@ --MF $(BUILD_TMP)/doc/$(notdir $@).d $< | $(PANDOC_HTML) -o $@
@@ -784,7 +786,7 @@ $(BUILD_DOC)/index.html: $(BUILD_DOC)/luax.html
 	@mkdir -p $(dir $@)
 	@cp -f $< $@
 
-README.md: doc/src/luax.md doc/src/fix_links.lua $(IMAGES)
+README.md: doc/src/luax.md doc/src/fix_links.lua $(IMAGES) $(BUILD_BIN)/luax
 	@$(call cyan,"DOC",$@)
 	@mkdir -p $(BUILD_TMP)/doc
 	@ypp --MD --MT $@ --MF $(BUILD_TMP)/doc/$(notdir $@).d $< | $(PANDOC_GFM) -o $@

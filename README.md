@@ -110,6 +110,7 @@ scripts:
       -t list-lua       list available Lua/Pandoc targets
       -o file           name the executable file to create
       -r                use rlwrap (Lua/Pandoc targets only)
+      -q                quiet compilation (error messages only)
 
     Scripts for compilation:
       file name         name of a Lua package to add to the binary
@@ -172,24 +173,24 @@ $ luax -o executable -t x86_64-macos-gnu main.lua lib1.lua lib2.lua
 $ luax -t list
 Targets producing standalone LuaX executables:
 
-    aarch64-linux-gnu     path/luax-aarch64-linux-gnu
-    aarch64-linux-musl    path/luax-aarch64-linux-musl
-    aarch64-macos-gnu     path/luax-aarch64-macos-gnu
-    i386-linux-gnu        path/luax-i386-linux-gnu
-    i386-linux-musl       path/luax-i386-linux-musl
-    i386-windows-gnu      path/luax-i386-windows-gnu.exe
-    x86_64-linux-gnu      path/luax-x86_64-linux-gnu
-    x86_64-linux-musl     path/luax-x86_64-linux-musl
-    x86_64-macos-gnu      path/luax-x86_64-macos-gnu
-    x86_64-windows-gnu    path/luax-x86_64-windows-gnu.exe
+    aarch64-linux-gnu
+    aarch64-linux-musl
+    aarch64-macos-none
+    i386-linux-gnu
+    i386-linux-musl
+    i386-windows-gnu
+    x86_64-linux-gnu
+    x86_64-linux-musl
+    x86_64-macos-none
+    x86_64-windows-gnu
 
 Targets based on an external Lua interpreter:
 
-    lua                   path/lua
-    lua-luax              path/lua
-    luax                  path/luax
-    pandoc                path/pandoc
-    pandoc-luax           path/pandoc
+    lua
+    lua-luax
+    luax
+    pandoc
+    pandoc-luax
 ```
 
 ## Built-in modules

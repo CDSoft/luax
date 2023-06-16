@@ -90,56 +90,11 @@ $ make install-all PREFIX=/usr  # install luax to /usr/bin
 `luax` is very similar to `lua` and adds more options to compile scripts:
 
 ```
-usage: luax [options] [script [args]]
-
-General options:
-  -h                show this help
-  -v                show version information
-  --                stop handling options
-
-Lua options:
-  -e stat           execute string 'stat'
-  -i                enter interactive mode after executing
-                    'script'
-  -l name           require library 'name' into global 'name'
-  -                 stop handling options and execute stdin
-                    (incompatible with -i)
-
-Compilation options:
-  -t target         name of the targetted platform
-  -t all            compile for all available LuaX targets
-  -t list           list available targets
-  -t list-luax      list available native LuaX targets
-  -t list-lua       list available Lua/Pandoc targets
-  -o file           name the executable file to create
-  -r                use rlwrap (Lua/Pandoc targets only)
-
-Scripts for compilation:
-  file name         name of a Lua package to add to the binary
-
-Lua and Compilation options can not be mixed.
-
-Environment variables:
-
-  LUA_INIT_5_4, LUA_INIT
-                    code executed before handling command line
-                    options and scripts (not in compilation
-                    mode). When LUA_INIT_5_4 is defined,
-                    LUA_INIT is ignored.
-
-  PATH              PATH shall contain the bin directory where
-                    LuaX is installed
-
-  LUA_PATH          LUA_PATH shall point to the lib directory
-                    where the Lua implementation of LuaX
-                    lbraries are installed
-
-  LUA_CPATH         LUA_CPATH shall point to the lib directory
-                    where LuaX shared libraries are installed
-
-PATH, LUA_PATH and LUA_CPATH can be set in .bashrc or .zshrc
-with « luax env ».
-E.g.: eval $(luax env)
+@sh(fs.join(os.getenv'BUILD_BIN', 'luax'), '-h')
+    : lines()
+    : drop_while(function(l) return not l:match"^usage:" end)
+    : unlines()
+    : trim()
 ```
 
 When compiling scripts (options `-t` and `-o`), the scripts shall contain tags
@@ -173,26 +128,13 @@ $ luax -o executable -t x86_64-macos-gnu main.lua lib1.lua lib2.lua
 
 # Available targets
 $ luax -t list
-Targets producing standalone LuaX executables:
-
-    aarch64-linux-gnu     path/luax-aarch64-linux-gnu
-    aarch64-linux-musl    path/luax-aarch64-linux-musl
-    aarch64-macos-gnu     path/luax-aarch64-macos-gnu
-    i386-linux-gnu        path/luax-i386-linux-gnu
-    i386-linux-musl       path/luax-i386-linux-musl
-    i386-windows-gnu      path/luax-i386-windows-gnu.exe
-    x86_64-linux-gnu      path/luax-x86_64-linux-gnu
-    x86_64-linux-musl     path/luax-x86_64-linux-musl
-    x86_64-macos-gnu      path/luax-x86_64-macos-gnu
-    x86_64-windows-gnu    path/luax-x86_64-windows-gnu.exe
-
-Targets based on an external Lua interpreter:
-
-    lua                   path/lua
-    lua-luax              path/lua
-    luax                  path/luax
-    pandoc                path/pandoc
-    pandoc-luax           path/pandoc
+@sh("PATH="..os.getenv'BUILD_BIN', 'luax', '-t list')
+    : lines()
+    : map(function(l)
+        return l:match "^    "
+            and "    "..l:words():head()
+            or l
+    end)
 ```
 
 ## Built-in modules
