@@ -3614,6 +3614,47 @@ function F.I(t)
     return Interpolator(F.clone(t))
 end
 
+--[[------------------------------------------------------------------------@@@
+## Random array access
+
+@@@]]
+
+--[[@@@
+```lua
+F.choose(xs, prng)
+F.choose(xs)    -- using the global PRNG
+xs:choose(prng)
+xs:choose()     -- using the global PRNG
+```
+returns a random item from `xs`
+@@@]]
+
+register1 "choose" (function(xs, prng)
+    if prng then
+        return prng:choose(xs)
+    else
+        return require "crypt".choose(xs)
+    end
+end)
+
+--[[@@@
+```lua
+F.shuffle(xs, prng)
+F.shuffle(xs)   -- using the global PRNG
+xs:shuffle(prng)
+xs:shuffle()    -- using the global PRNG
+```
+returns a shuffled copy of `xs`
+@@@]]
+
+register1 "shuffle" (function(xs, prng)
+    if prng then
+        return prng:shuffle(xs)
+    else
+        return require "crypt".shuffle(xs)
+    end
+end)
+
 -------------------------------------------------------------------------------
 -- module
 -------------------------------------------------------------------------------

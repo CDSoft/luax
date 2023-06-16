@@ -262,5 +262,48 @@ return function()
             F.range(100):map(function(_) eq(r1:int(), r2:int()) end)
         end
     end
-
+    do
+        -- test crypt.choose
+        local xs = F.range(0, 15):map(function(i) return string.char(i + string.byte"A") end)
+        local ys = F{}
+        for i = 1, 1000 do
+            ys[i] = crypt.choose(xs)
+            eq(F.elem(ys[i], xs), true)
+        end
+        ys = ys:from_set(F.const(true)):keys()
+        eq(ys, xs)
+    end
+    do
+        -- test prng:choose
+        local xs = F.range(0, 15):map(function(i) return string.char(i + string.byte"A") end)
+        local ys = F{}
+        for i = 1, 1000 do
+            ys[i] = prng:choose(xs)
+            eq(F.elem(ys[i], xs), true)
+        end
+        ys = ys:from_set(F.const(true)):keys()
+        eq(ys, xs)
+    end
+    do
+        -- test crypt.shuffle
+        local xs = F.range(0, 15):map(function(i) return string.char(i + string.byte"A") end):sort()
+        local ys = crypt.shuffle(xs)
+        local zs = crypt.shuffle(xs)
+        ne(ys, xs)
+        ne(zs, xs)
+        ne(zs, ys)
+        eq(ys:sort(), xs)
+        eq(zs:sort(), xs)
+    end
+    do
+        -- test prng:shuffle
+        local xs = F.range(0, 15):map(function(i) return string.char(i + string.byte"A") end):sort()
+        local ys = prng:shuffle(xs)
+        local zs = prng:shuffle(xs)
+        ne(ys, xs)
+        ne(zs, xs)
+        ne(zs, ys)
+        eq(ys:sort(), xs)
+        eq(zs:sort(), xs)
+    end
 end

@@ -22,6 +22,7 @@ http://cdelord.fr/luax
 local _, crypt = pcall(require, "_crypt")
 crypt = _ and crypt
 
+local F = require "F"
 
 -- Pure Lua implementation
 if not crypt then
@@ -322,7 +323,54 @@ if not crypt then
 
 end
 
--- Additional definitions for the C implementation
+--[[------------------------------------------------------------------------@@@
+## Random array access
+
+@@@]]
+
+--[[@@@
+```lua
+prng:choose(xs)
+crypt.choose(xs)    -- using the global PRNG
+```
+returns a random item from `xs`
+@@@]]
+
+local prng_mt = getmetatable(crypt.prng())
+
+function prng_mt.__index.choose(prng, xs)
+    return xs[prng:int(1, #xs)]
+end
+
+function crypt.choose(xs)
+    return xs[crypt.int(1, #xs)]
+end
+
+--[[@@@
+```lua
+prng:shuffle(xs)
+crypt.shuffle(xs)    -- using the global PRNG
+```
+returns a shuffled copy of `xs`
+@@@]]
+
+function prng_mt.__index.shuffle(prng, xs)
+    local ys = F.clone(xs)
+    for i = 1, #ys do
+        local j = prng:int(1, #ys)
+        ys[i], ys[j] = ys[j], ys[i]
+    end
+    return ys
+end
+
+function crypt.shuffle(xs)
+    local ys = F.clone(xs)
+    for i = 1, #ys do
+        local j = crypt.int(1, #ys)
+        ys[i], ys[j] = ys[j], ys[i]
+    end
+    return ys
+end
 
 --[[------------------------------------------------------------------------@@@
 ## String methods

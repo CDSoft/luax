@@ -231,6 +231,22 @@ crypt.hash(data)
 returns digest of `data` based on the LuaX PRNG (not suitable for
 cryptographic usage).
 
+## Random array access
+
+``` lua
+prng:choose(xs)
+crypt.choose(xs)    -- using the global PRNG
+```
+
+returns a random item from `xs`
+
+``` lua
+prng:shuffle(xs)
+crypt.shuffle(xs)    -- using the global PRNG
+```
+
+returns a shuffled copy of `xs`
+
 ## String methods
 
 Some functions of the `crypt` package are added to the string module:

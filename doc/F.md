@@ -1666,3 +1666,23 @@ F.I(t)
 > returns a string interpolator that replaces `$(...)` with the value of
 > `...` in the environment defined by the table `t`. An interpolator can
 > be given another table to build a new interpolator with new values.
+
+## Random array access
+
+``` lua
+F.choose(xs, prng)
+F.choose(xs)    -- using the global PRNG
+xs:choose(prng)
+xs:choose()     -- using the global PRNG
+```
+
+returns a random item from `xs`
+
+``` lua
+F.shuffle(xs, prng)
+F.shuffle(xs)   -- using the global PRNG
+xs:shuffle(prng)
+xs:shuffle()    -- using the global PRNG
+```
+
+returns a shuffled copy of `xs`

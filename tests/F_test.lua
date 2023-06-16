@@ -23,6 +23,7 @@ http://cdelord.fr/luax
 ---------------------------------------------------------------------
 
 local F = require "F"
+local crypt = require "crypt"
 
 require "test"
 
@@ -1553,6 +1554,58 @@ local function string_interpolation()
 end
 
 ---------------------------------------------------------------------
+-- Random access
+---------------------------------------------------------------------
+
+local function random_access()
+    local prng = crypt.prng(42)
+    do
+        -- test crypt.choose
+        local xs = F.range(0, 15):map(function(i) return string.char(i + string.byte"A") end)
+        local ys = F{}
+        for i = 1, 1000 do
+            ys[i] = xs:choose()
+            eq(F.elem(ys[i], xs), true)
+        end
+        ys = ys:from_set(F.const(true)):keys()
+        eq(ys, xs)
+    end
+    do
+        -- test prng:choose
+        local xs = F.range(0, 15):map(function(i) return string.char(i + string.byte"A") end)
+        local ys = F{}
+        for i = 1, 1000 do
+            ys[i] = xs:choose(prng)
+            eq(F.elem(ys[i], xs), true)
+        end
+        ys = ys:from_set(F.const(true)):keys()
+        eq(ys, xs)
+    end
+    do
+        -- test crypt.shuffle
+        local xs = F.range(0, 15):map(function(i) return string.char(i + string.byte"A") end):sort()
+        local ys = xs:shuffle()
+        local zs = xs:shuffle()
+        ne(ys, xs)
+        ne(zs, xs)
+        ne(zs, ys)
+        eq(ys:sort(), xs)
+        eq(zs:sort(), xs)
+    end
+    do
+        -- test prng:shuffle
+        local xs = F.range(0, 15):map(function(i) return string.char(i + string.byte"A") end):sort()
+        local ys = xs:shuffle(prng)
+        local zs = xs:shuffle(prng)
+        ne(ys, xs)
+        ne(zs, xs)
+        ne(zs, ys)
+        eq(ys:sort(), xs)
+        eq(zs:sort(), xs)
+    end
+end
+
+---------------------------------------------------------------------
 -- run all tests
 ---------------------------------------------------------------------
 
@@ -1584,5 +1637,8 @@ return function()
     -- string functions
     string_functions()
     string_interpolation()
+
+    -- random access functions
+    random_access()
 
 end
