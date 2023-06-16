@@ -791,15 +791,15 @@ README.md: doc/src/luax.md doc/src/fix_links.lua $(IMAGES)
 
 URL = cdelord.fr/luax
 
-doc/luax-banner.svg: doc/luax-logo.lua
+doc/luax-banner.svg: doc/src/luax-logo.lua
 	@$(call cyan,"IMAGE",$@)
 	@lsvg $< $@ -- 1024 192 # '$(URL)'
 
-doc/luax-logo.svg: doc/luax-logo.lua
+doc/luax-logo.svg: doc/src/luax-logo.lua
 	@$(call cyan,"IMAGE",$@)
 	@lsvg $< $@ -- 256 256 # '$(URL)'
 
-$(BUILD)/luax-social.png: doc/luax-logo.lua
+$(BUILD)/luax-social.png: doc/src/luax-logo.lua
 	@$(call cyan,"IMAGE",$@)
 	@mkdir -p $(dir $@)
 	@lsvg $< $@ -- 1280 640 '$(URL)'
