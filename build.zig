@@ -78,7 +78,6 @@ const luax_c_files = [_][]const u8 {
     "src/crypt/crypt.c",
     "src/crypt/sha1.c",
     "src/complex/complex.c",
-    "src/linenoise/linenoise.c",
     "src/socket/luasocket.c",
     "src/lz4/lz4.c",
     "src/term/term.c",
@@ -118,7 +117,6 @@ const third_party_c_files = [_][]const u8 {
 };
 
 const linux_third_party_c_files = [_][]const u8 {
-    "src/linenoise/linenoise/linenoise.c",
     "src/socket/luasocket/serial.c",
     "src/socket/luasocket/unixdgram.c",
     "src/socket/luasocket/unixstream.c",

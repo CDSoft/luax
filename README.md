@@ -109,7 +109,6 @@ scripts:
       -t list-luax      list available native LuaX targets
       -t list-lua       list available Lua/Pandoc targets
       -o file           name the executable file to create
-      -r                use rlwrap (Lua/Pandoc targets only)
       -q                quiet compilation (error messages only)
 
     Scripts for compilation:
@@ -217,7 +216,6 @@ and [lapp](http://cdelord.fr/lapp).
 - [crypt](doc/crypt.md): cryptography module
 - [lz4](doc/lz4.md): Extremely Fast Compression algorithm
 - [lpeg](doc/lpeg.md): Parsing Expression Grammars For Lua
-- [linenoise](doc/linenoise.md): light readline alternative
 - [prompt](doc/prompt.md): minimalistic readline alternative (to be used
   with `rlwrap`)
 - [luasocket](doc/luasocket.md): Network support for the Lua language
@@ -287,9 +285,6 @@ programs:
 - **[luasocket](https://github.com/diegonehab/luasocket)**: Network
   support for the Lua language ([LuaSocket 3.0
   license](https://github.com/diegonehab/luasocket/blob/master/LICENSE))
-- **[linenoise](https://github.com/antirez/linenoise)**: A small
-  self-contained alternative to readline and libedit ([BSD-2-Clause
-  license](https://github.com/antirez/linenoise/blob/master/LICENSE))
 - **[inspect](https://github.com/kikito/inspect.lua)**: Human-readable
   representation of Lua tables ([MIT
   license](https://github.com/kikito/inspect.lua/blob/master/MIT-LICENSE.txt))

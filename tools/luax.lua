@@ -66,7 +66,6 @@ Compilation options:
   -t list-luax      list available native LuaX targets
   -t list-lua       list available Lua/Pandoc targets
   -o file           name the executable file to create
-  -r                use rlwrap (Lua/Pandoc targets only)
   -q                quiet compilation (error messages only)
 
 Scripts for compilation:
@@ -201,7 +200,6 @@ local run_stdin = false
 local args = {}
 local output = nil
 local target = nil
-local rlwrap = false
 local quiet = false
 
 local luax_loaded = false
@@ -494,9 +492,6 @@ do
             if target == "list" then print_targets() os.exit() end
             if target == "list-luax" then print_luax_targets() os.exit() end
             if target == "list-lua" then print_lua_targets() os.exit() end
-        elseif has_compiler and a == "-r" then
-            compiler_mode = true
-            rlwrap = true
         elseif a == '-q' then
             compiler_mode = true
             quiet = true
@@ -592,15 +587,7 @@ local function run_interpreter()
     -- interactive REPL
 
     if interactive then
-        local history = sys.os == "windows"
-            and fs.join(os.getenv "APPDATA", "luax_history")
-            or fs.join(os.getenv "HOME", ".luax_history")
-        local linenoise = require "linenoise"
-        linenoise.load(history)
-        local function hist(input)
-            linenoise.add(input)
-            linenoise.save(history)
-        end
+        local prompt = require "prompt"
         local function try(input)
             local chunk, msg = load(input, "=stdin")
             if not chunk then
@@ -617,11 +604,10 @@ local function run_interpreter()
         print_welcome()
         while true do
             local inputs = {}
-            local prompt = ">> "
+            local current_prompt = ">> "
             while true do
-                local line = linenoise.read(prompt)
+                local line = prompt.read(current_prompt)
                 if not line then os.exit() end
-                hist(line)
                 table.insert(inputs, line)
                 local input = table.concat(inputs, "\n")
                 local try_expr, err_expr = try("return "..input)
@@ -632,7 +618,7 @@ local function run_interpreter()
                     print(try_stat == nil and err_stat or err_expr)
                     break
                 end
-                prompt = ".. "
+                current_prompt = ".. "
             end
         end
     end
@@ -720,9 +706,6 @@ local function run_compiler()
         local chunk = bundle.combine_lua{interpreter.format, luax_scripts, scripts}
         local exe = F.flatten{
                 "#!/usr/bin/env -S",
-
-                -- call the interpreter with rlwrap (option -r)
-                rlwrap and {"rlwrap -C", fs.basename(current_output)} or {},
 
                 -- "luax", "lua" or "pandoc lua" interpreter
                 interpreter.interpreter,

@@ -32,21 +32,32 @@ local term = require "term"
 ```
 @@@]]
 
-local term = require "_term"
+local _, term = pcall(require, "_term")
+term = _ and term
 
-if not term.isatty then
+if not term then
+    term = {}
 
-    function term.isatty()
-        return (sh.run("tty", "--slient", "2>/dev/null"))
+    if not term.isatty then
+
+        local _isatty = nil
+
+        function term.isatty()
+            if _isatty == nil then
+                _isatty = (sh.run("tty", "--slient", "2>/dev/null"))
+            end
+            return _isatty
+        end
+
     end
 
-end
+    if not term.size then
 
-if not term.size then
+        function term.size()
+            local rows, cols = sh.read("stty", "size"):words():map(tonumber):unpack()
+            return {rows=rows, cols=cols}
+        end
 
-    function term.size()
-        local rows, cols = sh.read("stty", "size"):words():map(tonumber):unpack()
-        return {rows=rows, cols=cols}
     end
 
 end

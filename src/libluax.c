@@ -46,7 +46,6 @@
 #include "imath/imath.h"
 #include "qmath/qmath.h"
 #include "complex/complex.h"
-#include "linenoise/linenoise.h"
 #include "socket/luasocket.h"
 #include "lz4/lz4.h"
 #include "term/term.h"
@@ -59,7 +58,6 @@ static const luaL_Reg lrun_libs[] = {
     {"_sys", luaopen_sys},
     {"_lpeg", luaopen_lpeg},
     {"_crypt", luaopen_crypt},
-    {"_linenoise", luaopen_linenoise},
     {"_mathx", luaopen_mathx},
     {"_imath", luaopen_imath},
     {"_qmath", luaopen_qmath},

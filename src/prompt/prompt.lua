@@ -37,6 +37,8 @@ local prompt = require "prompt"
 
 local prompt = {}
 
+local term = require "term"
+
 --[[@@@
 ```lua
 s = prompt.read(p)
@@ -45,9 +47,9 @@ prints `p` and waits for a user input
 @@@]]
 
 function prompt.read(p)
-    io.stdout:write(p)
-    io.stdout:flush()
-    return io.stdin:read "l"
+    io.write(p)
+    io.flush()
+    return io.read "l"
 end
 
 --[[@@@
@@ -58,7 +60,9 @@ clears the screen
 @@@]]
 
 function prompt.clear()
-    io.stdout:write "\x1b[1;1H\x1b[2J"
+    if term.isatty() then
+        io.write "\x1b[1;1H\x1b[2J"
+    end
 end
 
 -------------------------------------------------------------------------------

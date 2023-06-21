@@ -159,7 +159,6 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 - [crypt](crypt.md): cryptography module
 - [lz4](lz4.md): Extremely Fast Compression algorithm
 - [lpeg](lpeg.md): Parsing Expression Grammars For Lua
-- [linenoise](linenoise.md): light readline alternative
 - [prompt](prompt.md): minimalistic readline alternative (to be used with `rlwrap`)
 - [luasocket](luasocket.md): Network support for the Lua language
 - [argparse](argparse.md): Feature-rich command line parser for Lua
@@ -228,9 +227,6 @@ script `lib/luax.lua` can be reused in pure Lua programs:
 * **[luasocket](https://github.com/diegonehab/luasocket)**: Network support for
   the Lua language ([LuaSocket 3.0
   license](https://github.com/diegonehab/luasocket/blob/master/LICENSE))
-* **[linenoise](https://github.com/antirez/linenoise)**: A small self-contained
-  alternative to readline and libedit ([BSD-2-Clause
-  license](https://github.com/antirez/linenoise/blob/master/LICENSE))
 * **[inspect](https://github.com/kikito/inspect.lua)**: Human-readable
   representation of Lua tables ([MIT
   license](https://github.com/kikito/inspect.lua/blob/master/MIT-LICENSE.txt))

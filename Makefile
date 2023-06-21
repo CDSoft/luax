@@ -70,7 +70,6 @@ LIB_LUAX_SOURCES += src/crypt/crypt.lua
 LIB_LUAX_SOURCES += src/fs/fs.lua
 LIB_LUAX_SOURCES += src/imath/imath.lua
 LIB_LUAX_SOURCES += src/inspect/inspect.lua
-LIB_LUAX_SOURCES += src/linenoise/linenoise.lua
 LIB_LUAX_SOURCES += src/mathx/mathx.lua
 LIB_LUAX_SOURCES += src/prompt/prompt.lua
 LIB_LUAX_SOURCES += src/ps/ps.lua
@@ -211,7 +210,6 @@ mrproper: clean
 .PHONY: update-limath
 .PHONY: update-lqmath
 .PHONY: update-lmathx
-.PHONY: update-linenoise
 .PHONY: update-luasocket
 .PHONY: update-lpeg
 .PHONY: update-argparse
@@ -234,10 +232,6 @@ LQMATH_URL = https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$(LQMATH_ARCHIVE)
 
 LMATHX_ARCHIVE = lmathx.tar.gz
 LMATHX_URL = https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/5.3/$(LMATHX_ARCHIVE)
-
-LINENOISE_VERSION = master
-LINENOISE_ARCHIVE = linenoise-$(LINENOISE_VERSION).zip
-LINENOISE_URL = https://github.com/antirez/linenoise/archive/refs/heads/$(LINENOISE_VERSION).zip
 
 LUASOCKET_VERSION = 3.1.0
 LUASOCKET_ARCHIVE = luasocket-$(LUASOCKET_VERSION).zip
@@ -269,7 +263,6 @@ update: update-lcomplex
 update: update-limath
 update: update-lqmath
 update: update-lmathx
-update: update-linenoise
 update: update-luasocket
 update: update-lpeg
 update: update-argparse
@@ -324,22 +317,6 @@ update-lmathx: $(BUILD_TMP)/$(LMATHX_ARCHIVE)
 $(BUILD_TMP)/$(LMATHX_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(LMATHX_URL) -O $@
-
-## Update linenoise sources
-update-linenoise: $(BUILD_TMP)/$(LINENOISE_ARCHIVE)
-	rm -rf src/linenoise/linenoise
-	mkdir src/linenoise/linenoise
-	unzip -j $< -x '*/.gitignore' '*/Makefile' '*/example.c' -d src/linenoise/linenoise
-	sed -i -e 's/case ENTER:/case ENTER: case 10:/'                         \
-	       -e 's/malloc(/safe_malloc(/'                                     \
-	       -e 's/realloc(/safe_realloc(/'                                   \
-	       -e 's/\(#include "linenoise.h"\)/\1\n\n#include "tools.h"/'      \
-	       -e 's/TCSAFLUSH/TCSADRAIN/'                                      \
-	       src/linenoise/linenoise/linenoise.c
-
-$(BUILD_TMP)/$(LINENOISE_ARCHIVE):
-	@mkdir -p $(dir $@)
-	wget $(LINENOISE_URL) -O $@
 
 ## Update luasocket sources
 update-luasocket: $(BUILD_TMP)/$(LUASOCKET_ARCHIVE)
@@ -596,7 +573,7 @@ $(LIB_LUAX): $(LUAX0) $(LIB_LUAX_SOURCES) tools/bundle.lua $(LUAX0)
 
 $(LUAX_LUA): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(LIB_LUAX)
 	@$(call cyan,"BUNDLE",$@)
-	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -r -t lua -o $@ tools/luax.lua
+	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -t lua -o $@ tools/luax.lua
 
 ###############################################################################
 # luax-pandoc
@@ -604,7 +581,7 @@ $(LUAX_LUA): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(LIB_
 
 $(LUAX_PANDOC): $(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) tools/luax.lua $(LIB_LUAX)
 	@$(call cyan,"BUNDLE",$@)
-	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -r -t pandoc -o $@ tools/luax.lua
+	@$(BUILD_BIN)/luax-$(ARCH)-$(OS)-$(LIBC)$(EXT) -q -t pandoc -o $@ tools/luax.lua
 
 ###############################################################################
 # Tests (native only)
