@@ -239,4 +239,27 @@ term.down        = f(CSI..'%d;B')
 term.right       = f(CSI..'%d;C')
 term.left        = f(CSI..'%d;D')
 
+--[[------------------------------------------------------------------------@@@
+## Prompt
+
+The prompt function is a basic prompt implementation
+to display a prompt and get user inputs.
+
+The use of [rlwrap](https://github.com/hanslub42/rlwrap)
+is highly recommended for a better user experience on Linux.
+@@@]]
+
+--[[@@@
+```lua
+s = term.prompt(p)
+```
+prints `p` and waits for a user input
+@@@]]
+
+function term.prompt(p)
+    io.write(p)
+    io.flush()
+    return io.read "l"
+end
+
 return term

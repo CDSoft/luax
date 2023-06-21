@@ -159,7 +159,6 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 - [crypt](crypt.md): cryptography module
 - [lz4](lz4.md): Extremely Fast Compression algorithm
 - [lpeg](lpeg.md): Parsing Expression Grammars For Lua
-- [prompt](prompt.md): minimalistic readline alternative (to be used with `rlwrap`)
 - [luasocket](luasocket.md): Network support for the Lua language
 - [argparse](argparse.md): Feature-rich command line parser for Lua
 - [inspect](inspect.md): Human-readable representation of Lua tables

@@ -216,8 +216,6 @@ and [lapp](http://cdelord.fr/lapp).
 - [crypt](doc/crypt.md): cryptography module
 - [lz4](doc/lz4.md): Extremely Fast Compression algorithm
 - [lpeg](doc/lpeg.md): Parsing Expression Grammars For Lua
-- [prompt](doc/prompt.md): minimalistic readline alternative (to be used
-  with `rlwrap`)
 - [luasocket](doc/luasocket.md): Network support for the Lua language
 - [argparse](doc/argparse.md): Feature-rich command line parser for Lua
 - [inspect](doc/inspect.md): Human-readable representation of Lua tables

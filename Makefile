@@ -71,7 +71,6 @@ LIB_LUAX_SOURCES += src/fs/fs.lua
 LIB_LUAX_SOURCES += src/imath/imath.lua
 LIB_LUAX_SOURCES += src/inspect/inspect.lua
 LIB_LUAX_SOURCES += src/mathx/mathx.lua
-LIB_LUAX_SOURCES += src/prompt/prompt.lua
 LIB_LUAX_SOURCES += src/ps/ps.lua
 LIB_LUAX_SOURCES += src/qmath/qmath.lua
 LIB_LUAX_SOURCES += src/serpent/serpent.lua

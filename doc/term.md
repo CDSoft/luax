@@ -126,6 +126,20 @@ term.left([n])
 
 moves the cursor by `n` characters up, down, right or left.
 
+## Prompt
+
+The prompt function is a basic prompt implementation to display a prompt
+and get user inputs.
+
+The use of [rlwrap](https://github.com/hanslub42/rlwrap) is highly
+recommended for a better user experience on Linux.
+
+``` lua
+s = term.prompt(p)
+```
+
+prints `p` and waits for a user input
+
 ``` lua
 term.isatty([fileno])
 ```

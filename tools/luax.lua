@@ -587,7 +587,7 @@ local function run_interpreter()
     -- interactive REPL
 
     if interactive then
-        local prompt = require "prompt"
+        local term = require "term"
         local function try(input)
             local chunk, msg = load(input, "=stdin")
             if not chunk then
@@ -604,9 +604,9 @@ local function run_interpreter()
         print_welcome()
         while true do
             local inputs = {}
-            local current_prompt = ">> "
+            local prompt = ">> "
             while true do
-                local line = prompt.read(current_prompt)
+                local line = term.prompt(prompt)
                 if not line then os.exit() end
                 table.insert(inputs, line)
                 local input = table.concat(inputs, "\n")
@@ -618,7 +618,7 @@ local function run_interpreter()
                     print(try_stat == nil and err_stat or err_expr)
                     break
                 end
-                current_prompt = ".. "
+                prompt = ".. "
             end
         end
     end
