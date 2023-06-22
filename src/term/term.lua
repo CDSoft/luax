@@ -257,8 +257,10 @@ prints `p` and waits for a user input
 @@@]]
 
 function term.prompt(p)
-    io.write(p)
-    io.flush()
+    if p and term.isatty() then
+        io.write(p)
+        io.flush()
+    end
     return io.read "l"
 end
 
