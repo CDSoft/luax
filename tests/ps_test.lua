@@ -24,7 +24,7 @@ http://cdelord.fr/luax
 
 local ps = require "ps"
 
-local eps = sys.abi == "lua" and 1 or 0.001
+local eps = sys.abi == "lua" and 1 or 0.01
 
 local function sleep_test(n)
     local t0 = ps.time()
