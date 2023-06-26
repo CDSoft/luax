@@ -93,10 +93,8 @@ static inline uint32_t littleendian(uint32_t n)
 
 void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
 {
-    char *rc4_buffer = NULL;
-    size_t rc4_buffer_len = 0;
-    rc4_runtime(input, input_len, &rc4_buffer, &rc4_buffer_len);
-    const char *err = lz4_decompress(rc4_buffer, rc4_buffer_len, output, output_len);
+    char *rc4_buffer = rc4_runtime(input, input_len);
+    const char *err = lz4_decompress(rc4_buffer, input_len, output, output_len);
     free(rc4_buffer);
     if (err != NULL)
     {

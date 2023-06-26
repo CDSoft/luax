@@ -28,4 +28,4 @@
 LUAMOD_API int luaopen_crypt(lua_State *L);
 
 /* RC4 algorithm exported to be used by run.c to decrypt the payload */
-const char *rc4_runtime(const char *input, size_t input_len, char **output, size_t *output_len);
+char *rc4_runtime(const char *input, size_t input_len);

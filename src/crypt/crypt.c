@@ -907,7 +907,7 @@ typedef struct
 
 static inline void swap(uint8_t *a, uint8_t *b)
 {
-    uint8_t tmp = *a;
+    const uint8_t tmp = *a;
     *a = *b;
     *b = tmp;
 }
@@ -952,7 +952,7 @@ static inline void rc4_drop(t_rc4 *rc4, size_t n)
 
 static inline uint8_t rc4_byte(t_rc4 *rc4)
 {
-    uint8_t *S = rc4->S;
+    const uint8_t *S = rc4->S;
     return S[(S[rc4->i] + S[rc4->j]) % 256];
 }
 
@@ -965,21 +965,20 @@ static inline void rc4_xor(t_rc4 *rc4, size_t n, const char *input, char *output
     }
 }
 
-static void rc4(const char *key, size_t key_size, size_t drop, const char *input, size_t size, char *output)
+static char *rc4(const char *key, size_t key_size, size_t drop, const char *input, size_t size)
 {
     t_rc4 rc4;
     rc4_init(&rc4);
     rc4_schedule(&rc4, key, key_size);
     rc4_drop(&rc4, drop);
+    char *output = safe_malloc(size);
     rc4_xor(&rc4, size, input, output);
+    return output;
 }
 
-const char *rc4_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
+char *rc4_runtime(const char *input, size_t input_len)
 {
-    *output = safe_malloc(input_len);
-    rc4(LUAX_CRYPT_KEY, sizeof(LUAX_CRYPT_KEY)-1, RC4_DROP_3072, input, input_len, *output);
-    *output_len = input_len;
-    return NULL;
+    return rc4(LUAX_CRYPT_KEY, sizeof(LUAX_CRYPT_KEY)-1, RC4_DROP_3072, input, input_len);
 }
 
 /*@@@
@@ -1015,17 +1014,8 @@ static int crypt_rc4(lua_State *L)
         drop = (size_t)luaL_checkinteger(L, 3);
     }
 
-    char *out = NULL;
-    if (key == NULL)
-    {
-        size_t out_len = 0;
-        rc4_runtime(in, n, &out, &out_len);
-    }
-    else
-    {
-        out = safe_malloc(n);
-        rc4(key, key_size, drop, in, n, out);
-    }
+    char *out = (key == NULL) ? rc4_runtime(in, n)
+                              : rc4(key, key_size, drop, in, n);
     lua_pushlstring(L, out, n);
     free(out);
     return 1;
