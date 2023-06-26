@@ -32,7 +32,7 @@ BUILD_DOC = $(BUILD)/doc
 ZIG_INSTALL = .zig
 ZIG_CACHE = $(ZIG_INSTALL)/zig-cache
 
-RELEASE = release-small
+RELEASE = release-fast
 
 # Linux
 TARGETS += x86_64-linux-musl
