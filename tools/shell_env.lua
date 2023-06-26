@@ -26,13 +26,12 @@ local function shell_env()
 
     local exe = fs.is_file(arg[0]) and arg[0] or fs.findpath(arg[0])
 
+    local abi = { linux="gnu", macos="none",  windows="gnu" }
+    local ext = { linux="so",  macos="dylib", windows="dll" }
+
     local bin = fs.realpath(fs.dirname(exe))
     local lib_lua = fs.join(fs.dirname(bin), "lib", "?.lua")
-    local lib_so = fs.join(fs.dirname(bin), "lib",
-           sys.os == "linux"   and "?-"..sys.arch.."-linux-gnu.so"
-        or sys.os == "macos"   and "?-"..sys.arch.."-macos-gnu.dylib"
-        or sys.os == "windows" and "?-"..sys.arch.."-windows-gnu.dll"
-    )
+    local lib_so = fs.join(fs.dirname(bin), "lib", F{"?", sys.arch, sys.os, abi[sys.os], ext[sys.os]}:str("-", "."))
 
     return F.flatten{
         path:split(fs.path_sep):elem(bin)
