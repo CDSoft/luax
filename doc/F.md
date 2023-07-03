@@ -968,7 +968,7 @@ F.mapi(f, xs)
 xs:mapi(f)
 ```
 
-> maps `f` to the elements of `xs` and returns
+> maps `f` to the indices and elements of `xs` and returns
 > `{f(1, xs[1]), f(2, xs[2]), ...}`
 
 ``` lua
@@ -984,7 +984,7 @@ F.mapk(f, t)
 t:mapk(f)
 ```
 
-> maps `f` to the values of `t` and returns
+> maps `f` to the keys and values of `t` and returns
 > `{k1=f(k1, t[k1]), k2=f(k2, t[k2]), ...}`
 
 ``` lua
@@ -1020,6 +1020,39 @@ t:updatek(f, k)
 > deleted. Otherwise the key `k` is bound to the value `f(k, x)`.
 >
 > **Warning**: in-place modification.
+
+## Table trasversal
+
+``` lua
+F.foreach(xs, f)
+xs:foreach(f)
+```
+
+> calls `f` with the elements of `xs` (`f(xi)` for `xi` in `xs`)
+
+``` lua
+F.foreachi(xs, f)
+xs:foreachi(f)
+```
+
+> calls `f` with the indices and elements of `xs` (`f(i, xi)` for `xi`
+> in `xs`)
+
+``` lua
+F.foreacht(t, f)
+t:foreacht(f)
+```
+
+> calls `f` with the values of `t` (`f(v)` for `v` in `t` such that
+> `v = t[k]`)
+
+``` lua
+F.foreachk(t, f)
+t:foreachk(f)
+```
+
+> calls `f` with the keys and values of `t` (`f(k, v)` for (`k`, `v`) in
+> `t` such that `v = t[k]`)
 
 ## Table reductions (folds)
 

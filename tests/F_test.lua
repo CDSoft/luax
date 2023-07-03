@@ -940,6 +940,35 @@ local function table_transformations()
 end
 
 ---------------------------------------------------------------------
+-- Table traversal
+---------------------------------------------------------------------
+
+local function table_traversal()
+
+    local xs = F{10,20,30}
+    local function f(x) return 2*x end
+    local function g(i, x) return f(x) + i end
+    local function h(k, x) return k..":"..f(x) end
+
+    local ys
+
+    ys = {}; F.foreach(xs, function(x) ys[#ys+1] = f(x) end); eq(ys, {20,40,60})
+    ys = {}; xs:foreach(function(x) ys[#ys+1] = f(x) end); eq(ys, {20,40,60})
+
+    ys = {}; F.foreachi(xs, function(i, x) ys[#ys+1] = {i, g(i, x)} end); eq(ys, {{1,21},{2,42},{3,63}})
+    ys = {}; xs:foreachi(function(i, x) ys[#ys+1] = {i, g(i, x)} end); eq(ys, {{1,21},{2,42},{3,63}})
+
+    local t = F{x=10, y=20, z=30}
+
+    ys = {}; F.foreacht(t, function(v) ys[#ys+1] = f(v) end); eq(ys, {20,40,60})
+    ys = {}; t:foreacht(function(v) ys[#ys+1] = f(v) end); eq(ys, {20,40,60})
+
+    ys = {}; F.foreachk(t, function(k, v) ys[#ys+1] = {k, h(k, v)} end); eq(ys, {{"x","x:20"},{"y","y:40"},{"z","z:60"}})
+    ys = {}; t:foreachk(function(k, v) ys[#ys+1] = {k, h(k, v)} end); eq(ys, {{"x","x:20"},{"y","y:40"},{"z","z:60"}})
+
+end
+
+---------------------------------------------------------------------
 -- Table reductions (folds)
 ---------------------------------------------------------------------
 
@@ -1626,6 +1655,7 @@ return function()
     table_searching()
     table_size()
     table_transformations()
+    table_traversal()
     table_reductions()
     table_zipping()
     set_operations()
