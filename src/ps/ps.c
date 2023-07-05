@@ -80,7 +80,7 @@ static inline lua_Number gettime(void)
     const lua_Number t = (double)wintime / 1e7;
 #else
     struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+    clock_gettime(CLOCK_REALTIME, &ts);
     const uint64_t sec_in_nsec = (uint64_t)ts.tv_sec * 1000000000;
     const uint64_t nsec = (uint64_t)ts.tv_nsec;
     const lua_Number t = (double)(sec_in_nsec + nsec) / 1e9;

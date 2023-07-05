@@ -26,6 +26,10 @@ local ps = require "ps"
 
 local eps = sys.abi == "lua" and 1 or 0.01
 
+local function time_test()
+    assert(math.abs(ps.time() - os.time()) <= 1.0)
+end
+
 local function sleep_test(n)
     local t0 = ps.time()
     ps.sleep(n)
@@ -41,6 +45,7 @@ local function profile_test(n)
 end
 
 return function()
+    time_test()
     if sys.abi == "gnu" or sys.abi == "musl" then
         sleep_test(0)
         sleep_test(0.142)
