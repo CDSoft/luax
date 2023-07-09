@@ -83,7 +83,7 @@ pub fn build(b: *std.build.Builder) !void {
     exe.addIncludePath(build_path);
     exe.addIncludePath(lua_src);
     exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
-        "-std=gnu11",
+        "-std=gnu2x",
         "-O3",
         "-Werror",
         "-Wall",

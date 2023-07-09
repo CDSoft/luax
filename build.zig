@@ -176,7 +176,7 @@ pub fn build(b: *std.build.Builder) !void {
     exe.addIncludePath(build_path);
     exe.addIncludePath(lua_src);
     exe.addCSourceFiles(&luax_main_c_files, &[_][]const u8 {
-        "-std=gnu11",
+        "-std=gnu2x",
         "-O3",
         "-Werror",
         "-Wall",
@@ -198,7 +198,7 @@ pub fn build(b: *std.build.Builder) !void {
         //if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_BUILD_AS_DLL" else "",
     });
     exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
-        "-std=gnu11",
+        "-std=gnu2x",
         "-O3",
         "-Werror",
         "-Wall",
@@ -207,7 +207,7 @@ pub fn build(b: *std.build.Builder) !void {
         if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
     });
     exe.addCSourceFiles(&luax_c_files, &[_][]const u8 {
-        "-std=gnu11",
+        "-std=gnu2x",
         "-O3",
         "-Werror",
         "-Wall",
@@ -229,7 +229,7 @@ pub fn build(b: *std.build.Builder) !void {
         if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
     });
     exe.addCSourceFiles(&third_party_c_files, &[_][]const u8 {
-        "-std=gnu11",
+        "-std=gnu2x",
         "-O3",
         "-Wno-documentation",
         "-DLUA_LIB",
@@ -238,7 +238,7 @@ pub fn build(b: *std.build.Builder) !void {
     });
     if (target.os_tag == std.Target.Os.Tag.windows) {
         exe.addCSourceFiles(&windows_third_party_c_files, &[_][]const u8 {
-            "-std=gnu11",
+            "-std=gnu2x",
             "-O3",
             "-Wno-documentation",
         });
@@ -246,7 +246,7 @@ pub fn build(b: *std.build.Builder) !void {
         exe.linkSystemLibraryName("advapi32");
     } else {
         exe.addCSourceFiles(&linux_third_party_c_files, &[_][]const u8 {
-            "-std=gnu11",
+            "-std=gnu2x",
             "-O3",
             "-Wno-documentation",
             if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
@@ -274,7 +274,7 @@ pub fn build(b: *std.build.Builder) !void {
     lib_shared.addIncludePath(lz4_src);
     if (target.os_tag != std.Target.Os.Tag.linux) {
         lib_shared.addCSourceFiles(&lua_c_files, &[_][]const u8 {
-            "-std=gnu11",
+            "-std=gnu2x",
             "-O3",
             "-Werror",
             "-Wall",
@@ -285,7 +285,7 @@ pub fn build(b: *std.build.Builder) !void {
         });
     }
     lib_shared.addCSourceFiles(&luax_c_files, &[_][]const u8 {
-        "-std=gnu11",
+        "-std=gnu2x",
         "-O3",
         "-Werror",
         "-Wall",
@@ -308,7 +308,7 @@ pub fn build(b: *std.build.Builder) !void {
         //if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_BUILD_AS_DLL" else "",
     });
     lib_shared.addCSourceFiles(&third_party_c_files, &[_][]const u8 {
-        "-std=gnu11",
+        "-std=gnu2x",
         "-O3",
         "-Wno-documentation",
         "-DLUA_LIB",
@@ -318,7 +318,7 @@ pub fn build(b: *std.build.Builder) !void {
     });
     if (target.os_tag == std.Target.Os.Tag.windows) {
         lib_shared.addCSourceFiles(&windows_third_party_c_files, &[_][]const u8 {
-            "-std=gnu11",
+            "-std=gnu2x",
             "-O3",
             "-Wno-documentation",
             //"-DLUA_BUILD_AS_DLL",
@@ -327,7 +327,7 @@ pub fn build(b: *std.build.Builder) !void {
         lib_shared.linkSystemLibraryName("advapi32");
     } else {
         lib_shared.addCSourceFiles(&linux_third_party_c_files, &[_][]const u8 {
-            "-std=gnu11",
+            "-std=gnu2x",
             "-O3",
             "-Wno-documentation",
             if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",

@@ -1,5 +1,5 @@
 -Weverything
--std=gnu11
+-std=gnu2x
 -Wall
 -Wextra
 -pedantic
