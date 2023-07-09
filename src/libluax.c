@@ -91,7 +91,7 @@ static inline uint32_t littleendian(uint32_t n)
     return n;
 }
 
-void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
+static void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
 {
     char *rc4_buffer = rc4_runtime(input, input_len);
     const char *err = lz4_decompress(rc4_buffer, input_len, output, output_len);
@@ -141,7 +141,7 @@ static const char *arg0(lua_State *L)
     return luaL_checkstring(L, -1);
 }
 
-int run_buffer(lua_State *L, char *buffer, size_t size, const char *name)
+static int run_buffer(lua_State *L, char *buffer, size_t size, const char *name)
 {
     if (luaL_loadbuffer(L, buffer, size, name) != LUA_OK)
     {

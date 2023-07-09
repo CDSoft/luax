@@ -27,6 +27,6 @@
 /* C module registration function */
 LUAMOD_API int luaopen_lz4(lua_State *L);
 
-/* LZ4 functions to be used by run.c to decrypt the payload */
+/* LZ4 functions to be used by libluax.c to decrypt the payload */
 const char *lz4_compress(const char *src, const size_t src_len, char **dst, size_t *dst_len);
 const char *lz4_decompress(const char *src, const size_t src_len, char **dst, size_t *dst_len);
