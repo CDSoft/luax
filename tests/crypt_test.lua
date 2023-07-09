@@ -28,6 +28,7 @@ require "test"
 
 return function()
     local prng = crypt.prng()
+    local N = sys.abi == "lua" and 100 or 1000
     do
         local x = "foobarbaz"
         local y = crypt.hex(x)
@@ -36,7 +37,7 @@ return function()
         eq(y, z)
         eq(crypt.unhex(y), x)
         eq(z:unhex(), x)
-        for _ = 1, 1000 do
+        for _ = 1, N do
             local s = prng:str(256)
             eq(s:hex():unhex(), s)
         end
@@ -73,7 +74,7 @@ return function()
         for i = 0, 255 do
             eq(string.char(i):base64():unbase64(), string.char(i))
         end
-        for i = 1, 1000 do
+        for i = 1, N do
             local s = prng:str(256 + i%3)
             eq(s:base64():unbase64(), s)
             eq(s:base64url():unbase64url(), s)
@@ -105,7 +106,7 @@ return function()
             eq(crypt.rc4(x, key), x:rc4(key))
             eq(crypt.unrc4(y, key), y:unrc4(key))
             eq(x:rc4(key):unrc4(key), x)
-            for _ = 1, 1000 do
+            for _ = 1, N do
                 local s = prng:str(256)
                 local k = prng:str(256)
                 eq(s:rc4(k):unrc4(k), s)
@@ -121,14 +122,14 @@ return function()
             eq(crypt.rc4(x, key, drop), x:rc4(key, drop))
             eq(crypt.unrc4(y, key, drop), y:unrc4(key, drop))
             eq(x:rc4(key, drop):unrc4(key, drop), x)
-            for _ = 1, 1000 do
+            for _ = 1, N do
                 local s = prng:str(256)
                 local k = prng:str(256)
                 eq(s:rc4(k, drop):unrc4(k, drop), s)
             end
         end
         do
-            for _ = 1, 1000 do
+            for _ = 1, N do
                 local s = prng:str(256)
                 local k = prng:str(256)
                 local drop = prng:int() % 4096
@@ -141,7 +142,7 @@ return function()
             eq(crypt.sha1 "a", "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8")
             eq(crypt.sha1 "0123456701234567012345670123456701234567012345670123456701234567", "e0c094e867ef46c350ef54a7f59dd60bed92ae83")
             ne(crypt.sha1 "aa", crypt.sha1 "ab")
-            for _ = 1, sys.abi=="lua" and 10 or 1000 do
+            for _ = 1, N do
                 local s = crypt.str(crypt.int()%1024)
                 eq(s:sha1(), crypt.sha1(s))
             end
@@ -154,7 +155,7 @@ return function()
             eq(crypt.hash "ab", "27b12f5147011a98")
             eq(crypt.hash "0123456701234567012345670123456701234567012345670123456701234567", "fbc24b87f8801d96")
             ne(crypt.hash "aa", crypt.hash "ab")
-            for _ = 1, sys.abi=="lua" and 10 or 1000 do
+            for _ = 1, N do
                 local s = crypt.str(crypt.int()%1024)
                 eq(s:hash(), crypt.hash(s))
             end
@@ -174,28 +175,28 @@ return function()
         end
         eq(done, true)
         bounded(i, 100, 2000)
-        for _ = 1, 1000 do
+        for _ = 1, N do
             local x = prng:int()                              eq(type(x), "number") eq(math.type(x), "integer")
             local y = prng:int()                              eq(type(y), "number") eq(math.type(y), "integer")
             bounded(x, 0, crypt.RAND_MAX)
             bounded(y, 0, crypt.RAND_MAX)
             ne(x, y)
         end
-        for _ = 1, 1000 do
+        for _ = 1, N do
             local x = prng:float()                             eq(type(x), "number") eq(math.type(x), "float")
             local y = prng:float()                             eq(type(y), "number") eq(math.type(y), "float")
             bounded(x, 0.0, 1.0)
             bounded(y, 0.0, 1.0)
             ne(x, y)
         end
-        for _ = 1, 1000 do
+        for _ = 1, N do
             local x = prng:str(16)                           eq(type(x), "string")
             local y = prng:str(16)                           eq(type(y), "string")
             eq(#x, 16)
             eq(#y, 16)
             ne(x, y)
         end
-        for _ = 1, 1000 do
+        for _ = 1, N do
             bounded(prng:int(), 0, crypt.RAND_MAX)
             bounded(prng:int(15), 0, 15)
             bounded(prng:int(5, 15), 5, 15)
@@ -208,7 +209,7 @@ return function()
         local r1 = crypt.prng(42)
         local r2 = crypt.prng(42)
         local r3 = crypt.prng(43)
-        for _ = 1, 1000 do
+        for _ = 1, N do
             local x1 = r1:int()                                eq(type(x1), "number") eq(math.type(x1), "integer")
             local x2 = r2:int()                                eq(type(x2), "number") eq(math.type(x2), "integer")
             local x3 = r3:int()                                eq(type(x2), "number") eq(math.type(x3), "integer")
@@ -225,7 +226,7 @@ return function()
             eq(f1, f2)
             ne(f1, f3)
         end
-        for _ = 1, 1000 do
+        for _ = 1, N do
             bounded(r1:int(), 0, crypt.RAND_MAX)
             bounded(r1:int(15), 0, 15)
             bounded(r1:int(5, 15), 5, 15)
