@@ -724,7 +724,7 @@ IMAGES += $(BUILD)/luax-social.png
 
 doc: README.md
 doc: $(MARKDOWN_OUTPUTS)
-doc: $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD_DOC)/index.html
+#doc: $(HTML_OUTPUTS) $(MD_OUTPUTS) $(BUILD_DOC)/index.html
 doc: $(IMAGES)
 
 CSS = doc/src/luax.css
