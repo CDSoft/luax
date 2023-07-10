@@ -957,8 +957,13 @@ F.memo1(f)
 
 function F.memo1(f)
     return setmetatable({}, {
-        __index = function(self, k) local v = f(k); self[k] = v; return v; end,
-        __call = function(self, k) return self[k] end
+        __call = function(self, k)
+            local v = rawget(self, k)
+            if v then return table.unpack(v) end
+            v = F{f(k)}
+            self[k] = v
+            return table.unpack(v)
+        end
     })
 end
 
