@@ -436,29 +436,56 @@ local function miscellaneous_functions()
     local imath = require "imath"
     local ps = require "ps"
 
-    local fibcount = 0
-    local function fib(n)
-        fibcount = fibcount+1
-        assert(fibcount < 1000000, "The memoized fib function still takes to much time")
-        --return n <= 1 and imath.new(n) or fib(n-1) + fib(n-2)
-        if n <= 1 then return imath.new(n), n end
-        return fib(n-1) + fib(n-2), n
+    -- F.memo1
+    do
+        local fibcount = 0
+        local function fib(n)
+            fibcount = fibcount+1
+            assert(fibcount < 1000, "The memoized fib function still takes to much time")
+            --return n <= 1 and imath.new(n) or fib(n-1) + fib(n-2)
+            if n <= 1 then return imath.new(n), n end
+            return fib(n-1) + fib(n-2), n
+        end
+        fib = F.memo1(fib) ---@diagnostic disable-line:cast-local-type
+
+        eq({fib(0)}, {imath.new"0", 0})
+        eq({fib(1)}, {imath.new"1", 1})
+        eq({fib(2)}, {imath.new"1", 2})
+        eq({fib(3)}, {imath.new"2", 3})
+        eq({fib(4)}, {imath.new"3", 4})
+        eq({fib(5)}, {imath.new"5", 5})
+        eq({fib(6)}, {imath.new"8", 6})
+
+        local fib100
+        local dt, err = ps.profile(function() fib100 = {fib(100)} end) -- this should be fast because of memoization
+        assert(dt, err)
+        assert(dt < 1.0, "the memoized fibonacci suite takes too much time")
+        eq(fib100, {imath.new"354224848179261915075", 100})
     end
-    fib = F.memo1(fib) ---@diagnostic disable-line:cast-local-type
 
-    eq({fib(0)}, {imath.new"0", 0})
-    eq({fib(1)}, {imath.new"1", 1})
-    eq({fib(2)}, {imath.new"1", 2})
-    eq({fib(3)}, {imath.new"2", 3})
-    eq({fib(4)}, {imath.new"3", 4})
-    eq({fib(5)}, {imath.new"5", 5})
-    eq({fib(6)}, {imath.new"8", 6})
+    -- F.memo1
+    do
+        -- make a recursive function from an anonymous function (taking the function to recurse as the first argument)
+        local function rec(func)
+            local function r(...) return func(r, ...) end
+            return function(...) return r(...) end
+        end
 
-    local fib100
-    local dt, err = ps.profile(function() fib100 = {fib(100)} end) -- this should be fast because of memoization
-    assert(dt, err)
-    assert(dt < 1.0, "the memoized fibonacci suite takes too much time")
-    eq(fib100, {imath.new"354224848179261915075", 100})
+        local fibcount = 0
+        local fib = rec(F.memo(function(r, x, n) ---@diagnostic disable-line:unused-local
+            -- x is not used, it is used to test memoization with `nil` arguments
+            fibcount = fibcount+1
+            assert(fibcount < 1000, "The memoized fib function still takes to much time")
+            if n <= 1 then return imath.new(n), n end
+            return r(x, n-1) + r(x, n-2), n
+        end))
+
+        local fib100
+        local dt, err = ps.profile(function() fib100 = {fib(nil, 100)} end) -- this should be fast because of memoization
+        assert(dt, err)
+        assert(dt < 1.0, "the memoized fibonacci suite takes too much time")
+        eq(fib100, {imath.new"354224848179261915075", 100})
+    end
 
 end
 

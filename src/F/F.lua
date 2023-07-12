@@ -953,17 +953,53 @@ end
 F.memo1(f)
 ```
 > returns a memoized function (one argument)
+>
+> Note that the memoized function has a `reset` method to forget all the previously computed values.
 @@@]]
 
 function F.memo1(f)
+    local mem = {}
     return setmetatable({}, {
-        __call = function(self, k)
-            local v = rawget(self, k)
+        __index = {
+            reset = function(_) mem = {} end,
+        },
+        __call = function(_, k)
+            local v = mem[k]
             if v then return table.unpack(v) end
             v = F{f(k)}
-            self[k] = v
+            mem[k] = v
             return table.unpack(v)
-        end
+        end,
+    })
+end
+
+--[[@@@
+```lua
+F.memo(f)
+```
+> returns a memoized function (any number of arguments)
+>
+> Note that the memoized function has a `reset` method to forget all the previously computed values.
+@@@]]
+
+function F.memo(f)
+    local _nil = {}
+    local _value = {}
+    local mem = {}
+    return setmetatable({}, {
+        __index = {
+            reset = function(_) mem = {} end,
+        },
+        __call = function(_, ...)
+            local cur = mem
+            for i = 1, select("#", ...) do
+                local k = select(i, ...) or _nil
+                cur[k] = cur[k] or {}
+                cur = cur[k]
+            end
+            cur[_value] = cur[_value] or {f(...)}
+            return table.unpack(cur[_value])
+        end,
     })
 end
 

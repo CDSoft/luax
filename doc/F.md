@@ -449,6 +449,18 @@ F.memo1(f)
 ```
 
 > returns a memoized function (one argument)
+>
+> Note that the memoized function has a `reset` method to forget all the
+> previously computed values.
+
+``` lua
+F.memo(f)
+```
+
+> returns a memoized function (any number of arguments)
+>
+> Note that the memoized function has a `reset` method to forget all the
+> previously computed values.
 
 ## Converting to and from string
 
