@@ -966,7 +966,7 @@ function F.memo1(f)
         __call = function(_, k)
             local v = mem[k]
             if v then return table.unpack(v) end
-            v = F{f(k)}
+            v = {f(k)}
             mem[k] = v
             return table.unpack(v)
         end,
