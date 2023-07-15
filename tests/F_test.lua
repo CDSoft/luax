@@ -1596,11 +1596,6 @@ end
 
 local function string_interpolation()
 
-    eq(("foo = $(foo); 1 + 1 = $(1+1)"):I{}, "foo = $(foo); 1 + 1 = 2")
-    eq(("foo = $(foo); 1 + 1 = $(1+1)"):I{bar="aaa"}, "foo = $(foo); 1 + 1 = 2")
-    eq(("foo = $(foo); 1 + 1 = $(1+1)"):I{foo="aaa"}, "foo = aaa; 1 + 1 = 2")
-    eq(("foo = $(foo); 1 + 1 = $(1+1)"):I{foo="aaa", bar="bbb"}, "foo = aaa; 1 + 1 = 2")
-
     local I = F.I
 
     eq(I{}"foo = $(foo); 1 + 1 = $(1+1)", "foo = $(foo); 1 + 1 = 2")
@@ -1608,6 +1603,14 @@ local function string_interpolation()
     eq(I{foo="aaa"}"foo = $(foo); 1 + 1 = $(1+1)", "foo = aaa; 1 + 1 = 2")
     eq(I{foo="aaa", bar="bbb"}"foo = $(foo); 1 + 1 = $(1+1)", "foo = aaa; 1 + 1 = 2")
     eq(I{foo="aaa"}{bar="bbb"}"foo = $(foo); 1 + 1 = $(1+1); bar = $(bar)", "foo = aaa; 1 + 1 = 2; bar = bbb")
+
+    local J = F.I % "@{}"
+
+    eq(J{}"foo = @{foo}; 1 + 1 = @{1+1}", "foo = @{foo}; 1 + 1 = 2")
+    eq(J{bar="aaa"}"foo = @{foo}; 1 + 1 = @{1+1}", "foo = @{foo}; 1 + 1 = 2")
+    eq(J{foo="aaa"}"foo = @{foo}; 1 + 1 = @{1+1}", "foo = aaa; 1 + 1 = 2")
+    eq(J{foo="aaa", bar="bbb"}"foo = @{foo}; 1 + 1 = @{1+1}", "foo = aaa; 1 + 1 = 2")
+    eq(J{foo="aaa"}{bar="bbb"}"foo = @{foo}; 1 + 1 = @{1+1}; bar = @{bar}", "foo = aaa; 1 + 1 = 2; bar = bbb")
 
 end
 

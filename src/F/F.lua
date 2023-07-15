@@ -3668,44 +3668,48 @@ string.read = F.read
 
 --[[@@@
 ```lua
-string.I(s, t)
-s:I(t)
-```
-> interpolates expressions in the string `s` by replacing `$(...)` with
-  the value of `...` in the environment defined by the table `t`.
-@@@]]
-
-function string.I(s, t)
-    return (s:gsub("%$(%b())", function(x)
-        local y = ((assert(load("return "..x, nil, "t", t)))())
-        if type(y) == "table" or type(y) == "userdata" then
-            y = tostring(y)
-        end
-        return y
-    end))
-end
-
---[[@@@
-```lua
 F.I(t)
 ```
 > returns a string interpolator that replaces `$(...)` with
-  the value of `...` in the environment defined by the table `t`.
-  An interpolator can be given another table
-  to build a new interpolator with new values.
+> the value of `...` in the environment defined by the table `t`.
+> An interpolator can be given another table
+> to build a new interpolator with new values.
+>
+> The mod operator (`%`) produces a new interpolator with a custom pattern.
+> E.g. `F.I % "@[]"` is an interpolator that replaces `@[...]` with
+> the value of `...`.
 @@@]]
 
-local function Interpolator(t)
-    return function(x)
-        if type(x) == "table" then return Interpolator(F.merge{t, x}) end
-        if type(x) == "string" then return string.I(x, t) end
-        error("An interpolator expects a table or a string")
-    end
+local interpolator_mt = {}
+
+function interpolator_mt.__mod(self, pattern)
+    assert(type(pattern)=="string" and #pattern>=3)
+    return setmetatable({
+        pattern = pattern:gsub("^(.+)(.)(.)$", "%1(%%b%2%3)"),
+        env = self.env
+    }, interpolator_mt)
 end
 
-function F.I(t)
-    return Interpolator(F.clone(t))
+function interpolator_mt.__call(self, s)
+    if type(s) == "string" then
+        return (s:gsub(self.pattern, function(x)
+            local y = ((assert(load("return "..x:sub(2,-2), nil, "t", self.env)))())
+            if type(y) == "table" or type(y) == "userdata" then
+                y = tostring(y)
+            end
+            return y
+        end))
+    end
+    if type(s) == "table" then
+        return setmetatable({
+            pattern = self.pattern,
+            env = F.merge{self.env, s},
+        }, interpolator_mt)
+    end
+    error "An interpolator expects a table or a string"
 end
+
+F.I = setmetatable({env={}}, interpolator_mt) % "%$()"
 
 --[[------------------------------------------------------------------------@@@
 ## Random array access
