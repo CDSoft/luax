@@ -21,14 +21,14 @@ http://cdelord.fr/luax
 --@MAIN
 
 local fs = require "fs"
-local sys = require "sys"
 local F = require "F"
 local I = F.I(_G)
+local term = require "term"
 
 local has_compiler = pcall(require, "bundle")
 
-local welcome = I{sys=sys}[[
- _               __  __  |  http://cdelord.fr/luax
+local welcome = I[[
+ _               __  __  |  https://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |
 | |  | | | |/ _` |\  /   |  Version $(_LUAX_VERSION)
 | |__| |_| | (_| |/  \   |  Powered by $(_VERSION)
@@ -42,7 +42,7 @@ local LUA_INIT = F{
 }
 
 local usage = F.unlines(F.flatten {
-    I{fs=fs}[==[
+    I[==[
 usage: $(fs.basename(arg[0])) [options] [script [args]]
 
 General options:
@@ -103,7 +103,9 @@ local welcome_already_printed = false
 
 local function print_welcome()
     if welcome_already_printed then return end
-    print(welcome)
+    if term.isatty() then
+        print(welcome)
+    end
     welcome_already_printed = true
 end
 
@@ -256,7 +258,7 @@ E.g.:
 ``` sh
 $ rlwrap pandoc lua luax-lua.lua
 
- _               __  __  |  http://cdelord.fr/luax
+ _               __  __  |  https://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |
 | |  | | | |/ _` |\  /   |  Version X.Y
 | |__| |_| | (_| |/  \   |  Powered by Lua X.Y
@@ -299,6 +301,7 @@ returns a string representing `x` with nice formatting for tables and numbers.
 @@@]]
 
     function _ENV.show(x, opt)
+        if type(x) == "string" then return x end
         return F.show(x, show_opt:patch(opt))
     end
 
@@ -425,8 +428,8 @@ local function run_lua_init()
         end)
 end
 
-local has_shell_env, shell_env = pcall(require, "shell_env")
 if #arg == 1 and arg[1] == "env" then
+    local has_shell_env, shell_env = pcall(require, "shell_env")
     if has_shell_env then
         print(shell_env())
         os.exit()
@@ -587,7 +590,6 @@ local function run_interpreter()
     -- interactive REPL
 
     if interactive then
-        local term = require "term"
         local function try(input)
             local chunk, msg = load(input, "=stdin")
             if not chunk then
