@@ -536,11 +536,14 @@ xs1 .. xs2
 > concatenates lists
 
 ``` lua
-F.flatten(xs)
-xs:flatten()
+F.flatten(xs, [leaf])
+xs:flatten([leaf])
 ```
 
-> Returns a flat list with all elements recursively taken from xs
+> Returns a flat list with all elements recursively taken from xs. The
+> optional `leaf` parameter is a predicate that can stop `flatten` on
+> some kind of nodes. By default, `flatten` only recurses on tables with
+> no metatable or on `F` tables.
 
 ``` lua
 F.str({s1, s2, ... sn}, [separator, [last_separator]])

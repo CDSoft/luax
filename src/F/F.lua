@@ -1247,18 +1247,27 @@ end
 
 --[[@@@
 ```lua
-F.flatten(xs)
-xs:flatten()
+F.flatten(xs, [leaf])
+xs:flatten([leaf])
 ```
-> Returns a flat list with all elements recursively taken from xs
+> Returns a flat list with all elements recursively taken from xs.
+  The optional `leaf` parameter is a predicate that can stop `flatten` on some kind of nodes.
+  By default, `flatten` only recurses on tables with no metatable or on `F` tables.
 @@@]]
 
-register1 "flatten" (function(xs)
+local function default_leaf(x)
+    -- by default, a table is a leaf if it has a metatable and is not an F' list
+    local xmt = getmetatable(x)
+    return xmt and xmt ~= mt
+end
+
+register1 "flatten" (function(xs, leaf)
+    leaf = leaf or default_leaf
     local zs = {}
     local function f(ys)
         for i = 1, #ys do
             local x = ys[i]
-            if type(x) == "table" then
+            if type(x) == "table" and not leaf(x) then
                 f(x)
             else
                 zs[#zs+1] = x

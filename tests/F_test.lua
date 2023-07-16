@@ -571,9 +571,25 @@ local function table_construction()
     eq(F{{1,2},{3,4},{5,6}}:concat(), {1,2,3,4,5,6})
     eq(F{1,2}..F{3,4}..F{5,6}, {1,2,3,4,5,6})
 
-    local xss = F{1,{2,3,{{4,5,6},7},8},{{}},9}
-    eq(F.flatten(xss), {1,2,3,4,5,6,7,8,9})
-    eq(xss:flatten(), {1,2,3,4,5,6,7,8,9})
+    local omt = {}
+    local obj1 = setmetatable({"object with metatable"}, omt)
+    local obj2 = F{"object without metatable", obj1}
+    local xss = F{1,{2,3,{{4,5,6},obj1, obj2, 7},8},{{}},9}
+    eq(F.flatten(xss), {1,2,3,4,5,6,{"object with metatable"},"object without metatable",{"object with metatable"},7,8,9})
+    eq(xss:flatten(), {1,2,3,4,5,6,{"object with metatable"},"object without metatable",{"object with metatable"},7,8,9})
+    local yss = F.flatten(xss)
+    assert(getmetatable(yss[1]) == getmetatable(0))
+    assert(getmetatable(yss[2]) == getmetatable(0))
+    assert(getmetatable(yss[3]) == getmetatable(0))
+    assert(getmetatable(yss[4]) == getmetatable(0))
+    assert(getmetatable(yss[5]) == getmetatable(0))
+    assert(getmetatable(yss[6]) == getmetatable(0))
+    assert(getmetatable(yss[7]) == omt)
+    assert(getmetatable(yss[8]) == getmetatable "")
+    assert(getmetatable(yss[9]) == omt)
+    assert(getmetatable(yss[11]) == getmetatable(0))
+    assert(getmetatable(yss[12]) == getmetatable(0))
+    assert(getmetatable(yss[13]) == getmetatable(0))
 
     eq(F.str{"ab", "cd", "ef"}, "abcdef")
     eq(F{"ab", "cd", "ef"}:str(), "abcdef")
