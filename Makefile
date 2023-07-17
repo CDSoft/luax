@@ -78,6 +78,7 @@ LIB_LUAX_SOURCES += src/sh/sh.lua
 LIB_LUAX_SOURCES += src/sys/sys.lua
 LIB_LUAX_SOURCES += src/term/term.lua
 LIB_LUAX_SOURCES += src/lz4/lz4.lua
+LIB_LUAX_SOURCES += src/teal/teal/teal.lua
 
 LUAX_CONFIG_H := $(BUILD_TMP)/luax_config.h
 LUAX_CONFIG_LUA := $(BUILD_TMP)/luax_config.lua
@@ -215,6 +216,7 @@ mrproper: clean
 .PHONY: update-inspect
 .PHONY: update-serpent
 .PHONY: update-lz4
+.PHONY: update-teal
 
 LUA_VERSION = 5.4.6
 LUA_ARCHIVE = lua-$(LUA_VERSION).tar.gz
@@ -256,6 +258,10 @@ LZ4_VERSION = release
 LZ4_ARCHIVE = lz4-$(LZ4_VERSION).zip
 LZ4_URL = https://github.com/lz4/lz4/archive/refs/heads/$(LZ4_VERSION).zip
 
+TEAL_VERSION = master
+TEAL_ARCHIVE = teal-$(TEAL_VERSION).zip
+TEAL_URL = https://github.com/teal-language/tl/archive/refs/heads/$(TEAL_VERSION).zip
+
 ## Update the source code of third party packages
 update: update-lua
 update: update-lcomplex
@@ -268,6 +274,7 @@ update: update-argparse
 update: update-inspect
 update: update-serpent
 update: update-lz4
+update: update-teal
 
 ## Update Lua sources
 update-lua: $(BUILD_TMP)/$(LUA_ARCHIVE)
@@ -384,6 +391,16 @@ update-lz4: $(BUILD_TMP)/$(LZ4_ARCHIVE)
 $(BUILD_TMP)/$(LZ4_ARCHIVE):
 	@mkdir -p $(dir $@)
 	wget $(LZ4_URL) -O $@
+
+## Update Teal sources
+update-teal: $(BUILD_TMP)/$(TEAL_ARCHIVE)
+	rm -rf src/teal/teal
+	mkdir src/teal/teal
+	unzip -j $< '*/tl.lua' '*/LICENSE' -d src/teal/teal
+
+$(BUILD_TMP)/$(TEAL_ARCHIVE):
+	@mkdir -p $(dir $@)
+	wget $(TEAL_URL) -O $@
 
 ###############################################################################
 # Installation
