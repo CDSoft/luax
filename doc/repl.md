@@ -97,16 +97,3 @@ prints(x)
 ```
 
 prints `show(x)`
-
-``` lua
-inspect(x)
-```
-
-calls `inspect(x)` to build a human readable representation of `x` (see
-the `inspect` package).
-
-``` lua
-printi(x)
-```
-
-prints `inspect(x)` (without the metatables).

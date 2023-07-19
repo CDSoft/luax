@@ -368,43 +368,6 @@ prints `show(x)`
         print(show(x))
     end
 
---[[@@@
-```lua
-inspect(x)
-```
-calls `inspect(x)` to build a human readable
-representation of `x` (see the `inspect` package).
-@@@]]
-
-    local inspect = require "inspect"
-
-    local remove_all_metatables = function(item, path)
-        if path[#path] ~= inspect.METATABLE then return item end
-    end
-
-    local default_options = {
-        process = remove_all_metatables,
-    }
-
-    function _ENV.inspect(x, options)
-        return inspect(x, F.merge{default_options, options})
-    end
-
---[[@@@
-```lua
-printi(x)
-```
-prints `inspect(x)` (without the metatables).
-@@@]]
-
-    if inspect then
-
-        function _ENV.printi(x)
-            print(inspect.inspect(x))
-        end
-
-    end
-
 end
 
 local function run_lua_init()
