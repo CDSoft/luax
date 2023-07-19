@@ -55,6 +55,8 @@ Lua options:
   -i                enter interactive mode after executing
                     'script'
   -l name           require library 'name' into global 'name'
+  -l g=name         require library 'name' into global 'g'
+  -l _=name         require library 'name' (no global variable)
   -                 stop handling options and execute stdin
                     (incompatible with -i)
 ]==],
@@ -480,7 +482,14 @@ do
             if lib == nil then wrong_arg(a) end
             actions:add(function()
                 assert(lib)
-                _G[lib] = require(lib)
+                local modname, filename = lib:match "(.-)=(.+)"
+                if not modname then
+                    modname, filename = lib, lib
+                end
+                local mod = require(filename)
+                if modname ~= "_" then
+                    _G[modname] = mod
+                end
             end)
         elseif has_compiler and a == '-o' then
             compiler_mode = true

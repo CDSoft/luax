@@ -103,6 +103,8 @@ When compiling scripts (options `-t` and `-o`), the scripts shall contain tags
 - `--@MAIN`: main script (must be unique)
 - `--@LOAD`: library that is `require`'d before the main script is run and
   stored in a global variable
+- `--@LOAD=<global variable name>`: as `--@LOAD` but the module is stored
+  in a global variable with the given name
 - `--@LIB`: library that must be explicitly `require`'d by the main script
 - `--@NAME=<new module name>`: library that is `require`'d with `<new module name>`
   instead of the source filename.

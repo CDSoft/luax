@@ -99,6 +99,8 @@ scripts:
       -i                enter interactive mode after executing
                         'script'
       -l name           require library 'name' into global 'name'
+      -l g=name         require library 'name' into global 'g'
+      -l _=name         require library 'name' (no global variable)
       -                 stop handling options and execute stdin
                         (incompatible with -i)
 
@@ -144,6 +146,8 @@ contain tags (e.g. in comments) showing how the script is used by LuaX:
 - `--@MAIN`: main script (must be unique)
 - `--@LOAD`: library that is `require`’d before the main script is run
   and stored in a global variable
+- `--@LOAD=<global variable name>`: as `--@LOAD` but the module is
+  stored in a global variable with the given name
 - `--@LIB`: library that must be explicitly `require`’d by the main
   script
 - `--@NAME=<new module name>`: library that is `require`’d with

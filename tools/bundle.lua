@@ -90,6 +90,8 @@ function bundle.bundle(arg)
             local name = new_name or fs.basename(strip_ext(arg[i]))
             local main = content:match("@".."MAIN")
             local load = content:match("@".."LOAD")
+            local new_load_name = content:match("@".."LOAD=([%w%._%-]+)")
+            local load_name = new_load_name or name
             local lib = new_name or load or content:match("@".."LIB")
             local maybe_main =
                     not lib
@@ -102,6 +104,7 @@ function bundle.bundle(arg)
                 main = main,
                 lib = lib,
                 load = load,
+                load_name = load_name,
                 maybe_main = maybe_main,
                 content = content,
             }
@@ -157,7 +160,11 @@ function bundle.bundle(arg)
         plain.emit(("[%q] = lib(%q, %s),\n"):format(script.name, home_path(script.path), mlstr(script.content)))
     end
     local function load_library(script)
-        plain.emit(("_ENV[%q] = require %q\n"):format(script.name, script.name))
+        if script.load_name == "_" then
+            plain.emit(("require %q\n"):format(script.name))
+        else
+            plain.emit(("_ENV[%q] = require %q\n"):format(script.load_name, script.name))
+        end
     end
     local function run_script(script)
         assert(load(script.content, "@"..script.path, 't'))
