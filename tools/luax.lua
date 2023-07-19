@@ -21,8 +21,9 @@ http://cdelord.fr/luax
 --@MAIN
 
 local fs = require "fs"
+local sys = require "sys"
 local F = require "F"
-local I = F.I(_G)
+local I = F.I(_G){fs=fs, sys=sys}
 local term = require "term"
 
 local has_compiler = pcall(require, "bundle")
@@ -132,11 +133,11 @@ end
 local external_interpreters = F{
     -- Only the Lua format can be used with external interpreters
     -- to avoid incompatibilities between the payload and the interpreter.
-    ["lua"]          = { interpreter="lua",        format="-lua", library={},           loader={}, scripts={"luax.lua"} },
-    ["lua-luax"]     = { interpreter="lua",        format="-lua", library="-l libluax", loader={}, scripts={} },
-    ["luax"]         = { interpreter="luax",       format="-lua", library={},           loader={}, scripts={} },
-    ["pandoc"]       = { interpreter="pandoc lua", format="-lua", library={},           loader={}, scripts={"luax.lua"} },
-    ["pandoc-luax"]  = { interpreter="pandoc lua", format="-lua", library="-l libluax", loader={}, scripts={} },
+    ["lua"]          = { interpreter="lua",        format="-lua", library={},             loader={}, scripts={"luax.lua"} },
+    ["lua-luax"]     = { interpreter="lua",        format="-lua", library="-l _=libluax", loader={}, scripts={} },
+    ["luax"]         = { interpreter="luax",       format="-lua", library={},             loader={}, scripts={} },
+    ["pandoc"]       = { interpreter="pandoc lua", format="-lua", library={},             loader={}, scripts={"luax.lua"} },
+    ["pandoc-luax"]  = { interpreter="pandoc lua", format="-lua", library="-l _=libluax", loader={}, scripts={} },
 }
 
 local function print_targets()
@@ -455,7 +456,6 @@ do
             if stat == nil then wrong_arg(a) end
             actions:add(function()
                 assert(stat)
-                populate_repl()
                 local chunk, msg = load(stat, "=(command line)")
                 if not chunk then
                     io.stderr:write(("%s: %s\n"):format(arg[0], msg))
@@ -570,8 +570,6 @@ local function run_interpreter()
 
     -- scripts
 
-    populate_repl()
-
     if #args >= 1 then
         local script = args[1]
         local chunk, msg
@@ -613,6 +611,7 @@ local function run_interpreter()
             return "done"
         end
         print_welcome()
+        populate_repl()
         while true do
             local inputs = {}
             local prompt = ">> "

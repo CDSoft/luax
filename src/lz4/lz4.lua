@@ -24,7 +24,7 @@ http://cdelord.fr/luax
 The `lz4` functions are also available as `string` methods:
 @@@]]
 
---@LOAD
+--@LIB
 local _, lz4 = pcall(require, "_lz4")
 lz4 = _ and lz4
 

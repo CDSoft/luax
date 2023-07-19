@@ -24,6 +24,8 @@ http://cdelord.fr/luax
 
 local ps = require "ps"
 
+local sys = require "sys"
+
 local eps = sys.abi == "lua" and 1 or 0.01
 
 local function time_test()

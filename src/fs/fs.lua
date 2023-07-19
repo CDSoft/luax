@@ -22,7 +22,7 @@ http://cdelord.fr/luax
 ## Additional functions (Lua)
 @@@]]
 
---@LOAD
+--@LIB
 local _, fs = pcall(require, "_fs")
 fs = _ and fs
 
@@ -31,6 +31,8 @@ local F = require "F"
 -- Pure Lua / Pandoc Lua implementation
 if not fs then
     fs = {}
+
+    local sh = require "sh"
 
     if pandoc then
         fs.sep = pandoc.path.separator

@@ -24,6 +24,8 @@ http://cdelord.fr/luax
 
 require "test"
 
+local sys = require "sys"
+
 return function()
     local test_num = tonumber(os.getenv "TEST_NUM")
 

@@ -21,6 +21,9 @@ http://cdelord.fr/luax
 -- This is the main test script
 -- @MAIN
 
+-- luax global environment (shall be tested first before other tests add global variables)
+require "G_test"()
+
 -- Check the test environment first
 require "test_test"()
 

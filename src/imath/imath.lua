@@ -18,7 +18,7 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
---@LOAD
+--@LIB
 local _, imath = pcall(require, "_imath")
 imath = _ and imath
 
@@ -88,9 +88,9 @@ if not imath then
         return setmetatable(self, mt)
     end
 
-    int_zero = int(0)
-    int_one = int(1)
-    int_two = int(2)
+    local int_zero = int(0)
+    local int_one = int(1)
+    local int_two = int(2)
 
     local function int_copy(n)
         local c = {sign=n.sign}

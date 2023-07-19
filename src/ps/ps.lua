@@ -18,12 +18,14 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
---@LOAD
+--@LIB
 local _, ps = pcall(require, "_ps")
 ps = _ and ps
 
 if not ps then
     ps = {}
+
+    local sh = require "sh"
 
     function ps.sleep(n)
         return sh.run("sleep", n)

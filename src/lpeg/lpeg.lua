@@ -18,7 +18,7 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
---@LOAD
+--@LIB
 local lpeg = require "_lpeg"
 
 return lpeg

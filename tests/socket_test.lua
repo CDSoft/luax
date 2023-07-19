@@ -22,6 +22,8 @@ http://cdelord.fr/luax
 -- luasocket
 ---------------------------------------------------------------------
 
+local sys = require "sys"
+
 return function()
     if sys.abi == "gnu" then
 

@@ -18,13 +18,15 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
---@LOAD
+--@LIB
 local _, sys = pcall(require, "_sys")
 sys = _ and sys
 
 if not sys then
 
     sys = {}
+
+    local sh = require "sh"
 
     sys.arch = pandoc and pandoc.system.arch
     sys.os = pandoc and pandoc.system.os

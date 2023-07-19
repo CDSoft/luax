@@ -18,7 +18,7 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
---@LOAD
+--@LIB
 local _, mathx = pcall(require, "_mathx")
 mathx = _ and mathx
 

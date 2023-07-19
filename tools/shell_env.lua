@@ -18,6 +18,12 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+--@LIB
+
+local F = require "F"
+local fs = require "fs"
+local sys = require "sys"
+
 local function shell_env()
 
     local path = os.getenv "PATH" or ""

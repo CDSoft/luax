@@ -22,6 +22,8 @@ http://cdelord.fr/luax
 -- lpeg
 ---------------------------------------------------------------------
 
+local sys = require "sys"
+
 return function()
     if sys.abi == "gnu" or sys.abi == "musl" then
         assert(require "lpeg")

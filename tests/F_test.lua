@@ -19,11 +19,12 @@ http://cdelord.fr/luax
 --]]
 
 ---------------------------------------------------------------------
--- fun
+-- F
 ---------------------------------------------------------------------
 
 local F = require "F"
 local crypt = require "crypt"
+local sys = require "sys"
 
 require "test"
 

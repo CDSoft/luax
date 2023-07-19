@@ -337,7 +337,7 @@ $(BUILD_TMP)/$(LUASOCKET_ARCHIVE):
 update-lpeg: $(BUILD_TMP)/$(LPEG_ARCHIVE)
 	rm -rf src/lpeg/lpeg-*
 	tar xzf $< -C src/lpeg --exclude=HISTORY --exclude=*.gif --exclude=*.html --exclude=makefile --exclude=test.lua
-	echo "--@LOAD" >> src/lpeg/lpeg-1.0.2/re.lua
+	echo "--@LIB" >> src/lpeg/lpeg-1.0.2/re.lua
 
 $(BUILD_TMP)/$(LPEG_ARCHIVE):
 	@mkdir -p $(dir $@)
@@ -356,7 +356,7 @@ $(BUILD_TMP)/$(ARGPARSE_ARCHIVE):
 update-inspect: $(BUILD_TMP)/$(INSPECT_ARCHIVE)
 	rm -f src/inspect/inspect.lua
 	unzip -j $< '*/inspect.lua' -d src/inspect
-	echo "--@LOAD" >> src/inspect/inspect.lua
+	echo "--@LIB" >> src/inspect/inspect.lua
 
 $(BUILD_TMP)/$(INSPECT_ARCHIVE):
 	@mkdir -p $(dir $@)
@@ -369,7 +369,7 @@ update-serpent: $(BUILD_TMP)/$(SERPENT_ARCHIVE)
 	sed -i -e 's/(loadstring or load)/load/g'                   \
 	       -e '/^ *if setfenv then setfenv(f, env) end *$$/d'   \
 	       src/serpent/serpent.lua
-	echo "--@LOAD" >> src/serpent/serpent.lua
+	echo "--@LIB" >> src/serpent/serpent.lua
 
 $(BUILD_TMP)/$(SERPENT_ARCHIVE):
 	@mkdir -p $(dir $@)
@@ -560,6 +560,7 @@ $(LIB_LUAX): $(LUAX0) $(LIB_LUAX_SOURCES) tools/bundle.lua $(LUAX0)
 	@$(call cyan,"BUNDLE",$@)
 	@mkdir -p $(dir $@)
 	@(  set -eu;                                                    \
+	    echo "--@LOAD=_: load luax to expose LuaX modules";         \
 	    echo "_LUAX_VERSION = '$(LUAX_VERSION)'";                   \
 	    LUA_PATH="$(LUA_PATH);$(dir $(LUAX_CONFIG_LUA))/?.lua"      \
 	    $(LUAX0) tools/bundle.lua -lib -lua $(LIB_LUAX_SOURCES);    \

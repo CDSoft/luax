@@ -26,6 +26,9 @@ local crypt = require "crypt"
 
 require "test"
 
+local F = require "F"
+local sys = require "sys"
+
 return function()
     local prng = crypt.prng()
     local N = sys.abi == "lua" and 100 or 1000

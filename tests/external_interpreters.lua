@@ -1,3 +1,5 @@
+local sys = require "sys"
+
 local target = os.getenv "TARGET"
 
 --print("TARGET", os.getenv "TARGET")
@@ -17,7 +19,7 @@ if target == "lua" then
 
 elseif target == "lua-luax" then
     assert(arg[-4] == "lua")
-    assert(arg[-3] == "-l") assert(arg[-2] == "libluax")    -- load libluax.so
+    assert(arg[-3] == "-l") assert(arg[-2] == "_=libluax")    -- load libluax.so
     assert(arg[-1] == "--")
     assert(arg[0] == ".build/test/ext-lua-luax")
     assert(sys.abi == "gnu")

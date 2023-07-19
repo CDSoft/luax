@@ -19,6 +19,7 @@ http://cdelord.fr/luax
 --]]
 
 local fs = require "fs"
+local sh = require "sh"
 local sys = require "sys"
 local F = require "F"
 

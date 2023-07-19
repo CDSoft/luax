@@ -18,7 +18,7 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
---@LOAD
+--@LIB
 local _, crypt = pcall(require, "_crypt")
 crypt = _ and crypt
 
@@ -28,6 +28,9 @@ local F = require "F"
 if not crypt then
 
     crypt = {}
+
+    local fs = require "fs"
+    local sh = require "sh"
 
     -- Random number generator
 

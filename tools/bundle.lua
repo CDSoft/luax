@@ -230,6 +230,7 @@ function bundle.combine(target, scripts)
 end
 
 function bundle.combine_lua(scripts)
+    local F = require "F"
     local chunk = bundle.bundle(F.flatten{scripts})
     return chunk
 end
