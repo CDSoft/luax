@@ -138,7 +138,7 @@ local external_interpreters = F{
 local function print_targets()
     print "Targets producing standalone LuaX executables:\n"
     local config = require "luax_config"
-    F(config.targets):map(function(target)
+    F(config.targets):foreach(function(target)
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..target..ext(target))
         print(("    %-22s%s%s"):format(
             target,
@@ -148,7 +148,7 @@ local function print_targets()
     end)
     print ""
     print "Targets based on an external Lua interpreter:\n"
-    external_interpreters:items():map(function(name_def)
+    external_interpreters:items():foreach(function(name_def)
         local name, def = F.unpack(name_def)
         local exe = def.interpreter:words():head()
         local path = fs.findpath(exe)
@@ -161,11 +161,11 @@ end
 
 local function print_luax_targets()
     local config = require "luax_config"
-    F(config.targets):map(print)
+    F(config.targets):foreach(print)
 end
 
 local function print_lua_targets()
-    external_interpreters:keys():map(print)
+    external_interpreters:keys():foreach(print)
 end
 
 local function err(fmt, ...)
@@ -183,7 +183,7 @@ local function traceback(message)
         debug.traceback():lines(),
     }
     local pos = 1
-    trace:mapi(function(i, line)
+    trace:foreachi(function(i, line)
         if line:trim() == "[C]: in function 'xpcall'" then
             pos = i-1
         end
@@ -209,7 +209,7 @@ local actions = setmetatable({
     }, {
     __index = {
         add = function(self, action) self.actions[#self.actions+1] = action end,
-        run = function(self) self.actions:map(F.call) end,
+        run = function(self) self.actions:foreach(F.call) end,
     },
 })
 
@@ -406,7 +406,7 @@ local function run_lua_init()
     LUA_INIT
         : filter(function(var) return os.getenv(var) ~= nil end)
         : take(1)
-        : map(function(var)
+        : foreach(function(var)
             local code = assert(os.getenv(var))
             local filename = code:match "^@(.*)"
             local chunk, chunk_err
@@ -461,7 +461,7 @@ do
                 local ok = table.remove(res, 1)
                 if ok then
                     if #res > 0 then
-                        print(table.unpack(F.map(show, res)))
+                        print(F.map(show, res):unpack())
                     end
                 else
                     os.exit(1)
@@ -577,7 +577,7 @@ local function run_interpreter()
         local ok = table.remove(res, 1)
         if ok then
             if #res > 0 then
-                print(table.unpack(F.map(show, res)))
+                print(F.map(show, res):unpack())
             end
         else
             os.exit(1)
@@ -597,7 +597,7 @@ local function run_interpreter()
             local res = table.pack(xpcall(chunk, traceback))
             local ok = table.remove(res, 1)
             if ok then
-                if res ~= nil then print(table.unpack(F.map(show, res))) end
+                if res ~= nil then print(F.map(show, res):unpack()) end
             end
             return "done"
         end
@@ -644,7 +644,7 @@ local function run_compiler()
     local valid_targets = F.from_set(F.const(true), config.targets)
     local compilers = {}
     local function rmext(compiler_target, name) return name:gsub(ext(compiler_target):gsub("%.", "%%.").."$", "") end
-    F(target == "all" and valid_targets:keys() or target and {target} or {}):map(function(compiler_target)
+    F(target == "all" and valid_targets:keys() or target and {target} or {}):foreach(function(compiler_target)
         if external_interpreters[compiler_target] then return end
         if not valid_targets[compiler_target] then err("Invalid target: %s", compiler_target) end
         local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..compiler_target..ext(compiler_target))
@@ -734,10 +734,10 @@ local function run_compiler()
         fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
     end
 
-    F(compilers):map(function(compiler)
+    F(compilers):foreach(function(compiler)
         compile_target(output, compiler)
     end)
-    external_interpreters:mapk(function(name, interpreter)
+    external_interpreters:foreachk(function(name, interpreter)
         if target == name then
             compile_lua(output, name, interpreter)
         end

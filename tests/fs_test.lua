@@ -41,7 +41,7 @@ local function fs_test(tmp)
     eq(fs.rm, fs.remove)
 
     local in_tmp = F.curry(fs.join)(tmp)
-    F.map(fs.remove, fs.walk(tmp, {reverse=true}))
+    fs.walk(tmp, {reverse=true}):foreach(fs.remove)
     fs.remove(tmp)
 
     fs.mkdirs(tmp)
@@ -59,7 +59,9 @@ local function fs_test(tmp)
     fs.mkdir(in_tmp "foo")
     fs.mkdir(in_tmp "bar")
     fs.mkdir(in_tmp "bar/baz")
-    F.map(createfile, F{"foo.txt", "bar.txt", "foo/foo.txt", "bar/bar.txt", "bar/baz/baz.txt"}:map(in_tmp))
+    F{"foo.txt", "bar.txt", "foo/foo.txt", "bar/bar.txt", "bar/baz/baz.txt"}
+        : map(in_tmp)
+        : foreach(createfile)
 
     fs.mkdirs(fs.join(tmp, "level1", "level2", "level3"))
     eq(fs.is_dir(fs.join(tmp, "level1", "level2", "level3")), true)
@@ -139,7 +141,7 @@ local function fs_test(tmp)
             eq(s2.gR, false) eq(s2.gW, false) eq(s2.gX, false)
             eq(s2.oR, false) eq(s2.oW, false) eq(s2.oX, false)
         end
-        F"uR uW uX gR gW gX oR oW oX":words():map(function(perm)
+        F"uR uW uX gR gW gX oR oW oX":words():foreach(function(perm)
             fs.chmod(f1, fs[perm])
             local s1 = assert(fs.stat(f1))
             eq(s1.uR, perm=="uR") eq(s1.uW, perm=="uW") eq(s1.uX, perm=="uX")

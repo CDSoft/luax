@@ -350,7 +350,7 @@ if pandoc then
     end
 else
     function fs.rmdir(path)
-        fs.walk(path, {reverse=true}):map(fs.rm)
+        fs.walk(path, {reverse=true}):foreach(fs.rm)
         return fs.rm(path)
     end
 end

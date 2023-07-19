@@ -248,19 +248,19 @@ return function()
             -- test setting the seed after initialization
             local r1 = crypt.prng(666)
             local r2 = crypt.prng()
-            F.range(100):map(function(_) ne(r1:int(), r2:int()) end)
+            F.range(100):foreach(function(_) ne(r1:int(), r2:int()) end)
             r1 = crypt.prng(666)
             r2:seed(666)
-            F.range(100):map(function(_) eq(r1:int(), r2:int()) end)
+            F.range(100):foreach(function(_) eq(r1:int(), r2:int()) end)
         end
         do
             -- test setting the seed and inc after initialization
             local r1 = crypt.prng(666, 42)
             local r2 = crypt.prng(666)
-            F.range(100):map(function(_) ne(r1:int(), r2:int()) end)
+            F.range(100):foreach(function(_) ne(r1:int(), r2:int()) end)
             r1 = crypt.prng(666, 42)
             r2:seed(666, 42)
-            F.range(100):map(function(_) eq(r1:int(), r2:int()) end)
+            F.range(100):foreach(function(_) eq(r1:int(), r2:int()) end)
         end
     end
     do
