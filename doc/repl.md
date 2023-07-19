@@ -57,8 +57,22 @@ give nice edition facilities to the Pandoc Lua interpreter.
 
 The `luax` repl provides a few functions for the interactive mode.
 
-In interactive mode, these functions are available as global functions.
-`show` is used by the LuaX REPL to print results.
+In interactive mode, these functions are available as global functions
+and modules.
+
+LuaX preloads the following modules with the `-e` option or before
+entering the REPL:
+
+- F
+- complex
+- crypt
+- fs
+- mathx
+- ps
+- qmath
+- sh
+- sys
+- lz4
 
 ``` lua
 show(x)

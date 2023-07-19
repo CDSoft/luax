@@ -283,8 +283,7 @@ can be used to give nice edition facilities to the Pandoc Lua interpreter.
 
 The `luax` repl provides a few functions for the interactive mode.
 
-In interactive mode, these functions are available as global functions.
-`show`{.lua} is used by the LuaX REPL to print results.
+In interactive mode, these functions are available as global functions and modules.
 @@@]]
 
 local function populate_repl()
@@ -293,6 +292,26 @@ local function populate_repl()
 
     if luax_loaded then return end
     luax_loaded = true
+
+--[[@@@
+LuaX preloads the following modules with the `-e` option or before entering the REPL:
+
+- F
+- complex
+- crypt
+- fs
+- mathx
+- ps
+- qmath
+- sh
+- sys
+- lz4
+
+@@@]]
+
+    F"F complex crypt fs mathx ps qmath sh sys lz4"
+        : words()
+        : foreach(function(name) _ENV[name] = require(name) end)
 
     local show_opt = F{}
 
@@ -418,6 +437,7 @@ do
             local stat = arg[i]
             if stat == nil then wrong_arg(a) end
             actions:add(function()
+                populate_repl()
                 assert(stat)
                 local chunk, msg = load(stat, "=(command line)")
                 if not chunk then
