@@ -26,6 +26,8 @@ local crypt = require "crypt"
 
 `crypt` provides cryptography functions.
 
+**WARNING**: Please do not rely on LuaX `crypt` module if you actually need strong cryptography functions.
+
 @@@*/
 
 #include "crypt.h"

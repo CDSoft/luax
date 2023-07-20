@@ -6,6 +6,9 @@ local crypt = require "crypt"
 
 `crypt` provides cryptography functions.
 
+**WARNING**: Please do not rely on LuaX `crypt` module if you actually
+need strong cryptography functions.
+
 ## Random number generator
 
 The LuaX pseudorandom number generator is a [linear congruential
