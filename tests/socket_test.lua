@@ -41,6 +41,8 @@ return function()
         end
         assert(require "mime")
         assert(require "mime.core")
+        assert(require "mbox")
+        assert(require "ltn12")
 
         local t = assert(http.request"http://time.cdelord.fr/time.php")
         assert(math.abs(t - os.time() ) < 5*60)

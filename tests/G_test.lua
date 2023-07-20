@@ -24,6 +24,56 @@ http://cdelord.fr/luax
 
 local F = require "F"
 local fs = require "fs"
+local sys = require "sys"
+
+local is_luax =
+    (arg[0] and fs.basename(arg[0]):match"^test%-")
+    or (arg[-2] == "-l" and fs.basename(arg[-1]):match"^libluax%-")
+
+local luax_packages = F.flatten{
+    "F",
+    "L",
+    "argparse",
+    "complex",
+    "crypt",
+    "fs",
+    "imath",
+    "inspect",
+    "lz4",
+    "mathx",
+    "ps",
+    "qmath",
+    "serpent",
+    "sh",
+    "sys",
+    "term",
+
+    -- lpeg is only found in LuaX
+    is_luax and {"lpeg", "re"} or {},
+
+    -- socket is only found in LuaX
+    is_luax and {
+        "socket",
+        "socket.core",
+        "socket.ftp",
+        "socket.headers",
+        "socket.http",
+        "socket.smtp",
+        "socket.tp",
+        "socket.url",
+        sys.os == "linux" and {
+            "socket.unix",
+            "socket.serial",
+        } or {},
+        "mime",
+        "mime.core",
+        "mbox",
+        "ltn12",
+    } or {},
+}
+
+-- load all LuaX packages to check they won't interfere with the Lua global environment
+luax_packages:foreach(require)
 
 -- load test.lua in a local environment
 local test = F.clone(_G)
