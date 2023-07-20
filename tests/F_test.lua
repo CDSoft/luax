@@ -22,11 +22,13 @@ http://cdelord.fr/luax
 -- F
 ---------------------------------------------------------------------
 
+local test = require "test"
+local eq = test.eq
+local ne = test.ne
+
 local F = require "F"
 local crypt = require "crypt"
 local sys = require "sys"
-
-require "test"
 
 ---------------------------------------------------------------------
 -- Basic data types

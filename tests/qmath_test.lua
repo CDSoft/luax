@@ -22,6 +22,9 @@ http://cdelord.fr/luax
 -- qmath
 ---------------------------------------------------------------------
 
+local test = require "test"
+local eq = test.eq
+
 return function()
 
     local qmath = require "qmath"

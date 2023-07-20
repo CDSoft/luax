@@ -22,6 +22,9 @@ http://cdelord.fr/luax
 -- complex
 ---------------------------------------------------------------------
 
+local test = require "test"
+local eq = test.eq
+
 return function()
 
     local complex = require "complex"

@@ -18,6 +18,9 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+local test = require "test"
+local eq = test.eq
+
 return function()
 
     local serpent = require "serpent"

@@ -22,6 +22,9 @@ http://cdelord.fr/luax
 -- imath
 ---------------------------------------------------------------------
 
+local test = require "test"
+local eq = test.eq
+
 return function()
 
     local imath = require "imath"

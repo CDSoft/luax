@@ -21,7 +21,8 @@ http://cdelord.fr/luax
 -- This is the main test script
 -- @MAIN
 
--- luax global environment (shall be tested first before other tests add global variables)
+-- luax global environment
+-- (shall be tested first before other tests add global variables)
 require "G_test"()
 
 -- Check the test environment first
@@ -47,3 +48,7 @@ require "lz4_test"()
 require "mathx_test"()
 require "imath_test"()
 require "qmath_test"()
+
+-- luax global environment
+-- (also tested at the end to check that tests and new modules do not touch global variables)
+require "G_test"()

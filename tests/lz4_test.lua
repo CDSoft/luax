@@ -22,11 +22,13 @@ http://cdelord.fr/luax
 -- lz4
 ---------------------------------------------------------------------
 
+local test = require "test"
+local eq = test.eq
+local ne = test.ne
+
 local lz4 = require "lz4"
 
 local crypt = require "crypt"
-
-require "test"
 
 return function()
     do

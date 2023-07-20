@@ -18,6 +18,8 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+local test = {}
+
 local function is_a_list(t)
     for k, _ in pairs(t) do
         if type(k) ~= "number" then return false end
@@ -68,7 +70,7 @@ local function same(a, b)
     return contains(a, b) and contains(b, a)
 end
 
-function eq(a, b)
+function test.eq(a, b)
     if same(a, b) then return end
     error(([[
 
@@ -77,12 +79,12 @@ Expected: %s
 ]]):format(dump(a), dump(b)), 2)
 end
 
-function ne(a, b)
+function test.ne(a, b)
     if not same(a, b) then return end
     error(("Unexpected: %s"):format(dump(a)))
 end
 
-function bounded(x, a, b)
+function test.bounded(x, a, b)
     if x >= a and x <= b then return end
     error(([[
 
@@ -91,11 +93,13 @@ Expected: [%s, %s]
 ]]):format(x, a, b), 2)
 end
 
-function startswith(a, b)
+function test.startswith(a, b)
     if a:sub(1, #b) == b then return end
-    error(([[
+error(([[
 
 Got     : %s
 Expected: %s
 ]]):format(dump(a), dump(b)), 2)
 end
+
+return test

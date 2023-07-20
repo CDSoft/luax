@@ -22,8 +22,11 @@ http://cdelord.fr/luax
 -- Check the test environment
 ---------------------------------------------------------------------
 
+local test = require "test"
+local eq = test.eq
+local ne = test.ne
+
 return function()
-    require "test"
 
     -- eq
 

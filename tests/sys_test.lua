@@ -22,6 +22,9 @@ http://cdelord.fr/luax
 -- sys
 ---------------------------------------------------------------------
 
+local test = require "test"
+local eq = test.eq
+
 local sys = require "sys"
 
 return function()

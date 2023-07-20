@@ -22,9 +22,12 @@ http://cdelord.fr/luax
 -- crypt
 ---------------------------------------------------------------------
 
-local crypt = require "crypt"
+local test = require "test"
+local eq = test.eq
+local ne = test.ne
+local bounded = test.bounded
 
-require "test"
+local crypt = require "crypt"
 
 local F = require "F"
 local sys = require "sys"

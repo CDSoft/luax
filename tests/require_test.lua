@@ -22,6 +22,9 @@ http://cdelord.fr/luax
 -- embeded modules can be loaded with require
 ---------------------------------------------------------------------
 
+local test = require "test"
+local startswith = test.startswith
+
 return function()
     local lib = require "lib"
     local traceback = lib.hello "World":gsub("\t", "    ")
@@ -30,7 +33,7 @@ return function()
 Traceback test
 stack traceback:
     tests/lib.lua:25: in function 'lib.hello'
-    tests/require_test.lua:27: in function 'require_test']]
+    tests/require_test.lua:30: in function 'require_test']]
 
     startswith(traceback, expected_traceback)
 

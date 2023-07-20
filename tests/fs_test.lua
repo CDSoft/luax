@@ -18,6 +18,10 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+local test = require "test"
+local eq = test.eq
+local bounded = test.bounded
+
 local fs = require "fs"
 local sh = require "sh"
 local sys = require "sys"

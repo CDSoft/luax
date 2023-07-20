@@ -22,7 +22,8 @@ http://cdelord.fr/luax
 -- arg is built by the runtime
 ---------------------------------------------------------------------
 
-require "test"
+local test = require "test"
+local eq = test.eq
 
 local sys = require "sys"
 

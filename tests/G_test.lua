@@ -22,6 +22,9 @@ http://cdelord.fr/luax
 -- Global variables
 ---------------------------------------------------------------------
 
+local test = require "test"
+local eq = test.eq
+
 local F = require "F"
 local fs = require "fs"
 local sys = require "sys"
@@ -75,10 +78,6 @@ local luax_packages = F.flatten{
 -- load all LuaX packages to check they won't interfere with the Lua global environment
 luax_packages:foreach(require)
 
--- load test.lua in a local environment
-local test = F.clone(_G)
-assert(loadfile("tests/test.lua", "t", test))()
-
 return function()
     -- Check that LuaX does not pollute the global environment
     local global_variables = F.keys(_G)
@@ -122,7 +121,7 @@ return function()
         "xpcall",
     }
     local new_variables = F.difference(global_variables, expected_global_variables):sort()
-    test.eq(new_variables, F.flatten {
+    eq(new_variables, F.flatten {
         arg[-3] and fs.basename(arg[-3]) == "lua" and arg[-2] == "-l" and arg[-1] or {},
         arg[-3] == "pandoc lua" and {"PANDOC_API_VERSION","PANDOC_STATE","PANDOC_VERSION","lpeg","pandoc","re"} or {},
         arg[-3] == "pandoc lua" and arg[-2] == "-l" and fs.basename(arg[-1]) or {},

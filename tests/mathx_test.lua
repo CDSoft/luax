@@ -22,6 +22,9 @@ http://cdelord.fr/luax
 -- mathx
 ---------------------------------------------------------------------
 
+local test = require "test"
+local eq = test.eq
+
 local COSH = {
     [0] = 1.000000000000000e+00,
     [1] = 1.543080634815244e+00,

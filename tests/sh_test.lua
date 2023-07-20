@@ -22,6 +22,9 @@ http://cdelord.fr/luax
 -- sh
 ---------------------------------------------------------------------
 
+local test = require "test"
+local eq = test.eq
+
 local sh = require "sh"
 
 local fs = require "fs"
