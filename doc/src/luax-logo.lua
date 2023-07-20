@@ -18,6 +18,9 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 ]]
 
+local F = require "F"
+local crypt = require "crypt"
+
 img {
     Raw (F.unlines { "<!--", license:trim(), "-->" })
 }
