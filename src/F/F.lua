@@ -27,7 +27,7 @@ http://cdelord.fr/luax
 local F = require "F"
 ```
 
-`fun` provides some useful functions inspired by functional programming languages,
+`F` provides some useful functions inspired by functional programming languages,
 especially by these Haskell modules:
 
 - [`Data.List`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-List.html)
@@ -37,9 +37,31 @@ especially by these Haskell modules:
 
 @@@]]
 
+--[[@@@
+This module provides functions for Lua tables that can represent both arrays (i.e. integral indices)
+and tables (i.e. any indice types).
+The `F` constructor adds methods to tables which may interfere with table fields that could have the same names.
+In this case, F also defines a method alias (same name prefixed with `__`). E.g.:
+
+```lua
+t = F{foo = 12, mapk = 42} -- note that mapk is also a method of F tables
+
+t:mapk(func)   -- fails because mapk is a field of t
+t:__mapk(func) -- works and is equivalent to F.mapk(func, t)
+```
+
+@@@]]
+
 local F = {}
 
-local mt = {__index={}}
+local mt = {
+    __index = setmetatable({}, {
+        __newindex = function(t, k, v)
+            rawset(t, k, v)         -- set the method k
+            rawset(t, "__"..k, v)   -- and its __k alias in case of conflict with table fields named k
+        end,
+    }),
+}
 
 local function setmt(t) return setmetatable(t, mt) end
 
@@ -2440,7 +2462,7 @@ t:foldk(f, x)
 @@@]]
 
 register3 "foldk" (function(fzx, z, t)
-    for _, kv in F(t):items():ipairs() do
+    for _, kv in F.items(t):ipairs() do
         local k, v = table.unpack(kv)
         z = fzx(z, k, v)
     end

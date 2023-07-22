@@ -4,13 +4,26 @@
 local F = require "F"
 ```
 
-`fun` provides some useful functions inspired by functional programming
+`F` provides some useful functions inspired by functional programming
 languages, especially by these Haskell modules:
 
 - [`Data.List`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-List.html)
 - [`Data.Map`](https://hackage.haskell.org/package/containers-0.6.6/docs/Data-Map.html)
 - [`Data.String`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-String.html)
 - [`Prelude`](https://hackage.haskell.org/package/base-4.17.0.0/docs/Prelude.html)
+
+This module provides functions for Lua tables that can represent both
+arrays (i.e. integral indices) and tables (i.e. any indice types). The
+`F` constructor adds methods to tables which may interfere with table
+fields that could have the same names. In this case, F also defines a
+method alias (same name prefixed with `__`). E.g.:
+
+``` lua
+t = F{foo = 12, mapk = 42} -- note that mapk is also a method of F tables
+
+t:mapk(func)   -- fails because mapk is a field of t
+t:__mapk(func) -- works and is equivalent to F.mapk(func, t)
+```
 
 ## Standard types, and related functions
 
