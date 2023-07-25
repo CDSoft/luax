@@ -48,6 +48,7 @@ require "lz4_test"()
 require "mathx_test"()
 require "imath_test"()
 require "qmath_test"()
+require "package_test"()
 
 -- luax global environment
 -- (also tested at the end to check that tests and new modules do not touch global variables)

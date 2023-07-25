@@ -20,6 +20,8 @@ http://cdelord.fr/luax
 
 local test = {}
 
+local F = require "F"
+
 local function is_a_list(t)
     for k, _ in pairs(t) do
         if type(k) ~= "number" then return false end

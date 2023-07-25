@@ -204,6 +204,7 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl)
 and [lapp](http://cdelord.fr/lapp).
 
 - [LuaX interactive usage](repl.md): improved Lua REPL
+- [package](package.md): modified Lua package `package`
 - [F](F.md): functional programming inspired functions
 - [L](L.md): `pandoc.List` module from the Pandoc Lua interpreter
 - [fs](fs.md): file system management

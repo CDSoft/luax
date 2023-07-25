@@ -62,6 +62,7 @@ LUAX_SOURCES := $(sort $(shell find src -name "*.[ch]"))
 LUAX_RUNTIME := $(sort $(shell find src -name "*.lua"))
 LUAX_RUNTIME_BUNDLE := $(BUILD_TMP)/lua_runtime_bundle.dat
 
+LIB_LUAX_SOURCES += src/package/package_hook.lua
 LIB_LUAX_SOURCES += src/F/F.lua
 LIB_LUAX_SOURCES += src/L/L.lua
 LIB_LUAX_SOURCES += src/argparse/argparse.lua
@@ -610,7 +611,7 @@ endif
 
 $(BUILD_TEST)/test-luax.ok: $(BUILD_TEST)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"TEST",Luax executable: $^)
-	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=static \
+	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=static LUA_PATH="tests/?.lua" \
 	TEST_NUM=1 \
 	$< Lua is great
 	@touch $@
