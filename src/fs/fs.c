@@ -125,7 +125,7 @@ static int fs_dir(lua_State *L)
             lua_rawseti(L, -2, ++n);
         }
         closedir(dir);
-        set_fun_metatable(L);
+        set_F_metatable(L);
         return 1;
     }
     else
@@ -182,7 +182,7 @@ static int fs_glob(lua_State *L)
             lua_rawseti(L, -2, i);
         }
         globfree(&globres);
-        set_fun_metatable(L);
+        set_F_metatable(L);
         return 1;
     }
     else
@@ -365,7 +365,7 @@ static int fs_stat(lua_State *L)
         set_boolean(L, "aR", buf.st_mode & (S_IRUSR|S_IRGRP|S_IROTH));
         set_boolean(L, "aW", buf.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH));
         set_boolean(L, "aX", buf.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH));
-        set_fun_metatable(L);
+        set_F_metatable(L);
         return 1;
     }
     else
