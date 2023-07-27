@@ -426,6 +426,14 @@ end
 
 actions:add(run_lua_init)
 
+local function pack_res(ok, ...)
+    return { ok = ok, n = select("#", ...), ... }
+end
+
+local function show_res(res)
+    return F.range(1, res.n):map(function(i) return show(res[i]) end)
+end
+
 do
     local i = 1
     -- Scan options
@@ -445,11 +453,10 @@ do
                     os.exit(1)
                 end
                 assert(chunk)
-                local res = table.pack(xpcall(chunk, traceback))
-                local ok = table.remove(res, 1)
-                if ok then
-                    if #res > 0 then
-                        print(F.map(show, res):unpack())
+                local res = pack_res(xpcall(chunk, traceback))
+                if res.ok then
+                    if res.n > 0 then
+                        print(show_res(res):unpack())
                     end
                 else
                     os.exit(1)
@@ -566,11 +573,10 @@ local function run_interpreter()
             os.exit(1)
         end
         assert(chunk)
-        local res = table.pack(xpcall(chunk, traceback))
-        local ok = table.remove(res, 1)
-        if ok then
-            if #res > 0 then
-                print(F.map(show, res):unpack())
+        local res = pack_res(xpcall(chunk, traceback))
+        if res.ok then
+            if res.n > 0 then
+                print(show_res(res):unpack())
             end
         else
             os.exit(1)
@@ -586,10 +592,9 @@ local function run_interpreter()
                 if msg and type(msg) == "string" and msg:match "<eof>$" then return "cont" end
                 return nil, msg
             end
-            local res = table.pack(xpcall(chunk, traceback))
-            local ok = table.remove(res, 1)
-            if ok then
-                if res ~= nil then print(F.map(show, res):unpack()) end
+            local res = pack_res(xpcall(chunk, traceback))
+            if res.ok and res.n > 0 then
+                print(show_res(res):unpack())
             end
             return "done"
         end
