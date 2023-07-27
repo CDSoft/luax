@@ -484,7 +484,7 @@ local function miscellaneous_functions()
         eq(fib100, {imath.new"354224848179261915075", 100})
     end
 
-    -- F.memo1
+    -- F.memo
     do
         -- make a recursive function from an anonymous function (taking the function to recurse as the first argument)
         local function rec(func)
@@ -493,7 +493,7 @@ local function miscellaneous_functions()
         end
 
         local fibcount = 0
-        local fib = rec(F.memo(function(r, x, n) ---@diagnostic disable-line:unused-local
+        local fib = rec(F.memo(function(r, x, n)
             -- x is not used, it is used to test memoization with `nil` arguments
             fibcount = fibcount+1
             assert(fibcount < 1000, "The memoized fib function still takes to much time")

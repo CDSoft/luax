@@ -59,7 +59,7 @@ sleeps for `n` seconds.
 
 static int ps_sleep(lua_State *L)
 {
-    double t = luaL_checknumber(L, 1);
+    const double t = luaL_checknumber(L, 1);
     usleep((useconds_t)(t * 1e6));
     return 0;
 }
@@ -96,18 +96,38 @@ static int ps_time(lua_State *L)
 
 /*@@@
 ```lua
+ps.clock()
+```
+returns an approximation of the amount in seconds of CPU time used by the program,
+as returned by the underlying ISO C function `clock`.
+@@@*/
+
+static inline lua_Number getclock(void)
+{
+    const clock_t t = clock();
+    return (lua_Number)t/(lua_Number)CLOCKS_PER_SEC;
+}
+
+static int ps_clock(lua_State *L)
+{
+    lua_pushnumber(L, getclock());
+    return 1;
+}
+
+/*@@@
+```lua
 ps.profile(func)
 ```
-executes `func` and returns its execution time in seconds.
+executes `func` and returns its execution time in seconds (using `ps.clock`).
 @@@*/
 
 static int ps_profile(lua_State *L)
 {
     if (lua_gettop(L) == 1 && lua_isfunction(L, 1))
     {
-        const lua_Number t0 = gettime();
+        const lua_Number t0 = getclock();
         const int status = lua_pcall(L, 0, 0, 0);
-        const lua_Number t1 = gettime();
+        const lua_Number t1 = getclock();
         if (status == LUA_OK)
         {
             lua_pushnumber(L, t1 - t0);
@@ -128,6 +148,7 @@ static const luaL_Reg pslib[] =
 {
     {"sleep",       ps_sleep},
     {"time",        ps_time},
+    {"clock",       ps_clock},
     {"profile",     ps_profile},
     {NULL, NULL}
 };

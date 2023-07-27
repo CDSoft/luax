@@ -25,21 +25,28 @@ ps = _ and ps
 if not ps then
     ps = {}
 
-    local sh = require "sh"
-
     function ps.sleep(n)
-        return sh.run("sleep", n)
+        io.popen("sleep "..tostring(n)):close()
     end
 
-    function ps.time()
-        return os.time()
-    end
+    ps.time = os.time
+
+    ps.clock = os.clock
 
     function ps.profile(func)
-        local t0 = os.time()
-        func()
-        local t1 = os.time()
-        return t1 - t0
+        local clock = ps.clock
+        local ok, dt = pcall(function()
+            local t0 = clock()
+            func()
+            local t1 = clock()
+            return t1 - t0
+        end)
+        if ok then
+            return dt
+        else
+            return ok, dt
+        end
+
     end
 
 end

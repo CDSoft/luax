@@ -30,20 +30,57 @@ local eps = sys.abi == "lua" and 1 or 0.01
 
 local function time_test()
     assert(math.abs(ps.time() - os.time()) <= 1.0)
+
+    -- time and clock variations shall be the same
+    if sys.abi == "gnu" or sys.abi == "musl" then
+        local t0, c0 = ps.time(), os.clock()
+        local dt, dc = 0, 0
+        while dt < 0.15 do
+            -- active loop since os.clock only counts the CPU time used by the program
+            local t1, c1 = ps.time(), os.clock()
+            dt = t1-t0
+            dc = c1-c0
+        end
+        assert(math.abs(dt - dc) <= math.max(dt*1e-2, 1e-2))
+    end
+
+    -- ps.clock shall follow os.clock
+    do
+        local t0, c0 = ps.clock(), os.clock()
+        local dt, dc = 0, 0
+        while dt < 0.15 do
+            -- active loop since os.clock only counts the CPU time used by the program
+            local t1, c1 = ps.clock(), os.clock()
+            dt = t1-t0
+            dc = c1-c0
+        end
+        assert(math.abs(dt - dc) <= 1e-3)
+        assert(math.abs(t0 - c0) <= 1e-3)
+    end
 end
 
 local function sleep_test(n)
-    local t0 = ps.time()
+
+    local t0, c0 = ps.time(), ps.clock()
     ps.sleep(n)
-    local t1 = ps.time()
+    local t1, c1 = ps.time(), ps.clock()
+
+    -- ps.time measures the global execution time
     local dt = t1 - t0
-    assert(n <= dt and dt <= n+eps, ("Expected delay: %f, actual delay: %f"):format(n, dt))
+    assert(n-1e-6 <= dt and dt <= n+eps, ("Expected delay: %f, actual delay: %f"):format(n, dt))
+
+    -- ps.clock measures the CPU time (no idle time)
+    local dc = c1 - c0
+    assert(dc <= 1e-1, ("Expected delay: %f, actual delay: %f"):format(0, dc))
 end
 
 local function profile_test(n)
-    local dt, err = ps.profile(function() ps.sleep(n) end)
+    local dt, err = ps.profile(function()
+        local t = os.clock() + n
+        repeat until os.clock() >= t
+    end)
     assert(dt, err)
-    assert(n <= dt and dt <= n+eps, ("Expected delay: %f, actual delay: %f"):format(n, dt))
+    assert(n-1e-6 <= dt and dt <= n+eps, ("Expected delay: %f, actual delay: %f"):format(n, dt))
 end
 
 return function()
