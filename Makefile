@@ -323,12 +323,12 @@ update-luasocket: $(BUILD_TMP)/$(LUASOCKET_ARCHIVE)
 	rm -rf src/socket/luasocket
 	mkdir src/socket/luasocket
 	unzip -j $< 'luasocket-$(LUASOCKET_VERSION)/src/*' -d src/socket/luasocket
-	echo "--@NAME=socket.ftp"     >> src/socket/luasocket/ftp.lua
-	echo "--@NAME=socket.headers" >> src/socket/luasocket/headers.lua
-	echo "--@NAME=socket.http"    >> src/socket/luasocket/http.lua
-	echo "--@NAME=socket.smtp"    >> src/socket/luasocket/smtp.lua
-	echo "--@NAME=socket.tp"      >> src/socket/luasocket/tp.lua
-	echo "--@NAME=socket.url"     >> src/socket/luasocket/url.lua
+	echo "--@LIB=socket.ftp"     >> src/socket/luasocket/ftp.lua
+	echo "--@LIB=socket.headers" >> src/socket/luasocket/headers.lua
+	echo "--@LIB=socket.http"    >> src/socket/luasocket/http.lua
+	echo "--@LIB=socket.smtp"    >> src/socket/luasocket/smtp.lua
+	echo "--@LIB=socket.tp"      >> src/socket/luasocket/tp.lua
+	echo "--@LIB=socket.url"     >> src/socket/luasocket/url.lua
 
 $(BUILD_TMP)/$(LUASOCKET_ARCHIVE):
 	@mkdir -p $(dir $@)

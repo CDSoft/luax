@@ -329,4 +329,4 @@ function _M.build_path(parsed, unsafe)
 end
 
 return _M
---@NAME=socket.url
+--@LIB=socket.url

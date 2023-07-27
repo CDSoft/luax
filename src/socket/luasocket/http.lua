@@ -422,4 +422,4 @@ end)
 
 _M.schemes = SCHEMES
 return _M
---@NAME=socket.http
+--@LIB=socket.http

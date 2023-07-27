@@ -101,4 +101,4 @@ _M.canonic = {
     ["x-mailer"] = "X-Mailer",
 }
 
-return _M--@NAME=socket.headers
+return _M--@LIB=socket.headers

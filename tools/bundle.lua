@@ -86,7 +86,7 @@ function bundle.bundle(arg)
         elseif arg[i] == "-lua"    then format = "lua"
         else
             local content = read(arg[i]):gsub("^#![^\n]*", "")
-            local new_name = content:match("@".."NAME=([%w%._%-]+)")
+            local new_name = content:match("@".."LIB=([%w%._%-]+)")
             local name = new_name or fs.basename(strip_ext(arg[i]))
             local main = content:match("@".."MAIN")
             local load = content:match("@".."LOAD")
