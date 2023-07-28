@@ -237,16 +237,15 @@ subdirectories (the default path is the current directory).
 
 Options:
 
+- `stat`: returns the list of stat results instead of just filenames
 - `reverse`: the list is built in a reverse order (suitable for
   recursive directory removal)
-- `links`: follow symbolic links
 - `cross`: walk across several devices
 - `func`: function applied to the current file or directory. `func`
   takes two parameters (path of the file or directory and the stat
   object returned by `fs.stat`) and returns a boolean (to continue or
-  not walking recursively through the subdirectories) and a value
-  (e.g. the name of the file) to be added to the listed returned by
-  `walk`.
+  not walking recursively through the subdirectories) and the value to
+  add to the list.
 
 ``` lua
 fs.with_tmpfile(f)

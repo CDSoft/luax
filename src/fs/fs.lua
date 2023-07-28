@@ -367,22 +367,24 @@ directory).
 
 Options:
 
+- `stat`: returns the list of stat results instead of just filenames
 - `reverse`: the list is built in a reverse order
   (suitable for recursive directory removal)
-- `links`: follow symbolic links
 - `cross`: walk across several devices
 - `func`: function applied to the current file or directory.
   `func` takes two parameters (path of the file or directory and the stat object returned by `fs.stat`)
   and returns a boolean (to continue or not walking recursively through the subdirectories)
-  and a value (e.g. the name of the file) to be added to the listed returned by `walk`.
+  and the value to add to the list.
 @@@]]
 
 function fs.walk(path, options)
     options = options or {}
+    local return_stat = options.stat
     local reverse = options.reverse
-    local follow_links = options.links
     local cross_device = options.cross
-    local func = options.func or function(name, _) return true, name end
+    local func = options.func
+              or return_stat and function(_, stat) return true, stat end
+              or function(name, _) return true, name end
     local dirs = {path or "."}
     local acc_files = {}
     local acc_dirs = {}
@@ -415,20 +417,20 @@ function fs.walk(path, options)
                     local name = dir..fs.sep..names[i]
                     local stat = fs.stat(name)
                     if stat then
-                        if stat.type == "directory" or (follow_links and stat.type == "link") then
-                            local continue, new_name = func(name, stat)
+                        if stat.type == "directory" then
+                            local continue, obj = func(name, stat)
                             if continue then
                                 dirs[#dirs+1] = name
                             end
-                            if new_name then
-                                if reverse then acc_dirs = {new_name, acc_dirs}
-                                else acc_dirs[#acc_dirs+1] = new_name
+                            if obj then
+                                if reverse then table.insert(acc_dirs, 1, obj)
+                                else acc_dirs[#acc_dirs+1] = obj
                                 end
                             end
                         else
-                            local _, new_name = func(name, stat)
-                            if new_name then
-                                acc_files[#acc_files+1] = new_name
+                            local _, obj = func(name, stat)
+                            if obj then
+                                acc_files[#acc_files+1] = obj
                             end
                         end
                     end
@@ -436,7 +438,7 @@ function fs.walk(path, options)
             end
         end
     end
-    return F.flatten(reverse and {acc_files, acc_dirs} or {acc_dirs, acc_files})
+    return F.concat(reverse and {acc_files, acc_dirs} or {acc_dirs, acc_files})
 end
 
 --[[@@@
