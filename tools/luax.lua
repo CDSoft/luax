@@ -430,7 +430,8 @@ local function pack_res(ok, ...)
     return { ok = ok, n = select("#", ...), ... }
 end
 
-local function show_res(res)
+local function show_res(res, show)
+    show = show or F.show
     return F.range(1, res.n):map(function(i) return show(res[i]) end)
 end
 
@@ -456,7 +457,7 @@ do
                 local res = pack_res(xpcall(chunk, traceback))
                 if res.ok then
                     if res.n > 0 then
-                        print(show_res(res):unpack())
+                        print(show_res(res, show):unpack())
                     end
                 else
                     os.exit(1)
@@ -594,7 +595,7 @@ local function run_interpreter()
             end
             local res = pack_res(xpcall(chunk, traceback))
             if res.ok and res.n > 0 then
-                print(show_res(res):unpack())
+                print(show_res(res, show):unpack())
             end
             return "done"
         end

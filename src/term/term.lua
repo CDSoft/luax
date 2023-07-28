@@ -38,13 +38,15 @@ term = _ and term
 if not term then
     term = {}
 
+    local sh = require "sh"
+
     if not term.isatty then
 
         local _isatty = nil
 
         function term.isatty()
             if _isatty == nil then
-                _isatty = (sh.run("tty", "--slient", "2>/dev/null"))
+                _isatty = (sh.run("tty", "--silent", "2>/dev/null"))
             end
             return _isatty
         end
