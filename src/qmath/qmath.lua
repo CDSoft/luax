@@ -139,28 +139,27 @@ local rat = qmath.new
 local floor = math.floor
 local abs = math.abs
 
-function qmath.torat(n, eps)
-    if n == 0 then return rat(0, 1) end
+local function frac(a)
+    local q = rat(a[#a])
+    for i = #a-1, 1, -1 do
+        q = a[i] + 1/q
+    end
+    return q
+end
+
+function qmath.torat(x, eps)
     eps = eps or 1e-6
-    local absn = abs(n)
-    local num, den
-    if absn >= 1 then
-        num, den = floor(absn), 1
-    else
-        num, den = 1, floor(1/absn)
+    local x0 = x
+    local a = {floor(x)}
+    x = x - a[1]
+    local q = frac(a)
+    while abs(x0 - q:tonumber()) > eps and #a < 64 do
+        local y = 1/x
+        a[#a+1] = floor(y)
+        x = y - a[#a]
+        q = frac(a)
     end
-    local r = num / den
-    while abs(absn-r) > eps do
-        if r < absn then
-            num = num + 1
-        else
-            den = den + 1
-            num = floor(absn * den)
-        end
-        r = num / den
-    end
-    if n < 0 then num = -num end
-    return rat(num, den)
+    return q
 end
 
 return qmath
