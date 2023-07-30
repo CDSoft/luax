@@ -21,6 +21,7 @@ CRYPT_KEY ?= LuaX
 
 # magic id for LuaX chunks
 LUAX_VERSION := $(shell git describe --tags || echo undefined)
+LUAX_DATE := $(shell git show -s --format=%cd --date=format:'%Y-%m-%d' || echo undefined)
 LUAX_MAGIC_ID ?= LuaX
 
 BUILD = .build
@@ -498,6 +499,7 @@ $(LUAX_CONFIG_H): $(wildcard .git/refs/tags) $(wildcard .git/index) $(BUILD_TMP)
 	@(  set -eu;                                                \
 	    echo "#pragma once";                                    \
 	    echo "#define LUAX_VERSION \"$(LUAX_VERSION)\"";        \
+	    echo "#define LUAX_DATE \"$(LUAX_DATE)\"";              \
 	    echo "#define LUAX_CRYPT_KEY \"`echo -n $(CRYPT_KEY) | $(BUILD_TMP)/blake3`\"";     \
 	    echo "#define LUAX_MAGIC_ID \"$(LUAX_MAGIC_ID)\"";      \
 	) > $@.tmp
@@ -563,6 +565,7 @@ $(LIB_LUAX): $(LUAX0) $(LIB_LUAX_SOURCES) tools/bundle.lua $(LUAX0)
 	@(  set -eu;                                                    \
 	    echo "--@LOAD=_: load luax to expose LuaX modules";         \
 	    echo "_LUAX_VERSION = '$(LUAX_VERSION)'";                   \
+	    echo "_LUAX_DATE = '$(LUAX_DATE)'";                         \
 	    LUA_PATH="$(LUA_PATH);$(dir $(LUAX_CONFIG_LUA))/?.lua"      \
 	    $(LUAX0) tools/bundle.lua -lib -lua $(LIB_LUAX_SOURCES);    \
 	) > $@.tmp

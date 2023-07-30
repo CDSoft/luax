@@ -38,6 +38,8 @@ LUAMOD_API int luaopen_std(lua_State *L)
     lua_pushglobaltable(L);                 /* push _G */
     lua_pushstring(L, LUAX_VERSION);        /* push LUAX_VERSION */
     lua_setfield(L, -2, "_LUAX_VERSION");   /* _G._LUAX_VERSION = LUAX_VERSION */
+    lua_pushstring(L, LUAX_DATE);           /* push LUAX_DATE */
+    lua_setfield(L, -2, "_LUAX_DATE");      /* _G._LUAX_DATE = LUAX_DATE */
     lua_remove(L, -2);                      /* remove _G */
     return 0;
 }

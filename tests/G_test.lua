@@ -84,6 +84,7 @@ return function()
     local expected_global_variables = F{
         "_G",
         "_LUAX_VERSION",
+        "_LUAX_DATE",
         "_VERSION",
         "arg",
         "assert",

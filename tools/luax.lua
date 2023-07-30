@@ -31,7 +31,7 @@ local has_compiler = pcall(require, "bundle")
 local welcome = I[[
  _               __  __  |  https://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |
-| |  | | | |/ _` |\  /   |  Version $(_LUAX_VERSION)
+| |  | | | |/ _` |\  /   |  Version $(_LUAX_VERSION) ($(_LUAX_DATE))
 | |__| |_| | (_| |/  \   |  Powered by $(_VERSION)
 |_____\__,_|\__,_/_/\_\  |$(PANDOC_VERSION and "  and Pandoc "..tostring(PANDOC_VERSION) or "")
                          |  $(sys.os:cap()) $(sys.arch) $(sys.abi)
