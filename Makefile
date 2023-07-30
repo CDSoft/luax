@@ -238,7 +238,7 @@ LUASOCKET_VERSION = 3.1.0
 LUASOCKET_ARCHIVE = luasocket-$(LUASOCKET_VERSION).zip
 LUASOCKET_URL = https://github.com/lunarmodules/luasocket/archive/refs/tags/v$(LUASOCKET_VERSION).zip
 
-LPEG_VERSION = 1.0.2
+LPEG_VERSION = 1.1.0
 LPEG_ARCHIVE = lpeg-$(LPEG_VERSION).tar.gz
 LPEG_URL = http://www.inf.puc-rio.br/~roberto/lpeg/$(LPEG_ARCHIVE)
 
@@ -337,9 +337,10 @@ $(BUILD_TMP)/$(LUASOCKET_ARCHIVE):
 
 ## Update lpeg sources
 update-lpeg: $(BUILD_TMP)/$(LPEG_ARCHIVE)
-	rm -rf src/lpeg/lpeg-*
+	rm -rf src/lpeg/lpeg
 	tar xzf $< -C src/lpeg --exclude=HISTORY --exclude=*.gif --exclude=*.html --exclude=makefile --exclude=test.lua
-	echo "--@LIB" >> src/lpeg/lpeg-1.0.2/re.lua
+	mv src/lpeg/lpeg-$(LPEG_VERSION) src/lpeg/lpeg
+	echo "--@LIB" >> src/lpeg/lpeg/re.lua
 
 $(BUILD_TMP)/$(LPEG_ARCHIVE):
 	@mkdir -p $(dir $@)

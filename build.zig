@@ -85,11 +85,12 @@ const luax_c_files = [_][]const u8 {
 
 const third_party_c_files = [_][]const u8 {
     // LuaX runtime
-    "src/lpeg/lpeg-1.0.2/lpcap.c",
-    "src/lpeg/lpeg-1.0.2/lpcode.c",
-    "src/lpeg/lpeg-1.0.2/lpprint.c",
-    "src/lpeg/lpeg-1.0.2/lptree.c",
-    "src/lpeg/lpeg-1.0.2/lpvm.c",
+    "src/lpeg/lpeg/lpcap.c",
+    "src/lpeg/lpeg/lpcode.c",
+    "src/lpeg/lpeg/lpcset.c",
+    "src/lpeg/lpeg/lpprint.c",
+    "src/lpeg/lpeg/lptree.c",
+    "src/lpeg/lpeg/lpvm.c",
     "src/mathx/mathx/lmathx.c",
     "src/imath/limath-104/limath.c",
     "src/imath/limath-104/src/imath.c",
