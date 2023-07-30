@@ -22,7 +22,7 @@ CRYPT_KEY ?= LuaX
 # magic id for LuaX chunks
 LUAX_VERSION := $(shell git describe --tags || echo undefined)
 LUAX_DATE := $(shell git show -s --format=%cd --date=format:'%Y-%m-%d' || echo undefined)
-LUAX_MAGIC_ID ?= LuaX
+LUAX_MAGIC_ID ?= LuaX $(LUAX_VERSION) ($(LUAX_DATE))
 
 BUILD = .build
 BUILD_BIN = $(BUILD)/bin
