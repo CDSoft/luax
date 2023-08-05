@@ -13,9 +13,9 @@ scripts.
 
 `luax` runs on several platforms with no dependency:
 
-- Linux (x86_64, i386, aarch64)
+- Linux (x86_64, x86, aarch64)
 - MacOS (x86_64, aarch64)
-- Windows (x86_64, i386)
+- Windows (x86_64, x86)
 
 `luax` can « cross-compile[^cross] » scripts from and to any of these platforms.
 

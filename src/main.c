@@ -30,6 +30,8 @@
 
 #include "tools.h"
 
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+
 static void get_exe(const char *arg0, char *name, size_t name_size)
 {
 #ifdef _WIN32

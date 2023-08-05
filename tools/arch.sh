@@ -18,4 +18,12 @@
 # For further information about luax you can visit
 # http://cdelord.fr/luax
 
-uname -m
+ARCH="$(uname -m)"
+
+case "$ARCH" in
+    (i386)  echo x86 ;;
+    (i486)  echo x86 ;;
+    (i586)  echo x86 ;;
+    (i686)  echo x86 ;;
+    (*)     echo "$ARCH" ;;
+esac

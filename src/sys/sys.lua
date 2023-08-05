@@ -44,6 +44,8 @@ if not sys then
                 return os
             elseif param == "arch" then
                 local arch = sh.read("uname", "-m"):trim()
+                arch =   arch:match "^i[3-6]86" and "x86"
+                      or arch
                 sys.arch = arch
                 return arch
             end

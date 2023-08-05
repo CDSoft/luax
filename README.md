@@ -8,9 +8,9 @@ from Lua scripts.
 
 `luax` runs on several platforms with no dependency:
 
-- Linux (x86_64, i386, aarch64)
+- Linux (x86_64, x86, aarch64)
 - MacOS (x86_64, aarch64)
-- Windows (x86_64, i386)
+- Windows (x86_64, x86)
 
 `luax` can « cross-compile[^1] » scripts from and to any of these
 platforms.
@@ -179,9 +179,9 @@ Targets producing standalone LuaX executables:
     aarch64-linux-gnu
     aarch64-linux-musl
     aarch64-macos-none
-    i386-linux-gnu
-    i386-linux-musl
-    i386-windows-gnu
+    x86-linux-gnu
+    x86-linux-musl
+    x86-windows-gnu
     x86_64-linux-gnu
     x86_64-linux-musl
     x86_64-macos-none

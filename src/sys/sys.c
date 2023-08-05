@@ -51,7 +51,7 @@ sys.os
 ```lua
 sys.arch
 ```
-`"x86_64"`, `"i386"` or `"aarch64"`.
+`"x86_64"`, `"x86"` or `"aarch64"`.
 
 ```lua
 sys.abi

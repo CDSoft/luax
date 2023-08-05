@@ -18,6 +18,8 @@
 
 const std = @import("std");
 
+const release = .ReleaseFast;
+
 const lua_src = "lua";
 const lz4_src = "src/lz4/lz4";
 const src_path = "src";
@@ -141,10 +143,6 @@ pub fn build(b: *std.build.Builder) !void {
     // for restricting supported target set are available.
     const target = b.standardTargetOptions(.{});
 
-    // Standard release options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
-
     var page = std.heap.page_allocator;
 
     const runtime_name = std.os.getenv("RUNTIME_NAME");
@@ -164,18 +162,21 @@ pub fn build(b: *std.build.Builder) !void {
     // LuaX executable
     ///////////////////////////////////////////////////////////////////////////
 
-    const exe = b.addExecutable(exe_name, null);
-    exe.single_threaded = true;
+    const exe = b.addExecutable(.{
+        .name = exe_name,
+        .target = target,
+        .optimize = release,
+        .linkage = if (dynamic) .dynamic else .static,
+        .link_libc = true,
+        .single_threaded = true,
+    });
     exe.strip = true;
     exe.rdynamic = dynamic;
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-    exe.linkLibC();
-    exe.install();
-    exe.addIncludePath(src_path);
-    exe.addIncludePath(lz4_src);
-    exe.addIncludePath(build_path);
-    exe.addIncludePath(lua_src);
+    b.installArtifact(exe);
+    exe.addIncludePath(.{.cwd_relative = src_path});
+    exe.addIncludePath(.{.cwd_relative = lz4_src});
+    exe.addIncludePath(.{.cwd_relative = build_path});
+    exe.addIncludePath(.{.cwd_relative = lua_src});
     exe.addCSourceFiles(&luax_main_c_files, &[_][]const u8 {
         "-std=gnu2x",
         "-O3",
@@ -221,6 +222,7 @@ pub fn build(b: *std.build.Builder) !void {
         "-Wno-documentation",
         "-Wno-documentation-unknown-command",
         "-Wno-declaration-after-statement",
+        "-Wno-unsafe-buffer-usage",
         try std.fmt.allocPrint(page, "-DRUNTIME={?s}", .{runtime}),
         try std.fmt.allocPrint(page, "-DLUAX_ARCH=\"{s}\"", .{ARCH}),
         try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),
@@ -262,17 +264,19 @@ pub fn build(b: *std.build.Builder) !void {
     if (dynamic) {
     if (library_name) |_| {
 
-    const lib_shared = b.addSharedLibrary(lib_name, null, .{.unversioned={}});
-    lib_shared.single_threaded = true;
+    const lib_shared = b.addSharedLibrary(.{
+        .name = lib_name,
+        .target = target,
+        .optimize = release,
+        .link_libc = true,
+        .single_threaded = true,
+    });
     lib_shared.strip = true;
-    lib_shared.setTarget(target);
-    lib_shared.setBuildMode(mode);
-    lib_shared.linkLibC();
-    lib_shared.install();
-    lib_shared.addIncludePath(src_path);
-    lib_shared.addIncludePath(build_path);
-    lib_shared.addIncludePath(lua_src);
-    lib_shared.addIncludePath(lz4_src);
+    b.installArtifact(lib_shared);
+    lib_shared.addIncludePath(.{.cwd_relative = src_path});
+    lib_shared.addIncludePath(.{.cwd_relative = build_path});
+    lib_shared.addIncludePath(.{.cwd_relative = lua_src});
+    lib_shared.addIncludePath(.{.cwd_relative = lz4_src});
     if (target.os_tag != std.Target.Os.Tag.linux) {
         lib_shared.addCSourceFiles(&lua_c_files, &[_][]const u8 {
             "-std=gnu2x",
@@ -299,6 +303,7 @@ pub fn build(b: *std.build.Builder) !void {
         "-Wno-documentation",
         "-Wno-documentation-unknown-command",
         "-Wno-declaration-after-statement",
+        "-Wno-unsafe-buffer-usage",
         try std.fmt.allocPrint(page, "-DRUNTIME={?s}", .{runtime}),
         try std.fmt.allocPrint(page, "-DLUAX_ARCH=\"{s}\"", .{ARCH}),
         try std.fmt.allocPrint(page, "-DLUAX_OS=\"{s}\"", .{OS}),

@@ -33,19 +33,17 @@ BUILD_DOC = $(BUILD)/doc
 ZIG_INSTALL = .zig
 ZIG_CACHE = $(ZIG_INSTALL)/zig-cache
 
-RELEASE = release-fast
-
 # Linux
 TARGETS += x86_64-linux-musl
 TARGETS += x86_64-linux-gnu
-TARGETS += i386-linux-musl
-TARGETS += i386-linux-gnu
+TARGETS += x86-linux-musl
+TARGETS += x86-linux-gnu
 TARGETS += aarch64-linux-musl
 TARGETS += aarch64-linux-gnu
 
 # Windows
 TARGETS += x86_64-windows-gnu
-TARGETS += i386-windows-gnu
+TARGETS += x86-windows-gnu
 
 # MacOS
 TARGETS += x86_64-macos-none
@@ -167,9 +165,9 @@ welcome:
 	@echo ''
 	@echo '${CYAN}luax${NORMAL} runs on several platforms with no dependency:'
 	@echo ''
-	@echo '- Linux (x86_64, i386, aarch64)'
+	@echo '- Linux (x86_64, x86, aarch64)'
 	@echo '- MacOS (x86_64, aarch64)'
-	@echo '- Windows (x86_64, i386)'
+	@echo '- Windows (x86_64, x86)'
 	@echo ''
 	@echo '${CYAN}luax${NORMAL} can « cross-compile » scripts from and to any of these platforms.'
 
@@ -443,7 +441,7 @@ $(PREFIX)/bin/luax-pandoc: $(LUAX_PANDOC)
 
 ZIG := $(ZIG_INSTALL)/zig
 
-ZIG_VERSION = 0.10.1
+ZIG_VERSION = 0.11.0
 ZIG_URL = https://ziglang.org/download/$(ZIG_VERSION)/zig-$(OS)-$(ARCH)-$(ZIG_VERSION).tar.xz
 
 ZIG_ARCHIVE = $(BUILD_TMP)/$(notdir $(ZIG_URL))
@@ -472,7 +470,6 @@ $(LUA): $(ZIG) $(LUA_SOURCES) build-lua.zig
 	@$(ZIG) build \
 	    --cache-dir $(ZIG_CACHE) \
 	    --prefix $(dir $@) --prefix-exe-dir "" \
-	    -D$(RELEASE) \
 	    -Dtarget=$(ARCH)-$(OS)-$(LIBC) \
 	    --build-file build-lua.zig
 	@touch $@
@@ -483,7 +480,6 @@ $(LUAX0): $(ZIG) $(LUA_SOURCES) $(LUAX_SOURCES) $(LUAX_CONFIG_H) build.zig
 	@RUNTIME_NAME=lua0 RUNTIME=0 $(ZIG) build \
 	    --cache-dir $(ZIG_CACHE) \
 	    --prefix $(dir $@) --prefix-exe-dir "" \
-	    -D$(RELEASE) \
 	    -Dtarget=$(ARCH)-$(OS)-$(LIBC) \
 	    --build-file build.zig
 	@touch $@
@@ -538,7 +534,6 @@ $(BUILD_TMP)/luaxruntime-%: $(ZIG) $(LUA_SOURCES) $(SOURCES) $(LUAX_RUNTIME_BUND
 	@RUNTIME_NAME=luaxruntime LIB_NAME=luax RUNTIME=1 $(ZIG) build \
 	    --cache-dir $(ZIG_CACHE) \
 	    --prefix $(dir $@) --prefix-exe-dir "" \
-	    -D$(RELEASE) \
 	    -Dtarget=$(patsubst %.exe,%,$(patsubst $(BUILD_TMP)/luaxruntime-%,%,$@)) \
 	    --build-file build.zig
 	@find $(BUILD_TMP)/lib -name "*luax-$(patsubst %.exe,%,$(patsubst $(BUILD_TMP)/luaxruntime-%,%,$@))*" \

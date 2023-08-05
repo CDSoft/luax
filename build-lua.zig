@@ -18,6 +18,8 @@
 
 const std = @import("std");
 
+const release = .ReleaseFast;
+
 const lua_src = "lua";
 const build_path = ".build";
 
@@ -66,22 +68,21 @@ pub fn build(b: *std.build.Builder) !void {
     // for restricting supported target set are available.
     const target = b.standardTargetOptions(.{});
 
-    // Standard release options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
-
     const exe_name = "lua";
 
-    const exe = b.addExecutable(exe_name, null);
-    exe.single_threaded = true;
+    const exe = b.addExecutable(.{
+        .name = exe_name,
+        .target = target,
+        .optimize = release,
+        .linkage = .dynamic,
+        .link_libc = true,
+        .single_threaded = true,
+    });
     exe.strip = true;
     exe.rdynamic = true;
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-    exe.linkLibC();
-    exe.install();
-    exe.addIncludePath(build_path);
-    exe.addIncludePath(lua_src);
+    b.installArtifact(exe);
+    exe.addIncludePath(.{.cwd_relative = build_path});
+    exe.addIncludePath(.{.cwd_relative = lua_src});
     exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
         "-std=gnu2x",
         "-O3",
