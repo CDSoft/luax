@@ -616,6 +616,8 @@ test: $(BUILD_TEST)/test-pandoc-luax-so.ok
 endif
 endif
 
+export PATH := $(BUILD_TMP):$(PATH)
+
 $(BUILD_TEST)/test-luax.ok: $(BUILD_TEST)/test-$(ARCH)-$(OS)-$(LIBC)$(EXT)
 	@$(call cyan,"TEST",Luax executable: $^)
 	@ARCH=$(ARCH) OS=$(OS) LIBC=$(LIBC) TYPE=static LUA_PATH="tests/?.lua" \
