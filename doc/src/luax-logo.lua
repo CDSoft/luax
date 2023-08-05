@@ -137,7 +137,7 @@ end
 local d = h * 16/1024
 
 img {
-    sky(),
+    --sky(),
     G {
         transform = ("translate(%d, %d) rotate(%d)"):format(w/2, h/2, inclination),
         moon(),
