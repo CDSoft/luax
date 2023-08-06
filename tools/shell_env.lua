@@ -42,13 +42,13 @@ local function shell_env()
     return F.flatten{
         path:split(fs.path_sep):elem(bin)
             and ('# PATH already contains %s'):format(bin)
-            or ('PATH="%s%s$PATH"; export PATH'):format(bin, fs.path_sep),
+            or ('PATH="%s%s$PATH"; export PATH;'):format(bin, fs.path_sep),
         lua_path:split";":elem(lib_lua)
             and ('# LUA_PATH already contains %s'):format(lib_lua)
-            or ('LUA_PATH="%s;$LUA_PATH"; export LUA_PATH'):format(lib_lua),
+            or ('LUA_PATH="%s;$LUA_PATH"; export LUA_PATH;'):format(lib_lua),
         lua_cpath:split";":elem(lib_so)
             and ('# LUA_CPATH already contains %s'):format(lib_so)
-            or ('LUA_CPATH="%s;$LUA_CPATH"; export LUA_CPATH'):format(lib_so),
+            or ('LUA_CPATH="%s;$LUA_CPATH"; export LUA_CPATH;'):format(lib_so),
     } : unlines()
 end
 
