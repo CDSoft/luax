@@ -126,7 +126,7 @@ $ luax -o executable main.lua lib1.lua lib2.lua
 $ ./executable      # equivalent to luax main.lua
 
 # « Cross compilation » to MacOS x86_64
-$ luax -o executable -t x86_64-macos-gnu main.lua lib1.lua lib2.lua
+$ luax -o executable -t x86_64-macos-none main.lua lib1.lua lib2.lua
 
 # Available targets
 $ luax -t list

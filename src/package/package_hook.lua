@@ -23,7 +23,8 @@ http://cdelord.fr/luax
 -- inspired by https://stackoverflow.com/questions/60283272/how-to-get-the-exact-path-to-the-script-that-was-loaded-in-lua
 
 -- This module wraps package searchers in a function that tracks package paths.
--- The paths are stored in package.modpath, which can be used to generate the dependancy file
+-- The paths are stored in package.modpath, which can be used to generate dependency files
+-- for [ypp](https://cdelord.fr/ypp) or [panda](https://cdelord.fr/panda).
 
 --[=[-----------------------------------------------------------------------@@@
 # package
