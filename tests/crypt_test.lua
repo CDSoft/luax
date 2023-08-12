@@ -104,6 +104,14 @@ return function()
     do
         do
             local x = "foobar!"
+            local key = "" -- rc4 shall not crash with an empty key
+            local y = crypt.rc4(x, key)
+            local z = crypt.unrc4(y, key)
+            ne(y, x)
+            eq(z, x)
+        end
+        do
+            local x = "foobar!"
             local key = "rc4key"
             local y = crypt.rc4(x, key)
             local z = crypt.unrc4(y, key)
@@ -141,6 +149,21 @@ return function()
                 local drop = prng:int() % 4096
                 eq(s:rc4(k, drop):unrc4(k, drop), s)
             end
+        end
+        do
+            local s = "foobar!"
+            if sys.abi ~= "lua" then
+                -- nil key is available to the LuaX runtime only
+                ne(s:rc4(), s:rc4(""))
+                ne(s:rc4(), s:rc4("x"))
+            end
+            ne(s:rc4(""), s:rc4("x"))
+        end
+        do
+            local s = "foobar!"
+            -- C and Lua implementations shall implement the same rc4 algorithm
+            eq({s:rc4(""):byte(1, -1)}, {135,151,174,56,231,102,98})
+            eq({s:rc4("key"):byte(1, -1)}, {217,183,168,237,133,97,233})
         end
         do
             eq(crypt.sha1 "abc", "a9993e364706816aba3e25717850c26c9cd0d89d")

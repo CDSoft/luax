@@ -927,12 +927,15 @@ static inline void rc4_init(t_rc4 *rc4)
 
 static inline void rc4_schedule(t_rc4 *rc4, const char *key, size_t key_size)
 {
-    uint8_t *S = rc4->S;
-    size_t j = 0;
-    for (size_t i = 0; i < 256; i++)
+    if (key_size > 0)
     {
-        j = (j + (size_t)S[i] + (size_t)key[i % key_size]) % 256;
-        swap(&S[i], &S[j]);
+        uint8_t *S = rc4->S;
+        size_t j = 0;
+        for (size_t i = 0; i < 256; i++)
+        {
+            j = (j + (size_t)S[i] + (size_t)key[i % key_size]) % 256;
+            swap(&S[i], &S[j]);
+        }
     }
 }
 

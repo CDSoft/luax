@@ -275,13 +275,16 @@ if not crypt then
     -- RC4 encryption
 
     function crypt.rc4(input, key, drop)
+        assert(type(key) == "string", "rc4 key shall be a string")
         drop = drop or 768
         local S = {}
         for i = 0, 255 do S[i] = i end
         local j = 0
-        for i = 0, 255 do
-            j = (j + S[i] + byte(key, i%#key+1)) % 256
-            S[i], S[j] = S[j], S[i]
+        if #key > 0 then
+            for i = 0, 255 do
+                j = (j + S[i] + byte(key, i%#key+1)) % 256
+                S[i], S[j] = S[j], S[i]
+            end
         end
         local i = 0
         j = 0
