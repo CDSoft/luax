@@ -1649,6 +1649,29 @@ local function string_interpolation()
     eq(J{foo="aaa", bar="bbb"}"foo = @{foo}; 1 + 1 = @{1+1}", "foo = aaa; 1 + 1 = 2")
     eq(J{foo="aaa"}{bar="bbb"}"foo = @{foo}; 1 + 1 = @{1+1}; bar = @{bar}", "foo = aaa; 1 + 1 = 2; bar = bbb")
 
+    local t1 = {a=1, b=2}
+    local t2 = {b=3, c=4}
+    local K = F.I(t1)(t2)
+
+    eq(K"$(a) $(b) $(c)", "1 3 4")
+
+    t1.a = t1.a + 10
+    eq(K"$(a) $(b) $(c)", "11 3 4")
+    t1.b = t1.b + 10
+    eq(K"$(a) $(b) $(c)", "11 3 4")
+
+    t2.b = t2.b + 10
+    eq(K"$(a) $(b) $(c)", "11 13 4")
+
+    t2.c = t2.c + 10
+    eq(K"$(a) $(b) $(c)", "11 13 14")
+
+    t2.b = nil
+    eq(K"$(a) $(b) $(c)", "11 12 14")
+
+    t2.c = nil
+    eq(K"$(a) $(b) $(c)", "11 12 $(c)")
+
 end
 
 ---------------------------------------------------------------------

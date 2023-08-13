@@ -3732,15 +3732,22 @@ function interpolator_mt.__call(self, s)
         end))
     end
     if type(s) == "table" then
+        local new_env = s
         return setmetatable({
             pattern = self.pattern,
-            env = F.merge{self.env, s},
+            env = setmetatable({}, {
+                __index = function(_, k)
+                    local v = new_env[k]
+                    if v ~= nil then return v end
+                    return self.env and self.env[k]
+                end
+            })
         }, interpolator_mt)
     end
     error "An interpolator expects a table or a string"
 end
 
-F.I = setmetatable({env={}}, interpolator_mt) % "%$()"
+F.I = setmetatable({env=nil}, interpolator_mt) % "%$()"
 
 --[[------------------------------------------------------------------------@@@
 ## Random array access
