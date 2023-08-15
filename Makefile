@@ -726,7 +726,9 @@ MD_OUTPUTS = $(MARKDOWN_SOURCES:doc/src/%.md=$(BUILD_DOC)/%.md)
 
 IMAGES += doc/luax-banner.svg
 IMAGES += doc/luax-logo.svg
+IMAGES += $(BUILD)/luax-banner.png
 IMAGES += $(BUILD)/luax-social.png
+IMAGES += $(BUILD)/luax-logo.png
 
 doc: README.md
 doc: $(MARKDOWN_OUTPUTS)
@@ -779,9 +781,19 @@ doc/luax-banner.svg: doc/src/luax-logo.lua
 	@$(call cyan,"IMAGE",$@)
 	@lsvg $< $@ -- 1024 192 # '$(URL)'
 
+$(BUILD)/luax-banner.png: doc/src/luax-logo.lua
+	@$(call cyan,"IMAGE",$@)
+	@mkdir -p $(dir $@)
+	@lsvg $< $@ -- 1024 192 # '$(URL)'
+
 doc/luax-logo.svg: doc/src/luax-logo.lua
 	@$(call cyan,"IMAGE",$@)
 	@lsvg $< $@ -- 256 256 # '$(URL)'
+
+$(BUILD)/luax-logo.png: doc/src/luax-logo.lua
+	@$(call cyan,"IMAGE",$@)
+	@mkdir -p $(dir $@)
+	@lsvg $< $@ -- 1024 1024 # '$(URL)'
 
 $(BUILD)/luax-social.png: doc/src/luax-logo.lua
 	@$(call cyan,"IMAGE",$@)

@@ -15,6 +15,12 @@ from Lua scripts.
 `luax` can « cross-compile[^1] » scripts from and to any of these
 platforms.
 
+## Getting in touch
+
+- [cdelord.fr/luax](https://cdelord.fr/luax)
+- [github.com/CDSoft/luax](https://github.com/CDSoft/luax)
+- [LuaX on Discord](https://discord.gg/SzFUwYBAzF)
+
 ## Compilation
 
 `luax` is written in C and Lua and uses the Zig build system. Just
