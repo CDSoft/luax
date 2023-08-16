@@ -291,7 +291,7 @@ $(BUILD_TMP)/$(LCOMPLEX_ARCHIVE):
 
 ## Update limath sources
 update-limath: $(BUILD_TMP)/$(LIMATH_ARCHIVE)
-	rm -rf src/imath/limath-*
+	rm -rf src/imath/limath
 	tar -xzf $< -C src/imath --exclude=Makefile --exclude=test.lua
 	mv src/imath/$(patsubst %.tar.gz,%,$(notdir $(LIMATH_ARCHIVE))) src/imath/limath
 	sed -i 's@"imath.h"@"src/imath.h"@' src/imath/limath/limath.c
@@ -302,7 +302,7 @@ $(BUILD_TMP)/$(LIMATH_ARCHIVE):
 
 ## Update lqmath sources
 update-lqmath: $(BUILD_TMP)/$(LQMATH_ARCHIVE)
-	rm -rf src/qmath/lqmath-*
+	rm -rf src/qmath/lqmath
 	tar -xzf $< -C src/qmath --exclude=Makefile --exclude=test.lua
 	mv src/qmath/$(patsubst %.tar.gz,%,$(notdir $(LQMATH_ARCHIVE))) src/qmath/lqmath
 	sed -i 's@"imrat.h"@"src/imrat.h"@' src/qmath/lqmath/lqmath.c
