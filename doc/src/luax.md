@@ -8,7 +8,7 @@ author: Christophe Delord
 # Lua eXtended
 
 `luax` is a Lua interpreter and REPL based on Lua 5.4, augmented with some
-useful packages. `luax` can also produces standalone executables from Lua
+useful packages. `luax` can also produce standalone executables from Lua
 scripts.
 
 `luax` runs on several platforms with no dependency:
