@@ -209,6 +209,11 @@ if not fs then
         end
     end
 
+    function fs.ext(path)
+        local _, ext = fs.splitext(path)
+        return ext
+    end
+
     if pandoc then
         fs.realpath = pandoc.path.normalize
     else

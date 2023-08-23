@@ -138,6 +138,12 @@ fs.splitext(path)
 return the name without the extension and the extension.
 
 ``` lua
+fs.ext(path)
+```
+
+return the extension of a filename.
+
+``` lua
 fs.realpath(path)
 ```
 
