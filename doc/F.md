@@ -1701,6 +1701,34 @@ s:cap()
 > Capitalizes a string. The first character is upper case, other are
 > lower case.
 
+## Identifier formatting
+
+``` lua
+string.lower_snake_case(s)              -- e.g.: hello_world
+string.upper_snake_case(s)              -- e.g.: HELLO_WORLD
+string.lower_camel_case(s)              -- e.g.: helloWorld
+string.upper_camel_case(s)              -- e.g.: HelloWorld
+string.dotted_lower_snake_case(s)       -- e.g.: hello.world
+string.dotted_upper_snake_case(s)       -- e.g.: hello.world
+
+F.lower_snake_case(s)                   -- e.g.: hello_world
+F.upper_snake_case(s)                   -- e.g.: HELLO_WORLD
+F.lower_camel_case(s)                   -- e.g.: helloWorld
+F.upper_camel_case(s)                   -- e.g.: HelloWorld
+F.dotted_lower_snake_case(s)            -- e.g.: hello.world
+F.dotted_upper_snake_case(s)            -- e.g.: hello.world
+
+s:lower_snake_case()                    -- e.g.: hello_world
+s:upper_snake_case()                    -- e.g.: HELLO_WORLD
+s:lower_camel_case()                    -- e.g.: helloWorld
+s:upper_camel_case()                    -- e.g.: HelloWorld
+s:dotted_lower_snake_case()             -- e.g.: hello.world
+s:dotted_upper_snake_case()             -- e.g.: hello.world
+```
+
+> Convert an identifier using some wellknown naming conventions. `s` can
+> be a string or a list of strings.
+
 ## String evaluation
 
 ``` lua

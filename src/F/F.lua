@@ -3680,6 +3680,80 @@ function string.cap(s)
 end
 
 --[[------------------------------------------------------------------------@@@
+## Identifier formatting
+@@@]]
+
+local function split_identifier(...)
+    local words = F{}
+    local function add_word(name)
+        -- an upper case letter starts a new word
+        name = tostring(name):gsub("([^%u])(%u)", "%1_%2")
+        -- split words
+        for w in name:gmatch"%w+" do words[#words+1] = w end
+    end
+    F.flatten{...}:foreach(add_word)
+    return words
+end
+
+--[[@@@
+```lua
+string.lower_snake_case(s)              -- e.g.: hello_world
+string.upper_snake_case(s)              -- e.g.: HELLO_WORLD
+string.lower_camel_case(s)              -- e.g.: helloWorld
+string.upper_camel_case(s)              -- e.g.: HelloWorld
+string.dotted_lower_snake_case(s)       -- e.g.: hello.world
+string.dotted_upper_snake_case(s)       -- e.g.: hello.world
+
+F.lower_snake_case(s)                   -- e.g.: hello_world
+F.upper_snake_case(s)                   -- e.g.: HELLO_WORLD
+F.lower_camel_case(s)                   -- e.g.: helloWorld
+F.upper_camel_case(s)                   -- e.g.: HelloWorld
+F.dotted_lower_snake_case(s)            -- e.g.: hello.world
+F.dotted_upper_snake_case(s)            -- e.g.: hello.world
+
+s:lower_snake_case()                    -- e.g.: hello_world
+s:upper_snake_case()                    -- e.g.: HELLO_WORLD
+s:lower_camel_case()                    -- e.g.: helloWorld
+s:upper_camel_case()                    -- e.g.: HelloWorld
+s:dotted_lower_snake_case()             -- e.g.: hello.world
+s:dotted_upper_snake_case()             -- e.g.: hello.world
+```
+> Convert an identifier using some wellknown naming conventions.
+  `s` can be a string or a list of strings.
+@@@]]
+
+function string.lower_snake_case(...)
+    return split_identifier(...):map(string.lower):str"_"
+end
+
+function string.upper_snake_case(...)
+    return split_identifier(...):map(string.upper):str"_"
+end
+
+function string.lower_camel_case(...)
+    return split_identifier(...):map(string.cap):str():gsub("^%w", string.lower)
+end
+
+function string.upper_camel_case(...)
+    return split_identifier(...):map(string.cap):str()
+end
+
+function string.dotted_lower_snake_case(...)
+    return split_identifier(...):map(string.lower):str"."
+end
+
+function string.dotted_upper_snake_case(...)
+    return split_identifier(...):map(string.upper):str"."
+end
+
+register1 "lower_snake_case" (string.lower_snake_case)
+register1 "upper_snake_case" (string.upper_snake_case)
+register1 "lower_camel_case" (string.lower_camel_case)
+register1 "upper_camel_case" (string.upper_camel_case)
+register1 "dotted_lower_snake_case" (string.dotted_lower_snake_case)
+register1 "dotted_upper_snake_case" (string.dotted_upper_snake_case)
+
+--[[------------------------------------------------------------------------@@@
 ## String evaluation
 @@@]]
 
