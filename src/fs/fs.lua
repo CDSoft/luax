@@ -180,7 +180,7 @@ if not fs then
         fs.basename = pandoc.path.filename
     else
         function fs.basename(path)
-            return sh.read("basename", path) : trim()
+            return (path:gsub(".*[/\\]", ""))
         end
     end
 
@@ -188,7 +188,7 @@ if not fs then
         fs.dirname = pandoc.path.directory
     else
         function fs.dirname(path)
-            return sh.read("dirname", path) : trim()
+            return (path:gsub("[/\\][^/\\]*$", ""))
         end
     end
 
