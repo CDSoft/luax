@@ -32,8 +32,8 @@ More information on <https://www.lz4.org>.
 @@@*/
 
 #include "lz4.h"
-#include "lz4hc.h"
-#include "lz4frame.h"
+#include "ext/lz4/lz4hc.h"
+#include "ext/lz4/lz4frame.h"
 
 #include "tools.h"
 

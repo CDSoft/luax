@@ -87,48 +87,48 @@ const luax_c_files = [_][]const u8 {
 
 const third_party_c_files = [_][]const u8 {
     // LuaX runtime
-    "src/lpeg/lpeg/lpcap.c",
-    "src/lpeg/lpeg/lpcode.c",
-    "src/lpeg/lpeg/lpcset.c",
-    "src/lpeg/lpeg/lpprint.c",
-    "src/lpeg/lpeg/lptree.c",
-    "src/lpeg/lpeg/lpvm.c",
-    "src/mathx/mathx/lmathx.c",
-    "src/imath/limath/limath.c",
-    "src/imath/limath/src/imath.c",
-    "src/qmath/lqmath/lqmath.c",
-    "src/qmath/lqmath/src/imrat.c",
-    "src/complex/lcomplex/lcomplex.c",
-    "src/socket/luasocket/auxiliar.c",
-    "src/socket/luasocket/buffer.c",
-    "src/socket/luasocket/compat.c",
-    "src/socket/luasocket/except.c",
-    "src/socket/luasocket/inet.c",
-    "src/socket/luasocket/io.c",
-    "src/socket/luasocket/luasocket.c",
-    "src/socket/luasocket/mime.c",
-    "src/socket/luasocket/options.c",
-    "src/socket/luasocket/select.c",
-    "src/socket/luasocket/tcp.c",
-    "src/socket/luasocket/timeout.c",
-    "src/socket/luasocket/udp.c",
-    "src/lz4/lz4/lz4.c",
-    "src/lz4/lz4/lz4file.c",
-    "src/lz4/lz4/lz4frame.c",
-    "src/lz4/lz4/lz4hc.c",
-    "src/lz4/lz4/xxhash.c",
+    "ext/lpeg/lpcap.c",
+    "ext/lpeg/lpcode.c",
+    "ext/lpeg/lpcset.c",
+    "ext/lpeg/lpprint.c",
+    "ext/lpeg/lptree.c",
+    "ext/lpeg/lpvm.c",
+    "ext/mathx/lmathx.c",
+    "ext/limath/limath.c",
+    "ext/limath/src/imath.c",
+    "ext/lqmath/lqmath.c",
+    "ext/lqmath/src/imrat.c",
+    "ext/lcomplex/lcomplex.c",
+    "ext/luasocket/auxiliar.c",
+    "ext/luasocket/buffer.c",
+    "ext/luasocket/compat.c",
+    "ext/luasocket/except.c",
+    "ext/luasocket/inet.c",
+    "ext/luasocket/io.c",
+    "ext/luasocket/luasocket.c",
+    "ext/luasocket/mime.c",
+    "ext/luasocket/options.c",
+    "ext/luasocket/select.c",
+    "ext/luasocket/tcp.c",
+    "ext/luasocket/timeout.c",
+    "ext/luasocket/udp.c",
+    "ext/lz4/lz4.c",
+    "ext/lz4/lz4file.c",
+    "ext/lz4/lz4frame.c",
+    "ext/lz4/lz4hc.c",
+    "ext/lz4/xxhash.c",
 };
 
 const linux_third_party_c_files = [_][]const u8 {
-    "src/socket/luasocket/serial.c",
-    "src/socket/luasocket/unixdgram.c",
-    "src/socket/luasocket/unixstream.c",
-    "src/socket/luasocket/usocket.c",
-    "src/socket/luasocket/unix.c",
+    "ext/luasocket/serial.c",
+    "ext/luasocket/unixdgram.c",
+    "ext/luasocket/unixstream.c",
+    "ext/luasocket/usocket.c",
+    "ext/luasocket/unix.c",
 };
 
 const windows_third_party_c_files = [_][]const u8 {
-    "src/socket/luasocket/wsocket.c",
+    "ext/luasocket/wsocket.c",
 };
 
 fn tagName(opt: anytype) ?[]const u8 {
@@ -173,8 +173,8 @@ pub fn build(b: *std.build.Builder) !void {
     exe.strip = true;
     exe.rdynamic = dynamic;
     b.installArtifact(exe);
+    exe.addIncludePath(.{.cwd_relative = "."});
     exe.addIncludePath(.{.cwd_relative = src_path});
-    exe.addIncludePath(.{.cwd_relative = lz4_src});
     exe.addIncludePath(.{.cwd_relative = build_path});
     exe.addIncludePath(.{.cwd_relative = lua_src});
     exe.addCSourceFiles(&luax_main_c_files, &[_][]const u8 {
@@ -273,10 +273,10 @@ pub fn build(b: *std.build.Builder) !void {
     });
     lib_shared.strip = true;
     b.installArtifact(lib_shared);
+    lib_shared.addIncludePath(.{.cwd_relative = "."});
     lib_shared.addIncludePath(.{.cwd_relative = src_path});
     lib_shared.addIncludePath(.{.cwd_relative = build_path});
     lib_shared.addIncludePath(.{.cwd_relative = lua_src});
-    lib_shared.addIncludePath(.{.cwd_relative = lz4_src});
     if (target.os_tag != std.Target.Os.Tag.linux) {
         lib_shared.addCSourceFiles(&lua_c_files, &[_][]const u8 {
             "-std=gnu2x",

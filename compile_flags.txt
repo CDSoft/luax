@@ -13,8 +13,8 @@
 -Werror=missing-prototypes
 -Wno-declaration-after-statement
 -Wno-unsafe-buffer-usage
+-I.
 -Isrc
--Isrc/lz4/lz4
 -Ilua
 -I.build/tmp
 -DRUNTIME_NAME=lrun

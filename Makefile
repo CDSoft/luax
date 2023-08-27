@@ -56,24 +56,24 @@ LUA = $(BUILD_TMP)/lua
 LUAX0 = $(BUILD_TMP)/lua0-$(ARCH)-$(OS)-$(LIBC)
 LUA_SOURCES := $(sort $(wildcard lua/*))
 
-LUAX_SOURCES := $(sort $(shell find src -name "*.[ch]"))
+LUAX_SOURCES := $(sort $(shell find src -name "*.[ch]" && find ext -name "*.[ch]"))
 
-LUAX_RUNTIME := $(sort $(shell find src -name "*.lua"))
+LUAX_RUNTIME := $(sort $(shell find src -name "*.lua" && find ext -name "*.lua"))
 LUAX_RUNTIME_BUNDLE := $(BUILD_TMP)/lua_runtime_bundle.dat
 
 LIB_LUAX_SOURCES += src/package/package_hook.lua
 LIB_LUAX_SOURCES += src/F/F.lua
 LIB_LUAX_SOURCES += src/L/L.lua
-LIB_LUAX_SOURCES += src/argparse/argparse.lua
+LIB_LUAX_SOURCES += ext/argparse/argparse.lua
 LIB_LUAX_SOURCES += src/complex/complex.lua
 LIB_LUAX_SOURCES += src/crypt/crypt.lua
 LIB_LUAX_SOURCES += src/fs/fs.lua
 LIB_LUAX_SOURCES += src/imath/imath.lua
-LIB_LUAX_SOURCES += src/inspect/inspect.lua
+LIB_LUAX_SOURCES += ext/inspect/inspect.lua
 LIB_LUAX_SOURCES += src/mathx/mathx.lua
 LIB_LUAX_SOURCES += src/ps/ps.lua
 LIB_LUAX_SOURCES += src/qmath/qmath.lua
-LIB_LUAX_SOURCES += src/serpent/serpent.lua
+LIB_LUAX_SOURCES += ext/serpent/serpent.lua
 LIB_LUAX_SOURCES += src/sh/sh.lua
 LIB_LUAX_SOURCES += src/sys/sys.lua
 LIB_LUAX_SOURCES += src/term/term.lua
@@ -197,7 +197,7 @@ clean:
 
 ## Delete the build directory and the downloaded Zig compiler
 mrproper: clean
-	rm -rf $(ZIG_INSTALL)
+	rm -rf $(ZIG_INSTALL) zig-cache
 
 ###############################################################################
 # Package updates
@@ -281,9 +281,9 @@ $(BUILD_TMP)/$(LUA_ARCHIVE):
 
 ## Update lcomplex sources
 update-lcomplex: $(BUILD_TMP)/$(LCOMPLEX_ARCHIVE)
-	rm -rf src/complex/lcomplex
-	tar -xzf $< -C src/complex --exclude=Makefile --exclude=test.lua
-	mv src/complex/$(patsubst %.tar.gz,%,$(notdir $(LCOMPLEX_ARCHIVE))) src/complex/lcomplex
+	rm -rf ext/lcomplex
+	tar -xzf $< -C ext --exclude=Makefile --exclude=test.lua
+	mv ext/$(patsubst %.tar.gz,%,$(notdir $(LCOMPLEX_ARCHIVE))) ext/lcomplex
 
 $(BUILD_TMP)/$(LCOMPLEX_ARCHIVE):
 	@mkdir -p $(dir $@)
@@ -291,10 +291,10 @@ $(BUILD_TMP)/$(LCOMPLEX_ARCHIVE):
 
 ## Update limath sources
 update-limath: $(BUILD_TMP)/$(LIMATH_ARCHIVE)
-	rm -rf src/imath/limath
-	tar -xzf $< -C src/imath --exclude=Makefile --exclude=test.lua
-	mv src/imath/$(patsubst %.tar.gz,%,$(notdir $(LIMATH_ARCHIVE))) src/imath/limath
-	sed -i 's@"imath.h"@"src/imath.h"@' src/imath/limath/limath.c
+	rm -rf ext/limath
+	tar -xzf $< -C ext --exclude=Makefile --exclude=test.lua
+	mv ext/$(patsubst %.tar.gz,%,$(notdir $(LIMATH_ARCHIVE))) ext/limath
+	sed -i 's@"imath.h"@"src/imath.h"@' ext/limath/limath.c
 
 $(BUILD_TMP)/$(LIMATH_ARCHIVE):
 	@mkdir -p $(dir $@)
@@ -302,10 +302,10 @@ $(BUILD_TMP)/$(LIMATH_ARCHIVE):
 
 ## Update lqmath sources
 update-lqmath: $(BUILD_TMP)/$(LQMATH_ARCHIVE)
-	rm -rf src/qmath/lqmath
-	tar -xzf $< -C src/qmath --exclude=Makefile --exclude=test.lua
-	mv src/qmath/$(patsubst %.tar.gz,%,$(notdir $(LQMATH_ARCHIVE))) src/qmath/lqmath
-	sed -i 's@"imrat.h"@"src/imrat.h"@' src/qmath/lqmath/lqmath.c
+	rm -rf ext/lqmath
+	tar -xzf $< -C ext --exclude=Makefile --exclude=test.lua
+	mv ext/$(patsubst %.tar.gz,%,$(notdir $(LQMATH_ARCHIVE))) ext/lqmath
+	sed -i 's@"imrat.h"@"src/imrat.h"@' ext/lqmath/lqmath.c
 
 $(BUILD_TMP)/$(LQMATH_ARCHIVE):
 	@mkdir -p $(dir $@)
@@ -313,8 +313,8 @@ $(BUILD_TMP)/$(LQMATH_ARCHIVE):
 
 ## Update lmathx sources
 update-lmathx: $(BUILD_TMP)/$(LMATHX_ARCHIVE)
-	rm -rf src/mathx/mathx
-	tar -xzf $< -C src/mathx --exclude=Makefile --exclude=test.lua
+	rm -rf ext/mathx
+	tar -xzf $< -C ext --exclude=Makefile --exclude=test.lua
 
 $(BUILD_TMP)/$(LMATHX_ARCHIVE):
 	@mkdir -p $(dir $@)
@@ -322,15 +322,15 @@ $(BUILD_TMP)/$(LMATHX_ARCHIVE):
 
 ## Update luasocket sources
 update-luasocket: $(BUILD_TMP)/$(LUASOCKET_ARCHIVE)
-	rm -rf src/socket/luasocket
-	mkdir src/socket/luasocket
-	unzip -j $< 'luasocket-$(LUASOCKET_VERSION)/src/*' -d src/socket/luasocket
-	echo "--@LIB=socket.ftp"     >> src/socket/luasocket/ftp.lua
-	echo "--@LIB=socket.headers" >> src/socket/luasocket/headers.lua
-	echo "--@LIB=socket.http"    >> src/socket/luasocket/http.lua
-	echo "--@LIB=socket.smtp"    >> src/socket/luasocket/smtp.lua
-	echo "--@LIB=socket.tp"      >> src/socket/luasocket/tp.lua
-	echo "--@LIB=socket.url"     >> src/socket/luasocket/url.lua
+	rm -rf ext/luasocket
+	mkdir ext/luasocket
+	unzip -j $< 'luasocket-$(LUASOCKET_VERSION)/src/*' -d ext/luasocket
+	echo "--@LIB=socket.ftp"     >> ext/luasocket/ftp.lua
+	echo "--@LIB=socket.headers" >> ext/luasocket/headers.lua
+	echo "--@LIB=socket.http"    >> ext/luasocket/http.lua
+	echo "--@LIB=socket.smtp"    >> ext/luasocket/smtp.lua
+	echo "--@LIB=socket.tp"      >> ext/luasocket/tp.lua
+	echo "--@LIB=socket.url"     >> ext/luasocket/url.lua
 
 $(BUILD_TMP)/$(LUASOCKET_ARCHIVE):
 	@mkdir -p $(dir $@)
@@ -338,10 +338,10 @@ $(BUILD_TMP)/$(LUASOCKET_ARCHIVE):
 
 ## Update lpeg sources
 update-lpeg: $(BUILD_TMP)/$(LPEG_ARCHIVE)
-	rm -rf src/lpeg/lpeg
-	tar xzf $< -C src/lpeg --exclude=HISTORY --exclude=*.gif --exclude=*.html --exclude=makefile --exclude=test.lua
-	mv src/lpeg/lpeg-$(LPEG_VERSION) src/lpeg/lpeg
-	echo "--@LIB" >> src/lpeg/lpeg/re.lua
+	rm -rf ext/lpeg
+	tar xzf $< -C ext --exclude=HISTORY --exclude=*.gif --exclude=*.html --exclude=makefile --exclude=test.lua
+	mv ext/lpeg-$(LPEG_VERSION) ext/lpeg
+	echo "--@LIB" >> ext/lpeg/re.lua
 
 $(BUILD_TMP)/$(LPEG_ARCHIVE):
 	@mkdir -p $(dir $@)
@@ -349,8 +349,8 @@ $(BUILD_TMP)/$(LPEG_ARCHIVE):
 
 ## Update argparse sources
 update-argparse: $(BUILD_TMP)/$(ARGPARSE_ARCHIVE)
-	rm -f src/argparse/argparse.lua
-	unzip -j -o $< '*/argparse.lua' -d src/argparse
+	rm -f ext/argparse/argparse.lua
+	unzip -j -o $< '*/argparse.lua' -d ext/argparse
 
 $(BUILD_TMP)/$(ARGPARSE_ARCHIVE):
 	@mkdir -p $(dir $@)
@@ -358,9 +358,9 @@ $(BUILD_TMP)/$(ARGPARSE_ARCHIVE):
 
 ## Update inspect sources
 update-inspect: $(BUILD_TMP)/$(INSPECT_ARCHIVE)
-	rm -f src/inspect/inspect.lua
-	unzip -j $< '*/inspect.lua' -d src/inspect
-	echo "--@LIB" >> src/inspect/inspect.lua
+	rm -f ext/inspect/inspect.lua
+	unzip -j $< '*/inspect.lua' -d ext/inspect
+	echo "--@LIB" >> ext/inspect/inspect.lua
 
 $(BUILD_TMP)/$(INSPECT_ARCHIVE):
 	@mkdir -p $(dir $@)
@@ -368,12 +368,12 @@ $(BUILD_TMP)/$(INSPECT_ARCHIVE):
 
 ## Update serpent sources
 update-serpent: $(BUILD_TMP)/$(SERPENT_ARCHIVE)
-	rm -f src/serpent/serpent.lua
-	unzip -j $< '*/serpent.lua' -d src/serpent
+	rm -f ext/serpent/serpent.lua
+	unzip -j $< '*/serpent.lua' -d ext/serpent
 	sed -i -e 's/(loadstring or load)/load/g'                   \
 	       -e '/^ *if setfenv then setfenv(f, env) end *$$/d'   \
-	       src/serpent/serpent.lua
-	echo "--@LIB" >> src/serpent/serpent.lua
+	       ext/serpent/serpent.lua
+	echo "--@LIB" >> ext/serpent/serpent.lua
 
 $(BUILD_TMP)/$(SERPENT_ARCHIVE):
 	@mkdir -p $(dir $@)
@@ -381,9 +381,9 @@ $(BUILD_TMP)/$(SERPENT_ARCHIVE):
 
 ## Update LZ4 sources
 update-lz4: $(BUILD_TMP)/$(LZ4_ARCHIVE)
-	rm -rf src/lz4/lz4
-	mkdir src/lz4/lz4
-	unzip -j $< '*/lib/*.[ch]' '*/lib/LICENSE' -d src/lz4/lz4
+	rm -rf ext/lz4
+	mkdir ext/lz4
+	unzip -j $< '*/lib/*.[ch]' '*/lib/LICENSE' -d ext/lz4
 
 $(BUILD_TMP)/$(LZ4_ARCHIVE):
 	@mkdir -p $(dir $@)
