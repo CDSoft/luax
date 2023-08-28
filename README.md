@@ -120,7 +120,9 @@ scripts:
       -q                quiet compilation (error messages only)
 
     Scripts for compilation:
-      file name         name of a Lua package to add to the binary
+      file.lua          name of a Lua package to add to the binary.
+      file.xxx          file embeded as a module
+                        returning the content of the file.
 
     Lua and Compilation options can not be mixed.
 
@@ -167,6 +169,10 @@ Scripts without tags are classified using a simplistic heuristic:
 
 This heuristic should work for most of the Lua scripts but explicit tags
 are recommended.
+
+LuaX can also embed files that are not Lua scripts. These files are
+embedded as Lua modules that return the file content as a string. In
+this case, the module name if the file name.
 
 ### Examples
 

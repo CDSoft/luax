@@ -72,7 +72,9 @@ Compilation options:
   -q                quiet compilation (error messages only)
 
 Scripts for compilation:
-  file name         name of a Lua package to add to the binary
+  file.lua          name of a Lua package to add to the binary.
+  file.xxx          file embeded as a module
+                    returning the content of the file.
 
 Lua and Compilation options can not be mixed.
 ]==] or {},

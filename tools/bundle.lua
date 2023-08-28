@@ -84,7 +84,7 @@ function bundle.bundle(arg)
         elseif arg[i] == "-binary" then format = "binary"
         elseif arg[i] == "-ascii"  then format = "ascii"
         elseif arg[i] == "-lua"    then format = "lua"
-        else
+        elseif fs.ext(arg[i]) == ".lua" then
             local content = read(arg[i]):gsub("^#![^\n]*", "")
             local new_name = content:match("@".."LIB=([%w%._%-]+)")
             local name = new_name or fs.basename(strip_ext(arg[i]))
@@ -109,6 +109,25 @@ function bundle.bundle(arg)
                 content = content,
             }
             explicit_main = explicit_main or main
+        else
+            -- file embeded as a Lua module returning the content of the file
+            local name = fs.basename(arg[i])
+            local content = read(arg[i])
+            if content:match "^[%g%s]*$" then
+                content = ("return %s"):format(mlstr(content))
+            else
+                content = ("return require'crypt'.unbase64 %s"):format(mlstr(crypt.base64(content)))
+            end
+            scripts[#scripts+1] = {
+                path = arg[i],
+                name = name,
+                main = false,
+                lib = true,
+                load = false,
+                load_name = name,
+                maybe_main = false,
+                content = content,
+            }
         end
     end
 

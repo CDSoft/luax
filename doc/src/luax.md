@@ -124,6 +124,10 @@ Scripts without tags are classified using a simplistic heuristic:
 This heuristic should work for most of the Lua scripts but explicit tags are
 recommended.
 
+LuaX can also embed files that are not Lua scripts.
+These files are embedded as Lua modules that return the file content as a string.
+In this case, the module name if the file name.
+
 ### Examples
 
 ``` bash
