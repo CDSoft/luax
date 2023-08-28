@@ -1682,12 +1682,12 @@ register1 "group" (function(xs, comp_eq)
         if comp_eq(x, y) then
             ys[#ys+1] = x
         else
-            yss[#yss+1] = ys
+            yss[#yss+1] = setmt(ys)
             y = x
             ys = {y}
         end
     end
-    yss[#yss+1] = ys
+    yss[#yss+1] = setmt(ys)
     return setmt(yss)
 end)
 
@@ -1706,7 +1706,7 @@ register1 "inits" (function(xs)
         for j = 1, i do
             ys[#ys+1] = xs[j]
         end
-        yss[#yss+1] = ys
+        yss[#yss+1] = setmt(ys)
     end
     return setmt(yss)
 end)
@@ -1726,7 +1726,7 @@ register1 "tails" (function(xs)
         for j = i, #xs do
             ys[#ys+1] = xs[j]
         end
-        yss[#yss+1] = ys
+        yss[#yss+1] = setmt(ys)
     end
     return setmt(yss)
 end)
@@ -2303,7 +2303,7 @@ register1 "transpose" (function(xss)
     for j = 1, M do
         local ys = {}
         for i = 1, N do ys[#ys+1] = xss[i][j] end
-        yss[j] = ys
+        yss[j] = setmt(ys)
     end
     return setmt(yss)
 end)
