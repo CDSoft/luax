@@ -173,6 +173,11 @@ function bundle.bundle(arg)
     end
 
     local plain = Bundle()
+    if kind == "lib" and format == "lua" and config.version then
+        plain.emit("--@LOAD=_: load luax to expose LuaX modules\n")
+        plain.emit("_LUAX_VERSION = '"..config.version.."'\n");
+        plain.emit("_LUAX_DATE = '"..config.date.."'\n");
+    end
     plain.emit "local function lib(path, src) return assert(load(src, '@'..path, 't')) end\n"
     local function compile_library(script)
         assert(load(script.content, "@"..script.path, 't'))

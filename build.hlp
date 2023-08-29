@@ -1,0 +1,25 @@
+Lua eXtended
+Copyright (C) 2021-2023 Christophe Delord (https://cdelord.fr/luax)
+
+luax is a Lua interpreter and REPL based on Lua 5.4
+augmented with some useful packages.
+luax can also produce standalone executables from Lua scripts.
+
+luax runs on several platforms with no dependency:
+
+- Linux (x86_64, x86, aarch64)
+- MacOS (x86_64, aarch64)
+- Windows (x86_64, x86)
+
+luax can « cross-compile » scripts from and to any of these platforms.
+
+Targets:
+  help        show this help message
+  clean       clean generated files
+  compile     compile LuaX
+  test-fast   run LuaX tests (fast, native tests only)
+  test        run all LuaX tests
+  doc         update LuaX documentation
+  all         alias for compile, test and doc
+  update      update third-party modules
+  install     install LuaX in $PREFIX or $HOME/.local

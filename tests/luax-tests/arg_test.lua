@@ -41,7 +41,7 @@ return function()
     elseif test_num == 2 then
         eq(arg, {
             [-3] = ".build/tmp/lua",
-            [-2] = "-l", [-1] = "libluax-"..sys.arch.."-"..sys.os.."-"..sys.abi,
+            [-2] = "-l", [-1] = "libluax",
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })

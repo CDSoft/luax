@@ -21,21 +21,29 @@ platforms.
 - [github.com/CDSoft/luax](https://github.com/CDSoft/luax)
 - [LuaX on Discord](https://discord.gg/SzFUwYBAzF)
 
+## Requirements
+
+- [Ninja](https://ninja-build.org): needed to compile LuaX using the
+  LuaX Ninja file
+- [Bang](https://github.com/CDSoft/bang): optional, only needed to
+  update the Ninja file
+
 ## Compilation
 
-`luax` is written in C and Lua and uses the Zig build system. Just
-download `luax` (<https://github.com/CDSoft/luax>) and run `make`:
+`luax` is written in C and Lua. The build system uses Ninja and Zig
+(automatically downloaded by the Ninja file).
+
+Just download `luax` (<https://github.com/CDSoft/luax>) and run `ninja`:
 
 ``` sh
 $ git clone https://github.com/CDSoft/luax
 $ cd luax
-$ make              # compile for the host
-$ make all          # compile for all known targets (« cross compilation »)
-$ make test         # run tests on the host
-$ make doc          # generate LuaX documentation
+$ ninja             # compile LuaX (all targets)
+$ ninja test        # run tests on the host
+$ ninja doc         # generate LuaX documentation
 ```
 
-**Note**: `make` will download a Zig compiler.
+**Note**: `ninja` will download a Zig compiler.
 
 ### Precompiled LuaX binaries
 
@@ -51,26 +59,17 @@ on some specific glibc versions on the host.
 
 ## Installation
 
-### Installation of luax for the current host only
-
 ``` sh
-$ make install              # install luax to ~/.local/bin or ~/bin
-$ make install PREFIX=/usr  # install luax to /usr/bin
+$ ninja install                 # install luax to ~/.local/bin and ~/.local/lib
+$ PREFIX=/usr ninja install     # install luax to /usr/bin and /usr/lib
 ```
 
 `luax` is a single autonomous executable. It does not need to be
 installed and can be copied anywhere you want.
 
-### Installation of luax for all supported platforms (« cross compilation » support)
-
-``` sh
-$ make install-all              # install luax to ~/.local/bin or ~/bin
-$ make install-all PREFIX=/usr  # install luax to /usr/bin
-```
-
 ### LuaX artifacts
 
-`make install` and `make install-all` install:
+`ninja install` installs:
 
 - `$PREFIX/bin/luax`: symbolic link to the LuaX binary for the host
 - `$PREFIX/bin/luax-<ARCH>-<OS>-<LIBC>`: LuaX binary for a specific
@@ -93,7 +92,7 @@ $ make install-all PREFIX=/usr  # install luax to /usr/bin
 `luax` is very similar to `lua` and adds more options to compile
 scripts:
 
-    usage: luax [options] [script [args]]
+    usage: luax-x86_64-linux-gnu [options] [script [args]]
 
     General options:
       -h                show this help
@@ -188,16 +187,16 @@ $ luax -o executable -t x86_64-macos-none main.lua lib1.lua lib2.lua
 $ luax -t list
 Targets producing standalone LuaX executables:
 
-    aarch64-linux-gnu
-    aarch64-linux-musl
-    aarch64-macos-none
-    x86-linux-gnu
-    x86-linux-musl
-    x86-windows-gnu
-    x86_64-linux-gnu
     x86_64-linux-musl
-    x86_64-macos-none
+    x86_64-linux-gnu
+    x86-linux-musl
+    x86-linux-gnu
+    aarch64-linux-musl
+    aarch64-linux-gnu
     x86_64-windows-gnu
+    x86-windows-gnu
+    x86_64-macos-none
+    aarch64-macos-none
 
 Targets based on an external Lua interpreter:
 

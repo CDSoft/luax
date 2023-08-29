@@ -18,6 +18,29 @@
 # For further information about luax you can visit
 # http://cdelord.fr/luax
 
-export ARCH=$(tools/arch.sh)
-export OS=$(tools/os.sh)
-export LIBC=gnu
+ARCH="$(uname -m)"
+case "$ARCH" in
+    (i386)  ARCH=x86 ;;
+    (i486)  ARCH=x86 ;;
+    (i586)  ARCH=x86 ;;
+    (i686)  ARCH=x86 ;;
+esac
+
+case "$(uname -s)" in
+    (Linux)  OS=linux ;;
+    (Darwin) OS=macos ;;
+    (MINGW*) OS=windows ;;
+    (*)      OS=unknown ;;
+esac
+
+LIBC=gnu
+
+case "$OS" in
+    (windows) EXT=".exe" ;;
+    (*)       EXT="" ;;
+esac
+
+export ARCH
+export OS
+export LIBC
+export EXT
