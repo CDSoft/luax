@@ -19,15 +19,15 @@
 
 #include "luasocket.h"
 
-#include "ext/luasocket/luasocket.h"
-#include "ext/luasocket/mime.h"
+#include "ext/c/luasocket/luasocket.h"
+#include "ext/c/luasocket/mime.h"
 
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
 
 #ifndef _WIN32
-#include "ext/luasocket/unix.h"
+#include "ext/c/luasocket/unix.h"
 extern LUASOCKET_API int luaopen_socket_serial(lua_State *L);
 #endif
 

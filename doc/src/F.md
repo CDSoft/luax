@@ -3,4 +3,4 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-@(doc "src/F/F.lua")
+@(doc "luax-libs/F/F.lua")

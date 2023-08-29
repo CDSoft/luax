@@ -67,7 +67,6 @@ static const luaL_Reg lrun_libs[] = {
     {"_term", luaopen_term},
     {NULL, NULL},
 };
-#if RUNTIME == 1
 
 typedef char t_magic[1+sizeof(LUAX_MAGIC_ID)];
 
@@ -156,8 +155,6 @@ static int run_buffer(lua_State *L, char *buffer, size_t size, const char *name)
     return status;
 }
 
-#endif
-
 LUAMOD_API int luaopen_libluax(lua_State *L)
 {
     for (const luaL_Reg *lib = lrun_libs; lib->func != NULL; lib++)
@@ -166,7 +163,6 @@ LUAMOD_API int luaopen_libluax(lua_State *L)
         lua_pop(L, 1);
     }
 
-#if RUNTIME == 1
     char *rt_chunk = NULL;
     size_t rt_chunk_len = 0;
     decode_runtime(runtime_chunk, sizeof(runtime_chunk), &rt_chunk, &rt_chunk_len);
@@ -175,7 +171,6 @@ LUAMOD_API int luaopen_libluax(lua_State *L)
         error(arg0(L), "can not initialize LuaX runtime\n");
     }
     free(rt_chunk);
-#endif
 
     return 1;
 }
@@ -183,8 +178,6 @@ LUAMOD_API int luaopen_libluax(lua_State *L)
 __attribute__((__noreturn__))
 void luax_run(lua_State *L, const char *exe)
 {
-#if RUNTIME == 1
-
     FILE *f = fopen(exe, "rb");
     if (f == NULL) perror(exe);
 
@@ -215,10 +208,6 @@ void luax_run(lua_State *L, const char *exe)
     lua_pushnumber(L, status == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
     lua_pushboolean(L, 1);
     lua_call(L, 2, 0);
-
-#else
-    error(exe, "no LuaX runtime");
-#endif
 
     lua_close(L);
     exit(EXIT_FAILURE);

@@ -3,6 +3,6 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-@(doc "src/crypt/crypt.c")
+@(doc "luax-libs/crypt/crypt.c")
 
-@(doc "src/crypt/crypt.lua")
+@(doc "luax-libs/crypt/crypt.lua")

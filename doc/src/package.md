@@ -3,4 +3,4 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-@(doc "src/package/package_hook.lua")
+@(doc "luax-libs/package/package_hook.lua")

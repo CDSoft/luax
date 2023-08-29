@@ -65,41 +65,5 @@ int main(int argc, const char *argv[])
     createargtable(L, argv, argc, 0);
     luaopen_libluax(L);
 
-#if RUNTIME == 1
-
     luax_run(L, exe); /* no return */
-
-#else
-
-    /* Lua script execution (bootstrap interpreter with no LuaX runtime and payload) */
-
-    if (argc == 3 && strcmp(argv[1], "-e") == 0)
-    {
-        if (luaL_dostring(L, argv[2]) != LUA_OK)
-        {
-            error(argv[0], lua_tostring(L, -1));
-        }
-    }
-    else if (argc > 1)
-    {
-        luaL_dostring(L, "arg[0] = arg[1]; table.remove(arg, 1)");
-        if (luaL_dofile(L, argv[1]) != LUA_OK)
-        {
-            error(argv[0], lua_tostring(L, -1));
-        }
-    }
-    else
-    {
-        const char *name = basename(exe);
-        fprintf(stderr, "usage:\n"
-                        "\t%s -e 'Lua expression'\n"
-                        "\t%s script.lua\n",
-                        name, name);
-        exit(EXIT_FAILURE);
-    }
-
-    return EXIT_SUCCESS;
-
-#endif
-
 }

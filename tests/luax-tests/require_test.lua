@@ -29,11 +29,11 @@ return function()
     local lib = require "lib"
     local traceback = lib.hello "World":gsub("\t", "    ")
     local expected_traceback = [[
-@tests/lib.lua says: Hello World
+@tests/luax-tests/lib.lua says: Hello World
 Traceback test
 stack traceback:
-    tests/lib.lua:25: in function 'lib.hello'
-    tests/require_test.lua:30: in function 'require_test']]
+    tests/luax-tests/lib.lua:25: in function 'lib.hello'
+    tests/luax-tests/require_test.lua:30: in function 'require_test']]
 
     startswith(traceback, expected_traceback)
 

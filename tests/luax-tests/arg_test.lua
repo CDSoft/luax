@@ -32,7 +32,7 @@ return function()
 
     if test_num == 1 then
         eq(arg, {
-            [0] = ".build/test/test-"..sys.arch.."-"..sys.os.."-"..sys.abi,
+            [0] = ".build/test/test-luax",
             "Lua", "is", "great"
         })
         assert(sys.abi == "gnu")
@@ -42,7 +42,7 @@ return function()
         eq(arg, {
             [-3] = ".build/tmp/lua",
             [-2] = "-l", [-1] = "libluax-"..sys.arch.."-"..sys.os.."-"..sys.abi,
-            [0] = "tests/main.lua",
+            [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })
         assert(sys.abi == "gnu")
@@ -52,7 +52,7 @@ return function()
         eq(arg, {
             [-3] = ".build/tmp/lua",
             [-2] = "-l", [-1] = "luax",
-            [0] = "tests/main.lua",
+            [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })
         assert(sys.abi == "lua")
@@ -62,7 +62,7 @@ return function()
         eq(arg, {
             [-2] = "lua",
             [-1] = ".build/bin/luax-lua",
-            [0] = "tests/main.lua",
+            [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })
         assert(sys.abi == "lua")
@@ -72,7 +72,7 @@ return function()
         eq(arg, {
             [-3] = "pandoc lua",
             [-2] = "-l", [-1] = "luax",
-            [0] = "tests/main.lua",
+            [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })
         assert(sys.abi == "lua")
@@ -82,7 +82,7 @@ return function()
         eq(arg, {
             [-3] = "pandoc lua",
             [-2] = "-l", [-1] = "libluax-"..sys.arch.."-"..sys.os.."-"..sys.abi,
-            [0] = "tests/main.lua",
+            [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })
         assert(sys.abi == "gnu")

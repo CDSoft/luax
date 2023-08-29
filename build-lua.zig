@@ -17,49 +17,11 @@
 // http://cdelord.fr/luax
 
 const std = @import("std");
+const src = @import("luax-c-sources.zig");
 
 const release = .ReleaseFast;
 
 const lua_src = "lua";
-const build_path = ".build";
-
-const lua_c_files = [_][]const u8 {
-    // Lua interpreter
-    "lua/lapi.c",
-    "lua/lauxlib.c",
-    "lua/lbaselib.c",
-    "lua/lcode.c",
-    "lua/lcorolib.c",
-    "lua/lctype.c",
-    "lua/ldblib.c",
-    "lua/ldebug.c",
-    "lua/ldo.c",
-    "lua/ldump.c",
-    "lua/lfunc.c",
-    "lua/lgc.c",
-    "lua/linit.c",
-    "lua/liolib.c",
-    "lua/llex.c",
-    "lua/lmathlib.c",
-    "lua/lmem.c",
-    "lua/loadlib.c",
-    "lua/lobject.c",
-    "lua/lopcodes.c",
-    "lua/loslib.c",
-    "lua/lparser.c",
-    "lua/lstate.c",
-    "lua/lstring.c",
-    "lua/lstrlib.c",
-    "lua/ltable.c",
-    "lua/ltablib.c",
-    "lua/ltm.c",
-    "lua/lua.c",
-    //"lua/luac.c",
-    "lua/lundump.c",
-    "lua/lutf8lib.c",
-    "lua/lvm.c",
-    "lua/lzio.c",
-};
 
 pub fn build(b: *std.build.Builder) !void {
     // Standard target options allows the person running `zig build` to choose
@@ -81,9 +43,17 @@ pub fn build(b: *std.build.Builder) !void {
     exe.strip = true;
     exe.rdynamic = true;
     b.installArtifact(exe);
-    exe.addIncludePath(.{.cwd_relative = build_path});
     exe.addIncludePath(.{.cwd_relative = lua_src});
-    exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
+    exe.addCSourceFiles(&src.lua_main_c_files, &[_][]const u8 {
+        "-std=gnu2x",
+        "-O3",
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+        if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
+        if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
+    });
+    exe.addCSourceFiles(&src.lua_c_files, &[_][]const u8 {
         "-std=gnu2x",
         "-O3",
         "-Werror",

@@ -3,4 +3,4 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-@(doc "src/imath/imath.h")
+@(doc "luax-libs/imath/imath.h")

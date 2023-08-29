@@ -3,4 +3,4 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-@(doc "src/complex/complex.h")
+@(doc "luax-libs/complex/complex.h")

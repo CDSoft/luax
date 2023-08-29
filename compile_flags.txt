@@ -14,11 +14,11 @@
 -Wno-declaration-after-statement
 -Wno-unsafe-buffer-usage
 -I.
--Isrc
+-Iluax-libs
+-Iluax
 -Ilua
 -I.build/tmp
--DRUNTIME_NAME=lrun
--DRUNTIME=1
+-DRUNTIME_NAME=luaxruntime
 -DLUAX_ARCH="x86_64"
 -DLUAX_OS="linux"
 -DLUAX_ABI="gnu"

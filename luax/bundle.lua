@@ -22,9 +22,9 @@ http://cdelord.fr/luax
 
 local bundle = {}
 
-local fs = require "_fs"
-local lz4 = require "_lz4"
-local crypt = require "_crypt"
+local fs = require "fs"
+local lz4 = require "lz4"
+local crypt = require "crypt"
 local config = require "luax_config"
 
 bundle.magic = "\0"..config.magic_id.."\0"

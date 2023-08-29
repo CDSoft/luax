@@ -3,6 +3,6 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-@(doc "src/fs/fs.c")
+@(doc "luax-libs/fs/fs.c")
 
-@(doc "src/fs/fs.lua")
+@(doc "luax-libs/fs/fs.lua")

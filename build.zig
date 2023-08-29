@@ -17,119 +17,13 @@
 // http://cdelord.fr/luax
 
 const std = @import("std");
+const src = @import("luax-c-sources.zig");
 
 const release = .ReleaseFast;
 
 const lua_src = "lua";
-const lz4_src = "src/lz4/lz4";
-const src_path = "src";
+const src_path = "luax-libs";
 const build_path = ".build/tmp";
-
-const lua_c_files = [_][]const u8 {
-    // Lua interpreter
-    "lua/lapi.c",
-    "lua/lauxlib.c",
-    "lua/lbaselib.c",
-    "lua/lcode.c",
-    "lua/lcorolib.c",
-    "lua/lctype.c",
-    "lua/ldblib.c",
-    "lua/ldebug.c",
-    "lua/ldo.c",
-    "lua/ldump.c",
-    "lua/lfunc.c",
-    "lua/lgc.c",
-    "lua/linit.c",
-    "lua/liolib.c",
-    "lua/llex.c",
-    "lua/lmathlib.c",
-    "lua/lmem.c",
-    "lua/loadlib.c",
-    "lua/lobject.c",
-    "lua/lopcodes.c",
-    "lua/loslib.c",
-    "lua/lparser.c",
-    "lua/lstate.c",
-    "lua/lstring.c",
-    "lua/lstrlib.c",
-    "lua/ltable.c",
-    "lua/ltablib.c",
-    "lua/ltm.c",
-    //"lua/lua.c",
-    //"lua/luac.c",
-    "lua/lundump.c",
-    "lua/lutf8lib.c",
-    "lua/lvm.c",
-    "lua/lzio.c",
-};
-
-const luax_main_c_files = [_][]const u8 {
-    // LuaX runtime
-    "src/main.c",
-};
-
-const luax_c_files = [_][]const u8 {
-    // LuaX library (static and dynamic)
-    "src/rt0/rt0.c",
-    "src/libluax.c",
-    "src/tools.c",
-    "src/std/std.c",
-    "src/fs/fs.c",
-    "src/ps/ps.c",
-    "src/sys/sys.c",
-    "src/crypt/crypt.c",
-    "src/crypt/sha1.c",
-    "src/complex/complex.c",
-    "src/socket/luasocket.c",
-    "src/lz4/lz4.c",
-    "src/term/term.c",
-};
-
-const third_party_c_files = [_][]const u8 {
-    // LuaX runtime
-    "ext/lpeg/lpcap.c",
-    "ext/lpeg/lpcode.c",
-    "ext/lpeg/lpcset.c",
-    "ext/lpeg/lpprint.c",
-    "ext/lpeg/lptree.c",
-    "ext/lpeg/lpvm.c",
-    "ext/mathx/lmathx.c",
-    "ext/limath/limath.c",
-    "ext/limath/src/imath.c",
-    "ext/lqmath/lqmath.c",
-    "ext/lqmath/src/imrat.c",
-    "ext/lcomplex/lcomplex.c",
-    "ext/luasocket/auxiliar.c",
-    "ext/luasocket/buffer.c",
-    "ext/luasocket/compat.c",
-    "ext/luasocket/except.c",
-    "ext/luasocket/inet.c",
-    "ext/luasocket/io.c",
-    "ext/luasocket/luasocket.c",
-    "ext/luasocket/mime.c",
-    "ext/luasocket/options.c",
-    "ext/luasocket/select.c",
-    "ext/luasocket/tcp.c",
-    "ext/luasocket/timeout.c",
-    "ext/luasocket/udp.c",
-    "ext/lz4/lz4.c",
-    "ext/lz4/lz4file.c",
-    "ext/lz4/lz4frame.c",
-    "ext/lz4/lz4hc.c",
-    "ext/lz4/xxhash.c",
-};
-
-const linux_third_party_c_files = [_][]const u8 {
-    "ext/luasocket/serial.c",
-    "ext/luasocket/unixdgram.c",
-    "ext/luasocket/unixstream.c",
-    "ext/luasocket/usocket.c",
-    "ext/luasocket/unix.c",
-};
-
-const windows_third_party_c_files = [_][]const u8 {
-    "ext/luasocket/wsocket.c",
-};
 
 fn tagName(opt: anytype) ?[]const u8 {
     if (opt)|x| { return @tagName(x); }
@@ -177,7 +71,7 @@ pub fn build(b: *std.build.Builder) !void {
     exe.addIncludePath(.{.cwd_relative = src_path});
     exe.addIncludePath(.{.cwd_relative = build_path});
     exe.addIncludePath(.{.cwd_relative = lua_src});
-    exe.addCSourceFiles(&luax_main_c_files, &[_][]const u8 {
+    exe.addCSourceFiles(&src.luax_main_c_files, &[_][]const u8 {
         "-std=gnu2x",
         "-O3",
         "-Werror",
@@ -199,7 +93,7 @@ pub fn build(b: *std.build.Builder) !void {
         if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
         //if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_BUILD_AS_DLL" else "",
     });
-    exe.addCSourceFiles(&lua_c_files, &[_][]const u8 {
+    exe.addCSourceFiles(&src.lua_c_files, &[_][]const u8 {
         "-std=gnu2x",
         "-O3",
         "-Werror",
@@ -208,7 +102,7 @@ pub fn build(b: *std.build.Builder) !void {
         if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
         if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
     });
-    exe.addCSourceFiles(&luax_c_files, &[_][]const u8 {
+    exe.addCSourceFiles(&src.luax_c_files, &[_][]const u8 {
         "-std=gnu2x",
         "-O3",
         "-Werror",
@@ -231,7 +125,7 @@ pub fn build(b: *std.build.Builder) !void {
         if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
         if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
     });
-    exe.addCSourceFiles(&third_party_c_files, &[_][]const u8 {
+    exe.addCSourceFiles(&src.third_party_c_files, &[_][]const u8 {
         "-std=gnu2x",
         "-O3",
         "-Wno-documentation",
@@ -240,7 +134,7 @@ pub fn build(b: *std.build.Builder) !void {
         if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
     });
     if (target.os_tag == std.Target.Os.Tag.windows) {
-        exe.addCSourceFiles(&windows_third_party_c_files, &[_][]const u8 {
+        exe.addCSourceFiles(&src.windows_third_party_c_files, &[_][]const u8 {
             "-std=gnu2x",
             "-O3",
             "-Wno-documentation",
@@ -248,7 +142,7 @@ pub fn build(b: *std.build.Builder) !void {
         exe.linkSystemLibraryName("ws2_32");
         exe.linkSystemLibraryName("advapi32");
     } else {
-        exe.addCSourceFiles(&linux_third_party_c_files, &[_][]const u8 {
+        exe.addCSourceFiles(&src.linux_third_party_c_files, &[_][]const u8 {
             "-std=gnu2x",
             "-O3",
             "-Wno-documentation",
@@ -278,7 +172,7 @@ pub fn build(b: *std.build.Builder) !void {
     lib_shared.addIncludePath(.{.cwd_relative = build_path});
     lib_shared.addIncludePath(.{.cwd_relative = lua_src});
     if (target.os_tag != std.Target.Os.Tag.linux) {
-        lib_shared.addCSourceFiles(&lua_c_files, &[_][]const u8 {
+        lib_shared.addCSourceFiles(&src.lua_c_files, &[_][]const u8 {
             "-std=gnu2x",
             "-O3",
             "-Werror",
@@ -289,7 +183,7 @@ pub fn build(b: *std.build.Builder) !void {
             //if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_BUILD_AS_DLL" else "",
         });
     }
-    lib_shared.addCSourceFiles(&luax_c_files, &[_][]const u8 {
+    lib_shared.addCSourceFiles(&src.luax_c_files, &[_][]const u8 {
         "-std=gnu2x",
         "-O3",
         "-Werror",
@@ -313,7 +207,7 @@ pub fn build(b: *std.build.Builder) !void {
         if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
         //if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_BUILD_AS_DLL" else "",
     });
-    lib_shared.addCSourceFiles(&third_party_c_files, &[_][]const u8 {
+    lib_shared.addCSourceFiles(&src.third_party_c_files, &[_][]const u8 {
         "-std=gnu2x",
         "-O3",
         "-Wno-documentation",
@@ -323,7 +217,7 @@ pub fn build(b: *std.build.Builder) !void {
         //if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_BUILD_AS_DLL" else "",
     });
     if (target.os_tag == std.Target.Os.Tag.windows) {
-        lib_shared.addCSourceFiles(&windows_third_party_c_files, &[_][]const u8 {
+        lib_shared.addCSourceFiles(&src.windows_third_party_c_files, &[_][]const u8 {
             "-std=gnu2x",
             "-O3",
             "-Wno-documentation",
@@ -332,7 +226,7 @@ pub fn build(b: *std.build.Builder) !void {
         lib_shared.linkSystemLibraryName("ws2_32");
         lib_shared.linkSystemLibraryName("advapi32");
     } else {
-        lib_shared.addCSourceFiles(&linux_third_party_c_files, &[_][]const u8 {
+        lib_shared.addCSourceFiles(&src.linux_third_party_c_files, &[_][]const u8 {
             "-std=gnu2x",
             "-O3",
             "-Wno-documentation",
