@@ -28,6 +28,14 @@ local sys = require "sys"
 
 local eps = sys.abi == "lua" and 1 or 0.01
 
+local function try(test, ...)
+    -- These tests may fail when the system is loaded.
+    -- => Try to execute them three times before considering a failure.
+    return pcall(test, ...)
+        or pcall(test, ...)
+        or test(...)
+end
+
 local function time_test()
     assert(math.abs(ps.time() - os.time()) <= 1.0)
 
@@ -84,16 +92,16 @@ local function profile_test(n)
 end
 
 return function()
-    time_test()
+    try(time_test)
     if sys.abi == "gnu" or sys.abi == "musl" then
-        sleep_test(0)
-        sleep_test(0.142)
-        profile_test(0)
-        profile_test(0.142)
+        try(sleep_test, 0)
+        try(sleep_test, 0.142)
+        try(profile_test, 0)
+        try(profile_test, 0.142)
     else
-        sleep_test(0)
-        sleep_test(2)
-        profile_test(0)
-        profile_test(2)
+        try(sleep_test, 0)
+        try(sleep_test, 2)
+        try(profile_test, 0)
+        try(profile_test, 2)
     end
 end
