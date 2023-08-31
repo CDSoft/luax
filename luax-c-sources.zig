@@ -84,11 +84,11 @@ pub const third_party_c_files = [_][]const u8 {
     "ext/c/luasocket/tcp.c",
     "ext/c/luasocket/timeout.c",
     "ext/c/luasocket/udp.c",
-    "ext/c/lz4/lz4.c",
-    "ext/c/lz4/lz4file.c",
-    "ext/c/lz4/lz4frame.c",
-    "ext/c/lz4/lz4hc.c",
-    "ext/c/lz4/xxhash.c",
+    "ext/c/lz4/lib/lz4.c",
+    "ext/c/lz4/lib/lz4file.c",
+    "ext/c/lz4/lib/lz4frame.c",
+    "ext/c/lz4/lib/lz4hc.c",
+    "ext/c/lz4/lib/xxhash.c",
     "ext/c/mathx/lmathx.c",
 };
 

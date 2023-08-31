@@ -178,6 +178,29 @@ build "$luax_config_lua" { "gen_config_lua",
 }
 
 --===================================================================
+section "lz4 cli"
+---------------------------------------------------------------------
+
+var "lz4" "$tmp/lz4"
+
+rule "cc" {
+    command = {
+        "zig cc",
+        "-s",
+        "-Os",
+        "-Iext/c/lz4/lib",
+        "$in -o $out",
+    },
+}
+
+build "$lz4" {
+    "cc", ls "ext/c/lz4/**.c",
+    implicit_in = {
+        ls "ext/c/lz4/**.h",
+    },
+}
+
+--===================================================================
 section "LuaX sources"
 ---------------------------------------------------------------------
 
@@ -206,6 +229,7 @@ local zig = {
     luax_main_c_files = F{ "luax/luax.c" },
     luax_c_files = ls "luax-libs/**.c",
     third_party_c_files = ls "ext/c/**.c"
+        : filter(function(name) return not name:match "lz4/programs" end)
         : filter(function(name) return F.not_elem(name, linux_only) end)
         : filter(function(name) return F.not_elem(name, windows_only) end)
         : filter(function(name) return F.not_elem(name, ignored_sources) end),
@@ -258,7 +282,7 @@ var "lua_path" (
 
 rule "build-lua" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "$zig build",
             "--cache-dir $zig_cache",
             "--prefix `dirname $out` --prefix-exe-dir \"\"",
@@ -289,6 +313,7 @@ var "luax_runtime_bundle" "$tmp/lua_runtime_bundle.dat"
 
 rule "bundle_luax_runtime" {
     command = {
+        ". tools/build_env.sh $tmp;",
         "LUA_PATH=\"$lua_path\"",
         "CRYPT_KEY=\""..crypt_key.."\"",
         "$lua",
@@ -304,6 +329,7 @@ build "$luax_runtime_bundle" { "bundle_luax_runtime",
     "$luax_config_lua",
     luax_runtime,
     implicit_in = {
+        "$lz4",
         "$lua",
         "luax/bundle.lua",
         "tools/rc4_runtime.lua",
@@ -398,6 +424,7 @@ targets : foreach(function(target)
 
     rule("bundle-luax-"..target) {
         command = {
+            ". tools/build_env.sh $tmp;",
             "cp", "$tmp/luaxruntime-"..target..e, "$out.tmp",
             "&&",
             "LUA_PATH=\"$lua_path\"",
@@ -414,6 +441,7 @@ targets : foreach(function(target)
     build("$bin/luax-"..target..e) { "bundle-luax-"..target,
         luax_packages,
         implicit_in = {
+            "$lz4",
             "$lua",
             "tools/rc4_runtime.lua",
             "luax/bundle.lua",
@@ -441,7 +469,7 @@ end)
 
 rule "luax_shortcut" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "cp", "-f", "$bin/luax-$$ARCH-$$OS-$$LIBC$$EXT", "$out$$EXT",
     }
 }
@@ -469,6 +497,7 @@ local lib_luax_sources = F.flatten{
 
 rule "bundle_lib_luax" {
     command = {
+        ". tools/build_env.sh $tmp;",
         "LUA_PATH=\"$lua_path\"",
         "CRYPT_KEY=\""..crypt_key.."\"",
         "$lua",
@@ -484,6 +513,7 @@ build "$lib/luax.lua" { "bundle_lib_luax",
     "$luax_config_lua",
     lib_luax_sources,
     implicit_in = {
+        "$lz4",
         "$lua",
         "luax/bundle.lua",
         "tools/rc4_runtime.lua",
@@ -539,7 +569,7 @@ local test_main = "tests/luax-tests/main.lua"
 
 rule "test-1-luax_executable" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "$luax -q -o $test/test-luax", test_sources,
         "&&",
         "TYPE=static LUA_PATH='tests/luax-tests/?.lua'",
@@ -563,7 +593,7 @@ acc(test) "$test/test-1-luax_executable.ok"
 
 rule "test-2-lib" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
         "TYPE=dynamic LUA_PATH='tests/luax-tests/?.lua'",
         "TEST_NUM=2",
@@ -588,7 +618,7 @@ acc(test) "$test/test-2-lib.ok"
 
 rule "test-3-lua" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "LIBC=lua TYPE=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
         "TEST_NUM=3",
         "$lua", "-l luax", test_main, "Lua is great",
@@ -611,7 +641,7 @@ acc(test) "$test/test-3-lua.ok"
 
 rule "test-4-lua-luax-lua" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "LIBC=lua TYPE=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
         "TEST_NUM=4",
         "$bin/luax-lua", test_main, "Lua is great",
@@ -634,7 +664,7 @@ acc(test) "$test/test-4-lua-luax-lua.ok"
 
 rule "test-5-pandoc-luax-lua" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "LIBC=lua TYPE=pandoc LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
         "TEST_NUM=5",
         "pandoc lua ", "-l luax", test_main, "Lua is great",
@@ -657,7 +687,7 @@ acc(test) "$test/test-5-pandoc-luax-lua.ok"
 
 rule "test-6-pandoc-luax-so" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
         "TYPE=pandoc LUA_CPATH='$lib/?.so' LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
         "TEST_NUM=6",
@@ -683,7 +713,7 @@ build "$test/test-6-pandoc-luax-so.ok" { "test-6-pandoc-luax-so",
 
 rule "test-ext-1-lua" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
         "$luax -q -t lua -o $test/ext-lua", "$in",
         "&&",
@@ -709,7 +739,7 @@ acc(test) "$test/test-ext-1-lua.ok"
 
 rule "test-ext-2-lua-luax" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
         "$luax -q -t lua-luax -o $test/ext-lua-luax", "$in",
         "&&",
@@ -734,7 +764,7 @@ acc(test) "$test/test-ext-2-lua-luax.ok"
 
 rule "test-ext-3-luax" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
         "$luax -q -t luax -o $test/ext-luax", "$in",
         "&&",
@@ -759,7 +789,7 @@ acc(test) "$test/test-ext-3-luax.ok"
 
 rule "test-ext-4-pandoc" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
         "$luax -q -t pandoc -o $test/ext-pandoc", "$in",
         "&&",
@@ -785,7 +815,7 @@ acc(test) "$test/test-ext-4-pandoc.ok"
 
 rule "test-ext-5-pandoc-luax" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
         "$luax -q -t pandoc-luax -o $test/ext-pandoc-luax", "$in",
         "&&",
@@ -841,7 +871,7 @@ local pandoc_gfm = {
 
 rule "md_to_md" {
     command = {
-        ". tools/detect.sh;",
+        ". tools/build_env.sh $tmp;",
         "LUAX=$bin/luax-$$ARCH-$$OS-$$LIBC",
         "ypp --MD --MT $out --MF $doc/$out.d $in",
         "|",

@@ -196,8 +196,9 @@ update_lz4()
     wget "$LZ4_URL" -O "$TMP/$LZ4_ARCHIVE"
 
     rm -rf ext/c/lz4
-    mkdir ext/c/lz4
-    unzip -j "$TMP/$LZ4_ARCHIVE" '*/lib/*.[ch]' '*/lib/LICENSE' -d ext/c/lz4
+    mkdir -p ext/c/lz4/lib ext/c/lz4/programs
+    unzip -j "$TMP/$LZ4_ARCHIVE" '*/lib/*.[ch]' '*/lib/LICENSE' -d ext/c/lz4/lib
+    unzip -j "$TMP/$LZ4_ARCHIVE" '*/programs/*.[ch]' '*/programs/COPYING' -d ext/c/lz4/programs
 }
 
 update_all
