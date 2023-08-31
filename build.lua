@@ -88,22 +88,17 @@ section "Zig compiler"
 var "zig"           ".zig/zig"
 var "zig_cache"     ".zig/cache"
 
-rule "install_zig" {
-    command = "tools/install_zig.sh $out",
+build "$zig" { "tools/install_zig.sh",
+    command = "$in $out",
 }
 
-build "$zig" { "install_zig",
-    implicit_in = "tools/install_zig.sh",
-}
 --===================================================================
 section "Third-party modules update"
 ---------------------------------------------------------------------
 
-rule "update_modules" {
+build "update_modules" {
     command = {"tools/update-third-party-modules.sh", "$builddir/update"},
 }
-
-build "update_modules" { "update_modules" }
 
 --===================================================================
 section "LuaX configuration"
@@ -144,11 +139,8 @@ cat <<EOF > "$LUAX_CONFIG_H"
 EOF
 ]])
 
-rule "gen_config_h" {
-    command = { "bash", "tools/gen_config_h.sh", "$out" },
-}
-
-build "$luax_config_h" { "gen_config_h",
+build "$luax_config_h" { "tools/gen_config_h.sh",
+    command = { "bash", "$in", "$out" },
     implicit_in = { ".git/refs/tags", ".git/index" },
 }
 
@@ -169,11 +161,8 @@ return {
 EOF
 ]])
 
-rule "gen_config_lua" {
-    command = { "bash", "tools/gen_config_lua.sh", "$out" },
-}
-
-build "$luax_config_lua" { "gen_config_lua",
+build "$luax_config_lua" { "tools/gen_config_lua.sh",
+    command = { "bash", "$in", "$out" },
     implicit_in = { ".git/refs/tags", ".git/index" },
 }
 
@@ -183,7 +172,7 @@ section "lz4 cli"
 
 var "lz4" "$tmp/lz4"
 
-rule "cc" {
+build "$lz4" { ls "ext/c/lz4/**.c",
     command = {
         "zig cc",
         "-s",
@@ -191,10 +180,6 @@ rule "cc" {
         "-Iext/c/lz4/lib",
         "$in -o $out",
     },
-}
-
-build "$lz4" {
-    "cc", ls "ext/c/lz4/**.c",
     implicit_in = {
         ls "ext/c/lz4/**.h",
     },
@@ -280,7 +265,7 @@ var "lua_path" (
     : str ";"
 )
 
-rule "build-lua" {
+build "$lua" { "build-lua.zig",
     command = {
         ". tools/build_env.sh $tmp;",
         "$zig build",
@@ -290,9 +275,6 @@ rule "build-lua" {
             "--build-file $in",
         "&& touch $out",
     },
-}
-
-build "$lua" { "build-lua", "build-lua.zig",
     implicit_in = {
         "$zig",
         zig.lua_c_files,
@@ -311,7 +293,7 @@ local luax_runtime = F.flatten{
 
 var "luax_runtime_bundle" "$tmp/lua_runtime_bundle.dat"
 
-rule "bundle_luax_runtime" {
+build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
     command = {
         ". tools/build_env.sh $tmp;",
         "LUA_PATH=\"$lua_path\"",
@@ -323,11 +305,6 @@ rule "bundle_luax_runtime" {
         "&& touch $out.tmp",
         "&& mv $out.tmp $out",
     },
-}
-
-build "$luax_runtime_bundle" { "bundle_luax_runtime",
-    "$luax_config_lua",
-    luax_runtime,
     implicit_in = {
         "$lz4",
         "$lua",
@@ -369,7 +346,7 @@ targets : foreach(function(target)
     local shared_lib = shared_libs(target)
     local shared_lib_name = shared_lib and fs.join("$tmp", "lib", shared_lib)
 
-    rule("build-runtime-"..target) {
+    build("$tmp/luaxruntime-"..target..e) { "build.zig",
         command = {
             "RUNTIME_NAME=luaxruntime LIB_NAME=luax",
             "$zig build",
@@ -379,9 +356,6 @@ targets : foreach(function(target)
                 "--build-file $in",
             "&& touch $out", shared_lib_name,
         },
-    }
-
-    build("$tmp/luaxruntime-"..target..e) { "build-runtime-"..target, "build.zig",
         implicit_in = {
             "$zig",
             zig.lua_c_files,
@@ -409,7 +383,7 @@ local luax_packages = F.flatten {
     "$luax_config_lua",
 }
 
-rule "cp" { command = {"cp", "$in", "$out"} }
+rule "cp" { command = {"cp", "-f", "$in", "$out"} }
 
 local binaries = {}
 local libraries = {}
@@ -422,7 +396,7 @@ targets : foreach(function(target)
 
     local shared_lib = shared_libs(target)
 
-    rule("bundle-luax-"..target) {
+    acc(binaries)(build("$bin/luax-"..target..e) { luax_packages,
         command = {
             ". tools/build_env.sh $tmp;",
             "cp", "$tmp/luaxruntime-"..target..e, "$out.tmp",
@@ -436,10 +410,6 @@ targets : foreach(function(target)
             "&& touch $out.tmp",
             "&& mv $out.tmp $out",
         },
-    }
-
-    build("$bin/luax-"..target..e) { "bundle-luax-"..target,
-        luax_packages,
         implicit_in = {
             "$lz4",
             "$lua",
@@ -447,40 +417,27 @@ targets : foreach(function(target)
             "luax/bundle.lua",
             "$tmp/luaxruntime-"..target..e,
         },
-    }
-    install "bin" ("$bin/luax-"..target..e)
-    default("$bin/luax-"..target..e)
-    acc(compile)("$bin/luax-"..target..e)
-    acc(binaries)("$bin/luax-"..target..e)
+    })
 
     if shared_lib then
 
-        build("$lib/"..shared_lib) {
+        acc(libraries)(build("$lib/"..shared_lib) {
             "cp", fs.join("$tmp", "lib", shared_lib)
-        }
-        install "lib" ("$lib/"..shared_lib)
-        default("$lib/"..shared_lib)
-        acc(compile)("$lib/"..shared_lib)
-        acc(libraries)("$lib/"..shared_lib)
+        })
 
     end
 
 end)
 
-rule "luax_shortcut" {
+var "luax" "$bin/luax"
+
+acc(binaries)(build "$luax" {
     command = {
         ". tools/build_env.sh $tmp;",
         "cp", "-f", "$bin/luax-$$ARCH-$$OS-$$LIBC$$EXT", "$out$$EXT",
-    }
-}
-
-var "luax" "$bin/luax"
-
-build "$luax" { "luax_shortcut", implicit_in = binaries }
-
-install "bin" "$luax"
-default "$luax"
-acc(compile) "$luax"
+    },
+    implicit_in = binaries,
+})
 
 --===================================================================
 section "LuaX Lua implementation"
@@ -495,7 +452,7 @@ local lib_luax_sources = F.flatten{
     ls "ext/lua/**.lua",
 }
 
-rule "bundle_lib_luax" {
+acc(libraries)(build "$lib/luax.lua" { "$luax_config_lua", lib_luax_sources,
     command = {
         ". tools/build_env.sh $tmp;",
         "LUA_PATH=\"$lua_path\"",
@@ -507,56 +464,31 @@ rule "bundle_lib_luax" {
         "&& touch $out.tmp",
         "&& mv $out.tmp $out",
     },
-}
-
-build "$lib/luax.lua" { "bundle_lib_luax",
-    "$luax_config_lua",
-    lib_luax_sources,
     implicit_in = {
         "$lz4",
         "$lua",
         "luax/bundle.lua",
         "tools/rc4_runtime.lua",
     },
-}
-
-install "lib" "$lib/luax.lua"
-default "$lib/luax.lua"
-acc(compile) "$lib/luax.lua"
+})
 
 --===================================================================
 section "$bin/luax-lua"
 ---------------------------------------------------------------------
 
-rule "luax-compile-to-lua" {
+acc(binaries)(build "$bin/luax-lua" { "luax/luax.lua",
     command = { "$luax", "-q -t lua", "-o $out $in" },
-}
-
-build "$bin/luax-lua" { "luax-compile-to-lua",
-    "luax/luax.lua",
     implicit_in = { "$luax", "$lib/luax.lua" },
-}
-
-install "bin" "$bin/luax-lua"
-default "$bin/luax-lua"
-acc(compile) "$bin/luax-lua"
+})
 
 --===================================================================
 section "$bin/luax-pandoc"
 ---------------------------------------------------------------------
 
-rule "luax-compile-to-pandoc" {
+acc(binaries)(build "$bin/luax-pandoc" { "luax/luax.lua",
     command = { "$luax", "-q -t pandoc", "-o $out $in" },
-}
-
-build "$bin/luax-pandoc" { "luax-compile-to-pandoc",
-    "luax/luax.lua",
     implicit_in = { "$luax", "$lib/luax.lua" },
-}
-
-install "bin" "$bin/luax-pandoc"
-default "$bin/luax-pandoc"
-acc(compile) "$bin/luax-pandoc"
+})
 
 --===================================================================
 section "Tests"
@@ -567,7 +499,7 @@ local test_main = "tests/luax-tests/main.lua"
 
 ---------------------------------------------------------------------
 
-rule "test-1-luax_executable" {
+acc(test)(build "$test/test-1-luax_executable.ok" {
     command = {
         ". tools/build_env.sh $tmp;",
         "$luax -q -o $test/test-luax", test_sources,
@@ -578,20 +510,15 @@ rule "test-1-luax_executable" {
         "&&",
         "touch $out",
     },
-}
-
-build "$test/test-1-luax_executable.ok" { "test-1-luax_executable",
     implicit_in = {
         "$luax",
         test_sources,
     },
-}
-
-acc(test) "$test/test-1-luax_executable.ok"
+})
 
 ---------------------------------------------------------------------
 
-rule "test-2-lib" {
+acc(test)(build "$test/test-2-lib.ok" {
     command = {
         ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
@@ -601,22 +528,17 @@ rule "test-2-lib" {
         "&&",
         "touch $out",
     },
-}
-
-build "$test/test-2-lib.ok" { "test-2-lib",
     implicit_in = {
         "$lua",
         "$luax",
         libraries,
         test_sources,
     },
-}
-
-acc(test) "$test/test-2-lib.ok"
+})
 
 ---------------------------------------------------------------------
 
-rule "test-3-lua" {
+acc(test)(build "$test/test-3-lua.ok" {
     command = {
         ". tools/build_env.sh $tmp;",
         "LIBC=lua TYPE=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
@@ -625,21 +547,16 @@ rule "test-3-lua" {
         "&&",
         "touch $out",
     },
-}
-
-build "$test/test-3-lua.ok" { "test-3-lua",
     implicit_in = {
         "$lua",
         "$lib/luax.lua",
         test_sources,
     },
-}
-
-acc(test) "$test/test-3-lua.ok"
+})
 
 ---------------------------------------------------------------------
 
-rule "test-4-lua-luax-lua" {
+acc(test)(build "$test/test-4-lua-luax-lua.ok" {
     command = {
         ". tools/build_env.sh $tmp;",
         "LIBC=lua TYPE=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
@@ -648,21 +565,16 @@ rule "test-4-lua-luax-lua" {
         "&&",
         "touch $out",
     },
-}
-
-build "$test/test-4-lua-luax-lua.ok" { "test-4-lua-luax-lua",
     implicit_in = {
         "$lua",
         "$bin/luax-lua",
         test_sources,
     },
-}
-
-acc(test) "$test/test-4-lua-luax-lua.ok"
+})
 
 ---------------------------------------------------------------------
 
-rule "test-5-pandoc-luax-lua" {
+acc(test)(build "$test/test-5-pandoc-luax-lua.ok" {
     command = {
         ". tools/build_env.sh $tmp;",
         "LIBC=lua TYPE=pandoc LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
@@ -671,21 +583,18 @@ rule "test-5-pandoc-luax-lua" {
         "&&",
         "touch $out",
     },
-}
-
-build "$test/test-5-pandoc-luax-lua.ok" { "test-5-pandoc-luax-lua",
     implicit_in = {
         "$lua",
         "$lib/luax.lua",
         test_sources,
     },
-}
-
-acc(test) "$test/test-5-pandoc-luax-lua.ok"
+})
 
 ---------------------------------------------------------------------
 
-rule "test-6-pandoc-luax-so" {
+-- This test is disabled since most of the binary distributions of Pandoc do not support dynamic loading
+--[[
+acc(test)(build "$test/test-6-pandoc-luax-so.ok" {
     command = {
         ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
@@ -695,23 +604,18 @@ rule "test-6-pandoc-luax-so" {
         "&&",
         "touch $out",
     },
-}
-
-build "$test/test-6-pandoc-luax-so.ok" { "test-6-pandoc-luax-so",
     implicit_in = {
         "$lua",
         "$luax",
         "$lib/luax.lua",
         test_sources,
     },
-}
-
--- This test is disabled since most of the binary distributions of Pandoc do not support dynamic loading
---acc(test) "$test/test-6-pandoc-luax-so.ok"
+})
+--]]
 
 ---------------------------------------------------------------------
 
-rule "test-ext-1-lua" {
+acc(test)(build "$test/test-ext-1-lua.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
     command = {
         ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
@@ -722,22 +626,16 @@ rule "test-ext-1-lua" {
         "&&",
         "touch $out",
     },
-}
-
-build "$test/test-ext-1-lua.ok" { "test-ext-1-lua",
-    "tests/external_interpreter_tests/external_interpreters.lua",
     implicit_in = {
         "$lib/luax.lua",
         "$luax",
         binaries,
     },
-}
-
-acc(test) "$test/test-ext-1-lua.ok"
+})
 
 ---------------------------------------------------------------------
 
-rule "test-ext-2-lua-luax" {
+acc(test)(build "$test/test-ext-2-lua-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
     command = {
         ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
@@ -748,21 +646,15 @@ rule "test-ext-2-lua-luax" {
         "&&",
         "touch $out",
     },
-}
-
-build "$test/test-ext-2-lua-luax.ok" { "test-ext-2-lua-luax",
-    "tests/external_interpreter_tests/external_interpreters.lua",
     implicit_in = {
         "$lib/luax.lua",
         "$luax",
     },
-}
-
-acc(test) "$test/test-ext-2-lua-luax.ok"
+})
 
 ---------------------------------------------------------------------
 
-rule "test-ext-3-luax" {
+acc(test)(build "$test/test-ext-3-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
     command = {
         ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
@@ -773,21 +665,15 @@ rule "test-ext-3-luax" {
         "&&",
         "touch $out",
     },
-}
-
-build "$test/test-ext-3-luax.ok" { "test-ext-3-luax",
-    "tests/external_interpreter_tests/external_interpreters.lua",
     implicit_in = {
         "$lib/luax.lua",
         "$luax",
     },
-}
-
-acc(test) "$test/test-ext-3-luax.ok"
+})
 
 ---------------------------------------------------------------------
 
-rule "test-ext-4-pandoc" {
+acc(test)(build "$test/test-ext-4-pandoc.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
     command = {
         ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
@@ -798,22 +684,18 @@ rule "test-ext-4-pandoc" {
         "&&",
         "touch $out",
     },
-}
-
-build "$test/test-ext-4-pandoc.ok" { "test-ext-4-pandoc",
-    "tests/external_interpreter_tests/external_interpreters.lua",
     implicit_in = {
         "$lib/luax.lua",
         "$luax",
         binaries,
     },
-}
-
-acc(test) "$test/test-ext-4-pandoc.ok"
+})
 
 ---------------------------------------------------------------------
 
-rule "test-ext-5-pandoc-luax" {
+-- This test is disabled since most of the binary distributions of Pandoc do not support dynamic loading
+--[[
+acc(test)(build "$test/test-ext-5-pandoc-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
     command = {
         ". tools/build_env.sh $tmp;",
         "eval `$luax env`;",
@@ -824,32 +706,18 @@ rule "test-ext-5-pandoc-luax" {
         "&&",
         "touch $out",
     },
-}
-
-build "$test/test-ext-5-pandoc-luax.ok" { "test-ext-5-pandoc-luax",
-    "tests/external_interpreter_tests/external_interpreters.lua",
     implicit_in = {
         "$lib/luax.lua",
         "$luax",
     },
-}
-
--- This test is disabled since most of the binary distributions of Pandoc do not support dynamic loading
---acc(test) "$test/test-ext-5-pandoc-luax.ok"
+})
+--]]
 
 --===================================================================
 section "Documentation"
 ---------------------------------------------------------------------
 
 local markdown_sources = ls "doc/src/*.md"
-
-local images = F{
-    {img="doc/luax-banner.svg",             src="doc/src/luax-logo.lua",    rule="banner-1024" },
-    {img="doc/luax-logo.svg",               src="doc/src/luax-logo.lua",    rule="logo-256" },
-    {img="$builddir/luax-banner.png",       src="doc/src/luax-logo.lua",    rule="banner-1024" },
-    {img="$builddir/luax-social.png",       src="doc/src/luax-logo.lua",    rule="social-1280" },
-    {img="$builddir/luax-logo.png",         src="doc/src/luax-logo.lua",    rule="logo-1024" },
-}
 
 local url = "cdelord.fr/luax"
 
@@ -858,9 +726,15 @@ rule "logo-256"    { command = {"lsvg $in $out -- 256 256"} }
 rule "logo-1024"   { command = {"lsvg $in $out -- 1024 1024"} }
 rule "social-1280" { command = {"lsvg $in $out -- 1280 640", "'"..url.."'"} }
 
-images : foreach(function(image)
-    build(image.img, {image.rule, image.src})
-end)
+local images = {
+    build "doc/luax-banner.svg"         {"banner-1024", "doc/src/luax-logo.lua"},
+    build "doc/luax-logo.svg"           {"logo-256",    "doc/src/luax-logo.lua"},
+    build "$builddir/luax-banner.png"   {"banner-1024", "doc/src/luax-logo.lua"},
+    build "$builddir/luax-social.png"   {"social-1280", "doc/src/luax-logo.lua"},
+    build "$builddir/luax-logo.png"     {"logo-1024",   "doc/src/luax-logo.lua"},
+}
+
+acc(doc)(images)
 
 local pandoc_gfm = {
     "pandoc",
@@ -869,40 +743,26 @@ local pandoc_gfm = {
     "--fail-if-warnings",
 }
 
-rule "md_to_md" {
+rule "md_to_gfm" {
     command = {
-        ". tools/build_env.sh $tmp;",
-        "LUAX=$bin/luax-$$ARCH-$$OS-$$LIBC",
+        "LUAX=$luax",
         "ypp --MD --MT $out --MF $doc/$out.d $in",
         "|",
         pandoc_gfm, "-o $out",
     },
     depfile = "$doc/$out.d",
-}
-
-build "README.md" { "md_to_md", "doc/src/luax.md",
     implicit_in = {
-        binaries,
+        "$luax",
         "doc/src/fix_links.lua",
         images,
     },
 }
 
-acc(doc) "README.md"
+acc(doc)(build "README.md" { "md_to_gfm", "doc/src/luax.md" })
 
 markdown_sources : foreach(function(src)
 
-    local dst = fs.join("doc", fs.basename(src))
-
-    build(dst) { "md_to_md", src,
-        implicit_in = {
-            binaries,
-            "doc/src/fix_links.lua",
-            images,
-        },
-    }
-
-    acc(doc)(dst)
+    acc(doc)(build(fs.join("doc", fs.basename(src))) { "md_to_gfm", src })
 
 end)
 
@@ -910,9 +770,15 @@ end)
 section "Shorcuts"
 ---------------------------------------------------------------------
 
+acc(compile) {binaries, libraries}
+
+install "bin" (binaries)
+install "lib" (libraries)
+
 clean "$builddir"
 
 phony "compile" (compile)
+default "compile"
 help "compile" "compile LuaX"
 
 phony "test-fast" (test[1])

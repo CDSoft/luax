@@ -92,7 +92,7 @@ installed and can be copied anywhere you want.
 `luax` is very similar to `lua` and adds more options to compile
 scripts:
 
-    usage: luax-x86_64-linux-gnu [options] [script [args]]
+    usage: luax [options] [script [args]]
 
     General options:
       -h                show this help
