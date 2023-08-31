@@ -15,7 +15,6 @@ luax can « cross-compile » scripts from and to any of these platforms.
 
 Targets:
   help        show this help message
-  clean       clean generated files
   compile     compile LuaX
   test-fast   run LuaX tests (fast, native tests only)
   test        run all LuaX tests
@@ -23,3 +22,5 @@ Targets:
   all         alias for compile, test and doc
   update      update third-party modules
   install     install LuaX in $PREFIX or $HOME/.local
+  clean       clean generated files
+  mrproper    clean generated files and more

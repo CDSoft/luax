@@ -776,6 +776,7 @@ install "bin" (binaries)
 install "lib" (libraries)
 
 clean "$builddir"
+clean.mrproper "$zig_cache"
 
 phony "compile" (compile)
 default "compile"
