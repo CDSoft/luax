@@ -115,12 +115,7 @@ var "luax_config_lua" "$tmp/luax_config.lua"
 
 local magic_id = "LuaX"
 
-local crypt_key =
-    os.getenv "CRYPT_KEY" or
-    [[\x5d\xec\xc3\xbb\xe8\x40\x6e\x68\x7f\x20\xc2\x39\xf4\xa0\x27\x25]]
-
 local luax_config_table = (F.I % "%%()") {
-    CRYPT_KEY = crypt_key,
     MAGIC_ID = magic_id,
     TARGETS = targets:show(),
 }
@@ -135,15 +130,10 @@ cat <<EOF > "$LUAX_CONFIG_H"
 #pragma once
 #define LUAX_VERSION "$(git describe --tags)"
 #define LUAX_DATE "$(git show -s --format=%cd --date=format:'%Y-%m-%d')"
-#define LUAX_CRYPT_KEY "%(CRYPT_KEY)"
+#define LUAX_CRYPT_KEY "$CRYPT_KEY"
 #define LUAX_MAGIC_ID "%(MAGIC_ID)"
 EOF
 ]])
-
-build "$luax_config_h" { "tools/gen_config_h.sh",
-    command = { "bash", "$in", "$out" },
-    implicit_in = { ".git/refs/tags", ".git/index" },
-}
 
 file "tools/gen_config_lua.sh"
 : write(luax_config_table[[
@@ -162,10 +152,16 @@ return {
 EOF
 ]])
 
-build "$luax_config_lua" { "tools/gen_config_lua.sh",
-    command = { "bash", "$in", "$out" },
+rule "gen_config" {
+    command = {
+        ". tools/build_env.sh;",
+        "bash", "$in", "$out",
+    },
     implicit_in = { ".git/refs/tags", ".git/index" },
 }
+
+build "$luax_config_h"   { "gen_config", "tools/gen_config_h.sh" }
+build "$luax_config_lua" { "gen_config", "tools/gen_config_lua.sh" }
 
 --===================================================================
 section "lz4 cli"
@@ -298,7 +294,6 @@ build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
     command = {
         ". tools/build_env.sh $tmp;",
         "LUA_PATH=\"$lua_path\"",
-        "CRYPT_KEY=\""..crypt_key.."\"",
         "$lua",
         "-l tools/rc4_runtime",
         "luax/bundle.lua", "-lib -ascii",
@@ -403,7 +398,6 @@ targets : foreach(function(target)
             "cp", "$tmp/luaxruntime-"..target..e, "$out.tmp",
             "&&",
             "LUA_PATH=\"$lua_path\"",
-            "CRYPT_KEY=\""..crypt_key.."\"",
             "$lua",
             "-l tools/rc4_runtime",
             "luax/bundle.lua", "-binary",
@@ -457,7 +451,6 @@ acc(libraries)(build "$lib/luax.lua" { "$luax_config_lua", lib_luax_sources,
     command = {
         ". tools/build_env.sh $tmp;",
         "LUA_PATH=\"$lua_path\"",
-        "CRYPT_KEY=\""..crypt_key.."\"",
         "$lua",
         "-l tools/rc4_runtime",
         "luax/bundle.lua", "-lib -lua",

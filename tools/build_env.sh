@@ -51,3 +51,5 @@ export ARCH
 export OS
 export LIBC
 export EXT
+
+export CRYPT_KEY=${CRYPT_KEY:-"\x5d\xec\xc3\xbb\xe8\x40\x6e\x68\x7f\x20\xc2\x39\xf4\xa0\x27\x25"}

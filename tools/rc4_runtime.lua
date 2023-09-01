@@ -27,7 +27,10 @@ http://cdelord.fr/luax
 
 local crypt = require "crypt"
 
-local runtime_key = assert(os.getenv "CRYPT_KEY") : gsub("\\x", "") : unhex()
+local runtime_key = assert(os.getenv "CRYPT_KEY")
+    : gsub("\\x(..)", function(h)
+        return string.char(tonumber(h, 16))
+    end)
 local runtime_drop = 3072
 
 local rc4 = crypt.rc4
