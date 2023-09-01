@@ -93,6 +93,10 @@ build "$zig" { "tools/install_zig.sh",
     command = {"$in", zig_version, "$out"},
 }
 
+rule "mkdir" { command = "mkdir -p $out" }
+
+build "$zig_cache" { "mkdir" }
+
 --===================================================================
 section "Third-party modules update"
 ---------------------------------------------------------------------
@@ -171,13 +175,16 @@ var "lz4" "$tmp/lz4"
 
 build "$lz4" { ls "ext/c/lz4/**.c",
     command = {
-        "zig cc",
+        "ZIG_LOCAL_CACHE_DIR=$zig_cache",
+        "$zig cc",
         "-s",
         "-Os",
         "-Iext/c/lz4/lib",
         "$in -o $out",
     },
     implicit_in = {
+        "$zig",
+        "$zig_cache",
         ls "ext/c/lz4/**.h",
     },
 }

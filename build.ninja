@@ -49,6 +49,11 @@ rule _zig_8415da2cbf2891f4
 
 build $zig: _zig_8415da2cbf2891f4 tools/install_zig.sh
 
+rule mkdir
+  command = mkdir -p $out
+
+build $zig_cache: mkdir
+
 ######################################################################
 # Third-party modules update
 ######################################################################
@@ -79,10 +84,10 @@ build $luax_config_lua: gen_config tools/gen_config_lua.sh | .git/refs/tags .git
 
 lz4 = $tmp/lz4
 
-rule _lz4_1c019a1e90481358
-  command = zig cc -s -Os -Iext/c/lz4/lib $in -o $out
+rule _lz4_c92186c1b7535f4e
+  command = ZIG_LOCAL_CACHE_DIR=$zig_cache $zig cc -s -Os -Iext/c/lz4/lib $in -o $out
 
-build $lz4: _lz4_1c019a1e90481358 ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/lz4/programs/bench.c ext/c/lz4/programs/datagen.c ext/c/lz4/programs/lz4cli.c ext/c/lz4/programs/lz4io.c | ext/c/lz4/lib/lz4.h ext/c/lz4/lib/lz4file.h ext/c/lz4/lib/lz4frame.h ext/c/lz4/lib/lz4frame_static.h ext/c/lz4/lib/lz4hc.h ext/c/lz4/lib/xxhash.h ext/c/lz4/programs/bench.h ext/c/lz4/programs/datagen.h ext/c/lz4/programs/lz4io.h ext/c/lz4/programs/platform.h ext/c/lz4/programs/util.h
+build $lz4: _lz4_c92186c1b7535f4e ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/lz4/programs/bench.c ext/c/lz4/programs/datagen.c ext/c/lz4/programs/lz4cli.c ext/c/lz4/programs/lz4io.c | $zig $zig_cache ext/c/lz4/lib/lz4.h ext/c/lz4/lib/lz4file.h ext/c/lz4/lib/lz4frame.h ext/c/lz4/lib/lz4frame_static.h ext/c/lz4/lib/lz4hc.h ext/c/lz4/lib/xxhash.h ext/c/lz4/programs/bench.h ext/c/lz4/programs/datagen.h ext/c/lz4/programs/lz4io.h ext/c/lz4/programs/platform.h ext/c/lz4/programs/util.h
 
 ######################################################################
 # LuaX sources
