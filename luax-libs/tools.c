@@ -83,7 +83,7 @@ void strip_ext(char *name)
     name[last_index(name, '.')] = '\0';
 }
 
-int bl_pushresult(lua_State *L, int i, const char *filename)
+int luax_pushresult(lua_State *L, int i, const char *filename)
 {
     const int en = errno;  /* calls to Lua API may change this value */
     if (i)
@@ -100,21 +100,21 @@ int bl_pushresult(lua_State *L, int i, const char *filename)
     }
 }
 
-int bl_pusherror(lua_State *L, const char *msg)
+int luax_pusherror(lua_State *L, const char *msg)
 {
     lua_pushnil(L);
     lua_pushstring(L, msg);
     return 2;
 }
 
-int bl_pusherror1(lua_State *L, const char *msg, const char *arg1)
+int luax_pusherror1(lua_State *L, const char *msg, const char *arg1)
 {
     lua_pushnil(L);
     lua_pushfstring(L, msg, arg1);
     return 2;
 }
 
-int bl_pusherror2(lua_State *L, const char *msg, const char *arg1, int arg2)
+int luax_pusherror2(lua_State *L, const char *msg, const char *arg1, int arg2)
 {
     lua_pushnil(L);
     lua_pushfstring(L, msg, arg1, arg2);

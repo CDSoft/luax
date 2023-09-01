@@ -43,7 +43,7 @@ char *safe_strdup(const char *s);
 const char *ext(const char *name);
 void strip_ext(char *name);
 
-int bl_pushresult(lua_State *L, int i, const char *filename);
-int bl_pusherror(lua_State *L, const char *msg);
-int bl_pusherror1(lua_State *L, const char *msg, const char *arg1);
-int bl_pusherror2(lua_State *L, const char *msg, const char *arg1, int arg2);
+int luax_pushresult(lua_State *L, int i, const char *filename);
+int luax_pusherror(lua_State *L, const char *msg);
+int luax_pusherror1(lua_State *L, const char *msg, const char *arg1);
+int luax_pusherror2(lua_State *L, const char *msg, const char *arg1, int arg2);

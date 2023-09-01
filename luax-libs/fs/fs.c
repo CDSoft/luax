@@ -85,7 +85,7 @@ changes the current directory to `path`.
 static int fs_chdir(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 1);
-    return bl_pushresult(L, chdir(path) == 0, path);
+    return luax_pushresult(L, chdir(path) == 0, path);
 }
 
 /*@@@
@@ -109,7 +109,7 @@ static int fs_dir(lua_State *L)
     }
     else
     {
-        return bl_pusherror(L, "bad argument #1 to dir (none, nil or string expected)");
+        return luax_pusherror(L, "bad argument #1 to dir (none, nil or string expected)");
     }
     DIR *dir = opendir(path);
     struct dirent *file;
@@ -130,7 +130,7 @@ static int fs_dir(lua_State *L)
     }
     else
     {
-        return bl_pushresult(L, 0, path);
+        return luax_pushresult(L, 0, path);
     }
 }
 
@@ -150,7 +150,7 @@ returns the list of path names matching a pattern.
 
 static int fs_glob(lua_State *L)
 {
-    return bl_pusherror(L, "glob: not implemented on Windows");
+    return luax_pusherror(L, "glob: not implemented on Windows");
 }
 
 #else
@@ -168,7 +168,7 @@ static int fs_glob(lua_State *L)
     }
     else
     {
-        return bl_pusherror(L, "bad argument #1 to pattern (none, nil or string expected)");
+        return luax_pusherror(L, "bad argument #1 to pattern (none, nil or string expected)");
     }
     glob_t globres;
     unsigned int i;
@@ -187,7 +187,7 @@ static int fs_glob(lua_State *L)
     }
     else
     {
-        return bl_pushresult(L, 0, pattern);
+        return luax_pushresult(L, 0, pattern);
     }
 }
 
@@ -208,10 +208,10 @@ static int fs_remove(lua_State *L)
     stat(filename, &st);
     if (S_ISDIR(st.st_mode))
     {
-        return bl_pushresult(L, rmdir(filename) == 0, filename);
+        return luax_pushresult(L, rmdir(filename) == 0, filename);
     }
 #endif
-    return bl_pushresult(L, remove(filename) == 0, filename);
+    return luax_pushresult(L, remove(filename) == 0, filename);
 }
 
 /*@@@
@@ -225,7 +225,7 @@ static int fs_rename(lua_State *L)
 {
     const char *fromname = luaL_checkstring(L, 1);
     const char *toname = luaL_checkstring(L, 2);
-    return bl_pushresult(L, rename(fromname, toname) == 0, fromname);
+    return luax_pushresult(L, rename(fromname, toname) == 0, fromname);
 }
 
 /*@@@
@@ -247,14 +247,14 @@ static int fs_copy(lua_State *L)
     struct stat st;
     struct utimbuf t;
     from = fopen(fromname, "rb");
-    if (!from) return bl_pushresult(L, 0, fromname);
+    if (!from) return luax_pushresult(L, 0, fromname);
     to = fopen(toname, "wb");
     if (!to)
     {
         _en = errno;
         fclose(from);
         errno = _en;
-        return bl_pushresult(L, 0, toname);
+        return luax_pushresult(L, 0, toname);
     }
     while ((n = fread(buffer, sizeof(char), FS_BUFSIZE, from)))
     {
@@ -265,7 +265,7 @@ static int fs_copy(lua_State *L)
             fclose(to);
             remove(toname);
             errno = _en;
-            return bl_pushresult(L, 0, toname);
+            return luax_pushresult(L, 0, toname);
         }
     }
     if (ferror(from))
@@ -275,14 +275,14 @@ static int fs_copy(lua_State *L)
         fclose(to);
         remove(toname);
         errno = _en;
-        return bl_pushresult(L, 0, toname);
+        return luax_pushresult(L, 0, toname);
     }
     fclose(from);
     fclose(to);
-    if (stat(fromname, &st) != 0) return bl_pushresult(L, 0, fromname);
+    if (stat(fromname, &st) != 0) return luax_pushresult(L, 0, fromname);
     t.actime = st.st_atime;
     t.modtime = st.st_mtime;
-    return bl_pushresult(L,
+    return luax_pushresult(L,
         utime(toname, &t) == 0 && chmod(toname, st.st_mode) == 0,
         toname);
 }
@@ -298,9 +298,9 @@ static int fs_mkdir(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 1);
 #ifdef _WIN32
-    return bl_pushresult(L, mkdir(path) == 0, path);
+    return luax_pushresult(L, mkdir(path) == 0, path);
 #else
-    return bl_pushresult(L, mkdir(path, 0755) == 0, path);
+    return luax_pushresult(L, mkdir(path, 0755) == 0, path);
 #endif
 }
 
@@ -370,7 +370,7 @@ static int fs_stat(lua_State *L)
     }
     else
     {
-        return bl_pushresult(L, 0, path);
+        return luax_pushresult(L, 0, path);
     }
 }
 
@@ -452,7 +452,7 @@ static int fs_inode(lua_State *L)
     }
     else
     {
-        return bl_pushresult(L, 0, path);
+        return luax_pushresult(L, 0, path);
     }
 }
 
@@ -487,14 +487,14 @@ static int fs_chmod(lua_State *L)
     {
         const char *ref = luaL_checkstring(L, 2);
         struct stat st;
-        if (stat(ref, &st) != 0) return bl_pushresult(L, 0, ref);
+        if (stat(ref, &st) != 0) return luax_pushresult(L, 0, ref);
         mode = st.st_mode;
     }
     else
     {
-        return bl_pusherror(L, "bad argument #2 to 'chmod' (number or string expected)");
+        return luax_pusherror(L, "bad argument #2 to 'chmod' (number or string expected)");
     }
-    return bl_pushresult(L, chmod(path, mode) == 0, path);
+    return luax_pushresult(L, chmod(path, mode) == 0, path);
 }
 
 /*@@@
@@ -533,21 +533,21 @@ static int fs_touch(lua_State *L)
     {
         const char *ref = luaL_checkstring(L, 2);
         struct stat st;
-        if (stat(ref, &st) != 0) return bl_pushresult(L, 0, ref);
+        if (stat(ref, &st) != 0) return luax_pushresult(L, 0, ref);
         t.actime = st.st_atime;
         t.modtime = st.st_mtime;
     }
     else
     {
-        return bl_pusherror(L, "bad argument #2 to touch (none, nil, number or string expected)");
+        return luax_pusherror(L, "bad argument #2 to touch (none, nil, number or string expected)");
     }
     if (access(path, F_OK) != 0)
     {
         int fd = open(path, O_CREAT, S_IRUSR | S_IWUSR);
-        if (fd < 0) return bl_pushresult(L, 0, path);
+        if (fd < 0) return luax_pushresult(L, 0, path);
         if (fd >= 0) close(fd);
     }
-    return bl_pushresult(L, utime(path, &t) == 0, path);
+    return luax_pushresult(L, utime(path, &t) == 0, path);
 }
 
 /*@@@
@@ -668,14 +668,14 @@ return the content of a symbolic link.
 static int fs_readlink(lua_State *L)
 {
 #ifdef _WIN32
-    return bl_pusherror(L, "readlink not implemented");
+    return luax_pusherror(L, "readlink not implemented");
 #else
     const char *path = luaL_checkstring(L, 1);
     char dest[FS_PATHSIZE+1];
     const ssize_t n = readlink(path, dest, FS_PATHSIZE);
     if (n < 0)
     {
-        return bl_pusherror(L, "readlink failure");
+        return luax_pusherror(L, "readlink failure");
     }
     dest[n] = '\0';
     lua_pushstring(L, dest);
@@ -704,7 +704,7 @@ static int fs_absname(lua_State *L)
     }
     if (getcwd(path, FS_PATHSIZE) == NULL)
     {
-        return bl_pusherror(L, "getcwd failure");
+        return luax_pusherror(L, "getcwd failure");
     }
     strncat(path, LUA_DIRSEP, FS_PATHSIZE-strlen(path));
     strncat(path, name, FS_PATHSIZE-strlen(path));

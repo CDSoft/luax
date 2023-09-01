@@ -53,7 +53,7 @@ static int term_isatty(lua_State *L)
         case LUA_TNONE:     n = 0; break;
         case LUA_TNUMBER:   n = (int)luaL_checkinteger(L, 1); break;
         case LUA_TUSERDATA: n = fileno(*(FILE**)luaL_checkudata(L, 1, LUA_FILEHANDLE)); break;
-        default: return bl_pusherror(L, "invalud argument to isatty");
+        default: return luax_pusherror(L, "invalud argument to isatty");
     }
 #ifdef _WIN32
     lua_pushboolean(L, _isatty(n));

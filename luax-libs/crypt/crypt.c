@@ -1049,13 +1049,13 @@ static int crypt_sha1(lua_State *L)
     uint8_t Message_Digest[20];
 
     int err = SHA1Reset(&sha);
-    if (err != 0) { return bl_pusherror(L, "SHA1Reset Error"); }
+    if (err != 0) { return luax_pusherror(L, "SHA1Reset Error"); }
 
     err = SHA1Input(&sha, (const uint8_t*)data, (unsigned int)datalen);
-    if (err != 0) { return bl_pusherror(L, "SHA1Input Error"); }
+    if (err != 0) { return luax_pusherror(L, "SHA1Input Error"); }
 
     err = SHA1Result(&sha, Message_Digest);
-    if (err != 0) { return bl_pusherror(L, "SHA1Result Error"); }
+    if (err != 0) { return luax_pusherror(L, "SHA1Result Error"); }
 
     char hex_digest[2*sizeof(Message_Digest)];
     for (size_t i = 0; i < sizeof(Message_Digest); i++)
