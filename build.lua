@@ -85,11 +85,12 @@ local doc = {}
 section "Zig compiler"
 ---------------------------------------------------------------------
 
-var "zig"           ".zig/zig"
-var "zig_cache"     ".zig/cache"
+local zig_version = "0.11.0"
+var "zig"           (fs.join(".zig", zig_version, "zig"))
+var "zig_cache"     (fs.join(fs.dirname(vars.zig), "cache"))
 
 build "$zig" { "tools/install_zig.sh",
-    command = "$in $out",
+    command = {"$in", zig_version, "$out"},
 }
 
 --===================================================================

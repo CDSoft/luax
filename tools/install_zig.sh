@@ -20,8 +20,8 @@
 
 set -e
 
-ZIG_VERSION="0.11.0"
-ZIG="$1"
+ZIG_VERSION="$1"
+ZIG="$2"
 
 if ! [ -x "$ZIG" ]
 then

@@ -41,13 +41,13 @@ test = $builddir/test
 # Zig compiler
 ######################################################################
 
-zig = .zig/zig
-zig_cache = .zig/cache
+zig = .zig/0.11.0/zig
+zig_cache = .zig/0.11.0/cache
 
-rule _zig_f9116712c976468d
-  command = $in $out
+rule _zig_8415da2cbf2891f4
+  command = $in 0.11.0 $out
 
-build $zig: _zig_f9116712c976468d tools/install_zig.sh
+build $zig: _zig_8415da2cbf2891f4 tools/install_zig.sh
 
 ######################################################################
 # Third-party modules update
