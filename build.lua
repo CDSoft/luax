@@ -106,68 +106,6 @@ build "update_modules" {
 }
 
 --===================================================================
-section "LuaX configuration"
----------------------------------------------------------------------
-
-comment [[
-The configuration file (luax_config.h and luax_config.lua)
-are created in `luax-libs`
-]]
-
-var "luax_config_h"   "$tmp/luax_config.h"
-var "luax_config_lua" "$tmp/luax_config.lua"
-
-local magic_id = "LuaX"
-
-local luax_config_table = (F.I % "%%()") {
-    MAGIC_ID = magic_id,
-    TARGETS = targets:show(),
-}
-
-file "tools/gen_config_h.sh"
-: write(luax_config_table[[
-#!/bin/bash
-
-LUAX_CONFIG_H="$1"
-
-cat <<EOF > "$LUAX_CONFIG_H"
-#pragma once
-#define LUAX_VERSION "$(git describe --tags)"
-#define LUAX_DATE "$(git show -s --format=%cd --date=format:'%Y-%m-%d')"
-#define LUAX_CRYPT_KEY "$CRYPT_KEY"
-#define LUAX_MAGIC_ID "%(MAGIC_ID)"
-EOF
-]])
-
-file "tools/gen_config_lua.sh"
-: write(luax_config_table[[
-#!/bin/bash
-
-LUAX_CONFIG_LUA="$1"
-
-cat <<EOF > "$LUAX_CONFIG_LUA"
---@LIB
-return {
-    version = "$(git describe --tags)",
-    date = "$(git show -s --format=%cd --date=format:'%Y-%m-%d')",
-    magic_id = "%(MAGIC_ID)",
-    targets = %(TARGETS),
-}
-EOF
-]])
-
-rule "gen_config" {
-    command = {
-        ". tools/build_env.sh;",
-        "bash", "$in", "$out",
-    },
-    implicit_in = { ".git/refs/tags", ".git/index" },
-}
-
-build "$luax_config_h"   { "gen_config", "tools/gen_config_h.sh" }
-build "$luax_config_lua" { "gen_config", "tools/gen_config_lua.sh" }
-
---===================================================================
 section "lz4 cli"
 ---------------------------------------------------------------------
 
@@ -287,6 +225,85 @@ build "$lua" { "build-lua.zig",
 }
 
 --===================================================================
+section "LuaX configuration"
+---------------------------------------------------------------------
+
+comment [[
+The configuration file (luax_config.h and luax_config.lua)
+are created in `luax-libs`
+]]
+
+var "luax_config_h"   "$tmp/luax_config.h"
+var "luax_config_lua" "$tmp/luax_config.lua"
+var "luax_crypt_key"  "$tmp/luax_crypt_key.h"
+
+local magic_id = "LuaX"
+
+local luax_config_table = (F.I % "%%()") {
+    MAGIC_ID = magic_id,
+    TARGETS = targets:show(),
+}
+
+file "tools/gen_config_h.sh"
+: write(luax_config_table[[
+#!/bin/bash
+
+LUAX_CONFIG_H="$1"
+
+cat <<EOF > "$LUAX_CONFIG_H"
+#pragma once
+#define LUAX_VERSION "$(git describe --tags)"
+#define LUAX_DATE "$(git show -s --format=%cd --date=format:'%Y-%m-%d')"
+#define LUAX_MAGIC_ID "%(MAGIC_ID)"
+EOF
+]])
+
+file "tools/gen_config_lua.sh"
+: write(luax_config_table[[
+#!/bin/bash
+
+LUAX_CONFIG_LUA="$1"
+
+cat <<EOF > "$LUAX_CONFIG_LUA"
+--@LIB
+return {
+    version = "$(git describe --tags)",
+    date = "$(git show -s --format=%cd --date=format:'%Y-%m-%d')",
+    magic_id = "%(MAGIC_ID)",
+    targets = %(TARGETS),
+}
+EOF
+]])
+
+rule "gen_config" {
+    command = {
+        ". tools/build_env.sh;",
+        "bash", "$in", "$out",
+    },
+    implicit_in = {
+        "tools/build_env.sh",
+        ".git/refs/tags", ".git/index",
+        "$lua"
+    },
+}
+
+build "$luax_config_h"   { "gen_config", "tools/gen_config_h.sh" }
+build "$luax_config_lua" { "gen_config", "tools/gen_config_lua.sh" }
+
+build "$luax_crypt_key"  {
+    command = {
+        ". tools/build_env.sh;",
+        "$lua", "tools/crypt_key.lua", "LUAX_CRYPT_KEY", '"$$CRYPT_KEY"', "> $out.tmp",
+        "&& mv $out.tmp $out",
+    },
+    implicit_in = {
+        "$lua",
+        "tools/build_env.sh",
+        "tools/crypt_key.lua",
+    }
+}
+
+--===================================================================
 section "Lua runtime"
 ---------------------------------------------------------------------
 
@@ -369,6 +386,7 @@ targets : foreach(function(target)
             is_windows(target) and windows_third_party_c_files or {},
             "$luax_runtime_bundle",
             "$luax_config_h",
+            "$luax_crypt_key",
         },
         implicit_out = {
             shared_lib_name or {},

@@ -37,6 +37,7 @@ local crypt = require "crypt"
 #include "tools.h"
 
 #include "luax_config.h"
+#include "luax_crypt_key.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -982,8 +983,10 @@ static char *rc4(const char *key, size_t key_size, size_t drop, const char *inpu
 }
 
 char *rc4_runtime(const char *input, size_t input_len)
+__attribute__((optnone)) /* avoid the key to be computed at compile time */
 {
-    return rc4(LUAX_CRYPT_KEY, sizeof(LUAX_CRYPT_KEY)-1, RC4_DROP_3072, input, input_len);
+    LUAX_CRYPT_KEY(key)
+    return rc4((const char *)key, sizeof(key), RC4_DROP_3072, input, input_len);
 }
 
 /*@@@
