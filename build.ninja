@@ -58,10 +58,11 @@ build $zig_cache: mkdir
 # Third-party modules update
 ######################################################################
 
-rule update_modules-1e4ed78df51e23dc
+rule update_modules-2afe707b911f4a56
   command = tools/update-third-party-modules.sh $builddir/update
+  pool = console
 
-build update_modules: update_modules-1e4ed78df51e23dc
+build update_modules: update_modules-2afe707b911f4a56
 
 ######################################################################
 # lz4 cli

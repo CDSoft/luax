@@ -103,6 +103,7 @@ section "Third-party modules update"
 
 build "update_modules" {
     command = {"tools/update-third-party-modules.sh", "$builddir/update"},
+    pool = "console",
 }
 
 --===================================================================
