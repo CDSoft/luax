@@ -44,10 +44,10 @@ test = $builddir/test
 zig = .zig/0.11.0/zig
 zig_cache = .zig/0.11.0/cache
 
-rule _zig_8415da2cbf2891f4
+rule _zig-8415da2cbf2891f4
   command = $in 0.11.0 $out
 
-build $zig: _zig_8415da2cbf2891f4 tools/install_zig.sh
+build $zig: _zig-8415da2cbf2891f4 tools/install_zig.sh
 
 rule mkdir
   command = mkdir -p $out
@@ -58,10 +58,10 @@ build $zig_cache: mkdir
 # Third-party modules update
 ######################################################################
 
-rule update_modules_1e4ed78df51e23dc
+rule update_modules-1e4ed78df51e23dc
   command = tools/update-third-party-modules.sh $builddir/update
 
-build update_modules: update_modules_1e4ed78df51e23dc
+build update_modules: update_modules-1e4ed78df51e23dc
 
 ######################################################################
 # lz4 cli
@@ -69,10 +69,10 @@ build update_modules: update_modules_1e4ed78df51e23dc
 
 lz4 = $tmp/lz4
 
-rule _lz4_c92186c1b7535f4e
+rule _lz4-c92186c1b7535f4e
   command = ZIG_LOCAL_CACHE_DIR=$zig_cache $zig cc -s -Os -Iext/c/lz4/lib $in -o $out
 
-build $lz4: _lz4_c92186c1b7535f4e ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/lz4/programs/bench.c ext/c/lz4/programs/datagen.c ext/c/lz4/programs/lz4cli.c ext/c/lz4/programs/lz4io.c | $zig $zig_cache ext/c/lz4/lib/lz4.h ext/c/lz4/lib/lz4file.h ext/c/lz4/lib/lz4frame.h ext/c/lz4/lib/lz4frame_static.h ext/c/lz4/lib/lz4hc.h ext/c/lz4/lib/xxhash.h ext/c/lz4/programs/bench.h ext/c/lz4/programs/datagen.h ext/c/lz4/programs/lz4io.h ext/c/lz4/programs/platform.h ext/c/lz4/programs/util.h
+build $lz4: _lz4-c92186c1b7535f4e ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/lz4/programs/bench.c ext/c/lz4/programs/datagen.c ext/c/lz4/programs/lz4cli.c ext/c/lz4/programs/lz4io.c | $zig $zig_cache ext/c/lz4/lib/lz4.h ext/c/lz4/lib/lz4file.h ext/c/lz4/lib/lz4frame.h ext/c/lz4/lib/lz4frame_static.h ext/c/lz4/lib/lz4hc.h ext/c/lz4/lib/xxhash.h ext/c/lz4/programs/bench.h ext/c/lz4/programs/datagen.h ext/c/lz4/programs/lz4io.h ext/c/lz4/programs/platform.h ext/c/lz4/programs/util.h
 
 ######################################################################
 # LuaX sources
@@ -85,12 +85,12 @@ build $lz4: _lz4_c92186c1b7535f4e ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ex
 ######################################################################
 
 lua = $tmp/lua
-lua_path = ./?.lua;$tmp/./?.lua;luax-libs/?.lua;luax-libs/term/?.lua;luax-libs/lz4/?.lua;luax-libs/complex/?.lua;luax-libs/L/?.lua;luax-libs/sys/?.lua;luax-libs/socket/?.lua;luax-libs/rt0/?.lua;luax-libs/fs/?.lua;luax-libs/ps/?.lua;luax-libs/imath/?.lua;luax-libs/F/?.lua;luax-libs/lpeg/?.lua;luax-libs/crypt/?.lua;luax-libs/sh/?.lua;luax-libs/package/?.lua;luax-libs/mathx/?.lua;luax-libs/std/?.lua;luax-libs/qmath/?.lua
+lua_path = ./?.lua;$tmp/?.lua;luax-libs/?.lua;luax-libs/F/?.lua;luax-libs/L/?.lua;luax-libs/complex/?.lua;luax-libs/crypt/?.lua;luax-libs/fs/?.lua;luax-libs/imath/?.lua;luax-libs/lpeg/?.lua;luax-libs/lz4/?.lua;luax-libs/mathx/?.lua;luax-libs/package/?.lua;luax-libs/ps/?.lua;luax-libs/qmath/?.lua;luax-libs/rt0/?.lua;luax-libs/sh/?.lua;luax-libs/socket/?.lua;luax-libs/std/?.lua;luax-libs/sys/?.lua;luax-libs/term/?.lua
 
-rule _lua_58531904b207aeab
+rule _lua-58531904b207aeab
   command = . tools/build_env.sh $tmp; $zig build --cache-dir $zig_cache --prefix `dirname $out` --prefix-exe-dir "" -Dtarget=$$ARCH-$$OS-$$LIBC --build-file $in && touch $out
 
-build $lua: _lua_58531904b207aeab build-lua.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c lua/lua.c
+build $lua: _lua-58531904b207aeab build-lua.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c lua/lua.c
 
 ######################################################################
 # LuaX configuration
@@ -108,10 +108,10 @@ rule gen_config
 build $luax_config_h: gen_config tools/gen_config_h.sh | tools/build_env.sh .git/refs/tags .git/index $lua
 build $luax_config_lua: gen_config tools/gen_config_lua.sh | tools/build_env.sh .git/refs/tags .git/index $lua
 
-rule _luax_crypt_key_b7d6457719de6036
+rule _luax_crypt_key-b7d6457719de6036
   command = . tools/build_env.sh; $lua tools/crypt_key.lua LUAX_CRYPT_KEY "$$CRYPT_KEY" > $out.tmp && mv $out.tmp $out
 
-build $luax_crypt_key: _luax_crypt_key_b7d6457719de6036 | $lua tools/build_env.sh tools/crypt_key.lua
+build $luax_crypt_key: _luax_crypt_key-b7d6457719de6036 | $lua tools/build_env.sh tools/crypt_key.lua
 
 ######################################################################
 # Lua runtime
@@ -119,10 +119,10 @@ build $luax_crypt_key: _luax_crypt_key_b7d6457719de6036 | $lua tools/build_env.s
 
 luax_runtime_bundle = $tmp/lua_runtime_bundle.dat
 
-rule _luax_runtime_bundle_24efe006619a049f
+rule _luax_runtime_bundle-24efe006619a049f
   command = . tools/build_env.sh $tmp; LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -lib -ascii $in > $out.tmp && touch $out.tmp && mv $out.tmp $out
 
-build $luax_runtime_bundle: _luax_runtime_bundle_24efe006619a049f $luax_config_lua luax-libs/F/F.lua luax-libs/L/L.lua luax-libs/complex/complex.lua luax-libs/crypt/crypt.lua luax-libs/fs/fs.lua luax-libs/imath/imath.lua luax-libs/lpeg/lpeg.lua luax-libs/lz4/lz4.lua luax-libs/mathx/mathx.lua luax-libs/package/package_hook.lua luax-libs/ps/ps.lua luax-libs/qmath/qmath.lua luax-libs/rt0/rt0.lua luax-libs/sh/sh.lua luax-libs/sys/sys.lua luax-libs/term/term.lua ext/c/lpeg/re.lua ext/c/luasocket/ftp.lua ext/c/luasocket/headers.lua ext/c/luasocket/http.lua ext/c/luasocket/ltn12.lua ext/c/luasocket/mbox.lua ext/c/luasocket/mime.lua ext/c/luasocket/smtp.lua ext/c/luasocket/socket.lua ext/c/luasocket/tp.lua ext/c/luasocket/url.lua ext/lua/argparse/argparse.lua ext/lua/inspect/inspect.lua ext/lua/serpent/serpent.lua | $lz4 $lua luax/bundle.lua tools/rc4_runtime.lua
+build $luax_runtime_bundle: _luax_runtime_bundle-24efe006619a049f $luax_config_lua luax-libs/F/F.lua luax-libs/L/L.lua luax-libs/complex/complex.lua luax-libs/crypt/crypt.lua luax-libs/fs/fs.lua luax-libs/imath/imath.lua luax-libs/lpeg/lpeg.lua luax-libs/lz4/lz4.lua luax-libs/mathx/mathx.lua luax-libs/package/package_hook.lua luax-libs/ps/ps.lua luax-libs/qmath/qmath.lua luax-libs/rt0/rt0.lua luax-libs/sh/sh.lua luax-libs/sys/sys.lua luax-libs/term/term.lua ext/c/lpeg/re.lua ext/c/luasocket/ftp.lua ext/c/luasocket/headers.lua ext/c/luasocket/http.lua ext/c/luasocket/ltn12.lua ext/c/luasocket/mbox.lua ext/c/luasocket/mime.lua ext/c/luasocket/smtp.lua ext/c/luasocket/socket.lua ext/c/luasocket/tp.lua ext/c/luasocket/url.lua ext/lua/argparse/argparse.lua ext/lua/inspect/inspect.lua ext/lua/serpent/serpent.lua | $lz4 $lua luax/bundle.lua tools/rc4_runtime.lua
 
 ######################################################################
 # C runtimes
@@ -132,91 +132,91 @@ build $luax_runtime_bundle: _luax_runtime_bundle_24efe006619a049f $luax_config_l
 # x86_64-linux-musl runtime
 ######################################################################
 
-rule _tmp_luaxruntime-x86_64-linux-musl_43fd5213116438f8
+rule _tmp_luaxruntime-x86_64-linux-musl-43fd5213116438f8
   command = RUNTIME_NAME=luaxruntime LIB_NAME=luax $zig build --cache-dir $zig_cache --prefix `dirname $out` --prefix-exe-dir "" -Dtarget=x86_64-linux-musl --build-file $in && touch $out
 
-build $tmp/luaxruntime-x86_64-linux-musl | : _tmp_luaxruntime-x86_64-linux-musl_43fd5213116438f8 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
+build $tmp/luaxruntime-x86_64-linux-musl | : _tmp_luaxruntime-x86_64-linux-musl-43fd5213116438f8 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
 
 ######################################################################
 # x86_64-linux-gnu runtime
 ######################################################################
 
-rule _tmp_luaxruntime-x86_64-linux-gnu_f16b272b2442f5ed
+rule _tmp_luaxruntime-x86_64-linux-gnu-f16b272b2442f5ed
   command = RUNTIME_NAME=luaxruntime LIB_NAME=luax $zig build --cache-dir $zig_cache --prefix `dirname $out` --prefix-exe-dir "" -Dtarget=x86_64-linux-gnu --build-file $in && touch $out $tmp/lib/libluax-x86_64-linux-gnu.so
 
-build $tmp/luaxruntime-x86_64-linux-gnu | $tmp/lib/libluax-x86_64-linux-gnu.so: _tmp_luaxruntime-x86_64-linux-gnu_f16b272b2442f5ed build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
+build $tmp/luaxruntime-x86_64-linux-gnu | $tmp/lib/libluax-x86_64-linux-gnu.so: _tmp_luaxruntime-x86_64-linux-gnu-f16b272b2442f5ed build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
 
 ######################################################################
 # x86-linux-musl runtime
 ######################################################################
 
-rule _tmp_luaxruntime-x86-linux-musl_c5a283c77f17cd66
+rule _tmp_luaxruntime-x86-linux-musl-c5a283c77f17cd66
   command = RUNTIME_NAME=luaxruntime LIB_NAME=luax $zig build --cache-dir $zig_cache --prefix `dirname $out` --prefix-exe-dir "" -Dtarget=x86-linux-musl --build-file $in && touch $out
 
-build $tmp/luaxruntime-x86-linux-musl | : _tmp_luaxruntime-x86-linux-musl_c5a283c77f17cd66 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
+build $tmp/luaxruntime-x86-linux-musl | : _tmp_luaxruntime-x86-linux-musl-c5a283c77f17cd66 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
 
 ######################################################################
 # x86-linux-gnu runtime
 ######################################################################
 
-rule _tmp_luaxruntime-x86-linux-gnu_f5dbe0293f4a8826
+rule _tmp_luaxruntime-x86-linux-gnu-f5dbe0293f4a8826
   command = RUNTIME_NAME=luaxruntime LIB_NAME=luax $zig build --cache-dir $zig_cache --prefix `dirname $out` --prefix-exe-dir "" -Dtarget=x86-linux-gnu --build-file $in && touch $out $tmp/lib/libluax-x86-linux-gnu.so
 
-build $tmp/luaxruntime-x86-linux-gnu | $tmp/lib/libluax-x86-linux-gnu.so: _tmp_luaxruntime-x86-linux-gnu_f5dbe0293f4a8826 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
+build $tmp/luaxruntime-x86-linux-gnu | $tmp/lib/libluax-x86-linux-gnu.so: _tmp_luaxruntime-x86-linux-gnu-f5dbe0293f4a8826 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
 
 ######################################################################
 # aarch64-linux-musl runtime
 ######################################################################
 
-rule _tmp_luaxruntime-aarch64-linux-musl_d1d513c4eec1b526
+rule _tmp_luaxruntime-aarch64-linux-musl-d1d513c4eec1b526
   command = RUNTIME_NAME=luaxruntime LIB_NAME=luax $zig build --cache-dir $zig_cache --prefix `dirname $out` --prefix-exe-dir "" -Dtarget=aarch64-linux-musl --build-file $in && touch $out
 
-build $tmp/luaxruntime-aarch64-linux-musl | : _tmp_luaxruntime-aarch64-linux-musl_d1d513c4eec1b526 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
+build $tmp/luaxruntime-aarch64-linux-musl | : _tmp_luaxruntime-aarch64-linux-musl-d1d513c4eec1b526 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
 
 ######################################################################
 # aarch64-linux-gnu runtime
 ######################################################################
 
-rule _tmp_luaxruntime-aarch64-linux-gnu_ad273c5921109107
+rule _tmp_luaxruntime-aarch64-linux-gnu-ad273c5921109107
   command = RUNTIME_NAME=luaxruntime LIB_NAME=luax $zig build --cache-dir $zig_cache --prefix `dirname $out` --prefix-exe-dir "" -Dtarget=aarch64-linux-gnu --build-file $in && touch $out $tmp/lib/libluax-aarch64-linux-gnu.so
 
-build $tmp/luaxruntime-aarch64-linux-gnu | $tmp/lib/libluax-aarch64-linux-gnu.so: _tmp_luaxruntime-aarch64-linux-gnu_ad273c5921109107 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
+build $tmp/luaxruntime-aarch64-linux-gnu | $tmp/lib/libluax-aarch64-linux-gnu.so: _tmp_luaxruntime-aarch64-linux-gnu-ad273c5921109107 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
 
 ######################################################################
 # x86_64-windows-gnu runtime
 ######################################################################
 
-rule _tmp_luaxruntime-x86_64-windows-gnu_exe_45b586d419051173
+rule _tmp_luaxruntime-x86_64-windows-gnu.exe-45b586d419051173
   command = RUNTIME_NAME=luaxruntime LIB_NAME=luax $zig build --cache-dir $zig_cache --prefix `dirname $out` --prefix-exe-dir "" -Dtarget=x86_64-windows-gnu --build-file $in && touch $out $tmp/lib/luax-x86_64-windows-gnu.dll
 
-build $tmp/luaxruntime-x86_64-windows-gnu.exe | $tmp/lib/luax-x86_64-windows-gnu.dll: _tmp_luaxruntime-x86_64-windows-gnu_exe_45b586d419051173 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
+build $tmp/luaxruntime-x86_64-windows-gnu.exe | $tmp/lib/luax-x86_64-windows-gnu.dll: _tmp_luaxruntime-x86_64-windows-gnu.exe-45b586d419051173 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
 
 ######################################################################
 # x86-windows-gnu runtime
 ######################################################################
 
-rule _tmp_luaxruntime-x86-windows-gnu_exe_f12ab0667d360917
+rule _tmp_luaxruntime-x86-windows-gnu.exe-f12ab0667d360917
   command = RUNTIME_NAME=luaxruntime LIB_NAME=luax $zig build --cache-dir $zig_cache --prefix `dirname $out` --prefix-exe-dir "" -Dtarget=x86-windows-gnu --build-file $in && touch $out $tmp/lib/luax-x86-windows-gnu.dll
 
-build $tmp/luaxruntime-x86-windows-gnu.exe | $tmp/lib/luax-x86-windows-gnu.dll: _tmp_luaxruntime-x86-windows-gnu_exe_f12ab0667d360917 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
+build $tmp/luaxruntime-x86-windows-gnu.exe | $tmp/lib/luax-x86-windows-gnu.dll: _tmp_luaxruntime-x86-windows-gnu.exe-f12ab0667d360917 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
 
 ######################################################################
 # x86_64-macos-none runtime
 ######################################################################
 
-rule _tmp_luaxruntime-x86_64-macos-none_2f01b30843ac05c0
+rule _tmp_luaxruntime-x86_64-macos-none-2f01b30843ac05c0
   command = RUNTIME_NAME=luaxruntime LIB_NAME=luax $zig build --cache-dir $zig_cache --prefix `dirname $out` --prefix-exe-dir "" -Dtarget=x86_64-macos-none --build-file $in && touch $out $tmp/lib/libluax-x86_64-macos-none.dylib
 
-build $tmp/luaxruntime-x86_64-macos-none | $tmp/lib/libluax-x86_64-macos-none.dylib: _tmp_luaxruntime-x86_64-macos-none_2f01b30843ac05c0 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
+build $tmp/luaxruntime-x86_64-macos-none | $tmp/lib/libluax-x86_64-macos-none.dylib: _tmp_luaxruntime-x86_64-macos-none-2f01b30843ac05c0 build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
 
 ######################################################################
 # aarch64-macos-none runtime
 ######################################################################
 
-rule _tmp_luaxruntime-aarch64-macos-none_9bdb9fb6d7156b6a
+rule _tmp_luaxruntime-aarch64-macos-none-9bdb9fb6d7156b6a
   command = RUNTIME_NAME=luaxruntime LIB_NAME=luax $zig build --cache-dir $zig_cache --prefix `dirname $out` --prefix-exe-dir "" -Dtarget=aarch64-macos-none --build-file $in && touch $out $tmp/lib/libluax-aarch64-macos-none.dylib
 
-build $tmp/luaxruntime-aarch64-macos-none | $tmp/lib/libluax-aarch64-macos-none.dylib: _tmp_luaxruntime-aarch64-macos-none_9bdb9fb6d7156b6a build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
+build $tmp/luaxruntime-aarch64-macos-none | $tmp/lib/libluax-aarch64-macos-none.dylib: _tmp_luaxruntime-aarch64-macos-none-9bdb9fb6d7156b6a build.zig | $zig lua/lapi.c lua/lauxlib.c lua/lbaselib.c lua/lcode.c lua/lcorolib.c lua/lctype.c lua/ldblib.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/linit.c lua/liolib.c lua/llex.c lua/lmathlib.c lua/lmem.c lua/loadlib.c lua/lobject.c lua/lopcodes.c lua/loslib.c lua/lparser.c lua/lstate.c lua/lstring.c lua/lstrlib.c lua/ltable.c lua/ltablib.c lua/ltm.c lua/lundump.c lua/lutf8lib.c lua/lvm.c lua/lzio.c luax-libs/complex/complex.c luax-libs/crypt/crypt.c luax-libs/crypt/sha1.c luax-libs/fs/fs.c luax-libs/libluax.c luax-libs/lz4/lz4.c luax-libs/ps/ps.c luax-libs/rt0/rt0.c luax-libs/socket/luasocket.c luax-libs/std/std.c luax-libs/sys/sys.c luax-libs/term/term.c luax-libs/tools.c luax/luax.c ext/c/lcomplex/lcomplex.c ext/c/limath/limath.c ext/c/limath/src/imath.c ext/c/lpeg/lpcap.c ext/c/lpeg/lpcode.c ext/c/lpeg/lpcset.c ext/c/lpeg/lpprint.c ext/c/lpeg/lptree.c ext/c/lpeg/lpvm.c ext/c/lqmath/lqmath.c ext/c/lqmath/src/imrat.c ext/c/luasocket/auxiliar.c ext/c/luasocket/buffer.c ext/c/luasocket/compat.c ext/c/luasocket/except.c ext/c/luasocket/inet.c ext/c/luasocket/io.c ext/c/luasocket/luasocket.c ext/c/luasocket/mime.c ext/c/luasocket/options.c ext/c/luasocket/select.c ext/c/luasocket/tcp.c ext/c/luasocket/timeout.c ext/c/luasocket/udp.c ext/c/lz4/lib/lz4.c ext/c/lz4/lib/lz4file.c ext/c/lz4/lib/lz4frame.c ext/c/lz4/lib/lz4hc.c ext/c/lz4/lib/xxhash.c ext/c/mathx/lmathx.c $luax_runtime_bundle $luax_config_h $luax_crypt_key
 
 ######################################################################
 # LuaX binaries
@@ -229,104 +229,104 @@ rule cp
 # LuaX x86_64-linux-musl
 ######################################################################
 
-rule _bin_luax-x86_64-linux-musl_7b42172726c7bb3f
+rule _bin_luax-x86_64-linux-musl-7b42172726c7bb3f
   command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86_64-linux-musl $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
 
-build $bin/luax-x86_64-linux-musl: _bin_luax-x86_64-linux-musl_7b42172726c7bb3f luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86_64-linux-musl
+build $bin/luax-x86_64-linux-musl: _bin_luax-x86_64-linux-musl-7b42172726c7bb3f luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86_64-linux-musl
 
 ######################################################################
 # LuaX x86_64-linux-gnu
 ######################################################################
 
-rule _bin_luax-x86_64-linux-gnu_aa797719dbdffd4d
+rule _bin_luax-x86_64-linux-gnu-aa797719dbdffd4d
   command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86_64-linux-gnu $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
 
-build $bin/luax-x86_64-linux-gnu: _bin_luax-x86_64-linux-gnu_aa797719dbdffd4d luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86_64-linux-gnu
+build $bin/luax-x86_64-linux-gnu: _bin_luax-x86_64-linux-gnu-aa797719dbdffd4d luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86_64-linux-gnu
 build $lib/libluax-x86_64-linux-gnu.so: cp $tmp/lib/libluax-x86_64-linux-gnu.so
 
 ######################################################################
 # LuaX x86-linux-musl
 ######################################################################
 
-rule _bin_luax-x86-linux-musl_f496275af18faaf4
+rule _bin_luax-x86-linux-musl-f496275af18faaf4
   command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86-linux-musl $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
 
-build $bin/luax-x86-linux-musl: _bin_luax-x86-linux-musl_f496275af18faaf4 luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86-linux-musl
+build $bin/luax-x86-linux-musl: _bin_luax-x86-linux-musl-f496275af18faaf4 luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86-linux-musl
 
 ######################################################################
 # LuaX x86-linux-gnu
 ######################################################################
 
-rule _bin_luax-x86-linux-gnu_1fa3392c7063017b
+rule _bin_luax-x86-linux-gnu-1fa3392c7063017b
   command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86-linux-gnu $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
 
-build $bin/luax-x86-linux-gnu: _bin_luax-x86-linux-gnu_1fa3392c7063017b luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86-linux-gnu
+build $bin/luax-x86-linux-gnu: _bin_luax-x86-linux-gnu-1fa3392c7063017b luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86-linux-gnu
 build $lib/libluax-x86-linux-gnu.so: cp $tmp/lib/libluax-x86-linux-gnu.so
 
 ######################################################################
 # LuaX aarch64-linux-musl
 ######################################################################
 
-rule _bin_luax-aarch64-linux-musl_222f361610cb5742
+rule _bin_luax-aarch64-linux-musl-222f361610cb5742
   command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-aarch64-linux-musl $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
 
-build $bin/luax-aarch64-linux-musl: _bin_luax-aarch64-linux-musl_222f361610cb5742 luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-aarch64-linux-musl
+build $bin/luax-aarch64-linux-musl: _bin_luax-aarch64-linux-musl-222f361610cb5742 luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-aarch64-linux-musl
 
 ######################################################################
 # LuaX aarch64-linux-gnu
 ######################################################################
 
-rule _bin_luax-aarch64-linux-gnu_cd77a37a680e0912
+rule _bin_luax-aarch64-linux-gnu-cd77a37a680e0912
   command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-aarch64-linux-gnu $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
 
-build $bin/luax-aarch64-linux-gnu: _bin_luax-aarch64-linux-gnu_cd77a37a680e0912 luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-aarch64-linux-gnu
+build $bin/luax-aarch64-linux-gnu: _bin_luax-aarch64-linux-gnu-cd77a37a680e0912 luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-aarch64-linux-gnu
 build $lib/libluax-aarch64-linux-gnu.so: cp $tmp/lib/libluax-aarch64-linux-gnu.so
 
 ######################################################################
 # LuaX x86_64-windows-gnu
 ######################################################################
 
-rule _bin_luax-x86_64-windows-gnu_exe_aaea94a297f9c07e
+rule _bin_luax-x86_64-windows-gnu.exe-aaea94a297f9c07e
   command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86_64-windows-gnu.exe $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
 
-build $bin/luax-x86_64-windows-gnu.exe: _bin_luax-x86_64-windows-gnu_exe_aaea94a297f9c07e luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86_64-windows-gnu.exe
+build $bin/luax-x86_64-windows-gnu.exe: _bin_luax-x86_64-windows-gnu.exe-aaea94a297f9c07e luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86_64-windows-gnu.exe
 build $lib/luax-x86_64-windows-gnu.dll: cp $tmp/lib/luax-x86_64-windows-gnu.dll
 
 ######################################################################
 # LuaX x86-windows-gnu
 ######################################################################
 
-rule _bin_luax-x86-windows-gnu_exe_effd7580dc7c484a
+rule _bin_luax-x86-windows-gnu.exe-effd7580dc7c484a
   command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86-windows-gnu.exe $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
 
-build $bin/luax-x86-windows-gnu.exe: _bin_luax-x86-windows-gnu_exe_effd7580dc7c484a luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86-windows-gnu.exe
+build $bin/luax-x86-windows-gnu.exe: _bin_luax-x86-windows-gnu.exe-effd7580dc7c484a luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86-windows-gnu.exe
 build $lib/luax-x86-windows-gnu.dll: cp $tmp/lib/luax-x86-windows-gnu.dll
 
 ######################################################################
 # LuaX x86_64-macos-none
 ######################################################################
 
-rule _bin_luax-x86_64-macos-none_3f2e672f928e91cb
+rule _bin_luax-x86_64-macos-none-3f2e672f928e91cb
   command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86_64-macos-none $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
 
-build $bin/luax-x86_64-macos-none: _bin_luax-x86_64-macos-none_3f2e672f928e91cb luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86_64-macos-none
+build $bin/luax-x86_64-macos-none: _bin_luax-x86_64-macos-none-3f2e672f928e91cb luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86_64-macos-none
 build $lib/libluax-x86_64-macos-none.dylib: cp $tmp/lib/libluax-x86_64-macos-none.dylib
 
 ######################################################################
 # LuaX aarch64-macos-none
 ######################################################################
 
-rule _bin_luax-aarch64-macos-none_164ac123c5ffda06
+rule _bin_luax-aarch64-macos-none-164ac123c5ffda06
   command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-aarch64-macos-none $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
 
-build $bin/luax-aarch64-macos-none: _bin_luax-aarch64-macos-none_164ac123c5ffda06 luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-aarch64-macos-none
+build $bin/luax-aarch64-macos-none: _bin_luax-aarch64-macos-none-164ac123c5ffda06 luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-aarch64-macos-none
 build $lib/libluax-aarch64-macos-none.dylib: cp $tmp/lib/libluax-aarch64-macos-none.dylib
 luax = $bin/luax
 
-rule _luax_0944b8049bce16f6
+rule _luax-0944b8049bce16f6
   command = . tools/build_env.sh $tmp; cp -f $bin/luax-$$ARCH-$$OS-$$LIBC$$EXT $out$$EXT
 
-build $luax: _luax_0944b8049bce16f6 | $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-x86-linux-musl $bin/luax-x86-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none
+build $luax: _luax-0944b8049bce16f6 | $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-x86-linux-musl $bin/luax-x86-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none
 
 ######################################################################
 # LuaX Lua implementation
@@ -336,77 +336,77 @@ build $luax: _luax_0944b8049bce16f6 | $bin/luax-x86_64-linux-musl $bin/luax-x86_
 # $lib/luax.lua
 ######################################################################
 
-rule _lib_luax_lua_b8137ccb0a34a6c5
+rule _lib_luax.lua-b8137ccb0a34a6c5
   command = . tools/build_env.sh $tmp; LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -lib -lua $in > $out.tmp && touch $out.tmp && mv $out.tmp $out
 
-build $lib/luax.lua: _lib_luax_lua_b8137ccb0a34a6c5 $luax_config_lua luax-libs/F/F.lua luax-libs/L/L.lua luax-libs/complex/complex.lua luax-libs/crypt/crypt.lua luax-libs/fs/fs.lua luax-libs/imath/imath.lua luax-libs/lpeg/lpeg.lua luax-libs/lz4/lz4.lua luax-libs/mathx/mathx.lua luax-libs/package/package_hook.lua luax-libs/ps/ps.lua luax-libs/qmath/qmath.lua luax-libs/rt0/rt0.lua luax-libs/sh/sh.lua luax-libs/sys/sys.lua luax-libs/term/term.lua ext/lua/argparse/argparse.lua ext/lua/inspect/inspect.lua ext/lua/serpent/serpent.lua | $lz4 $lua luax/bundle.lua tools/rc4_runtime.lua
+build $lib/luax.lua: _lib_luax.lua-b8137ccb0a34a6c5 $luax_config_lua luax-libs/F/F.lua luax-libs/L/L.lua luax-libs/complex/complex.lua luax-libs/crypt/crypt.lua luax-libs/fs/fs.lua luax-libs/imath/imath.lua luax-libs/lpeg/lpeg.lua luax-libs/lz4/lz4.lua luax-libs/mathx/mathx.lua luax-libs/package/package_hook.lua luax-libs/ps/ps.lua luax-libs/qmath/qmath.lua luax-libs/rt0/rt0.lua luax-libs/sh/sh.lua luax-libs/sys/sys.lua luax-libs/term/term.lua ext/lua/argparse/argparse.lua ext/lua/inspect/inspect.lua ext/lua/serpent/serpent.lua | $lz4 $lua luax/bundle.lua tools/rc4_runtime.lua
 
 ######################################################################
 # $bin/luax-lua
 ######################################################################
 
-rule _bin_luax-lua_2a3192456f35617f
+rule _bin_luax-lua-2a3192456f35617f
   command = $luax -q -t lua -o $out $in
 
-build $bin/luax-lua: _bin_luax-lua_2a3192456f35617f luax/luax.lua | $luax $lib/luax.lua
+build $bin/luax-lua: _bin_luax-lua-2a3192456f35617f luax/luax.lua | $luax $lib/luax.lua
 
 ######################################################################
 # $bin/luax-pandoc
 ######################################################################
 
-rule _bin_luax-pandoc_00e7b43aa25cd595
+rule _bin_luax-pandoc-00e7b43aa25cd595
   command = $luax -q -t pandoc -o $out $in
 
-build $bin/luax-pandoc: _bin_luax-pandoc_00e7b43aa25cd595 luax/luax.lua | $luax $lib/luax.lua
+build $bin/luax-pandoc: _bin_luax-pandoc-00e7b43aa25cd595 luax/luax.lua | $luax $lib/luax.lua
 
 ######################################################################
 # Tests
 ######################################################################
 
-rule _test_test-1-luax_executable_ok_7578e6be563bdfc2
+rule _test_test-1-luax_executable.ok-7578e6be563bdfc2
   command = . tools/build_env.sh $tmp; $luax -q -o $test/test-luax tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua && TYPE=static LUA_PATH='tests/luax-tests/?.lua' TEST_NUM=1 $test/test-luax Lua is great && touch $out
 
-build $test/test-1-luax_executable.ok: _test_test-1-luax_executable_ok_7578e6be563bdfc2 | $luax tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
+build $test/test-1-luax_executable.ok: _test_test-1-luax_executable.ok-7578e6be563bdfc2 | $luax tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
 
-rule _test_test-2-lib_ok_0483109cbfcf0654
+rule _test_test-2-lib.ok-0483109cbfcf0654
   command = . tools/build_env.sh $tmp; eval `$luax env`; TYPE=dynamic LUA_PATH='tests/luax-tests/?.lua' TEST_NUM=2 $lua -l libluax tests/luax-tests/main.lua Lua is great && touch $out
 
-build $test/test-2-lib.ok: _test_test-2-lib_ok_0483109cbfcf0654 | $lua $luax $lib/libluax-x86_64-linux-gnu.so $lib/libluax-x86-linux-gnu.so $lib/libluax-aarch64-linux-gnu.so $lib/luax-x86_64-windows-gnu.dll $lib/luax-x86-windows-gnu.dll $lib/libluax-x86_64-macos-none.dylib $lib/libluax-aarch64-macos-none.dylib $lib/luax.lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
+build $test/test-2-lib.ok: _test_test-2-lib.ok-0483109cbfcf0654 | $lua $luax $lib/libluax-x86_64-linux-gnu.so $lib/libluax-x86-linux-gnu.so $lib/libluax-aarch64-linux-gnu.so $lib/luax-x86_64-windows-gnu.dll $lib/luax-x86-windows-gnu.dll $lib/libluax-x86_64-macos-none.dylib $lib/libluax-aarch64-macos-none.dylib $lib/luax.lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
 
-rule _test_test-3-lua_ok_77f1b1384794fe92
+rule _test_test-3-lua.ok-77f1b1384794fe92
   command = . tools/build_env.sh $tmp; LIBC=lua TYPE=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=3 $lua -l luax tests/luax-tests/main.lua Lua is great && touch $out
 
-build $test/test-3-lua.ok: _test_test-3-lua_ok_77f1b1384794fe92 | $lua $lib/luax.lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
+build $test/test-3-lua.ok: _test_test-3-lua.ok-77f1b1384794fe92 | $lua $lib/luax.lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
 
-rule _test_test-4-lua-luax-lua_ok_809d7a9861d25e40
+rule _test_test-4-lua-luax-lua.ok-809d7a9861d25e40
   command = . tools/build_env.sh $tmp; LIBC=lua TYPE=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=4 $bin/luax-lua tests/luax-tests/main.lua Lua is great && touch $out
 
-build $test/test-4-lua-luax-lua.ok: _test_test-4-lua-luax-lua_ok_809d7a9861d25e40 | $lua $bin/luax-lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
+build $test/test-4-lua-luax-lua.ok: _test_test-4-lua-luax-lua.ok-809d7a9861d25e40 | $lua $bin/luax-lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
 
-rule _test_test-5-pandoc-luax-lua_ok_5343264bc5405997
+rule _test_test-5-pandoc-luax-lua.ok-5343264bc5405997
   command = . tools/build_env.sh $tmp; LIBC=lua TYPE=pandoc LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=5 pandoc lua -l luax tests/luax-tests/main.lua Lua is great && touch $out
 
-build $test/test-5-pandoc-luax-lua.ok: _test_test-5-pandoc-luax-lua_ok_5343264bc5405997 | $lua $lib/luax.lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
+build $test/test-5-pandoc-luax-lua.ok: _test_test-5-pandoc-luax-lua.ok-5343264bc5405997 | $lua $lib/luax.lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
 
-rule _test_test-ext-1-lua_ok_57656074244b508c
+rule _test_test-ext-1-lua.ok-57656074244b508c
   command = . tools/build_env.sh $tmp; eval `$luax env`; $luax -q -t lua -o $test/ext-lua $in && TARGET=lua $test/ext-lua Lua is great && touch $out
 
-build $test/test-ext-1-lua.ok: _test_test-ext-1-lua_ok_57656074244b508c tests/external_interpreter_tests/external_interpreters.lua | $lib/luax.lua $luax $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-x86-linux-musl $bin/luax-x86-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none $luax $bin/luax-lua $bin/luax-pandoc
+build $test/test-ext-1-lua.ok: _test_test-ext-1-lua.ok-57656074244b508c tests/external_interpreter_tests/external_interpreters.lua | $lib/luax.lua $luax $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-x86-linux-musl $bin/luax-x86-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none $luax $bin/luax-lua $bin/luax-pandoc
 
-rule _test_test-ext-2-lua-luax_ok_97b694b61fa02891
+rule _test_test-ext-2-lua-luax.ok-97b694b61fa02891
   command = . tools/build_env.sh $tmp; eval `$luax env`; $luax -q -t lua-luax -o $test/ext-lua-luax $in && TARGET=lua-luax $test/ext-lua-luax Lua is great && touch $out
 
-build $test/test-ext-2-lua-luax.ok: _test_test-ext-2-lua-luax_ok_97b694b61fa02891 tests/external_interpreter_tests/external_interpreters.lua | $lib/luax.lua $luax
+build $test/test-ext-2-lua-luax.ok: _test_test-ext-2-lua-luax.ok-97b694b61fa02891 tests/external_interpreter_tests/external_interpreters.lua | $lib/luax.lua $luax
 
-rule _test_test-ext-3-luax_ok_a731b6c8a8355006
+rule _test_test-ext-3-luax.ok-a731b6c8a8355006
   command = . tools/build_env.sh $tmp; eval `$luax env`; $luax -q -t luax -o $test/ext-luax $in && TARGET=luax $test/ext-luax Lua is great && touch $out
 
-build $test/test-ext-3-luax.ok: _test_test-ext-3-luax_ok_a731b6c8a8355006 tests/external_interpreter_tests/external_interpreters.lua | $lib/luax.lua $luax
+build $test/test-ext-3-luax.ok: _test_test-ext-3-luax.ok-a731b6c8a8355006 tests/external_interpreter_tests/external_interpreters.lua | $lib/luax.lua $luax
 
-rule _test_test-ext-4-pandoc_ok_52c5090bac1c8a2e
+rule _test_test-ext-4-pandoc.ok-52c5090bac1c8a2e
   command = . tools/build_env.sh $tmp; eval `$luax env`; $luax -q -t pandoc -o $test/ext-pandoc $in && TARGET=pandoc $test/ext-pandoc Lua is great && touch $out
 
-build $test/test-ext-4-pandoc.ok: _test_test-ext-4-pandoc_ok_52c5090bac1c8a2e tests/external_interpreter_tests/external_interpreters.lua | $lib/luax.lua $luax $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-x86-linux-musl $bin/luax-x86-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none $luax $bin/luax-lua $bin/luax-pandoc
+build $test/test-ext-4-pandoc.ok: _test_test-ext-4-pandoc.ok-52c5090bac1c8a2e tests/external_interpreter_tests/external_interpreters.lua | $lib/luax.lua $luax $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-x86-linux-musl $bin/luax-x86-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none $luax $bin/luax-lua $bin/luax-pandoc
 
 ######################################################################
 # Documentation
@@ -478,39 +478,39 @@ build update: phony update_modules
 
 prefix = $$HOME/.local
 
-rule install-bin_21c266048ccc983d
+rule install-bin-21c266048ccc983d
   description = INSTALL $in to bin
   command = install -v -D -t $${PREFIX:-$prefix}/bin $in
 
-build install-bin: install-bin_21c266048ccc983d $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-x86-linux-musl $bin/luax-x86-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none $luax $bin/luax-lua $bin/luax-pandoc
+build install-bin: install-bin-21c266048ccc983d $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-x86-linux-musl $bin/luax-x86-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none $luax $bin/luax-lua $bin/luax-pandoc
 
-rule install-lib_fdd7ad5f2480eba7
+rule install-lib-fdd7ad5f2480eba7
   description = INSTALL $in to lib
   command = install -v -D -t $${PREFIX:-$prefix}/lib $in
 
-build install-lib: install-lib_fdd7ad5f2480eba7 $lib/libluax-x86_64-linux-gnu.so $lib/libluax-x86-linux-gnu.so $lib/libluax-aarch64-linux-gnu.so $lib/luax-x86_64-windows-gnu.dll $lib/luax-x86-windows-gnu.dll $lib/libluax-x86_64-macos-none.dylib $lib/libluax-aarch64-macos-none.dylib $lib/luax.lua
+build install-lib: install-lib-fdd7ad5f2480eba7 $lib/libluax-x86_64-linux-gnu.so $lib/libluax-x86-linux-gnu.so $lib/libluax-aarch64-linux-gnu.so $lib/luax-x86_64-windows-gnu.dll $lib/luax-x86-windows-gnu.dll $lib/libluax-x86_64-macos-none.dylib $lib/libluax-aarch64-macos-none.dylib $lib/luax.lua
 build install: phony install-bin install-lib
 
 ######################################################################
 # Clean
 ######################################################################
 
-rule clean-_builddir_e7c9fd42467ee7fb
+rule clean-_builddir-e7c9fd42467ee7fb
   description = CLEAN $builddir
   command = rm -rf $builddir/*
 
-build clean-_builddir: clean-_builddir_e7c9fd42467ee7fb
+build clean-_builddir: clean-_builddir-e7c9fd42467ee7fb
 build clean: phony clean-_builddir
 
 ######################################################################
 # Clean (mrproper)
 ######################################################################
 
-rule mrproper-_zig_cache_dda176db1ca72cf9
+rule mrproper-_zig_cache-dda176db1ca72cf9
   description = CLEAN $zig_cache
   command = rm -rf $zig_cache
 
-build mrproper-_zig_cache: mrproper-_zig_cache_dda176db1ca72cf9
+build mrproper-_zig_cache: mrproper-_zig_cache-dda176db1ca72cf9
 build mrproper: phony clean mrproper-_zig_cache
 
 ######################################################################

@@ -194,16 +194,13 @@ var "lua" "$tmp/lua"
 
 var "lua_path" (
     F{
-        "./?.lua",
-        "$tmp/./?.lua",
-        "luax-libs/?.lua",
-        fs.dir "luax-libs"
-            : map(function(name)
-                local path = fs.join("luax-libs", name)
-                return fs.is_dir(path) and fs.join(path, "?.lua") or {}
-            end),
+        ".",
+        "$tmp",
+        "luax-libs",
+        ls "luax-libs/*" : filter(fs.is_dir),
     }
     : flatten()
+    : map(function(path) return fs.join(path, "?.lua") end)
     : str ";"
 )
 
