@@ -518,8 +518,8 @@ build mrproper: phony clean mrproper-_zig_cache
 # Help
 ######################################################################
 
-rule help
-  description = $in
-  command = cat $in
+rule help-ed43c8257c60b0bb
+  description = help
+  command = echo "Lua eXtended"; echo "Copyright (C) 2021-2023 Christophe Delord (https://cdelord.fr/luax)"; echo ""; echo "luax is a Lua interpreter and REPL based on Lua 5.4"; echo "augmented with some useful packages."; echo "luax can also produce standalone executables from Lua scripts."; echo ""; echo "luax runs on several platforms with no dependency:"; echo ""; echo "- Linux (x86_64, x86, aarch64)"; echo "- MacOS (x86_64, aarch64)"; echo "- Windows (x86_64, x86)"; echo ""; echo "luax can « cross-compile » scripts from and to any of these platforms."; echo ""; echo "Targets:"; echo "  help        show this help message"; echo "  compile     compile LuaX"; echo "  test-fast   run LuaX tests (fast, native tests only)"; echo "  test        run all LuaX tests"; echo "  doc         update LuaX documentation"; echo "  all         alias for compile, test and doc"; echo "  update      update third-party modules"; echo "  install     install LuaX in $PREFIX or $HOME/.local"; echo "  clean       clean generated files"; echo "  mrproper    clean generated files and more";
 
-build help: help build.hlp
+build help: help-ed43c8257c60b0bb
