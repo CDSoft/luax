@@ -58,6 +58,7 @@ local function fs_test(tmp)
     if sys.os == "linux" then
         sh.run("ln -sf", fs.join(tmp, "linkdest"), fs.join(tmp, "symlink"))
         eq(fs.readlink(fs.join(tmp, "symlink")), fs.join(tmp, "linkdest"))
+        eq((tmp/"symlink"):readlink(), tmp/"linkdest")
         fs.rm(fs.join(tmp, "symlink"))
     end
 
@@ -75,6 +76,7 @@ local function fs_test(tmp)
     if sys.abi == "gnu" or sys.abi == "musl" then
         eq(fs.dir():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         eq(fs.dir("."):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
+        eq(("."):dir():sort(), fs.dir("."):sort())
     end
     if sys.os == "linux" and (sys.abi == "gnu" or sys.abi == "musl") then
         eq(fs.glob():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
@@ -96,10 +98,13 @@ local function fs_test(tmp)
         eq(f(tmp, {reverse=reverse}), F.map(function(name) return F.prefix(tmp)(name:gsub("/", fs.sep)) end, testfiles))
     end
 
-    test_files(fs.walk, {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/foo.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
+    test_files(fs.walk,     {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/foo.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
+    test_files(string.walk, {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/foo.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
     assert(fs.rename(fs.join(tmp, "foo.txt"), fs.join(tmp, "foo2.txt")))
-    test_files(fs.walk, {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
-    test_files(fs.walk, {"/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt","/bar/baz","/level1/level2/level3","/level1/level2","/level1","/foo","/bar"}, true)
+    test_files(fs.walk,     {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
+    test_files(string.walk, {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
+    test_files(fs.walk,     {"/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt","/bar/baz","/level1/level2/level3","/level1/level2","/level1","/foo","/bar"}, true)
+    test_files(string.walk, {"/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt","/bar/baz","/level1/level2/level3","/level1/level2","/level1","/foo","/bar"}, true)
 
     do
         local content1 = "Lua is great!!!"
@@ -114,21 +119,29 @@ local function fs_test(tmp)
         test_files(fs.walk, {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/f1.txt","/f2.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
 
         eq(fs.is_file(fs.join(tmp, "f1.txt")), true)
+        eq((tmp/"f1.txt"):is_file(), true)
         eq(fs.is_file(fs.join(tmp, "unknown")), false)
+        eq((tmp/"unknown"):is_file(), false)
         eq(fs.is_file(fs.join(tmp, "foo")), false)
+        eq((tmp/"foo"):is_file(), false)
 
         eq(fs.is_dir(fs.join(tmp, "f1.txt")), false)
+        eq((tmp/"f1.txt"):is_dir(), false)
         eq(fs.is_dir(fs.join(tmp, "unknown")), false)
+        eq((tmp/"unknown"):is_dir(), false)
         eq(fs.is_dir(fs.join(tmp, "foo")), true)
+        eq((tmp/"foo"):is_dir(), true)
 
         local stat_f1 = assert(fs.stat(fs.join(tmp, "f1.txt")))
         eq(stat_f1.name, fs.join(tmp, "f1.txt"))
         eq(stat_f1.type, "file")
         eq(stat_f1.size, #content1)
+        eq((tmp/"f1.txt"):stat(), stat_f1)
 
         local stat_foo = assert(fs.stat(fs.join(tmp, "foo")))
         eq(stat_foo.name, fs.join(tmp, "foo"))
         eq(stat_foo.type, "directory")
+        eq((tmp/"foo"):stat(), stat_foo)
     end
 
     if sys.os == "linux" then
@@ -196,9 +209,13 @@ local function fs_test(tmp)
 
     local a, b, c = "aaa", "bb", "ccc"
     eq(fs.join(a, b, c), "aaa/bb/ccc")
+    eq(a/b/c, "aaa/bb/ccc")
     eq(fs.join(a, fs.sep..b, c), "/bb/ccc")
+    eq(a/(fs.sep..b)/c, "/bb/ccc")
     eq(fs.dirname(fs.join(a,b,c)), fs.join(a,b))
+    eq((a/b/c):dirname(), a/b)
     eq(fs.basename(fs.join(a,b,c)), fs.join(c))
+    eq((a/b/c):basename(), c)
     eq({fs.splitext("path/with.dots/file.with_ext")},     {"path/with.dots/file", ".with_ext"})
     eq({fs.splitext("path/with.dots/file_without_ext")},  {"path/with.dots/file_without_ext", ""})
     eq({fs.splitext("path/with.dots/.file_without_ext")}, {"path/with.dots/.file_without_ext", ""})
@@ -217,18 +234,22 @@ local function fs_test(tmp)
     eq({fs.ext("file.with_ext")},     {".with_ext"})
     eq({fs.ext("file_without_ext")},  {""})
     eq({fs.ext(".file_without_ext")}, {""})
+    eq({("path/with.dots/file.with_ext"):splitext()}, {"path/with.dots/file", ".with_ext"})
+    eq({("path/with.dots/file.with_ext"):ext()}, {".with_ext"})
     if sys.abi == "gnu" or sys.abi == "musl" then
         eq(fs.absname("."), fs.join(tmp, "."))
     end
     eq(fs.absname(tmp), tmp)
     if sys.abi == "gnu" or sys.abi == "musl" then
         eq(fs.absname("foo"), fs.join(tmp, "foo"))
+        eq(("foo"):absname(), tmp/"foo")
     end
     eq(fs.absname("/foo"), "/foo")
     eq(fs.absname("\\foo"), "\\foo")
     eq(fs.absname("Z:foo"), "Z:foo")
     if sys.abi == "gnu" or sys.abi == "musl" then
         eq(fs.realpath("."), tmp)
+        eq(("."):realpath(), tmp)
     end
     eq(fs.realpath(tmp), tmp)
     if sys.abi == "gnu" or sys.abi == "musl" then
@@ -248,6 +269,7 @@ local function fs_test(tmp)
 
     if sys.os == "linux" then
         eq(fs.findpath("sh"), "/usr/bin/sh")
+        eq(("sh"):findpath(), "/usr/bin/sh")
         local path, msg = fs.findpath("a_name_that_is_likely_not_found")
         eq(path, nil)
         eq(msg, "a_name_that_is_likely_not_found: not found in $PATH")

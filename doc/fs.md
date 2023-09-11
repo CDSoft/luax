@@ -300,3 +300,25 @@ fs.write_bin(filename, ...)
 ```
 
 write `...` to the binary file `filename`.
+
+## String methods
+
+Some functions of the `fs` package are added to the string module:
+
+``` lua
+path:dir(path)              == fs.dir(path)
+path:stat(path)             == fs.stat(path)
+path:inode(path)            == fs.inode(path)
+path:basename(path)         == fs.basename(path)
+path:dirname(path)          == fs.dirname(path)
+path:splitext(path)         == fs.splitext(path)
+path:ext(path)              == fs.ext(path)
+path:realpath(path)         == fs.realpath(path)
+path:readlink(path)         == fs.readlink(path)
+path:absname(path)          == fs.absname(path)
+path1 / path2               == fs.join(path1, path2)
+path:is_file(path)          == fs.is_file(path)
+path:is_dir(path)           == fs.is_dir(path)
+path:findpath(path)         == fs.findpath(path)
+path:walk(path, ...)        == fs.walk(path, ...)
+```

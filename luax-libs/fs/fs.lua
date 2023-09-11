@@ -582,4 +582,51 @@ function fs.write_bin(name, ...)
     return ok, werr
 end
 
+--[[------------------------------------------------------------------------@@@
+## String methods
+
+Some functions of the `fs` package are added to the string module:
+
+@@@]]
+
+--[[@@@
+```lua
+path:dir(path)              == fs.dir(path)
+path:stat(path)             == fs.stat(path)
+path:inode(path)            == fs.inode(path)
+path:basename(path)         == fs.basename(path)
+path:dirname(path)          == fs.dirname(path)
+path:splitext(path)         == fs.splitext(path)
+path:ext(path)              == fs.ext(path)
+path:realpath(path)         == fs.realpath(path)
+path:readlink(path)         == fs.readlink(path)
+path:absname(path)          == fs.absname(path)
+path1 / path2               == fs.join(path1, path2)
+path:is_file(path)          == fs.is_file(path)
+path:is_dir(path)           == fs.is_dir(path)
+path:findpath(path)         == fs.findpath(path)
+path:walk(path, ...)        == fs.walk(path, ...)
+```
+@@@]]
+
+function string.dir(path)                   return fs.dir(path) end
+function string.stat(path)                  return fs.stat(path) end
+function string.inode(path)                 return fs.inode(path) end
+function string.basename(path)              return fs.basename(path) end
+function string.dirname(path)               return fs.dirname(path) end
+function string.splitext(path)              return fs.splitext(path) end
+function string.ext(path)                   return fs.ext(path) end
+function string.realpath(path)              return fs.realpath(path) end
+function string.readlink(path)              return fs.readlink(path) end
+function string.absname(path)               return fs.absname(path) end
+
+getmetatable("").__div = function(path1, path2)
+    return fs.join(path1, path2)
+end
+
+function string.is_file(path)               return fs.is_file(path) end
+function string.is_dir(path)                return fs.is_dir(path) end
+function string.findpath(path)              return fs.findpath(path) end
+function string.walk(path, ...)             return fs.walk(path, ...) end
+
 return fs

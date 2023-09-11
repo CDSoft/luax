@@ -32,15 +32,11 @@ bundle.magic = "\0"..config.magic_id.."\0"
 local header_format = ("<I4c%d"):format(#bundle.magic)
 
 local function read(name)
-    local f = io.open(name)
-    if f == nil then
+    if not name:is_file() then
         io.stderr:write("error: ", name, ": File not found\n")
         os.exit(1)
     end
-    assert(f)
-    local content = f:read "a"
-    f:close()
-    return content
+    return fs.read(name)
 end
 
 local function Bundle()

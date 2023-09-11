@@ -146,7 +146,7 @@ local function print_targets()
     print "Targets producing standalone LuaX executables:\n"
     local config = require "luax_config"
     F(config.targets):foreach(function(target)
-        local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..target..ext(target))
+        local compiler = findpath(arg[0]):dirname() / "luax-"..target..ext(target)
         print(("    %-22s%s%s"):format(
             target,
             compiler:gsub("^"..os.getenv"HOME", "~"),
@@ -648,7 +648,7 @@ local function run_compiler()
     F(target == "all" and valid_targets:keys() or target and {target} or {}):foreach(function(compiler_target)
         if external_interpreters[compiler_target] then return end
         if not valid_targets[compiler_target] then err("Invalid target: %s", compiler_target) end
-        local compiler = fs.join(fs.dirname(findpath(arg[0])), "luax-"..compiler_target..ext(compiler_target))
+        local compiler = findpath(arg[0]) / "luax-"..compiler_target..ext(compiler_target)
         if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, compiler_target} end
     end)
     if not target then
@@ -699,7 +699,7 @@ local function run_compiler()
         log("output", "%s", current_output)
 
         local function findscript(script_name)
-            return fs.join(fs.dirname(fs.dirname(findpath(arg[0]))), "lib", script_name)
+            return findpath(arg[0]):dirname():dirname() / "lib" / script_name
         end
         local luax_scripts = F.map(findscript, interpreter.scripts)
 
