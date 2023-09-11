@@ -22,7 +22,9 @@ http://cdelord.fr/luax
 ## Additional functions (Lua)
 @@@]]
 
---@LIB
+-- Load fs.lua to add new methods to strings
+--@LOAD=_
+
 local _, fs = pcall(require, "_fs")
 fs = _ and fs
 

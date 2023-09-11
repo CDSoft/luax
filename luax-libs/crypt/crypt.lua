@@ -18,7 +18,9 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
---@LIB
+-- Load crypt.lua to add new methods to strings
+--@LOAD=_
+
 local _, crypt = pcall(require, "_crypt")
 crypt = _ and crypt
 

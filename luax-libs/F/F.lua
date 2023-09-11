@@ -18,7 +18,8 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
---@LIB
+-- Load F.lua to add new methods to strings
+--@LOAD=_
 
 --[[------------------------------------------------------------------------@@@
 # Functional programming utilities
