@@ -86,8 +86,8 @@ section "Zig compiler"
 ---------------------------------------------------------------------
 
 local zig_version = "0.11.0"
-var "zig"           (fs.join(".zig", zig_version, "zig"))
-var "zig_cache"     (fs.join(fs.dirname(vars.zig), "cache"))
+var "zig"           (".zig" / zig_version / "zig")
+var "zig_cache"     (vars.zig:dirname() / "cache")
 
 build "$zig" { "tools/install_zig.sh",
     command = {"$in", zig_version, "$out"},
@@ -152,7 +152,7 @@ local ignored_sources = F{
 
 local zig = {
     lua_c_files = ls "lua/*.c"
-        : filter(function(name) return F.not_elem(fs.basename(name), {"lua.c", "luac.c"}) end),
+        : filter(function(name) return F.not_elem(name:basename(), {"lua.c", "luac.c"}) end),
     lua_main_c_files = F{ "lua/lua.c" },
     luax_main_c_files = F{ "luax/luax.c" },
     luax_c_files = ls "luax-libs/**.c",
@@ -201,7 +201,7 @@ var "lua_path" (
         ls "luax-libs/*" : filter(fs.is_dir),
     }
     : flatten()
-    : map(function(path) return fs.join(path, "?.lua") end)
+    : map(function(path) return path / "?.lua" end)
     : str ";"
 )
 
@@ -362,7 +362,7 @@ targets : foreach(function(target)
     local e = ext(target)
 
     local shared_lib = shared_libs(target)
-    local shared_lib_name = shared_lib and fs.join("$tmp", "lib", shared_lib)
+    local shared_lib_name = shared_lib and ("$tmp" / "lib" / shared_lib)
 
     build("$tmp/luaxruntime-"..target..e) { "build.zig",
         command = {
@@ -440,7 +440,7 @@ targets : foreach(function(target)
     if shared_lib then
 
         acc(libraries)(build("$lib/"..shared_lib) {
-            "cp", fs.join("$tmp", "lib", shared_lib)
+            "cp", "$tmp"/"lib"/shared_lib,
         })
 
     end
@@ -779,7 +779,7 @@ acc(doc)(build "README.md" { "md_to_gfm", "doc/src/luax.md" })
 
 markdown_sources : foreach(function(src)
 
-    acc(doc)(build(fs.join("doc", fs.basename(src))) { "md_to_gfm", src })
+    acc(doc)(build("doc"/src:basename()) { "md_to_gfm", src })
 
 end)
 
