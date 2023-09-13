@@ -648,7 +648,7 @@ local function run_compiler()
     F(target == "all" and valid_targets:keys() or target and {target} or {}):foreach(function(compiler_target)
         if external_interpreters[compiler_target] then return end
         if not valid_targets[compiler_target] then err("Invalid target: %s", compiler_target) end
-        local compiler = findpath(arg[0]) / "luax-"..compiler_target..ext(compiler_target)
+        local compiler = findpath(arg[0]):dirname() / "luax-"..compiler_target..ext(compiler_target)
         if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, compiler_target} end
     end)
     if not target then
