@@ -35,6 +35,7 @@ return function()
         F_test          = "tests/luax-tests/F_test.lua",
         G_test          = "tests/luax-tests/G_test.lua",
         arg_test        = "tests/luax-tests/arg_test.lua",
+        cbor_test       = "tests/luax-tests/cbor_test.lua",
         complex_test    = "tests/luax-tests/complex_test.lua",
         crypt_test      = "tests/luax-tests/crypt_test.lua",
         fs_test         = "tests/luax-tests/fs_test.lua",

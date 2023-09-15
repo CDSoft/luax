@@ -35,6 +35,7 @@ update_all()
     update_inspect      master
     update_serpent      master
     update_lz4          release
+    update_cbor
 }
 
 update_lua()
@@ -199,6 +200,25 @@ update_lz4()
     mkdir -p ext/c/lz4/lib ext/c/lz4/programs
     unzip -j "$TMP/$LZ4_ARCHIVE" '*/lib/*.[ch]' '*/lib/LICENSE' -d ext/c/lz4/lib
     unzip -j "$TMP/$LZ4_ARCHIVE" '*/programs/*.[ch]' '*/programs/COPYING' -d ext/c/lz4/programs
+}
+
+update_cbor()
+{
+    local CBOR_ARCHIVE=lua-cbor.tar.gz
+    local CBOR_URL="https://code.zash.se/lua-cbor/archive/tip.tar.gz"
+
+    mkdir -p "$TMP"
+    wget "$CBOR_URL" -O "$TMP/$CBOR_ARCHIVE"
+
+    rm -rf ext/lua/cbor
+    mkdir -p ext/lua/cbor
+    tar -xzf "$TMP/$CBOR_ARCHIVE" -C ext/lua/cbor
+    mv ext/lua/cbor/lua-cbor-*/cbor.lua ext/lua/cbor/
+    mv ext/lua/cbor/lua-cbor-*/README.* ext/lua/cbor/
+    mv ext/lua/cbor/lua-cbor-*/COPYING ext/lua/cbor/
+    rm -rf ext/lua/cbor/lua-cbor-*
+    echo "--@LIB" >> ext/lua/cbor/cbor.lua
+
 }
 
 update_all

@@ -173,6 +173,7 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 - [argparse](argparse.md): Feature-rich command line parser for Lua
 - [inspect](inspect.md): Human-readable representation of Lua tables
 - [serpent](serpent.md): Lua serializer and pretty printer
+- [cbor](cbor.md): pure Lua implementation of the CBOR
 
 ## Shared libraries
 
