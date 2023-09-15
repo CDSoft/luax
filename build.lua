@@ -216,6 +216,7 @@ build "$lua" { "build-lua.zig",
         "&& touch $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$zig",
         zig.lua_c_files,
         zig.lua_main_c_files,
@@ -275,7 +276,7 @@ EOF
 
 rule "gen_config" {
     command = {
-        ". tools/build_env.sh;",
+        ". tools/build_env.sh $tmp;",
         "bash", "$in", "$out",
     },
     implicit_in = {
@@ -290,7 +291,7 @@ build "$luax_config_lua" { "gen_config", "tools/gen_config_lua.sh" }
 
 build "$luax_crypt_key"  {
     command = {
-        ". tools/build_env.sh;",
+        ". tools/build_env.sh $tmp;",
         "$lua", "tools/crypt_key.lua", "LUAX_CRYPT_KEY", '"$$CRYPT_KEY"', "> $out.tmp",
         "&& mv $out.tmp $out",
     },
@@ -324,6 +325,7 @@ build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
         "&& mv $out.tmp $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$lz4",
         "$lua",
         "luax/bundle.lua",
@@ -429,6 +431,7 @@ targets : foreach(function(target)
             "&& mv $out.tmp $out",
         },
         implicit_in = {
+            "tools/build_env.sh",
             "$lz4",
             "$lua",
             "tools/rc4_runtime.lua",
@@ -454,7 +457,10 @@ acc(binaries)(build "$luax" {
         ". tools/build_env.sh $tmp;",
         "cp", "-f", "$bin/luax-$$ARCH-$$OS-$$LIBC$$EXT", "$out$$EXT",
     },
-    implicit_in = binaries,
+    implicit_in = {
+        "tools/build_env.sh",
+        binaries,
+    },
 })
 
 --===================================================================
@@ -482,6 +488,7 @@ acc(libraries)(build "$lib/luax.lua" { "$luax_config_lua", lib_luax_sources,
         "&& mv $out.tmp $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$lz4",
         "$lua",
         "luax/bundle.lua",
@@ -528,6 +535,7 @@ acc(test)(build "$test/test-1-luax_executable.ok" {
         "touch $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$luax",
         test_sources,
     },
@@ -546,6 +554,7 @@ acc(test)(build "$test/test-2-lib.ok" {
         "touch $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$lua",
         "$luax",
         libraries,
@@ -565,6 +574,7 @@ acc(test)(build "$test/test-3-lua.ok" {
         "touch $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$lua",
         "$lib/luax.lua",
         test_sources,
@@ -583,6 +593,7 @@ acc(test)(build "$test/test-4-lua-luax-lua.ok" {
         "touch $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$lua",
         "$bin/luax-lua",
         test_sources,
@@ -601,6 +612,7 @@ acc(test)(build "$test/test-5-pandoc-luax-lua.ok" {
         "touch $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$lua",
         "$lib/luax.lua",
         test_sources,
@@ -622,6 +634,7 @@ acc(test)(build "$test/test-6-pandoc-luax-so.ok" {
         "touch $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$lua",
         "$luax",
         "$lib/luax.lua",
@@ -644,6 +657,7 @@ acc(test)(build "$test/test-ext-1-lua.ok" { "tests/external_interpreter_tests/ex
         "touch $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$lib/luax.lua",
         "$luax",
         binaries,
@@ -664,6 +678,7 @@ acc(test)(build "$test/test-ext-2-lua-luax.ok" { "tests/external_interpreter_tes
         "touch $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$lib/luax.lua",
         "$luax",
     },
@@ -683,6 +698,7 @@ acc(test)(build "$test/test-ext-3-luax.ok" { "tests/external_interpreter_tests/e
         "touch $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$lib/luax.lua",
         "$luax",
     },
@@ -702,6 +718,7 @@ acc(test)(build "$test/test-ext-4-pandoc.ok" { "tests/external_interpreter_tests
         "touch $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$lib/luax.lua",
         "$luax",
         binaries,
@@ -724,6 +741,7 @@ acc(test)(build "$test/test-ext-5-pandoc-luax.ok" { "tests/external_interpreter_
         "touch $out",
     },
     implicit_in = {
+        "tools/build_env.sh",
         "$lib/luax.lua",
         "$luax",
     },
