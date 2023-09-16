@@ -36,7 +36,7 @@ if not fs then
 
     local sh = require "sh"
 
-    if pandoc then
+    if pandoc and pandoc.path then
         fs.sep = pandoc.path.separator
         fs.path_sep = pandoc.path.search_path_separator
     else
@@ -44,7 +44,7 @@ if not fs then
         fs.path_sep = fs.sep == '\\' and ";" or ":"
     end
 
-    if pandoc then
+    if pandoc and pandoc.system then
         fs.getcwd = pandoc.system.get_working_directory
     else
         function fs.getcwd()
@@ -52,7 +52,7 @@ if not fs then
         end
     end
 
-    if pandoc then
+    if pandoc and pandoc.system then
         fs.dir = F.compose{F, pandoc.system.list_directory}
     else
         function fs.dir(path)
@@ -87,7 +87,7 @@ if not fs then
         to:close()
     end
 
-    if pandoc then
+    if pandoc and pandoc.system then
         fs.mkdir = pandoc.system.make_directory
     else
         function fs.mkdir(path)
@@ -178,7 +178,7 @@ if not fs then
         end
     end
 
-    if pandoc then
+    if pandoc and pandoc.path then
         fs.basename = pandoc.path.filename
     else
         function fs.basename(path)
@@ -186,7 +186,7 @@ if not fs then
         end
     end
 
-    if pandoc then
+    if pandoc and pandoc.path then
         fs.dirname = pandoc.path.directory
     else
         function fs.dirname(path)
@@ -194,7 +194,7 @@ if not fs then
         end
     end
 
-    if pandoc then
+    if pandoc and pandoc.path then
         function fs.splitext(path)
             if fs.basename(path):match "^%." then
                 return path, ""
@@ -216,7 +216,7 @@ if not fs then
         return ext
     end
 
-    if pandoc then
+    if pandoc and pandoc.path then
         fs.realpath = pandoc.path.normalize
     else
         function fs.realpath(path)
@@ -233,7 +233,7 @@ if not fs then
         return fs.getcwd()..fs.sep..path
     end
 
-    if pandoc then
+    if pandoc and pandoc.system then
         function fs.mkdirs(path)
             return pandoc.system.make_directory(path, true)
         end
@@ -254,7 +254,7 @@ return a path name made of several path components
 If a component is absolute, the previous components are removed.
 @@@]]
 
-if pandoc then
+if pandoc and pandoc.path then
     function fs.join(...)
         return pandoc.path.join(F.flatten{...})
     end
@@ -352,7 +352,7 @@ fs.rmdir(path, [params])
 deletes the directory `path` and its content recursively.
 @@@]]
 
-if pandoc then
+if pandoc and pandoc.system then
     function fs.rmdir(path)
         pandoc.system.remove_directory(path, true)
         return true
@@ -455,7 +455,7 @@ fs.with_tmpfile(f)
 calls `f(tmp)` where `tmp` is the name of a temporary file.
 @@@]]
 
-if pandoc then
+if pandoc and pandoc.system then
     function fs.with_tmpfile(f)
         return pandoc.system.with_temporary_directory("luax-XXXXXX", function(tmpdir)
             return f(fs.join(tmpdir, "tmpfile"))
@@ -477,7 +477,7 @@ fs.with_tmpdir(f)
 calls `f(tmp)` where `tmp` is the name of a temporary directory.
 @@@]]
 
-if pandoc then
+if pandoc and pandoc.system then
     function fs.with_tmpdir(f)
         return pandoc.system.with_temporary_directory("luax", f)
     end
@@ -499,7 +499,7 @@ fs.with_dir(path, f)
 changes the current working directory to `path` and calls `f()`.
 @@@]]
 
-if pandoc then
+if pandoc and pandoc.system then
     fs.with_dir = pandoc.system.with_working_directory
 elseif fs.chdir then
     function fs.with_dir(path, f)
@@ -518,7 +518,7 @@ fs.with_env(env, f)
 changes the environnement to `env` and calls `f()`.
 @@@]]
 
-if pandoc then
+if pandoc and pandoc.system then
     fs.with_env = pandoc.system.with_environment
 end
 
