@@ -639,8 +639,14 @@ static void base64_decode(const unsigned char *rev, const unsigned char *b64, si
         plain[p++] = (unsigned char)((rev[b64[i+2]] << 6) |  rev[b64[i+3]]);
         i = i + 4;
     }
-    if (b64[n_in-1] == '=') p--;
-    if (b64[n_in-2] == '=') p--;
+    if (n_in >= 1)
+    {
+        if (b64[n_in-1] == '=') p--;
+        if (n_in >= 2)
+        {
+            if (b64[n_in-2] == '=') p--;
+        }
+    }
     *n_out = p;
 }
 
