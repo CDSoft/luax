@@ -12,10 +12,8 @@ More information on <https://www.lz4.org>.
 
 ## LZ4 compression preferences
 
-The compression preferences are hard coded and not configurable:
-
-- maximal compression level
-- compression ratio prefered to decompression speed
+The compression preferences are hard coded (LZ4 default preferences for
+faster compression).
 
 ## LZ4 frame compression
 
@@ -23,9 +21,8 @@ The compression preferences are hard coded and not configurable:
 lz4.compress(data)
 ```
 
-compresses `data` with LZ4 (highest compression level). The compressed
-data is an LZ4 frame that can be stored in a file and decompressed by
-the `lz4` command line utility.
+compresses `data` with LZ4. The compressed data is an LZ4 frame that can
+be stored in a file and decompressed by the `lz4` command line utility.
 
 ## LZ4 frame decompression
 

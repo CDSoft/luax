@@ -44,19 +44,9 @@ More information on <https://www.lz4.org>.
 /***************************************************************************@@@
 ## LZ4 compression preferences
 
-The compression preferences are hard coded and not configurable:
-
-- maximal compression level
-- compression ratio prefered to decompression speed
+The compression preferences are hard coded
+(LZ4 default preferences for faster compression).
 @@@*/
-
-static const LZ4F_preferences_t preferences = {
-    .frameInfo = LZ4F_INIT_FRAMEINFO,
-    .compressionLevel = LZ4HC_CLEVEL_MAX,
-    .autoFlush = 0,
-    .favorDecSpeed = 0,
-    .reserved = {0u, 0u, 0u},
-};
 
 /***************************************************************************@@@
 ## LZ4 frame compression
@@ -66,9 +56,9 @@ const char *lz4_compress(const char *src, const size_t src_len, char **dst, size
 {
     const char *srcBuffer = src;
     const size_t srcSize = src_len;
-    const size_t dstCapacity = LZ4F_compressFrameBound(srcSize, &preferences);
+    const size_t dstCapacity = LZ4F_compressFrameBound(srcSize, NULL);
     char *dstBuffer = safe_malloc(dstCapacity);
-    const size_t n = LZ4F_compressFrame(dstBuffer, dstCapacity, srcBuffer, srcSize, &preferences);
+    const size_t n = LZ4F_compressFrame(dstBuffer, dstCapacity, srcBuffer, srcSize, NULL);
     if (LZ4F_isError(n))
     {
         free(dstBuffer);
@@ -83,7 +73,7 @@ const char *lz4_compress(const char *src, const size_t src_len, char **dst, size
 ```lua
 lz4.compress(data)
 ```
-compresses `data` with LZ4 (highest compression level).
+compresses `data` with LZ4.
 The compressed data is an LZ4 frame that can be stored in a file and
 decompressed by the `lz4` command line utility.
 @@@*/
