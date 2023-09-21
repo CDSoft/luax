@@ -17,11 +17,7 @@
 // http://cdelord.fr/luax
 
 const std = @import("std");
-const src = @import("luax-c-sources.zig");
-
-const release = .ReleaseFast;
-
-const lua_src = "lua";
+const cfg = @import("config.zig");
 
 pub fn build(b: *std.build.Builder) !void {
     // Standard target options allows the person running `zig build` to choose
@@ -35,27 +31,29 @@ pub fn build(b: *std.build.Builder) !void {
     const exe = b.addExecutable(.{
         .name = exe_name,
         .target = target,
-        .optimize = release,
+        .optimize = cfg.release,
         .linkage = .dynamic,
         .link_libc = true,
         .single_threaded = true,
     });
-    exe.strip = true;
+    exe.strip = cfg.strip;
     exe.rdynamic = true;
     b.installArtifact(exe);
-    exe.addIncludePath(.{.cwd_relative = lua_src});
-    exe.addCSourceFiles(&src.lua_main_c_files, &[_][]const u8 {
+    exe.addIncludePath(.{.cwd_relative = cfg.lua_src});
+    exe.addCSourceFiles(&cfg.lua_main_c_files, &[_][]const u8 {
         "-std=gnu2x",
-        "-O3",
+        cfg.optim,
+        cfg.debug,
         "-Werror",
         "-Wall",
         "-Wextra",
         if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
         if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
     });
-    exe.addCSourceFiles(&src.lua_c_files, &[_][]const u8 {
+    exe.addCSourceFiles(&cfg.lua_c_files, &[_][]const u8 {
         "-std=gnu2x",
-        "-O3",
+        cfg.optim,
+        cfg.debug,
         "-Werror",
         "-Wall",
         "-Wextra",

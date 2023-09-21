@@ -166,6 +166,7 @@ return function()
             eq({s:rc4("key"):byte(1, -1)}, {217,183,168,237,133,97,233})
         end
         do
+            eq(crypt.sha1 "", "da39a3ee5e6b4b0d3255bfef95601890afd80709")
             eq(crypt.sha1 "abc", "a9993e364706816aba3e25717850c26c9cd0d89d")
             eq(crypt.sha1 "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "84983e441c3bd26ebaae4aa1f95129e5e54670f1")
             eq(crypt.sha1 "a", "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8")
@@ -177,6 +178,7 @@ return function()
             end
         end
         do
+            eq(crypt.hash "", "7b6a78f0d6c6494a")
             eq(crypt.hash "abc", "aad997d90d2fc60c")
             eq(crypt.hash "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "43b171325717ed36")
             eq(crypt.hash "a", "ba1cdf88b948c824")

@@ -52,7 +52,26 @@ $ ninja doc         # generate LuaX documentation
 
 **Note**: `ninja` will download a Zig compiler.
 
-### Precompiled LuaX binaries
+## Compilation in debug mode
+
+LuaX can be compiled in debug mode
+(less optimization, debug symbols kept in the binaries).
+In this mode, the tests are executed with [valgrind](https://valgrind.org/).
+They run much slower but this helps finding tricky bugs.
+[Bang](https://github.com/CDSoft/bang) must be installed first
+to generate `build.ninja`:
+
+``` sh
+$ git clone https://github.com/CDSoft/bang
+$ ninja -C bang install
+$ git clone https://github.com/CDSoft/luax
+$ cd luax
+$ bang -- debug     # generate build.ninja in debug mode
+$ ninja             # compile LuaX (all targets)
+$ ninja test        # run tests on the host
+```
+
+## Precompiled LuaX binaries
 
 In case precompiled binaries are needed (GNU/Linux, MacOS, Windows),
 some can be found at [cdelord.fr/pub](http://cdelord.fr/pub).
