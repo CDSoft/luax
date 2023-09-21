@@ -1051,20 +1051,13 @@ returns a SHA-1 digest of `data`.
 
 static int crypt_sha1(lua_State *L)
 {
-    const char *data = (const char *)luaL_checkstring(L, 1);
+    const uint8_t *data = (const uint8_t *)luaL_checkstring(L, 1);
     const size_t datalen = (size_t)lua_rawlen(L, 1);
 
-    SHA1Context sha;
     uint8_t Message_Digest[20];
 
-    int err = SHA1Reset(&sha);
-    if (err != 0) { return luax_pusherror(L, "SHA1Reset Error"); }
-
-    err = SHA1Input(&sha, (const uint8_t*)data, (unsigned int)datalen);
-    if (err != 0) { return luax_pusherror(L, "SHA1Input Error"); }
-
-    err = SHA1Result(&sha, Message_Digest);
-    if (err != 0) { return luax_pusherror(L, "SHA1Result Error"); }
+    int err = sha1digest(Message_Digest, data, datalen);
+    if (err != 0) { return luax_pusherror(L, "sha1 error"); }
 
     char hex_digest[2*sizeof(Message_Digest)];
     for (size_t i = 0; i < sizeof(Message_Digest); i++)
