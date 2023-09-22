@@ -431,34 +431,61 @@ build $builddir/luax-banner.png: banner-1024 doc/src/luax-logo.lua
 build $builddir/luax-social.png: social-1280 doc/src/luax-logo.lua
 build $builddir/luax-logo.png: logo-1024 doc/src/luax-logo.lua
 
-rule md_to_gfm
-  command = LUAX=$luax ypp --MD --MT $out --MF $doc/$out.d $in | pandoc --to gfm --lua-filter doc/src/fix_links.lua --fail-if-warnings -o $out
+rule ypp
+  command = LUAX=$luax ypp --MD --MT $out --MF $doc/$out.d $in -o $out
   depfile = $doc/$out.d
 
-build README.md: md_to_gfm doc/src/luax.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/F.md: md_to_gfm doc/src/F.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/L.md: md_to_gfm doc/src/L.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/argparse.md: md_to_gfm doc/src/argparse.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/cbor.md: md_to_gfm doc/src/cbor.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/complex.md: md_to_gfm doc/src/complex.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/crypt.md: md_to_gfm doc/src/crypt.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/fs.md: md_to_gfm doc/src/fs.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/imath.md: md_to_gfm doc/src/imath.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/inspect.md: md_to_gfm doc/src/inspect.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/lpeg.md: md_to_gfm doc/src/lpeg.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/luasocket.md: md_to_gfm doc/src/luasocket.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/luax.lua.md: md_to_gfm doc/src/luax.lua.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/luax.md: md_to_gfm doc/src/luax.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/lz4.md: md_to_gfm doc/src/lz4.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/mathx.md: md_to_gfm doc/src/mathx.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/package.md: md_to_gfm doc/src/package.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/ps.md: md_to_gfm doc/src/ps.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/qmath.md: md_to_gfm doc/src/qmath.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/repl.md: md_to_gfm doc/src/repl.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/serpent.md: md_to_gfm doc/src/serpent.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/sh.md: md_to_gfm doc/src/sh.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/sys.md: md_to_gfm doc/src/sys.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
-build doc/term.md: md_to_gfm doc/src/term.md | $luax doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+rule md_to_gfm
+  command = pandoc --to gfm --lua-filter doc/src/fix_links.lua --fail-if-warnings $in -o $out
+
+build $tmp/doc/README.md: ypp doc/src/luax.md | $luax
+build README.md: md_to_gfm $tmp/doc/README.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/F.md: ypp doc/src/F.md | $luax
+build doc/F.md: md_to_gfm $tmp/doc/src/F.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/L.md: ypp doc/src/L.md | $luax
+build doc/L.md: md_to_gfm $tmp/doc/src/L.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/argparse.md: ypp doc/src/argparse.md | $luax
+build doc/argparse.md: md_to_gfm $tmp/doc/src/argparse.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/cbor.md: ypp doc/src/cbor.md | $luax
+build doc/cbor.md: md_to_gfm $tmp/doc/src/cbor.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/complex.md: ypp doc/src/complex.md | $luax
+build doc/complex.md: md_to_gfm $tmp/doc/src/complex.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/crypt.md: ypp doc/src/crypt.md | $luax
+build doc/crypt.md: md_to_gfm $tmp/doc/src/crypt.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/fs.md: ypp doc/src/fs.md | $luax
+build doc/fs.md: md_to_gfm $tmp/doc/src/fs.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/imath.md: ypp doc/src/imath.md | $luax
+build doc/imath.md: md_to_gfm $tmp/doc/src/imath.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/inspect.md: ypp doc/src/inspect.md | $luax
+build doc/inspect.md: md_to_gfm $tmp/doc/src/inspect.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/lpeg.md: ypp doc/src/lpeg.md | $luax
+build doc/lpeg.md: md_to_gfm $tmp/doc/src/lpeg.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/luasocket.md: ypp doc/src/luasocket.md | $luax
+build doc/luasocket.md: md_to_gfm $tmp/doc/src/luasocket.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/luax.lua.md: ypp doc/src/luax.lua.md | $luax
+build doc/luax.lua.md: md_to_gfm $tmp/doc/src/luax.lua.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/luax.md: ypp doc/src/luax.md | $luax
+build doc/luax.md: md_to_gfm $tmp/doc/src/luax.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/lz4.md: ypp doc/src/lz4.md | $luax
+build doc/lz4.md: md_to_gfm $tmp/doc/src/lz4.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/mathx.md: ypp doc/src/mathx.md | $luax
+build doc/mathx.md: md_to_gfm $tmp/doc/src/mathx.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/package.md: ypp doc/src/package.md | $luax
+build doc/package.md: md_to_gfm $tmp/doc/src/package.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/ps.md: ypp doc/src/ps.md | $luax
+build doc/ps.md: md_to_gfm $tmp/doc/src/ps.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/qmath.md: ypp doc/src/qmath.md | $luax
+build doc/qmath.md: md_to_gfm $tmp/doc/src/qmath.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/repl.md: ypp doc/src/repl.md | $luax
+build doc/repl.md: md_to_gfm $tmp/doc/src/repl.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/serpent.md: ypp doc/src/serpent.md | $luax
+build doc/serpent.md: md_to_gfm $tmp/doc/src/serpent.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/sh.md: ypp doc/src/sh.md | $luax
+build doc/sh.md: md_to_gfm $tmp/doc/src/sh.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/sys.md: ypp doc/src/sys.md | $luax
+build doc/sys.md: md_to_gfm $tmp/doc/src/sys.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
+build $tmp/doc/src/term.md: ypp doc/src/term.md | $luax
+build doc/term.md: md_to_gfm $tmp/doc/src/term.md | doc/src/fix_links.lua doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png
 
 ######################################################################
 # Shorcuts

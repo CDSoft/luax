@@ -813,26 +813,36 @@ local pandoc_gfm = {
     "--fail-if-warnings",
 }
 
-rule "md_to_gfm" {
+rule "ypp" {
     command = {
         "LUAX=$luax",
-        "ypp --MD --MT $out --MF $doc/$out.d $in",
-        "|",
-        pandoc_gfm, "-o $out",
+        "ypp --MD --MT $out --MF $doc/$out.d $in -o $out",
     },
     depfile = "$doc/$out.d",
     implicit_in = {
         "$luax",
+    },
+}
+
+rule "md_to_gfm" {
+    command = {
+        pandoc_gfm, "$in -o $out",
+    },
+    implicit_in = {
         "doc/src/fix_links.lua",
         images,
     },
 }
 
-acc(doc)(build "README.md" { "md_to_gfm", "doc/src/luax.md" })
+acc(doc)(build "README.md" { "md_to_gfm",
+    build "$tmp/doc/README.md" { "ypp", "doc/src/luax.md" },
+})
 
 markdown_sources : foreach(function(src)
 
-    acc(doc)(build("doc"/src:basename()) { "md_to_gfm", src })
+    acc(doc)(build("doc"/src:basename()) { "md_to_gfm",
+        build("$tmp"/src) { "ypp", src },
+    })
 
 end)
 
