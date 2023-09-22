@@ -22,6 +22,7 @@ http://cdelord.fr/luax
 
 local bundle = {}
 
+local F = require "F"
 local fs = require "fs"
 local lz4 = require "lz4"
 local crypt = require "crypt"
@@ -41,9 +42,9 @@ end
 
 local function Bundle()
     local self = {}
-    local fragments = {}
+    local fragments = F{}
     function self.emit(s) fragments[#fragments+1] = s end
-    function self.get() return table.concat(fragments) end
+    function self.get() return fragments:str() end
     return self
 end
 
@@ -52,12 +53,10 @@ local function strip_ext(path)
 end
 
 local function last_line(s)
-    local last = ""
-    s:gsub("[^\r\n]+", function(line)
-        line = line:gsub("^%s*(.-)%s*$", "%1")
-        if #line > 0 then last = line end
-    end)
-    return last
+    return s
+    : lines()
+    : drop_while_end(F.compose{string.null, string.trim})
+    : last()
 end
 
 local function mlstr(code)
@@ -66,7 +65,7 @@ local function mlstr(code)
         n = math.max(n, #s+1)
     end)
     local eqs = ("="):rep(n)
-    return table.concat{"[", eqs, "[", code, "]", eqs, "]"}
+    return F.str{"[", eqs, "[", code, "]", eqs, "]"}
 end
 
 function bundle.bundle(arg)
@@ -250,7 +249,6 @@ function bundle.combine(target, scripts)
 end
 
 function bundle.combine_lua(scripts)
-    local F = require "F"
     local chunk = bundle.bundle(F.flatten{scripts})
     return chunk
 end
