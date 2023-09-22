@@ -1222,25 +1222,22 @@ F.range(a, b, step)
 @@@]]
 
 register0 "range" (function(a, b, step)
-    assert(step ~= 0, "range step can not be zero")
-    if not b then a, b = 1, a end
-    step = step or (a < b and 1) or (a > b and -1)
+    step = step or 1
+    if step == 0 then return nil, "range step can not be zero" end
+    if b == nil then a, b = 1, a end
     local r = {}
-    if a < b then
-        assert(step > 0, "step shall be positive")
+    if step > 0 then
         while a <= b do
-            table.insert(r, a)
-            a = a + step
-        end
-    elseif a > b then
-        assert(step < 0, "step shall be negative")
-        while a >= b do
-            table.insert(r, a)
+            r[#r+1] = a
             a = a + step
         end
     else
-        table.insert(r, a)
+        while a >= b do
+            r[#r+1] = a
+            a = a + step
+        end
     end
+
     return setmt(r)
 end)
 

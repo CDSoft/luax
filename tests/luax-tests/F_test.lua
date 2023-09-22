@@ -583,10 +583,17 @@ local function table_construction()
     eq(F.rep(5, 42), {42,42,42,42,42})
 
     eq(F.range(5), {1,2,3,4,5})
+    eq(F.range(1, 5), {1,2,3,4,5})
+    eq(F.range(1, 5, -1), {})
     eq(F.range(5, 9), {5,6,7,8,9})
     eq(F.range(5, 9, 2), {5,7,9})
-    eq(F.range(9, 5), {9,8,7,6,5})
+    eq(F.range(9, 5), {})
     eq(F.range(9, 5, -2), {9,7,5})
+    do
+        local r, err = F.range(1, 5, 0)
+        eq(r, nil)
+        eq(err, "range step can not be zero")
+    end
 
     eq(F.concat{{1,2},{3,4},{5,6}}, {1,2,3,4,5,6})
     eq(F{{1,2},{3,4},{5,6}}:concat(), {1,2,3,4,5,6})
