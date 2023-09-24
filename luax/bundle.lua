@@ -239,7 +239,7 @@ local function drop_chunk(exe)
         io.stderr:write("error: no LuaX header found in the current target\n")
         os.exit(1)
     end
-    return exe:sub(1, #exe - header_size - size + 1)
+    return exe:sub(1, #exe - header_size - size)
 end
 
 function bundle.combine(target, scripts)
