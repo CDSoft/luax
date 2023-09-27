@@ -112,7 +112,7 @@ const char *lz4_decompress(const char *src, const size_t src_len, char **dst, si
     size_t dstSize = dstBufferCapacity;
     size_t dstOffset = 0;
     LZ4F_dctx *dctx;
-    LZ4F_errorCode_t dctxRet = LZ4F_createDecompressionContext(&dctx, LZ4F_VERSION);
+    const LZ4F_errorCode_t dctxRet = LZ4F_createDecompressionContext(&dctx, LZ4F_VERSION);
     if (LZ4F_isError(dctxRet))
     {
         free(dstBuffer);

@@ -202,13 +202,6 @@ void luax_run(lua_State *L, const char *exe)
     const int status = run_buffer(L, decoded_chunk, decoded_chunk_len, "=");
     free(decoded_chunk);
 
-    /* exit with os.exit() (calling lua_close(L) from luax.so crashes the Lua interpreter) */
-    lua_getglobal(L, "os");
-    lua_getfield(L, -1, "exit");
-    lua_pushnumber(L, status == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
-    lua_pushboolean(L, 1);
-    lua_call(L, 2, 0);
-
     lua_close(L);
-    exit(EXIT_FAILURE);
+    exit(status == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
 }

@@ -470,7 +470,7 @@ targets : foreach(function(target)
 
     if shared_lib then
 
-        acc(libraries)(build("$lib/"..shared_lib) {
+        acc(libraries)(build("$lib"/shared_lib) {
             "cp", "$tmp"/"lib"/shared_lib,
         })
 
