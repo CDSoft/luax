@@ -49,6 +49,7 @@ require "lz4_test"()
 require "mathx_test"()
 require "imath_test"()
 require "qmath_test"()
+require "linenoise_test"()
 require "package_test"()
 require "resource_test"()
 

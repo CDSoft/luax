@@ -589,6 +589,15 @@ local function run_interpreter()
     -- interactive REPL
 
     if interactive then
+        local history = sys.os == "windows"
+            and os.getenv "APPDATA" / "luax_history"
+            or os.getenv "HOME" / ".luax_history"
+        local linenoise = require "linenoise"
+        linenoise.load(history)
+        local function hist(input)
+            linenoise.add(input)
+            linenoise.save(history)
+        end
         local function try(input)
             local chunk, msg = load(input, "=stdin")
             if not chunk then
@@ -607,8 +616,9 @@ local function run_interpreter()
             local inputs = {}
             local prompt = ">> "
             while true do
-                local line = term.prompt(prompt)
+                local line = linenoise.read(prompt)
                 if not line then os.exit() end
+                hist(line)
                 table.insert(inputs, line)
                 local input = table.concat(inputs, "\n")
                 local try_expr, err_expr = try("return "..input)

@@ -151,6 +151,8 @@ local linux_only = F{
     "ext/c/luasocket/unixstream.c",
     "ext/c/luasocket/usocket.c",
     "ext/c/luasocket/unix.c",
+    "ext/c/linenoise/linenoise.c",
+    "ext/c/linenoise/utf8.c",
 }
 local windows_only = F{
     "ext/c/luasocket/wsocket.c",

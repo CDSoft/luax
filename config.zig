@@ -58,6 +58,7 @@ pub const luax_c_files = [_][]const u8 {
     "luax-libs/crypt/sha1.c",
     "luax-libs/fs/fs.c",
     "luax-libs/libluax.c",
+    "luax-libs/linenoise/linenoise.c",
     "luax-libs/lz4/lz4.c",
     "luax-libs/ps/ps.c",
     "luax-libs/rt0/rt0.c",
@@ -107,6 +108,8 @@ pub const linux_third_party_c_files = [_][]const u8 {
     "ext/c/luasocket/unixstream.c",
     "ext/c/luasocket/usocket.c",
     "ext/c/luasocket/unix.c",
+    "ext/c/linenoise/linenoise.c",
+    "ext/c/linenoise/utf8.c",
 };
 
 pub const windows_third_party_c_files = [_][]const u8 {

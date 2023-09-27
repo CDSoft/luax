@@ -254,6 +254,8 @@ and [lapp](http://cdelord.fr/lapp).
 - [inspect](inspect.md): Human-readable representation of Lua tables
 - [serpent](serpent.md): Lua serializer and pretty printer
 - [cbor](cbor.md): pure Lua implementation of the CBOR
+- [linenoise](linenoise.md): A small, portable GNU readline replacement
+  with UTF-8 support
 
 ## Shared libraries
 
@@ -328,6 +330,9 @@ programs:
 - **[Argparse](https://github.com/mpeterv/argparse)**: a feature-rich
   command line parser for Lua ([MIT
   license](https://github.com/mpeterv/argparse/blob/master/LICENSE))
+- **[Linenoise](https://github.com/yhirose/linenoise/tree/utf8-support)**:
+  A minimal, zero-config, BSD licensed, readline replacement ([BSD
+  license](https://github.com/antirez/linenoise/blob/master/LICENSE))
 
 [^1]: `luax` is actually not a « cross compiler ».
 

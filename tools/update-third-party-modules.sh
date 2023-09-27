@@ -36,6 +36,7 @@ update_all()
     update_serpent      master
     update_lz4          release
     update_cbor
+    update_linenoise    utf8-support # switch to "master" when the UTF-8 support is merged
 }
 
 update_lua()
@@ -219,6 +220,28 @@ update_cbor()
     rm -rf ext/lua/cbor/lua-cbor-*
     echo "--@LIB" >> ext/lua/cbor/cbor.lua
 
+}
+
+update_linenoise()
+{
+    local LINENOISE_REPO="yhirose/linenoise" # switch to "antirez/linenoise" when the UTF-8 support is merged
+    local LINENOISE_VERSION="$1"
+    local LINENOISE_ARCHIVE="linenoise-$LINENOISE_VERSION.zip"
+    local LINENOISE_URL="https://github.com/$LINENOISE_REPO/archive/refs/heads/$LINENOISE_VERSION.zip"
+
+    mkdir -p "$TMP"
+    wget "$LINENOISE_URL" -O "$TMP/$LINENOISE_ARCHIVE"
+
+    rm -rf ext/c/linenoise
+    mkdir -p ext/c/linenoise
+    unzip -j "$TMP/$LINENOISE_ARCHIVE" '*/linenoise.[ch]' '*/encodings/*.[ch]' '*/LICENSE' -d ext/c/linenoise
+    sed -i                                                              \
+        -e 's/case ENTER:/case ENTER: case 10:/'                        \
+        -e 's/malloc(/safe_malloc(/'                                    \
+        -e 's/realloc(/safe_realloc(/'                                  \
+        -e 's/\(#include "linenoise.h"\)/\1\n\n#include "tools.h"/'     \
+        -e 's/TCSAFLUSH/TCSADRAIN/'                                     \
+        ext/c/linenoise/linenoise.c
 }
 
 update_all

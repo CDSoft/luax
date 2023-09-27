@@ -193,6 +193,7 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 - [inspect](inspect.md): Human-readable representation of Lua tables
 - [serpent](serpent.md): Lua serializer and pretty printer
 - [cbor](cbor.md): pure Lua implementation of the CBOR
+- [linenoise](linenoise.md): A small, portable GNU readline replacement with UTF-8 support
 
 ## Shared libraries
 
@@ -246,8 +247,8 @@ script `lib/luax.lua` can be reused in pure Lua programs:
 
 `luax` uses other third party softwares:
 
-* **[Zig](https://ziglang.org/)**: General-purpose programming language
-  and toolchain for maintaining robust, optimal, and reusable software. ([MIT
+* **[Zig](https://ziglang.org/)**: General-purpose programming language and
+  toolchain for maintaining robust, optimal, and reusable software. ([MIT
   license](https://github.com/ziglang/zig/blob/master/LICENSE))
 * **[Lua 5.4](http://www.lua.org)**: Copyright (C) 1994-2023 Lua.org, PUC-Rio
   ([MIT license](http://www.lua.org/license.html))
@@ -264,6 +265,9 @@ script `lib/luax.lua` can be reused in pure Lua programs:
   license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))
 * **[LZ4](https://github.com/lz4/lz4)**: Extremely Fast Compression algorithm
   ([License](https://github.com/lz4/lz4/blob/dev/lib/LICENSE))
-- **[Argparse](https://github.com/mpeterv/argparse)**: a feature-rich
-  command line parser for Lua ([MIT
+- **[Argparse](https://github.com/mpeterv/argparse)**: a feature-rich command
+  line parser for Lua ([MIT
   license](https://github.com/mpeterv/argparse/blob/master/LICENSE))
+- **[Linenoise](https://github.com/yhirose/linenoise/tree/utf8-support)**: A minimal,
+  zero-config, BSD licensed, readline replacement ([BSD
+  license](https://github.com/antirez/linenoise/blob/master/LICENSE))
