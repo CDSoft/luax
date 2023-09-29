@@ -364,8 +364,8 @@ returns a shuffled copy of `xs`
 
 function prng_mt.__index.shuffle(prng, xs)
     local ys = F.clone(xs)
-    for i = 1, #ys do
-        local j = prng:int(1, #ys)
+    for i = 1, #ys-1 do
+        local j = prng:int(i, #ys)
         ys[i], ys[j] = ys[j], ys[i]
     end
     return ys
@@ -373,8 +373,8 @@ end
 
 function crypt.shuffle(xs)
     local ys = F.clone(xs)
-    for i = 1, #ys do
-        local j = crypt.int(1, #ys)
+    for i = 1, #ys-1 do
+        local j = crypt.int(i, #ys)
         ys[i], ys[j] = ys[j], ys[i]
     end
     return ys
