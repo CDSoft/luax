@@ -106,6 +106,18 @@ local function fs_test(tmp)
     test_files(fs.walk,     {"/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt","/bar/baz","/level1/level2/level3","/level1/level2","/level1","/foo","/bar"}, true)
     test_files(string.walk, {"/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt","/bar/baz","/level1/level2/level3","/level1/level2","/level1","/foo","/bar"}, true)
 
+    local function trim_tmp(path)
+        assert(path:sub(1, #tmp) == tmp)
+        return path:sub(#tmp+1)
+    end
+    eq(fs.ls(tmp):map(trim_tmp),          {"/bar","/bar.txt","/foo","/foo2.txt","/level1"})
+    eq(fs.ls(tmp/"*"):map(trim_tmp),      {"/bar","/bar.txt","/foo","/foo2.txt","/level1"})
+    eq(fs.ls(tmp/"bar*"):map(trim_tmp),   {"/bar","/bar.txt"})
+    eq(fs.ls(tmp/"*.txt"):map(trim_tmp),  {"/bar.txt","/foo2.txt"})
+    eq(fs.ls(tmp/"**"):map(trim_tmp),     {"/bar","/bar.txt","/bar/bar.txt","/bar/baz","/bar/baz/baz.txt","/foo","/foo/foo.txt","/foo2.txt","/level1","/level1/level2","/level1/level2/level3"})
+    eq(fs.ls(tmp/"bar**"):map(trim_tmp),  {"/bar","/bar.txt","/bar/bar.txt"})
+    eq(fs.ls(tmp/"**.txt"):map(trim_tmp), {"/bar.txt","/bar/bar.txt","/bar/baz/baz.txt","/foo/foo.txt","/foo2.txt"})
+
     do
         local content1 = "Lua is great!!!"
         local f1 = assert(io.open(fs.join(tmp, "f1.txt"), "wb"))

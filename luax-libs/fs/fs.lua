@@ -48,7 +48,7 @@ if not fs then
         fs.getcwd = pandoc.system.get_working_directory
     else
         function fs.getcwd()
-            return sh.read "pwd" : trim()
+            return sh.read "pwd" : trim() ---@diagnostic disable-line:undefined-field
         end
     end
 
@@ -56,7 +56,7 @@ if not fs then
         fs.dir = F.compose{F, pandoc.system.list_directory}
     else
         function fs.dir(path)
-            return sh.read("ls", path) : lines() : sort()
+            return sh.read("ls", path) : lines() : sort() ---@diagnostic disable-line:undefined-field
         end
     end
 
@@ -220,12 +220,12 @@ if not fs then
         fs.realpath = pandoc.path.normalize
     else
         function fs.realpath(path)
-            return sh.read("realpath", path) : trim()
+            return sh.read("realpath", path) : trim() ---@diagnostic disable-line:undefined-field
         end
     end
 
     function fs.readlink(path)
-        return sh.read("readlink", path) : trim()
+        return sh.read("readlink", path) : trim() ---@diagnostic disable-line:undefined-field
     end
 
     function fs.absname(path)
@@ -446,6 +446,43 @@ function fs.walk(path, options)
         end
     end
     return F.concat(reverse and {acc_files, acc_dirs} or {acc_dirs, acc_files})
+end
+
+--[[@@@
+```lua
+fs.ls(path)
+```
+returns a list of file names.
+`path` can be a directory name or a simple file pattern.
+Patterns can contain jokers (`*` to match any character and `**` to search files recursively).
+
+Examples:
+
+- `fs.ls "src"`: list all files/directories in `src`
+- `fs.ls "src/*.c"`: list all C files in `src`
+- `fs.ls "src/**.c"`: list all C files in `src` and its subdirectories
+@@@]]
+
+function fs.ls(dir)
+    local base = dir:basename()
+    local path = dir:dirname()
+    local recursive = base:match"%*%*"
+    local pattern = base:match"%*" and base:gsub("%.", "%%."):gsub("%*%*", "*"):gsub("%*", ".*")
+
+    if recursive then
+        return fs.walk(path)
+            : filter(function(name) return name:basename():match("^"..pattern.."$") end)
+            : sort()
+    end
+    if pattern then
+        return fs.dir(path)
+            : filter(function(name) return name:match("^"..pattern.."$") end)
+            : map(F.partial(fs.join, path))
+            : sort()
+    end
+    return fs.dir(dir)
+        : map(F.partial(fs.join, dir))
+        : sort()
 end
 
 --[[@@@
