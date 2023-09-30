@@ -25,15 +25,22 @@ http://cdelord.fr/luax
 local test = require "test"
 local startswith = test.startswith
 
+local F = require "F"
+
 return function()
     local lib = require "lib"
     local traceback = lib.hello "World":gsub("\t", "    ")
     local expected_traceback = [[
-@tests/luax-tests/lib.lua says: Hello World
+@$test-luax/tests/luax-tests/lib.lua says: Hello World
 Traceback test
 stack traceback:
-    tests/luax-tests/lib.lua:25: in function 'lib.hello'
-    tests/luax-tests/require_test.lua:30: in function 'require_test']]
+    $test-luax/tests/luax-tests/lib.lua:25: in function 'lib.hello'
+    $test-luax/tests/luax-tests/require_test.lua:32: in function 'require_test']]
+
+    local test_num = tonumber(os.getenv "TEST_NUM")
+    if F.elem(test_num, {2, 3, 4, 5}) then
+        expected_traceback = expected_traceback : gsub("%$test%-luax/", "")
+    end
 
     startswith(traceback, expected_traceback)
 

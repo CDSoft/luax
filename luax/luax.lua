@@ -678,7 +678,7 @@ local function run_compiler()
         log("output", "%s", current_output)
 
         local bundle = require "bundle"
-        local exe, chunk = bundle.combine(compiler_exe, scripts)
+        local exe, chunk = bundle.combine(compiler_exe, current_output:basename(), scripts)
         log("Chunk", "%7d bytes", #chunk)
         log("Total", "%7d bytes", #exe)
 
@@ -704,7 +704,7 @@ local function run_compiler()
         local luax_scripts = F.map(findscript, interpreter.scripts)
 
         local bundle = require "bundle"
-        local chunk = bundle.combine_lua{interpreter.format, luax_scripts, scripts}
+        local chunk = bundle.combine_lua(current_output:basename(), {interpreter.format, luax_scripts, scripts})
         local exe = F.flatten{
                 "#!/usr/bin/env -S",
 

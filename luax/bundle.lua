@@ -68,12 +68,13 @@ local function mlstr(code)
     return F.str{"[", eqs, "[", code, "]", eqs, "]"}
 end
 
-function bundle.bundle(arg)
+function bundle.bundle(arg, opts)
 
     local kind = "prog"
     local format = "binary"
     local scripts = {}
     local explicit_main = false
+    local product_name = assert(opts.name, "Missing output name")
     for i = 1, #arg do
         if arg[i] == "-lib" then kind = "lib"
         elseif arg[i] == "-binary" then format = "binary"
@@ -173,7 +174,7 @@ function bundle.bundle(arg)
         plain.emit("_LUAX_VERSION = '"..config.version.."'\n");
         plain.emit("_LUAX_DATE = '"..config.date.."'\n");
     end
-    plain.emit "local function lib(path, src) return assert(load(src, '@'..path, 't')) end\n"
+    plain.emit(("local function lib(path, src) return assert(load(src, '@$%s/'..path, 't')) end\n"):format(product_name))
     local function compile_library(script)
         assert(load(script.content, "@"..script.path, 't'))
         plain.emit(("[%q] = lib(%q, %s),\n"):format(script.name, home_path(script.path), mlstr(script.content)))
@@ -242,14 +243,14 @@ local function drop_chunk(exe)
     return exe:sub(1, #exe - header_size - size)
 end
 
-function bundle.combine(target, scripts)
+function bundle.combine(target, name, scripts)
     local runtime = drop_chunk(read(target))
-    local chunk = bundle.bundle(scripts)
+    local chunk = bundle.bundle(scripts, {name=name})
     return runtime..chunk, chunk
 end
 
-function bundle.combine_lua(scripts)
-    local chunk = bundle.bundle(F.flatten{scripts})
+function bundle.combine_lua(name, scripts)
+    local chunk = bundle.bundle(F.flatten{scripts}, {name=name})
     return chunk
 end
 
@@ -263,4 +264,4 @@ end
 
 if called_by(require) then return bundle end
 
-io.stdout:write(bundle.bundle(arg))
+io.stdout:write(bundle.bundle(arg, {name="luax-runtime"}))
