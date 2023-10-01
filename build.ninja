@@ -110,7 +110,7 @@ build $luax_config_h: gen_config tools/gen_config_h.sh | tools/build_env.sh .git
 build $luax_config_lua: gen_config tools/gen_config_lua.sh | tools/build_env.sh .git/refs/tags .git/index $lua
 
 rule _luax_crypt_key
-  command = . tools/build_env.sh $tmp; $lua tools/crypt_key.lua LUAX_CRYPT_KEY "$$CRYPT_KEY" > $out.tmp && mv $out.tmp $out
+  command = . tools/build_env.sh $tmp; $lua tools/crypt_key.lua LUAX_CRYPT_KEY "$$CRYPT_KEY" > $out
 
 build $luax_crypt_key: _luax_crypt_key | $lua tools/build_env.sh tools/crypt_key.lua
 
@@ -121,7 +121,7 @@ build $luax_crypt_key: _luax_crypt_key | $lua tools/build_env.sh tools/crypt_key
 luax_runtime_bundle = $tmp/lua_runtime_bundle.dat
 
 rule _luax_runtime_bundle
-  command = . tools/build_env.sh $tmp; LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -lib -ascii $in > $out.tmp && touch $out.tmp && mv $out.tmp $out
+  command = . tools/build_env.sh $tmp; LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -lib -ascii $in > $out && touch $out
 
 build $luax_runtime_bundle: _luax_runtime_bundle $luax_config_lua luax-libs/F/F.lua luax-libs/L/L.lua luax-libs/complex/complex.lua luax-libs/crypt/crypt.lua luax-libs/fs/fs.lua luax-libs/imath/imath.lua luax-libs/lpeg/lpeg.lua luax-libs/lz4/lz4.lua luax-libs/mathx/mathx.lua luax-libs/package/package_hook.lua luax-libs/ps/ps.lua luax-libs/qmath/qmath.lua luax-libs/rt0/rt0.lua luax-libs/sh/sh.lua luax-libs/sys/sys.lua luax-libs/term/term.lua ext/c/lpeg/re.lua ext/c/luasocket/ftp.lua ext/c/luasocket/headers.lua ext/c/luasocket/http.lua ext/c/luasocket/ltn12.lua ext/c/luasocket/mbox.lua ext/c/luasocket/mime.lua ext/c/luasocket/smtp.lua ext/c/luasocket/socket.lua ext/c/luasocket/tp.lua ext/c/luasocket/url.lua ext/lua/argparse/argparse.lua ext/lua/cbor/cbor.lua ext/lua/inspect/inspect.lua ext/lua/serpent/serpent.lua | tools/build_env.sh $lz4 $lua luax/bundle.lua tools/rc4_runtime.lua
 
@@ -231,7 +231,7 @@ rule cp
 ######################################################################
 
 rule _bin_luax-x86_64-linux-musl
-  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86_64-linux-musl $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
+  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86_64-linux-musl $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out && touch $out
 
 build $bin/luax-x86_64-linux-musl: _bin_luax-x86_64-linux-musl luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86_64-linux-musl
 
@@ -240,7 +240,7 @@ build $bin/luax-x86_64-linux-musl: _bin_luax-x86_64-linux-musl luax/bundle.lua l
 ######################################################################
 
 rule _bin_luax-x86_64-linux-gnu
-  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86_64-linux-gnu $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
+  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86_64-linux-gnu $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out && touch $out
 
 build $bin/luax-x86_64-linux-gnu: _bin_luax-x86_64-linux-gnu luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86_64-linux-gnu
 build $lib/libluax-x86_64-linux-gnu.so: cp $tmp/lib/libluax-x86_64-linux-gnu.so
@@ -250,7 +250,7 @@ build $lib/libluax-x86_64-linux-gnu.so: cp $tmp/lib/libluax-x86_64-linux-gnu.so
 ######################################################################
 
 rule _bin_luax-x86-linux-musl
-  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86-linux-musl $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
+  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86-linux-musl $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out && touch $out
 
 build $bin/luax-x86-linux-musl: _bin_luax-x86-linux-musl luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86-linux-musl
 
@@ -259,7 +259,7 @@ build $bin/luax-x86-linux-musl: _bin_luax-x86-linux-musl luax/bundle.lua luax/lu
 ######################################################################
 
 rule _bin_luax-x86-linux-gnu
-  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86-linux-gnu $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
+  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86-linux-gnu $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out && touch $out
 
 build $bin/luax-x86-linux-gnu: _bin_luax-x86-linux-gnu luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86-linux-gnu
 build $lib/libluax-x86-linux-gnu.so: cp $tmp/lib/libluax-x86-linux-gnu.so
@@ -269,7 +269,7 @@ build $lib/libluax-x86-linux-gnu.so: cp $tmp/lib/libluax-x86-linux-gnu.so
 ######################################################################
 
 rule _bin_luax-aarch64-linux-musl
-  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-aarch64-linux-musl $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
+  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-aarch64-linux-musl $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out && touch $out
 
 build $bin/luax-aarch64-linux-musl: _bin_luax-aarch64-linux-musl luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-aarch64-linux-musl
 
@@ -278,7 +278,7 @@ build $bin/luax-aarch64-linux-musl: _bin_luax-aarch64-linux-musl luax/bundle.lua
 ######################################################################
 
 rule _bin_luax-aarch64-linux-gnu
-  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-aarch64-linux-gnu $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
+  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-aarch64-linux-gnu $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out && touch $out
 
 build $bin/luax-aarch64-linux-gnu: _bin_luax-aarch64-linux-gnu luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-aarch64-linux-gnu
 build $lib/libluax-aarch64-linux-gnu.so: cp $tmp/lib/libluax-aarch64-linux-gnu.so
@@ -288,7 +288,7 @@ build $lib/libluax-aarch64-linux-gnu.so: cp $tmp/lib/libluax-aarch64-linux-gnu.s
 ######################################################################
 
 rule _bin_luax-x86_64-windows-gnu.exe
-  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86_64-windows-gnu.exe $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
+  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86_64-windows-gnu.exe $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out && touch $out
 
 build $bin/luax-x86_64-windows-gnu.exe: _bin_luax-x86_64-windows-gnu.exe luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86_64-windows-gnu.exe
 build $lib/luax-x86_64-windows-gnu.dll: cp $tmp/lib/luax-x86_64-windows-gnu.dll
@@ -298,7 +298,7 @@ build $lib/luax-x86_64-windows-gnu.dll: cp $tmp/lib/luax-x86_64-windows-gnu.dll
 ######################################################################
 
 rule _bin_luax-x86-windows-gnu.exe
-  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86-windows-gnu.exe $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
+  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86-windows-gnu.exe $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out && touch $out
 
 build $bin/luax-x86-windows-gnu.exe: _bin_luax-x86-windows-gnu.exe luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86-windows-gnu.exe
 build $lib/luax-x86-windows-gnu.dll: cp $tmp/lib/luax-x86-windows-gnu.dll
@@ -308,7 +308,7 @@ build $lib/luax-x86-windows-gnu.dll: cp $tmp/lib/luax-x86-windows-gnu.dll
 ######################################################################
 
 rule _bin_luax-x86_64-macos-none
-  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86_64-macos-none $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
+  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-x86_64-macos-none $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out && touch $out
 
 build $bin/luax-x86_64-macos-none: _bin_luax-x86_64-macos-none luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-x86_64-macos-none
 build $lib/libluax-x86_64-macos-none.dylib: cp $tmp/lib/libluax-x86_64-macos-none.dylib
@@ -318,7 +318,7 @@ build $lib/libluax-x86_64-macos-none.dylib: cp $tmp/lib/libluax-x86_64-macos-non
 ######################################################################
 
 rule _bin_luax-aarch64-macos-none
-  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-aarch64-macos-none $out.tmp && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out.tmp && touch $out.tmp && mv $out.tmp $out
+  command = . tools/build_env.sh $tmp; cp $tmp/luaxruntime-aarch64-macos-none $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out && touch $out
 
 build $bin/luax-aarch64-macos-none: _bin_luax-aarch64-macos-none luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/luaxruntime-aarch64-macos-none
 build $lib/libluax-aarch64-macos-none.dylib: cp $tmp/lib/libluax-aarch64-macos-none.dylib
@@ -338,7 +338,7 @@ build $luax: _luax | tools/build_env.sh $bin/luax-x86_64-linux-musl $bin/luax-x8
 ######################################################################
 
 rule _lib_luax.lua
-  command = . tools/build_env.sh $tmp; LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -lib -lua $in > $out.tmp && touch $out.tmp && mv $out.tmp $out
+  command = . tools/build_env.sh $tmp; LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -lib -lua $in > $out && touch $out
 
 build $lib/luax.lua: _lib_luax.lua $luax_config_lua luax-libs/F/F.lua luax-libs/L/L.lua luax-libs/complex/complex.lua luax-libs/crypt/crypt.lua luax-libs/fs/fs.lua luax-libs/imath/imath.lua luax-libs/lpeg/lpeg.lua luax-libs/lz4/lz4.lua luax-libs/mathx/mathx.lua luax-libs/package/package_hook.lua luax-libs/ps/ps.lua luax-libs/qmath/qmath.lua luax-libs/rt0/rt0.lua luax-libs/sh/sh.lua luax-libs/sys/sys.lua luax-libs/term/term.lua ext/lua/argparse/argparse.lua ext/lua/cbor/cbor.lua ext/lua/inspect/inspect.lua ext/lua/serpent/serpent.lua | tools/build_env.sh $lz4 $lua luax/bundle.lua tools/rc4_runtime.lua
 

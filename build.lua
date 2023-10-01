@@ -319,8 +319,7 @@ build "$luax_config_lua" { "gen_config", "tools/gen_config_lua.sh" }
 build "$luax_crypt_key"  {
     command = {
         ". tools/build_env.sh $tmp;",
-        "$lua", "tools/crypt_key.lua", "LUAX_CRYPT_KEY", '"$$CRYPT_KEY"', "> $out.tmp",
-        "&& mv $out.tmp $out",
+        "$lua", "tools/crypt_key.lua", "LUAX_CRYPT_KEY", '"$$CRYPT_KEY"', "> $out",
     },
     implicit_in = {
         "$lua",
@@ -333,7 +332,7 @@ build "$luax_crypt_key"  {
 section "Lua runtime"
 ---------------------------------------------------------------------
 
-local luax_runtime = F.flatten{
+local luax_runtime = {
     ls "luax-libs/**.lua",
     ls "ext/**.lua",
 }
@@ -347,9 +346,8 @@ build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
         "$lua",
         "-l tools/rc4_runtime",
         "luax/bundle.lua", "-lib -ascii",
-        "$in > $out.tmp",
-        "&& touch $out.tmp",
-        "&& mv $out.tmp $out",
+        "$in > $out",
+        "&& touch $out",
     },
     implicit_in = {
         "tools/build_env.sh",
@@ -445,34 +443,37 @@ targets : foreach(function(target)
 
     local shared_lib = shared_libs(target)
 
-    acc(binaries)(build("$bin/luax-"..target..e) { luax_packages,
-        command = {
-            ". tools/build_env.sh $tmp;",
-            "cp", "$tmp/luaxruntime-"..target..e, "$out.tmp",
-            "&&",
-            "LUA_PATH=\"$lua_path\"",
-            "$lua",
-            "-l tools/rc4_runtime",
-            "luax/bundle.lua", "-binary",
-            "$in >> $out.tmp",
-            "&& touch $out.tmp",
-            "&& mv $out.tmp $out",
-        },
-        implicit_in = {
-            "tools/build_env.sh",
-            "$lz4",
-            "$lua",
-            "tools/rc4_runtime.lua",
-            "luax/bundle.lua",
-            "$tmp/luaxruntime-"..target..e,
-        },
-    })
+    acc(binaries) {
+        build("$bin/luax-"..target..e) { luax_packages,
+            command = {
+                ". tools/build_env.sh $tmp;",
+                "cp", "$tmp/luaxruntime-"..target..e, "$out",
+                "&&",
+                "LUA_PATH=\"$lua_path\"",
+                "$lua",
+                "-l tools/rc4_runtime",
+                "luax/bundle.lua", "-binary",
+                "$in >> $out",
+                "&& touch $out",
+            },
+            implicit_in = {
+                "tools/build_env.sh",
+                "$lz4",
+                "$lua",
+                "tools/rc4_runtime.lua",
+                "luax/bundle.lua",
+                "$tmp/luaxruntime-"..target..e,
+            },
+        }
+    }
 
     if shared_lib then
 
-        acc(libraries)(build("$lib"/shared_lib) {
-            "cp", "$tmp"/"lib"/shared_lib,
-        })
+        acc(libraries) {
+            build("$lib"/shared_lib) {
+                "cp", "$tmp"/"lib"/shared_lib,
+            }
+        }
 
     end
 
@@ -480,16 +481,18 @@ end)
 
 var "luax" "$bin/luax"
 
-acc(binaries)(build "$luax" {
-    command = {
-        ". tools/build_env.sh $tmp;",
-        "cp", "-f", "$bin/luax-$$ARCH-$$OS-$$LIBC$$EXT", "$out$$EXT",
-    },
-    implicit_in = {
-        "tools/build_env.sh",
-        binaries,
-    },
-})
+acc(binaries) {
+    build "$luax" {
+        command = {
+            ". tools/build_env.sh $tmp;",
+            "cp", "-f", "$bin/luax-$$ARCH-$$OS-$$LIBC$$EXT", "$out$$EXT",
+        },
+        implicit_in = {
+            "tools/build_env.sh",
+            binaries,
+        },
+    }
+}
 
 --===================================================================
 section "LuaX Lua implementation"
@@ -504,43 +507,48 @@ local lib_luax_sources = F.flatten{
     ls "ext/lua/**.lua",
 }
 
-acc(libraries)(build "$lib/luax.lua" { "$luax_config_lua", lib_luax_sources,
-    command = {
-        ". tools/build_env.sh $tmp;",
-        "LUA_PATH=\"$lua_path\"",
-        "$lua",
-        "-l tools/rc4_runtime",
-        "luax/bundle.lua", "-lib -lua",
-        "$in > $out.tmp",
-        "&& touch $out.tmp",
-        "&& mv $out.tmp $out",
-    },
-    implicit_in = {
-        "tools/build_env.sh",
-        "$lz4",
-        "$lua",
-        "luax/bundle.lua",
-        "tools/rc4_runtime.lua",
-    },
-})
+acc(libraries) {
+    build "$lib/luax.lua" { "$luax_config_lua", lib_luax_sources,
+        command = {
+            ". tools/build_env.sh $tmp;",
+            "LUA_PATH=\"$lua_path\"",
+            "$lua",
+            "-l tools/rc4_runtime",
+            "luax/bundle.lua", "-lib -lua",
+            "$in > $out",
+            "&& touch $out",
+        },
+        implicit_in = {
+            "tools/build_env.sh",
+            "$lz4",
+            "$lua",
+            "luax/bundle.lua",
+            "tools/rc4_runtime.lua",
+        },
+    }
+}
 
 --===================================================================
 section "$bin/luax-lua"
 ---------------------------------------------------------------------
 
-acc(binaries)(build "$bin/luax-lua" { "luax/luax.lua",
-    command = { "$luax", "-q -t lua", "-o $out $in" },
-    implicit_in = { "$luax", "$lib/luax.lua" },
-})
+acc(binaries) {
+    build "$bin/luax-lua" { "luax/luax.lua",
+        command = { "$luax", "-q -t lua", "-o $out $in" },
+        implicit_in = { "$luax", "$lib/luax.lua" },
+    }
+}
 
 --===================================================================
 section "$bin/luax-pandoc"
 ---------------------------------------------------------------------
 
-acc(binaries)(build "$bin/luax-pandoc" { "luax/luax.lua",
-    command = { "$luax", "-q -t pandoc", "-o $out $in" },
-    implicit_in = { "$luax", "$lib/luax.lua" },
-})
+acc(binaries) {
+    build "$bin/luax-pandoc" { "luax/luax.lua",
+        command = { "$luax", "-q -t pandoc", "-o $out $in" },
+        implicit_in = { "$luax", "$lib/luax.lua" },
+    }
+}
 
 --===================================================================
 section "Tests"
@@ -553,235 +561,241 @@ local valgrind = {
     mode == "debug" and "valgrind --quiet" or {},
 }
 
----------------------------------------------------------------------
-
-acc(test)(build "$test/test-1-luax_executable.ok" {
-    command = {
-        ". tools/build_env.sh $tmp;",
-        valgrind,
-        "$luax -q -o $test/test-luax", test_sources,
-        "&&",
-        "TYPE=static LUA_PATH='tests/luax-tests/?.lua'",
-        "TEST_NUM=1",
-        valgrind,
-        "$test/test-luax Lua is great",
-        "&&",
-        "touch $out",
-    },
-    implicit_in = {
-        "tools/build_env.sh",
-        "$luax",
-        test_sources,
-    },
-})
+acc(test) {
 
 ---------------------------------------------------------------------
 
-acc(test)(build "$test/test-2-lib.ok" {
-    command = {
-        ". tools/build_env.sh $tmp;",
-        "eval `$luax env`;",
-        "TYPE=dynamic LUA_PATH='tests/luax-tests/?.lua'",
-        "TEST_NUM=2",
-        valgrind,
-        "$lua", "-l libluax", test_main, "Lua is great",
-        "&&",
-        "touch $out",
+    build "$test/test-1-luax_executable.ok" {
+        command = {
+            ". tools/build_env.sh $tmp;",
+            valgrind,
+            "$luax -q -o $test/test-luax", test_sources,
+            "&&",
+            "TYPE=static LUA_PATH='tests/luax-tests/?.lua'",
+            "TEST_NUM=1",
+            valgrind,
+            "$test/test-luax Lua is great",
+            "&&",
+            "touch $out",
+        },
+        implicit_in = {
+            "tools/build_env.sh",
+            "$luax",
+            test_sources,
+        },
     },
-    implicit_in = {
-        "tools/build_env.sh",
-        "$lua",
-        "$luax",
-        libraries,
-        test_sources,
-    },
-})
 
 ---------------------------------------------------------------------
 
-acc(test)(build "$test/test-3-lua.ok" {
-    command = {
-        ". tools/build_env.sh $tmp;",
-        "LIBC=lua TYPE=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
-        "TEST_NUM=3",
-        "$lua", "-l luax", test_main, "Lua is great",
-        "&&",
-        "touch $out",
+    build "$test/test-2-lib.ok" {
+        command = {
+            ". tools/build_env.sh $tmp;",
+            "eval `$luax env`;",
+            "TYPE=dynamic LUA_PATH='tests/luax-tests/?.lua'",
+            "TEST_NUM=2",
+            valgrind,
+            "$lua", "-l libluax", test_main, "Lua is great",
+            "&&",
+            "touch $out",
+        },
+        implicit_in = {
+            "tools/build_env.sh",
+            "$lua",
+            "$luax",
+            libraries,
+            test_sources,
+        },
     },
-    implicit_in = {
-        "tools/build_env.sh",
-        "$lua",
-        "$lib/luax.lua",
-        test_sources,
-    },
-})
 
 ---------------------------------------------------------------------
 
-acc(test)(build "$test/test-4-lua-luax-lua.ok" {
-    command = {
-        ". tools/build_env.sh $tmp;",
-        "LIBC=lua TYPE=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
-        "TEST_NUM=4",
-        "$bin/luax-lua", test_main, "Lua is great",
-        "&&",
-        "touch $out",
+    build "$test/test-3-lua.ok" {
+        command = {
+            ". tools/build_env.sh $tmp;",
+            "LIBC=lua TYPE=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
+            "TEST_NUM=3",
+            "$lua", "-l luax", test_main, "Lua is great",
+            "&&",
+            "touch $out",
+        },
+        implicit_in = {
+            "tools/build_env.sh",
+            "$lua",
+            "$lib/luax.lua",
+            test_sources,
+        },
     },
-    implicit_in = {
-        "tools/build_env.sh",
-        "$lua",
-        "$bin/luax-lua",
-        test_sources,
-    },
-})
 
 ---------------------------------------------------------------------
 
-acc(test)(build "$test/test-5-pandoc-luax-lua.ok" {
-    command = {
-        ". tools/build_env.sh $tmp;",
-        "LIBC=lua TYPE=pandoc LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
-        "TEST_NUM=5",
-        "pandoc lua ", "-l luax", test_main, "Lua is great",
-        "&&",
-        "touch $out",
+    build "$test/test-4-lua-luax-lua.ok" {
+        command = {
+            ". tools/build_env.sh $tmp;",
+            "LIBC=lua TYPE=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
+            "TEST_NUM=4",
+            "$bin/luax-lua", test_main, "Lua is great",
+            "&&",
+            "touch $out",
+        },
+        implicit_in = {
+            "tools/build_env.sh",
+            "$lua",
+            "$bin/luax-lua",
+            test_sources,
+        },
     },
-    implicit_in = {
-        "tools/build_env.sh",
-        "$lua",
-        "$lib/luax.lua",
-        test_sources,
-    },
-})
 
 ---------------------------------------------------------------------
 
--- This test is disabled since most of the binary distributions of Pandoc do not support dynamic loading
---[[
-acc(test)(build "$test/test-6-pandoc-luax-so.ok" {
-    command = {
-        ". tools/build_env.sh $tmp;",
-        "eval `$luax env`;",
-        "TYPE=pandoc LUA_CPATH='$lib/?.so' LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
-        "TEST_NUM=6",
-        "pandoc lua ", "-l libluax", test_main, "Lua is great",
-        "&&",
-        "touch $out",
+    build "$test/test-5-pandoc-luax-lua.ok" {
+        command = {
+            ". tools/build_env.sh $tmp;",
+            "LIBC=lua TYPE=pandoc LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
+            "TEST_NUM=5",
+            "pandoc lua ", "-l luax", test_main, "Lua is great",
+            "&&",
+            "touch $out",
+        },
+        implicit_in = {
+            "tools/build_env.sh",
+            "$lua",
+            "$lib/luax.lua",
+            test_sources,
+        },
     },
-    implicit_in = {
-        "tools/build_env.sh",
-        "$lua",
-        "$luax",
-        "$lib/luax.lua",
-        test_sources,
-    },
-})
---]]
-
----------------------------------------------------------------------
-
-acc(test)(build "$test/test-ext-1-lua.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
-    command = {
-        ". tools/build_env.sh $tmp;",
-        "eval `$luax env`;",
-        "$luax -q -t lua -o $test/ext-lua", "$in",
-        "&&",
-        "TARGET=lua",
-        "$test/ext-lua Lua is great",
-        "&&",
-        "touch $out",
-    },
-    implicit_in = {
-        "tools/build_env.sh",
-        "$lib/luax.lua",
-        "$luax",
-        binaries,
-    },
-})
-
----------------------------------------------------------------------
-
-acc(test)(build "$test/test-ext-2-lua-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
-    command = {
-        ". tools/build_env.sh $tmp;",
-        "eval `$luax env`;",
-        "$luax -q -t lua-luax -o $test/ext-lua-luax", "$in",
-        "&&",
-        "TARGET=lua-luax",
-        "$test/ext-lua-luax Lua is great",
-        "&&",
-        "touch $out",
-    },
-    implicit_in = {
-        "tools/build_env.sh",
-        "$lib/luax.lua",
-        "$luax",
-    },
-})
-
----------------------------------------------------------------------
-
-acc(test)(build "$test/test-ext-3-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
-    command = {
-        ". tools/build_env.sh $tmp;",
-        "eval `$luax env`;",
-        "$luax -q -t luax -o $test/ext-luax", "$in",
-        "&&",
-        "TARGET=luax",
-        "$test/ext-luax Lua is great",
-        "&&",
-        "touch $out",
-    },
-    implicit_in = {
-        "tools/build_env.sh",
-        "$lib/luax.lua",
-        "$luax",
-    },
-})
-
----------------------------------------------------------------------
-
-acc(test)(build "$test/test-ext-4-pandoc.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
-    command = {
-        ". tools/build_env.sh $tmp;",
-        "eval `$luax env`;",
-        "$luax -q -t pandoc -o $test/ext-pandoc", "$in",
-        "&&",
-        "TARGET=pandoc",
-        "$test/ext-pandoc Lua is great",
-        "&&",
-        "touch $out",
-    },
-    implicit_in = {
-        "tools/build_env.sh",
-        "$lib/luax.lua",
-        "$luax",
-        binaries,
-    },
-})
 
 ---------------------------------------------------------------------
 
 -- This test is disabled since most of the binary distributions of Pandoc do not support dynamic loading
 --[[
-acc(test)(build "$test/test-ext-5-pandoc-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
-    command = {
-        ". tools/build_env.sh $tmp;",
-        "eval `$luax env`;",
-        "$luax -q -t pandoc-luax -o $test/ext-pandoc-luax", "$in",
-        "&&",
-        "TARGET=pandoc-luax",
-        "$test/ext-pandoc-luax Lua is great",
-        "&&",
-        "touch $out",
+    build "$test/test-6-pandoc-luax-so.ok" {
+        command = {
+            ". tools/build_env.sh $tmp;",
+            "eval `$luax env`;",
+            "TYPE=pandoc LUA_CPATH='$lib/?.so' LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
+            "TEST_NUM=6",
+            "pandoc lua ", "-l libluax", test_main, "Lua is great",
+            "&&",
+            "touch $out",
+        },
+        implicit_in = {
+            "tools/build_env.sh",
+            "$lua",
+            "$luax",
+            "$lib/luax.lua",
+            test_sources,
+        },
     },
-    implicit_in = {
-        "tools/build_env.sh",
-        "$lib/luax.lua",
-        "$luax",
-    },
-})
 --]]
+
+---------------------------------------------------------------------
+
+    build "$test/test-ext-1-lua.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
+        command = {
+            ". tools/build_env.sh $tmp;",
+            "eval `$luax env`;",
+            "$luax -q -t lua -o $test/ext-lua", "$in",
+            "&&",
+            "TARGET=lua",
+            "$test/ext-lua Lua is great",
+            "&&",
+            "touch $out",
+        },
+        implicit_in = {
+            "tools/build_env.sh",
+            "$lib/luax.lua",
+            "$luax",
+            binaries,
+        },
+    },
+
+---------------------------------------------------------------------
+
+    build "$test/test-ext-2-lua-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
+        command = {
+            ". tools/build_env.sh $tmp;",
+            "eval `$luax env`;",
+            "$luax -q -t lua-luax -o $test/ext-lua-luax", "$in",
+            "&&",
+            "TARGET=lua-luax",
+            "$test/ext-lua-luax Lua is great",
+            "&&",
+            "touch $out",
+        },
+        implicit_in = {
+            "tools/build_env.sh",
+            "$lib/luax.lua",
+            "$luax",
+        },
+    },
+
+---------------------------------------------------------------------
+
+    build "$test/test-ext-3-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
+        command = {
+            ". tools/build_env.sh $tmp;",
+            "eval `$luax env`;",
+            "$luax -q -t luax -o $test/ext-luax", "$in",
+            "&&",
+            "TARGET=luax",
+            "$test/ext-luax Lua is great",
+            "&&",
+            "touch $out",
+        },
+        implicit_in = {
+            "tools/build_env.sh",
+            "$lib/luax.lua",
+            "$luax",
+        },
+    },
+
+---------------------------------------------------------------------
+
+    build "$test/test-ext-4-pandoc.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
+        command = {
+            ". tools/build_env.sh $tmp;",
+            "eval `$luax env`;",
+            "$luax -q -t pandoc -o $test/ext-pandoc", "$in",
+            "&&",
+            "TARGET=pandoc",
+            "$test/ext-pandoc Lua is great",
+            "&&",
+            "touch $out",
+        },
+        implicit_in = {
+            "tools/build_env.sh",
+            "$lib/luax.lua",
+            "$luax",
+            binaries,
+        },
+    },
+
+---------------------------------------------------------------------
+
+-- This test is disabled since most of the binary distributions of Pandoc do not support dynamic loading
+--[[
+    build "$test/test-ext-5-pandoc-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
+        command = {
+            ". tools/build_env.sh $tmp;",
+            "eval `$luax env`;",
+            "$luax -q -t pandoc-luax -o $test/ext-pandoc-luax", "$in",
+            "&&",
+            "TARGET=pandoc-luax",
+            "$test/ext-pandoc-luax Lua is great",
+            "&&",
+            "touch $out",
+        },
+        implicit_in = {
+            "tools/build_env.sh",
+            "$lib/luax.lua",
+            "$luax",
+        },
+    },
+--]]
+
+---------------------------------------------------------------------
+
+}
 
 --===================================================================
 section "Documentation"
@@ -834,17 +848,19 @@ rule "md_to_gfm" {
     },
 }
 
-acc(doc)(build "README.md" { "md_to_gfm",
-    build "$tmp/doc/README.md" { "ypp", "doc/src/luax.md" },
-})
+acc(doc) {
 
-markdown_sources : foreach(function(src)
+    build "README.md" { "md_to_gfm",
+        build "$tmp/doc/README.md" { "ypp", "doc/src/luax.md" },
+    },
 
-    acc(doc)(build("doc"/src:basename()) { "md_to_gfm",
-        build("$tmp"/src) { "ypp", src },
-    })
+    markdown_sources : map(function(src)
+        return build("doc"/src:basename()) { "md_to_gfm",
+            build("$tmp"/src) { "ypp", src },
+        }
+    end)
 
-end)
+}
 
 --===================================================================
 section "Shorcuts"
