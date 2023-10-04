@@ -12,8 +12,11 @@ More information on <https://www.lz4.org>.
 
 ## LZ4 compression preferences
 
-The compression preferences are hard coded (LZ4 default preferences for
-faster compression).
+The compression preferences are hard coded:
+
+- linked blocks
+- frame checksum enabled
+- maximal compression level
 
 ## LZ4 frame compression
 

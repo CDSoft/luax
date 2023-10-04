@@ -44,8 +44,12 @@ More information on <https://www.lz4.org>.
 /***************************************************************************@@@
 ## LZ4 compression preferences
 
-The compression preferences are hard coded
-(LZ4 default preferences for faster compression).
+The compression preferences are hard coded:
+
+- linked blocks
+- frame checksum enabled
+- maximal compression level
+
 @@@*/
 
 /***************************************************************************@@@
@@ -56,9 +60,13 @@ const char *lz4_compress(const char *src, const size_t src_len, char **dst, size
 {
     const char *srcBuffer = src;
     const size_t srcSize = src_len;
-    const size_t dstCapacity = LZ4F_compressFrameBound(srcSize, NULL);
+    LZ4F_preferences_t prefs = LZ4F_INIT_PREFERENCES;
+    prefs.frameInfo.blockMode = LZ4F_blockLinked;
+    prefs.frameInfo.contentChecksumFlag = LZ4F_contentChecksumEnabled;
+    prefs.compressionLevel = LZ4HC_CLEVEL_MAX;
+    const size_t dstCapacity = LZ4F_compressFrameBound(srcSize, &prefs);
     char *dstBuffer = safe_malloc(dstCapacity);
-    const size_t n = LZ4F_compressFrame(dstBuffer, dstCapacity, srcBuffer, srcSize, NULL);
+    const size_t n = LZ4F_compressFrame(dstBuffer, dstCapacity, srcBuffer, srcSize, &prefs);
     if (LZ4F_isError(n))
     {
         free(dstBuffer);
@@ -99,25 +107,25 @@ static int compress(lua_State *L)
 @@@*/
 
 #define MIN_DECOMPRESSION_BUFFER_SIZE 4096
+#define COMPRESSION_RATIO_GUESS 4 /* The compression ratio of the LuaX library is about 3.5 */
 
 const char *lz4_decompress(const char *src, const size_t src_len, char **dst, size_t *dst_len)
 {
     const char *srcBuffer = src;
     const size_t srcTotalSize = src_len;
-    size_t dstBufferCapacity = srcTotalSize + MIN_DECOMPRESSION_BUFFER_SIZE;
-    char *dstBuffer = safe_malloc(dstBufferCapacity);
     const char *srcPtr = srcBuffer;
     size_t srcSize = srcTotalSize;
-    char *dstPtr = dstBuffer;
-    size_t dstSize = dstBufferCapacity;
-    size_t dstOffset = 0;
     LZ4F_dctx *dctx;
     const LZ4F_errorCode_t dctxRet = LZ4F_createDecompressionContext(&dctx, LZ4F_VERSION);
     if (LZ4F_isError(dctxRet))
     {
-        free(dstBuffer);
         return LZ4F_getErrorName(dctxRet);
     }
+    size_t dstBufferCapacity = COMPRESSION_RATIO_GUESS*srcTotalSize + MIN_DECOMPRESSION_BUFFER_SIZE;
+    char *dstBuffer = safe_malloc(dstBufferCapacity);
+    char *dstPtr = dstBuffer;
+    size_t dstSize = dstBufferCapacity;
+    size_t dstOffset = 0;
     while (srcSize > 0)
     {
         if (dstSize < MIN_DECOMPRESSION_BUFFER_SIZE)

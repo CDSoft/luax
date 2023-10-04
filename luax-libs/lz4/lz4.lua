@@ -39,7 +39,7 @@ if not lz4 then
 
     function lz4.lz4(s)
         return fs.with_tmpfile(function(tmp)
-            assert(sh.write("lz4 -q -z -12 -f -", tmp)(s))
+            assert(sh.write("lz4 -q -z -BD --best --frame-crc -f -", tmp)(s))
             return fs.read_bin(tmp)
         end)
     end
