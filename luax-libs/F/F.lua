@@ -1094,7 +1094,7 @@ register1 "show" (function(x, opt)
                         first_field = false
                         need_nl = opt.indent ~= nil
                         if opt.indent then emit "\n" emit((" "):rep(tabs)) end
-                        if type(k) == "string" and k:match "^[%w_]+$" then
+                        if type(k) == "string" and k:match "^[%a_][%w_]*$" then
                             emit(k)
                         else
                             emit "[" fmt(k) emit "]"

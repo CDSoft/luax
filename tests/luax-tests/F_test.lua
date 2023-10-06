@@ -533,6 +533,10 @@ local function convert_to_and_from_string()
     eq(("42"):read(), 42)
     eq(("{1, 3, x=2}"):read(), {1, x=2, 3})
     eq(("{1, 3, p={x=1.5, y=2.5}, x=2}"):read(), {1, 3, p={x=1.5, y=2.5}, x=2})
+
+    eq(F{["x9"]=1, ["9x"]=2}:show(), "{[\"9x\"]=2, x9=1}")
+    eq(("{[\"9x\"]=2, x9=1}"):read(), {["x9"]=1, ["9x"]=2})
+
     do
         local sts, msg = F.read("syntax error")
         eq(sts, nil)
