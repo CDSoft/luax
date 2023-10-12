@@ -989,7 +989,6 @@ static char *rc4(const char *key, size_t key_size, size_t drop, const char *inpu
 }
 
 char *rc4_runtime(const char *input, size_t input_len)
-__attribute__((optnone)) /* avoid the key to be computed at compile time */
 {
     LUAX_CRYPT_KEY(key)
     return rc4((const char *)key, sizeof(key), RC4_DROP_3072, input, input_len);

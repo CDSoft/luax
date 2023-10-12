@@ -20,23 +20,12 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
-local byte = string.byte
-local char = string.char
-
-local function prng(seed)
-    seed = seed*6364136223846793005 + 1
-    seed = seed*6364136223846793005 + 1
-    return function()
-        seed = seed*6364136223846793005 + 1
-        return seed
-    end
-end
-
+-- hash function inspired by crypt.hash
 local function hash(s)
     local h = 1844674407370955155*10+7
     h = h * 6364136223846793005 + 1
     for i = 1, #s do
-        local c = byte(s, i)
+        local c = s:byte(i)
         h = h * 6364136223846793005 + ((c << 1) | 1)
     end
     h = h * 6364136223846793005 + 1
@@ -44,42 +33,60 @@ local function hash(s)
 end
 
 local name, key = table.unpack(arg)
-key = key : gsub("\\x(..)", function(h) return char(tonumber(h, 16)) end)
+key = key : gsub("\\x(..)", function(h) return string.char(tonumber(h, 16)) end)
 
 local function write(fmt, ...)
     io.stdout:write(fmt:format(...))
 end
 
-write("/* key: %s */\n", key)
-write("#define %s(K) ", name)
+-- Linear congruential generator used to encrypt the decryption key
+-- (see https://en.wikipedia.org/wiki/Linear_congruential_generator (Turbo Pascal random number generator)
+local a = 134775813
+local c = 1
+local m = 32
 
-local kxor = hash(key) % 256
-local rot = hash(string.reverse(key)) % 4 + 2
+-- Seed value of the generator
+local r0 = (hash(key)>>32) % (1<<m)
 
+a = a % (1<<m)
+
+-- Drop some values to make it less predictable
+for _ = 1, 3072 + (hash(key)&0xffff) do
+    r0 = (r0*a + c) % (1<<m)
+end
+
+-- Encrypt the key by xoring bytes with pseudo random values
 local encrypted_key = {}
+local r = r0
 for i = 1, #key do
-    local c = byte(key, i)
-    c = (c<<rot) | (c>>(8-rot))
-    c = c ~ kxor
-    encrypted_key[i] = c & 0xff
+    r = (r*a + c) % (1<<m)
+    encrypted_key[i] = (key:byte(i) ~ (r>>(m/2))) & 0xff
 end
 
-local rnd = prng(hash(key))
+-- The encrypted key is stored in a C source file
+-- and is decrypted at runtime.
 
-local permutation = {}
-for i = 1, #key do permutation[i] = i end
-for i = 1, #key-1 do
-    local j = i + (rnd() % (#key-i)) + 1
-    permutation[i], permutation[j] = permutation[j], permutation[i]
-end
+write("/* key: %s */\n", key)
+write("#define %s(K) \\\n", name)
 
-write("unsigned char K[%d];", #key)
-for i = 1, #key do
-    local j = permutation[i]
-    write("K[%d]=%d;", j-1, encrypted_key[j])
-end
+-- buffer where the key is decrypted
+write("    uint8_t K[%d]; \\\n", #key)
+write("    { \\\n")
 
-write("for(int i=0;i<%d;i++){", #key)
-write("int c=K[i]^%d;", kxor)
-write("K[i]=(unsigned char)((c>>%d)|(c<<%d));", rot, 8-rot)
-write("}\n")
+-- encrypted key stored as a constant
+write("        static const uint8_t k[%d] = {", #key)
+for i = 1, #key do write("%d,", encrypted_key[i]) end
+write("};\\\n")
+
+-- The runtime uses the same algorithm to generate pseudo random values
+-- used to decrypt the encrypted key
+
+-- "volatile const" to avoid code optimizations that may decrypt the key at compilation time
+write("        volatile const uint%d_t r0 = %d; \\\n", m, r0);
+write("        uint%d_t r = r0; \\\n", m);
+write("        for (int i = 0; i < %d; i++) { \\\n", #key)
+write("            r = r*%d + %d; \\\n", a, c)
+write("            K[i] = (uint8_t)(k[i] ^ (r>>%d)); \\\n", m/2)    assert(m/2 >= 8)
+write("        } \\\n")
+
+write("    }\n")
