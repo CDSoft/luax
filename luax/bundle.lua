@@ -56,10 +56,7 @@ local function last_line(s)
 end
 
 local function mlstr(code)
-    local n = 0
-    code:gsub("](=*)]", function(s)
-        n = math.max(n, #s+1)
-    end)
+    local n = (code:matches"](=*)]":map(F.op.len):maximum() or 0) + 1
     local eqs = ("="):rep(n)
     return F.str{"[", eqs, "[", code, "]", eqs, "]"}
 end

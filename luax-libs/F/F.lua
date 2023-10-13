@@ -3555,6 +3555,26 @@ end
 
 --[[@@@
 ```lua
+string.matches(s, pattern, [init])
+s:matches(pattern, [init])
+```
+> Returns the list of the captures from `pattern` by iterating on `string.gmatch`.
+  If `pattern` defines two or more captures, the result is a list of list of captures.
+@@@]]
+
+function string.matches(s, pattern, init)
+    local iterator = s:gmatch(pattern, init)
+    local ms = F{}
+    while true do
+        local xs = {iterator()}
+        if #xs == 0 then return ms end
+        if #xs == 1 then xs = xs[1] end
+        ms[#ms+1] = xs
+    end
+end
+
+--[[@@@
+```lua
 string.split(s, sep, maxsplit, plain)
 s:split(sep, maxsplit, plain)
 ```

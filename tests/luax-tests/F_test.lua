@@ -1596,6 +1596,11 @@ local function string_functions()
     eq(("1234"):has_infix(""), true)
     eq((""):has_infix("12"), false)
 
+    eq(("foo=bar oof=rab"):matches"baz", {})
+    eq(("foo=bar oof=rab"):matches"%w+", {"foo", "bar", "oof", "rab"})
+    eq(("foo=bar oof=rab"):matches"(%w+)", {"foo", "bar", "oof", "rab"})
+    eq(("foo=bar oof=rab"):matches"(%w+)=(%w+)", {{"foo", "bar"}, {"oof", "rab"}})
+
     eq(("ab/cd/efg/hij"):split("/"), {"ab","cd","efg","hij"})
     eq(("ab/cd/efg/hij"):split("/", 2), {"ab","cd","efg/hij"})
     eq(("ab/cd/efg/hij/"):split("/"), {"ab","cd","efg","hij",""})

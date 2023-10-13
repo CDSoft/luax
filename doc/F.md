@@ -1641,6 +1641,15 @@ s:has_infix(infix)
 > anywhere within the first.
 
 ``` lua
+string.matches(s, pattern, [init])
+s:matches(pattern, [init])
+```
+
+> Returns the list of the captures from `pattern` by iterating on
+> `string.gmatch`. If `pattern` defines two or more captures, the result
+> is a list of list of captures.
+
+``` lua
 string.split(s, sep, maxsplit, plain)
 s:split(sep, maxsplit, plain)
 ```
