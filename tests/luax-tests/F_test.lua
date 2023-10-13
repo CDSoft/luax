@@ -1482,6 +1482,10 @@ local function string_functions()
     eq(s:chars(5), {"i","s"," ","g","r","e","a","t"})
     eq(s:chars(5, 7), {"i","s"," "})
 
+    eq(s:bytes(), {76,117,97,32,105,115,32,103,114,101,97,116})
+    eq(s:bytes(5), {105,115,32,103,114,101,97,116})
+    eq(s:bytes(5, 7), {105,115,32})
+
     eq(s:head(), "L")
     eq(s:last(), "t")
     eq(s:tail(), "ua is great")

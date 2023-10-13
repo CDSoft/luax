@@ -3184,11 +3184,21 @@ s:chars(i, j)
 @@@]]
 
 function string.chars(s, i, j)
-    local cs = {}
+    return s:bytes(i, j):map(string.char)
+end
+
+--[[@@@
+```lua
+string.bytes(s, i, j)
+s:bytes(i, j)
+```
+> Returns the list of byte codes of a string between indices i and j, or the whole string if i and j are not provided.
+@@@]]
+
+function string.bytes(s, i, j)
     i = i or 1
-    j = j or #s
-    for k = i, j do cs[k-i+1] = s:sub(k, k) end
-    return F(cs)
+    j = j or -1
+    return F{s:byte(i, j)}
 end
 
 --[[@@@

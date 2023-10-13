@@ -1438,6 +1438,14 @@ s:chars(i, j)
 > the whole string if i and j are not provided.
 
 ``` lua
+string.bytes(s, i, j)
+s:bytes(i, j)
+```
+
+> Returns the list of byte codes of a string between indices i and j, or
+> the whole string if i and j are not provided.
+
+``` lua
 string.head(s)
 s:head()
 ```
