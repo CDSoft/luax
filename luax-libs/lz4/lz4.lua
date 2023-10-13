@@ -18,6 +18,9 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
+-- Load lz4.lua to add new methods to strings
+--@LOAD=_
+
 --[[------------------------------------------------------------------------@@@
 ## String methods
 
