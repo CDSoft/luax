@@ -24,8 +24,8 @@ local bundle = {}
 
 local F = require "F"
 local fs = require "fs"
-local lz4 = require "lz4"
-local crypt = require "crypt"
+require "lz4"
+require "crypt"
 local config = require "luax_config"
 
 bundle.magic = "\0"..config.magic_id.."\0"
@@ -46,10 +46,6 @@ local function Bundle()
     function self.emit(s) fragments[#fragments+1] = s end
     function self.get() return fragments:str() end
     return self
-end
-
-local function strip_ext(path)
-    return path:gsub("%.lua$", "")
 end
 
 local function last_line(s)
@@ -80,10 +76,10 @@ function bundle.bundle(arg, opts)
         elseif arg[i] == "-binary" then format = "binary"
         elseif arg[i] == "-ascii"  then format = "ascii"
         elseif arg[i] == "-lua"    then format = "lua"
-        elseif fs.ext(arg[i]) == ".lua" then
+        elseif arg[i]:ext() == ".lua" then
             local content = read(arg[i]):gsub("^#![^\n]*", "")
             local new_name = content:match("@".."LIB=([%w%._%-]+)")
-            local name = new_name or fs.basename(strip_ext(arg[i]))
+            local name = new_name or arg[i]:basename():splitext()
             local main = content:match("@".."MAIN")
             local load = content:match("@".."LOAD")
             local new_load_name = content:match("@".."LOAD=([%w%._%-]+)")
@@ -107,12 +103,12 @@ function bundle.bundle(arg, opts)
             explicit_main = explicit_main or main
         else
             -- file embeded as a Lua module returning the content of the file
-            local name = fs.basename(arg[i])
+            local name = arg[i]:basename()
             local content = read(arg[i])
             if content:match "^[%g%s]*$" then
                 content = ("return %s"):format(mlstr(content))
             else
-                content = ("return require'crypt'.unbase64 %s"):format(mlstr(crypt.base64(content)))
+                content = ("return require'crypt'.unbase64 %s"):format(mlstr(content:base64()))
             end
             scripts[#scripts+1] = {
                 path = arg[i],
@@ -163,7 +159,7 @@ function bundle.bundle(arg, opts)
 
     local function home_path(name)
         if name:match("^"..home) then
-            return fs.realpath(name):gsub("^"..home, "~")
+            return name:realpath():gsub("^"..home, "~")
         end
         return name
     end
@@ -215,14 +211,14 @@ function bundle.bundle(arg, opts)
     end
 
     local plain_payload = plain.get()
-    local payload = crypt.rc4(lz4.lz4(plain_payload))
+    local payload = plain_payload:lz4():rc4()
 
     if format == "binary" then
         return payload .. header_format:pack(#payload, bundle.magic)
     end
 
     if format == "ascii" then
-        return crypt.hex(payload):gsub("..", "'\\x%0',") .. "\n"
+        return payload:bytes():str"," .. "\n"
     end
 
     if format == "lua" then

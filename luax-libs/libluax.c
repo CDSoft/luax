@@ -80,7 +80,7 @@ typedef struct __attribute__((__packed__))
 
 static const t_magic magic = "\0"LUAX_MAGIC_ID;
 
-static const char runtime_chunk[] = {
+static const uint8_t runtime_chunk[] = {
 #include "lua_runtime_bundle.dat"
 };
 
@@ -167,7 +167,7 @@ LUAMOD_API int luaopen_libluax(lua_State *L)
 
     char *rt_chunk = NULL;
     size_t rt_chunk_len = 0;
-    decode_runtime(runtime_chunk, sizeof(runtime_chunk), &rt_chunk, &rt_chunk_len);
+    decode_runtime((const char *)runtime_chunk, sizeof(runtime_chunk), &rt_chunk, &rt_chunk_len);
     if (run_buffer(L, rt_chunk, rt_chunk_len, "=runtime") != LUA_OK)
     {
         error(arg0(L), "can not initialize LuaX runtime\n");
