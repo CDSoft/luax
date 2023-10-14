@@ -35,7 +35,7 @@ if not sys then
     setmetatable(sys, {
         __index = function(_, param)
             if param == "os" then
-                local os = sh.read("uname", "-s"):trim()
+                local os = sh.read("uname", "-s"):trim() ---@diagnostic disable-line: undefined-field
                 os =   os == "Linux" and "linux"
                     or os == "Darwin" and "macos"
                     or os:match "^MINGW" and "windows"
@@ -43,7 +43,7 @@ if not sys then
                 sys.os = os
                 return os
             elseif param == "arch" then
-                local arch = sh.read("uname", "-m"):trim()
+                local arch = sh.read("uname", "-m"):trim() ---@diagnostic disable-line: undefined-field
                 arch =   arch:match "^i[3-6]86" and "x86"
                       or arch
                 sys.arch = arch

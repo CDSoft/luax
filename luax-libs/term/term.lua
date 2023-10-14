@@ -56,7 +56,9 @@ if not term then
     if not term.size then
 
         function term.size()
-            local rows, cols = sh.read("stty", "size"):words():map(tonumber):unpack()
+            local rows, cols = sh.read("stty", "size")
+                : words() ---@diagnostic disable-line: undefined-field
+                : map(tonumber):unpack()
             return {rows=rows, cols=cols}
         end
 
