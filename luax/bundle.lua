@@ -257,4 +257,4 @@ end
 
 if called_by(require) then return bundle end
 
-io.stdout:write(bundle.bundle(arg, {name="luax-runtime"}))
+io.stdout:write(bundle.bundle(arg, {name="luax"}))
