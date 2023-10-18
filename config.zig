@@ -61,7 +61,6 @@ pub const luax_c_files = [_][]const u8 {
     "luax-libs/linenoise/linenoise.c",
     "luax-libs/lz4/lz4.c",
     "luax-libs/ps/ps.c",
-    "luax-libs/rt0/rt0.c",
     "luax-libs/socket/luasocket.c",
     "luax-libs/std/std.c",
     "luax-libs/sys/sys.c",

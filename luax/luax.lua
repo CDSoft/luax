@@ -135,11 +135,11 @@ end
 local external_interpreters = F{
     -- Only the Lua format can be used with external interpreters
     -- to avoid incompatibilities between the payload and the interpreter.
-    ["lua"]          = { interpreter="lua",        format="-lua", library={},             loader={}, scripts={"luax.lua"} },
-    ["lua-luax"]     = { interpreter="lua",        format="-lua", library="-l _=libluax", loader={}, scripts={} },
-    ["luax"]         = { interpreter="luax",       format="-lua", library={},             loader={}, scripts={} },
-    ["pandoc"]       = { interpreter="pandoc lua", format="-lua", library={},             loader={}, scripts={"luax.lua"} },
-    ["pandoc-luax"]  = { interpreter="pandoc lua", format="-lua", library="-l _=libluax", loader={}, scripts={} },
+    ["lua"]          = { interpreter="lua",        format="-lua", library={},             scripts={"luax.lua"} },
+    ["lua-luax"]     = { interpreter="lua",        format="-lua", library="-l _=libluax", scripts={} },
+    ["luax"]         = { interpreter="luax",       format="-lua", library={},             scripts={} },
+    ["pandoc"]       = { interpreter="pandoc lua", format="-lua", library={},             scripts={"luax.lua"} },
+    ["pandoc-luax"]  = { interpreter="pandoc lua", format="-lua", library="-l _=libluax", scripts={} },
 }
 
 local function print_targets()
@@ -723,9 +723,6 @@ local function run_compiler()
 
                 -- load luax library (.lua or .so)
                 interpreter.library,
-
-                -- load the LuaX runtime
-                interpreter.loader,
 
                 -- remaining parameters are given to the main script
                 "--",
