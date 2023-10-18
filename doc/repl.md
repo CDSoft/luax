@@ -67,12 +67,13 @@ entering the REPL:
 - complex
 - crypt
 - fs
+- imath
+- lz4
 - mathx
 - ps
 - qmath
 - sh
 - sys
-- lz4
 
 ``` lua
 show(x)

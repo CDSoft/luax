@@ -558,8 +558,8 @@ build help: help
 # Regenerate build.ninja when build.lua changes
 ######################################################################
 
-rule regenerate_ninja_file
+rule bang
   command = bang $quiet $in -o $out -- $args
   generator = true
 
-build build.ninja: regenerate_ninja_file build.lua
+build build.ninja: bang build.lua
