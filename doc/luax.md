@@ -281,12 +281,11 @@ E.g.:
 
 ## Pure Lua modules
 
-LuaX modules also provides a pure Lua implementation (no LuaX
-dependency). The script `lib/luax.lua` can be reused in pure Lua
-programs:
+LuaX modules also provide pure Lua implementations (no LuaX dependency).
+The script `lib/luax.lua` can be reused in pure Lua programs:
 
 - [luax.lua](luax.lua.md): LuaX modules reimplemented in pure Lua
-  (except LuaSocket)
+  (except LuaSocket and lpeg)
 
 ## License
 
