@@ -349,7 +349,6 @@ build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
         "-l tools/rc4_runtime",
         "luax/bundle.lua", "-lib -ascii",
         "$in > $out",
-        "&& touch $out",
     },
     implicit_in = {
         "tools/build_env.sh",
@@ -391,7 +390,7 @@ targets : foreach(function(target)
     local e = ext(target)
 
     local shared_lib = shared_libs(target)
-    local shared_lib_name = shared_lib and ("$tmp" / "lib" / shared_lib)
+    local shared_lib_name = shared_lib and ("$tmp" / "lib" / shared_lib) or {}
 
     build("$tmp/luaxruntime-"..target..e) { "build.zig",
         command = {
@@ -416,9 +415,7 @@ targets : foreach(function(target)
             "$luax_crypt_key",
             "config.zig",
         },
-        implicit_out = {
-            shared_lib_name or {},
-        },
+        implicit_out = shared_lib_name,
     }
 
 end)
@@ -456,7 +453,6 @@ targets : foreach(function(target)
                 "-l tools/rc4_runtime",
                 "luax/bundle.lua", "-binary",
                 "$in >> $out",
-                "&& touch $out",
             },
             implicit_in = {
                 "tools/build_env.sh",
@@ -518,7 +514,6 @@ acc(libraries) {
             "-l tools/rc4_runtime",
             "luax/bundle.lua", "-lib -lua",
             "$in > $out",
-            "&& touch $out",
         },
         implicit_in = {
             "tools/build_env.sh",
