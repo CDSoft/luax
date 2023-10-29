@@ -45,6 +45,7 @@ pub fn build(b: *std.build.Builder) !void {
     const lib_name = try std.fmt.allocPrint(page, "{?s}-{s}-{s}-{s}", .{library_name, ARCH, OS, ABI});
 
     const dynamic = if (target.abi)|abi| !std.Target.Abi.isMusl(abi) else true;
+    const wasi = if (target.cpu_arch)|arch| std.Target.Cpu.Arch.isWasm(arch) else false;
 
     ///////////////////////////////////////////////////////////////////////////
     // LuaX executable
@@ -87,6 +88,7 @@ pub fn build(b: *std.build.Builder) !void {
         if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
         if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
         //if (target.os_tag == std.Target.Os.Tag.windows) "-DLUA_BUILD_AS_DLL" else "",
+        if (wasi) "-D_WASI_EMULATED_SIGNAL" else "",
     });
     exe.addCSourceFiles(&cfg.lua_c_files, &[_][]const u8 {
         "-std=gnu2x",
@@ -97,6 +99,7 @@ pub fn build(b: *std.build.Builder) !void {
         "-Wextra",
         if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
         if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
+        if (wasi) "-D_WASI_EMULATED_SIGNAL" else "",
     });
     exe.addCSourceFiles(&cfg.luax_c_files, &[_][]const u8 {
         "-std=gnu2x",
@@ -121,6 +124,7 @@ pub fn build(b: *std.build.Builder) !void {
         "-DLUA_LIB",
         if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
         if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
+        if (wasi) "-D_WASI_EMULATED_SIGNAL" else "",
     });
     exe.addCSourceFiles(&cfg.third_party_c_files, &[_][]const u8 {
         "-std=gnu2x",
@@ -130,6 +134,7 @@ pub fn build(b: *std.build.Builder) !void {
         "-DLUA_LIB",
         if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
         if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
+        if (wasi) "-D_WASI_EMULATED_SIGNAL" else "",
     });
     if (target.os_tag == std.Target.Os.Tag.windows) {
         exe.addCSourceFiles(&cfg.windows_third_party_c_files, &[_][]const u8 {
@@ -137,6 +142,7 @@ pub fn build(b: *std.build.Builder) !void {
             cfg.optim,
             cfg.debug,
             "-Wno-documentation",
+            if (wasi) "-D_WASI_EMULATED_SIGNAL" else "",
         });
         exe.linkSystemLibraryName("ws2_32");
         exe.linkSystemLibraryName("advapi32");
@@ -148,6 +154,7 @@ pub fn build(b: *std.build.Builder) !void {
             "-Wno-documentation",
             if (target.os_tag == std.Target.Os.Tag.linux) "-DLUA_USE_LINUX" else "",
             if (target.os_tag == std.Target.Os.Tag.macos) "-DLUA_USE_MACOSX" else "",
+            if (wasi) "-D_WASI_EMULATED_SIGNAL" else "",
         });
     }
 

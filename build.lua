@@ -84,6 +84,9 @@ local targets = F{
     -- MacOS
     "x86_64-macos-none",
     "aarch64-macos-none",
+
+    -- Wasm
+    "wasm32-wasi",
 }
 
 local compile = {}
@@ -379,6 +382,7 @@ local function shared_libs(target)
     if target : match "linux"   then return "libluax-"..target..".so" end
     if target : match "macos"   then return "libluax-"..target..".dylib" end
     if target : match "windows" then return "luax-"..target..".dll" end
+    if target : match "wasm"    then return nil end
     error("Unknown shared libary for "..target)
 end
 
