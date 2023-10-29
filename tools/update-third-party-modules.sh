@@ -50,7 +50,7 @@ update_lua()
 
     rm -rf lua
     mkdir -p lua
-    tar -xzf "$TMP/$LUA_ARCHIVE" -C lua --exclude=Makefile --strip-components=2 "lua-$LUA_VERSION/src"
+    tar -xzf "$TMP/$LUA_ARCHIVE" -C lua --exclude=Makefile --exclude=lua.hpp --strip-components=2 "lua-$LUA_VERSION/src"
 }
 
 update_lcomplex()
@@ -120,7 +120,7 @@ update_luasocket()
 
     rm -rf ext/c/luasocket
     mkdir ext/c/luasocket
-    unzip -j "$TMP/$LUASOCKET_ARCHIVE" "luasocket-$LUASOCKET_VERSION/src/*" -d ext/c/luasocket
+    unzip -j "$TMP/$LUASOCKET_ARCHIVE" "luasocket-$LUASOCKET_VERSION/src/*" -x "*/src/makefile" -d ext/c/luasocket
     echo "--@LIB=socket.ftp"     >> ext/c/luasocket/ftp.lua
     echo "--@LIB=socket.headers" >> ext/c/luasocket/headers.lua
     echo "--@LIB=socket.http"    >> ext/c/luasocket/http.lua
