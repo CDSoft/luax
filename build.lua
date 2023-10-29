@@ -382,6 +382,13 @@ local function shared_libs(target)
     error("Unknown shared libary for "..target)
 end
 
+-- imath is also provided by qmath, both versions shall be compatible
+rule "diff" { command = "diff $in && touch $out" }
+phony "check_limath_version" {
+    build "$tmp/check_limath_header_version" { "diff", "ext/c/lqmath/src/imath.h", "ext/c/limath/src/imath.h" },
+    build "$tmp/check_limath_source_version" { "diff", "ext/c/lqmath/src/imath.c", "ext/c/limath/src/imath.c" },
+}
+
 targets : foreach(function(target)
 
     section(target.." runtime")
@@ -413,6 +420,7 @@ targets : foreach(function(target)
             "$luax_config_h",
             "$luax_crypt_key",
             "config.zig",
+            "check_limath_version",
         },
         implicit_out = shared_lib_name,
     }
