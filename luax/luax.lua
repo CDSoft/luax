@@ -497,7 +497,7 @@ do
             if target == "list" then print_targets() os.exit() end
             if target == "list-luax" then print_luax_targets() os.exit() end
             if target == "list-lua" then print_lua_targets() os.exit() end
-        elseif a == '-q' then
+        elseif has_compiler and a == '-q' then
             compiler_mode = true
             quiet = true
         elseif a == '-v' then
