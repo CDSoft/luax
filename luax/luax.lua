@@ -23,12 +23,11 @@ http://cdelord.fr/luax
 local fs = require "fs"
 local sys = require "sys"
 local F = require "F"
-local I = F.I(_G){fs=fs, sys=sys}
 local term = require "term"
 
 local has_compiler = pcall(require, "bundle")
 
-local welcome = I[[
+local welcome = F.I(_G){sys=sys}[[
  _               __  __  |  https://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |
 | |  | | | |/ _` |\  /   |  Version $(_LUAX_VERSION) ($(_LUAX_DATE))
@@ -43,8 +42,8 @@ local LUA_INIT = F{
 }
 
 local usage = F.unlines(F.flatten {
-    I[==[
-usage: $(fs.basename(arg[0])) [options] [script [args]]
+    F.I{arg=arg}[==[
+usage: $(arg[0]:basename()) [options] [script [args]]
 
 General options:
   -h                show this help
@@ -78,7 +77,7 @@ Scripts for compilation:
 
 Lua and Compilation options can not be mixed.
 ]==] or {},
-    I{init=LUA_INIT}[==[
+    F.I{init=LUA_INIT}[==[
 Environment variables:
 
   $(init[1]), $(init[2])
