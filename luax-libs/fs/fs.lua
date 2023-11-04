@@ -467,7 +467,9 @@ function fs.ls(dir)
     local base = dir:basename()
     local path = dir:dirname()
     local recursive = base:match"%*%*"
-    local pattern = base:match"%*" and base:gsub("%.", "%%."):gsub("%*%*", "*"):gsub("%*", ".*")
+    local pattern = base:match"%*" and base : gsub("([.+-])", "%%%0")
+                                            : gsub("%*%*", "*")
+                                            : gsub("%*", ".*")
 
     if recursive then
         return fs.walk(path)
