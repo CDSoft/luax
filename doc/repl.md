@@ -24,20 +24,20 @@ $ LUA_CPATH="lib/?.so" lua -l luax-x86_64-linux-gnu
 ### LuaX with a plain Lua interpreter
 
 ``` sh
-lua luax-lua.lua
+luax-lua
 ```
 
 ### LuaX with the Pandoc Lua interpreter
 
 ``` sh
-pandoc lua luax-lua.lua
+luax-pandoc
 ```
 
-The integration with Pandoc is interresting to debug Pandoc Lua filters
+The integration with Pandoc is interesting to debug Pandoc Lua filters
 and inspect Pandoc AST. E.g.:
 
 ``` sh
-$ rlwrap pandoc lua luax-lua.lua
+$ rlwrap luax-pandoc
 
  _               __  __  |  https://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |

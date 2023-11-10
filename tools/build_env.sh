@@ -52,4 +52,12 @@ export OS
 export LIBC
 export EXT
 
+case "$OS" in
+    (linux) LUA_CFLAGS="-DLUA_USE_LINUX" ;;
+    (macos) LUA_CFLAGS="-DLUA_USE_MACOSX" ;;
+    (*)     LUA_CFLAGS="" ;;
+esac
+
+export LUA_CFLAGS
+
 export CRYPT_KEY=${CRYPT_KEY:-"LuaX"}

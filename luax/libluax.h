@@ -24,7 +24,16 @@
 
 #include <stdlib.h>
 
+/* C module registration function */
 LUAMOD_API int luaopen_libluax(lua_State *L);
 
-__attribute__((__noreturn__))
-void luax_run(lua_State *L, const char *exe);
+/* libluax functions to decode and execute a LuaX chunk of Lua code */
+
+/* decrypt and decompress a LuaX/app runtime */
+void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len);
+
+/* get arg[0] */
+const char *arg0(lua_State *L);
+
+/* run a decrypted and decompressed chunk */
+int run_buffer(lua_State *L, char *buffer, size_t size, const char *name);

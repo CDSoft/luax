@@ -45,7 +45,19 @@ $ ninja doc         # generate LuaX documentation
 
 **Note**: `ninja` will download a Zig compiler.
 
-## Compilation in debug mode
+### Compilation options
+
+| Option                | Description                                                                   |
+|:----------------------|:------------------------------------------------------------------------------|
+| `bang -- fast [upx]`  | Optimized for speed, optionally compressed with [UPX](https://upx.github.io/) |
+| `bang -- small [upx]` | Optimized for size, optionally compressed with [UPX](https://upx.github.io/)  |
+| `bang -- debug`       | Debug symbols kept, tests with [valgrind](https://valgrind.org/)              |
+
+`bang` must be run before `ninja` to change the compilation options.
+
+The default compilation option is `fast` with no compression.
+
+### Compilation in debug mode
 
 LuaX can be compiled in debug mode (less optimization, debug symbols
 kept in the binaries). In this mode, the tests are executed with

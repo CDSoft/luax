@@ -32,15 +32,15 @@ local function shell_env()
 
     local exe = assert(fs.is_file(arg[0]) and arg[0] or fs.findpath(arg[0]))
 
-    local abi = { linux="gnu", macos="none",  windows="gnu" }
-    local ext = { linux="so",  macos="dylib", windows="dll" }
+    local abi = F.case(sys.os) { linux="gnu", macos="none",  windows="gnu" }
+    local ext = F.case(sys.os) { linux="so",  macos="dylib", windows="dll" }
 
     local bin = exe:dirname():realpath()
     local prefix = bin:dirname()
     local lib_lua = prefix / "lib" / "?.lua"
-    local lib_so = prefix / "lib" / F{"?", sys.arch, sys.os, abi[sys.os], ext[sys.os]}:str("-", ".")
+    local lib_so = prefix / "lib" / F{"?", sys.arch, sys.os, abi, ext}:str("-", ".")
 
-    return F.flatten{
+    return F{
         path:split(fs.path_sep):elem(bin)
             and ('# PATH already contains %s'):format(bin)
             or ('PATH="%s%s$PATH"; export PATH;'):format(bin, fs.path_sep),

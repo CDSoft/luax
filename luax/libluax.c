@@ -68,29 +68,11 @@ static const luaL_Reg lrun_libs[] = {
     {NULL, NULL},
 };
 
-typedef char t_magic[1+sizeof(LUAX_MAGIC_ID)];
-
-typedef struct __attribute__((__packed__))
-{
-    uint32_t size;
-    t_magic magic;
-} t_header;
-
-static const t_magic magic = "\0"LUAX_MAGIC_ID;
-
 static const uint8_t runtime_chunk[] = {
 #include "lua_runtime_bundle.dat"
 };
 
-static inline uint32_t littleendian(uint32_t n)
-{
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    n = __builtin_bswap32(n);
-#endif
-    return n;
-}
-
-static void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
+void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
 {
     char *rc4_buffer = rc4_runtime(input, input_len);
     const char *err = lz4_decompress(rc4_buffer, input_len, output, output_len);
@@ -126,7 +108,7 @@ static int traceback(lua_State *L)
     return 0;
 }
 
-static const char *arg0(lua_State *L)
+const char *arg0(lua_State *L)
 {
     int type = lua_getglobal(L, "arg");
     if (type == LUA_TTABLE)
@@ -140,7 +122,7 @@ static const char *arg0(lua_State *L)
     return luaL_checkstring(L, -1);
 }
 
-static int run_buffer(lua_State *L, char *buffer, size_t size, const char *name)
+int run_buffer(lua_State *L, char *buffer, size_t size, const char *name)
 {
     if (luaL_loadbuffer(L, buffer, size, name) != LUA_OK)
     {
@@ -173,35 +155,4 @@ LUAMOD_API int luaopen_libluax(lua_State *L)
     free(rt_chunk);
 
     return 1;
-}
-
-__attribute__((__noreturn__))
-void luax_run(lua_State *L, const char *exe)
-{
-    FILE *f = fopen(exe, "rb");
-    if (f == NULL) perror(exe);
-
-    t_header header;
-    fseek(f, -(long)sizeof(header), SEEK_END);
-    if (fread(&header, sizeof(header), 1, f) != 1) perror(arg0(L));
-    header.size = littleendian(header.size);
-    if (memcmp(header.magic, magic, sizeof(magic)) != 0)
-    {
-        /* The runtime contains no application */
-        error(arg0(L), "LuaX application not found");
-    }
-
-    fseek(f, -(long)(header.size + sizeof(header)), SEEK_END);
-    char *chunk = safe_malloc(header.size);
-    if (fread(chunk, header.size, 1, f) != 1) perror(arg0(L));
-    fclose(f);
-    char *decoded_chunk = NULL;
-    size_t decoded_chunk_len = 0;
-    decode_runtime(chunk, header.size, &decoded_chunk, &decoded_chunk_len);
-    free(chunk);
-    const int status = run_buffer(L, decoded_chunk, decoded_chunk_len, "=");
-    free(decoded_chunk);
-
-    lua_close(L);
-    exit(status == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
 }

@@ -1,5 +1,3 @@
-#!/usr/bin/env luax
-
 section [[
 This file is part of luax.
 
@@ -47,14 +45,25 @@ If you need to update the build system, please modify build.lua
 and run bang to regenerate build.ninja.
 ]]
 
-local mode = "release"
+local mode = nil -- fast, small, debug
+local upx = false
 
 F.foreach(arg, function(a)
-    if a == "debug" or a == "release" then mode = a
-    else
-        error(a..": unknown parameter")
+    local function set_mode()
+        if mode~=nil then F.error_without_stack_trace(a..": duplicate compilation mode", 2) end
+        mode = a
     end
+    case(a) {
+        fast  = set_mode,
+        small = set_mode,
+        debug = set_mode,
+        upx   = function() upx = true end,
+        otherwise = function() F.error_without_stack_trace(a..": unknown parameter", 2) end,
+    } ()
 end)
+
+mode = mode or "fast"
+if mode=="debug" and upx then F.error_without_stack_trace("UPX compression not available in debug mode") end
 
 --===================================================================
 section "Build environment"
@@ -95,22 +104,217 @@ section "Zig compiler"
 ---------------------------------------------------------------------
 
 local zig_version = "0.11.0"
-var "zig"           (".zig" / zig_version / "zig")
-var "zig_cache"     (vars.zig:dirname() / "cache")
+var "zig"       (".zig" / zig_version / "zig")
+var "zig_cache" (vars.zig:dirname() / "cache")
+
+local set_cache = "export ZIG_LOCAL_CACHE_DIR=$zig_cache;"
 
 build "$zig" { "tools/install_zig.sh",
+    description = {"GET zig", zig_version},
     command = {"$in", zig_version, "$out"},
+    pool = "console",
 }
 
-rule "mkdir" { command = "mkdir -p $out" }
+rule "mkdir" {
+    description = "MKDIR $out",
+    command = "mkdir -p $out",
+}
 
 build "$zig_cache" { "mkdir" }
+
+local include_path = {
+    ".",
+    "$tmp",
+    "lua",
+    "ext/c/lz4/lib",
+    "luax-libs",
+}
+
+local native_cflags = {
+    "-std=gnu2x",
+    "-s -O3 -flto",
+    F.map(F.prefix"-I", include_path),
+    "$$LUA_CFLAGS",
+    "-Wno-constant-logical-operand",
+}
+
+local native_ldflags = {
+    "-rdynamic",
+    "-s -flto",
+}
+
+local cflags = {
+    "-std=gnu2x",
+    case(mode) {
+        fast  = "-s -O3",
+        small = "-s -Os",
+        debug = "-g -Og",
+    },
+    F.map(F.prefix"-I", include_path),
+}
+
+local luax_cflags = {
+    cflags,
+    "-Werror",
+    "-Wall",
+    "-Wextra",
+    "-Weverything",
+    "-Wno-padded",
+    "-Wno-reserved-identifier",
+    "-Wno-disabled-macro-expansion",
+    "-Wno-used-but-marked-unused",
+    "-Wno-documentation",
+    "-Wno-documentation-unknown-command",
+    "-Wno-declaration-after-statement",
+    "-Wno-unsafe-buffer-usage",
+}
+
+local ext_cflags = {
+    cflags,
+    "-Wno-constant-logical-operand",
+}
+
+local ldflags = {
+    case(mode) {
+        fast  = "-s",
+        small = "-s",
+        debug = {},
+    },
+}
+
+rule "cc" {
+    description = "CC $in",
+    command = {
+        ". tools/build_env.sh $tmp;",
+        set_cache,
+        "$zig cc -c", "-target", "$$ARCH-$$OS-$$LIBC", native_cflags, "-MD -MF $depfile $in -o $out",
+    },
+    implicit_in = {
+        "$zig", "$zig_cache",
+        "tools/build_env.sh",
+    },
+    depfile = "$out.d",
+}
+
+rule "ld" {
+    description = "LD $out",
+    command = {
+        ". tools/build_env.sh $tmp;",
+        set_cache,
+        "$zig cc", "-target", "$$ARCH-$$OS-$$LIBC", native_ldflags, "$in -o $out",
+    },
+    implicit_in = {
+        "$zig", "$zig_cache",
+        "tools/build_env.sh",
+    },
+}
+
+local cc = {}
+local cc_ext = {}
+local ld = {}
+local so = {}
+
+targets : foreach(function(target)
+    local target_arch, target_os, target_abi = target:split "%-":unpack()
+    local lto = case(mode) {
+        fast = case(target_os) {
+            linux   = "-flto",
+            macos   = {},
+            windows = "-flto",
+        },
+        small = {},
+        debug = {},
+    }
+    local target_flags = {
+        "-DLUAX_ARCH='\""..target_arch.."\"'",
+        "-DLUAX_OS='\""..target_os.."\"'",
+        "-DLUAX_ABI='\""..target_abi.."\"'",
+    }
+    local lua_flags = {
+        case(target_os) {
+            linux   = "-DLUA_USE_LINUX",
+            macos   = "-DLUA_USE_MACOSX",
+            windows = {},
+        },
+    }
+    local target_ld_flags = {
+        case(target_abi) {
+            gnu  = "-rdynamic",
+            musl = {},
+            none = "-rdynamic",
+        },
+        case(target_os) {
+            linux   = {},
+            macos   = {},
+            windows = "-lws2_32 -ladvapi32",
+        },
+    }
+    local target_so_flags = {
+        "-shared",
+    }
+    cc[target] = rule("cc-"..target) {
+        description = "CC["..target.."] $in",
+        command = {
+            set_cache,
+            "$zig cc", "-target", target, "-c", lto, luax_cflags, lua_flags, target_flags, "-MD -MF $depfile $in -o $out",
+        },
+        implicit_in = {
+            "$zig", "$zig_cache",
+        },
+        depfile = "$out.d",
+    }
+    cc_ext[target] = rule("cc_ext-"..target) {
+        description = "CC["..target.."] $in",
+        command = {
+            set_cache,
+            "$zig cc", "-target", target, "-c", lto, ext_cflags, lua_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
+        },
+        implicit_in = {
+            "$zig", "$zig_cache",
+        },
+        depfile = "$out.d",
+    }
+    ld[target] = rule("ld-"..target) {
+        description = "LD["..target.."] $out",
+        command = {
+            set_cache,
+            "$zig cc", "-target", target, lto, ldflags, target_ld_flags, "$in -o $out",
+        },
+        implicit_in = {
+            "$zig", "$zig_cache",
+        },
+    }
+    if target_abi~="musl" then
+        so[target] = rule("so-"..target) {
+            description = "SO["..target.."] $out",
+            command = {
+                set_cache,
+                "$zig cc", "-target", target, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out",
+            },
+            implicit_in = {
+                "$zig", "$zig_cache",
+            },
+        }
+    end
+end)
+
+local ar = rule "ar" {
+    description = "AR $out",
+    command = {
+        set_cache,
+        "$zig ar -crs $out $in",
+    },
+    implicit_in = {
+        "$zig", "$zig_cache",
+    },
+}
 
 --===================================================================
 section "Third-party modules update"
 ---------------------------------------------------------------------
 
 build "update_modules" {
+    description = "UPDATE",
     command = {"tools/update-third-party-modules.sh", "$builddir/update"},
     pool = "console",
 }
@@ -121,29 +325,16 @@ section "lz4 cli"
 
 var "lz4" "$tmp/lz4"
 
-build "$lz4" { ls "ext/c/lz4/**.c",
-    command = {
-        "ZIG_LOCAL_CACHE_DIR=$zig_cache",
-        "$zig cc",
-        "-s",
-        "-Os",
-        "-Iext/c/lz4/lib",
-        "$in -o $out",
-    },
-    implicit_in = {
-        "$zig",
-        "$zig_cache",
-        ls "ext/c/lz4/**.h",
-    },
+build "$lz4" { "ld",
+    ls "ext/c/lz4/**.c"
+    : map(function(src)
+        return build("$tmp/obj/lz4"/src:splitext()..".o") { "cc", src }
+    end),
 }
 
 --===================================================================
 section "LuaX sources"
 ---------------------------------------------------------------------
-
-comment [[
-The lists of C sources for Zig build are generated in config.zig"
-]]
 
 local linux_only = F{
     "ext/c/luasocket/serial.c",
@@ -161,11 +352,12 @@ local ignored_sources = F{
     "ext/c/lqmath/src/imath.c",
 }
 
-local zig = {
+local sources = {
     lua_c_files = ls "lua/*.c"
         : filter(function(name) return F.not_elem(name:basename(), {"lua.c", "luac.c"}) end),
     lua_main_c_files = F{ "lua/lua.c" },
     luax_main_c_files = F{ "luax/luax.c" },
+    libluax_main_c_files = F{ "luax/libluax.c" },
     luax_c_files = ls "luax-libs/**.c",
     third_party_c_files = ls "ext/c/**.c"
         : filter(function(name) return not name:match "lz4/programs" end)
@@ -175,46 +367,6 @@ local zig = {
     linux_third_party_c_files = linux_only,
     windows_third_party_c_files = windows_only,
 }
-
-local function array(list_name)
-    return F.flatten {
-        "pub const "..list_name.." = [_][]const u8 {",
-        zig[list_name]
-            : map(function(name) return '    "'..name..'",' end),
-        "};",
-    } : unlines()
-end
-
-local config_zig_vars = F.I {
-    array = array,
-    release = mode == "debug" and ".Debug" or ".ReleaseFast",
-    strip   = mode == "debug" and "false"  or "true",
-    optim   = mode == "debug" and "-Og"    or "-O3",
-    debug   = mode == "debug" and "-g"     or "",
-    build_path = vars.builddir/"tmp",
-}
-
-F.compose { file "config.zig", config_zig_vars }
-[===[
-// Generated by build.lua (bang)
-
-pub const lua_src = "lua";
-pub const src_path = "luax-libs";
-pub const build_path = "$(build_path)";
-
-pub const release = $(release);
-pub const strip = $(strip);
-pub const optim = "$(optim)";
-pub const debug = "$(debug)";
-
-$(array "lua_c_files")
-$(array "lua_main_c_files")
-$(array "luax_main_c_files")
-$(array "luax_c_files")
-$(array "third_party_c_files")
-$(array "linux_third_party_c_files")
-$(array "windows_third_party_c_files")
-]===]
 
 --===================================================================
 section "Native Lua interpreter"
@@ -234,23 +386,10 @@ var "lua_path" (
     : str ";"
 )
 
-build "$lua" { "build-lua.zig",
-    command = {
-        ". tools/build_env.sh $tmp;",
-        "$zig build",
-            "--cache-dir $zig_cache",
-            "--prefix `dirname $out` --prefix-exe-dir \"\"",
-            "-Dtarget=$$ARCH-$$OS-$$LIBC",
-            "--build-file $in",
-        "&& touch $out",
-    },
-    implicit_in = {
-        "tools/build_env.sh",
-        "$zig",
-        zig.lua_c_files,
-        zig.lua_main_c_files,
-        "config.zig",
-    },
+build "$lua" { "ld",
+    (sources.lua_c_files .. sources.lua_main_c_files) : map(function(src)
+        return build("$tmp/obj/lua"/src:splitext()..".o") { "cc", src }
+    end),
 }
 
 --===================================================================
@@ -303,6 +442,7 @@ EOF
 ]]
 
 rule "gen_config" {
+    description = "GEN $out",
     command = {
         ". tools/build_env.sh $tmp;",
         "bash", "$in", "$out",
@@ -318,6 +458,7 @@ build "$luax_config_h"   { "gen_config", "tools/gen_config_h.sh" }
 build "$luax_config_lua" { "gen_config", "tools/gen_config_lua.sh" }
 
 build "$luax_crypt_key"  {
+    description = "GEN $out",
     command = {
         ". tools/build_env.sh $tmp;",
         "$lua", "tools/crypt_key.lua", "LUAX_CRYPT_KEY", '"$$CRYPT_KEY"', "> $out",
@@ -341,6 +482,7 @@ local luax_runtime = {
 var "luax_runtime_bundle" "$tmp/lua_runtime_bundle.dat"
 
 build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
+    description = "BUNDLE $out",
     command = {
         ". tools/build_env.sh $tmp;",
         "LUA_PATH=\"$lua_path\"",
@@ -362,98 +504,175 @@ build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
 section "C runtimes"
 ---------------------------------------------------------------------
 
-local function is_linux(target)
-    return target:match "linux" or target:match "macos"
-end
-
-local function is_windows(target)
-    return target:match "windows"
+local function target_os(target)
+    return target:split"%-":snd()
 end
 
 local function ext(target)
-    return is_windows(target) and ".exe" or ""
+    return case(target_os(target)) {
+        windows = ".exe",
+        otherwise = "",
+    }
 end
 
-local function shared_libs(target)
-    if target : match "musl"    then return nil end
-    if target : match "linux"   then return "libluax-"..target..".so" end
-    if target : match "macos"   then return "libluax-"..target..".dylib" end
-    if target : match "windows" then return "luax-"..target..".dll" end
-    error("Unknown shared libary for "..target)
+local function libext(target)
+    return case(target_os(target)) {
+        linux   = ".so",
+        macos   = ".dylib",
+        windows = ".dll",
+    }
 end
 
 -- imath is also provided by qmath, both versions shall be compatible
-rule "diff" { command = "diff $in && touch $out" }
+rule "diff" {
+    description = "DIFF $in",
+    command = "diff $in > $out",
+}
 phony "check_limath_version" {
     build "$tmp/check_limath_header_version" { "diff", "ext/c/lqmath/src/imath.h", "ext/c/limath/src/imath.h" },
     build "$tmp/check_limath_source_version" { "diff", "ext/c/lqmath/src/imath.c", "ext/c/limath/src/imath.c" },
 }
 
-targets : foreach(function(target)
+local runtimes, shared_libraries =
+    targets : map(function(target)
 
-    section(target.." runtime")
+        section(target.." runtime")
 
-    local e = ext(target)
+        local liblua = build("$tmp/lib/liblua-"..target..".a") { ar,
+            F.flatten {
+                sources.lua_c_files,
+            } : map(function(src)
+                return build("$tmp/obj"/target/src:splitext()..".o") { cc_ext[target], src }
+            end),
+        }
 
-    local shared_lib = shared_libs(target)
-    local shared_lib_name = shared_lib and ("$tmp" / "lib" / shared_lib) or {}
+        local libluax = build("$tmp/lib/libluax-"..target..".a") { ar,
+            F.flatten {
+                sources.luax_c_files,
+            } : map(function(src)
+                return build("$tmp/obj"/target/src:splitext()..".o") { cc[target], src,
+                    implicit_in = {
+                        "$luax_config_h",
+                        case(src:basename():splitext()) {
+                            crypt = "$luax_crypt_key",
+                            otherwise = {},
+                        },
+                    },
+                }
+            end),
+            F.flatten {
+                sources.third_party_c_files,
+                case(target_os(target)) {
+                    linux   = sources.linux_third_party_c_files,
+                    macos   = sources.linux_third_party_c_files,
+                    windows = sources.windows_third_party_c_files,
+                },
+            } : map(function(src)
+                return build("$tmp/obj"/target/src:splitext()..".o") { cc_ext[target], src,
+                    additional_flags = case(src:basename():splitext()) {
+                        usocket = "-Wno-#warnings",
+                    },
+                    implicit_in = case(src:basename():splitext()) {
+                        limath = "check_limath_version",
+                        imath  = "check_limath_version",
+                    },
+                }
+            end),
+        }
 
-    build("$tmp/luaxruntime-"..target..e) { "build.zig",
-        command = {
-            "RUNTIME_NAME=luaxruntime LIB_NAME=luax",
-            "$zig build",
-                "--cache-dir $zig_cache",
-                "--prefix `dirname $out` --prefix-exe-dir \"\"",
-                "-Dtarget="..target,
-                "--build-file $in",
-            "&& touch $out", shared_lib_name,
-        },
-        implicit_in = {
-            "$zig",
-            zig.lua_c_files,
-            zig.luax_c_files,
-            zig.luax_main_c_files,
-            zig.third_party_c_files,
-            is_linux(target) and linux_third_party_c_files or {},
-            is_windows(target) and windows_third_party_c_files or {},
-            "$luax_runtime_bundle",
-            "$luax_config_h",
-            "$luax_crypt_key",
-            "config.zig",
-            "check_limath_version",
-        },
-        implicit_out = shared_lib_name,
+        local main_luax = F.flatten { sources.luax_main_c_files }
+            : map(function(src)
+                return build("$tmp/obj"/target/src:splitext()..".o") { cc[target], src,
+                    implicit_in = {
+                        "$luax_config_h",
+                    },
+                }
+            end)
+
+        local main_libluax = F.flatten { sources.libluax_main_c_files }
+            : map(function(src)
+                    return build("$tmp/obj"/target/src:splitext()..".o") { cc[target], src,
+                        implicit_in = {
+                            "$luax_config_h",
+                            "$luax_runtime_bundle",
+                        },
+                    }
+                end)
+
+        local runtime = build("$tmp/run/luaxruntime-"..target..ext(target)) { ld[target],
+            main_luax,
+            main_libluax,
+            liblua,
+            libluax,
+        }
+
+        local shared_library = so[target] and
+            build("$tmp/lib/libluax-"..target..libext(target)) { so[target],
+                main_libluax,
+                case(target_os(target)) {
+                    linux   = {},
+                    macos   = liblua,
+                    windows = liblua,
+                },
+                libluax,
+        }
+
+        return {runtime, shared_library or F.Nil}
+
+    end)
+    : unzip()
+
+shared_libraries = shared_libraries : filter(function(lib) return lib ~= F.Nil end)
+
+if upx and mode~="debug" then
+    rule "upx" {
+        description = "UPX $in",
+        command = "rm -f $out; upx -qqq -o $out $in && touch $out",
     }
+    runtimes = runtimes : map(function(runtime)
+        return build("$tmp/run-upx"/runtime:basename()) { "upx", runtime }
+    end)
+    shared_libraries = shared_libraries : map(function(library)
+        return case(library:ext()) {
+            [".dylib"] = F.const(library),
+            otherwise = function() return build("$tmp/lib-upx"/library:basename()) { "upx", library } end,
+        }()
+    end)
+end
 
+rule "cp" {
+    description = "CP $out",
+    command = "cp -f $in $out",
+}
+
+shared_libraries = shared_libraries : map(function(library)
+    return build("$lib"/library:basename()) { "cp", library }
 end)
 
 --===================================================================
 section "LuaX binaries"
 ---------------------------------------------------------------------
 
-local luax_packages = F.flatten {
+local luax_packages = {
     ls "luax/*.lua",
     "$luax_config_lua",
 }
 
-rule "cp" { command = {"cp", "-f", "$in", "$out"} }
-
 local binaries = {}
 local libraries = {}
 
-targets : foreach(function(target)
+F{targets, runtimes} : zip(function(target, runtime)
 
     section("LuaX "..target)
 
     local e = ext(target)
 
-    local shared_lib = shared_libs(target)
-
     acc(binaries) {
         build("$bin/luax-"..target..e) { luax_packages,
+        description = "LUAX $out",
             command = {
                 ". tools/build_env.sh $tmp;",
-                "cp", "$tmp/luaxruntime-"..target..e, "$out",
+                "cp", runtime, "$out",
                 "&&",
                 "LUA_PATH=\"$lua_path\"",
                 "$lua",
@@ -467,20 +686,10 @@ targets : foreach(function(target)
                 "$lua",
                 "tools/rc4_runtime.lua",
                 "luax/bundle.lua",
-                "$tmp/luaxruntime-"..target..e,
+                runtime,
             },
         }
     }
-
-    if shared_lib then
-
-        acc(libraries) {
-            build("$lib"/shared_lib) {
-                "cp", "$tmp"/"lib"/shared_lib,
-            }
-        }
-
-    end
 
 end)
 
@@ -488,6 +697,7 @@ var "luax" "$bin/luax"
 
 acc(binaries) {
     build "$luax" {
+        description = "CP $out",
         command = {
             ". tools/build_env.sh $tmp;",
             "cp", "-f", "$bin/luax-$$ARCH-$$OS-$$LIBC$$EXT", "$out$$EXT",
@@ -507,13 +717,14 @@ section "LuaX Lua implementation"
 section "$lib/luax.lua"
 ---------------------------------------------------------------------
 
-local lib_luax_sources = F.flatten{
+local lib_luax_sources = {
     ls "luax-libs/**.lua",
     ls "ext/lua/**.lua",
 }
 
 acc(libraries) {
     build "$lib/luax.lua" { "$luax_config_lua", lib_luax_sources,
+        description = "LUAX $out",
         command = {
             ". tools/build_env.sh $tmp;",
             "LUA_PATH=\"$lua_path\"",
@@ -538,6 +749,7 @@ section "$bin/luax-lua"
 
 acc(binaries) {
     build "$bin/luax-lua" { "luax/luax.lua",
+        description = "LUAX $out",
         command = { "$luax", "-q -t lua", "-o $out $in" },
         implicit_in = { "$luax", "$lib/luax.lua" },
     }
@@ -549,6 +761,7 @@ section "$bin/luax-pandoc"
 
 acc(binaries) {
     build "$bin/luax-pandoc" { "luax/luax.lua",
+        description = "LUAX $out",
         command = { "$luax", "-q -t pandoc", "-o $out $in" },
         implicit_in = { "$luax", "$lib/luax.lua" },
     }
@@ -562,7 +775,11 @@ local test_sources = ls "tests/luax-tests/*.*"
 local test_main = "tests/luax-tests/main.lua"
 
 local valgrind = {
-    mode == "debug" and "valgrind --quiet" or {},
+    case(mode) {
+        fast  = {},
+        small = {},
+        debug = "valgrind --quiet",
+    },
 }
 
 acc(test) {
@@ -570,12 +787,13 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-1-luax_executable.ok" {
+        description = "TEST $out",
         command = {
             ". tools/build_env.sh $tmp;",
             valgrind,
             "$luax -q -o $test/test-luax", test_sources,
             "&&",
-            "TYPE=static LUA_PATH='tests/luax-tests/?.lua'",
+            "LUA_PATH='tests/luax-tests/?.lua'",
             "TEST_NUM=1",
             valgrind,
             "$test/test-luax Lua is great",
@@ -592,10 +810,11 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-2-lib.ok" {
+        description = "TEST $out",
         command = {
             ". tools/build_env.sh $tmp;",
             "eval `$luax env`;",
-            "TYPE=dynamic LUA_PATH='tests/luax-tests/?.lua'",
+            "LUA_PATH='tests/luax-tests/?.lua'",
             "TEST_NUM=2",
             valgrind,
             "$lua", "-l libluax", test_main, "Lua is great",
@@ -614,9 +833,10 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-3-lua.ok" {
+        description = "TEST $out",
         command = {
             ". tools/build_env.sh $tmp;",
-            "LIBC=lua TYPE=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
+            "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=3",
             "$lua", "-l luax", test_main, "Lua is great",
             "&&",
@@ -633,9 +853,10 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-4-lua-luax-lua.ok" {
+        description = "TEST $out",
         command = {
             ". tools/build_env.sh $tmp;",
-            "LIBC=lua TYPE=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
+            "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=4",
             "$bin/luax-lua", test_main, "Lua is great",
             "&&",
@@ -652,9 +873,10 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-5-pandoc-luax-lua.ok" {
+        description = "TEST $out",
         command = {
             ". tools/build_env.sh $tmp;",
-            "LIBC=lua TYPE=pandoc LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
+            "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=5",
             "pandoc lua ", "-l luax", test_main, "Lua is great",
             "&&",
@@ -673,10 +895,11 @@ acc(test) {
 -- This test is disabled since most of the binary distributions of Pandoc do not support dynamic loading
 --[[
     build "$test/test-6-pandoc-luax-so.ok" {
+        description = "TEST $out",
         command = {
             ". tools/build_env.sh $tmp;",
             "eval `$luax env`;",
-            "TYPE=pandoc LUA_CPATH='$lib/?.so' LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
+            "LUA_CPATH='$lib/?.so' LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=6",
             "pandoc lua ", "-l libluax", test_main, "Lua is great",
             "&&",
@@ -695,6 +918,7 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-ext-1-lua.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
+        description = "TEST $out",
         command = {
             ". tools/build_env.sh $tmp;",
             "eval `$luax env`;",
@@ -716,6 +940,7 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-ext-2-lua-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
+        description = "TEST $out",
         command = {
             ". tools/build_env.sh $tmp;",
             "eval `$luax env`;",
@@ -736,6 +961,7 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-ext-3-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
+        description = "TEST $out",
         command = {
             ". tools/build_env.sh $tmp;",
             "eval `$luax env`;",
@@ -756,6 +982,7 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-ext-4-pandoc.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
+        description = "TEST $out",
         command = {
             ". tools/build_env.sh $tmp;",
             "eval `$luax env`;",
@@ -779,6 +1006,7 @@ acc(test) {
 -- This test is disabled since most of the binary distributions of Pandoc do not support dynamic loading
 --[[
     build "$test/test-ext-5-pandoc-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
+        description = "TEST $out",
         command = {
             ". tools/build_env.sh $tmp;",
             "eval `$luax env`;",
@@ -809,10 +1037,10 @@ local markdown_sources = ls "doc/src/*.md"
 
 local url = "cdelord.fr/luax"
 
-rule "banner-1024" { command = {"lsvg $in $out -- 1024 192"} }
-rule "logo-256"    { command = {"lsvg $in $out -- 256 256"} }
-rule "logo-1024"   { command = {"lsvg $in $out -- 1024 1024"} }
-rule "social-1280" { command = {"lsvg $in $out -- 1280 640", "'"..url.."'"} }
+rule "banner-1024" { description = "LSVG $in", command = {"lsvg $in $out -- 1024 192"} }
+rule "logo-256"    { description = "LSVG $in", command = {"lsvg $in $out -- 256 256"} }
+rule "logo-1024"   { description = "LSVG $in", command = {"lsvg $in $out -- 1024 1024"} }
+rule "social-1280" { description = "LSVG $in", command = {"lsvg $in $out -- 1280 640", F.show(url)} }
 
 local images = {
     build "doc/luax-banner.svg"         {"banner-1024", "doc/src/luax-logo.lua"},
@@ -832,9 +1060,10 @@ local pandoc_gfm = {
 }
 
 rule "ypp" {
+    description = "YPP $in",
     command = {
         "LUAX=$luax",
-        "ypp --MD --MT $out --MF $doc/$out.d $in -o $out",
+        "ypp --MD --MT $out --MF $depfile $in -o $out",
     },
     depfile = "$doc/$out.d",
     implicit_in = {
@@ -843,6 +1072,7 @@ rule "ypp" {
 }
 
 rule "md_to_gfm" {
+    description = "PANDOC $out",
     command = {
         pandoc_gfm, "$in -o $out",
     },
@@ -870,10 +1100,10 @@ acc(doc) {
 section "Shorcuts"
 ---------------------------------------------------------------------
 
-acc(compile) {binaries, libraries}
+acc(compile) {binaries, libraries, shared_libraries}
 
-install "bin" (binaries)
-install "lib" (libraries)
+install "bin" {binaries}
+install "lib" {libraries, shared_libraries}
 
 clean "$builddir"
 clean.mrproper "$zig_cache"

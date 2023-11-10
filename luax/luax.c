@@ -20,9 +20,12 @@
 #include "libluax.h"
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <libgen.h>
+
+#include "luax_config.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -31,6 +34,24 @@
 #include "tools.h"
 
 #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+
+typedef char t_magic[1+sizeof(LUAX_MAGIC_ID)];
+
+typedef struct __attribute__((__packed__))
+{
+    uint32_t size;
+    t_magic magic;
+} t_header;
+
+static const t_magic magic = "\0"LUAX_MAGIC_ID;
+
+static inline uint32_t littleendian(uint32_t n)
+{
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    n = __builtin_bswap32(n);
+#endif
+    return n;
+}
 
 static void get_exe(const char *arg0, char *name, size_t name_size)
 {
@@ -65,5 +86,30 @@ int main(int argc, const char *argv[])
     createargtable(L, argv, argc, 0);
     luaopen_libluax(L);
 
-    luax_run(L, exe); /* no return */
+    FILE *f = fopen(exe, "rb");
+    if (f == NULL) perror(exe);
+
+    t_header header;
+    fseek(f, -(long)sizeof(header), SEEK_END);
+    if (fread(&header, sizeof(header), 1, f) != 1) perror(arg0(L));
+    header.size = littleendian(header.size);
+    if (memcmp(header.magic, magic, sizeof(magic)) != 0)
+    {
+        /* The runtime contains no application */
+        error(arg0(L), "LuaX application not found");
+    }
+
+    fseek(f, -(long)(header.size + sizeof(header)), SEEK_END);
+    char *chunk = safe_malloc(header.size);
+    if (fread(chunk, header.size, 1, f) != 1) perror(arg0(L));
+    fclose(f);
+    char *decoded_chunk = NULL;
+    size_t decoded_chunk_len = 0;
+    decode_runtime(chunk, header.size, &decoded_chunk, &decoded_chunk_len);
+    free(chunk);
+    const int status = run_buffer(L, decoded_chunk, decoded_chunk_len, "=");
+    free(decoded_chunk);
+
+    lua_close(L);
+    exit(status == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
 }

@@ -241,6 +241,7 @@ update_linenoise()
         -e 's/realloc(/safe_realloc(/'                                  \
         -e 's/\(#include "linenoise.h"\)/\1\n\n#include "tools.h"/'     \
         -e 's/TCSAFLUSH/TCSADRAIN/'                                     \
+        -e 's/UNUSED/UNUSED_ARG/g'                                      \
         ext/c/linenoise/linenoise.c
 }
 
