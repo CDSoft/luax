@@ -257,6 +257,10 @@ targets : foreach(function(target)
         command = {
             set_cache,
             "$zig cc", "-target", target, "-c", lto, luax_cflags, lua_flags, target_flags, "-MD -MF $depfile $in -o $out",
+            case(target_os) {
+                windows = "$build_as_dll",
+                otherwise = {},
+            }
         },
         implicit_in = {
             "$zig", "$zig_cache",
@@ -592,6 +596,9 @@ local runtimes, shared_libraries =
         local main_libluax = F.flatten { sources.libluax_main_c_files }
             : map(function(src)
                     return build("$tmp/obj"/target/src:splitext()..".o") { cc[target], src,
+                        build_as_dll = case(target_os(target)) {
+                            windows = "-DLUA_BUILD_AS_DLL -DLUA_LIB",
+                        },
                         implicit_in = {
                             "$luax_config_h",
                             "$luax_runtime_bundle",
