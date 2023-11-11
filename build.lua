@@ -20,6 +20,7 @@ http://cdelord.fr/luax
 
 local F = require "F"
 local fs = require "fs"
+local sys = require "sys"
 
 help.name "LuaX"
 help.description [[
@@ -46,6 +47,7 @@ and run bang to regenerate build.ninja.
 ]]
 
 local mode = nil -- fast, small, quick, debug
+local host = false
 local upx = false
 
 F.foreach(arg, function(a)
@@ -54,11 +56,12 @@ F.foreach(arg, function(a)
         mode = a
     end
     case(a) {
-        fast  = set_mode,
-        small = set_mode,
-        quick = set_mode,
-        debug = set_mode,
-        upx   = function() upx = true end,
+        fast   = set_mode,
+        small  = set_mode,
+        quick  = set_mode,
+        debug  = set_mode,
+        host   = function() host = true end,
+        upx    = function() upx = true end,
         otherwise = function() F.error_without_stack_trace(a..": unknown parameter", 2) end,
     } ()
 end)
@@ -82,19 +85,26 @@ local targets = F{
     -- Linux
     "x86_64-linux-musl",
     "x86_64-linux-gnu",
-    "x86-linux-musl",
-    "x86-linux-gnu",
+    --"x86-linux-musl",         -- 32-bit targets are deprecated
+    --"x86-linux-gnu",          -- 32-bit targets are deprecated
     "aarch64-linux-musl",
     "aarch64-linux-gnu",
 
     -- Windows
     "x86_64-windows-gnu",
-    "x86-windows-gnu",
+    --"x86-windows-gnu",        -- 32-bit targets are deprecated
 
     -- MacOS
     "x86_64-macos-none",
     "aarch64-macos-none",
 }
+
+if host then
+    targets = targets : filter(function(target)
+        local target_arch, target_os, _ = target:split"%-":unpack()
+        return target_os == sys.os and target_arch == sys.arch
+    end)
+end
 
 local compile = {}
 local test = {}
