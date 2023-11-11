@@ -45,7 +45,7 @@ If you need to update the build system, please modify build.lua
 and run bang to regenerate build.ninja.
 ]]
 
-local mode = nil -- fast, small, debug
+local mode = nil -- fast, small, quick, debug
 local upx = false
 
 F.foreach(arg, function(a)
@@ -56,6 +56,7 @@ F.foreach(arg, function(a)
     case(a) {
         fast  = set_mode,
         small = set_mode,
+        quick = set_mode,
         debug = set_mode,
         upx   = function() upx = true end,
         otherwise = function() F.error_without_stack_trace(a..": unknown parameter", 2) end,
@@ -148,7 +149,8 @@ local cflags = {
     case(mode) {
         fast  = "-s -O3",
         small = "-s -Os",
-        debug = "-g -Og",
+        quick = {},
+        debug = "-g",
     },
     F.map(F.prefix"-I", include_path),
 }
@@ -178,6 +180,7 @@ local ldflags = {
     case(mode) {
         fast  = "-s",
         small = "-s",
+        quick = {},
         debug = {},
     },
 }
@@ -223,6 +226,7 @@ targets : foreach(function(target)
             windows = "-flto",
         },
         small = {},
+        quick = {},
         debug = {},
     }
     local target_flags = {
@@ -785,6 +789,7 @@ local valgrind = {
     case(mode) {
         fast  = {},
         small = {},
+        quick = {},
         debug = "valgrind --quiet",
     },
 }
