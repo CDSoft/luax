@@ -138,7 +138,7 @@ local include_path = {
     "$tmp",
     "lua",
     "ext/c/lz4/lib",
-    "luax-libs",
+    "libluax",
 }
 
 local native_cflags = {
@@ -376,7 +376,7 @@ local sources = {
     lua_main_c_files = F{ "lua/lua.c" },
     luax_main_c_files = F{ "luax/luax.c" },
     libluax_main_c_files = F{ "luax/libluax.c" },
-    luax_c_files = ls "luax-libs/**.c",
+    luax_c_files = ls "libluax/**.c",
     third_party_c_files = ls "ext/c/**.c"
         : filter(function(name) return not name:match "lz4/programs" end)
         : filter(function(name) return F.not_elem(name, linux_only) end)
@@ -396,8 +396,8 @@ var "lua_path" (
     F{
         ".",
         "$tmp",
-        "luax-libs",
-        ls "luax-libs/*" : filter(fs.is_dir),
+        "libluax",
+        ls "libluax/*" : filter(fs.is_dir),
     }
     : flatten()
     : map(function(path) return path / "?.lua" end)
@@ -416,7 +416,7 @@ section "LuaX configuration"
 
 comment [[
 The configuration file (luax_config.h and luax_config.lua)
-are created in `luax-libs`
+are created in `libluax`
 ]]
 
 var "luax_config_h"   "$tmp/luax_config.h"
@@ -493,7 +493,7 @@ section "Lua runtime"
 ---------------------------------------------------------------------
 
 local luax_runtime = {
-    ls "luax-libs/**.lua",
+    ls "libluax/**.lua",
     ls "ext/**.lua",
 }
 
@@ -741,7 +741,7 @@ section "$lib/luax.lua"
 ---------------------------------------------------------------------
 
 local lib_luax_sources = {
-    ls "luax-libs/**.lua",
+    ls "libluax/**.lua",
     ls "ext/lua/**.lua",
 }
 
@@ -1101,7 +1101,7 @@ rule "ypp" {
         "LUAX=$luax",
         "ypp --MD --MT $out --MF $depfile $in -o $out",
     },
-    depfile = "$doc/$out.d",
+    depfile = "$out.d",
     implicit_in = {
         "$luax",
     },

@@ -3,6 +3,6 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-@(doc "luax-libs/term/term.lua")
+@(doc "libluax/term/term.lua")
 
-@(doc "luax-libs/term/term.c")
+@(doc "libluax/term/term.c")

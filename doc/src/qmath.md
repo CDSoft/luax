@@ -3,6 +3,6 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-@(doc "luax-libs/qmath/qmath.h")
+@(doc "libluax/qmath/qmath.h")
 
-@(doc "luax-libs/qmath/qmath.lua")
+@(doc "libluax/qmath/qmath.lua")

@@ -17,12 +17,21 @@
  * http://cdelord.fr/luax
  */
 
-#pragma once
+#include "version.h"
+
+#include "luax_config.h"
+#include "tools.h"
 
 #include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
 
-/* set the F module metatable to the table at the top of the stack */
-void set_F_metatable(lua_State *L);
-
-/* C module registration function */
-LUAMOD_API int luaopen_std(lua_State *L);
+void set_version(lua_State *L)
+{
+    lua_pushglobaltable(L);                 /* push _G */
+    lua_pushstring(L, LUAX_VERSION);        /* push LUAX_VERSION */
+    lua_setfield(L, -2, "_LUAX_VERSION");   /* _G._LUAX_VERSION = LUAX_VERSION */
+    lua_pushstring(L, LUAX_DATE);           /* push LUAX_DATE */
+    lua_setfield(L, -2, "_LUAX_DATE");      /* _G._LUAX_DATE = LUAX_DATE */
+    lua_remove(L, -2);                      /* remove _G */
+}

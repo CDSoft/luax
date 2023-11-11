@@ -14,7 +14,7 @@
 -Wno-declaration-after-statement
 -Wno-unsafe-buffer-usage
 -I.
--Iluax-libs
+-Ilibluax
 -Iluax
 -Ilua
 -I.build/tmp

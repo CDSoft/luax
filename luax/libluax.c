@@ -34,8 +34,8 @@
 #include "luax_config.h"
 
 #include "tools.h"
+#include "version/version.h"
 
-#include "std/std.h"
 #include "fs/fs.h"
 #include "ps/ps.h"
 #include "sys/sys.h"
@@ -51,7 +51,6 @@
 #include "linenoise/linenoise.h"
 
 static const luaL_Reg lrun_libs[] = {
-    {"std", luaopen_std},
     {"_fs", luaopen_fs},
     {"_ps", luaopen_ps},
     {"_sys", luaopen_sys},
@@ -139,6 +138,7 @@ int run_buffer(lua_State *L, char *buffer, size_t size, const char *name)
 
 LUAMOD_API int luaopen_libluax(lua_State *L)
 {
+    set_version(L);
     for (const luaL_Reg *lib = lrun_libs; lib->func != NULL; lib++)
     {
         luaL_requiref(L, lib->name, lib->func, 0);

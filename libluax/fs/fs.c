@@ -32,7 +32,7 @@ local fs = require "fs"
 #include "fs.h"
 
 #include "luaconf.h"
-#include "std/std.h"
+#include "F/F.h"
 #include "tools.h"
 
 #ifdef _WIN32

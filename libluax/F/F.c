@@ -17,7 +17,7 @@
  * http://cdelord.fr/luax
  */
 
-#include "std.h"
+#include "F.h"
 
 #include "luax_config.h"
 #include "tools.h"
@@ -31,15 +31,4 @@ void set_F_metatable(lua_State *L)
     luaL_requiref(L, "F", NULL, 0);         /* push the F package */
     lua_rotate(L, lua_gettop(L), 2);        /* swap the F package and the list to pass to F */
     lua_call(L, 1, 1);                      /* call F(list) and leave list on the stack */
-}
-
-LUAMOD_API int luaopen_std(lua_State *L)
-{
-    lua_pushglobaltable(L);                 /* push _G */
-    lua_pushstring(L, LUAX_VERSION);        /* push LUAX_VERSION */
-    lua_setfield(L, -2, "_LUAX_VERSION");   /* _G._LUAX_VERSION = LUAX_VERSION */
-    lua_pushstring(L, LUAX_DATE);           /* push LUAX_DATE */
-    lua_setfield(L, -2, "_LUAX_DATE");      /* _G._LUAX_DATE = LUAX_DATE */
-    lua_remove(L, -2);                      /* remove _G */
-    return 0;
 }

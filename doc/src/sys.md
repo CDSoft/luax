@@ -3,4 +3,4 @@ title: Lua eXtended
 author: Christophe Delord
 ---
 
-@(doc "luax-libs/sys/sys.c")
+@(doc "libluax/sys/sys.c")
