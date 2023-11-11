@@ -18,13 +18,6 @@
 # For further information about luax you can visit
 # http://cdelord.fr/luax
 
-NEW_PATH="$1"
-if [ -n "$NEW_PATH" ]
-then
-    PATH="$NEW_PATH:$PATH"
-    export PATH
-fi
-
 ARCH="$(uname -m)"
 case "$ARCH" in
     (i386)  ARCH=x86 ;;

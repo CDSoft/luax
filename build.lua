@@ -198,7 +198,7 @@ local ldflags = {
 rule "cc" {
     description = "CC $in",
     command = {
-        ". tools/build_env.sh $tmp;",
+        ". tools/build_env.sh;",
         set_cache,
         "$zig cc -c", "-target", "$$ARCH-$$OS-$$LIBC", native_cflags, "-MD -MF $depfile $in -o $out",
     },
@@ -212,7 +212,7 @@ rule "cc" {
 rule "ld" {
     description = "LD $out",
     command = {
-        ". tools/build_env.sh $tmp;",
+        ". tools/build_env.sh;",
         set_cache,
         "$zig cc", "-target", "$$ARCH-$$OS-$$LIBC", native_ldflags, "$in -o $out",
     },
@@ -462,7 +462,7 @@ EOF
 rule "gen_config" {
     description = "GEN $out",
     command = {
-        ". tools/build_env.sh $tmp;",
+        ". tools/build_env.sh;",
         "bash", "$in", "$out",
     },
     implicit_in = {
@@ -478,7 +478,7 @@ build "$luax_config_lua" { "gen_config", "tools/gen_config_lua.sh" }
 build "$luax_crypt_key"  {
     description = "GEN $out",
     command = {
-        ". tools/build_env.sh $tmp;",
+        ". tools/build_env.sh;",
         "$lua", "tools/crypt_key.lua", "LUAX_CRYPT_KEY", '"$$CRYPT_KEY"', "> $out",
     },
     implicit_in = {
@@ -502,7 +502,8 @@ var "luax_runtime_bundle" "$tmp/lua_runtime_bundle.dat"
 build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
     description = "BUNDLE $out",
     command = {
-        ". tools/build_env.sh $tmp;",
+        ". tools/build_env.sh;",
+        "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
         "$lua",
         "-l tools/rc4_runtime",
@@ -692,9 +693,10 @@ F{targets, runtimes} : zip(function(target, runtime)
         build("$bin/luax-"..target..e) { luax_packages,
         description = "LUAX $out",
             command = {
-                ". tools/build_env.sh $tmp;",
+                ". tools/build_env.sh;",
                 "cp", runtime, "$out",
                 "&&",
+                "PATH=$tmp:$$PATH",
                 "LUA_PATH=\"$lua_path\"",
                 "$lua",
                 "-l tools/rc4_runtime",
@@ -720,7 +722,7 @@ acc(binaries) {
     build "$luax" {
         description = "CP $out",
         command = {
-            ". tools/build_env.sh $tmp;",
+            ". tools/build_env.sh;",
             "cp", "-f", "$bin/luax-$$ARCH-$$OS-$$LIBC$$EXT", "$out$$EXT",
         },
         implicit_in = {
@@ -747,7 +749,8 @@ acc(libraries) {
     build "$lib/luax.lua" { "$luax_config_lua", lib_luax_sources,
         description = "LUAX $out",
         command = {
-            ". tools/build_env.sh $tmp;",
+            ". tools/build_env.sh;",
+            "PATH=$tmp:$$PATH",
             "LUA_PATH=\"$lua_path\"",
             "$lua",
             "-l tools/rc4_runtime",
@@ -811,10 +814,11 @@ acc(test) {
     build "$test/test-1-luax_executable.ok" {
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh $tmp;",
+            ". tools/build_env.sh;",
             valgrind,
             "$luax -q -o $test/test-luax", test_sources,
             "&&",
+            "PATH=$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua'",
             "TEST_NUM=1",
             valgrind,
@@ -834,8 +838,9 @@ acc(test) {
     build "$test/test-2-lib.ok" {
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh $tmp;",
-            "eval `$luax env`;",
+            ". tools/build_env.sh;",
+            "eval $$($luax env);",
+            "PATH=$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua'",
             "TEST_NUM=2",
             valgrind,
@@ -857,7 +862,8 @@ acc(test) {
     build "$test/test-3-lua.ok" {
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh $tmp;",
+            ". tools/build_env.sh;",
+            "PATH=$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=3",
             "$lua", "-l luax", test_main, "Lua is great",
@@ -877,7 +883,8 @@ acc(test) {
     build "$test/test-4-lua-luax-lua.ok" {
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh $tmp;",
+            ". tools/build_env.sh;",
+            "PATH=$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=4",
             "$bin/luax-lua", test_main, "Lua is great",
@@ -897,7 +904,8 @@ acc(test) {
     build "$test/test-5-pandoc-luax-lua.ok" {
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh $tmp;",
+            ". tools/build_env.sh;",
+            "PATH=$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=5",
             "pandoc lua ", "-l luax", test_main, "Lua is great",
@@ -919,8 +927,9 @@ acc(test) {
     build "$test/test-6-pandoc-luax-so.ok" {
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh $tmp;",
-            "eval `$luax env`;",
+            ". tools/build_env.sh;",
+            "eval $$($luax env);",
+            "PATH=$tmp:$$PATH",
             "LUA_CPATH='$lib/?.so' LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=6",
             "pandoc lua ", "-l libluax", test_main, "Lua is great",
@@ -942,10 +951,11 @@ acc(test) {
     build "$test/test-ext-1-lua.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh $tmp;",
-            "eval `$luax env`;",
+            ". tools/build_env.sh;",
+            "eval $$($luax env);",
             "$luax -q -t lua -o $test/ext-lua", "$in",
             "&&",
+            "PATH=$tmp:$$PATH",
             "TARGET=lua",
             "$test/ext-lua Lua is great",
             "&&",
@@ -964,10 +974,11 @@ acc(test) {
     build "$test/test-ext-2-lua-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh $tmp;",
-            "eval `$luax env`;",
+            ". tools/build_env.sh;",
+            "eval $$($luax env);",
             "$luax -q -t lua-luax -o $test/ext-lua-luax", "$in",
             "&&",
+            "PATH=$tmp:$$PATH",
             "TARGET=lua-luax",
             "$test/ext-lua-luax Lua is great",
             "&&",
@@ -985,10 +996,11 @@ acc(test) {
     build "$test/test-ext-3-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh $tmp;",
-            "eval `$luax env`;",
+            ". tools/build_env.sh;",
+            "eval $$($luax env);",
             "$luax -q -t luax -o $test/ext-luax", "$in",
             "&&",
+            "PATH=$tmp:$$PATH",
             "TARGET=luax",
             "$test/ext-luax Lua is great",
             "&&",
@@ -1006,10 +1018,11 @@ acc(test) {
     build "$test/test-ext-4-pandoc.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh $tmp;",
-            "eval `$luax env`;",
+            ". tools/build_env.sh;",
+            "eval $$($luax env);",
             "$luax -q -t pandoc -o $test/ext-pandoc", "$in",
             "&&",
+            "PATH=$tmp:$$PATH",
             "TARGET=pandoc",
             "$test/ext-pandoc Lua is great",
             "&&",
@@ -1030,10 +1043,11 @@ acc(test) {
     build "$test/test-ext-5-pandoc-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh $tmp;",
-            "eval `$luax env`;",
+            ". tools/build_env.sh;",
+            "eval $$($luax env);",
             "$luax -q -t pandoc-luax -o $test/ext-pandoc-luax", "$in",
             "&&",
+            "PATH=$tmp:$$PATH",
             "TARGET=pandoc-luax",
             "$test/ext-pandoc-luax Lua is great",
             "&&",

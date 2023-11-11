@@ -61,12 +61,12 @@ build $zig_cache: mkdir
 
 rule cc
   description = CC $in
-  command = . tools/build_env.sh $tmp; export ZIG_LOCAL_CACHE_DIR=$zig_cache; $zig cc -c -target $$ARCH-$$OS-$$LIBC -std=gnu2x -s -O3 -flto -I. -I$tmp -Ilua -Iext/c/lz4/lib -Iluax-libs $$LUA_CFLAGS -Wno-constant-logical-operand -MD -MF $depfile $in -o $out
+  command = . tools/build_env.sh; export ZIG_LOCAL_CACHE_DIR=$zig_cache; $zig cc -c -target $$ARCH-$$OS-$$LIBC -std=gnu2x -s -O3 -flto -I. -I$tmp -Ilua -Iext/c/lz4/lib -Iluax-libs $$LUA_CFLAGS -Wno-constant-logical-operand -MD -MF $depfile $in -o $out
   depfile = $out.d
 
 rule ld
   description = LD $out
-  command = . tools/build_env.sh $tmp; export ZIG_LOCAL_CACHE_DIR=$zig_cache; $zig cc -target $$ARCH-$$OS-$$LIBC -rdynamic -s -flto $in -o $out
+  command = . tools/build_env.sh; export ZIG_LOCAL_CACHE_DIR=$zig_cache; $zig cc -target $$ARCH-$$OS-$$LIBC -rdynamic -s -flto $in -o $out
 
 rule cc-x86_64-linux-musl
   description = CC[x86_64-linux-musl] $in
@@ -274,14 +274,14 @@ luax_crypt_key = $tmp/luax_crypt_key.h
 
 rule gen_config
   description = GEN $out
-  command = . tools/build_env.sh $tmp; bash $in $out
+  command = . tools/build_env.sh; bash $in $out
 
 build $luax_config_h: gen_config tools/gen_config_h.sh | tools/build_env.sh .git/refs/tags .git/index $lua
 build $luax_config_lua: gen_config tools/gen_config_lua.sh | tools/build_env.sh .git/refs/tags .git/index $lua
 
 rule _luax_crypt_key
   description = GEN $out
-  command = . tools/build_env.sh $tmp; $lua tools/crypt_key.lua LUAX_CRYPT_KEY "$$CRYPT_KEY" > $out
+  command = . tools/build_env.sh; $lua tools/crypt_key.lua LUAX_CRYPT_KEY "$$CRYPT_KEY" > $out
 
 build $luax_crypt_key: _luax_crypt_key | $lua tools/build_env.sh tools/crypt_key.lua
 
@@ -293,7 +293,7 @@ luax_runtime_bundle = $tmp/lua_runtime_bundle.dat
 
 rule _luax_runtime_bundle
   description = BUNDLE $out
-  command = . tools/build_env.sh $tmp; LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -lib -ascii $in > $out
+  command = . tools/build_env.sh; PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -lib -ascii $in > $out
 
 build $luax_runtime_bundle: _luax_runtime_bundle $luax_config_lua luax-libs/F/F.lua luax-libs/L/L.lua luax-libs/complex/complex.lua luax-libs/crypt/crypt.lua luax-libs/fs/fs.lua luax-libs/imath/imath.lua luax-libs/linenoise/linenoise.lua luax-libs/lpeg/lpeg.lua luax-libs/lz4/lz4.lua luax-libs/mathx/mathx.lua luax-libs/package/package_hook.lua luax-libs/ps/ps.lua luax-libs/qmath/qmath.lua luax-libs/sh/sh.lua luax-libs/sys/sys.lua luax-libs/term/term.lua ext/c/lpeg/re.lua ext/c/luasocket/ftp.lua ext/c/luasocket/headers.lua ext/c/luasocket/http.lua ext/c/luasocket/ltn12.lua ext/c/luasocket/mbox.lua ext/c/luasocket/mime.lua ext/c/luasocket/smtp.lua ext/c/luasocket/socket.lua ext/c/luasocket/tp.lua ext/c/luasocket/url.lua ext/lua/argparse/argparse.lua ext/lua/cbor/cbor.lua ext/lua/inspect/inspect.lua ext/lua/serpent/serpent.lua | tools/build_env.sh $lz4 $lua luax/bundle.lua tools/rc4_runtime.lua
 
@@ -972,7 +972,7 @@ build $lib/libluax-aarch64-macos-none.dylib: cp $tmp/lib/libluax-aarch64-macos-n
 
 rule _bin_luax-x86_64-linux-musl
   description = LUAX $out
-  command = . tools/build_env.sh $tmp; cp $tmp/run/luaxruntime-x86_64-linux-musl $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
+  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-x86_64-linux-musl $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
 
 build $bin/luax-x86_64-linux-musl: _bin_luax-x86_64-linux-musl luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-x86_64-linux-musl
 
@@ -982,7 +982,7 @@ build $bin/luax-x86_64-linux-musl: _bin_luax-x86_64-linux-musl luax/bundle.lua l
 
 rule _bin_luax-x86_64-linux-gnu
   description = LUAX $out
-  command = . tools/build_env.sh $tmp; cp $tmp/run/luaxruntime-x86_64-linux-gnu $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
+  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-x86_64-linux-gnu $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
 
 build $bin/luax-x86_64-linux-gnu: _bin_luax-x86_64-linux-gnu luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-x86_64-linux-gnu
 
@@ -992,7 +992,7 @@ build $bin/luax-x86_64-linux-gnu: _bin_luax-x86_64-linux-gnu luax/bundle.lua lua
 
 rule _bin_luax-aarch64-linux-musl
   description = LUAX $out
-  command = . tools/build_env.sh $tmp; cp $tmp/run/luaxruntime-aarch64-linux-musl $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
+  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-aarch64-linux-musl $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
 
 build $bin/luax-aarch64-linux-musl: _bin_luax-aarch64-linux-musl luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-aarch64-linux-musl
 
@@ -1002,7 +1002,7 @@ build $bin/luax-aarch64-linux-musl: _bin_luax-aarch64-linux-musl luax/bundle.lua
 
 rule _bin_luax-aarch64-linux-gnu
   description = LUAX $out
-  command = . tools/build_env.sh $tmp; cp $tmp/run/luaxruntime-aarch64-linux-gnu $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
+  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-aarch64-linux-gnu $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
 
 build $bin/luax-aarch64-linux-gnu: _bin_luax-aarch64-linux-gnu luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-aarch64-linux-gnu
 
@@ -1012,7 +1012,7 @@ build $bin/luax-aarch64-linux-gnu: _bin_luax-aarch64-linux-gnu luax/bundle.lua l
 
 rule _bin_luax-x86_64-windows-gnu.exe
   description = LUAX $out
-  command = . tools/build_env.sh $tmp; cp $tmp/run/luaxruntime-x86_64-windows-gnu.exe $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
+  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-x86_64-windows-gnu.exe $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
 
 build $bin/luax-x86_64-windows-gnu.exe: _bin_luax-x86_64-windows-gnu.exe luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-x86_64-windows-gnu.exe
 
@@ -1022,7 +1022,7 @@ build $bin/luax-x86_64-windows-gnu.exe: _bin_luax-x86_64-windows-gnu.exe luax/bu
 
 rule _bin_luax-x86_64-macos-none
   description = LUAX $out
-  command = . tools/build_env.sh $tmp; cp $tmp/run/luaxruntime-x86_64-macos-none $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
+  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-x86_64-macos-none $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
 
 build $bin/luax-x86_64-macos-none: _bin_luax-x86_64-macos-none luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-x86_64-macos-none
 
@@ -1032,14 +1032,14 @@ build $bin/luax-x86_64-macos-none: _bin_luax-x86_64-macos-none luax/bundle.lua l
 
 rule _bin_luax-aarch64-macos-none
   description = LUAX $out
-  command = . tools/build_env.sh $tmp; cp $tmp/run/luaxruntime-aarch64-macos-none $out && LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
+  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-aarch64-macos-none $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
 
 build $bin/luax-aarch64-macos-none: _bin_luax-aarch64-macos-none luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-aarch64-macos-none
 luax = $bin/luax
 
 rule _luax
   description = CP $out
-  command = . tools/build_env.sh $tmp; cp -f $bin/luax-$$ARCH-$$OS-$$LIBC$$EXT $out$$EXT
+  command = . tools/build_env.sh; cp -f $bin/luax-$$ARCH-$$OS-$$LIBC$$EXT $out$$EXT
 
 build $luax: _luax | tools/build_env.sh $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none
 
@@ -1053,7 +1053,7 @@ build $luax: _luax | tools/build_env.sh $bin/luax-x86_64-linux-musl $bin/luax-x8
 
 rule _lib_luax.lua
   description = LUAX $out
-  command = . tools/build_env.sh $tmp; LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -lib -lua $in > $out
+  command = . tools/build_env.sh; PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -lib -lua $in > $out
 
 build $lib/luax.lua: _lib_luax.lua $luax_config_lua luax-libs/F/F.lua luax-libs/L/L.lua luax-libs/complex/complex.lua luax-libs/crypt/crypt.lua luax-libs/fs/fs.lua luax-libs/imath/imath.lua luax-libs/linenoise/linenoise.lua luax-libs/lpeg/lpeg.lua luax-libs/lz4/lz4.lua luax-libs/mathx/mathx.lua luax-libs/package/package_hook.lua luax-libs/ps/ps.lua luax-libs/qmath/qmath.lua luax-libs/sh/sh.lua luax-libs/sys/sys.lua luax-libs/term/term.lua ext/lua/argparse/argparse.lua ext/lua/cbor/cbor.lua ext/lua/inspect/inspect.lua ext/lua/serpent/serpent.lua | tools/build_env.sh $lz4 $lua luax/bundle.lua tools/rc4_runtime.lua
 
@@ -1083,55 +1083,55 @@ build $bin/luax-pandoc: _bin_luax-pandoc luax/luax.lua | $luax $lib/luax.lua
 
 rule _test_test-1-luax_executable.ok
   description = TEST $out
-  command = . tools/build_env.sh $tmp; $luax -q -o $test/test-luax tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua && LUA_PATH='tests/luax-tests/?.lua' TEST_NUM=1 $test/test-luax Lua is great && touch $out
+  command = . tools/build_env.sh; $luax -q -o $test/test-luax tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua && PATH=$tmp:$$PATH LUA_PATH='tests/luax-tests/?.lua' TEST_NUM=1 $test/test-luax Lua is great && touch $out
 
 build $test/test-1-luax_executable.ok: _test_test-1-luax_executable.ok | tools/build_env.sh $luax tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
 
 rule _test_test-2-lib.ok
   description = TEST $out
-  command = . tools/build_env.sh $tmp; eval `$luax env`; LUA_PATH='tests/luax-tests/?.lua' TEST_NUM=2 $lua -l libluax tests/luax-tests/main.lua Lua is great && touch $out
+  command = . tools/build_env.sh; eval $$($luax env); PATH=$tmp:$$PATH LUA_PATH='tests/luax-tests/?.lua' TEST_NUM=2 $lua -l libluax tests/luax-tests/main.lua Lua is great && touch $out
 
 build $test/test-2-lib.ok: _test_test-2-lib.ok | tools/build_env.sh $lua $luax $lib/luax.lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
 
 rule _test_test-3-lua.ok
   description = TEST $out
-  command = . tools/build_env.sh $tmp; LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=3 $lua -l luax tests/luax-tests/main.lua Lua is great && touch $out
+  command = . tools/build_env.sh; PATH=$tmp:$$PATH LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=3 $lua -l luax tests/luax-tests/main.lua Lua is great && touch $out
 
 build $test/test-3-lua.ok: _test_test-3-lua.ok | tools/build_env.sh $lua $lib/luax.lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
 
 rule _test_test-4-lua-luax-lua.ok
   description = TEST $out
-  command = . tools/build_env.sh $tmp; LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=4 $bin/luax-lua tests/luax-tests/main.lua Lua is great && touch $out
+  command = . tools/build_env.sh; PATH=$tmp:$$PATH LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=4 $bin/luax-lua tests/luax-tests/main.lua Lua is great && touch $out
 
 build $test/test-4-lua-luax-lua.ok: _test_test-4-lua-luax-lua.ok | tools/build_env.sh $lua $bin/luax-lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
 
 rule _test_test-5-pandoc-luax-lua.ok
   description = TEST $out
-  command = . tools/build_env.sh $tmp; LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=5 pandoc lua -l luax tests/luax-tests/main.lua Lua is great && touch $out
+  command = . tools/build_env.sh; PATH=$tmp:$$PATH LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=5 pandoc lua -l luax tests/luax-tests/main.lua Lua is great && touch $out
 
 build $test/test-5-pandoc-luax-lua.ok: _test_test-5-pandoc-luax-lua.ok | tools/build_env.sh $lua $lib/luax.lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua
 
 rule _test_test-ext-1-lua.ok
   description = TEST $out
-  command = . tools/build_env.sh $tmp; eval `$luax env`; $luax -q -t lua -o $test/ext-lua $in && TARGET=lua $test/ext-lua Lua is great && touch $out
+  command = . tools/build_env.sh; eval $$($luax env); $luax -q -t lua -o $test/ext-lua $in && PATH=$tmp:$$PATH TARGET=lua $test/ext-lua Lua is great && touch $out
 
 build $test/test-ext-1-lua.ok: _test_test-ext-1-lua.ok tests/external_interpreter_tests/external_interpreters.lua | tools/build_env.sh $lib/luax.lua $luax $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none $luax $bin/luax-lua $bin/luax-pandoc
 
 rule _test_test-ext-2-lua-luax.ok
   description = TEST $out
-  command = . tools/build_env.sh $tmp; eval `$luax env`; $luax -q -t lua-luax -o $test/ext-lua-luax $in && TARGET=lua-luax $test/ext-lua-luax Lua is great && touch $out
+  command = . tools/build_env.sh; eval $$($luax env); $luax -q -t lua-luax -o $test/ext-lua-luax $in && PATH=$tmp:$$PATH TARGET=lua-luax $test/ext-lua-luax Lua is great && touch $out
 
 build $test/test-ext-2-lua-luax.ok: _test_test-ext-2-lua-luax.ok tests/external_interpreter_tests/external_interpreters.lua | tools/build_env.sh $lib/luax.lua $luax
 
 rule _test_test-ext-3-luax.ok
   description = TEST $out
-  command = . tools/build_env.sh $tmp; eval `$luax env`; $luax -q -t luax -o $test/ext-luax $in && TARGET=luax $test/ext-luax Lua is great && touch $out
+  command = . tools/build_env.sh; eval $$($luax env); $luax -q -t luax -o $test/ext-luax $in && PATH=$tmp:$$PATH TARGET=luax $test/ext-luax Lua is great && touch $out
 
 build $test/test-ext-3-luax.ok: _test_test-ext-3-luax.ok tests/external_interpreter_tests/external_interpreters.lua | tools/build_env.sh $lib/luax.lua $luax
 
 rule _test_test-ext-4-pandoc.ok
   description = TEST $out
-  command = . tools/build_env.sh $tmp; eval `$luax env`; $luax -q -t pandoc -o $test/ext-pandoc $in && TARGET=pandoc $test/ext-pandoc Lua is great && touch $out
+  command = . tools/build_env.sh; eval $$($luax env); $luax -q -t pandoc -o $test/ext-pandoc $in && PATH=$tmp:$$PATH TARGET=pandoc $test/ext-pandoc Lua is great && touch $out
 
 build $test/test-ext-4-pandoc.ok: _test_test-ext-4-pandoc.ok tests/external_interpreter_tests/external_interpreters.lua | tools/build_env.sh $lib/luax.lua $luax $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none $luax $bin/luax-lua $bin/luax-pandoc
 
