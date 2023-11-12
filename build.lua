@@ -46,6 +46,24 @@ If you need to update the build system, please modify build.lua
 and run bang to regenerate build.ninja.
 ]]
 
+local targets = F{
+    -- Linux
+    "x86_64-linux-musl",
+    "x86_64-linux-gnu",
+    --"x86-linux-musl",         -- 32-bit targets are deprecated
+    --"x86-linux-gnu",          -- 32-bit targets are deprecated
+    "aarch64-linux-musl",
+    "aarch64-linux-gnu",
+
+    -- Windows
+    "x86_64-windows-gnu",
+    --"x86-windows-gnu",        -- 32-bit targets are deprecated
+
+    -- MacOS
+    "x86_64-macos-none",
+    "aarch64-macos-none",
+}
+
 local mode = nil -- fast, small, quick, debug
 local host = false
 local upx = false
@@ -66,8 +84,22 @@ F.foreach(arg, function(a)
     } ()
 end)
 
-mode = mode or "fast"
+mode = F.default("fast", mode)
 if mode=="debug" and upx then F.error_without_stack_trace("UPX compression not available in debug mode") end
+
+if host then
+    targets = targets : filter(function(target)
+        local target_arch, target_os, _ = target:split"%-":unpack()
+        return target_os == sys.os and target_arch == sys.arch
+    end)
+end
+
+section("Compilation options")
+comment(("Compilation mode: %s"):format(mode))
+targets : foreachi(function(i, target)
+    comment(("%-16s: %s"):format(i==1 and "Targets" or "", target))
+end)
+comment(("Compression     : %s"):format(upx and "UPX" or "none"))
 
 --===================================================================
 section "Build environment"
@@ -80,31 +112,6 @@ var "lib" "$builddir/lib"
 var "doc" "$builddir/doc"
 var "tmp" "$builddir/tmp"
 var "test" "$builddir/test"
-
-local targets = F{
-    -- Linux
-    "x86_64-linux-musl",
-    "x86_64-linux-gnu",
-    --"x86-linux-musl",         -- 32-bit targets are deprecated
-    --"x86-linux-gnu",          -- 32-bit targets are deprecated
-    "aarch64-linux-musl",
-    "aarch64-linux-gnu",
-
-    -- Windows
-    "x86_64-windows-gnu",
-    --"x86-windows-gnu",        -- 32-bit targets are deprecated
-
-    -- MacOS
-    "x86_64-macos-none",
-    "aarch64-macos-none",
-}
-
-if host then
-    targets = targets : filter(function(target)
-        local target_arch, target_os, _ = target:split"%-":unpack()
-        return target_os == sys.os and target_arch == sys.arch
-    end)
-end
 
 local compile = {}
 local test = {}
