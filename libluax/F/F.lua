@@ -56,6 +56,7 @@ t:__mapk(func) -- works and is equivalent to F.mapk(func, t)
 local F = {}
 
 local mt = {
+    __name = "F-table",
     __index = setmetatable({}, {
         __newindex = function(t, k, v)
             rawset(t, k, v)         -- set the method k
@@ -2978,6 +2979,7 @@ F.Nil
 > `F.Nil` is a singleton used to represent `nil` (see `F.patch`)
 @@@]]
 local Nil = setmetatable({}, {
+    __name = "Nil",
     __call = function(_) return nil end,
     __tostring = function(_) return "Nil" end,
 })
