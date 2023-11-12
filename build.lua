@@ -149,7 +149,7 @@ local include_path = {
 
 local native_cflags = {
     "-std=gnu2x",
-    "-s -O3 -flto",
+    "-s -O3 -flto=thin",
     F.map(F.prefix"-I", include_path),
     "$$LUA_CFLAGS",
     "-Wno-constant-logical-operand",
@@ -157,7 +157,7 @@ local native_cflags = {
 
 local native_ldflags = {
     "-rdynamic",
-    "-s -flto",
+    "-s -flto=thin",
 }
 
 local cflags = {
@@ -237,9 +237,9 @@ targets : foreach(function(target)
     local target_arch, target_os, target_abi = target:split "%-":unpack()
     local lto = case(mode) {
         fast = case(target_os) {
-            linux   = "-flto",
+            linux   = "-flto=thin",
             macos   = {},
-            windows = "-flto",
+            windows = "-flto=thin",
         },
         small = {},
         quick = {},
