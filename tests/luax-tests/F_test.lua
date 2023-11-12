@@ -124,7 +124,7 @@ local function basic_data_types()
         [41] = "41",
         [42] = "42",
         [43] = "43",
-        otherwise = "other",
+        [F.Nil] = "other",
     }, "other")
 
     eq(F.fst{4,5,6}, 4)

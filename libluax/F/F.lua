@@ -358,7 +358,7 @@ F.case(x) {
     t1 = v1,
     ...
     tn = vn,
-    [otherwise = default_value]
+    [F.Nil] = default_value,
 }
 ```
 > returns `vi` such that `ti == x` or `default_value` if no `ti` is equal to `x`.
@@ -366,7 +366,7 @@ F.case(x) {
 
 function F.case(val)
     return function(cases)
-        return F.default(cases.otherwise, cases[val])
+        return F.default(cases[F.Nil], cases[val])
     end
 end
 

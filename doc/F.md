@@ -111,7 +111,7 @@ F.case(x) {
     t1 = v1,
     ...
     tn = vn,
-    [otherwise = default_value]
+    [F.Nil] = default_value,
 }
 ```
 

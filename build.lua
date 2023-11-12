@@ -73,15 +73,14 @@ F.foreach(arg, function(a)
         if mode~=nil then F.error_without_stack_trace(a..": duplicate compilation mode", 2) end
         mode = a
     end
-    case(a) {
+    (case(a) {
         fast   = set_mode,
         small  = set_mode,
         quick  = set_mode,
         debug  = set_mode,
         host   = function() host = true end,
         upx    = function() upx = true end,
-        otherwise = function() F.error_without_stack_trace(a..": unknown parameter", 2) end,
-    } ()
+    } or F.error_without_stack_trace(a..": unknown parameter", 1)) ()
 end)
 
 mode = F.default("fast", mode)
@@ -279,8 +278,9 @@ targets : foreach(function(target)
             set_cache,
             "$zig cc", "-target", target, "-c", lto, luax_cflags, lua_flags, target_flags, "-MD -MF $depfile $in -o $out",
             case(target_os) {
+                linux = {},
+                macos = {},
                 windows = "$build_as_dll",
-                otherwise = {},
             }
         },
         implicit_in = {
@@ -536,8 +536,9 @@ end
 
 local function ext(target)
     return case(target_os(target)) {
+        linux   = "",
+        macos   = "",
         windows = ".exe",
-        otherwise = "",
     }
 end
 
@@ -581,8 +582,7 @@ local runtimes, shared_libraries =
                         "$luax_config_h",
                         case(src:basename():splitext()) {
                             crypt = "$luax_crypt_key",
-                            otherwise = {},
-                        },
+                        } or {},
                     },
                 }
             end),
@@ -663,9 +663,8 @@ if upx and mode~="debug" then
     end)
     shared_libraries = shared_libraries : map(function(library)
         return case(library:ext()) {
-            [".dylib"] = F.const(library),
-            otherwise = function() return build("$tmp/lib-upx"/library:basename()) { "upx", library } end,
-        }()
+            [".dylib"] = library,
+        } or build("$tmp/lib-upx"/library:basename()) { "upx", library }
     end)
 end
 
