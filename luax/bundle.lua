@@ -167,7 +167,7 @@ function bundle.bundle(arg, opts)
         plain.emit("_LUAX_VERSION = '"..config.version.."'\n");
         plain.emit("_LUAX_DATE = '"..config.date.."'\n");
     end
-    plain.emit(("local function lib(path, src) return assert(load(src, '@$%s/'..path, 't')) end\n"):format(product_name))
+    plain.emit(("local function lib(path, src) return assert(load(src, '@$%s:'..path, 't')) end\n"):format(product_name))
     local function compile_library(script)
         assert(load(script.content, "@"..script.path, 't'))
         plain.emit(("[%q] = lib(%q, %s),\n"):format(script.name, home_path(script.path), mlstr(script.content)))
