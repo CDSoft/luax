@@ -809,7 +809,7 @@ local valgrind = {
         fast  = {},
         small = {},
         quick = {},
-        debug = "valgrind --quiet",
+        debug = "VALGRIND=true valgrind --quiet",
     },
 }
 
