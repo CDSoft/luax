@@ -29,7 +29,6 @@ local sys = require "sys"
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "lualib.h"
 
 static const luaL_Reg blsyslib[] =
 {

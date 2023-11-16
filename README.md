@@ -51,11 +51,21 @@ $ ninja doc         # generate LuaX documentation
 |:----------------------|:------------------------------------------------------------------------------|
 | `bang -- fast [upx]`  | Optimized for speed, optionally compressed with [UPX](https://upx.github.io/) |
 | `bang -- small [upx]` | Optimized for size, optionally compressed with [UPX](https://upx.github.io/)  |
+| `bang -- quick`       | Faster compilation, not optimized                                             |
 | `bang -- debug`       | Debug symbols kept, tests with [valgrind](https://valgrind.org/)              |
+| `bang -- zig`         | Compile LuaX with Zig, for all supported targets (default)                    |
+| `bang -- gcc`         | Compile LuaX with gcc (implies “host”)                                        |
+| `bang -- clang`       | Compile LuaX with clang (implies “host”)                                      |
+| `bang -- host`        | Compile LuaX for the current host only                                        |
+| `bang -- upx`         | Compress LuaX with UPX                                                        |
 
 `bang` must be run before `ninja` to change the compilation options.
 
-The default compilation option is `fast` with no compression.
+The default compilation options are `fast`, `zig`, for all targets, with
+no compression.
+
+Zig is downloaded by the ninja file. gcc and clang must be already
+installed.
 
 ### Compilation in debug mode
 

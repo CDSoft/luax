@@ -20,11 +20,8 @@
 #include "version.h"
 
 #include "luax_config.h"
-#include "tools.h"
 
 #include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
 
 void set_version(lua_State *L)
 {

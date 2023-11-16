@@ -21,7 +21,9 @@
 
 #include <complex.h>
 
+#ifdef __clang__
 #pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
 
 /* Missing complex functions in the current Zig version ??? */
 

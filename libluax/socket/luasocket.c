@@ -24,7 +24,6 @@
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "lualib.h"
 
 #ifndef _WIN32
 #include "ext/c/luasocket/unix.h"

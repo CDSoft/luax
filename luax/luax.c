@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <libgen.h>
 
+#include "lualib.h"
+
 #include "luax_config.h"
 
 #ifdef _WIN32
@@ -33,7 +35,9 @@
 
 #include "tools.h"
 
+#ifdef __clang__
 #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+#endif
 
 typedef char t_magic[1+sizeof(LUAX_MAGIC_ID)];
 

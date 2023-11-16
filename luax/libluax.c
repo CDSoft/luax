@@ -24,14 +24,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 #include <unistd.h>
 #include <libgen.h>
 
 #include "lauxlib.h"
-#include "lualib.h"
-
-#include "luax_config.h"
 
 #include "tools.h"
 #include "version/version.h"

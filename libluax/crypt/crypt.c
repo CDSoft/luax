@@ -36,14 +36,12 @@ local crypt = require "crypt"
 
 #include "tools.h"
 
-#include "luax_config.h"
 #include "luax_crypt_key.h"
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "lualib.h"
 
-#include <math.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>

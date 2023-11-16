@@ -39,7 +39,8 @@ More information on <https://www.lz4.org>.
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "lualib.h"
+
+#include <stdlib.h>
 
 /***************************************************************************@@@
 ## LZ4 compression preferences

@@ -20,9 +20,6 @@
 #pragma once
 
 #include "lauxlib.h"
-#include "lualib.h"
-
-#include <stdlib.h>
 
 /* C module registration function */
 LUAMOD_API int luaopen_libluax(lua_State *L);

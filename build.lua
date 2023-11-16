@@ -46,6 +46,7 @@ If you need to update the build system, please modify build.lua
 and run bang to regenerate build.ninja.
 ]]
 
+-- list of targets used for cross compilation (with Zig only)
 local targets = F{
     -- Linux
     "x86_64-linux-musl",
@@ -64,8 +65,58 @@ local targets = F{
     "aarch64-macos-none",
 }
 
+local usage = F.I{
+    title = function(s) return F.unlines {s, (s:gsub(".", "="))}:rtrim() end,
+    list = function(t) return t:map(F.prefix"    - "):unlines():rtrim() end,
+    targets = targets,
+}[[
+$(title "LuaX bang file usage")
+
+The LuaX bang file can be given options to customize the LuaX compilation.
+
+Without any options, LuaX is:
+    - compiled with Zig for all supported targets
+    - optimized for speed
+
+$(title "Compilation mode")
+
+bang -- fast        Code optimized for speed (default)
+bang -- small       Code optimized for size
+bang -- quick       Reduce compilation time (slow execution)
+bang -- debug       Compiled with debug informations
+                    Tests run with Valgrind (very slow)
+
+$(title "Compiler")
+
+bang -- zig         Compile LuaX with Zig (default)
+bang -- gcc         Compile LuaX with gcc (implies "host")
+bang -- clang       Compile LuaX with clang (implies "host")
+
+Zig is downloaded by the ninja file.
+gcc and clang must be already installed.
+
+$(title "Compilation targets")
+
+bang -- host        Compile LuaX for the current host only
+
+By default LuaX is compiled for all supported targets:
+$(list(targets))
+
+$(title "Compression")
+
+bang -- upx         Compress LuaX with UPX
+
+By default LuaX is not compressed.
+]]
+
+if F.elem("help", arg) then
+    print(usage)
+    os.exit(0)
+end
+
 local mode = nil -- fast, small, quick, debug
 local host = false
+local compiler = nil -- zig, gcc, clang
 local upx = false
 
 F.foreach(arg, function(a)
@@ -73,12 +124,19 @@ F.foreach(arg, function(a)
         if mode~=nil then F.error_without_stack_trace(a..": duplicate compilation mode", 2) end
         mode = a
     end
+    local function set_compiler()
+        if compiler~=nil then F.error_without_stack_trace(a..": duplicate compiler specification", 2) end
+        compiler = a
+    end
     (case(a) {
         fast   = set_mode,
         small  = set_mode,
         quick  = set_mode,
         debug  = set_mode,
         host   = function() host = true end,
+        zig    = set_compiler,
+        gcc    = set_compiler,
+        clang  = set_compiler,
         upx    = function() upx = true end,
     } or F.error_without_stack_trace(a..": unknown parameter", 1)) ()
 end)
@@ -86,18 +144,33 @@ end)
 mode = F.default("fast", mode)
 if mode=="debug" and upx then F.error_without_stack_trace("UPX compression not available in debug mode") end
 
+compiler = F.default("zig", compiler)
+host = host or compiler=="gcc" or compiler=="clang"
+
 if host then
     targets = targets : filter(function(target)
-        local target_arch, target_os, _ = target:split"%-":unpack()
-        return target_os == sys.os and target_arch == sys.arch
+        local target_arch, target_os, target_abi = target:split"%-":unpack()
+        local same_platform = target_os == sys.os and target_arch == sys.arch
+        return case(compiler) {
+            zig   = same_platform,
+            gcc   = same_platform and target_abi~="musl",
+            clang = same_platform and target_abi~="musl",
+        }
     end)
+end
+
+if (compiler=="gcc" or compiler=="clang") and #targets~=1 then
+    F.error_without_stack_trace("Too many targets for "..compiler..": "..targets:str", ")
 end
 
 section("Compilation options")
 comment(("Compilation mode: %s"):format(mode))
-targets : foreachi(function(i, target)
-    comment(("%-16s: %s"):format(i==1 and "Targets" or "", target))
-end)
+comment(("Compiler        : %s"):format(compiler))
+if compiler == "zig" then
+    targets : foreachi(function(i, target)
+        comment(("%-16s: %s"):format(i==1 and "Targets" or "", target))
+    end)
+end
 comment(("Compression     : %s"):format(upx and "UPX" or "none"))
 
 --===================================================================
@@ -117,27 +190,54 @@ local test = {}
 local doc = {}
 
 --===================================================================
-section "Zig compiler"
+section "Compiler"
 ---------------------------------------------------------------------
-
-local zig_version = "0.11.0"
-var "zig"       (".zig" / zig_version / "zig")
-var "zig_cache" (vars.zig:dirname() / "cache")
-
-local set_cache = "export ZIG_LOCAL_CACHE_DIR=$zig_cache;"
-
-build "$zig" { "tools/install_zig.sh",
-    description = {"GET zig", zig_version},
-    command = {"$in", zig_version, "$out"},
-    pool = "console",
-}
 
 rule "mkdir" {
     description = "MKDIR $out",
     command = "mkdir -p $out",
 }
 
-build "$zig_cache" { "mkdir" }
+local compiler_deps = {}
+
+case(compiler) {
+
+    zig = function()
+        local zig_version = "0.11.0"
+        var "zig" (".zig" / zig_version / "zig")
+
+        build "$zig" { "tools/install_zig.sh",
+            description = {"GET zig", zig_version},
+            command = {"$in", zig_version, "$out"},
+            pool = "console",
+        }
+
+        compiler_deps = { "$zig" }
+
+        var "cc"      "$zig cc"
+        var "cc-host" "$zig cc -target $$ARCH-$$OS-$$LIBC"
+        var "ar"      "$zig ar"
+        var "ld"      "$zig cc"
+        var "ld-host" "$zig cc -target $$ARCH-$$OS-$$LIBC"
+    end,
+
+    gcc = function()
+        var "cc"      "gcc"
+        var "cc-host" "gcc"
+        var "ar"      "ar"
+        var "ld"      "gcc"
+        var "ld-host" "gcc"
+    end,
+
+    clang = function()
+        var "cc"      "clang"
+        var "cc-host" "clang"
+        var "ar"      "ar"
+        var "ld"      "clang"
+        var "ld-host" "clang"
+    end,
+
+}()
 
 local include_path = {
     ".",
@@ -147,27 +247,44 @@ local include_path = {
     "libluax",
 }
 
+local lto_opt = case(compiler) {
+    zig   = "-flto=thin",
+    gcc   = "-flto",
+    clang = "-flto=thin",
+}
+
 local native_cflags = {
     "-std=gnu2x",
-    "-s -O3 -flto=thin",
+    "-O3", lto_opt,
+    "-fPIC",
     F.map(F.prefix"-I", include_path),
     "$$LUA_CFLAGS",
-    "-Wno-constant-logical-operand",
+    case(compiler) {
+        zig = {
+            "-Wno-constant-logical-operand",
+        },
+        gcc = {},
+        clang = {
+            "-Wno-constant-logical-operand",
+        },
+    },
 }
 
 local native_ldflags = {
     "-rdynamic",
-    "-s -flto=thin",
+    "-s", lto_opt,
+    "-lm",
 }
 
 local cflags = {
     "-std=gnu2x",
     case(mode) {
-        fast  = "-s -O3",
-        small = "-s -Os",
+        fast  = "-O3",
+        small = "-Os",
         quick = {},
         debug = "-g",
     },
+    "-fPIC",
     F.map(F.prefix"-I", include_path),
 }
 
@@ -176,20 +293,49 @@ local luax_cflags = {
     "-Werror",
     "-Wall",
     "-Wextra",
-    "-Weverything",
-    "-Wno-padded",
-    "-Wno-reserved-identifier",
-    "-Wno-disabled-macro-expansion",
-    "-Wno-used-but-marked-unused",
-    "-Wno-documentation",
-    "-Wno-documentation-unknown-command",
-    "-Wno-declaration-after-statement",
-    "-Wno-unsafe-buffer-usage",
+    case(compiler) {
+        zig = {
+            "-Weverything",
+            "-Wno-padded",
+            "-Wno-reserved-identifier",
+            "-Wno-disabled-macro-expansion",
+            "-Wno-used-but-marked-unused",
+            "-Wno-documentation",
+            "-Wno-documentation-unknown-command",
+            "-Wno-declaration-after-statement",
+            "-Wno-unsafe-buffer-usage",
+        },
+        gcc = {
+            "-Wno-stringop-overflow",
+        },
+        clang = {
+            "-Weverything",
+            "-Wno-padded",
+            "-Wno-reserved-identifier",
+            "-Wno-disabled-macro-expansion",
+            "-Wno-used-but-marked-unused",
+            "-Wno-documentation",
+            "-Wno-documentation-unknown-command",
+            "-Wno-declaration-after-statement",
+            "-Wno-unsafe-buffer-usage",
+            "-Wno-pre-c2x-compat",
+        },
+    },
 }
 
 local ext_cflags = {
     cflags,
-    "-Wno-constant-logical-operand",
+    case(compiler) {
+        zig = {
+            "-Wno-constant-logical-operand",
+        },
+        gcc = {
+        },
+        clang = {
+            "-Wno-constant-logical-operand",
+            "-Wno-visibility",
+        },
+    },
 }
 
 local ldflags = {
@@ -199,17 +345,24 @@ local ldflags = {
         quick = {},
         debug = {},
     },
+    "-lm",
+    case(compiler) {
+        zig = {},
+        gcc = {
+            "-Wstringop-overflow=0",
+        },
+        clang = {},
+    },
 }
 
 rule "cc" {
     description = "CC $in",
     command = {
         ". tools/build_env.sh;",
-        set_cache,
-        "$zig cc -c", "-target", "$$ARCH-$$OS-$$LIBC", native_cflags, "-MD -MF $depfile $in -o $out",
+        "$cc-host", "-c", native_cflags, "-MD -MF $depfile $in -o $out",
     },
     implicit_in = {
-        "$zig", "$zig_cache",
+        compiler_deps,
         "tools/build_env.sh",
     },
     depfile = "$out.d",
@@ -219,11 +372,10 @@ rule "ld" {
     description = "LD $out",
     command = {
         ". tools/build_env.sh;",
-        set_cache,
-        "$zig cc", "-target", "$$ARCH-$$OS-$$LIBC", native_ldflags, "$in -o $out",
+        "$ld-host", native_ldflags, "$in -o $out",
     },
     implicit_in = {
-        "$zig", "$zig_cache",
+        compiler_deps,
         "tools/build_env.sh",
     },
 }
@@ -237,9 +389,9 @@ targets : foreach(function(target)
     local target_arch, target_os, target_abi = target:split "%-":unpack()
     local lto = case(mode) {
         fast = case(target_os) {
-            linux   = "-flto=thin",
+            linux   = lto_opt,
             macos   = {},
-            windows = "-flto=thin",
+            windows = lto_opt,
         },
         small = {},
         quick = {},
@@ -272,52 +424,53 @@ targets : foreach(function(target)
     local target_so_flags = {
         "-shared",
     }
+    local target_opt = case(compiler) {
+        zig   = {"-target", target},
+        gcc   = {},
+        clang = {},
+    }
     cc[target] = rule("cc-"..target) {
         description = "CC["..target.."] $in",
         command = {
-            set_cache,
-            "$zig cc", "-target", target, "-c", lto, luax_cflags, lua_flags, target_flags, "-MD -MF $depfile $in -o $out",
+            "$cc", target_opt, "-c", lto, luax_cflags, lua_flags, target_flags, "-MD -MF $depfile $in -o $out",
             case(target_os) {
-                linux = {},
-                macos = {},
+                linux   = {},
+                macos   = {},
                 windows = "$build_as_dll",
             }
         },
         implicit_in = {
-            "$zig", "$zig_cache",
+            compiler_deps,
         },
         depfile = "$out.d",
     }
     cc_ext[target] = rule("cc_ext-"..target) {
         description = "CC["..target.."] $in",
         command = {
-            set_cache,
-            "$zig cc", "-target", target, "-c", lto, ext_cflags, lua_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
+            "$cc", target_opt, "-c", lto, ext_cflags, lua_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
         },
         implicit_in = {
-            "$zig", "$zig_cache",
+            compiler_deps,
         },
         depfile = "$out.d",
     }
     ld[target] = rule("ld-"..target) {
         description = "LD["..target.."] $out",
         command = {
-            set_cache,
-            "$zig cc", "-target", target, lto, ldflags, target_ld_flags, "$in -o $out",
+            "$ld", target_opt, lto, ldflags, target_ld_flags, "$in -o $out",
         },
         implicit_in = {
-            "$zig", "$zig_cache",
+            compiler_deps,
         },
     }
     if target_abi~="musl" then
         so[target] = rule("so-"..target) {
             description = "SO["..target.."] $out",
             command = {
-                set_cache,
-                "$zig cc", "-target", target, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out",
+                "$cc", target_opt, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out",
             },
             implicit_in = {
-                "$zig", "$zig_cache",
+                compiler_deps,
             },
         }
     end
@@ -325,12 +478,9 @@ end)
 
 local ar = rule "ar" {
     description = "AR $out",
-    command = {
-        set_cache,
-        "$zig ar -crs $out $in",
-    },
+    command = "$ar -crs $out $in",
     implicit_in = {
-        "$zig", "$zig_cache",
+        compiler_deps,
     },
 }
 
@@ -386,9 +536,9 @@ local sources = {
     luax_c_files = ls "libluax/**.c",
     third_party_c_files = ls "ext/c/**.c"
         : filter(function(name) return not name:match "lz4/programs" end)
-        : filter(function(name) return F.not_elem(name, linux_only) end)
-        : filter(function(name) return F.not_elem(name, windows_only) end)
-        : filter(function(name) return F.not_elem(name, ignored_sources) end),
+        : difference(linux_only)
+        : difference(windows_only)
+        : difference(ignored_sources),
     linux_third_party_c_files = linux_only,
     windows_third_party_c_files = windows_only,
 }
@@ -474,7 +624,7 @@ rule "gen_config" {
     },
     implicit_in = {
         "tools/build_env.sh",
-        ".git/refs/tags", ".git/index",
+        ".git/refs/tags",
         "$lua"
     },
 }
@@ -579,8 +729,8 @@ local runtimes, shared_libraries =
             } : map(function(src)
                 return build("$tmp/obj"/target/src:splitext()..".o") { cc[target], src,
                     implicit_in = {
-                        "$luax_config_h",
                         case(src:basename():splitext()) {
+                            version = "$luax_config_h",
                             crypt = "$luax_crypt_key",
                         } or {},
                     },
@@ -622,7 +772,6 @@ local runtimes, shared_libraries =
                             windows = "-DLUA_BUILD_AS_DLL -DLUA_LIB",
                         },
                         implicit_in = {
-                            "$luax_config_h",
                             "$luax_runtime_bundle",
                         },
                     }
@@ -651,7 +800,7 @@ local runtimes, shared_libraries =
     end)
     : unzip()
 
-shared_libraries = shared_libraries : filter(function(lib) return lib ~= F.Nil end)
+shared_libraries = shared_libraries : filter(F.partial(F.op.ne, F.Nil))
 
 if upx and mode~="debug" then
     rule "upx" {
@@ -845,6 +994,7 @@ acc(test) {
         description = "TEST $out",
         command = {
             ". tools/build_env.sh;",
+            "export LUA_CPATH=;",
             "eval $$($luax env);",
             "PATH=$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua'",
@@ -858,7 +1008,7 @@ acc(test) {
             "tools/build_env.sh",
             "$lua",
             "$luax",
-            libraries,
+            shared_libraries,
             test_sources,
         },
     },
@@ -880,6 +1030,7 @@ acc(test) {
             "tools/build_env.sh",
             "$lua",
             "$lib/luax.lua",
+            libraries,
             test_sources,
         },
     },
@@ -922,35 +1073,10 @@ acc(test) {
             "tools/build_env.sh",
             "$lua",
             "$lib/luax.lua",
+            libraries,
             test_sources,
         },
     },
-
----------------------------------------------------------------------
-
--- This test is disabled since most of the binary distributions of Pandoc do not support dynamic loading
---[[
-    build "$test/test-6-pandoc-luax-so.ok" {
-        description = "TEST $out",
-        command = {
-            ". tools/build_env.sh;",
-            "eval $$($luax env);",
-            "PATH=$tmp:$$PATH",
-            "LUA_CPATH='$lib/?.so' LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
-            "TEST_NUM=6",
-            "pandoc lua ", "-l libluax", test_main, "Lua is great",
-            "&&",
-            "touch $out",
-        },
-        implicit_in = {
-            "tools/build_env.sh",
-            "$lua",
-            "$luax",
-            "$lib/luax.lua",
-            test_sources,
-        },
-    },
---]]
 
 ---------------------------------------------------------------------
 
@@ -981,6 +1107,7 @@ acc(test) {
         description = "TEST $out",
         command = {
             ". tools/build_env.sh;",
+            "export LUA_CPATH=;",
             "eval $$($luax env);",
             "$luax -q -t lua-luax -o $test/ext-lua-luax", "$in",
             "&&",
@@ -1041,31 +1168,6 @@ acc(test) {
             binaries,
         },
     },
-
----------------------------------------------------------------------
-
--- This test is disabled since most of the binary distributions of Pandoc do not support dynamic loading
---[[
-    build "$test/test-ext-5-pandoc-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
-        description = "TEST $out",
-        command = {
-            ". tools/build_env.sh;",
-            "eval $$($luax env);",
-            "$luax -q -t pandoc-luax -o $test/ext-pandoc-luax", "$in",
-            "&&",
-            "PATH=$tmp:$$PATH",
-            "TARGET=pandoc-luax",
-            "$test/ext-pandoc-luax Lua is great",
-            "&&",
-            "touch $out",
-        },
-        implicit_in = {
-            "tools/build_env.sh",
-            "$lib/luax.lua",
-            "$luax",
-        },
-    },
---]]
 
 ---------------------------------------------------------------------
 
@@ -1148,7 +1250,6 @@ install "bin" {binaries}
 install "lib" {libraries, shared_libraries}
 
 clean "$builddir"
-clean.mrproper "$zig_cache"
 
 phony "compile" (compile)
 default "compile"

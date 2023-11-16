@@ -37,6 +37,7 @@ local fs = require "fs"
 
 #ifdef _WIN32
 #include <windows.h>
+#include <stdint.h>
 #else
 #include <glob.h>
 #endif
@@ -45,7 +46,6 @@ local fs = require "fs"
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -56,7 +56,6 @@ local fs = require "fs"
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "lualib.h"
 
 #define FS_PATHSIZE 1024
 #define FS_BUFSIZE  (64*1024)

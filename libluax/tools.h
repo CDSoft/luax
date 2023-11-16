@@ -21,7 +21,6 @@
 
 #include <lstate.h>
 
-#include <stdlib.h>
 #include <stdbool.h>
 
 struct lrun_Reg

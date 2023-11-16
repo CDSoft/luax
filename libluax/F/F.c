@@ -19,12 +19,8 @@
 
 #include "F.h"
 
-#include "luax_config.h"
-#include "tools.h"
-
 #include "lua.h"
 #include "lauxlib.h"
-#include "lualib.h"
 
 void set_F_metatable(lua_State *L)
 {

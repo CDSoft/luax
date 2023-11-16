@@ -35,7 +35,6 @@ The history can not be saved on Windows.
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "lualib.h"
 
 #ifdef _WIN32
 #else

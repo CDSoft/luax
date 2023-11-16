@@ -30,9 +30,7 @@ local ps = require "ps"
 #include "tools.h"
 
 #include <dirent.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,7 +46,6 @@ local ps = require "ps"
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "lualib.h"
 
 /*@@@
 ```lua

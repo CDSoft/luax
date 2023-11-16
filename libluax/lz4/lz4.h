@@ -21,9 +21,6 @@
 
 #include "lua.h"
 
-#include <stdint.h>
-#include <stdlib.h>
-
 /* C module registration function */
 LUAMOD_API int luaopen_lz4(lua_State *L);
 
