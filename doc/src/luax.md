@@ -136,6 +136,7 @@ It does not need to be installed and can be copied anywhere you want.
 @sh(os.getenv'LUAX', '-h')
     : lines()
     : drop_while(function(l) return not l:match"^usage:" end)
+    : take_while(function(l) return not l:match"^Copyright:" end)
     : unlines()
     : trim()
 ```

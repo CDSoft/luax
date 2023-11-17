@@ -24,6 +24,7 @@ local fs = require "fs"
 local sys = require "sys"
 local F = require "F"
 local term = require "term"
+local luax_config = require "luax_config"
 
 local has_compiler = pcall(require, "bundle")
 
@@ -100,7 +101,12 @@ Environment variables:
 PATH, LUA_PATH and LUA_CPATH can be set in .bashrc or .zshrc
 with « luax env ».
 E.g.: eval $(luax env)
-]==]
+]==],
+    F.I(luax_config)[==[
+Copyright:
+  $(copyright)
+  $(authors)
+]==],
     })
 
 local welcome_already_printed = false
@@ -143,8 +149,7 @@ local external_interpreters = F{
 
 local function print_targets()
     print "Targets producing standalone LuaX executables:\n"
-    local config = require "luax_config"
-    F(config.targets):foreach(function(target)
+    F(luax_config.targets):foreach(function(target)
         local compiler = findpath(arg[0]):dirname() / "luax-"..target..ext(target)
         print(("    %-22s%s%s"):format(
             target,
@@ -166,8 +171,7 @@ local function print_targets()
 end
 
 local function print_luax_targets()
-    local config = require "luax_config"
-    F(config.targets):foreach(print)
+    F(luax_config.targets):foreach(print)
 end
 
 local function print_lua_targets()
@@ -651,8 +655,7 @@ local function run_compiler()
     end
 
     -- Check the target parameter
-    local config = require "luax_config"
-    local valid_targets = F.from_set(F.const(true), config.targets)
+    local valid_targets = F.from_set(F.const(true), luax_config.targets)
     local compilers = {}
     local function rmext(compiler_target, name) return name:gsub(ext(compiler_target):gsub("%.", "%%.").."$", "") end
     F(target == "all" and valid_targets:keys() or target and {target} or {}):foreach(function(compiler_target)
