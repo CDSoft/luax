@@ -204,6 +204,7 @@ case(compiler) {
 
     zig = function()
         local zig_version = "0.11.0"
+        --local zig_version = "0.12.0-dev.1642+5f8641401"
         var "zig" (".zig" / zig_version / "zig")
 
         build "$zig" { "tools/install_zig.sh",
@@ -304,6 +305,7 @@ local luax_cflags = {
             "-Wno-documentation-unknown-command",
             "-Wno-declaration-after-statement",
             "-Wno-unsafe-buffer-usage",
+            "-Wno-pre-c2x-compat",
         },
         gcc = {
             "-Wno-stringop-overflow",

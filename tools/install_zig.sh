@@ -29,7 +29,10 @@ then
     . tools/build_env.sh
 
     ZIG_ARCHIVE="zig-$OS-$ARCH-$ZIG_VERSION.tar.xz"
-    ZIG_URL="https://ziglang.org/download/$ZIG_VERSION/$ZIG_ARCHIVE"
+    case $ZIG_VERSION in
+        *-dev*)     ZIG_URL="https://ziglang.org/builds/$ZIG_ARCHIVE" ;;
+        *)          ZIG_URL="https://ziglang.org/download/$ZIG_VERSION/$ZIG_ARCHIVE" ;;
+    esac
 
     mkdir -p "$(dirname "$ZIG")"
     wget "$ZIG_URL" -O "$(dirname "$ZIG")/$ZIG_ARCHIVE"

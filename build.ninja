@@ -87,7 +87,7 @@ rule ld
 
 rule cc-x86_64-linux-musl
   description = CC[x86_64-linux-musl] $in
-  command = $cc -target x86_64-linux-musl -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -DLUA_USE_LINUX -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"musl"' -MD -MF $depfile $in -o $out
+  command = $cc -target x86_64-linux-musl -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_LINUX -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"musl"' -MD -MF $depfile $in -o $out
   depfile = $out.d
 
 rule cc_ext-x86_64-linux-musl
@@ -101,7 +101,7 @@ rule ld-x86_64-linux-musl
 
 rule cc-x86_64-linux-gnu
   description = CC[x86_64-linux-gnu] $in
-  command = $cc -target x86_64-linux-gnu -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -DLUA_USE_LINUX -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"gnu"' -MD -MF $depfile $in -o $out
+  command = $cc -target x86_64-linux-gnu -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_LINUX -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"gnu"' -MD -MF $depfile $in -o $out
   depfile = $out.d
 
 rule cc_ext-x86_64-linux-gnu
@@ -119,7 +119,7 @@ rule so-x86_64-linux-gnu
 
 rule cc-aarch64-linux-musl
   description = CC[aarch64-linux-musl] $in
-  command = $cc -target aarch64-linux-musl -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -DLUA_USE_LINUX -DLUAX_ARCH='"aarch64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"musl"' -MD -MF $depfile $in -o $out
+  command = $cc -target aarch64-linux-musl -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_LINUX -DLUAX_ARCH='"aarch64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"musl"' -MD -MF $depfile $in -o $out
   depfile = $out.d
 
 rule cc_ext-aarch64-linux-musl
@@ -133,7 +133,7 @@ rule ld-aarch64-linux-musl
 
 rule cc-aarch64-linux-gnu
   description = CC[aarch64-linux-gnu] $in
-  command = $cc -target aarch64-linux-gnu -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -DLUA_USE_LINUX -DLUAX_ARCH='"aarch64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"gnu"' -MD -MF $depfile $in -o $out
+  command = $cc -target aarch64-linux-gnu -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_LINUX -DLUAX_ARCH='"aarch64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"gnu"' -MD -MF $depfile $in -o $out
   depfile = $out.d
 
 rule cc_ext-aarch64-linux-gnu
@@ -151,7 +151,7 @@ rule so-aarch64-linux-gnu
 
 rule cc-x86_64-windows-gnu
   description = CC[x86_64-windows-gnu] $in
-  command = $cc -target x86_64-windows-gnu -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"windows"' -DLUAX_ABI='"gnu"' -MD -MF $depfile $in -o $out $build_as_dll
+  command = $cc -target x86_64-windows-gnu -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"windows"' -DLUAX_ABI='"gnu"' -MD -MF $depfile $in -o $out $build_as_dll
   depfile = $out.d
 
 rule cc_ext-x86_64-windows-gnu
@@ -169,7 +169,7 @@ rule so-x86_64-windows-gnu
 
 rule cc-x86_64-macos-none
   description = CC[x86_64-macos-none] $in
-  command = $cc -target x86_64-macos-none -c -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -DLUA_USE_MACOSX -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"macos"' -DLUAX_ABI='"none"' -MD -MF $depfile $in -o $out
+  command = $cc -target x86_64-macos-none -c -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_MACOSX -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"macos"' -DLUAX_ABI='"none"' -MD -MF $depfile $in -o $out
   depfile = $out.d
 
 rule cc_ext-x86_64-macos-none
@@ -187,7 +187,7 @@ rule so-x86_64-macos-none
 
 rule cc-aarch64-macos-none
   description = CC[aarch64-macos-none] $in
-  command = $cc -target aarch64-macos-none -c -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -DLUA_USE_MACOSX -DLUAX_ARCH='"aarch64"' -DLUAX_OS='"macos"' -DLUAX_ABI='"none"' -MD -MF $depfile $in -o $out
+  command = $cc -target aarch64-macos-none -c -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_MACOSX -DLUAX_ARCH='"aarch64"' -DLUAX_OS='"macos"' -DLUAX_ABI='"none"' -MD -MF $depfile $in -o $out
   depfile = $out.d
 
 rule cc_ext-aarch64-macos-none

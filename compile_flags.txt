@@ -13,6 +13,7 @@
 -Werror=missing-prototypes
 -Wno-declaration-after-statement
 -Wno-unsafe-buffer-usage
+-Wno-pre-c2x-compat
 -I.
 -Ilibluax
 -Iluax
