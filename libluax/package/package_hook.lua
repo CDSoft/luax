@@ -20,6 +20,8 @@ http://cdelord.fr/luax
 
 --@LOAD=_
 
+local F = require "F"
+
 -- inspired by https://stackoverflow.com/questions/60283272/how-to-get-the-exact-path-to-the-script-that-was-loaded-in-lua
 
 -- This module wraps package searchers in a function that tracks package paths.
@@ -39,7 +41,7 @@ package.modpath      -- { module_name = module_path }
 > table containing the names of the loaded packages and their actual paths.
 @@@]]
 
-package.modpath = {}
+package.modpath = F{}
 
 local function wrap_searcher(searcher)
     return function(modname)
