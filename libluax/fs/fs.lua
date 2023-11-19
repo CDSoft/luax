@@ -274,6 +274,20 @@ end
 
 --[[@@@
 ```lua
+fs.splitpath(path)
+```
+return a list of path components.
+@@@]]
+
+function fs.splitpath(path)
+    if path == "" then return F{} end
+    local components = path:split "[/\\]+"
+    if components[1] == "" then components[1] = fs.sep end
+    return components
+end
+
+--[[@@@
+```lua
 fs.is_file(name)
 ```
 returns `true` if `name` is a file.
@@ -657,6 +671,7 @@ function string.basename(path)              return fs.basename(path) end
 function string.dirname(path)               return fs.dirname(path) end
 function string.splitext(path)              return fs.splitext(path) end
 function string.ext(path)                   return fs.ext(path) end
+function string.splitpath(path)             return fs.splitpath(path) end
 function string.realpath(path)              return fs.realpath(path) end
 function string.readlink(path)              return fs.readlink(path) end
 function string.absname(path)               return fs.absname(path) end

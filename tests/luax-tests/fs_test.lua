@@ -251,6 +251,10 @@ local function fs_test(tmp)
     eq({fs.ext(".file_without_ext")}, {""})
     eq({("path/with.dots/file.with_ext"):splitext()}, {"path/with.dots/file", ".with_ext"})
     eq({("path/with.dots/file.with_ext"):ext()}, {".with_ext"})
+    eq(fs.splitpath("/usr/bin/lua"), {"/", "usr", "bin", "lua"})
+    eq(fs.splitpath("usr/bin/lua"), {"usr", "bin", "lua"})
+    eq(F"/usr/bin/lua":splitpath(), {"/", "usr", "bin", "lua"})
+    eq(F"usr/bin/lua":splitpath(), {"usr", "bin", "lua"})
     if sys.abi == "gnu" or sys.abi == "musl" then
         eq(fs.absname("."), fs.join(tmp, "."))
     end

@@ -193,6 +193,12 @@ return a path name made of several path components (separated by
 removed.
 
 ``` lua
+fs.splitpath(path)
+```
+
+return a list of path components.
+
+``` lua
 fs.is_file(name)
 ```
 
