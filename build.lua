@@ -984,7 +984,8 @@ acc(test) {
         command = {
             ". tools/build_env.sh;",
             valgrind,
-            "$luax -q -o $test/test-luax", test_sources,
+            "$luax -q -o $test/test-luax",
+                test_sources : difference(ls "tests/luax-tests/to_be_imported-*.lua"),
             "&&",
             "PATH=$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua'",

@@ -52,6 +52,7 @@ require "qmath_test"()
 require "linenoise_test"()
 require "package_test"()
 require "resource_test"()
+require "import_test"()
 
 -- luax global environment
 -- (also tested at the end to check that tests and new modules do not touch global variables)
