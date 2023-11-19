@@ -1030,7 +1030,7 @@ t:updatek(f, k)
 >
 > **Warning**: in-place modification.
 
-## Table trasversal
+## Table transversal
 
 ``` lua
 F.foreach(xs, f)

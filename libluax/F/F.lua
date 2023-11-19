@@ -2293,7 +2293,7 @@ register3 "updatek" (function(f, k, t)
 end)
 
 --[[------------------------------------------------------------------------@@@
-## Table trasversal
+## Table transversal
 @@@]]
 
 --[[@@@
