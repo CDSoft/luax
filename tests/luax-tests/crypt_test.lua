@@ -283,7 +283,7 @@ return function()
         do
             -- test setting the seed after initialization
             local r1 = crypt.prng(666)
-            local r2 = crypt.prng()
+            local r2 = crypt.prng(42)
             F.range(100):foreach(function(_) ne(r1:int(), r2:int()) end)
             r1 = crypt.prng(666)
             r2:seed(666)
