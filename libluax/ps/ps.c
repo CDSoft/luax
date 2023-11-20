@@ -31,6 +31,7 @@ local ps = require "ps"
 
 #include <dirent.h>
 #include <fcntl.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,7 +58,17 @@ sleeps for `n` seconds.
 static int ps_sleep(lua_State *L)
 {
     const double t = luaL_checknumber(L, 1);
+#ifdef __WIN32
     usleep((useconds_t)(t * 1e6));
+#else
+    double sec;
+    double nsec = modf(t, &sec);
+    const struct timespec ts = {
+        .tv_sec = (typeof(ts.tv_sec))sec,
+        .tv_nsec = (typeof(ts.tv_nsec))(nsec*1e9),
+    };
+    nanosleep(&ts, NULL);
+#endif
     return 0;
 }
 
