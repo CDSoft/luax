@@ -21,36 +21,5 @@
 
 #include <complex.h>
 
-#ifdef __clang__
-#pragma clang diagnostic ignored "-Wreserved-identifier"
-#endif
-
-/* Missing complex functions in the current Zig version ??? */
-
-// Returns: the product of a + ib and c + id
-
-extern double _Complex __muldc3(double a, double b, double c, double d);
-
-double _Complex __muldc3(double a, double b, double c, double d)
-{
-    double _Complex z;
-    __real__(z) = a*c - b*d;
-    __imag__(z) = a*d + b*c;
-    return z;
-}
-
-// Returns: the quotient of (a + ib) / (c + id)
-
-extern double _Complex __divdc3(double a, double b, double c, double d);
-
-double _Complex __divdc3(double a, double b, double c, double d)
-{
-    double _Complex z;
-    const double cc_dd = c*c + d*d;
-    __real__(z) = (a*c + b*d) / cc_dd;
-    __imag__(z) = (b*c - a*d) / cc_dd;
-    return z;
-}
-
 /* C module registration function */
 LUAMOD_API int luaopen_complex(lua_State *L);
