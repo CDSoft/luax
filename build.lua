@@ -208,7 +208,7 @@ case(compiler) {
 
     zig = function()
         local zig_version = "0.11.0"
-        --local zig_version = "0.12.0-dev.1642+5f8641401"
+        --local zig_version = "0.12.0-dev.1647+325e0f5f0"
         var "zig" (".zig" / zig_version / "zig")
 
         build "$zig" { "tools/install_zig.sh",
@@ -218,12 +218,16 @@ case(compiler) {
         }
 
         compiler_deps = { "$zig" }
+        local zig_cache = {
+            "ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache",
+            "ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache",
+        }
 
-        var "cc"      "$zig cc"
-        var "cc-host" "$zig cc -target $$ARCH-$$OS-$$LIBC"
-        var "ar"      "$zig ar"
-        var "ld"      "$zig cc"
-        var "ld-host" "$zig cc -target $$ARCH-$$OS-$$LIBC"
+        var "cc"      { zig_cache, "$zig cc" }
+        var "cc-host" { zig_cache, "$zig cc -target $$ARCH-$$OS-$$LIBC" }
+        var "ar"      { zig_cache, "$zig ar" }
+        var "ld"      { zig_cache, "$zig cc" }
+        var "ld-host" { zig_cache, "$zig cc -target $$ARCH-$$OS-$$LIBC" }
     end,
 
     gcc = function()

@@ -70,11 +70,11 @@ rule _zig
   pool = console
 
 build $zig: _zig tools/install_zig.sh
-cc = $zig cc
-cc-host = $zig cc -target $$ARCH-$$OS-$$LIBC
-ar = $zig ar
-ld = $zig cc
-ld-host = $zig cc -target $$ARCH-$$OS-$$LIBC
+cc = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache $zig cc
+cc-host = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache $zig cc -target $$ARCH-$$OS-$$LIBC
+ar = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache $zig ar
+ld = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache $zig cc
+ld-host = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache $zig cc -target $$ARCH-$$OS-$$LIBC
 
 rule cc
   description = CC $in
