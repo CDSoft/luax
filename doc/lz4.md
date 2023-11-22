@@ -16,7 +16,7 @@ The compression preferences are hard coded:
 
 - linked blocks
 - frame checksum enabled
-- maximal compression level
+- default compression level
 
 ## LZ4 frame compression
 

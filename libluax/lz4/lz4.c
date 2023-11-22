@@ -49,7 +49,7 @@ The compression preferences are hard coded:
 
 - linked blocks
 - frame checksum enabled
-- maximal compression level
+- default compression level
 
 @@@*/
 
@@ -64,7 +64,7 @@ const char *lz4_compress(const char *src, const size_t src_len, char **dst, size
     LZ4F_preferences_t prefs = LZ4F_INIT_PREFERENCES;
     prefs.frameInfo.blockMode = LZ4F_blockLinked;
     prefs.frameInfo.contentChecksumFlag = LZ4F_contentChecksumEnabled;
-    prefs.compressionLevel = LZ4HC_CLEVEL_MAX;
+    prefs.compressionLevel = LZ4HC_CLEVEL_DEFAULT;
     const size_t dstCapacity = LZ4F_compressFrameBound(srcSize, &prefs);
     char *dstBuffer = safe_malloc(dstCapacity);
     const size_t n = LZ4F_compressFrame(dstBuffer, dstCapacity, srcBuffer, srcSize, &prefs);
