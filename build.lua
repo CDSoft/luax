@@ -268,6 +268,9 @@ local native_cflags = {
     "-fPIC",
     F.map(F.prefix"-I", include_path),
     "$$LUA_CFLAGS",
+    "-Werror",
+    "-Wall",
+    "-Wextra",
     case(compiler) {
         zig = {
             "-Wno-constant-logical-operand",
@@ -283,6 +286,13 @@ local native_ldflags = {
     "-rdynamic",
     "-s", lto_opt,
     "-lm",
+    case(compiler) {
+        zig = {},
+        gcc = {
+            "-Wstringop-overflow=0",
+        },
+        clang = {},
+    },
 }
 
 local cflags = {
@@ -309,22 +319,18 @@ local luax_cflags = {
             "-Wno-reserved-identifier",
             "-Wno-disabled-macro-expansion",
             "-Wno-used-but-marked-unused",
-            "-Wno-documentation",
             "-Wno-documentation-unknown-command",
             "-Wno-declaration-after-statement",
             "-Wno-unsafe-buffer-usage",
             "-Wno-pre-c2x-compat",
         },
-        gcc = {
-            "-Wno-stringop-overflow",
-        },
+        gcc = {},
         clang = {
             "-Weverything",
             "-Wno-padded",
             "-Wno-reserved-identifier",
             "-Wno-disabled-macro-expansion",
             "-Wno-used-but-marked-unused",
-            "-Wno-documentation",
             "-Wno-documentation-unknown-command",
             "-Wno-declaration-after-statement",
             "-Wno-unsafe-buffer-usage",
@@ -339,11 +345,9 @@ local ext_cflags = {
         zig = {
             "-Wno-constant-logical-operand",
         },
-        gcc = {
-        },
+        gcc = {},
         clang = {
             "-Wno-constant-logical-operand",
-            "-Wno-visibility",
         },
     },
 }
@@ -357,7 +361,9 @@ local ldflags = {
     },
     "-lm",
     case(compiler) {
-        zig = {},
+        zig = {
+            "-Wno-single-bit-bitfield-constant-conversion",
+        },
         gcc = {
             "-Wstringop-overflow=0",
         },

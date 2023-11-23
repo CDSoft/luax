@@ -11,6 +11,10 @@
 -Werror=switch-enum
 -Werror=implicit-fallthrough
 -Werror=missing-prototypes
+-Wno-padded
+-Wno-reserved-identifier
+-Wno-disabled-macro-expansion
+-Wno-documentation-unknown-command
 -Wno-declaration-after-statement
 -Wno-unsafe-buffer-usage
 -Wno-pre-c2x-compat
