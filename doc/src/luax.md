@@ -95,7 +95,7 @@ $ ninja test        # run tests on the host
 ## Precompiled LuaX binaries
 
 In case precompiled binaries are needed (GNU/Linux, MacOS, Windows),
-some can be found at [cdelord.fr/pub](http://cdelord.fr/pub).
+some can be found at [cdelord.fr/hey](http://cdelord.fr/hey).
 These archives contain LuaX as well as some other softwares more or less related to LuaX.
 
 **Warning**: There are Linux binaries linked with musl and glibc. The musl
