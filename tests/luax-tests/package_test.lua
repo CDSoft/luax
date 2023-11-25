@@ -51,6 +51,7 @@ return function()
         qmath_test      = "tests/luax-tests/qmath_test.lua",
         require_test    = "tests/luax-tests/require_test.lua",
         serpent_test    = "tests/luax-tests/serpent_test.lua",
+        json_test       = "tests/luax-tests/json_test.lua",
         sh_test         = "tests/luax-tests/sh_test.lua",
         socket_test     = "tests/luax-tests/socket_test.lua",
         sys_test        = "tests/luax-tests/sys_test.lua",

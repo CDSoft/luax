@@ -37,6 +37,7 @@ update_all()
     update_lz4          release
     update_cbor
     update_linenoise    utf8-support # switch to "master" when the UTF-8 support is merged
+    update_json         master
 }
 
 update_lua()
@@ -243,6 +244,21 @@ update_linenoise()
         -e 's/TCSAFLUSH/TCSADRAIN/'                                     \
         -e 's/UNUSED/UNUSED_ARG/g'                                      \
         ext/c/linenoise/linenoise.c
+}
+
+update_json()
+{
+    local JSON_REPO=rxi/json.lua
+    local JSON_VERSION="$1"
+    local JSON_ARCHIVE="json-$JSON_VERSION.zip"
+    local JSON_URL="https://github.com/$JSON_REPO/archive/refs/heads/$JSON_VERSION.zip"
+
+    mkdir -p "$TMP"
+    wget "$JSON_URL" -O "$TMP/$JSON_ARCHIVE"
+
+    rm -rf ext/lua/json
+    mkdir -p ext/lua/json
+    unzip -j "$TMP/$JSON_ARCHIVE" '*/json.lua' '*/LICENSE' -d ext/lua/json
 }
 
 update_all

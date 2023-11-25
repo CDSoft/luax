@@ -276,6 +276,7 @@ and [lapp](http://cdelord.fr/lapp).
 - [cbor](cbor.md): pure Lua implementation of the CBOR
 - [linenoise](linenoise.md): A small, portable GNU readline replacement
   with UTF-8 support
+- [json](json.md): A lightweight JSON library for Lua
 
 ## Shared libraries
 
@@ -352,6 +353,9 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
 - **[Linenoise](https://github.com/yhirose/linenoise/tree/utf8-support)**:
   A minimal, zero-config, BSD licensed, readline replacement ([BSD
   license](https://github.com/antirez/linenoise/blob/master/LICENSE))
+- **[json.lua](https://github.com/rxi/json.lua)**: A lightweight JSON
+  library for Lua ([MIT
+  license](https://github.com/rxi/json.lua/blob/master/LICENSE))
 
 [^1]: `luax` is actually not a « cross compiler ».
 
