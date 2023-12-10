@@ -828,11 +828,13 @@ if upx and mode~="debug" then
         command = "rm -f $out; upx -qqq -o $out $in && touch $out",
     }
     runtimes = runtimes : map(function(runtime)
-        return build("$tmp/run-upx"/runtime:basename()) { "upx", runtime }
+        return case(target_os(runtime:split("-", 1):snd():splitext())) {
+            macos = runtime,
+        } or build("$tmp/run-upx"/runtime:basename()) { "upx", runtime }
     end)
     shared_libraries = shared_libraries : map(function(library)
-        return case(library:ext()) {
-            [".dylib"] = library,
+        return case(target_os(library:split("-", 1):snd():splitext())) {
+            macos = library,
         } or build("$tmp/lib-upx"/library:basename()) { "upx", library }
     end)
 end
