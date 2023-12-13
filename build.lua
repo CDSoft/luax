@@ -1193,17 +1193,17 @@ section "Documentation"
 
 local markdown_sources = ls "doc/src/*.md"
 
-rule "banner-1024" { description = "LSVG $in", command = {"lsvg $in $out -- 1024 192"} }
-rule "logo-256"    { description = "LSVG $in", command = {"lsvg $in $out -- 256 256"} }
-rule "logo-1024"   { description = "LSVG $in", command = {"lsvg $in $out -- 1024 1024"} }
-rule "social-1280" { description = "LSVG $in", command = {"lsvg $in $out -- 1280 640", F.show(URL)} }
+rule "lsvg" {
+    command = "lsvg $in -o $out --MF $depfile -- $args",
+    depfile = "$builddir/tmp/lsvg/$out.d",
+}
 
 local images = {
-    build "doc/luax-banner.svg"         {"banner-1024", "doc/src/luax-logo.lua"},
-    build "doc/luax-logo.svg"           {"logo-256",    "doc/src/luax-logo.lua"},
-    build "$builddir/luax-banner.png"   {"banner-1024", "doc/src/luax-logo.lua"},
-    build "$builddir/luax-social.png"   {"social-1280", "doc/src/luax-logo.lua"},
-    build "$builddir/luax-logo.png"     {"logo-1024",   "doc/src/luax-logo.lua"},
+    build "doc/luax-banner.svg"         {"lsvg", "doc/src/luax-logo.lua", args={1024,  192}},
+    build "doc/luax-logo.svg"           {"lsvg", "doc/src/luax-logo.lua", args={ 256,  256}},
+    build "$builddir/luax-banner.png"   {"lsvg", "doc/src/luax-logo.lua", args={1024,  192}},
+    build "$builddir/luax-social.png"   {"lsvg", "doc/src/luax-logo.lua", args={1280,  640, F.show(URL)}},
+    build "$builddir/luax-logo.png"     {"lsvg", "doc/src/luax-logo.lua", args={1024, 1024}},
 }
 
 acc(doc)(images)
