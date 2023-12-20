@@ -120,6 +120,18 @@ local function fs_test(tmp)
     eq(fs.ls(tmp/"bar**"):map(trim_tmp),      {"/bar","/bar.txt","/bar/bar.txt"})
     eq(fs.ls(tmp/"**.txt"):map(trim_tmp),     {"/bar.txt","/bar/bar.txt","/bar/baz/baz.txt","/foo-bar/x-y+z.txt","/foo/foo.txt","/foo2.txt"})
     eq(fs.ls(tmp/"**-y+z.txt"):map(trim_tmp), {"/foo-bar/x-y+z.txt"})
+    if sys.abi == "gnu" or sys.abi == "musl" then
+        fs.chdir(tmp)
+        eq(fs.ls(),             {"bar","bar.txt","foo","foo-bar","foo2.txt","level1"})
+        eq(fs.ls("."),          {"bar","bar.txt","foo","foo-bar","foo2.txt","level1"})
+        eq(fs.ls("*"),          {"bar","bar.txt","foo","foo-bar","foo2.txt","level1"})
+        eq(fs.ls("bar*"),       {"bar","bar.txt"})
+        eq(fs.ls("*.txt"),      {"bar.txt","foo2.txt"})
+        eq(fs.ls("**"),         {"bar","bar.txt","bar/bar.txt","bar/baz","bar/baz/baz.txt","foo","foo-bar","foo-bar/x-y+z.txt","foo/foo.txt","foo2.txt","level1","level1/level2","level1/level2/level3"})
+        eq(fs.ls("bar**"),      {"bar","bar.txt","bar/bar.txt"})
+        eq(fs.ls("**.txt"),     {"bar.txt","bar/bar.txt","bar/baz/baz.txt","foo-bar/x-y+z.txt","foo/foo.txt","foo2.txt"})
+        eq(fs.ls("**-y+z.txt"), {"foo-bar/x-y+z.txt"})
+    end
 
     do
         local content1 = "Lua is great!!!"

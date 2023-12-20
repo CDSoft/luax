@@ -478,6 +478,7 @@ Examples:
 @@@]]
 
 function fs.ls(dir)
+    dir = dir or "."
     local base = dir:basename()
     local path = dir:dirname()
     local recursive = base:match"%*%*"
@@ -485,19 +486,27 @@ function fs.ls(dir)
                                             : gsub("%*%*", "*")
                                             : gsub("%*", ".*")
 
+    local useless_path_prefix = "^%."..fs.sep
+    local function clean_path(fullpath)
+        return fullpath:gsub(useless_path_prefix, "")
+    end
+
     if recursive then
         return fs.walk(path)
             : filter(function(name) return name:basename():match("^"..pattern.."$") end)
+            : map(clean_path)
             : sort()
     end
     if pattern then
         return fs.dir(path)
             : filter(function(name) return name:match("^"..pattern.."$") end)
             : map(F.partial(fs.join, path))
+            : map(clean_path)
             : sort()
     end
     return fs.dir(dir)
         : map(F.partial(fs.join, dir))
+        : map(clean_path)
         : sort()
 end
 
