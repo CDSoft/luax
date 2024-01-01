@@ -26,10 +26,6 @@ local sys = require "sys"
 
 local function luax_env(arg0)
 
-    local path = os.getenv "PATH" or ""
-    local lua_path = os.getenv "LUA_PATH" or ""
-    local lua_cpath = os.getenv "LUA_CPATH" or ""
-
     local exe = assert(fs.is_file(arg0) and arg0 or fs.findpath(arg0))
 
     local abi = F.case(sys.os) { linux="gnu", macos="none",  windows="gnu" }
@@ -40,17 +36,25 @@ local function luax_env(arg0)
     local lib_lua = prefix / "lib" / "?.lua"
     local lib_so = prefix / "lib" / F{"?", sys.arch, sys.os, abi, ext}:str("-", ".")
 
-    return F{
-        path:split(fs.path_sep):elem(bin)
-            and ('# PATH already contains %s'):format(bin)
-            or ('export PATH="%s%s$PATH";'):format(bin, fs.path_sep),
-        lua_path:split";":elem(lib_lua)
-            and ('# LUA_PATH already contains %s'):format(lib_lua)
-            or ('export LUA_PATH="%s;$LUA_PATH";'):format(lib_lua),
-        lua_cpath:split";":elem(lib_so)
-            and ('# LUA_CPATH already contains %s'):format(lib_so)
-            or ('export LUA_CPATH="%s;$LUA_CPATH";'):format(lib_so),
-    } : unlines()
+    local function update(var_name, separator, new_path)
+        return F{
+            "export ", var_name, "=\"",
+            F{
+                new_path,
+                (os.getenv(var_name) or "")
+                    : split(separator)
+                    : filter(F.partial(F.op.ne, new_path))
+                    : nub(),
+            } : flatten() : str(separator),
+            "\";",
+        } : str()
+    end
+
+    return F.unlines {
+        update("PATH",      fs.path_sep, bin),
+        update("LUA_PATH",  ";",         lib_lua),
+        update("LUA_CPATH", ";",         lib_so),
+    }
 end
 
 local function user_env(args)

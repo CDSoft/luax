@@ -38,17 +38,17 @@ return function()
         local cwd = fs.getcwd()
 
         eq(shell_env(os.getenv"LUAX"),
-F.I{CWD=cwd, sys=sys, libext=libext}[[
-export PATH="$(CWD)/.build/bin:$PATH";
-export LUA_PATH="$(CWD)/.build/lib/?.lua;$LUA_PATH";
-export LUA_CPATH="$(CWD)/.build/lib/?-$(sys.arch)-$(sys.os)-$(sys.abi).$(libext);$LUA_CPATH";
+F.I{CWD=cwd, sys=sys, libext=libext, os=os}[[
+export PATH="$(CWD)/.build/bin:$(os.getenv'PATH')";
+export LUA_PATH="$(CWD)/.build/lib/?.lua;$(os.getenv'LUA_PATH')";
+export LUA_CPATH="$(CWD)/.build/lib/?-$(sys.arch)-$(sys.os)-$(sys.abi).$(libext);$(os.getenv'LUA_CPATH')";
 ]])
 
         eq(shell_env(os.getenv"LUAX", {}),
-F.I{CWD=cwd, sys=sys, libext=libext}[[
-export PATH="$(CWD)/.build/bin:$PATH";
-export LUA_PATH="$(CWD)/.build/lib/?.lua;$LUA_PATH";
-export LUA_CPATH="$(CWD)/.build/lib/?-$(sys.arch)-$(sys.os)-$(sys.abi).$(libext);$LUA_CPATH";
+F.I{CWD=cwd, sys=sys, libext=libext, os=os}[[
+export PATH="$(CWD)/.build/bin:$(os.getenv'PATH')";
+export LUA_PATH="$(CWD)/.build/lib/?.lua;$(os.getenv'LUA_PATH')";
+export LUA_CPATH="$(CWD)/.build/lib/?-$(sys.arch)-$(sys.os)-$(sys.abi).$(libext);$(os.getenv'LUA_CPATH')";
 ]])
 
         fs.with_tmpdir(function(tmp)

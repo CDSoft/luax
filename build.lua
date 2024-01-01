@@ -991,6 +991,7 @@ acc(test) {
             "&&",
             "PATH=$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
+            "LUA_CPATH='foo/?.so'",
             "TEST_NUM=1",
             "LUAX=$luax",
             valgrind, "$test/test-luax Lua is great",
