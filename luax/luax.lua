@@ -42,9 +42,11 @@ local LUA_INIT = F{
     "LUA_INIT",
 }
 
+local arg0 = arg[0]
+
 local usage = F.unlines(F.flatten {
-    F.I{arg=arg}[==[
-usage: $(arg[0]:basename()) [options] [script [args]]
+    F.I{arg0=arg0}[==[
+usage: $(arg0:basename()) [options] [script [args]]
 
 General options:
   -h                show this help
@@ -101,6 +103,9 @@ Environment variables:
 PATH, LUA_PATH and LUA_CPATH can be set in .bashrc or .zshrc
 with « luax env ».
 E.g.: eval $(luax env)
+
+« luax env » can also generate shell variables from a script.
+E.g.: eval $(luax env script.lua)
 ]==],
     F.I(luax_config)[==[
 Copyright:
@@ -150,7 +155,7 @@ local external_interpreters = F{
 local function print_targets()
     print "Targets producing standalone LuaX executables:\n"
     F(luax_config.targets):foreach(function(target)
-        local compiler = findpath(arg[0]):dirname() / "luax-"..target..ext(target)
+        local compiler = findpath(arg0):dirname() / "luax-"..target..ext(target)
         print(("    %-22s%s%s"):format(
             target,
             compiler:gsub("^"..os.getenv"HOME", "~"),
@@ -207,7 +212,7 @@ local interpreter_mode = false
 local compiler_mode = false
 local interactive = #arg == 0
 local run_stdin = false
-local args = {}
+local args = F{}
 local output = nil
 local target = nil
 local quiet = false
@@ -419,17 +424,6 @@ local function run_lua_init()
         end)
 end
 
-if #arg == 1 and arg[1] == "env" then
-    local has_shell_env, shell_env = pcall(require, "shell_env")
-    if has_shell_env then
-        print(shell_env())
-        os.exit()
-    else
-        print("use « luax env » instead")
-        os.exit(1)
-    end
-end
-
 actions:add(run_lua_init)
 
 local function pack_res(ok, ...)
@@ -456,7 +450,7 @@ do
                 assert(stat)
                 local chunk, msg = load(stat, "=(command line)")
                 if not chunk then
-                    io.stderr:write(("%s: %s\n"):format(arg[0], msg))
+                    io.stderr:write(("%s: %s\n"):format(arg0, msg))
                     os.exit(1)
                 end
                 assert(chunk)
@@ -569,8 +563,11 @@ local function run_interpreter()
 
     if #args >= 1 then
         local script = args[1]
-        local chunk, msg
-        if script == "-" then
+        local show, chunk, msg
+        if script == "env" then
+            local shell_env = require "shell_env"
+            show, chunk = F.id, function() return shell_env(arg0, args:drop(1)) end
+        elseif script == "-" then
             chunk, msg = load(io.stdin:read "*a")
         else
             chunk, msg = loadfile(script)
@@ -583,7 +580,7 @@ local function run_interpreter()
         local res = pack_res(xpcall(chunk, traceback))
         if res.ok then
             if res.n > 0 then
-                print(show_res(res):unpack())
+                print(show_res(res, show):unpack())
             end
         else
             os.exit(1)
@@ -661,11 +658,11 @@ local function run_compiler()
     F(target == "all" and valid_targets:keys() or target and {target} or {}):foreach(function(compiler_target)
         if external_interpreters[compiler_target] then return end
         if not valid_targets[compiler_target] then err("Invalid target: %s", compiler_target) end
-        local compiler = findpath(arg[0]):dirname() / "luax-"..compiler_target..ext(compiler_target)
+        local compiler = findpath(arg0):dirname() / "luax-"..compiler_target..ext(compiler_target)
         if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, compiler_target} end
     end)
     if not target then
-        local compiler = findpath(arg[0])
+        local compiler = findpath(arg0)
         if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, nil} end
     end
 
@@ -712,7 +709,7 @@ local function run_compiler()
         log("output", "%s", current_output)
 
         local function findscript(script_name)
-            return findpath(arg[0]):dirname():dirname() / "lib" / script_name
+            return findpath(arg0):dirname():dirname() / "lib" / script_name
         end
         local luax_scripts = F.map(findscript, interpreter.scripts)
 

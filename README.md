@@ -187,6 +187,9 @@ scripts:
     with « luax env ».
     E.g.: eval $(luax env)
 
+    « luax env » can also generate shell variables from a script.
+    E.g.: eval $(luax env script.lua)
+
 When compiling scripts (options `-t` and `-o`), the scripts shall
 contain tags (e.g. in comments) showing how the script is used by LuaX:
 

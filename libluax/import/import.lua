@@ -23,6 +23,10 @@ http://cdelord.fr/luax
 --[[------------------------------------------------------------------------@@@
 # import: import Lua scripts into tables
 
+```lua
+local import = require "import"
+```
+
 The import module can be used to manage simple configuration files,
 configuration parameters being global variables defined in the configuration file.
 
@@ -42,7 +46,7 @@ local mt = {}
 import.files = F{}
 
 function mt.__call(self, fname)
-    local mod = F{}
+    local mod = setmetatable({}, {__index = _ENV})
     assert(loadfile(fname, "t", mod))()
     if F.not_elem(fname, self.files) then
         self.files[#self.files+1] = fname

@@ -55,6 +55,9 @@ require "package_test"()
 require "resource_test"()
 require "import_test"()
 
+-- luax builtin scripts
+require "shell_env_test"()
+
 -- luax global environment
 -- (also tested at the end to check that tests and new modules do not touch global variables)
 require "G_test"()

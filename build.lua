@@ -990,8 +990,9 @@ acc(test) {
                 test_sources : difference(ls "tests/luax-tests/to_be_imported-*.lua"),
             "&&",
             "PATH=$tmp:$$PATH",
-            "LUA_PATH='tests/luax-tests/?.lua'",
+            "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
             "TEST_NUM=1",
+            "LUAX=$luax",
             valgrind, "$test/test-luax Lua is great",
             "&&",
             "touch $out",
@@ -1010,7 +1011,7 @@ acc(test) {
         command = {
             ". tools/build_env.sh;",
             "export LUA_CPATH=;",
-            "eval $$($luax env);",
+            "eval \"$$($luax env)\";",
             "PATH=$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua'",
             "TEST_NUM=2",
@@ -1098,7 +1099,7 @@ acc(test) {
         description = "TEST $out",
         command = {
             ". tools/build_env.sh;",
-            "eval $$($luax env);",
+            "eval \"$$($luax env)\";",
             "$luax -q -t lua -o $test/ext-lua $in",
             "&&",
             "PATH=$tmp:$$PATH",
@@ -1122,7 +1123,7 @@ acc(test) {
         command = {
             ". tools/build_env.sh;",
             "export LUA_CPATH=;",
-            "eval $$($luax env);",
+            "eval \"$$($luax env)\";",
             "$luax -q -t lua-luax -o $test/ext-lua-luax $in",
             "&&",
             "PATH=$tmp:$$PATH",
@@ -1144,7 +1145,7 @@ acc(test) {
         description = "TEST $out",
         command = {
             ". tools/build_env.sh;",
-            "eval $$($luax env);",
+            "eval \"$$($luax env)\";",
             "$luax -q -t luax -o $test/ext-luax $in",
             "&&",
             "PATH=$tmp:$$PATH",
@@ -1166,7 +1167,7 @@ acc(test) {
         description = "TEST $out",
         command = {
             ". tools/build_env.sh;",
-            "eval $$($luax env);",
+            "eval \"$$($luax env)\";",
             "$luax -q -t pandoc -o $test/ext-pandoc $in",
             "&&",
             "PATH=$tmp:$$PATH",

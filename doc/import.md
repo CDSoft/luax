@@ -1,5 +1,9 @@
 # import: import Lua scripts into tables
 
+``` lua
+local import = require "import"
+```
+
 The import module can be used to manage simple configuration files,
 configuration parameters being global variables defined in the
 configuration file.
