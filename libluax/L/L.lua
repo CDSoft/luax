@@ -33,6 +33,8 @@ local L = require "L"
 
 local L = pandoc and pandoc.List
 
+local F = require "F"
+
 if not L then
 
     local mt = {__index={}}

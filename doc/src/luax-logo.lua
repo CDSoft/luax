@@ -29,6 +29,8 @@ local w = tonumber(arg[1]) or 1024
 local h = tonumber(arg[2]) or w
 local fh = h/4
 
+local fill_the_sky_with_stars = F.elem("sky", arg)
+
 img {
     width = w,
     height = h,
@@ -136,8 +138,11 @@ end
 
 local d = h * 16/1024
 
+if fill_the_sky_with_stars then
+	img { sky() }
+end
+
 img {
-    --sky(),
     G {
         transform = ("translate(%d, %d) rotate(%d)"):format(w/2, h/2, inclination),
         moon(),
