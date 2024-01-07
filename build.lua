@@ -264,7 +264,7 @@ local lto_opt = case(compiler) {
 
 local native_cflags = {
     "-std=gnu2x",
-    "-O3", lto_opt,
+    "-O3",
     "-fPIC",
     F.map(F.prefix"-I", include_path),
     "$$LUA_CFLAGS",
@@ -284,7 +284,7 @@ local native_cflags = {
 
 local native_ldflags = {
     "-rdynamic",
-    "-s", lto_opt,
+    "-s",
     "-lm",
     case(compiler) {
         zig = {},

@@ -78,12 +78,12 @@ ld-host = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$P
 
 rule cc
   description = CC $in
-  command = . tools/build_env.sh; $cc-host -c -std=gnu2x -O3 -flto=thin -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax $$LUA_CFLAGS -Werror -Wall -Wextra -Wno-constant-logical-operand -MD -MF $depfile $in -o $out
+  command = . tools/build_env.sh; $cc-host -c -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax $$LUA_CFLAGS -Werror -Wall -Wextra -Wno-constant-logical-operand -MD -MF $depfile $in -o $out
   depfile = $out.d
 
 rule ld
   description = LD $out
-  command = . tools/build_env.sh; $ld-host -rdynamic -s -flto=thin -lm $in -o $out
+  command = . tools/build_env.sh; $ld-host -rdynamic -s -lm $in -o $out
 
 rule cc-x86_64-linux-musl
   description = CC[x86_64-linux-musl] $in
