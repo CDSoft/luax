@@ -35,6 +35,7 @@ if not fs then
     fs = {}
 
     local sh = require "sh"
+    local sys = require "sys"
 
     if pandoc and pandoc.path then
         fs.sep = pandoc.path.separator
@@ -118,8 +119,10 @@ if not fs then
     fs.oW = S_IWOTH
     fs.oX = S_IXOTH
 
+    local stat = sys.os=="macos" and "gstat" or "stat"
+
     function fs.stat(name)
-        local st = sh.read("LC_ALL=C", "stat", "-L", "-c '%s;%Y;%X;%W;%F;%f'", name, "2>/dev/null")
+        local st = sh.read("LC_ALL=C", stat, "-L", "-c '%s;%Y;%X;%W;%F;%f'", name, "2>/dev/null")
         if not st then return nil, "cannot stat "..name end
         local size, mtime, atime, ctime, type, mode = st:trim():split ";":unpack()
         mode = tonumber(mode, 16)
@@ -148,7 +151,7 @@ if not fs then
     end
 
     function fs.inode(name)
-        local st = sh.read("LC_ALL=C", "stat", "-L", "-c '%d;%i'", name, "2>/dev/null")
+        local st = sh.read("LC_ALL=C", stat, "-L", "-c '%d;%i'", name, "2>/dev/null")
         if not st then return nil, "cannot stat "..name end
         local dev, ino = st:trim():split ";":unpack()
         return F{

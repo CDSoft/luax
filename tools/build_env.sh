@@ -24,6 +24,7 @@ case "$ARCH" in
     (i486)  ARCH=x86 ;;
     (i586)  ARCH=x86 ;;
     (i686)  ARCH=x86 ;;
+    (arm64) ARCH=aarch64 ;;
 esac
 
 case "$(uname -s)" in
@@ -33,7 +34,10 @@ case "$(uname -s)" in
     (*)      OS=unknown ;;
 esac
 
-LIBC=gnu
+case "$OS" in
+    (macos) LIBC=none ;;
+    (*)     LIBC=gnu ;;
+esac
 
 case "$OS" in
     (windows) EXT=".exe" ;;

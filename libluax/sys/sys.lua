@@ -45,6 +45,7 @@ if not sys then
             elseif param == "arch" then
                 local arch = sh.read("uname", "-m"):trim() ---@diagnostic disable-line: undefined-field
                 arch =   arch:match "^i[3-6]86" and "x86"
+                      or arch:match "arm64" and "aarch64"
                       or arch
                 sys.arch = arch
                 return arch
