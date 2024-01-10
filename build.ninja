@@ -34,13 +34,7 @@ ninja_required_version = 1.11.1
 
 # Compilation mode: fast
 # Compiler        : zig
-# Targets         : x86_64-linux-musl
-#                 : x86_64-linux-gnu
-#                 : aarch64-linux-musl
-#                 : aarch64-linux-gnu
-#                 : x86_64-windows-gnu
-#                 : x86_64-macos-none
-#                 : aarch64-macos-none
+# Target          : native
 # Compression     : none
 
 ######################################################################
@@ -71,137 +65,35 @@ rule _zig
 
 build $zig: _zig tools/install_zig.sh
 cc = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache $zig cc
-cc-host = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache $zig cc -target $$ARCH-$$OS-$$LIBC
 ar = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache $zig ar
 ld = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache $zig cc
-ld-host = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache $zig cc -target $$ARCH-$$OS-$$LIBC
 
 rule cc
   description = CC $in
-  command = . tools/build_env.sh; $cc-host -c -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax $$LUA_CFLAGS -Werror -Wall -Wextra -Wno-constant-logical-operand -MD -MF $depfile $in -o $out
+  command = $cc -c -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -DLUA_USE_LINUX -Werror -Wall -Wextra -Wno-constant-logical-operand -MD -MF $depfile $in -o $out
   depfile = $out.d
 
 rule ld
   description = LD $out
-  command = . tools/build_env.sh; $ld-host -rdynamic -s -lm $in -o $out
+  command = $ld -rdynamic -s -lm $in -o $out
 
-rule cc-x86_64-linux-musl
-  description = CC[x86_64-linux-musl] $in
-  command = $cc -target x86_64-linux-musl -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_LINUX -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"musl"' -MD -MF $depfile $in -o $out
+rule cc-target
+  description = CC $in
+  command = $cc -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_LINUX -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"gnu"' -MD -MF $depfile $in -o $out
   depfile = $out.d
 
-rule cc_ext-x86_64-linux-musl
-  description = CC[x86_64-linux-musl] $in
-  command = $cc -target x86_64-linux-musl -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Wno-constant-logical-operand -DLUA_USE_LINUX $additional_flags -MD -MF $depfile $in -o $out
+rule cc_ext-target
+  description = CC $in
+  command = $cc -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Wno-constant-logical-operand -DLUA_USE_LINUX $additional_flags -MD -MF $depfile $in -o $out
   depfile = $out.d
 
-rule ld-x86_64-linux-musl
-  description = LD[x86_64-linux-musl] $out
-  command = $ld -target x86_64-linux-musl -flto=thin -s -lm -Wno-single-bit-bitfield-constant-conversion $in -o $out
+rule ld-target
+  description = LD $out
+  command = $ld -flto=thin -s -lm -Wno-single-bit-bitfield-constant-conversion -rdynamic $in -o $out
 
-rule cc-x86_64-linux-gnu
-  description = CC[x86_64-linux-gnu] $in
-  command = $cc -target x86_64-linux-gnu -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_LINUX -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"gnu"' -MD -MF $depfile $in -o $out
-  depfile = $out.d
-
-rule cc_ext-x86_64-linux-gnu
-  description = CC[x86_64-linux-gnu] $in
-  command = $cc -target x86_64-linux-gnu -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Wno-constant-logical-operand -DLUA_USE_LINUX $additional_flags -MD -MF $depfile $in -o $out
-  depfile = $out.d
-
-rule ld-x86_64-linux-gnu
-  description = LD[x86_64-linux-gnu] $out
-  command = $ld -target x86_64-linux-gnu -flto=thin -s -lm -Wno-single-bit-bitfield-constant-conversion -rdynamic $in -o $out
-
-rule so-x86_64-linux-gnu
-  description = SO[x86_64-linux-gnu] $out
-  command = $cc -target x86_64-linux-gnu -flto=thin -s -lm -Wno-single-bit-bitfield-constant-conversion -rdynamic -shared $in -o $out
-
-rule cc-aarch64-linux-musl
-  description = CC[aarch64-linux-musl] $in
-  command = $cc -target aarch64-linux-musl -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_LINUX -DLUAX_ARCH='"aarch64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"musl"' -MD -MF $depfile $in -o $out
-  depfile = $out.d
-
-rule cc_ext-aarch64-linux-musl
-  description = CC[aarch64-linux-musl] $in
-  command = $cc -target aarch64-linux-musl -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Wno-constant-logical-operand -DLUA_USE_LINUX $additional_flags -MD -MF $depfile $in -o $out
-  depfile = $out.d
-
-rule ld-aarch64-linux-musl
-  description = LD[aarch64-linux-musl] $out
-  command = $ld -target aarch64-linux-musl -flto=thin -s -lm -Wno-single-bit-bitfield-constant-conversion $in -o $out
-
-rule cc-aarch64-linux-gnu
-  description = CC[aarch64-linux-gnu] $in
-  command = $cc -target aarch64-linux-gnu -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_LINUX -DLUAX_ARCH='"aarch64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"gnu"' -MD -MF $depfile $in -o $out
-  depfile = $out.d
-
-rule cc_ext-aarch64-linux-gnu
-  description = CC[aarch64-linux-gnu] $in
-  command = $cc -target aarch64-linux-gnu -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Wno-constant-logical-operand -DLUA_USE_LINUX $additional_flags -MD -MF $depfile $in -o $out
-  depfile = $out.d
-
-rule ld-aarch64-linux-gnu
-  description = LD[aarch64-linux-gnu] $out
-  command = $ld -target aarch64-linux-gnu -flto=thin -s -lm -Wno-single-bit-bitfield-constant-conversion -rdynamic $in -o $out
-
-rule so-aarch64-linux-gnu
-  description = SO[aarch64-linux-gnu] $out
-  command = $cc -target aarch64-linux-gnu -flto=thin -s -lm -Wno-single-bit-bitfield-constant-conversion -rdynamic -shared $in -o $out
-
-rule cc-x86_64-windows-gnu
-  description = CC[x86_64-windows-gnu] $in
-  command = $cc -target x86_64-windows-gnu -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"windows"' -DLUAX_ABI='"gnu"' -MD -MF $depfile $in -o $out $build_as_dll
-  depfile = $out.d
-
-rule cc_ext-x86_64-windows-gnu
-  description = CC[x86_64-windows-gnu] $in
-  command = $cc -target x86_64-windows-gnu -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Wno-constant-logical-operand $additional_flags -MD -MF $depfile $in -o $out
-  depfile = $out.d
-
-rule ld-x86_64-windows-gnu
-  description = LD[x86_64-windows-gnu] $out
-  command = $ld -target x86_64-windows-gnu -flto=thin -s -lm -Wno-single-bit-bitfield-constant-conversion -rdynamic -lws2_32 -ladvapi32 $in -o $out
-
-rule so-x86_64-windows-gnu
-  description = SO[x86_64-windows-gnu] $out
-  command = $cc -target x86_64-windows-gnu -flto=thin -s -lm -Wno-single-bit-bitfield-constant-conversion -rdynamic -lws2_32 -ladvapi32 -shared $in -o $out
-
-rule cc-x86_64-macos-none
-  description = CC[x86_64-macos-none] $in
-  command = $cc -target x86_64-macos-none -c -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_MACOSX -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"macos"' -DLUAX_ABI='"none"' -MD -MF $depfile $in -o $out
-  depfile = $out.d
-
-rule cc_ext-x86_64-macos-none
-  description = CC[x86_64-macos-none] $in
-  command = $cc -target x86_64-macos-none -c -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Wno-constant-logical-operand -DLUA_USE_MACOSX $additional_flags -MD -MF $depfile $in -o $out
-  depfile = $out.d
-
-rule ld-x86_64-macos-none
-  description = LD[x86_64-macos-none] $out
-  command = $ld -target x86_64-macos-none -s -lm -Wno-single-bit-bitfield-constant-conversion -rdynamic $in -o $out
-
-rule so-x86_64-macos-none
-  description = SO[x86_64-macos-none] $out
-  command = $cc -target x86_64-macos-none -s -lm -Wno-single-bit-bitfield-constant-conversion -rdynamic -shared $in -o $out
-
-rule cc-aarch64-macos-none
-  description = CC[aarch64-macos-none] $in
-  command = $cc -target aarch64-macos-none -c -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_MACOSX -DLUAX_ARCH='"aarch64"' -DLUAX_OS='"macos"' -DLUAX_ABI='"none"' -MD -MF $depfile $in -o $out
-  depfile = $out.d
-
-rule cc_ext-aarch64-macos-none
-  description = CC[aarch64-macos-none] $in
-  command = $cc -target aarch64-macos-none -c -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Wno-constant-logical-operand -DLUA_USE_MACOSX $additional_flags -MD -MF $depfile $in -o $out
-  depfile = $out.d
-
-rule ld-aarch64-macos-none
-  description = LD[aarch64-macos-none] $out
-  command = $ld -target aarch64-macos-none -s -lm -Wno-single-bit-bitfield-constant-conversion -rdynamic $in -o $out
-
-rule so-aarch64-macos-none
-  description = SO[aarch64-macos-none] $out
-  command = $cc -target aarch64-macos-none -s -lm -Wno-single-bit-bitfield-constant-conversion -rdynamic -shared $in -o $out
+rule so-target
+  description = SO $out
+  command = $cc -flto=thin -s -lm -Wno-single-bit-bitfield-constant-conversion -rdynamic -shared $in -o $out
 
 rule ar
   description = AR $out
@@ -223,16 +115,16 @@ build update_modules: update_modules
 ######################################################################
 
 lz4 = $tmp/lz4
-build $tmp/obj/lz4/ext/c/lz4/lib/lz4.o: cc ext/c/lz4/lib/lz4.c | $zig tools/build_env.sh
-build $tmp/obj/lz4/ext/c/lz4/lib/lz4file.o: cc ext/c/lz4/lib/lz4file.c | $zig tools/build_env.sh
-build $tmp/obj/lz4/ext/c/lz4/lib/lz4frame.o: cc ext/c/lz4/lib/lz4frame.c | $zig tools/build_env.sh
-build $tmp/obj/lz4/ext/c/lz4/lib/lz4hc.o: cc ext/c/lz4/lib/lz4hc.c | $zig tools/build_env.sh
-build $tmp/obj/lz4/ext/c/lz4/lib/xxhash.o: cc ext/c/lz4/lib/xxhash.c | $zig tools/build_env.sh
-build $tmp/obj/lz4/ext/c/lz4/programs/bench.o: cc ext/c/lz4/programs/bench.c | $zig tools/build_env.sh
-build $tmp/obj/lz4/ext/c/lz4/programs/datagen.o: cc ext/c/lz4/programs/datagen.c | $zig tools/build_env.sh
-build $tmp/obj/lz4/ext/c/lz4/programs/lz4cli.o: cc ext/c/lz4/programs/lz4cli.c | $zig tools/build_env.sh
-build $tmp/obj/lz4/ext/c/lz4/programs/lz4io.o: cc ext/c/lz4/programs/lz4io.c | $zig tools/build_env.sh
-build $lz4: ld $tmp/obj/lz4/ext/c/lz4/lib/lz4.o $tmp/obj/lz4/ext/c/lz4/lib/lz4file.o $tmp/obj/lz4/ext/c/lz4/lib/lz4frame.o $tmp/obj/lz4/ext/c/lz4/lib/lz4hc.o $tmp/obj/lz4/ext/c/lz4/lib/xxhash.o $tmp/obj/lz4/ext/c/lz4/programs/bench.o $tmp/obj/lz4/ext/c/lz4/programs/datagen.o $tmp/obj/lz4/ext/c/lz4/programs/lz4cli.o $tmp/obj/lz4/ext/c/lz4/programs/lz4io.o | $zig tools/build_env.sh
+build $tmp/obj/lz4/ext/c/lz4/lib/lz4.o: cc ext/c/lz4/lib/lz4.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/lib/lz4file.o: cc ext/c/lz4/lib/lz4file.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/lib/lz4frame.o: cc ext/c/lz4/lib/lz4frame.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/lib/lz4hc.o: cc ext/c/lz4/lib/lz4hc.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/lib/xxhash.o: cc ext/c/lz4/lib/xxhash.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/programs/bench.o: cc ext/c/lz4/programs/bench.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/programs/datagen.o: cc ext/c/lz4/programs/datagen.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/programs/lz4cli.o: cc ext/c/lz4/programs/lz4cli.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/programs/lz4io.o: cc ext/c/lz4/programs/lz4io.c | $zig
+build $lz4: ld $tmp/obj/lz4/ext/c/lz4/lib/lz4.o $tmp/obj/lz4/ext/c/lz4/lib/lz4file.o $tmp/obj/lz4/ext/c/lz4/lib/lz4frame.o $tmp/obj/lz4/ext/c/lz4/lib/lz4hc.o $tmp/obj/lz4/ext/c/lz4/lib/xxhash.o $tmp/obj/lz4/ext/c/lz4/programs/bench.o $tmp/obj/lz4/ext/c/lz4/programs/datagen.o $tmp/obj/lz4/ext/c/lz4/programs/lz4cli.o $tmp/obj/lz4/ext/c/lz4/programs/lz4io.o | $zig
 
 ######################################################################
 # LuaX sources
@@ -243,41 +135,41 @@ build $lz4: ld $tmp/obj/lz4/ext/c/lz4/lib/lz4.o $tmp/obj/lz4/ext/c/lz4/lib/lz4fi
 ######################################################################
 
 lua = $tmp/lua
-lua_path = ./?.lua;$tmp/?.lua;libluax/?.lua;libluax/F/?.lua;libluax/L/?.lua;libluax/complex/?.lua;libluax/crypt/?.lua;libluax/fs/?.lua;libluax/imath/?.lua;libluax/import/?.lua;libluax/linenoise/?.lua;libluax/lpeg/?.lua;libluax/lz4/?.lua;libluax/mathx/?.lua;libluax/package/?.lua;libluax/ps/?.lua;libluax/qmath/?.lua;libluax/sh/?.lua;libluax/socket/?.lua;libluax/sys/?.lua;libluax/term/?.lua;libluax/version/?.lua
-build $tmp/obj/lua/lua/lapi.o: cc lua/lapi.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lauxlib.o: cc lua/lauxlib.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lbaselib.o: cc lua/lbaselib.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lcode.o: cc lua/lcode.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lcorolib.o: cc lua/lcorolib.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lctype.o: cc lua/lctype.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/ldblib.o: cc lua/ldblib.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/ldebug.o: cc lua/ldebug.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/ldo.o: cc lua/ldo.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/ldump.o: cc lua/ldump.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lfunc.o: cc lua/lfunc.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lgc.o: cc lua/lgc.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/linit.o: cc lua/linit.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/liolib.o: cc lua/liolib.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/llex.o: cc lua/llex.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lmathlib.o: cc lua/lmathlib.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lmem.o: cc lua/lmem.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/loadlib.o: cc lua/loadlib.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lobject.o: cc lua/lobject.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lopcodes.o: cc lua/lopcodes.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/loslib.o: cc lua/loslib.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lparser.o: cc lua/lparser.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lstate.o: cc lua/lstate.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lstring.o: cc lua/lstring.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lstrlib.o: cc lua/lstrlib.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/ltable.o: cc lua/ltable.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/ltablib.o: cc lua/ltablib.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/ltm.o: cc lua/ltm.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lundump.o: cc lua/lundump.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lutf8lib.o: cc lua/lutf8lib.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lvm.o: cc lua/lvm.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lzio.o: cc lua/lzio.c | $zig tools/build_env.sh
-build $tmp/obj/lua/lua/lua.o: cc lua/lua.c | $zig tools/build_env.sh
-build $lua: ld $tmp/obj/lua/lua/lapi.o $tmp/obj/lua/lua/lauxlib.o $tmp/obj/lua/lua/lbaselib.o $tmp/obj/lua/lua/lcode.o $tmp/obj/lua/lua/lcorolib.o $tmp/obj/lua/lua/lctype.o $tmp/obj/lua/lua/ldblib.o $tmp/obj/lua/lua/ldebug.o $tmp/obj/lua/lua/ldo.o $tmp/obj/lua/lua/ldump.o $tmp/obj/lua/lua/lfunc.o $tmp/obj/lua/lua/lgc.o $tmp/obj/lua/lua/linit.o $tmp/obj/lua/lua/liolib.o $tmp/obj/lua/lua/llex.o $tmp/obj/lua/lua/lmathlib.o $tmp/obj/lua/lua/lmem.o $tmp/obj/lua/lua/loadlib.o $tmp/obj/lua/lua/lobject.o $tmp/obj/lua/lua/lopcodes.o $tmp/obj/lua/lua/loslib.o $tmp/obj/lua/lua/lparser.o $tmp/obj/lua/lua/lstate.o $tmp/obj/lua/lua/lstring.o $tmp/obj/lua/lua/lstrlib.o $tmp/obj/lua/lua/ltable.o $tmp/obj/lua/lua/ltablib.o $tmp/obj/lua/lua/ltm.o $tmp/obj/lua/lua/lundump.o $tmp/obj/lua/lua/lutf8lib.o $tmp/obj/lua/lua/lvm.o $tmp/obj/lua/lua/lzio.o $tmp/obj/lua/lua/lua.o | $zig tools/build_env.sh
+lua_path = ./?.lua;$tmp/?.lua;libluax/?.lua;libluax/F/?.lua;libluax/L/?.lua;libluax/complex/?.lua;libluax/crypt/?.lua;libluax/fs/?.lua;libluax/imath/?.lua;libluax/import/?.lua;libluax/linenoise/?.lua;libluax/lpeg/?.lua;libluax/lz4/?.lua;libluax/mathx/?.lua;libluax/package/?.lua;libluax/ps/?.lua;libluax/qmath/?.lua;libluax/sh/?.lua;libluax/socket/?.lua;libluax/sys/?.lua;libluax/term/?.lua;libluax/version/?.lua;luax/?.lua
+build $tmp/obj/lua/lua/lapi.o: cc lua/lapi.c | $zig
+build $tmp/obj/lua/lua/lauxlib.o: cc lua/lauxlib.c | $zig
+build $tmp/obj/lua/lua/lbaselib.o: cc lua/lbaselib.c | $zig
+build $tmp/obj/lua/lua/lcode.o: cc lua/lcode.c | $zig
+build $tmp/obj/lua/lua/lcorolib.o: cc lua/lcorolib.c | $zig
+build $tmp/obj/lua/lua/lctype.o: cc lua/lctype.c | $zig
+build $tmp/obj/lua/lua/ldblib.o: cc lua/ldblib.c | $zig
+build $tmp/obj/lua/lua/ldebug.o: cc lua/ldebug.c | $zig
+build $tmp/obj/lua/lua/ldo.o: cc lua/ldo.c | $zig
+build $tmp/obj/lua/lua/ldump.o: cc lua/ldump.c | $zig
+build $tmp/obj/lua/lua/lfunc.o: cc lua/lfunc.c | $zig
+build $tmp/obj/lua/lua/lgc.o: cc lua/lgc.c | $zig
+build $tmp/obj/lua/lua/linit.o: cc lua/linit.c | $zig
+build $tmp/obj/lua/lua/liolib.o: cc lua/liolib.c | $zig
+build $tmp/obj/lua/lua/llex.o: cc lua/llex.c | $zig
+build $tmp/obj/lua/lua/lmathlib.o: cc lua/lmathlib.c | $zig
+build $tmp/obj/lua/lua/lmem.o: cc lua/lmem.c | $zig
+build $tmp/obj/lua/lua/loadlib.o: cc lua/loadlib.c | $zig
+build $tmp/obj/lua/lua/lobject.o: cc lua/lobject.c | $zig
+build $tmp/obj/lua/lua/lopcodes.o: cc lua/lopcodes.c | $zig
+build $tmp/obj/lua/lua/loslib.o: cc lua/loslib.c | $zig
+build $tmp/obj/lua/lua/lparser.o: cc lua/lparser.c | $zig
+build $tmp/obj/lua/lua/lstate.o: cc lua/lstate.c | $zig
+build $tmp/obj/lua/lua/lstring.o: cc lua/lstring.c | $zig
+build $tmp/obj/lua/lua/lstrlib.o: cc lua/lstrlib.c | $zig
+build $tmp/obj/lua/lua/ltable.o: cc lua/ltable.c | $zig
+build $tmp/obj/lua/lua/ltablib.o: cc lua/ltablib.c | $zig
+build $tmp/obj/lua/lua/ltm.o: cc lua/ltm.c | $zig
+build $tmp/obj/lua/lua/lundump.o: cc lua/lundump.c | $zig
+build $tmp/obj/lua/lua/lutf8lib.o: cc lua/lutf8lib.c | $zig
+build $tmp/obj/lua/lua/lvm.o: cc lua/lvm.c | $zig
+build $tmp/obj/lua/lua/lzio.o: cc lua/lzio.c | $zig
+build $tmp/obj/lua/lua/lua.o: cc lua/lua.c | $zig
+build $lua: ld $tmp/obj/lua/lua/lapi.o $tmp/obj/lua/lua/lauxlib.o $tmp/obj/lua/lua/lbaselib.o $tmp/obj/lua/lua/lcode.o $tmp/obj/lua/lua/lcorolib.o $tmp/obj/lua/lua/lctype.o $tmp/obj/lua/lua/ldblib.o $tmp/obj/lua/lua/ldebug.o $tmp/obj/lua/lua/ldo.o $tmp/obj/lua/lua/ldump.o $tmp/obj/lua/lua/lfunc.o $tmp/obj/lua/lua/lgc.o $tmp/obj/lua/lua/linit.o $tmp/obj/lua/lua/liolib.o $tmp/obj/lua/lua/llex.o $tmp/obj/lua/lua/lmathlib.o $tmp/obj/lua/lua/lmem.o $tmp/obj/lua/lua/loadlib.o $tmp/obj/lua/lua/lobject.o $tmp/obj/lua/lua/lopcodes.o $tmp/obj/lua/lua/loslib.o $tmp/obj/lua/lua/lparser.o $tmp/obj/lua/lua/lstate.o $tmp/obj/lua/lua/lstring.o $tmp/obj/lua/lua/lstrlib.o $tmp/obj/lua/lua/ltable.o $tmp/obj/lua/lua/ltablib.o $tmp/obj/lua/lua/ltm.o $tmp/obj/lua/lua/lundump.o $tmp/obj/lua/lua/lutf8lib.o $tmp/obj/lua/lua/lvm.o $tmp/obj/lua/lua/lzio.o $tmp/obj/lua/lua/lua.o | $zig
 
 ######################################################################
 # LuaX configuration
@@ -291,16 +183,17 @@ luax_crypt_key = $tmp/luax_crypt_key.h
 
 rule gen_config
   description = GEN $out
-  command = . tools/build_env.sh; bash $in $out
+  command = bash $in $out
 
-build $luax_config_h: gen_config tools/gen_config_h.sh | tools/build_env.sh .git/refs/tags $lua
-build $luax_config_lua: gen_config tools/gen_config_lua.sh | tools/build_env.sh .git/refs/tags $lua
+build $luax_config_h: gen_config tools/gen_config_h.sh | .git/refs/tags $lua
+build $luax_config_lua: gen_config tools/gen_config_lua.sh | .git/refs/tags $lua
+crypt_key = LuaX
 
 rule _luax_crypt_key
   description = GEN $out
-  command = . tools/build_env.sh; $lua tools/crypt_key.lua LUAX_CRYPT_KEY "$$CRYPT_KEY" > $out
+  command = $lua tools/crypt_key.lua LUAX_CRYPT_KEY "$crypt_key" > $out
 
-build $luax_crypt_key: _luax_crypt_key | $lua tools/build_env.sh tools/crypt_key.lua
+build $luax_crypt_key: _luax_crypt_key | $lua tools/crypt_key.lua
 
 ######################################################################
 # Lua runtime
@@ -310,12 +203,19 @@ luax_runtime_bundle = $tmp/lua_runtime_bundle.dat
 
 rule _luax_runtime_bundle
   description = BUNDLE $out
-  command = . tools/build_env.sh; PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -lib -ascii $in > $out
+  command = PATH=$tmp:$$PATH LUA_PATH="$lua_path" CRYPT_KEY="$crypt_key" $lua -l tools/rc4_runtime luax/luax_bundle.lua -lib -ascii $in > $out
 
-build $luax_runtime_bundle: _luax_runtime_bundle $luax_config_lua libluax/F/F.lua libluax/L/L.lua libluax/complex/complex.lua libluax/crypt/crypt.lua libluax/fs/fs.lua libluax/imath/imath.lua libluax/import/import.lua libluax/linenoise/linenoise.lua libluax/lpeg/lpeg.lua libluax/lz4/lz4.lua libluax/mathx/mathx.lua libluax/package/package_hook.lua libluax/ps/ps.lua libluax/qmath/qmath.lua libluax/sh/sh.lua libluax/sys/sys.lua libluax/term/term.lua ext/c/lpeg/re.lua ext/c/luasocket/ftp.lua ext/c/luasocket/headers.lua ext/c/luasocket/http.lua ext/c/luasocket/ltn12.lua ext/c/luasocket/mbox.lua ext/c/luasocket/mime.lua ext/c/luasocket/smtp.lua ext/c/luasocket/socket.lua ext/c/luasocket/tp.lua ext/c/luasocket/url.lua ext/lua/argparse/argparse.lua ext/lua/cbor/cbor.lua ext/lua/inspect/inspect.lua ext/lua/json/json.lua ext/lua/serpent/serpent.lua | tools/build_env.sh $lz4 $lua luax/bundle.lua tools/rc4_runtime.lua
+build $luax_runtime_bundle: _luax_runtime_bundle $luax_config_lua libluax/F/F.lua libluax/L/L.lua libluax/complex/complex.lua libluax/crypt/crypt.lua libluax/fs/fs.lua libluax/imath/imath.lua libluax/import/import.lua libluax/linenoise/linenoise.lua libluax/lpeg/lpeg.lua libluax/lz4/lz4.lua libluax/mathx/mathx.lua libluax/package/package_hook.lua libluax/ps/ps.lua libluax/qmath/qmath.lua libluax/sh/sh.lua libluax/sys/sys.lua libluax/term/term.lua ext/c/lpeg/re.lua ext/c/luasocket/ftp.lua ext/c/luasocket/headers.lua ext/c/luasocket/http.lua ext/c/luasocket/ltn12.lua ext/c/luasocket/mbox.lua ext/c/luasocket/mime.lua ext/c/luasocket/smtp.lua ext/c/luasocket/socket.lua ext/c/luasocket/tp.lua ext/c/luasocket/url.lua ext/lua/argparse/argparse.lua ext/lua/cbor/cbor.lua ext/lua/inspect/inspect.lua ext/lua/json/json.lua ext/lua/serpent/serpent.lua | $lz4 $lua luax/luax_bundle.lua tools/rc4_runtime.lua
+luax_app_bundle = $tmp/lua_app_bundle.dat
+
+rule _luax_app_bundle
+  description = BUNDLE $out
+  command = PATH=$tmp:$$PATH LUA_PATH="$lua_path" CRYPT_KEY="$crypt_key" $lua -l tools/rc4_runtime luax/luax_bundle.lua -app -ascii $in > $out
+
+build $luax_app_bundle: _luax_app_bundle $luax_config_lua luax/luax.lua luax/luax_bundle.lua luax/luax_shell_env.lua $luax_config_lua | $lz4 $lua luax/luax_bundle.lua tools/rc4_runtime.lua
 
 ######################################################################
-# C runtimes
+# Binaries and shared libraries
 ######################################################################
 
 rule diff
@@ -325,747 +225,103 @@ rule diff
 build $tmp/check_limath_header_version: diff ext/c/lqmath/src/imath.h ext/c/limath/src/imath.h
 build $tmp/check_limath_source_version: diff ext/c/lqmath/src/imath.c ext/c/limath/src/imath.c
 build check_limath_version: phony $tmp/check_limath_header_version $tmp/check_limath_source_version
-
-######################################################################
-# x86_64-linux-musl runtime
-######################################################################
-
-build $tmp/obj/x86_64-linux-musl/lua/lapi.o: cc_ext-x86_64-linux-musl lua/lapi.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lauxlib.o: cc_ext-x86_64-linux-musl lua/lauxlib.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lbaselib.o: cc_ext-x86_64-linux-musl lua/lbaselib.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lcode.o: cc_ext-x86_64-linux-musl lua/lcode.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lcorolib.o: cc_ext-x86_64-linux-musl lua/lcorolib.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lctype.o: cc_ext-x86_64-linux-musl lua/lctype.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/ldblib.o: cc_ext-x86_64-linux-musl lua/ldblib.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/ldebug.o: cc_ext-x86_64-linux-musl lua/ldebug.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/ldo.o: cc_ext-x86_64-linux-musl lua/ldo.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/ldump.o: cc_ext-x86_64-linux-musl lua/ldump.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lfunc.o: cc_ext-x86_64-linux-musl lua/lfunc.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lgc.o: cc_ext-x86_64-linux-musl lua/lgc.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/linit.o: cc_ext-x86_64-linux-musl lua/linit.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/liolib.o: cc_ext-x86_64-linux-musl lua/liolib.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/llex.o: cc_ext-x86_64-linux-musl lua/llex.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lmathlib.o: cc_ext-x86_64-linux-musl lua/lmathlib.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lmem.o: cc_ext-x86_64-linux-musl lua/lmem.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/loadlib.o: cc_ext-x86_64-linux-musl lua/loadlib.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lobject.o: cc_ext-x86_64-linux-musl lua/lobject.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lopcodes.o: cc_ext-x86_64-linux-musl lua/lopcodes.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/loslib.o: cc_ext-x86_64-linux-musl lua/loslib.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lparser.o: cc_ext-x86_64-linux-musl lua/lparser.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lstate.o: cc_ext-x86_64-linux-musl lua/lstate.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lstring.o: cc_ext-x86_64-linux-musl lua/lstring.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lstrlib.o: cc_ext-x86_64-linux-musl lua/lstrlib.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/ltable.o: cc_ext-x86_64-linux-musl lua/ltable.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/ltablib.o: cc_ext-x86_64-linux-musl lua/ltablib.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/ltm.o: cc_ext-x86_64-linux-musl lua/ltm.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lundump.o: cc_ext-x86_64-linux-musl lua/lundump.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lutf8lib.o: cc_ext-x86_64-linux-musl lua/lutf8lib.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lvm.o: cc_ext-x86_64-linux-musl lua/lvm.c | $zig
-build $tmp/obj/x86_64-linux-musl/lua/lzio.o: cc_ext-x86_64-linux-musl lua/lzio.c | $zig
-build $tmp/lib/liblua-x86_64-linux-musl.a: ar $tmp/obj/x86_64-linux-musl/lua/lapi.o $tmp/obj/x86_64-linux-musl/lua/lauxlib.o $tmp/obj/x86_64-linux-musl/lua/lbaselib.o $tmp/obj/x86_64-linux-musl/lua/lcode.o $tmp/obj/x86_64-linux-musl/lua/lcorolib.o $tmp/obj/x86_64-linux-musl/lua/lctype.o $tmp/obj/x86_64-linux-musl/lua/ldblib.o $tmp/obj/x86_64-linux-musl/lua/ldebug.o $tmp/obj/x86_64-linux-musl/lua/ldo.o $tmp/obj/x86_64-linux-musl/lua/ldump.o $tmp/obj/x86_64-linux-musl/lua/lfunc.o $tmp/obj/x86_64-linux-musl/lua/lgc.o $tmp/obj/x86_64-linux-musl/lua/linit.o $tmp/obj/x86_64-linux-musl/lua/liolib.o $tmp/obj/x86_64-linux-musl/lua/llex.o $tmp/obj/x86_64-linux-musl/lua/lmathlib.o $tmp/obj/x86_64-linux-musl/lua/lmem.o $tmp/obj/x86_64-linux-musl/lua/loadlib.o $tmp/obj/x86_64-linux-musl/lua/lobject.o $tmp/obj/x86_64-linux-musl/lua/lopcodes.o $tmp/obj/x86_64-linux-musl/lua/loslib.o $tmp/obj/x86_64-linux-musl/lua/lparser.o $tmp/obj/x86_64-linux-musl/lua/lstate.o $tmp/obj/x86_64-linux-musl/lua/lstring.o $tmp/obj/x86_64-linux-musl/lua/lstrlib.o $tmp/obj/x86_64-linux-musl/lua/ltable.o $tmp/obj/x86_64-linux-musl/lua/ltablib.o $tmp/obj/x86_64-linux-musl/lua/ltm.o $tmp/obj/x86_64-linux-musl/lua/lundump.o $tmp/obj/x86_64-linux-musl/lua/lutf8lib.o $tmp/obj/x86_64-linux-musl/lua/lvm.o $tmp/obj/x86_64-linux-musl/lua/lzio.o | $zig
-build $tmp/obj/x86_64-linux-musl/libluax/F/F.o: cc-x86_64-linux-musl libluax/F/F.c | $zig
-build $tmp/obj/x86_64-linux-musl/libluax/complex/complex.o: cc-x86_64-linux-musl libluax/complex/complex.c | $zig
-build $tmp/obj/x86_64-linux-musl/libluax/crypt/crypt.o: cc-x86_64-linux-musl libluax/crypt/crypt.c | $zig $luax_crypt_key
-build $tmp/obj/x86_64-linux-musl/libluax/crypt/sha1.o: cc-x86_64-linux-musl libluax/crypt/sha1.c | $zig
-build $tmp/obj/x86_64-linux-musl/libluax/fs/fs.o: cc-x86_64-linux-musl libluax/fs/fs.c | $zig
-build $tmp/obj/x86_64-linux-musl/libluax/linenoise/linenoise.o: cc-x86_64-linux-musl libluax/linenoise/linenoise.c | $zig
-build $tmp/obj/x86_64-linux-musl/libluax/lz4/lz4.o: cc-x86_64-linux-musl libluax/lz4/lz4.c | $zig
-build $tmp/obj/x86_64-linux-musl/libluax/ps/ps.o: cc-x86_64-linux-musl libluax/ps/ps.c | $zig
-build $tmp/obj/x86_64-linux-musl/libluax/socket/luasocket.o: cc-x86_64-linux-musl libluax/socket/luasocket.c | $zig
-build $tmp/obj/x86_64-linux-musl/libluax/sys/sys.o: cc-x86_64-linux-musl libluax/sys/sys.c | $zig
-build $tmp/obj/x86_64-linux-musl/libluax/term/term.o: cc-x86_64-linux-musl libluax/term/term.c | $zig
-build $tmp/obj/x86_64-linux-musl/libluax/tools.o: cc-x86_64-linux-musl libluax/tools.c | $zig
-build $tmp/obj/x86_64-linux-musl/libluax/version/version.o: cc-x86_64-linux-musl libluax/version/version.c | $zig $luax_config_h
-build $tmp/obj/x86_64-linux-musl/ext/c/lcomplex/lcomplex.o: cc_ext-x86_64-linux-musl ext/c/lcomplex/lcomplex.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/limath/limath.o: cc_ext-x86_64-linux-musl ext/c/limath/limath.c | $zig check_limath_version
-build $tmp/obj/x86_64-linux-musl/ext/c/limath/src/imath.o: cc_ext-x86_64-linux-musl ext/c/limath/src/imath.c | $zig check_limath_version
-build $tmp/obj/x86_64-linux-musl/ext/c/lpeg/lpcap.o: cc_ext-x86_64-linux-musl ext/c/lpeg/lpcap.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/lpeg/lpcode.o: cc_ext-x86_64-linux-musl ext/c/lpeg/lpcode.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/lpeg/lpcset.o: cc_ext-x86_64-linux-musl ext/c/lpeg/lpcset.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/lpeg/lpprint.o: cc_ext-x86_64-linux-musl ext/c/lpeg/lpprint.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/lpeg/lptree.o: cc_ext-x86_64-linux-musl ext/c/lpeg/lptree.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/lpeg/lpvm.o: cc_ext-x86_64-linux-musl ext/c/lpeg/lpvm.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/lqmath/lqmath.o: cc_ext-x86_64-linux-musl ext/c/lqmath/lqmath.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/lqmath/src/imrat.o: cc_ext-x86_64-linux-musl ext/c/lqmath/src/imrat.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/auxiliar.o: cc_ext-x86_64-linux-musl ext/c/luasocket/auxiliar.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/buffer.o: cc_ext-x86_64-linux-musl ext/c/luasocket/buffer.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/compat.o: cc_ext-x86_64-linux-musl ext/c/luasocket/compat.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/except.o: cc_ext-x86_64-linux-musl ext/c/luasocket/except.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/inet.o: cc_ext-x86_64-linux-musl ext/c/luasocket/inet.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/io.o: cc_ext-x86_64-linux-musl ext/c/luasocket/io.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/luasocket.o: cc_ext-x86_64-linux-musl ext/c/luasocket/luasocket.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/mime.o: cc_ext-x86_64-linux-musl ext/c/luasocket/mime.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/options.o: cc_ext-x86_64-linux-musl ext/c/luasocket/options.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/select.o: cc_ext-x86_64-linux-musl ext/c/luasocket/select.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/tcp.o: cc_ext-x86_64-linux-musl ext/c/luasocket/tcp.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/timeout.o: cc_ext-x86_64-linux-musl ext/c/luasocket/timeout.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/udp.o: cc_ext-x86_64-linux-musl ext/c/luasocket/udp.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/lz4/lib/lz4.o: cc_ext-x86_64-linux-musl ext/c/lz4/lib/lz4.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/lz4/lib/lz4file.o: cc_ext-x86_64-linux-musl ext/c/lz4/lib/lz4file.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/lz4/lib/lz4frame.o: cc_ext-x86_64-linux-musl ext/c/lz4/lib/lz4frame.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/lz4/lib/lz4hc.o: cc_ext-x86_64-linux-musl ext/c/lz4/lib/lz4hc.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/lz4/lib/xxhash.o: cc_ext-x86_64-linux-musl ext/c/lz4/lib/xxhash.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/mathx/lmathx.o: cc_ext-x86_64-linux-musl ext/c/mathx/lmathx.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/serial.o: cc_ext-x86_64-linux-musl ext/c/luasocket/serial.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/unixdgram.o: cc_ext-x86_64-linux-musl ext/c/luasocket/unixdgram.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/unixstream.o: cc_ext-x86_64-linux-musl ext/c/luasocket/unixstream.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/usocket.o: cc_ext-x86_64-linux-musl ext/c/luasocket/usocket.c | $zig
+build $tmp/obj/lua/lapi.o: cc_ext-target lua/lapi.c | $zig
+build $tmp/obj/lua/lauxlib.o: cc_ext-target lua/lauxlib.c | $zig
+build $tmp/obj/lua/lbaselib.o: cc_ext-target lua/lbaselib.c | $zig
+build $tmp/obj/lua/lcode.o: cc_ext-target lua/lcode.c | $zig
+build $tmp/obj/lua/lcorolib.o: cc_ext-target lua/lcorolib.c | $zig
+build $tmp/obj/lua/lctype.o: cc_ext-target lua/lctype.c | $zig
+build $tmp/obj/lua/ldblib.o: cc_ext-target lua/ldblib.c | $zig
+build $tmp/obj/lua/ldebug.o: cc_ext-target lua/ldebug.c | $zig
+build $tmp/obj/lua/ldo.o: cc_ext-target lua/ldo.c | $zig
+build $tmp/obj/lua/ldump.o: cc_ext-target lua/ldump.c | $zig
+build $tmp/obj/lua/lfunc.o: cc_ext-target lua/lfunc.c | $zig
+build $tmp/obj/lua/lgc.o: cc_ext-target lua/lgc.c | $zig
+build $tmp/obj/lua/linit.o: cc_ext-target lua/linit.c | $zig
+build $tmp/obj/lua/liolib.o: cc_ext-target lua/liolib.c | $zig
+build $tmp/obj/lua/llex.o: cc_ext-target lua/llex.c | $zig
+build $tmp/obj/lua/lmathlib.o: cc_ext-target lua/lmathlib.c | $zig
+build $tmp/obj/lua/lmem.o: cc_ext-target lua/lmem.c | $zig
+build $tmp/obj/lua/loadlib.o: cc_ext-target lua/loadlib.c | $zig
+build $tmp/obj/lua/lobject.o: cc_ext-target lua/lobject.c | $zig
+build $tmp/obj/lua/lopcodes.o: cc_ext-target lua/lopcodes.c | $zig
+build $tmp/obj/lua/loslib.o: cc_ext-target lua/loslib.c | $zig
+build $tmp/obj/lua/lparser.o: cc_ext-target lua/lparser.c | $zig
+build $tmp/obj/lua/lstate.o: cc_ext-target lua/lstate.c | $zig
+build $tmp/obj/lua/lstring.o: cc_ext-target lua/lstring.c | $zig
+build $tmp/obj/lua/lstrlib.o: cc_ext-target lua/lstrlib.c | $zig
+build $tmp/obj/lua/ltable.o: cc_ext-target lua/ltable.c | $zig
+build $tmp/obj/lua/ltablib.o: cc_ext-target lua/ltablib.c | $zig
+build $tmp/obj/lua/ltm.o: cc_ext-target lua/ltm.c | $zig
+build $tmp/obj/lua/lundump.o: cc_ext-target lua/lundump.c | $zig
+build $tmp/obj/lua/lutf8lib.o: cc_ext-target lua/lutf8lib.c | $zig
+build $tmp/obj/lua/lvm.o: cc_ext-target lua/lvm.c | $zig
+build $tmp/obj/lua/lzio.o: cc_ext-target lua/lzio.c | $zig
+build $tmp/lib/liblua.a: ar $tmp/obj/lua/lapi.o $tmp/obj/lua/lauxlib.o $tmp/obj/lua/lbaselib.o $tmp/obj/lua/lcode.o $tmp/obj/lua/lcorolib.o $tmp/obj/lua/lctype.o $tmp/obj/lua/ldblib.o $tmp/obj/lua/ldebug.o $tmp/obj/lua/ldo.o $tmp/obj/lua/ldump.o $tmp/obj/lua/lfunc.o $tmp/obj/lua/lgc.o $tmp/obj/lua/linit.o $tmp/obj/lua/liolib.o $tmp/obj/lua/llex.o $tmp/obj/lua/lmathlib.o $tmp/obj/lua/lmem.o $tmp/obj/lua/loadlib.o $tmp/obj/lua/lobject.o $tmp/obj/lua/lopcodes.o $tmp/obj/lua/loslib.o $tmp/obj/lua/lparser.o $tmp/obj/lua/lstate.o $tmp/obj/lua/lstring.o $tmp/obj/lua/lstrlib.o $tmp/obj/lua/ltable.o $tmp/obj/lua/ltablib.o $tmp/obj/lua/ltm.o $tmp/obj/lua/lundump.o $tmp/obj/lua/lutf8lib.o $tmp/obj/lua/lvm.o $tmp/obj/lua/lzio.o | $zig
+build $tmp/obj/libluax/F/F.o: cc-target libluax/F/F.c | $zig
+build $tmp/obj/libluax/complex/complex.o: cc-target libluax/complex/complex.c | $zig
+build $tmp/obj/libluax/crypt/crypt.o: cc-target libluax/crypt/crypt.c | $zig $luax_crypt_key
+build $tmp/obj/libluax/crypt/sha1.o: cc-target libluax/crypt/sha1.c | $zig
+build $tmp/obj/libluax/fs/fs.o: cc-target libluax/fs/fs.c | $zig
+build $tmp/obj/libluax/linenoise/linenoise.o: cc-target libluax/linenoise/linenoise.c | $zig
+build $tmp/obj/libluax/lz4/lz4.o: cc-target libluax/lz4/lz4.c | $zig
+build $tmp/obj/libluax/ps/ps.o: cc-target libluax/ps/ps.c | $zig
+build $tmp/obj/libluax/socket/luasocket.o: cc-target libluax/socket/luasocket.c | $zig
+build $tmp/obj/libluax/sys/sys.o: cc-target libluax/sys/sys.c | $zig
+build $tmp/obj/libluax/term/term.o: cc-target libluax/term/term.c | $zig
+build $tmp/obj/libluax/tools.o: cc-target libluax/tools.c | $zig
+build $tmp/obj/libluax/version/version.o: cc-target libluax/version/version.c | $zig $luax_config_h
+build $tmp/obj/ext/c/lcomplex/lcomplex.o: cc_ext-target ext/c/lcomplex/lcomplex.c | $zig
+build $tmp/obj/ext/c/limath/limath.o: cc_ext-target ext/c/limath/limath.c | $zig check_limath_version
+build $tmp/obj/ext/c/limath/src/imath.o: cc_ext-target ext/c/limath/src/imath.c | $zig check_limath_version
+build $tmp/obj/ext/c/lpeg/lpcap.o: cc_ext-target ext/c/lpeg/lpcap.c | $zig
+build $tmp/obj/ext/c/lpeg/lpcode.o: cc_ext-target ext/c/lpeg/lpcode.c | $zig
+build $tmp/obj/ext/c/lpeg/lpcset.o: cc_ext-target ext/c/lpeg/lpcset.c | $zig
+build $tmp/obj/ext/c/lpeg/lpprint.o: cc_ext-target ext/c/lpeg/lpprint.c | $zig
+build $tmp/obj/ext/c/lpeg/lptree.o: cc_ext-target ext/c/lpeg/lptree.c | $zig
+build $tmp/obj/ext/c/lpeg/lpvm.o: cc_ext-target ext/c/lpeg/lpvm.c | $zig
+build $tmp/obj/ext/c/lqmath/lqmath.o: cc_ext-target ext/c/lqmath/lqmath.c | $zig
+build $tmp/obj/ext/c/lqmath/src/imrat.o: cc_ext-target ext/c/lqmath/src/imrat.c | $zig
+build $tmp/obj/ext/c/luasocket/auxiliar.o: cc_ext-target ext/c/luasocket/auxiliar.c | $zig
+build $tmp/obj/ext/c/luasocket/buffer.o: cc_ext-target ext/c/luasocket/buffer.c | $zig
+build $tmp/obj/ext/c/luasocket/compat.o: cc_ext-target ext/c/luasocket/compat.c | $zig
+build $tmp/obj/ext/c/luasocket/except.o: cc_ext-target ext/c/luasocket/except.c | $zig
+build $tmp/obj/ext/c/luasocket/inet.o: cc_ext-target ext/c/luasocket/inet.c | $zig
+build $tmp/obj/ext/c/luasocket/io.o: cc_ext-target ext/c/luasocket/io.c | $zig
+build $tmp/obj/ext/c/luasocket/luasocket.o: cc_ext-target ext/c/luasocket/luasocket.c | $zig
+build $tmp/obj/ext/c/luasocket/mime.o: cc_ext-target ext/c/luasocket/mime.c | $zig
+build $tmp/obj/ext/c/luasocket/options.o: cc_ext-target ext/c/luasocket/options.c | $zig
+build $tmp/obj/ext/c/luasocket/select.o: cc_ext-target ext/c/luasocket/select.c | $zig
+build $tmp/obj/ext/c/luasocket/tcp.o: cc_ext-target ext/c/luasocket/tcp.c | $zig
+build $tmp/obj/ext/c/luasocket/timeout.o: cc_ext-target ext/c/luasocket/timeout.c | $zig
+build $tmp/obj/ext/c/luasocket/udp.o: cc_ext-target ext/c/luasocket/udp.c | $zig
+build $tmp/obj/ext/c/lz4/lib/lz4.o: cc_ext-target ext/c/lz4/lib/lz4.c | $zig
+build $tmp/obj/ext/c/lz4/lib/lz4file.o: cc_ext-target ext/c/lz4/lib/lz4file.c | $zig
+build $tmp/obj/ext/c/lz4/lib/lz4frame.o: cc_ext-target ext/c/lz4/lib/lz4frame.c | $zig
+build $tmp/obj/ext/c/lz4/lib/lz4hc.o: cc_ext-target ext/c/lz4/lib/lz4hc.c | $zig
+build $tmp/obj/ext/c/lz4/lib/xxhash.o: cc_ext-target ext/c/lz4/lib/xxhash.c | $zig
+build $tmp/obj/ext/c/mathx/lmathx.o: cc_ext-target ext/c/mathx/lmathx.c | $zig
+build $tmp/obj/ext/c/luasocket/serial.o: cc_ext-target ext/c/luasocket/serial.c | $zig
+build $tmp/obj/ext/c/luasocket/unixdgram.o: cc_ext-target ext/c/luasocket/unixdgram.c | $zig
+build $tmp/obj/ext/c/luasocket/unixstream.o: cc_ext-target ext/c/luasocket/unixstream.c | $zig
+build $tmp/obj/ext/c/luasocket/usocket.o: cc_ext-target ext/c/luasocket/usocket.c | $zig
   additional_flags = -Wno-#warnings
-build $tmp/obj/x86_64-linux-musl/ext/c/luasocket/unix.o: cc_ext-x86_64-linux-musl ext/c/luasocket/unix.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/linenoise/linenoise.o: cc_ext-x86_64-linux-musl ext/c/linenoise/linenoise.c | $zig
-build $tmp/obj/x86_64-linux-musl/ext/c/linenoise/utf8.o: cc_ext-x86_64-linux-musl ext/c/linenoise/utf8.c | $zig
-build $tmp/lib/libluax-x86_64-linux-musl.a: ar $tmp/obj/x86_64-linux-musl/libluax/F/F.o $tmp/obj/x86_64-linux-musl/libluax/complex/complex.o $tmp/obj/x86_64-linux-musl/libluax/crypt/crypt.o $tmp/obj/x86_64-linux-musl/libluax/crypt/sha1.o $tmp/obj/x86_64-linux-musl/libluax/fs/fs.o $tmp/obj/x86_64-linux-musl/libluax/linenoise/linenoise.o $tmp/obj/x86_64-linux-musl/libluax/lz4/lz4.o $tmp/obj/x86_64-linux-musl/libluax/ps/ps.o $tmp/obj/x86_64-linux-musl/libluax/socket/luasocket.o $tmp/obj/x86_64-linux-musl/libluax/sys/sys.o $tmp/obj/x86_64-linux-musl/libluax/term/term.o $tmp/obj/x86_64-linux-musl/libluax/tools.o $tmp/obj/x86_64-linux-musl/libluax/version/version.o $tmp/obj/x86_64-linux-musl/ext/c/lcomplex/lcomplex.o $tmp/obj/x86_64-linux-musl/ext/c/limath/limath.o $tmp/obj/x86_64-linux-musl/ext/c/limath/src/imath.o $tmp/obj/x86_64-linux-musl/ext/c/lpeg/lpcap.o $tmp/obj/x86_64-linux-musl/ext/c/lpeg/lpcode.o $tmp/obj/x86_64-linux-musl/ext/c/lpeg/lpcset.o $tmp/obj/x86_64-linux-musl/ext/c/lpeg/lpprint.o $tmp/obj/x86_64-linux-musl/ext/c/lpeg/lptree.o $tmp/obj/x86_64-linux-musl/ext/c/lpeg/lpvm.o $tmp/obj/x86_64-linux-musl/ext/c/lqmath/lqmath.o $tmp/obj/x86_64-linux-musl/ext/c/lqmath/src/imrat.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/auxiliar.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/buffer.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/compat.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/except.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/inet.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/io.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/luasocket.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/mime.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/options.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/select.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/tcp.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/timeout.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/udp.o $tmp/obj/x86_64-linux-musl/ext/c/lz4/lib/lz4.o $tmp/obj/x86_64-linux-musl/ext/c/lz4/lib/lz4file.o $tmp/obj/x86_64-linux-musl/ext/c/lz4/lib/lz4frame.o $tmp/obj/x86_64-linux-musl/ext/c/lz4/lib/lz4hc.o $tmp/obj/x86_64-linux-musl/ext/c/lz4/lib/xxhash.o $tmp/obj/x86_64-linux-musl/ext/c/mathx/lmathx.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/serial.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/unixdgram.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/unixstream.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/usocket.o $tmp/obj/x86_64-linux-musl/ext/c/luasocket/unix.o $tmp/obj/x86_64-linux-musl/ext/c/linenoise/linenoise.o $tmp/obj/x86_64-linux-musl/ext/c/linenoise/utf8.o | $zig
-build $tmp/obj/x86_64-linux-musl/luax/luax.o: cc-x86_64-linux-musl luax/luax.c | $zig $luax_config_h
-build $tmp/obj/x86_64-linux-musl/luax/libluax.o: cc-x86_64-linux-musl luax/libluax.c | $zig $luax_runtime_bundle
-build $tmp/run/luaxruntime-x86_64-linux-musl: ld-x86_64-linux-musl $tmp/obj/x86_64-linux-musl/luax/luax.o $tmp/obj/x86_64-linux-musl/luax/libluax.o $tmp/lib/liblua-x86_64-linux-musl.a $tmp/lib/libluax-x86_64-linux-musl.a | $zig
-
-######################################################################
-# x86_64-linux-gnu runtime
-######################################################################
-
-build $tmp/obj/x86_64-linux-gnu/lua/lapi.o: cc_ext-x86_64-linux-gnu lua/lapi.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lauxlib.o: cc_ext-x86_64-linux-gnu lua/lauxlib.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lbaselib.o: cc_ext-x86_64-linux-gnu lua/lbaselib.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lcode.o: cc_ext-x86_64-linux-gnu lua/lcode.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lcorolib.o: cc_ext-x86_64-linux-gnu lua/lcorolib.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lctype.o: cc_ext-x86_64-linux-gnu lua/lctype.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/ldblib.o: cc_ext-x86_64-linux-gnu lua/ldblib.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/ldebug.o: cc_ext-x86_64-linux-gnu lua/ldebug.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/ldo.o: cc_ext-x86_64-linux-gnu lua/ldo.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/ldump.o: cc_ext-x86_64-linux-gnu lua/ldump.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lfunc.o: cc_ext-x86_64-linux-gnu lua/lfunc.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lgc.o: cc_ext-x86_64-linux-gnu lua/lgc.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/linit.o: cc_ext-x86_64-linux-gnu lua/linit.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/liolib.o: cc_ext-x86_64-linux-gnu lua/liolib.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/llex.o: cc_ext-x86_64-linux-gnu lua/llex.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lmathlib.o: cc_ext-x86_64-linux-gnu lua/lmathlib.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lmem.o: cc_ext-x86_64-linux-gnu lua/lmem.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/loadlib.o: cc_ext-x86_64-linux-gnu lua/loadlib.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lobject.o: cc_ext-x86_64-linux-gnu lua/lobject.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lopcodes.o: cc_ext-x86_64-linux-gnu lua/lopcodes.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/loslib.o: cc_ext-x86_64-linux-gnu lua/loslib.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lparser.o: cc_ext-x86_64-linux-gnu lua/lparser.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lstate.o: cc_ext-x86_64-linux-gnu lua/lstate.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lstring.o: cc_ext-x86_64-linux-gnu lua/lstring.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lstrlib.o: cc_ext-x86_64-linux-gnu lua/lstrlib.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/ltable.o: cc_ext-x86_64-linux-gnu lua/ltable.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/ltablib.o: cc_ext-x86_64-linux-gnu lua/ltablib.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/ltm.o: cc_ext-x86_64-linux-gnu lua/ltm.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lundump.o: cc_ext-x86_64-linux-gnu lua/lundump.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lutf8lib.o: cc_ext-x86_64-linux-gnu lua/lutf8lib.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lvm.o: cc_ext-x86_64-linux-gnu lua/lvm.c | $zig
-build $tmp/obj/x86_64-linux-gnu/lua/lzio.o: cc_ext-x86_64-linux-gnu lua/lzio.c | $zig
-build $tmp/lib/liblua-x86_64-linux-gnu.a: ar $tmp/obj/x86_64-linux-gnu/lua/lapi.o $tmp/obj/x86_64-linux-gnu/lua/lauxlib.o $tmp/obj/x86_64-linux-gnu/lua/lbaselib.o $tmp/obj/x86_64-linux-gnu/lua/lcode.o $tmp/obj/x86_64-linux-gnu/lua/lcorolib.o $tmp/obj/x86_64-linux-gnu/lua/lctype.o $tmp/obj/x86_64-linux-gnu/lua/ldblib.o $tmp/obj/x86_64-linux-gnu/lua/ldebug.o $tmp/obj/x86_64-linux-gnu/lua/ldo.o $tmp/obj/x86_64-linux-gnu/lua/ldump.o $tmp/obj/x86_64-linux-gnu/lua/lfunc.o $tmp/obj/x86_64-linux-gnu/lua/lgc.o $tmp/obj/x86_64-linux-gnu/lua/linit.o $tmp/obj/x86_64-linux-gnu/lua/liolib.o $tmp/obj/x86_64-linux-gnu/lua/llex.o $tmp/obj/x86_64-linux-gnu/lua/lmathlib.o $tmp/obj/x86_64-linux-gnu/lua/lmem.o $tmp/obj/x86_64-linux-gnu/lua/loadlib.o $tmp/obj/x86_64-linux-gnu/lua/lobject.o $tmp/obj/x86_64-linux-gnu/lua/lopcodes.o $tmp/obj/x86_64-linux-gnu/lua/loslib.o $tmp/obj/x86_64-linux-gnu/lua/lparser.o $tmp/obj/x86_64-linux-gnu/lua/lstate.o $tmp/obj/x86_64-linux-gnu/lua/lstring.o $tmp/obj/x86_64-linux-gnu/lua/lstrlib.o $tmp/obj/x86_64-linux-gnu/lua/ltable.o $tmp/obj/x86_64-linux-gnu/lua/ltablib.o $tmp/obj/x86_64-linux-gnu/lua/ltm.o $tmp/obj/x86_64-linux-gnu/lua/lundump.o $tmp/obj/x86_64-linux-gnu/lua/lutf8lib.o $tmp/obj/x86_64-linux-gnu/lua/lvm.o $tmp/obj/x86_64-linux-gnu/lua/lzio.o | $zig
-build $tmp/obj/x86_64-linux-gnu/libluax/F/F.o: cc-x86_64-linux-gnu libluax/F/F.c | $zig
-build $tmp/obj/x86_64-linux-gnu/libluax/complex/complex.o: cc-x86_64-linux-gnu libluax/complex/complex.c | $zig
-build $tmp/obj/x86_64-linux-gnu/libluax/crypt/crypt.o: cc-x86_64-linux-gnu libluax/crypt/crypt.c | $zig $luax_crypt_key
-build $tmp/obj/x86_64-linux-gnu/libluax/crypt/sha1.o: cc-x86_64-linux-gnu libluax/crypt/sha1.c | $zig
-build $tmp/obj/x86_64-linux-gnu/libluax/fs/fs.o: cc-x86_64-linux-gnu libluax/fs/fs.c | $zig
-build $tmp/obj/x86_64-linux-gnu/libluax/linenoise/linenoise.o: cc-x86_64-linux-gnu libluax/linenoise/linenoise.c | $zig
-build $tmp/obj/x86_64-linux-gnu/libluax/lz4/lz4.o: cc-x86_64-linux-gnu libluax/lz4/lz4.c | $zig
-build $tmp/obj/x86_64-linux-gnu/libluax/ps/ps.o: cc-x86_64-linux-gnu libluax/ps/ps.c | $zig
-build $tmp/obj/x86_64-linux-gnu/libluax/socket/luasocket.o: cc-x86_64-linux-gnu libluax/socket/luasocket.c | $zig
-build $tmp/obj/x86_64-linux-gnu/libluax/sys/sys.o: cc-x86_64-linux-gnu libluax/sys/sys.c | $zig
-build $tmp/obj/x86_64-linux-gnu/libluax/term/term.o: cc-x86_64-linux-gnu libluax/term/term.c | $zig
-build $tmp/obj/x86_64-linux-gnu/libluax/tools.o: cc-x86_64-linux-gnu libluax/tools.c | $zig
-build $tmp/obj/x86_64-linux-gnu/libluax/version/version.o: cc-x86_64-linux-gnu libluax/version/version.c | $zig $luax_config_h
-build $tmp/obj/x86_64-linux-gnu/ext/c/lcomplex/lcomplex.o: cc_ext-x86_64-linux-gnu ext/c/lcomplex/lcomplex.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/limath/limath.o: cc_ext-x86_64-linux-gnu ext/c/limath/limath.c | $zig check_limath_version
-build $tmp/obj/x86_64-linux-gnu/ext/c/limath/src/imath.o: cc_ext-x86_64-linux-gnu ext/c/limath/src/imath.c | $zig check_limath_version
-build $tmp/obj/x86_64-linux-gnu/ext/c/lpeg/lpcap.o: cc_ext-x86_64-linux-gnu ext/c/lpeg/lpcap.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/lpeg/lpcode.o: cc_ext-x86_64-linux-gnu ext/c/lpeg/lpcode.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/lpeg/lpcset.o: cc_ext-x86_64-linux-gnu ext/c/lpeg/lpcset.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/lpeg/lpprint.o: cc_ext-x86_64-linux-gnu ext/c/lpeg/lpprint.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/lpeg/lptree.o: cc_ext-x86_64-linux-gnu ext/c/lpeg/lptree.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/lpeg/lpvm.o: cc_ext-x86_64-linux-gnu ext/c/lpeg/lpvm.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/lqmath/lqmath.o: cc_ext-x86_64-linux-gnu ext/c/lqmath/lqmath.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/lqmath/src/imrat.o: cc_ext-x86_64-linux-gnu ext/c/lqmath/src/imrat.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/auxiliar.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/auxiliar.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/buffer.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/buffer.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/compat.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/compat.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/except.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/except.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/inet.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/inet.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/io.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/io.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/luasocket.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/luasocket.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/mime.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/mime.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/options.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/options.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/select.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/select.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/tcp.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/tcp.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/timeout.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/timeout.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/udp.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/udp.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/lz4/lib/lz4.o: cc_ext-x86_64-linux-gnu ext/c/lz4/lib/lz4.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/lz4/lib/lz4file.o: cc_ext-x86_64-linux-gnu ext/c/lz4/lib/lz4file.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/lz4/lib/lz4frame.o: cc_ext-x86_64-linux-gnu ext/c/lz4/lib/lz4frame.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/lz4/lib/lz4hc.o: cc_ext-x86_64-linux-gnu ext/c/lz4/lib/lz4hc.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/lz4/lib/xxhash.o: cc_ext-x86_64-linux-gnu ext/c/lz4/lib/xxhash.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/mathx/lmathx.o: cc_ext-x86_64-linux-gnu ext/c/mathx/lmathx.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/serial.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/serial.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/unixdgram.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/unixdgram.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/unixstream.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/unixstream.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/usocket.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/usocket.c | $zig
-  additional_flags = -Wno-#warnings
-build $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/unix.o: cc_ext-x86_64-linux-gnu ext/c/luasocket/unix.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/linenoise/linenoise.o: cc_ext-x86_64-linux-gnu ext/c/linenoise/linenoise.c | $zig
-build $tmp/obj/x86_64-linux-gnu/ext/c/linenoise/utf8.o: cc_ext-x86_64-linux-gnu ext/c/linenoise/utf8.c | $zig
-build $tmp/lib/libluax-x86_64-linux-gnu.a: ar $tmp/obj/x86_64-linux-gnu/libluax/F/F.o $tmp/obj/x86_64-linux-gnu/libluax/complex/complex.o $tmp/obj/x86_64-linux-gnu/libluax/crypt/crypt.o $tmp/obj/x86_64-linux-gnu/libluax/crypt/sha1.o $tmp/obj/x86_64-linux-gnu/libluax/fs/fs.o $tmp/obj/x86_64-linux-gnu/libluax/linenoise/linenoise.o $tmp/obj/x86_64-linux-gnu/libluax/lz4/lz4.o $tmp/obj/x86_64-linux-gnu/libluax/ps/ps.o $tmp/obj/x86_64-linux-gnu/libluax/socket/luasocket.o $tmp/obj/x86_64-linux-gnu/libluax/sys/sys.o $tmp/obj/x86_64-linux-gnu/libluax/term/term.o $tmp/obj/x86_64-linux-gnu/libluax/tools.o $tmp/obj/x86_64-linux-gnu/libluax/version/version.o $tmp/obj/x86_64-linux-gnu/ext/c/lcomplex/lcomplex.o $tmp/obj/x86_64-linux-gnu/ext/c/limath/limath.o $tmp/obj/x86_64-linux-gnu/ext/c/limath/src/imath.o $tmp/obj/x86_64-linux-gnu/ext/c/lpeg/lpcap.o $tmp/obj/x86_64-linux-gnu/ext/c/lpeg/lpcode.o $tmp/obj/x86_64-linux-gnu/ext/c/lpeg/lpcset.o $tmp/obj/x86_64-linux-gnu/ext/c/lpeg/lpprint.o $tmp/obj/x86_64-linux-gnu/ext/c/lpeg/lptree.o $tmp/obj/x86_64-linux-gnu/ext/c/lpeg/lpvm.o $tmp/obj/x86_64-linux-gnu/ext/c/lqmath/lqmath.o $tmp/obj/x86_64-linux-gnu/ext/c/lqmath/src/imrat.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/auxiliar.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/buffer.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/compat.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/except.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/inet.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/io.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/luasocket.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/mime.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/options.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/select.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/tcp.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/timeout.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/udp.o $tmp/obj/x86_64-linux-gnu/ext/c/lz4/lib/lz4.o $tmp/obj/x86_64-linux-gnu/ext/c/lz4/lib/lz4file.o $tmp/obj/x86_64-linux-gnu/ext/c/lz4/lib/lz4frame.o $tmp/obj/x86_64-linux-gnu/ext/c/lz4/lib/lz4hc.o $tmp/obj/x86_64-linux-gnu/ext/c/lz4/lib/xxhash.o $tmp/obj/x86_64-linux-gnu/ext/c/mathx/lmathx.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/serial.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/unixdgram.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/unixstream.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/usocket.o $tmp/obj/x86_64-linux-gnu/ext/c/luasocket/unix.o $tmp/obj/x86_64-linux-gnu/ext/c/linenoise/linenoise.o $tmp/obj/x86_64-linux-gnu/ext/c/linenoise/utf8.o | $zig
-build $tmp/obj/x86_64-linux-gnu/luax/luax.o: cc-x86_64-linux-gnu luax/luax.c | $zig $luax_config_h
-build $tmp/obj/x86_64-linux-gnu/luax/libluax.o: cc-x86_64-linux-gnu luax/libluax.c | $zig $luax_runtime_bundle
-build $tmp/run/luaxruntime-x86_64-linux-gnu: ld-x86_64-linux-gnu $tmp/obj/x86_64-linux-gnu/luax/luax.o $tmp/obj/x86_64-linux-gnu/luax/libluax.o $tmp/lib/liblua-x86_64-linux-gnu.a $tmp/lib/libluax-x86_64-linux-gnu.a | $zig
-build $tmp/lib/libluax-x86_64-linux-gnu.so: so-x86_64-linux-gnu $tmp/obj/x86_64-linux-gnu/luax/libluax.o $tmp/lib/libluax-x86_64-linux-gnu.a | $zig
-
-######################################################################
-# aarch64-linux-musl runtime
-######################################################################
-
-build $tmp/obj/aarch64-linux-musl/lua/lapi.o: cc_ext-aarch64-linux-musl lua/lapi.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lauxlib.o: cc_ext-aarch64-linux-musl lua/lauxlib.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lbaselib.o: cc_ext-aarch64-linux-musl lua/lbaselib.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lcode.o: cc_ext-aarch64-linux-musl lua/lcode.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lcorolib.o: cc_ext-aarch64-linux-musl lua/lcorolib.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lctype.o: cc_ext-aarch64-linux-musl lua/lctype.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/ldblib.o: cc_ext-aarch64-linux-musl lua/ldblib.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/ldebug.o: cc_ext-aarch64-linux-musl lua/ldebug.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/ldo.o: cc_ext-aarch64-linux-musl lua/ldo.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/ldump.o: cc_ext-aarch64-linux-musl lua/ldump.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lfunc.o: cc_ext-aarch64-linux-musl lua/lfunc.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lgc.o: cc_ext-aarch64-linux-musl lua/lgc.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/linit.o: cc_ext-aarch64-linux-musl lua/linit.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/liolib.o: cc_ext-aarch64-linux-musl lua/liolib.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/llex.o: cc_ext-aarch64-linux-musl lua/llex.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lmathlib.o: cc_ext-aarch64-linux-musl lua/lmathlib.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lmem.o: cc_ext-aarch64-linux-musl lua/lmem.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/loadlib.o: cc_ext-aarch64-linux-musl lua/loadlib.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lobject.o: cc_ext-aarch64-linux-musl lua/lobject.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lopcodes.o: cc_ext-aarch64-linux-musl lua/lopcodes.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/loslib.o: cc_ext-aarch64-linux-musl lua/loslib.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lparser.o: cc_ext-aarch64-linux-musl lua/lparser.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lstate.o: cc_ext-aarch64-linux-musl lua/lstate.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lstring.o: cc_ext-aarch64-linux-musl lua/lstring.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lstrlib.o: cc_ext-aarch64-linux-musl lua/lstrlib.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/ltable.o: cc_ext-aarch64-linux-musl lua/ltable.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/ltablib.o: cc_ext-aarch64-linux-musl lua/ltablib.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/ltm.o: cc_ext-aarch64-linux-musl lua/ltm.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lundump.o: cc_ext-aarch64-linux-musl lua/lundump.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lutf8lib.o: cc_ext-aarch64-linux-musl lua/lutf8lib.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lvm.o: cc_ext-aarch64-linux-musl lua/lvm.c | $zig
-build $tmp/obj/aarch64-linux-musl/lua/lzio.o: cc_ext-aarch64-linux-musl lua/lzio.c | $zig
-build $tmp/lib/liblua-aarch64-linux-musl.a: ar $tmp/obj/aarch64-linux-musl/lua/lapi.o $tmp/obj/aarch64-linux-musl/lua/lauxlib.o $tmp/obj/aarch64-linux-musl/lua/lbaselib.o $tmp/obj/aarch64-linux-musl/lua/lcode.o $tmp/obj/aarch64-linux-musl/lua/lcorolib.o $tmp/obj/aarch64-linux-musl/lua/lctype.o $tmp/obj/aarch64-linux-musl/lua/ldblib.o $tmp/obj/aarch64-linux-musl/lua/ldebug.o $tmp/obj/aarch64-linux-musl/lua/ldo.o $tmp/obj/aarch64-linux-musl/lua/ldump.o $tmp/obj/aarch64-linux-musl/lua/lfunc.o $tmp/obj/aarch64-linux-musl/lua/lgc.o $tmp/obj/aarch64-linux-musl/lua/linit.o $tmp/obj/aarch64-linux-musl/lua/liolib.o $tmp/obj/aarch64-linux-musl/lua/llex.o $tmp/obj/aarch64-linux-musl/lua/lmathlib.o $tmp/obj/aarch64-linux-musl/lua/lmem.o $tmp/obj/aarch64-linux-musl/lua/loadlib.o $tmp/obj/aarch64-linux-musl/lua/lobject.o $tmp/obj/aarch64-linux-musl/lua/lopcodes.o $tmp/obj/aarch64-linux-musl/lua/loslib.o $tmp/obj/aarch64-linux-musl/lua/lparser.o $tmp/obj/aarch64-linux-musl/lua/lstate.o $tmp/obj/aarch64-linux-musl/lua/lstring.o $tmp/obj/aarch64-linux-musl/lua/lstrlib.o $tmp/obj/aarch64-linux-musl/lua/ltable.o $tmp/obj/aarch64-linux-musl/lua/ltablib.o $tmp/obj/aarch64-linux-musl/lua/ltm.o $tmp/obj/aarch64-linux-musl/lua/lundump.o $tmp/obj/aarch64-linux-musl/lua/lutf8lib.o $tmp/obj/aarch64-linux-musl/lua/lvm.o $tmp/obj/aarch64-linux-musl/lua/lzio.o | $zig
-build $tmp/obj/aarch64-linux-musl/libluax/F/F.o: cc-aarch64-linux-musl libluax/F/F.c | $zig
-build $tmp/obj/aarch64-linux-musl/libluax/complex/complex.o: cc-aarch64-linux-musl libluax/complex/complex.c | $zig
-build $tmp/obj/aarch64-linux-musl/libluax/crypt/crypt.o: cc-aarch64-linux-musl libluax/crypt/crypt.c | $zig $luax_crypt_key
-build $tmp/obj/aarch64-linux-musl/libluax/crypt/sha1.o: cc-aarch64-linux-musl libluax/crypt/sha1.c | $zig
-build $tmp/obj/aarch64-linux-musl/libluax/fs/fs.o: cc-aarch64-linux-musl libluax/fs/fs.c | $zig
-build $tmp/obj/aarch64-linux-musl/libluax/linenoise/linenoise.o: cc-aarch64-linux-musl libluax/linenoise/linenoise.c | $zig
-build $tmp/obj/aarch64-linux-musl/libluax/lz4/lz4.o: cc-aarch64-linux-musl libluax/lz4/lz4.c | $zig
-build $tmp/obj/aarch64-linux-musl/libluax/ps/ps.o: cc-aarch64-linux-musl libluax/ps/ps.c | $zig
-build $tmp/obj/aarch64-linux-musl/libluax/socket/luasocket.o: cc-aarch64-linux-musl libluax/socket/luasocket.c | $zig
-build $tmp/obj/aarch64-linux-musl/libluax/sys/sys.o: cc-aarch64-linux-musl libluax/sys/sys.c | $zig
-build $tmp/obj/aarch64-linux-musl/libluax/term/term.o: cc-aarch64-linux-musl libluax/term/term.c | $zig
-build $tmp/obj/aarch64-linux-musl/libluax/tools.o: cc-aarch64-linux-musl libluax/tools.c | $zig
-build $tmp/obj/aarch64-linux-musl/libluax/version/version.o: cc-aarch64-linux-musl libluax/version/version.c | $zig $luax_config_h
-build $tmp/obj/aarch64-linux-musl/ext/c/lcomplex/lcomplex.o: cc_ext-aarch64-linux-musl ext/c/lcomplex/lcomplex.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/limath/limath.o: cc_ext-aarch64-linux-musl ext/c/limath/limath.c | $zig check_limath_version
-build $tmp/obj/aarch64-linux-musl/ext/c/limath/src/imath.o: cc_ext-aarch64-linux-musl ext/c/limath/src/imath.c | $zig check_limath_version
-build $tmp/obj/aarch64-linux-musl/ext/c/lpeg/lpcap.o: cc_ext-aarch64-linux-musl ext/c/lpeg/lpcap.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/lpeg/lpcode.o: cc_ext-aarch64-linux-musl ext/c/lpeg/lpcode.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/lpeg/lpcset.o: cc_ext-aarch64-linux-musl ext/c/lpeg/lpcset.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/lpeg/lpprint.o: cc_ext-aarch64-linux-musl ext/c/lpeg/lpprint.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/lpeg/lptree.o: cc_ext-aarch64-linux-musl ext/c/lpeg/lptree.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/lpeg/lpvm.o: cc_ext-aarch64-linux-musl ext/c/lpeg/lpvm.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/lqmath/lqmath.o: cc_ext-aarch64-linux-musl ext/c/lqmath/lqmath.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/lqmath/src/imrat.o: cc_ext-aarch64-linux-musl ext/c/lqmath/src/imrat.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/auxiliar.o: cc_ext-aarch64-linux-musl ext/c/luasocket/auxiliar.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/buffer.o: cc_ext-aarch64-linux-musl ext/c/luasocket/buffer.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/compat.o: cc_ext-aarch64-linux-musl ext/c/luasocket/compat.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/except.o: cc_ext-aarch64-linux-musl ext/c/luasocket/except.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/inet.o: cc_ext-aarch64-linux-musl ext/c/luasocket/inet.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/io.o: cc_ext-aarch64-linux-musl ext/c/luasocket/io.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/luasocket.o: cc_ext-aarch64-linux-musl ext/c/luasocket/luasocket.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/mime.o: cc_ext-aarch64-linux-musl ext/c/luasocket/mime.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/options.o: cc_ext-aarch64-linux-musl ext/c/luasocket/options.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/select.o: cc_ext-aarch64-linux-musl ext/c/luasocket/select.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/tcp.o: cc_ext-aarch64-linux-musl ext/c/luasocket/tcp.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/timeout.o: cc_ext-aarch64-linux-musl ext/c/luasocket/timeout.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/udp.o: cc_ext-aarch64-linux-musl ext/c/luasocket/udp.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/lz4/lib/lz4.o: cc_ext-aarch64-linux-musl ext/c/lz4/lib/lz4.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/lz4/lib/lz4file.o: cc_ext-aarch64-linux-musl ext/c/lz4/lib/lz4file.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/lz4/lib/lz4frame.o: cc_ext-aarch64-linux-musl ext/c/lz4/lib/lz4frame.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/lz4/lib/lz4hc.o: cc_ext-aarch64-linux-musl ext/c/lz4/lib/lz4hc.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/lz4/lib/xxhash.o: cc_ext-aarch64-linux-musl ext/c/lz4/lib/xxhash.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/mathx/lmathx.o: cc_ext-aarch64-linux-musl ext/c/mathx/lmathx.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/serial.o: cc_ext-aarch64-linux-musl ext/c/luasocket/serial.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/unixdgram.o: cc_ext-aarch64-linux-musl ext/c/luasocket/unixdgram.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/unixstream.o: cc_ext-aarch64-linux-musl ext/c/luasocket/unixstream.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/usocket.o: cc_ext-aarch64-linux-musl ext/c/luasocket/usocket.c | $zig
-  additional_flags = -Wno-#warnings
-build $tmp/obj/aarch64-linux-musl/ext/c/luasocket/unix.o: cc_ext-aarch64-linux-musl ext/c/luasocket/unix.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/linenoise/linenoise.o: cc_ext-aarch64-linux-musl ext/c/linenoise/linenoise.c | $zig
-build $tmp/obj/aarch64-linux-musl/ext/c/linenoise/utf8.o: cc_ext-aarch64-linux-musl ext/c/linenoise/utf8.c | $zig
-build $tmp/lib/libluax-aarch64-linux-musl.a: ar $tmp/obj/aarch64-linux-musl/libluax/F/F.o $tmp/obj/aarch64-linux-musl/libluax/complex/complex.o $tmp/obj/aarch64-linux-musl/libluax/crypt/crypt.o $tmp/obj/aarch64-linux-musl/libluax/crypt/sha1.o $tmp/obj/aarch64-linux-musl/libluax/fs/fs.o $tmp/obj/aarch64-linux-musl/libluax/linenoise/linenoise.o $tmp/obj/aarch64-linux-musl/libluax/lz4/lz4.o $tmp/obj/aarch64-linux-musl/libluax/ps/ps.o $tmp/obj/aarch64-linux-musl/libluax/socket/luasocket.o $tmp/obj/aarch64-linux-musl/libluax/sys/sys.o $tmp/obj/aarch64-linux-musl/libluax/term/term.o $tmp/obj/aarch64-linux-musl/libluax/tools.o $tmp/obj/aarch64-linux-musl/libluax/version/version.o $tmp/obj/aarch64-linux-musl/ext/c/lcomplex/lcomplex.o $tmp/obj/aarch64-linux-musl/ext/c/limath/limath.o $tmp/obj/aarch64-linux-musl/ext/c/limath/src/imath.o $tmp/obj/aarch64-linux-musl/ext/c/lpeg/lpcap.o $tmp/obj/aarch64-linux-musl/ext/c/lpeg/lpcode.o $tmp/obj/aarch64-linux-musl/ext/c/lpeg/lpcset.o $tmp/obj/aarch64-linux-musl/ext/c/lpeg/lpprint.o $tmp/obj/aarch64-linux-musl/ext/c/lpeg/lptree.o $tmp/obj/aarch64-linux-musl/ext/c/lpeg/lpvm.o $tmp/obj/aarch64-linux-musl/ext/c/lqmath/lqmath.o $tmp/obj/aarch64-linux-musl/ext/c/lqmath/src/imrat.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/auxiliar.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/buffer.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/compat.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/except.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/inet.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/io.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/luasocket.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/mime.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/options.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/select.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/tcp.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/timeout.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/udp.o $tmp/obj/aarch64-linux-musl/ext/c/lz4/lib/lz4.o $tmp/obj/aarch64-linux-musl/ext/c/lz4/lib/lz4file.o $tmp/obj/aarch64-linux-musl/ext/c/lz4/lib/lz4frame.o $tmp/obj/aarch64-linux-musl/ext/c/lz4/lib/lz4hc.o $tmp/obj/aarch64-linux-musl/ext/c/lz4/lib/xxhash.o $tmp/obj/aarch64-linux-musl/ext/c/mathx/lmathx.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/serial.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/unixdgram.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/unixstream.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/usocket.o $tmp/obj/aarch64-linux-musl/ext/c/luasocket/unix.o $tmp/obj/aarch64-linux-musl/ext/c/linenoise/linenoise.o $tmp/obj/aarch64-linux-musl/ext/c/linenoise/utf8.o | $zig
-build $tmp/obj/aarch64-linux-musl/luax/luax.o: cc-aarch64-linux-musl luax/luax.c | $zig $luax_config_h
-build $tmp/obj/aarch64-linux-musl/luax/libluax.o: cc-aarch64-linux-musl luax/libluax.c | $zig $luax_runtime_bundle
-build $tmp/run/luaxruntime-aarch64-linux-musl: ld-aarch64-linux-musl $tmp/obj/aarch64-linux-musl/luax/luax.o $tmp/obj/aarch64-linux-musl/luax/libluax.o $tmp/lib/liblua-aarch64-linux-musl.a $tmp/lib/libluax-aarch64-linux-musl.a | $zig
-
-######################################################################
-# aarch64-linux-gnu runtime
-######################################################################
-
-build $tmp/obj/aarch64-linux-gnu/lua/lapi.o: cc_ext-aarch64-linux-gnu lua/lapi.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lauxlib.o: cc_ext-aarch64-linux-gnu lua/lauxlib.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lbaselib.o: cc_ext-aarch64-linux-gnu lua/lbaselib.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lcode.o: cc_ext-aarch64-linux-gnu lua/lcode.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lcorolib.o: cc_ext-aarch64-linux-gnu lua/lcorolib.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lctype.o: cc_ext-aarch64-linux-gnu lua/lctype.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/ldblib.o: cc_ext-aarch64-linux-gnu lua/ldblib.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/ldebug.o: cc_ext-aarch64-linux-gnu lua/ldebug.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/ldo.o: cc_ext-aarch64-linux-gnu lua/ldo.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/ldump.o: cc_ext-aarch64-linux-gnu lua/ldump.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lfunc.o: cc_ext-aarch64-linux-gnu lua/lfunc.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lgc.o: cc_ext-aarch64-linux-gnu lua/lgc.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/linit.o: cc_ext-aarch64-linux-gnu lua/linit.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/liolib.o: cc_ext-aarch64-linux-gnu lua/liolib.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/llex.o: cc_ext-aarch64-linux-gnu lua/llex.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lmathlib.o: cc_ext-aarch64-linux-gnu lua/lmathlib.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lmem.o: cc_ext-aarch64-linux-gnu lua/lmem.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/loadlib.o: cc_ext-aarch64-linux-gnu lua/loadlib.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lobject.o: cc_ext-aarch64-linux-gnu lua/lobject.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lopcodes.o: cc_ext-aarch64-linux-gnu lua/lopcodes.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/loslib.o: cc_ext-aarch64-linux-gnu lua/loslib.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lparser.o: cc_ext-aarch64-linux-gnu lua/lparser.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lstate.o: cc_ext-aarch64-linux-gnu lua/lstate.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lstring.o: cc_ext-aarch64-linux-gnu lua/lstring.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lstrlib.o: cc_ext-aarch64-linux-gnu lua/lstrlib.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/ltable.o: cc_ext-aarch64-linux-gnu lua/ltable.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/ltablib.o: cc_ext-aarch64-linux-gnu lua/ltablib.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/ltm.o: cc_ext-aarch64-linux-gnu lua/ltm.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lundump.o: cc_ext-aarch64-linux-gnu lua/lundump.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lutf8lib.o: cc_ext-aarch64-linux-gnu lua/lutf8lib.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lvm.o: cc_ext-aarch64-linux-gnu lua/lvm.c | $zig
-build $tmp/obj/aarch64-linux-gnu/lua/lzio.o: cc_ext-aarch64-linux-gnu lua/lzio.c | $zig
-build $tmp/lib/liblua-aarch64-linux-gnu.a: ar $tmp/obj/aarch64-linux-gnu/lua/lapi.o $tmp/obj/aarch64-linux-gnu/lua/lauxlib.o $tmp/obj/aarch64-linux-gnu/lua/lbaselib.o $tmp/obj/aarch64-linux-gnu/lua/lcode.o $tmp/obj/aarch64-linux-gnu/lua/lcorolib.o $tmp/obj/aarch64-linux-gnu/lua/lctype.o $tmp/obj/aarch64-linux-gnu/lua/ldblib.o $tmp/obj/aarch64-linux-gnu/lua/ldebug.o $tmp/obj/aarch64-linux-gnu/lua/ldo.o $tmp/obj/aarch64-linux-gnu/lua/ldump.o $tmp/obj/aarch64-linux-gnu/lua/lfunc.o $tmp/obj/aarch64-linux-gnu/lua/lgc.o $tmp/obj/aarch64-linux-gnu/lua/linit.o $tmp/obj/aarch64-linux-gnu/lua/liolib.o $tmp/obj/aarch64-linux-gnu/lua/llex.o $tmp/obj/aarch64-linux-gnu/lua/lmathlib.o $tmp/obj/aarch64-linux-gnu/lua/lmem.o $tmp/obj/aarch64-linux-gnu/lua/loadlib.o $tmp/obj/aarch64-linux-gnu/lua/lobject.o $tmp/obj/aarch64-linux-gnu/lua/lopcodes.o $tmp/obj/aarch64-linux-gnu/lua/loslib.o $tmp/obj/aarch64-linux-gnu/lua/lparser.o $tmp/obj/aarch64-linux-gnu/lua/lstate.o $tmp/obj/aarch64-linux-gnu/lua/lstring.o $tmp/obj/aarch64-linux-gnu/lua/lstrlib.o $tmp/obj/aarch64-linux-gnu/lua/ltable.o $tmp/obj/aarch64-linux-gnu/lua/ltablib.o $tmp/obj/aarch64-linux-gnu/lua/ltm.o $tmp/obj/aarch64-linux-gnu/lua/lundump.o $tmp/obj/aarch64-linux-gnu/lua/lutf8lib.o $tmp/obj/aarch64-linux-gnu/lua/lvm.o $tmp/obj/aarch64-linux-gnu/lua/lzio.o | $zig
-build $tmp/obj/aarch64-linux-gnu/libluax/F/F.o: cc-aarch64-linux-gnu libluax/F/F.c | $zig
-build $tmp/obj/aarch64-linux-gnu/libluax/complex/complex.o: cc-aarch64-linux-gnu libluax/complex/complex.c | $zig
-build $tmp/obj/aarch64-linux-gnu/libluax/crypt/crypt.o: cc-aarch64-linux-gnu libluax/crypt/crypt.c | $zig $luax_crypt_key
-build $tmp/obj/aarch64-linux-gnu/libluax/crypt/sha1.o: cc-aarch64-linux-gnu libluax/crypt/sha1.c | $zig
-build $tmp/obj/aarch64-linux-gnu/libluax/fs/fs.o: cc-aarch64-linux-gnu libluax/fs/fs.c | $zig
-build $tmp/obj/aarch64-linux-gnu/libluax/linenoise/linenoise.o: cc-aarch64-linux-gnu libluax/linenoise/linenoise.c | $zig
-build $tmp/obj/aarch64-linux-gnu/libluax/lz4/lz4.o: cc-aarch64-linux-gnu libluax/lz4/lz4.c | $zig
-build $tmp/obj/aarch64-linux-gnu/libluax/ps/ps.o: cc-aarch64-linux-gnu libluax/ps/ps.c | $zig
-build $tmp/obj/aarch64-linux-gnu/libluax/socket/luasocket.o: cc-aarch64-linux-gnu libluax/socket/luasocket.c | $zig
-build $tmp/obj/aarch64-linux-gnu/libluax/sys/sys.o: cc-aarch64-linux-gnu libluax/sys/sys.c | $zig
-build $tmp/obj/aarch64-linux-gnu/libluax/term/term.o: cc-aarch64-linux-gnu libluax/term/term.c | $zig
-build $tmp/obj/aarch64-linux-gnu/libluax/tools.o: cc-aarch64-linux-gnu libluax/tools.c | $zig
-build $tmp/obj/aarch64-linux-gnu/libluax/version/version.o: cc-aarch64-linux-gnu libluax/version/version.c | $zig $luax_config_h
-build $tmp/obj/aarch64-linux-gnu/ext/c/lcomplex/lcomplex.o: cc_ext-aarch64-linux-gnu ext/c/lcomplex/lcomplex.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/limath/limath.o: cc_ext-aarch64-linux-gnu ext/c/limath/limath.c | $zig check_limath_version
-build $tmp/obj/aarch64-linux-gnu/ext/c/limath/src/imath.o: cc_ext-aarch64-linux-gnu ext/c/limath/src/imath.c | $zig check_limath_version
-build $tmp/obj/aarch64-linux-gnu/ext/c/lpeg/lpcap.o: cc_ext-aarch64-linux-gnu ext/c/lpeg/lpcap.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/lpeg/lpcode.o: cc_ext-aarch64-linux-gnu ext/c/lpeg/lpcode.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/lpeg/lpcset.o: cc_ext-aarch64-linux-gnu ext/c/lpeg/lpcset.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/lpeg/lpprint.o: cc_ext-aarch64-linux-gnu ext/c/lpeg/lpprint.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/lpeg/lptree.o: cc_ext-aarch64-linux-gnu ext/c/lpeg/lptree.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/lpeg/lpvm.o: cc_ext-aarch64-linux-gnu ext/c/lpeg/lpvm.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/lqmath/lqmath.o: cc_ext-aarch64-linux-gnu ext/c/lqmath/lqmath.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/lqmath/src/imrat.o: cc_ext-aarch64-linux-gnu ext/c/lqmath/src/imrat.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/auxiliar.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/auxiliar.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/buffer.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/buffer.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/compat.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/compat.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/except.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/except.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/inet.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/inet.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/io.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/io.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/luasocket.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/luasocket.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/mime.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/mime.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/options.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/options.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/select.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/select.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/tcp.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/tcp.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/timeout.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/timeout.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/udp.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/udp.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/lz4/lib/lz4.o: cc_ext-aarch64-linux-gnu ext/c/lz4/lib/lz4.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/lz4/lib/lz4file.o: cc_ext-aarch64-linux-gnu ext/c/lz4/lib/lz4file.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/lz4/lib/lz4frame.o: cc_ext-aarch64-linux-gnu ext/c/lz4/lib/lz4frame.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/lz4/lib/lz4hc.o: cc_ext-aarch64-linux-gnu ext/c/lz4/lib/lz4hc.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/lz4/lib/xxhash.o: cc_ext-aarch64-linux-gnu ext/c/lz4/lib/xxhash.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/mathx/lmathx.o: cc_ext-aarch64-linux-gnu ext/c/mathx/lmathx.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/serial.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/serial.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/unixdgram.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/unixdgram.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/unixstream.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/unixstream.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/usocket.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/usocket.c | $zig
-  additional_flags = -Wno-#warnings
-build $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/unix.o: cc_ext-aarch64-linux-gnu ext/c/luasocket/unix.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/linenoise/linenoise.o: cc_ext-aarch64-linux-gnu ext/c/linenoise/linenoise.c | $zig
-build $tmp/obj/aarch64-linux-gnu/ext/c/linenoise/utf8.o: cc_ext-aarch64-linux-gnu ext/c/linenoise/utf8.c | $zig
-build $tmp/lib/libluax-aarch64-linux-gnu.a: ar $tmp/obj/aarch64-linux-gnu/libluax/F/F.o $tmp/obj/aarch64-linux-gnu/libluax/complex/complex.o $tmp/obj/aarch64-linux-gnu/libluax/crypt/crypt.o $tmp/obj/aarch64-linux-gnu/libluax/crypt/sha1.o $tmp/obj/aarch64-linux-gnu/libluax/fs/fs.o $tmp/obj/aarch64-linux-gnu/libluax/linenoise/linenoise.o $tmp/obj/aarch64-linux-gnu/libluax/lz4/lz4.o $tmp/obj/aarch64-linux-gnu/libluax/ps/ps.o $tmp/obj/aarch64-linux-gnu/libluax/socket/luasocket.o $tmp/obj/aarch64-linux-gnu/libluax/sys/sys.o $tmp/obj/aarch64-linux-gnu/libluax/term/term.o $tmp/obj/aarch64-linux-gnu/libluax/tools.o $tmp/obj/aarch64-linux-gnu/libluax/version/version.o $tmp/obj/aarch64-linux-gnu/ext/c/lcomplex/lcomplex.o $tmp/obj/aarch64-linux-gnu/ext/c/limath/limath.o $tmp/obj/aarch64-linux-gnu/ext/c/limath/src/imath.o $tmp/obj/aarch64-linux-gnu/ext/c/lpeg/lpcap.o $tmp/obj/aarch64-linux-gnu/ext/c/lpeg/lpcode.o $tmp/obj/aarch64-linux-gnu/ext/c/lpeg/lpcset.o $tmp/obj/aarch64-linux-gnu/ext/c/lpeg/lpprint.o $tmp/obj/aarch64-linux-gnu/ext/c/lpeg/lptree.o $tmp/obj/aarch64-linux-gnu/ext/c/lpeg/lpvm.o $tmp/obj/aarch64-linux-gnu/ext/c/lqmath/lqmath.o $tmp/obj/aarch64-linux-gnu/ext/c/lqmath/src/imrat.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/auxiliar.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/buffer.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/compat.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/except.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/inet.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/io.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/luasocket.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/mime.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/options.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/select.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/tcp.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/timeout.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/udp.o $tmp/obj/aarch64-linux-gnu/ext/c/lz4/lib/lz4.o $tmp/obj/aarch64-linux-gnu/ext/c/lz4/lib/lz4file.o $tmp/obj/aarch64-linux-gnu/ext/c/lz4/lib/lz4frame.o $tmp/obj/aarch64-linux-gnu/ext/c/lz4/lib/lz4hc.o $tmp/obj/aarch64-linux-gnu/ext/c/lz4/lib/xxhash.o $tmp/obj/aarch64-linux-gnu/ext/c/mathx/lmathx.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/serial.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/unixdgram.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/unixstream.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/usocket.o $tmp/obj/aarch64-linux-gnu/ext/c/luasocket/unix.o $tmp/obj/aarch64-linux-gnu/ext/c/linenoise/linenoise.o $tmp/obj/aarch64-linux-gnu/ext/c/linenoise/utf8.o | $zig
-build $tmp/obj/aarch64-linux-gnu/luax/luax.o: cc-aarch64-linux-gnu luax/luax.c | $zig $luax_config_h
-build $tmp/obj/aarch64-linux-gnu/luax/libluax.o: cc-aarch64-linux-gnu luax/libluax.c | $zig $luax_runtime_bundle
-build $tmp/run/luaxruntime-aarch64-linux-gnu: ld-aarch64-linux-gnu $tmp/obj/aarch64-linux-gnu/luax/luax.o $tmp/obj/aarch64-linux-gnu/luax/libluax.o $tmp/lib/liblua-aarch64-linux-gnu.a $tmp/lib/libluax-aarch64-linux-gnu.a | $zig
-build $tmp/lib/libluax-aarch64-linux-gnu.so: so-aarch64-linux-gnu $tmp/obj/aarch64-linux-gnu/luax/libluax.o $tmp/lib/libluax-aarch64-linux-gnu.a | $zig
-
-######################################################################
-# x86_64-windows-gnu runtime
-######################################################################
-
-build $tmp/obj/x86_64-windows-gnu/lua/lapi.o: cc_ext-x86_64-windows-gnu lua/lapi.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lauxlib.o: cc_ext-x86_64-windows-gnu lua/lauxlib.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lbaselib.o: cc_ext-x86_64-windows-gnu lua/lbaselib.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lcode.o: cc_ext-x86_64-windows-gnu lua/lcode.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lcorolib.o: cc_ext-x86_64-windows-gnu lua/lcorolib.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lctype.o: cc_ext-x86_64-windows-gnu lua/lctype.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/ldblib.o: cc_ext-x86_64-windows-gnu lua/ldblib.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/ldebug.o: cc_ext-x86_64-windows-gnu lua/ldebug.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/ldo.o: cc_ext-x86_64-windows-gnu lua/ldo.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/ldump.o: cc_ext-x86_64-windows-gnu lua/ldump.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lfunc.o: cc_ext-x86_64-windows-gnu lua/lfunc.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lgc.o: cc_ext-x86_64-windows-gnu lua/lgc.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/linit.o: cc_ext-x86_64-windows-gnu lua/linit.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/liolib.o: cc_ext-x86_64-windows-gnu lua/liolib.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/llex.o: cc_ext-x86_64-windows-gnu lua/llex.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lmathlib.o: cc_ext-x86_64-windows-gnu lua/lmathlib.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lmem.o: cc_ext-x86_64-windows-gnu lua/lmem.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/loadlib.o: cc_ext-x86_64-windows-gnu lua/loadlib.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lobject.o: cc_ext-x86_64-windows-gnu lua/lobject.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lopcodes.o: cc_ext-x86_64-windows-gnu lua/lopcodes.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/loslib.o: cc_ext-x86_64-windows-gnu lua/loslib.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lparser.o: cc_ext-x86_64-windows-gnu lua/lparser.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lstate.o: cc_ext-x86_64-windows-gnu lua/lstate.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lstring.o: cc_ext-x86_64-windows-gnu lua/lstring.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lstrlib.o: cc_ext-x86_64-windows-gnu lua/lstrlib.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/ltable.o: cc_ext-x86_64-windows-gnu lua/ltable.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/ltablib.o: cc_ext-x86_64-windows-gnu lua/ltablib.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/ltm.o: cc_ext-x86_64-windows-gnu lua/ltm.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lundump.o: cc_ext-x86_64-windows-gnu lua/lundump.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lutf8lib.o: cc_ext-x86_64-windows-gnu lua/lutf8lib.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lvm.o: cc_ext-x86_64-windows-gnu lua/lvm.c | $zig
-build $tmp/obj/x86_64-windows-gnu/lua/lzio.o: cc_ext-x86_64-windows-gnu lua/lzio.c | $zig
-build $tmp/lib/liblua-x86_64-windows-gnu.a: ar $tmp/obj/x86_64-windows-gnu/lua/lapi.o $tmp/obj/x86_64-windows-gnu/lua/lauxlib.o $tmp/obj/x86_64-windows-gnu/lua/lbaselib.o $tmp/obj/x86_64-windows-gnu/lua/lcode.o $tmp/obj/x86_64-windows-gnu/lua/lcorolib.o $tmp/obj/x86_64-windows-gnu/lua/lctype.o $tmp/obj/x86_64-windows-gnu/lua/ldblib.o $tmp/obj/x86_64-windows-gnu/lua/ldebug.o $tmp/obj/x86_64-windows-gnu/lua/ldo.o $tmp/obj/x86_64-windows-gnu/lua/ldump.o $tmp/obj/x86_64-windows-gnu/lua/lfunc.o $tmp/obj/x86_64-windows-gnu/lua/lgc.o $tmp/obj/x86_64-windows-gnu/lua/linit.o $tmp/obj/x86_64-windows-gnu/lua/liolib.o $tmp/obj/x86_64-windows-gnu/lua/llex.o $tmp/obj/x86_64-windows-gnu/lua/lmathlib.o $tmp/obj/x86_64-windows-gnu/lua/lmem.o $tmp/obj/x86_64-windows-gnu/lua/loadlib.o $tmp/obj/x86_64-windows-gnu/lua/lobject.o $tmp/obj/x86_64-windows-gnu/lua/lopcodes.o $tmp/obj/x86_64-windows-gnu/lua/loslib.o $tmp/obj/x86_64-windows-gnu/lua/lparser.o $tmp/obj/x86_64-windows-gnu/lua/lstate.o $tmp/obj/x86_64-windows-gnu/lua/lstring.o $tmp/obj/x86_64-windows-gnu/lua/lstrlib.o $tmp/obj/x86_64-windows-gnu/lua/ltable.o $tmp/obj/x86_64-windows-gnu/lua/ltablib.o $tmp/obj/x86_64-windows-gnu/lua/ltm.o $tmp/obj/x86_64-windows-gnu/lua/lundump.o $tmp/obj/x86_64-windows-gnu/lua/lutf8lib.o $tmp/obj/x86_64-windows-gnu/lua/lvm.o $tmp/obj/x86_64-windows-gnu/lua/lzio.o | $zig
-build $tmp/obj/x86_64-windows-gnu/libluax/F/F.o: cc-x86_64-windows-gnu libluax/F/F.c | $zig
-build $tmp/obj/x86_64-windows-gnu/libluax/complex/complex.o: cc-x86_64-windows-gnu libluax/complex/complex.c | $zig
-build $tmp/obj/x86_64-windows-gnu/libluax/crypt/crypt.o: cc-x86_64-windows-gnu libluax/crypt/crypt.c | $zig $luax_crypt_key
-build $tmp/obj/x86_64-windows-gnu/libluax/crypt/sha1.o: cc-x86_64-windows-gnu libluax/crypt/sha1.c | $zig
-build $tmp/obj/x86_64-windows-gnu/libluax/fs/fs.o: cc-x86_64-windows-gnu libluax/fs/fs.c | $zig
-build $tmp/obj/x86_64-windows-gnu/libluax/linenoise/linenoise.o: cc-x86_64-windows-gnu libluax/linenoise/linenoise.c | $zig
-build $tmp/obj/x86_64-windows-gnu/libluax/lz4/lz4.o: cc-x86_64-windows-gnu libluax/lz4/lz4.c | $zig
-build $tmp/obj/x86_64-windows-gnu/libluax/ps/ps.o: cc-x86_64-windows-gnu libluax/ps/ps.c | $zig
-build $tmp/obj/x86_64-windows-gnu/libluax/socket/luasocket.o: cc-x86_64-windows-gnu libluax/socket/luasocket.c | $zig
-build $tmp/obj/x86_64-windows-gnu/libluax/sys/sys.o: cc-x86_64-windows-gnu libluax/sys/sys.c | $zig
-build $tmp/obj/x86_64-windows-gnu/libluax/term/term.o: cc-x86_64-windows-gnu libluax/term/term.c | $zig
-build $tmp/obj/x86_64-windows-gnu/libluax/tools.o: cc-x86_64-windows-gnu libluax/tools.c | $zig
-build $tmp/obj/x86_64-windows-gnu/libluax/version/version.o: cc-x86_64-windows-gnu libluax/version/version.c | $zig $luax_config_h
-build $tmp/obj/x86_64-windows-gnu/ext/c/lcomplex/lcomplex.o: cc_ext-x86_64-windows-gnu ext/c/lcomplex/lcomplex.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/limath/limath.o: cc_ext-x86_64-windows-gnu ext/c/limath/limath.c | $zig check_limath_version
-build $tmp/obj/x86_64-windows-gnu/ext/c/limath/src/imath.o: cc_ext-x86_64-windows-gnu ext/c/limath/src/imath.c | $zig check_limath_version
-build $tmp/obj/x86_64-windows-gnu/ext/c/lpeg/lpcap.o: cc_ext-x86_64-windows-gnu ext/c/lpeg/lpcap.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/lpeg/lpcode.o: cc_ext-x86_64-windows-gnu ext/c/lpeg/lpcode.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/lpeg/lpcset.o: cc_ext-x86_64-windows-gnu ext/c/lpeg/lpcset.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/lpeg/lpprint.o: cc_ext-x86_64-windows-gnu ext/c/lpeg/lpprint.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/lpeg/lptree.o: cc_ext-x86_64-windows-gnu ext/c/lpeg/lptree.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/lpeg/lpvm.o: cc_ext-x86_64-windows-gnu ext/c/lpeg/lpvm.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/lqmath/lqmath.o: cc_ext-x86_64-windows-gnu ext/c/lqmath/lqmath.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/lqmath/src/imrat.o: cc_ext-x86_64-windows-gnu ext/c/lqmath/src/imrat.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/auxiliar.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/auxiliar.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/buffer.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/buffer.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/compat.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/compat.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/except.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/except.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/inet.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/inet.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/io.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/io.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/luasocket.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/luasocket.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/mime.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/mime.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/options.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/options.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/select.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/select.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/tcp.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/tcp.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/timeout.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/timeout.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/udp.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/udp.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/lz4/lib/lz4.o: cc_ext-x86_64-windows-gnu ext/c/lz4/lib/lz4.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/lz4/lib/lz4file.o: cc_ext-x86_64-windows-gnu ext/c/lz4/lib/lz4file.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/lz4/lib/lz4frame.o: cc_ext-x86_64-windows-gnu ext/c/lz4/lib/lz4frame.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/lz4/lib/lz4hc.o: cc_ext-x86_64-windows-gnu ext/c/lz4/lib/lz4hc.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/lz4/lib/xxhash.o: cc_ext-x86_64-windows-gnu ext/c/lz4/lib/xxhash.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/mathx/lmathx.o: cc_ext-x86_64-windows-gnu ext/c/mathx/lmathx.c | $zig
-build $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/wsocket.o: cc_ext-x86_64-windows-gnu ext/c/luasocket/wsocket.c | $zig
-build $tmp/lib/libluax-x86_64-windows-gnu.a: ar $tmp/obj/x86_64-windows-gnu/libluax/F/F.o $tmp/obj/x86_64-windows-gnu/libluax/complex/complex.o $tmp/obj/x86_64-windows-gnu/libluax/crypt/crypt.o $tmp/obj/x86_64-windows-gnu/libluax/crypt/sha1.o $tmp/obj/x86_64-windows-gnu/libluax/fs/fs.o $tmp/obj/x86_64-windows-gnu/libluax/linenoise/linenoise.o $tmp/obj/x86_64-windows-gnu/libluax/lz4/lz4.o $tmp/obj/x86_64-windows-gnu/libluax/ps/ps.o $tmp/obj/x86_64-windows-gnu/libluax/socket/luasocket.o $tmp/obj/x86_64-windows-gnu/libluax/sys/sys.o $tmp/obj/x86_64-windows-gnu/libluax/term/term.o $tmp/obj/x86_64-windows-gnu/libluax/tools.o $tmp/obj/x86_64-windows-gnu/libluax/version/version.o $tmp/obj/x86_64-windows-gnu/ext/c/lcomplex/lcomplex.o $tmp/obj/x86_64-windows-gnu/ext/c/limath/limath.o $tmp/obj/x86_64-windows-gnu/ext/c/limath/src/imath.o $tmp/obj/x86_64-windows-gnu/ext/c/lpeg/lpcap.o $tmp/obj/x86_64-windows-gnu/ext/c/lpeg/lpcode.o $tmp/obj/x86_64-windows-gnu/ext/c/lpeg/lpcset.o $tmp/obj/x86_64-windows-gnu/ext/c/lpeg/lpprint.o $tmp/obj/x86_64-windows-gnu/ext/c/lpeg/lptree.o $tmp/obj/x86_64-windows-gnu/ext/c/lpeg/lpvm.o $tmp/obj/x86_64-windows-gnu/ext/c/lqmath/lqmath.o $tmp/obj/x86_64-windows-gnu/ext/c/lqmath/src/imrat.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/auxiliar.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/buffer.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/compat.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/except.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/inet.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/io.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/luasocket.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/mime.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/options.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/select.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/tcp.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/timeout.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/udp.o $tmp/obj/x86_64-windows-gnu/ext/c/lz4/lib/lz4.o $tmp/obj/x86_64-windows-gnu/ext/c/lz4/lib/lz4file.o $tmp/obj/x86_64-windows-gnu/ext/c/lz4/lib/lz4frame.o $tmp/obj/x86_64-windows-gnu/ext/c/lz4/lib/lz4hc.o $tmp/obj/x86_64-windows-gnu/ext/c/lz4/lib/xxhash.o $tmp/obj/x86_64-windows-gnu/ext/c/mathx/lmathx.o $tmp/obj/x86_64-windows-gnu/ext/c/luasocket/wsocket.o | $zig
-build $tmp/obj/x86_64-windows-gnu/luax/luax.o: cc-x86_64-windows-gnu luax/luax.c | $zig $luax_config_h
-build $tmp/obj/x86_64-windows-gnu/luax/libluax.o: cc-x86_64-windows-gnu luax/libluax.c | $zig $luax_runtime_bundle
-  build_as_dll = -DLUA_BUILD_AS_DLL -DLUA_LIB
-build $tmp/run/luaxruntime-x86_64-windows-gnu.exe: ld-x86_64-windows-gnu $tmp/obj/x86_64-windows-gnu/luax/luax.o $tmp/obj/x86_64-windows-gnu/luax/libluax.o $tmp/lib/liblua-x86_64-windows-gnu.a $tmp/lib/libluax-x86_64-windows-gnu.a | $zig
-build $tmp/lib/libluax-x86_64-windows-gnu.dll: so-x86_64-windows-gnu $tmp/obj/x86_64-windows-gnu/luax/libluax.o $tmp/lib/liblua-x86_64-windows-gnu.a $tmp/lib/libluax-x86_64-windows-gnu.a | $zig
-
-######################################################################
-# x86_64-macos-none runtime
-######################################################################
-
-build $tmp/obj/x86_64-macos-none/lua/lapi.o: cc_ext-x86_64-macos-none lua/lapi.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lauxlib.o: cc_ext-x86_64-macos-none lua/lauxlib.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lbaselib.o: cc_ext-x86_64-macos-none lua/lbaselib.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lcode.o: cc_ext-x86_64-macos-none lua/lcode.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lcorolib.o: cc_ext-x86_64-macos-none lua/lcorolib.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lctype.o: cc_ext-x86_64-macos-none lua/lctype.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/ldblib.o: cc_ext-x86_64-macos-none lua/ldblib.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/ldebug.o: cc_ext-x86_64-macos-none lua/ldebug.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/ldo.o: cc_ext-x86_64-macos-none lua/ldo.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/ldump.o: cc_ext-x86_64-macos-none lua/ldump.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lfunc.o: cc_ext-x86_64-macos-none lua/lfunc.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lgc.o: cc_ext-x86_64-macos-none lua/lgc.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/linit.o: cc_ext-x86_64-macos-none lua/linit.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/liolib.o: cc_ext-x86_64-macos-none lua/liolib.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/llex.o: cc_ext-x86_64-macos-none lua/llex.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lmathlib.o: cc_ext-x86_64-macos-none lua/lmathlib.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lmem.o: cc_ext-x86_64-macos-none lua/lmem.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/loadlib.o: cc_ext-x86_64-macos-none lua/loadlib.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lobject.o: cc_ext-x86_64-macos-none lua/lobject.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lopcodes.o: cc_ext-x86_64-macos-none lua/lopcodes.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/loslib.o: cc_ext-x86_64-macos-none lua/loslib.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lparser.o: cc_ext-x86_64-macos-none lua/lparser.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lstate.o: cc_ext-x86_64-macos-none lua/lstate.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lstring.o: cc_ext-x86_64-macos-none lua/lstring.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lstrlib.o: cc_ext-x86_64-macos-none lua/lstrlib.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/ltable.o: cc_ext-x86_64-macos-none lua/ltable.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/ltablib.o: cc_ext-x86_64-macos-none lua/ltablib.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/ltm.o: cc_ext-x86_64-macos-none lua/ltm.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lundump.o: cc_ext-x86_64-macos-none lua/lundump.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lutf8lib.o: cc_ext-x86_64-macos-none lua/lutf8lib.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lvm.o: cc_ext-x86_64-macos-none lua/lvm.c | $zig
-build $tmp/obj/x86_64-macos-none/lua/lzio.o: cc_ext-x86_64-macos-none lua/lzio.c | $zig
-build $tmp/lib/liblua-x86_64-macos-none.a: ar $tmp/obj/x86_64-macos-none/lua/lapi.o $tmp/obj/x86_64-macos-none/lua/lauxlib.o $tmp/obj/x86_64-macos-none/lua/lbaselib.o $tmp/obj/x86_64-macos-none/lua/lcode.o $tmp/obj/x86_64-macos-none/lua/lcorolib.o $tmp/obj/x86_64-macos-none/lua/lctype.o $tmp/obj/x86_64-macos-none/lua/ldblib.o $tmp/obj/x86_64-macos-none/lua/ldebug.o $tmp/obj/x86_64-macos-none/lua/ldo.o $tmp/obj/x86_64-macos-none/lua/ldump.o $tmp/obj/x86_64-macos-none/lua/lfunc.o $tmp/obj/x86_64-macos-none/lua/lgc.o $tmp/obj/x86_64-macos-none/lua/linit.o $tmp/obj/x86_64-macos-none/lua/liolib.o $tmp/obj/x86_64-macos-none/lua/llex.o $tmp/obj/x86_64-macos-none/lua/lmathlib.o $tmp/obj/x86_64-macos-none/lua/lmem.o $tmp/obj/x86_64-macos-none/lua/loadlib.o $tmp/obj/x86_64-macos-none/lua/lobject.o $tmp/obj/x86_64-macos-none/lua/lopcodes.o $tmp/obj/x86_64-macos-none/lua/loslib.o $tmp/obj/x86_64-macos-none/lua/lparser.o $tmp/obj/x86_64-macos-none/lua/lstate.o $tmp/obj/x86_64-macos-none/lua/lstring.o $tmp/obj/x86_64-macos-none/lua/lstrlib.o $tmp/obj/x86_64-macos-none/lua/ltable.o $tmp/obj/x86_64-macos-none/lua/ltablib.o $tmp/obj/x86_64-macos-none/lua/ltm.o $tmp/obj/x86_64-macos-none/lua/lundump.o $tmp/obj/x86_64-macos-none/lua/lutf8lib.o $tmp/obj/x86_64-macos-none/lua/lvm.o $tmp/obj/x86_64-macos-none/lua/lzio.o | $zig
-build $tmp/obj/x86_64-macos-none/libluax/F/F.o: cc-x86_64-macos-none libluax/F/F.c | $zig
-build $tmp/obj/x86_64-macos-none/libluax/complex/complex.o: cc-x86_64-macos-none libluax/complex/complex.c | $zig
-build $tmp/obj/x86_64-macos-none/libluax/crypt/crypt.o: cc-x86_64-macos-none libluax/crypt/crypt.c | $zig $luax_crypt_key
-build $tmp/obj/x86_64-macos-none/libluax/crypt/sha1.o: cc-x86_64-macos-none libluax/crypt/sha1.c | $zig
-build $tmp/obj/x86_64-macos-none/libluax/fs/fs.o: cc-x86_64-macos-none libluax/fs/fs.c | $zig
-build $tmp/obj/x86_64-macos-none/libluax/linenoise/linenoise.o: cc-x86_64-macos-none libluax/linenoise/linenoise.c | $zig
-build $tmp/obj/x86_64-macos-none/libluax/lz4/lz4.o: cc-x86_64-macos-none libluax/lz4/lz4.c | $zig
-build $tmp/obj/x86_64-macos-none/libluax/ps/ps.o: cc-x86_64-macos-none libluax/ps/ps.c | $zig
-build $tmp/obj/x86_64-macos-none/libluax/socket/luasocket.o: cc-x86_64-macos-none libluax/socket/luasocket.c | $zig
-build $tmp/obj/x86_64-macos-none/libluax/sys/sys.o: cc-x86_64-macos-none libluax/sys/sys.c | $zig
-build $tmp/obj/x86_64-macos-none/libluax/term/term.o: cc-x86_64-macos-none libluax/term/term.c | $zig
-build $tmp/obj/x86_64-macos-none/libluax/tools.o: cc-x86_64-macos-none libluax/tools.c | $zig
-build $tmp/obj/x86_64-macos-none/libluax/version/version.o: cc-x86_64-macos-none libluax/version/version.c | $zig $luax_config_h
-build $tmp/obj/x86_64-macos-none/ext/c/lcomplex/lcomplex.o: cc_ext-x86_64-macos-none ext/c/lcomplex/lcomplex.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/limath/limath.o: cc_ext-x86_64-macos-none ext/c/limath/limath.c | $zig check_limath_version
-build $tmp/obj/x86_64-macos-none/ext/c/limath/src/imath.o: cc_ext-x86_64-macos-none ext/c/limath/src/imath.c | $zig check_limath_version
-build $tmp/obj/x86_64-macos-none/ext/c/lpeg/lpcap.o: cc_ext-x86_64-macos-none ext/c/lpeg/lpcap.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/lpeg/lpcode.o: cc_ext-x86_64-macos-none ext/c/lpeg/lpcode.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/lpeg/lpcset.o: cc_ext-x86_64-macos-none ext/c/lpeg/lpcset.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/lpeg/lpprint.o: cc_ext-x86_64-macos-none ext/c/lpeg/lpprint.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/lpeg/lptree.o: cc_ext-x86_64-macos-none ext/c/lpeg/lptree.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/lpeg/lpvm.o: cc_ext-x86_64-macos-none ext/c/lpeg/lpvm.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/lqmath/lqmath.o: cc_ext-x86_64-macos-none ext/c/lqmath/lqmath.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/lqmath/src/imrat.o: cc_ext-x86_64-macos-none ext/c/lqmath/src/imrat.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/auxiliar.o: cc_ext-x86_64-macos-none ext/c/luasocket/auxiliar.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/buffer.o: cc_ext-x86_64-macos-none ext/c/luasocket/buffer.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/compat.o: cc_ext-x86_64-macos-none ext/c/luasocket/compat.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/except.o: cc_ext-x86_64-macos-none ext/c/luasocket/except.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/inet.o: cc_ext-x86_64-macos-none ext/c/luasocket/inet.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/io.o: cc_ext-x86_64-macos-none ext/c/luasocket/io.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/luasocket.o: cc_ext-x86_64-macos-none ext/c/luasocket/luasocket.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/mime.o: cc_ext-x86_64-macos-none ext/c/luasocket/mime.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/options.o: cc_ext-x86_64-macos-none ext/c/luasocket/options.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/select.o: cc_ext-x86_64-macos-none ext/c/luasocket/select.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/tcp.o: cc_ext-x86_64-macos-none ext/c/luasocket/tcp.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/timeout.o: cc_ext-x86_64-macos-none ext/c/luasocket/timeout.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/udp.o: cc_ext-x86_64-macos-none ext/c/luasocket/udp.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/lz4/lib/lz4.o: cc_ext-x86_64-macos-none ext/c/lz4/lib/lz4.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/lz4/lib/lz4file.o: cc_ext-x86_64-macos-none ext/c/lz4/lib/lz4file.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/lz4/lib/lz4frame.o: cc_ext-x86_64-macos-none ext/c/lz4/lib/lz4frame.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/lz4/lib/lz4hc.o: cc_ext-x86_64-macos-none ext/c/lz4/lib/lz4hc.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/lz4/lib/xxhash.o: cc_ext-x86_64-macos-none ext/c/lz4/lib/xxhash.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/mathx/lmathx.o: cc_ext-x86_64-macos-none ext/c/mathx/lmathx.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/serial.o: cc_ext-x86_64-macos-none ext/c/luasocket/serial.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/unixdgram.o: cc_ext-x86_64-macos-none ext/c/luasocket/unixdgram.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/unixstream.o: cc_ext-x86_64-macos-none ext/c/luasocket/unixstream.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/usocket.o: cc_ext-x86_64-macos-none ext/c/luasocket/usocket.c | $zig
-  additional_flags = -Wno-#warnings
-build $tmp/obj/x86_64-macos-none/ext/c/luasocket/unix.o: cc_ext-x86_64-macos-none ext/c/luasocket/unix.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/linenoise/linenoise.o: cc_ext-x86_64-macos-none ext/c/linenoise/linenoise.c | $zig
-build $tmp/obj/x86_64-macos-none/ext/c/linenoise/utf8.o: cc_ext-x86_64-macos-none ext/c/linenoise/utf8.c | $zig
-build $tmp/lib/libluax-x86_64-macos-none.a: ar $tmp/obj/x86_64-macos-none/libluax/F/F.o $tmp/obj/x86_64-macos-none/libluax/complex/complex.o $tmp/obj/x86_64-macos-none/libluax/crypt/crypt.o $tmp/obj/x86_64-macos-none/libluax/crypt/sha1.o $tmp/obj/x86_64-macos-none/libluax/fs/fs.o $tmp/obj/x86_64-macos-none/libluax/linenoise/linenoise.o $tmp/obj/x86_64-macos-none/libluax/lz4/lz4.o $tmp/obj/x86_64-macos-none/libluax/ps/ps.o $tmp/obj/x86_64-macos-none/libluax/socket/luasocket.o $tmp/obj/x86_64-macos-none/libluax/sys/sys.o $tmp/obj/x86_64-macos-none/libluax/term/term.o $tmp/obj/x86_64-macos-none/libluax/tools.o $tmp/obj/x86_64-macos-none/libluax/version/version.o $tmp/obj/x86_64-macos-none/ext/c/lcomplex/lcomplex.o $tmp/obj/x86_64-macos-none/ext/c/limath/limath.o $tmp/obj/x86_64-macos-none/ext/c/limath/src/imath.o $tmp/obj/x86_64-macos-none/ext/c/lpeg/lpcap.o $tmp/obj/x86_64-macos-none/ext/c/lpeg/lpcode.o $tmp/obj/x86_64-macos-none/ext/c/lpeg/lpcset.o $tmp/obj/x86_64-macos-none/ext/c/lpeg/lpprint.o $tmp/obj/x86_64-macos-none/ext/c/lpeg/lptree.o $tmp/obj/x86_64-macos-none/ext/c/lpeg/lpvm.o $tmp/obj/x86_64-macos-none/ext/c/lqmath/lqmath.o $tmp/obj/x86_64-macos-none/ext/c/lqmath/src/imrat.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/auxiliar.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/buffer.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/compat.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/except.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/inet.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/io.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/luasocket.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/mime.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/options.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/select.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/tcp.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/timeout.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/udp.o $tmp/obj/x86_64-macos-none/ext/c/lz4/lib/lz4.o $tmp/obj/x86_64-macos-none/ext/c/lz4/lib/lz4file.o $tmp/obj/x86_64-macos-none/ext/c/lz4/lib/lz4frame.o $tmp/obj/x86_64-macos-none/ext/c/lz4/lib/lz4hc.o $tmp/obj/x86_64-macos-none/ext/c/lz4/lib/xxhash.o $tmp/obj/x86_64-macos-none/ext/c/mathx/lmathx.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/serial.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/unixdgram.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/unixstream.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/usocket.o $tmp/obj/x86_64-macos-none/ext/c/luasocket/unix.o $tmp/obj/x86_64-macos-none/ext/c/linenoise/linenoise.o $tmp/obj/x86_64-macos-none/ext/c/linenoise/utf8.o | $zig
-build $tmp/obj/x86_64-macos-none/luax/luax.o: cc-x86_64-macos-none luax/luax.c | $zig $luax_config_h
-build $tmp/obj/x86_64-macos-none/luax/libluax.o: cc-x86_64-macos-none luax/libluax.c | $zig $luax_runtime_bundle
-build $tmp/run/luaxruntime-x86_64-macos-none: ld-x86_64-macos-none $tmp/obj/x86_64-macos-none/luax/luax.o $tmp/obj/x86_64-macos-none/luax/libluax.o $tmp/lib/liblua-x86_64-macos-none.a $tmp/lib/libluax-x86_64-macos-none.a | $zig
-build $tmp/lib/libluax-x86_64-macos-none.dylib: so-x86_64-macos-none $tmp/obj/x86_64-macos-none/luax/libluax.o $tmp/lib/liblua-x86_64-macos-none.a $tmp/lib/libluax-x86_64-macos-none.a | $zig
-
-######################################################################
-# aarch64-macos-none runtime
-######################################################################
-
-build $tmp/obj/aarch64-macos-none/lua/lapi.o: cc_ext-aarch64-macos-none lua/lapi.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lauxlib.o: cc_ext-aarch64-macos-none lua/lauxlib.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lbaselib.o: cc_ext-aarch64-macos-none lua/lbaselib.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lcode.o: cc_ext-aarch64-macos-none lua/lcode.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lcorolib.o: cc_ext-aarch64-macos-none lua/lcorolib.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lctype.o: cc_ext-aarch64-macos-none lua/lctype.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/ldblib.o: cc_ext-aarch64-macos-none lua/ldblib.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/ldebug.o: cc_ext-aarch64-macos-none lua/ldebug.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/ldo.o: cc_ext-aarch64-macos-none lua/ldo.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/ldump.o: cc_ext-aarch64-macos-none lua/ldump.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lfunc.o: cc_ext-aarch64-macos-none lua/lfunc.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lgc.o: cc_ext-aarch64-macos-none lua/lgc.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/linit.o: cc_ext-aarch64-macos-none lua/linit.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/liolib.o: cc_ext-aarch64-macos-none lua/liolib.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/llex.o: cc_ext-aarch64-macos-none lua/llex.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lmathlib.o: cc_ext-aarch64-macos-none lua/lmathlib.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lmem.o: cc_ext-aarch64-macos-none lua/lmem.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/loadlib.o: cc_ext-aarch64-macos-none lua/loadlib.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lobject.o: cc_ext-aarch64-macos-none lua/lobject.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lopcodes.o: cc_ext-aarch64-macos-none lua/lopcodes.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/loslib.o: cc_ext-aarch64-macos-none lua/loslib.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lparser.o: cc_ext-aarch64-macos-none lua/lparser.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lstate.o: cc_ext-aarch64-macos-none lua/lstate.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lstring.o: cc_ext-aarch64-macos-none lua/lstring.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lstrlib.o: cc_ext-aarch64-macos-none lua/lstrlib.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/ltable.o: cc_ext-aarch64-macos-none lua/ltable.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/ltablib.o: cc_ext-aarch64-macos-none lua/ltablib.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/ltm.o: cc_ext-aarch64-macos-none lua/ltm.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lundump.o: cc_ext-aarch64-macos-none lua/lundump.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lutf8lib.o: cc_ext-aarch64-macos-none lua/lutf8lib.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lvm.o: cc_ext-aarch64-macos-none lua/lvm.c | $zig
-build $tmp/obj/aarch64-macos-none/lua/lzio.o: cc_ext-aarch64-macos-none lua/lzio.c | $zig
-build $tmp/lib/liblua-aarch64-macos-none.a: ar $tmp/obj/aarch64-macos-none/lua/lapi.o $tmp/obj/aarch64-macos-none/lua/lauxlib.o $tmp/obj/aarch64-macos-none/lua/lbaselib.o $tmp/obj/aarch64-macos-none/lua/lcode.o $tmp/obj/aarch64-macos-none/lua/lcorolib.o $tmp/obj/aarch64-macos-none/lua/lctype.o $tmp/obj/aarch64-macos-none/lua/ldblib.o $tmp/obj/aarch64-macos-none/lua/ldebug.o $tmp/obj/aarch64-macos-none/lua/ldo.o $tmp/obj/aarch64-macos-none/lua/ldump.o $tmp/obj/aarch64-macos-none/lua/lfunc.o $tmp/obj/aarch64-macos-none/lua/lgc.o $tmp/obj/aarch64-macos-none/lua/linit.o $tmp/obj/aarch64-macos-none/lua/liolib.o $tmp/obj/aarch64-macos-none/lua/llex.o $tmp/obj/aarch64-macos-none/lua/lmathlib.o $tmp/obj/aarch64-macos-none/lua/lmem.o $tmp/obj/aarch64-macos-none/lua/loadlib.o $tmp/obj/aarch64-macos-none/lua/lobject.o $tmp/obj/aarch64-macos-none/lua/lopcodes.o $tmp/obj/aarch64-macos-none/lua/loslib.o $tmp/obj/aarch64-macos-none/lua/lparser.o $tmp/obj/aarch64-macos-none/lua/lstate.o $tmp/obj/aarch64-macos-none/lua/lstring.o $tmp/obj/aarch64-macos-none/lua/lstrlib.o $tmp/obj/aarch64-macos-none/lua/ltable.o $tmp/obj/aarch64-macos-none/lua/ltablib.o $tmp/obj/aarch64-macos-none/lua/ltm.o $tmp/obj/aarch64-macos-none/lua/lundump.o $tmp/obj/aarch64-macos-none/lua/lutf8lib.o $tmp/obj/aarch64-macos-none/lua/lvm.o $tmp/obj/aarch64-macos-none/lua/lzio.o | $zig
-build $tmp/obj/aarch64-macos-none/libluax/F/F.o: cc-aarch64-macos-none libluax/F/F.c | $zig
-build $tmp/obj/aarch64-macos-none/libluax/complex/complex.o: cc-aarch64-macos-none libluax/complex/complex.c | $zig
-build $tmp/obj/aarch64-macos-none/libluax/crypt/crypt.o: cc-aarch64-macos-none libluax/crypt/crypt.c | $zig $luax_crypt_key
-build $tmp/obj/aarch64-macos-none/libluax/crypt/sha1.o: cc-aarch64-macos-none libluax/crypt/sha1.c | $zig
-build $tmp/obj/aarch64-macos-none/libluax/fs/fs.o: cc-aarch64-macos-none libluax/fs/fs.c | $zig
-build $tmp/obj/aarch64-macos-none/libluax/linenoise/linenoise.o: cc-aarch64-macos-none libluax/linenoise/linenoise.c | $zig
-build $tmp/obj/aarch64-macos-none/libluax/lz4/lz4.o: cc-aarch64-macos-none libluax/lz4/lz4.c | $zig
-build $tmp/obj/aarch64-macos-none/libluax/ps/ps.o: cc-aarch64-macos-none libluax/ps/ps.c | $zig
-build $tmp/obj/aarch64-macos-none/libluax/socket/luasocket.o: cc-aarch64-macos-none libluax/socket/luasocket.c | $zig
-build $tmp/obj/aarch64-macos-none/libluax/sys/sys.o: cc-aarch64-macos-none libluax/sys/sys.c | $zig
-build $tmp/obj/aarch64-macos-none/libluax/term/term.o: cc-aarch64-macos-none libluax/term/term.c | $zig
-build $tmp/obj/aarch64-macos-none/libluax/tools.o: cc-aarch64-macos-none libluax/tools.c | $zig
-build $tmp/obj/aarch64-macos-none/libluax/version/version.o: cc-aarch64-macos-none libluax/version/version.c | $zig $luax_config_h
-build $tmp/obj/aarch64-macos-none/ext/c/lcomplex/lcomplex.o: cc_ext-aarch64-macos-none ext/c/lcomplex/lcomplex.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/limath/limath.o: cc_ext-aarch64-macos-none ext/c/limath/limath.c | $zig check_limath_version
-build $tmp/obj/aarch64-macos-none/ext/c/limath/src/imath.o: cc_ext-aarch64-macos-none ext/c/limath/src/imath.c | $zig check_limath_version
-build $tmp/obj/aarch64-macos-none/ext/c/lpeg/lpcap.o: cc_ext-aarch64-macos-none ext/c/lpeg/lpcap.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/lpeg/lpcode.o: cc_ext-aarch64-macos-none ext/c/lpeg/lpcode.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/lpeg/lpcset.o: cc_ext-aarch64-macos-none ext/c/lpeg/lpcset.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/lpeg/lpprint.o: cc_ext-aarch64-macos-none ext/c/lpeg/lpprint.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/lpeg/lptree.o: cc_ext-aarch64-macos-none ext/c/lpeg/lptree.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/lpeg/lpvm.o: cc_ext-aarch64-macos-none ext/c/lpeg/lpvm.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/lqmath/lqmath.o: cc_ext-aarch64-macos-none ext/c/lqmath/lqmath.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/lqmath/src/imrat.o: cc_ext-aarch64-macos-none ext/c/lqmath/src/imrat.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/auxiliar.o: cc_ext-aarch64-macos-none ext/c/luasocket/auxiliar.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/buffer.o: cc_ext-aarch64-macos-none ext/c/luasocket/buffer.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/compat.o: cc_ext-aarch64-macos-none ext/c/luasocket/compat.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/except.o: cc_ext-aarch64-macos-none ext/c/luasocket/except.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/inet.o: cc_ext-aarch64-macos-none ext/c/luasocket/inet.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/io.o: cc_ext-aarch64-macos-none ext/c/luasocket/io.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/luasocket.o: cc_ext-aarch64-macos-none ext/c/luasocket/luasocket.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/mime.o: cc_ext-aarch64-macos-none ext/c/luasocket/mime.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/options.o: cc_ext-aarch64-macos-none ext/c/luasocket/options.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/select.o: cc_ext-aarch64-macos-none ext/c/luasocket/select.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/tcp.o: cc_ext-aarch64-macos-none ext/c/luasocket/tcp.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/timeout.o: cc_ext-aarch64-macos-none ext/c/luasocket/timeout.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/udp.o: cc_ext-aarch64-macos-none ext/c/luasocket/udp.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/lz4/lib/lz4.o: cc_ext-aarch64-macos-none ext/c/lz4/lib/lz4.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/lz4/lib/lz4file.o: cc_ext-aarch64-macos-none ext/c/lz4/lib/lz4file.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/lz4/lib/lz4frame.o: cc_ext-aarch64-macos-none ext/c/lz4/lib/lz4frame.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/lz4/lib/lz4hc.o: cc_ext-aarch64-macos-none ext/c/lz4/lib/lz4hc.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/lz4/lib/xxhash.o: cc_ext-aarch64-macos-none ext/c/lz4/lib/xxhash.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/mathx/lmathx.o: cc_ext-aarch64-macos-none ext/c/mathx/lmathx.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/serial.o: cc_ext-aarch64-macos-none ext/c/luasocket/serial.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/unixdgram.o: cc_ext-aarch64-macos-none ext/c/luasocket/unixdgram.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/unixstream.o: cc_ext-aarch64-macos-none ext/c/luasocket/unixstream.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/usocket.o: cc_ext-aarch64-macos-none ext/c/luasocket/usocket.c | $zig
-  additional_flags = -Wno-#warnings
-build $tmp/obj/aarch64-macos-none/ext/c/luasocket/unix.o: cc_ext-aarch64-macos-none ext/c/luasocket/unix.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/linenoise/linenoise.o: cc_ext-aarch64-macos-none ext/c/linenoise/linenoise.c | $zig
-build $tmp/obj/aarch64-macos-none/ext/c/linenoise/utf8.o: cc_ext-aarch64-macos-none ext/c/linenoise/utf8.c | $zig
-build $tmp/lib/libluax-aarch64-macos-none.a: ar $tmp/obj/aarch64-macos-none/libluax/F/F.o $tmp/obj/aarch64-macos-none/libluax/complex/complex.o $tmp/obj/aarch64-macos-none/libluax/crypt/crypt.o $tmp/obj/aarch64-macos-none/libluax/crypt/sha1.o $tmp/obj/aarch64-macos-none/libluax/fs/fs.o $tmp/obj/aarch64-macos-none/libluax/linenoise/linenoise.o $tmp/obj/aarch64-macos-none/libluax/lz4/lz4.o $tmp/obj/aarch64-macos-none/libluax/ps/ps.o $tmp/obj/aarch64-macos-none/libluax/socket/luasocket.o $tmp/obj/aarch64-macos-none/libluax/sys/sys.o $tmp/obj/aarch64-macos-none/libluax/term/term.o $tmp/obj/aarch64-macos-none/libluax/tools.o $tmp/obj/aarch64-macos-none/libluax/version/version.o $tmp/obj/aarch64-macos-none/ext/c/lcomplex/lcomplex.o $tmp/obj/aarch64-macos-none/ext/c/limath/limath.o $tmp/obj/aarch64-macos-none/ext/c/limath/src/imath.o $tmp/obj/aarch64-macos-none/ext/c/lpeg/lpcap.o $tmp/obj/aarch64-macos-none/ext/c/lpeg/lpcode.o $tmp/obj/aarch64-macos-none/ext/c/lpeg/lpcset.o $tmp/obj/aarch64-macos-none/ext/c/lpeg/lpprint.o $tmp/obj/aarch64-macos-none/ext/c/lpeg/lptree.o $tmp/obj/aarch64-macos-none/ext/c/lpeg/lpvm.o $tmp/obj/aarch64-macos-none/ext/c/lqmath/lqmath.o $tmp/obj/aarch64-macos-none/ext/c/lqmath/src/imrat.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/auxiliar.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/buffer.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/compat.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/except.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/inet.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/io.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/luasocket.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/mime.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/options.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/select.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/tcp.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/timeout.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/udp.o $tmp/obj/aarch64-macos-none/ext/c/lz4/lib/lz4.o $tmp/obj/aarch64-macos-none/ext/c/lz4/lib/lz4file.o $tmp/obj/aarch64-macos-none/ext/c/lz4/lib/lz4frame.o $tmp/obj/aarch64-macos-none/ext/c/lz4/lib/lz4hc.o $tmp/obj/aarch64-macos-none/ext/c/lz4/lib/xxhash.o $tmp/obj/aarch64-macos-none/ext/c/mathx/lmathx.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/serial.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/unixdgram.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/unixstream.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/usocket.o $tmp/obj/aarch64-macos-none/ext/c/luasocket/unix.o $tmp/obj/aarch64-macos-none/ext/c/linenoise/linenoise.o $tmp/obj/aarch64-macos-none/ext/c/linenoise/utf8.o | $zig
-build $tmp/obj/aarch64-macos-none/luax/luax.o: cc-aarch64-macos-none luax/luax.c | $zig $luax_config_h
-build $tmp/obj/aarch64-macos-none/luax/libluax.o: cc-aarch64-macos-none luax/libluax.c | $zig $luax_runtime_bundle
-build $tmp/run/luaxruntime-aarch64-macos-none: ld-aarch64-macos-none $tmp/obj/aarch64-macos-none/luax/luax.o $tmp/obj/aarch64-macos-none/luax/libluax.o $tmp/lib/liblua-aarch64-macos-none.a $tmp/lib/libluax-aarch64-macos-none.a | $zig
-build $tmp/lib/libluax-aarch64-macos-none.dylib: so-aarch64-macos-none $tmp/obj/aarch64-macos-none/luax/libluax.o $tmp/lib/liblua-aarch64-macos-none.a $tmp/lib/libluax-aarch64-macos-none.a | $zig
+build $tmp/obj/ext/c/luasocket/unix.o: cc_ext-target ext/c/luasocket/unix.c | $zig
+build $tmp/obj/ext/c/linenoise/linenoise.o: cc_ext-target ext/c/linenoise/linenoise.c | $zig
+build $tmp/obj/ext/c/linenoise/utf8.o: cc_ext-target ext/c/linenoise/utf8.c | $zig
+build $tmp/lib/libluax.a: ar $tmp/obj/libluax/F/F.o $tmp/obj/libluax/complex/complex.o $tmp/obj/libluax/crypt/crypt.o $tmp/obj/libluax/crypt/sha1.o $tmp/obj/libluax/fs/fs.o $tmp/obj/libluax/linenoise/linenoise.o $tmp/obj/libluax/lz4/lz4.o $tmp/obj/libluax/ps/ps.o $tmp/obj/libluax/socket/luasocket.o $tmp/obj/libluax/sys/sys.o $tmp/obj/libluax/term/term.o $tmp/obj/libluax/tools.o $tmp/obj/libluax/version/version.o $tmp/obj/ext/c/lcomplex/lcomplex.o $tmp/obj/ext/c/limath/limath.o $tmp/obj/ext/c/limath/src/imath.o $tmp/obj/ext/c/lpeg/lpcap.o $tmp/obj/ext/c/lpeg/lpcode.o $tmp/obj/ext/c/lpeg/lpcset.o $tmp/obj/ext/c/lpeg/lpprint.o $tmp/obj/ext/c/lpeg/lptree.o $tmp/obj/ext/c/lpeg/lpvm.o $tmp/obj/ext/c/lqmath/lqmath.o $tmp/obj/ext/c/lqmath/src/imrat.o $tmp/obj/ext/c/luasocket/auxiliar.o $tmp/obj/ext/c/luasocket/buffer.o $tmp/obj/ext/c/luasocket/compat.o $tmp/obj/ext/c/luasocket/except.o $tmp/obj/ext/c/luasocket/inet.o $tmp/obj/ext/c/luasocket/io.o $tmp/obj/ext/c/luasocket/luasocket.o $tmp/obj/ext/c/luasocket/mime.o $tmp/obj/ext/c/luasocket/options.o $tmp/obj/ext/c/luasocket/select.o $tmp/obj/ext/c/luasocket/tcp.o $tmp/obj/ext/c/luasocket/timeout.o $tmp/obj/ext/c/luasocket/udp.o $tmp/obj/ext/c/lz4/lib/lz4.o $tmp/obj/ext/c/lz4/lib/lz4file.o $tmp/obj/ext/c/lz4/lib/lz4frame.o $tmp/obj/ext/c/lz4/lib/lz4hc.o $tmp/obj/ext/c/lz4/lib/xxhash.o $tmp/obj/ext/c/mathx/lmathx.o $tmp/obj/ext/c/luasocket/serial.o $tmp/obj/ext/c/luasocket/unixdgram.o $tmp/obj/ext/c/luasocket/unixstream.o $tmp/obj/ext/c/luasocket/usocket.o $tmp/obj/ext/c/luasocket/unix.o $tmp/obj/ext/c/linenoise/linenoise.o $tmp/obj/ext/c/linenoise/utf8.o | $zig
+build $tmp/obj/luax/luax.o: cc-target luax/luax.c | $zig $luax_config_h $luax_app_bundle
+build $tmp/obj/luax/libluax.o: cc-target luax/libluax.c | $zig $luax_runtime_bundle
+build $tmp/bin/luax: ld-target $tmp/obj/luax/luax.o $tmp/obj/luax/libluax.o $tmp/lib/liblua.a $tmp/lib/libluax.a | $zig
+build $tmp/lib/libluax.so: so-target $tmp/obj/luax/libluax.o $tmp/lib/libluax.a | $zig
 
 rule cp
   description = CP $out
   command = cp -f $in $out
 
-build $lib/libluax-x86_64-linux-gnu.so: cp $tmp/lib/libluax-x86_64-linux-gnu.so
-build $lib/libluax-aarch64-linux-gnu.so: cp $tmp/lib/libluax-aarch64-linux-gnu.so
-build $lib/libluax-x86_64-windows-gnu.dll: cp $tmp/lib/libluax-x86_64-windows-gnu.dll
-build $lib/libluax-x86_64-macos-none.dylib: cp $tmp/lib/libluax-x86_64-macos-none.dylib
-build $lib/libluax-aarch64-macos-none.dylib: cp $tmp/lib/libluax-aarch64-macos-none.dylib
-
-######################################################################
-# LuaX binaries
-######################################################################
-
-######################################################################
-# LuaX x86_64-linux-musl
-######################################################################
-
-rule _bin_luax-x86_64-linux-musl
-  description = LUAX $out
-  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-x86_64-linux-musl $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
-
-build $bin/luax-x86_64-linux-musl: _bin_luax-x86_64-linux-musl luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-x86_64-linux-musl
-
-######################################################################
-# LuaX x86_64-linux-gnu
-######################################################################
-
-rule _bin_luax-x86_64-linux-gnu
-  description = LUAX $out
-  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-x86_64-linux-gnu $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
-
-build $bin/luax-x86_64-linux-gnu: _bin_luax-x86_64-linux-gnu luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-x86_64-linux-gnu
-
-######################################################################
-# LuaX aarch64-linux-musl
-######################################################################
-
-rule _bin_luax-aarch64-linux-musl
-  description = LUAX $out
-  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-aarch64-linux-musl $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
-
-build $bin/luax-aarch64-linux-musl: _bin_luax-aarch64-linux-musl luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-aarch64-linux-musl
-
-######################################################################
-# LuaX aarch64-linux-gnu
-######################################################################
-
-rule _bin_luax-aarch64-linux-gnu
-  description = LUAX $out
-  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-aarch64-linux-gnu $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
-
-build $bin/luax-aarch64-linux-gnu: _bin_luax-aarch64-linux-gnu luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-aarch64-linux-gnu
-
-######################################################################
-# LuaX x86_64-windows-gnu
-######################################################################
-
-rule _bin_luax-x86_64-windows-gnu.exe
-  description = LUAX $out
-  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-x86_64-windows-gnu.exe $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
-
-build $bin/luax-x86_64-windows-gnu.exe: _bin_luax-x86_64-windows-gnu.exe luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-x86_64-windows-gnu.exe
-
-######################################################################
-# LuaX x86_64-macos-none
-######################################################################
-
-rule _bin_luax-x86_64-macos-none
-  description = LUAX $out
-  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-x86_64-macos-none $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
-
-build $bin/luax-x86_64-macos-none: _bin_luax-x86_64-macos-none luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-x86_64-macos-none
-
-######################################################################
-# LuaX aarch64-macos-none
-######################################################################
-
-rule _bin_luax-aarch64-macos-none
-  description = LUAX $out
-  command = . tools/build_env.sh; cp $tmp/run/luaxruntime-aarch64-macos-none $out && PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out
-
-build $bin/luax-aarch64-macos-none: _bin_luax-aarch64-macos-none luax/bundle.lua luax/luax.lua luax/shell_env.lua $luax_config_lua | tools/build_env.sh $lz4 $lua tools/rc4_runtime.lua luax/bundle.lua $tmp/run/luaxruntime-aarch64-macos-none
 luax = $bin/luax
-
-rule _luax
-  description = CP $out
-  command = . tools/build_env.sh; cp -f $bin/luax-$$ARCH-$$OS-$$LIBC$$EXT $out$$EXT
-
-build $luax: _luax | tools/build_env.sh $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none
+build $luax: cp $tmp/bin/luax
+build $lib/libluax.so: cp $tmp/lib/libluax.so
 
 ######################################################################
 # LuaX Lua implementation
@@ -1077,9 +333,9 @@ build $luax: _luax | tools/build_env.sh $bin/luax-x86_64-linux-musl $bin/luax-x8
 
 rule _lib_luax.lua
   description = LUAX $out
-  command = . tools/build_env.sh; PATH=$tmp:$$PATH LUA_PATH="$lua_path" $lua -l tools/rc4_runtime luax/bundle.lua -lib -lua $in > $out
+  command = PATH=$tmp:$$PATH LUA_PATH="$lua_path" CRYPT_KEY="$crypt_key" $lua -l tools/rc4_runtime luax/luax_bundle.lua -lib -lua $in > $out
 
-build $lib/luax.lua: _lib_luax.lua $luax_config_lua libluax/F/F.lua libluax/L/L.lua libluax/complex/complex.lua libluax/crypt/crypt.lua libluax/fs/fs.lua libluax/imath/imath.lua libluax/import/import.lua libluax/linenoise/linenoise.lua libluax/lpeg/lpeg.lua libluax/lz4/lz4.lua libluax/mathx/mathx.lua libluax/package/package_hook.lua libluax/ps/ps.lua libluax/qmath/qmath.lua libluax/sh/sh.lua libluax/sys/sys.lua libluax/term/term.lua ext/lua/argparse/argparse.lua ext/lua/cbor/cbor.lua ext/lua/inspect/inspect.lua ext/lua/json/json.lua ext/lua/serpent/serpent.lua | tools/build_env.sh $lz4 $lua luax/bundle.lua tools/rc4_runtime.lua
+build $lib/luax.lua: _lib_luax.lua $luax_config_lua libluax/F/F.lua libluax/L/L.lua libluax/complex/complex.lua libluax/crypt/crypt.lua libluax/fs/fs.lua libluax/imath/imath.lua libluax/import/import.lua libluax/linenoise/linenoise.lua libluax/lpeg/lpeg.lua libluax/lz4/lz4.lua libluax/mathx/mathx.lua libluax/package/package_hook.lua libluax/ps/ps.lua libluax/qmath/qmath.lua libluax/sh/sh.lua libluax/sys/sys.lua libluax/term/term.lua ext/lua/argparse/argparse.lua ext/lua/cbor/cbor.lua ext/lua/inspect/inspect.lua ext/lua/json/json.lua ext/lua/serpent/serpent.lua | $lz4 $lua luax/luax_bundle.lua tools/rc4_runtime.lua
 
 ######################################################################
 # $bin/luax-lua
@@ -1087,9 +343,9 @@ build $lib/luax.lua: _lib_luax.lua $luax_config_lua libluax/F/F.lua libluax/L/L.
 
 rule _bin_luax-lua
   description = LUAX $out
-  command = $luax -q -t lua -o $out $in
+  command = PATH=$tmp:$$PATH LUA_PATH="$lua_path" CRYPT_KEY="$crypt_key" LUAX_LIB=$lib $lua -l tools/rc4_runtime luax/luax.lua -q -t lua -o $out $in
 
-build $bin/luax-lua: _bin_luax-lua luax/luax.lua | $luax $lib/luax.lua
+build $bin/luax-lua: _bin_luax-lua luax/luax.lua luax/luax_bundle.lua luax/luax_shell_env.lua | $lz4 $lua luax/luax_bundle.lua tools/rc4_runtime.lua $lib/luax.lua
 
 ######################################################################
 # $bin/luax-pandoc
@@ -1097,9 +353,9 @@ build $bin/luax-lua: _bin_luax-lua luax/luax.lua | $luax $lib/luax.lua
 
 rule _bin_luax-pandoc
   description = LUAX $out
-  command = $luax -q -t pandoc -o $out $in
+  command = PATH=$tmp:$$PATH LUA_PATH="$lua_path" CRYPT_KEY="$crypt_key" LUAX_LIB=$lib $lua -l tools/rc4_runtime luax/luax.lua -q -t pandoc -o $out $in
 
-build $bin/luax-pandoc: _bin_luax-pandoc luax/luax.lua | $luax $lib/luax.lua
+build $bin/luax-pandoc: _bin_luax-pandoc luax/luax.lua luax/luax_bundle.lua luax/luax_shell_env.lua | $lz4 $lua luax/luax_bundle.lua tools/rc4_runtime.lua $lib/luax.lua
 
 ######################################################################
 # Tests
@@ -1107,57 +363,51 @@ build $bin/luax-pandoc: _bin_luax-pandoc luax/luax.lua | $luax $lib/luax.lua
 
 rule _test_test-1-luax_executable.ok
   description = TEST $out
-  command = . tools/build_env.sh; $luax -q -o $test/test-luax tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/import_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/json_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/shell_env_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua && PATH=$tmp:$$PATH LUA_PATH='tests/luax-tests/?.lua;luax/?.lua' LUA_CPATH='foo/?.so' TEST_NUM=1 LUAX=$luax $test/test-luax Lua is great && touch $out
+  command = $luax -q -o $test/test-luax tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/import_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/json_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/shell_env_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua && PATH=$bin:$tmp:$$PATH LUA_PATH='tests/luax-tests/?.lua;luax/?.lua' LUA_CPATH='foo/?.so' TEST_NUM=1 LUAX=$luax ARCH=x86_64 OS=linux LIBC=gnu $test/test-luax Lua is great && touch $out
 
-build $test/test-1-luax_executable.ok: _test_test-1-luax_executable.ok | tools/build_env.sh $luax tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/import_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/json_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/shell_env_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua tests/luax-tests/to_be_imported-1.lua tests/luax-tests/to_be_imported-2.lua
+build $test/test-1-luax_executable.ok: _test_test-1-luax_executable.ok | $luax tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/import_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/json_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/shell_env_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua tests/luax-tests/to_be_imported-1.lua tests/luax-tests/to_be_imported-2.lua
 
 rule _test_test-2-lib.ok
   description = TEST $out
-  command = . tools/build_env.sh; export LUA_CPATH=; eval "$$($luax env)"; PATH=$tmp:$$PATH LUA_PATH='tests/luax-tests/?.lua' TEST_NUM=2 $lua -l libluax tests/luax-tests/main.lua Lua is great && touch $out
+  command = export LUA_CPATH=; eval "$$($luax env)"; PATH=$bin:$tmp:$$PATH LUA_PATH='tests/luax-tests/?.lua' TEST_NUM=2 ARCH=x86_64 OS=linux LIBC=gnu $lua -l libluax tests/luax-tests/main.lua Lua is great && touch $out
 
-build $test/test-2-lib.ok: _test_test-2-lib.ok | tools/build_env.sh $lua $luax $lib/libluax-x86_64-linux-gnu.so $lib/libluax-aarch64-linux-gnu.so $lib/libluax-x86_64-windows-gnu.dll $lib/libluax-x86_64-macos-none.dylib $lib/libluax-aarch64-macos-none.dylib tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/import_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/json_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/shell_env_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua tests/luax-tests/to_be_imported-1.lua tests/luax-tests/to_be_imported-2.lua
+build $test/test-2-lib.ok: _test_test-2-lib.ok | $lua $luax tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/import_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/json_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/shell_env_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua tests/luax-tests/to_be_imported-1.lua tests/luax-tests/to_be_imported-2.lua
 
 rule _test_test-3-lua.ok
   description = TEST $out
-  command = . tools/build_env.sh; PATH=$tmp:$$PATH LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=3 $lua -l luax tests/luax-tests/main.lua Lua is great && touch $out
+  command = PATH=$bin:$tmp:$$PATH LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=3 ARCH=x86_64 OS=linux LIBC=lua $lua -l luax tests/luax-tests/main.lua Lua is great && touch $out
 
-build $test/test-3-lua.ok: _test_test-3-lua.ok | tools/build_env.sh $lua $lib/luax.lua $lib/luax.lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/import_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/json_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/shell_env_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua tests/luax-tests/to_be_imported-1.lua tests/luax-tests/to_be_imported-2.lua
+build $test/test-3-lua.ok: _test_test-3-lua.ok | $lua $lib/luax.lua $lib/libluax.so $lib/luax.lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/import_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/json_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/shell_env_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua tests/luax-tests/to_be_imported-1.lua tests/luax-tests/to_be_imported-2.lua
 
 rule _test_test-4-lua-luax-lua.ok
   description = TEST $out
-  command = . tools/build_env.sh; PATH=$tmp:$$PATH LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=4 $bin/luax-lua tests/luax-tests/main.lua Lua is great && touch $out
+  command = PATH=$bin:$tmp:$$PATH LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=4 ARCH=x86_64 OS=linux LIBC=lua $bin/luax-lua tests/luax-tests/main.lua Lua is great && touch $out
 
-build $test/test-4-lua-luax-lua.ok: _test_test-4-lua-luax-lua.ok | tools/build_env.sh $lua $bin/luax-lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/import_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/json_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/shell_env_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua tests/luax-tests/to_be_imported-1.lua tests/luax-tests/to_be_imported-2.lua
+build $test/test-4-lua-luax-lua.ok: _test_test-4-lua-luax-lua.ok | $lua $bin/luax-lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/import_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/json_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/shell_env_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua tests/luax-tests/to_be_imported-1.lua tests/luax-tests/to_be_imported-2.lua
 
 rule _test_test-5-pandoc-luax-lua.ok
   description = TEST $out
-  command = . tools/build_env.sh; PATH=$tmp:$$PATH LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=5 pandoc lua -l luax tests/luax-tests/main.lua Lua is great && touch $out
+  command = PATH=$bin:$tmp:$$PATH LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua' TEST_NUM=5 ARCH=x86_64 OS=linux LIBC=lua pandoc lua -l luax tests/luax-tests/main.lua Lua is great && touch $out
 
-build $test/test-5-pandoc-luax-lua.ok: _test_test-5-pandoc-luax-lua.ok | tools/build_env.sh $lua $lib/luax.lua $lib/luax.lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/import_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/json_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/shell_env_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua tests/luax-tests/to_be_imported-1.lua tests/luax-tests/to_be_imported-2.lua
+build $test/test-5-pandoc-luax-lua.ok: _test_test-5-pandoc-luax-lua.ok | $lua $lib/luax.lua $lib/libluax.so $lib/luax.lua tests/luax-tests/F_test.lua tests/luax-tests/G_test.lua tests/luax-tests/arg_test.lua tests/luax-tests/cbor_test.lua tests/luax-tests/complex_test.lua tests/luax-tests/crypt_test.lua tests/luax-tests/fs_test.lua tests/luax-tests/imath_test.lua tests/luax-tests/import_test.lua tests/luax-tests/inspect_test.lua tests/luax-tests/json_test.lua tests/luax-tests/lib.lua tests/luax-tests/linenoise_test.lua tests/luax-tests/lpeg_test.lua tests/luax-tests/lz4_test.lua tests/luax-tests/main.lua tests/luax-tests/mathx_test.lua tests/luax-tests/package_test.lua tests/luax-tests/ps_test.lua tests/luax-tests/qmath_test.lua tests/luax-tests/require_test.lua tests/luax-tests/resource.txt tests/luax-tests/resource.txt.lz4 tests/luax-tests/resource_test.lua tests/luax-tests/serpent_test.lua tests/luax-tests/sh_test.lua tests/luax-tests/shell_env_test.lua tests/luax-tests/socket_test.lua tests/luax-tests/sys_test.lua tests/luax-tests/test.lua tests/luax-tests/test_test.lua tests/luax-tests/to_be_imported-1.lua tests/luax-tests/to_be_imported-2.lua
 
 rule _test_test-ext-1-lua.ok
   description = TEST $out
-  command = . tools/build_env.sh; eval "$$($luax env)"; $luax -q -t lua -o $test/ext-lua $in && PATH=$tmp:$$PATH TARGET=lua $test/ext-lua Lua is great && touch $out
+  command = eval "$$($luax env)"; $luax -q -t lua -o $test/ext-lua $in && PATH=$bin:$tmp:$$PATH TARGET=lua $test/ext-lua Lua is great && touch $out
 
-build $test/test-ext-1-lua.ok: _test_test-ext-1-lua.ok tests/external_interpreter_tests/external_interpreters.lua | tools/build_env.sh $lib/luax.lua $luax $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none $luax $bin/luax-lua $bin/luax-pandoc
-
-rule _test_test-ext-2-lua-luax.ok
-  description = TEST $out
-  command = . tools/build_env.sh; export LUA_CPATH=; eval "$$($luax env)"; $luax -q -t lua-luax -o $test/ext-lua-luax $in && PATH=$tmp:$$PATH TARGET=lua-luax $test/ext-lua-luax Lua is great && touch $out
-
-build $test/test-ext-2-lua-luax.ok: _test_test-ext-2-lua-luax.ok tests/external_interpreter_tests/external_interpreters.lua | tools/build_env.sh $lib/luax.lua $luax
+build $test/test-ext-1-lua.ok: _test_test-ext-1-lua.ok tests/external_interpreter_tests/external_interpreters.lua | $lib/luax.lua $luax $luax $bin/luax-lua $bin/luax-pandoc
 
 rule _test_test-ext-3-luax.ok
   description = TEST $out
-  command = . tools/build_env.sh; eval "$$($luax env)"; $luax -q -t luax -o $test/ext-luax $in && PATH=$tmp:$$PATH TARGET=luax $test/ext-luax Lua is great && touch $out
+  command = eval "$$($luax env)"; $luax -q -t luax -o $test/ext-luax $in && PATH=$bin:$tmp:$$PATH TARGET=luax $test/ext-luax Lua is great && touch $out
 
-build $test/test-ext-3-luax.ok: _test_test-ext-3-luax.ok tests/external_interpreter_tests/external_interpreters.lua | tools/build_env.sh $lib/luax.lua $luax
+build $test/test-ext-3-luax.ok: _test_test-ext-3-luax.ok tests/external_interpreter_tests/external_interpreters.lua | $lib/luax.lua $luax
 
 rule _test_test-ext-4-pandoc.ok
   description = TEST $out
-  command = . tools/build_env.sh; eval "$$($luax env)"; $luax -q -t pandoc -o $test/ext-pandoc $in && PATH=$tmp:$$PATH TARGET=pandoc $test/ext-pandoc Lua is great && touch $out
+  command = eval "$$($luax env)"; $luax -q -t pandoc -o $test/ext-pandoc $in && PATH=$bin:$tmp:$$PATH TARGET=pandoc $test/ext-pandoc Lua is great && touch $out
 
-build $test/test-ext-4-pandoc.ok: _test_test-ext-4-pandoc.ok tests/external_interpreter_tests/external_interpreters.lua | tools/build_env.sh $lib/luax.lua $luax $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none $luax $bin/luax-lua $bin/luax-pandoc
+build $test/test-ext-4-pandoc.ok: _test_test-ext-4-pandoc.ok tests/external_interpreter_tests/external_interpreters.lua | $lib/luax.lua $luax $luax $bin/luax-lua $bin/luax-pandoc
 
 ######################################################################
 # Documentation
@@ -1246,12 +496,12 @@ build doc/term.md: md_to_gfm $tmp/doc/src/term.md | doc/src/fix_links.lua doc/lu
 # Shorcuts
 ######################################################################
 
-build compile: phony $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none $luax $bin/luax-lua $bin/luax-pandoc $lib/luax.lua $lib/libluax-x86_64-linux-gnu.so $lib/libluax-aarch64-linux-gnu.so $lib/libluax-x86_64-windows-gnu.dll $lib/libluax-x86_64-macos-none.dylib $lib/libluax-aarch64-macos-none.dylib
+build compile: phony $luax $bin/luax-lua $bin/luax-pandoc $lib/libluax.so $lib/luax.lua
 
 default compile
 
 build test-fast: phony $test/test-1-luax_executable.ok
-build test: phony $test/test-1-luax_executable.ok $test/test-2-lib.ok $test/test-3-lua.ok $test/test-4-lua-luax-lua.ok $test/test-5-pandoc-luax-lua.ok $test/test-ext-1-lua.ok $test/test-ext-2-lua-luax.ok $test/test-ext-3-luax.ok $test/test-ext-4-pandoc.ok
+build test: phony $test/test-1-luax_executable.ok $test/test-2-lib.ok $test/test-3-lua.ok $test/test-4-lua-luax-lua.ok $test/test-5-pandoc-luax-lua.ok $test/test-ext-1-lua.ok $test/test-ext-3-luax.ok $test/test-ext-4-pandoc.ok
 build doc: phony doc/luax-banner.svg doc/luax-logo.svg $builddir/luax-banner.png $builddir/luax-social.png $builddir/luax-logo.png README.md doc/F.md doc/L.md doc/argparse.md doc/cbor.md doc/complex.md doc/crypt.md doc/fs.md doc/imath.md doc/import.md doc/inspect.md doc/json.md doc/linenoise.md doc/lpeg.md doc/luasocket.md doc/luax.lua.md doc/luax.md doc/lz4.md doc/mathx.md doc/package.md doc/ps.md doc/qmath.md doc/repl.md doc/serpent.md doc/sh.md doc/sys.md doc/term.md
 build all: phony compile test doc
 build update: phony update_modules
@@ -1266,13 +516,13 @@ rule install-bin
   description = INSTALL $in to bin
   command = install -v -D -t $${PREFIX:-$prefix}/bin $in
 
-build install-bin: install-bin $bin/luax-x86_64-linux-musl $bin/luax-x86_64-linux-gnu $bin/luax-aarch64-linux-musl $bin/luax-aarch64-linux-gnu $bin/luax-x86_64-windows-gnu.exe $bin/luax-x86_64-macos-none $bin/luax-aarch64-macos-none $luax $bin/luax-lua $bin/luax-pandoc
+build install-bin: install-bin $luax $bin/luax-lua $bin/luax-pandoc
 
 rule install-lib
   description = INSTALL $in to lib
   command = install -v -D -t $${PREFIX:-$prefix}/lib $in
 
-build install-lib: install-lib $lib/luax.lua $lib/libluax-x86_64-linux-gnu.so $lib/libluax-aarch64-linux-gnu.so $lib/libluax-x86_64-windows-gnu.dll $lib/libluax-x86_64-macos-none.dylib $lib/libluax-aarch64-macos-none.dylib
+build install-lib: install-lib $lib/libluax.so $lib/luax.lua
 build install: phony install-bin install-lib
 
 ######################################################################
@@ -1292,7 +542,7 @@ build clean: phony clean-_builddir
 
 rule help
   description = help
-  command = echo "Lua eXtended"; echo "Copyright (C) 2021-2024 Christophe Delord (https://cdelord.fr/luax)"; echo ""; echo "luax is a Lua interpreter and REPL based on Lua 5.4"; echo "augmented with some useful packages."; echo "luax can also produce standalone executables from Lua scripts."; echo ""; echo "luax runs on several platforms with no dependency:"; echo ""; echo "- Linux (x86_64, x86, aarch64)"; echo "- MacOS (x86_64, aarch64)"; echo "- Windows (x86_64, x86)"; echo ""; echo "luax can « cross-compile » scripts from and to any of these platforms."; echo ""; echo "Targets:"; echo "  help        show this help message"; echo "  compile     compile LuaX"; echo "  test-fast   run LuaX tests (fast, native tests only)"; echo "  test        run all LuaX tests"; echo "  doc         update LuaX documentation"; echo "  all         alias for compile, test and doc"; echo "  update      update third-party modules"; echo "  install     install LuaX in PREFIX or ~/.local"; echo "  clean       clean generated files";
+  command = echo "Lua eXtended"; echo "Copyright (C) 2021-2024 Christophe Delord (https://cdelord.fr/luax)"; echo ""; echo "luax is a Lua interpreter and REPL based on Lua 5.4"; echo "augmented with some useful packages."; echo "luax can also produce standalone scripts from Lua scripts."; echo ""; echo "luax runs on several platforms with no dependency:"; echo ""; echo "- Linux (x86_64, aarch64)"; echo "- MacOS (x86_64, aarch64)"; echo "- Windows (x86_64)"; echo ""; echo "luax can « compile » scripts executable on all supported platforms"; echo "(LuaX must be installed on the target environment)."; echo ""; echo "Targets:"; echo "  help        show this help message"; echo "  compile     compile LuaX"; echo "  test-fast   run LuaX tests (fast, native tests only)"; echo "  test        run all LuaX tests"; echo "  doc         update LuaX documentation"; echo "  all         alias for compile, test and doc"; echo "  update      update third-party modules"; echo "  install     install LuaX in PREFIX or ~/.local"; echo "  clean       clean generated files";
 
 build help: help
 

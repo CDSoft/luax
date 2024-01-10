@@ -28,13 +28,12 @@ local function luax_env(arg0)
 
     local exe = assert(fs.is_file(arg0) and arg0 or fs.findpath(arg0))
 
-    local abi = F.case(sys.os) { linux="gnu", macos="none",  windows="gnu" }
     local ext = F.case(sys.os) { linux="so",  macos="dylib", windows="dll" }
 
     local bin = exe:dirname():realpath()
     local prefix = bin:dirname()
     local lib_lua = prefix / "lib" / "?.lua"
-    local lib_so = prefix / "lib" / F{"?", sys.arch, sys.os, abi, ext}:str("-", ".")
+    local lib_so = prefix / "lib" / F{"?", ext}:str(".")
 
     local function update(var_name, separator, new_path)
         return F{

@@ -1,10 +1,10 @@
 local F = require "F"
 local fs = require "fs"
-local sys = require "sys"
 
 local URL = "cdelord.fr/luax"
 local YEARS = os.date "2021-%Y"
 local AUTHORS = "Christophe Delord"
+local crypt_key = "LuaX"
 
 section(F.I{URL=URL}[[
 This file is part of luax.
@@ -33,15 +33,16 @@ Copyright (C) $(YEARS) $(AUTHORS) (https://$(URL))
 
 luax is a Lua interpreter and REPL based on Lua 5.4
 augmented with some useful packages.
-luax can also produce standalone executables from Lua scripts.
+luax can also produce standalone scripts from Lua scripts.
 
 luax runs on several platforms with no dependency:
 
-- Linux (x86_64, x86, aarch64)
+- Linux (x86_64, aarch64)
 - MacOS (x86_64, aarch64)
-- Windows (x86_64, x86)
+- Windows (x86_64)
 
-luax can « cross-compile » scripts from and to any of these platforms.
+luax can « compile » scripts executable on all supported platforms
+(LuaX must be installed on the target environment).
 ]])
 
 section [[
@@ -51,35 +52,26 @@ and run bang to regenerate build.ninja.
 ]]
 
 -- list of targets used for cross compilation (with Zig only)
-local targets = F{
-    -- Linux
-    "x86_64-linux-musl",
-    "x86_64-linux-gnu",
-    --"x86-linux-musl",         -- 32-bit targets are deprecated
-    --"x86-linux-gnu",          -- 32-bit targets are deprecated
-    "aarch64-linux-musl",
-    "aarch64-linux-gnu",
-
-    -- Windows
-    "x86_64-windows-gnu",
-    --"x86-windows-gnu",        -- 32-bit targets are deprecated
-
-    -- MacOS
-    "x86_64-macos-none",
-    "aarch64-macos-none",
-}
+local luax_sys = dofile"libluax/sys/sys.lua"
+local targets = F(luax_sys.targets)
+local host = targets
+    : filter(function(t) return t.zig_os==luax_sys.os and t.zig_arch==luax_sys.arch and t.zig_abi~="musl" end)
+    : head()
+if not host then
+    F.error_without_stack_trace("Unknown platform")
+end
 
 local usage = F.I{
     title = function(s) return F.unlines {s, (s:gsub(".", "="))}:rtrim() end,
     list = function(t) return t:map(F.prefix"    - "):unlines():rtrim() end,
-    targets = targets,
+    targets = targets:map(F.partial(F.nth, "name")),
 }[[
 $(title "LuaX bang file usage")
 
 The LuaX bang file can be given options to customize the LuaX compilation.
 
 Without any options, LuaX is:
-    - compiled with Zig for all supported targets
+    - compiled with Zig for the current platform
     - optimized for speed
 
 $(title "Compilation mode")
@@ -93,17 +85,18 @@ bang -- debug       Compiled with debug informations
 $(title "Compiler")
 
 bang -- zig         Compile LuaX with Zig (default)
-bang -- gcc         Compile LuaX with gcc (implies "host")
-bang -- clang       Compile LuaX with clang (implies "host")
+bang -- gcc         Compile LuaX with gcc
+bang -- clang       Compile LuaX with clang
 
 Zig is downloaded by the ninja file.
 gcc and clang must be already installed.
 
 $(title "Compilation targets")
 
-bang -- host        Compile LuaX for the current host only
+bang -- <target>    Compile LuaX for <target> (with zig only)
 
-By default LuaX is compiled for all supported targets:
+By default LuaX is compiled for the current platform.
+Supported targets:
 $(list(targets))
 
 $(title "Compression")
@@ -118,8 +111,8 @@ if F.elem("help", arg) then
     os.exit(0)
 end
 
+local target = nil
 local mode = nil -- fast, small, quick, debug
-local host = false
 local compiler = nil -- zig, gcc, clang
 local upx = false
 
@@ -132,56 +125,47 @@ F.foreach(arg, function(a)
         if compiler~=nil then F.error_without_stack_trace(a..": duplicate compiler specification", 2) end
         compiler = a
     end
-    (case(a) {
+    local function set_target()
+        if target~=nil then F.error_without_stack_trace(a..": duplicate target specification", 2) end
+        target = targets : filter(function(t) return t.name == a end) : head()
+        if not target then F.error_without_stack_trace(a..": unknown target", 2) end
+    end
+    case(a) {
         fast   = set_mode,
         small  = set_mode,
         quick  = set_mode,
         debug  = set_mode,
-        host   = function() host = true end,
         zig    = set_compiler,
         gcc    = set_compiler,
         clang  = set_compiler,
         upx    = function() upx = true end,
-    } or F.error_without_stack_trace(a..": unknown parameter", 1)) ()
+        [F.Nil] = set_target,
+    } ()
 end)
 
 mode = F.default("fast", mode)
 if mode=="debug" and upx then F.error_without_stack_trace("UPX compression not available in debug mode") end
 
 compiler = F.default("zig", compiler)
-host = host or compiler=="gcc" or compiler=="clang"
-
-if host then
-    targets = targets : filter(function(target)
-        local target_arch, target_os, target_abi = target:split"%-":unpack()
-        local same_platform = target_os == sys.os and target_arch == sys.arch
-        return case(compiler) {
-            zig   = same_platform,
-            gcc   = same_platform and target_abi~="musl",
-            clang = same_platform and target_abi~="musl",
-        }
-    end)
-end
-
-if (compiler=="gcc" or compiler=="clang") and #targets~=1 then
-    F.error_without_stack_trace("Too many targets for "..compiler..": "..targets:str", ")
+if compiler~="zig" and target then
+    F.error_without_stack_trace("The compilation target can not be specified with "..compiler)
 end
 
 section("Compilation options")
 comment(("Compilation mode: %s"):format(mode))
 comment(("Compiler        : %s"):format(compiler))
-if compiler == "zig" then
-    targets : foreachi(function(i, target)
-        comment(("%-16s: %s"):format(i==1 and "Targets" or "", target))
-    end)
-end
+comment(("Target          : %s"):format(target or "native"))
 comment(("Compression     : %s"):format(upx and "UPX" or "none"))
 
 --===================================================================
 section "Build environment"
 ---------------------------------------------------------------------
 
-var "builddir" ".build"
+if target then
+    var "builddir" (".build" / target.name)
+else
+    var "builddir" ".build"
+end
 
 var "bin" "$builddir/bin"
 var "lib" "$builddir/lib"
@@ -208,7 +192,7 @@ case(compiler) {
 
     zig = function()
         local zig_version = "0.11.0"
-        --local zig_version = "0.12.0-dev.1746+19af8aac8"
+        --local zig_version = "0.12.0-dev.2139+e025ad7b4"
         var "zig" (".zig" / zig_version / "zig")
 
         build "$zig" { "tools/install_zig.sh",
@@ -223,27 +207,21 @@ case(compiler) {
             "ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache",
         }
 
-        var "cc"      { zig_cache, "$zig cc" }
-        var "cc-host" { zig_cache, "$zig cc -target $$ARCH-$$OS-$$LIBC" }
-        var "ar"      { zig_cache, "$zig ar" }
-        var "ld"      { zig_cache, "$zig cc" }
-        var "ld-host" { zig_cache, "$zig cc -target $$ARCH-$$OS-$$LIBC" }
+        var "cc" { zig_cache, "$zig cc" }
+        var "ar" { zig_cache, "$zig ar" }
+        var "ld" { zig_cache, "$zig cc" }
     end,
 
     gcc = function()
-        var "cc"      "gcc"
-        var "cc-host" "gcc"
-        var "ar"      "ar"
-        var "ld"      "gcc"
-        var "ld-host" "gcc"
+        var "cc" "gcc"
+        var "ar" "ar"
+        var "ld" "gcc"
     end,
 
     clang = function()
-        var "cc"      "clang"
-        var "cc-host" "clang"
-        var "ar"      "ar"
-        var "ld"      "clang"
-        var "ld-host" "clang"
+        var "cc" "clang"
+        var "ar" "ar"
+        var "ld" "clang"
     end,
 
 }()
@@ -267,7 +245,11 @@ local native_cflags = {
     "-O3",
     "-fPIC",
     F.map(F.prefix"-I", include_path),
-    "$$LUA_CFLAGS",
+    case(host.zig_os) {
+        linux = "-DLUA_USE_LINUX",
+        macos = "-DLUA_USE_MACOSX",
+        windows = {},
+    },
     "-Werror",
     "-Wall",
     "-Wextra",
@@ -371,15 +353,17 @@ local ldflags = {
     },
 }
 
+local function zig_target(t)
+    return t and {"-target", F{t.zig_arch, t.zig_os, t.zig_libc}:str"-"} or {}
+end
+
 rule "cc" {
     description = "CC $in",
     command = {
-        ". tools/build_env.sh;",
-        "$cc-host", "-c", native_cflags, "-MD -MF $depfile $in -o $out",
+        "$cc", "-c", native_cflags, "-MD -MF $depfile $in -o $out",
     },
     implicit_in = {
         compiler_deps,
-        "tools/build_env.sh",
     },
     depfile = "$out.d",
 }
@@ -387,110 +371,102 @@ rule "cc" {
 rule "ld" {
     description = "LD $out",
     command = {
-        ". tools/build_env.sh;",
-        "$ld-host", native_ldflags, "$in -o $out",
+        "$ld", native_ldflags, "$in -o $out",
     },
     implicit_in = {
         compiler_deps,
-        "tools/build_env.sh",
     },
 }
 
-local cc = {}
-local cc_ext = {}
-local ld = {}
-local so = {}
+local target_arch = target and target.zig_arch or host.zig_arch
+local target_os   = target and target.zig_os   or host.zig_os
+local target_abi  = target and target.zig_libc or host.zig_libc
 
-targets : foreach(function(target)
-    local target_arch, target_os, target_abi = target:split "%-":unpack()
-    local lto = case(mode) {
-        fast = case(target_os) {
-            linux   = lto_opt,
-            macos   = {},
-            windows = lto_opt,
-        },
-        small = {},
-        quick = {},
-        debug = {},
-    }
-    local target_flags = {
-        "-DLUAX_ARCH='\""..target_arch.."\"'",
-        "-DLUAX_OS='\""..target_os.."\"'",
-        "-DLUAX_ABI='\""..target_abi.."\"'",
-    }
-    local lua_flags = {
-        case(target_os) {
-            linux   = "-DLUA_USE_LINUX",
-            macos   = "-DLUA_USE_MACOSX",
-            windows = {},
-        },
-    }
-    local target_ld_flags = {
-        case(target_abi) {
-            gnu  = "-rdynamic",
-            musl = {},
-            none = "-rdynamic",
-        },
+local lto = case(mode) {
+    fast = case(target_os) {
+        linux   = lto_opt,
+        macos   = {},
+        windows = lto_opt,
+    },
+    small = {},
+    quick = {},
+    debug = {},
+}
+local target_flags = {
+    "-DLUAX_ARCH='\""..target_arch.."\"'",
+    "-DLUAX_OS='\""..target_os.."\"'",
+    "-DLUAX_ABI='\""..target_abi.."\"'",
+}
+local lua_flags = {
+    case(target_os) {
+        linux   = "-DLUA_USE_LINUX",
+        macos   = "-DLUA_USE_MACOSX",
+        windows = {},
+    },
+}
+local target_ld_flags = {
+    case(target_abi) {
+        gnu  = "-rdynamic",
+        musl = {},
+        none = "-rdynamic",
+    },
+    case(target_os) {
+        linux   = {},
+        macos   = {},
+        windows = "-lws2_32 -ladvapi32",
+    },
+}
+local target_so_flags = {
+    "-shared",
+}
+local target_opt = case(compiler) {
+    zig   = zig_target(target),
+    gcc   = {},
+    clang = {},
+}
+local cc = rule("cc-target") {
+    description = "CC $in",
+    command = {
+        "$cc", target_opt, "-c", lto, luax_cflags, lua_flags, target_flags, "-MD -MF $depfile $in -o $out",
         case(target_os) {
             linux   = {},
             macos   = {},
-            windows = "-lws2_32 -ladvapi32",
-        },
-    }
-    local target_so_flags = {
-        "-shared",
-    }
-    local target_opt = case(compiler) {
-        zig   = {"-target", target},
-        gcc   = {},
-        clang = {},
-    }
-    cc[target] = rule("cc-"..target) {
-        description = "CC["..target.."] $in",
-        command = {
-            "$cc", target_opt, "-c", lto, luax_cflags, lua_flags, target_flags, "-MD -MF $depfile $in -o $out",
-            case(target_os) {
-                linux   = {},
-                macos   = {},
-                windows = "$build_as_dll",
-            }
-        },
-        implicit_in = {
-            compiler_deps,
-        },
-        depfile = "$out.d",
-    }
-    cc_ext[target] = rule("cc_ext-"..target) {
-        description = "CC["..target.."] $in",
-        command = {
-            "$cc", target_opt, "-c", lto, ext_cflags, lua_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
-        },
-        implicit_in = {
-            compiler_deps,
-        },
-        depfile = "$out.d",
-    }
-    ld[target] = rule("ld-"..target) {
-        description = "LD["..target.."] $out",
-        command = {
-            "$ld", target_opt, lto, ldflags, target_ld_flags, "$in -o $out",
-        },
-        implicit_in = {
-            compiler_deps,
-        },
-    }
-    if target_abi~="musl" then
-        so[target] = rule("so-"..target) {
-            description = "SO["..target.."] $out",
-            command = {
-                "$cc", target_opt, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out",
-            },
-            implicit_in = {
-                compiler_deps,
-            },
+            windows = "$build_as_dll",
         }
-    end
-end)
+    },
+    implicit_in = {
+        compiler_deps,
+    },
+    depfile = "$out.d",
+}
+local cc_ext = rule("cc_ext-target") {
+    description = "CC $in",
+    command = {
+        "$cc", target_opt, "-c", lto, ext_cflags, lua_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
+    },
+    implicit_in = {
+        compiler_deps,
+    },
+    depfile = "$out.d",
+}
+local ld = rule("ld-target") {
+    description = "LD $out",
+    command = {
+        "$ld", target_opt, lto, ldflags, target_ld_flags, "$in -o $out",
+    },
+    implicit_in = {
+        compiler_deps,
+    },
+}
+local so = rule("so-target") {
+    description = "SO $out",
+    command = {
+        "$cc", target_opt, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out",
+    },
+    implicit_in = {
+        compiler_deps,
+    },
+}
 
 local ar = rule "ar" {
     description = "AR $out",
@@ -571,6 +547,7 @@ var "lua_path" (
         "$tmp",
         "libluax",
         ls "libluax/*" : filter(fs.is_dir),
+        "luax",
     }
     : flatten()
     : map(function(path) return path / "?.lua" end)
@@ -596,11 +573,7 @@ var "luax_config_h"   "$tmp/luax_config.h"
 var "luax_config_lua" "$tmp/luax_config.lua"
 var "luax_crypt_key"  "$tmp/luax_crypt_key.h"
 
-local magic_id = "LuaX"
-
 local luax_config_table = (F.I % "%%()") {
-    MAGIC_ID = magic_id,
-    TARGETS = targets:show(),
     AUTHORS = AUTHORS,
     URL = URL,
 }
@@ -616,7 +589,6 @@ cat <<EOF > "$LUAX_CONFIG_H"
 #define LUAX_DATE "$(git show -s --format=%cd --date=format:'%Y-%m-%d')"
 #define LUAX_COPYRIGHT "LuaX "LUAX_VERSION"  Copyright (C) 2021-$(git show -s --format=%cd --date=format:'%Y') %(URL)"
 #define LUAX_AUTHORS "%(AUTHORS)"
-#define LUAX_MAGIC_ID "%(MAGIC_ID)"
 EOF
 ]]
 
@@ -633,8 +605,6 @@ return {
     date = "$(git show -s --format=%cd --date=format:'%Y-%m-%d')",
     copyright = "LuaX "..version.."  Copyright (C) 2021-$(git show -s --format=%cd --date=format:'%Y') %(URL)",
     authors = "%(AUTHORS)",
-    magic_id = "%(MAGIC_ID)",
-    targets = %(TARGETS),
 }
 EOF
 ]]
@@ -642,11 +612,9 @@ EOF
 rule "gen_config" {
     description = "GEN $out",
     command = {
-        ". tools/build_env.sh;",
         "bash", "$in", "$out",
     },
     implicit_in = {
-        "tools/build_env.sh",
         ".git/refs/tags",
         "$lua"
     },
@@ -655,15 +623,15 @@ rule "gen_config" {
 build "$luax_config_h"   { "gen_config", "tools/gen_config_h.sh" }
 build "$luax_config_lua" { "gen_config", "tools/gen_config_lua.sh" }
 
+var "crypt_key" (crypt_key)
+
 build "$luax_crypt_key"  {
     description = "GEN $out",
     command = {
-        ". tools/build_env.sh;",
-        "$lua tools/crypt_key.lua LUAX_CRYPT_KEY \"$$CRYPT_KEY\" > $out",
+        "$lua tools/crypt_key.lua LUAX_CRYPT_KEY \"$crypt_key\" > $out",
     },
     implicit_in = {
         "$lua",
-        "tools/build_env.sh",
         "tools/crypt_key.lua",
     }
 }
@@ -682,43 +650,60 @@ var "luax_runtime_bundle" "$tmp/lua_runtime_bundle.dat"
 build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
     description = "BUNDLE $out",
     command = {
-        ". tools/build_env.sh;",
         "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
-        "$lua -l tools/rc4_runtime luax/bundle.lua -lib -ascii $in > $out",
+        "CRYPT_KEY=\"$crypt_key\"",
+        "$lua -l tools/rc4_runtime luax/luax_bundle.lua -lib -ascii $in > $out",
     },
     implicit_in = {
-        "tools/build_env.sh",
         "$lz4",
         "$lua",
-        "luax/bundle.lua",
+        "luax/luax_bundle.lua",
+        "tools/rc4_runtime.lua",
+    },
+}
+
+local luax_app = {
+    ls "luax/**.lua",
+    "$luax_config_lua",
+}
+
+var "luax_app_bundle" "$tmp/lua_app_bundle.dat"
+
+build "$luax_app_bundle" { "$luax_config_lua", luax_app,
+    description = "BUNDLE $out",
+    command = {
+        "PATH=$tmp:$$PATH",
+        "LUA_PATH=\"$lua_path\"",
+        "CRYPT_KEY=\"$crypt_key\"",
+        "$lua -l tools/rc4_runtime luax/luax_bundle.lua -app -ascii $in > $out",
+    },
+    implicit_in = {
+        "$lz4",
+        "$lua",
+        "luax/luax_bundle.lua",
         "tools/rc4_runtime.lua",
     },
 }
 
 --===================================================================
-section "C runtimes"
+section "Binaries and shared libraries"
 ---------------------------------------------------------------------
 
-local function target_os(target)
-    return target:split"%-":snd()
-end
+local binaries = {}
+local libraries = {}
 
-local function ext(target)
-    return case(target_os(target)) {
-        linux   = "",
-        macos   = "",
-        windows = ".exe",
-    }
-end
+local ext = case(target_os) {
+    linux   = "",
+    macos   = "",
+    windows = ".exe",
+}
 
-local function libext(target)
-    return case(target_os(target)) {
-        linux   = ".so",
-        macos   = ".dylib",
-        windows = ".dll",
-    }
-end
+local libext = case(target_os) {
+    linux   = ".so",
+    macos   = ".dylib",
+    windows = ".dll",
+}
 
 -- imath is also provided by qmath, both versions shall be compatible
 rule "diff" {
@@ -730,113 +715,100 @@ phony "check_limath_version" {
     build "$tmp/check_limath_source_version" { "diff", "ext/c/lqmath/src/imath.c", "ext/c/limath/src/imath.c" },
 }
 
-local runtimes, shared_libraries =
-    targets : map(function(target)
+local liblua = build("$tmp/lib/liblua.a") { ar,
+    F.flatten {
+        sources.lua_c_files,
+    } : map(function(src)
+        return build("$tmp/obj"/src:splitext()..".o") { cc_ext, src }
+    end),
+}
 
-        section(target.." runtime")
-
-        local liblua = build("$tmp/lib/liblua-"..target..".a") { ar,
-            F.flatten {
-                sources.lua_c_files,
-            } : map(function(src)
-                return build("$tmp/obj"/target/src:splitext()..".o") { cc_ext[target], src }
-            end),
+local libluax = build("$tmp/lib/libluax.a") { ar,
+    F.flatten {
+        sources.luax_c_files,
+    } : map(function(src)
+        return build("$tmp/obj"/src:splitext()..".o") { cc, src,
+            implicit_in = {
+                case(src:basename():splitext()) {
+                    version = "$luax_config_h",
+                    crypt = "$luax_crypt_key",
+                } or {},
+            },
         }
-
-        local libluax = build("$tmp/lib/libluax-"..target..".a") { ar,
-            F.flatten {
-                sources.luax_c_files,
-            } : map(function(src)
-                return build("$tmp/obj"/target/src:splitext()..".o") { cc[target], src,
-                    implicit_in = {
-                        case(src:basename():splitext()) {
-                            version = "$luax_config_h",
-                            crypt = "$luax_crypt_key",
-                        } or {},
-                    },
-                }
-            end),
-            F.flatten {
-                sources.third_party_c_files,
-                case(target_os(target)) {
-                    linux   = sources.linux_third_party_c_files,
-                    macos   = sources.linux_third_party_c_files,
-                    windows = sources.windows_third_party_c_files,
-                },
-            } : map(function(src)
-                return build("$tmp/obj"/target/src:splitext()..".o") { cc_ext[target], src,
-                    additional_flags = case(src:basename():splitext()) {
-                        usocket = "-Wno-#warnings",
-                    },
-                    implicit_in = case(src:basename():splitext()) {
-                        limath = "check_limath_version",
-                        imath  = "check_limath_version",
-                    },
-                }
-            end),
+    end),
+    F.flatten {
+        sources.third_party_c_files,
+        case(target_os) {
+            linux   = sources.linux_third_party_c_files,
+            macos   = sources.linux_third_party_c_files,
+            windows = sources.windows_third_party_c_files,
+        },
+    } : map(function(src)
+        return build("$tmp/obj"/src:splitext()..".o") { cc_ext, src,
+            additional_flags = case(src:basename():splitext()) {
+                usocket = "-Wno-#warnings",
+            },
+            implicit_in = case(src:basename():splitext()) {
+                limath = "check_limath_version",
+                imath  = "check_limath_version",
+            },
         }
+    end),
+}
 
-        local main_luax = F.flatten { sources.luax_main_c_files }
-            : map(function(src)
-                return build("$tmp/obj"/target/src:splitext()..".o") { cc[target], src,
-                    implicit_in = {
-                        "$luax_config_h",
-                    },
-                }
-            end)
-
-        local main_libluax = F.flatten { sources.libluax_main_c_files }
-            : map(function(src)
-                    return build("$tmp/obj"/target/src:splitext()..".o") { cc[target], src,
-                        build_as_dll = case(target_os(target)) {
-                            windows = "-DLUA_BUILD_AS_DLL -DLUA_LIB",
-                        },
-                        implicit_in = {
-                            "$luax_runtime_bundle",
-                        },
-                    }
-                end)
-
-        local runtime = build("$tmp/run/luaxruntime-"..target..ext(target)) { ld[target],
-            main_luax,
-            main_libluax,
-            liblua,
-            libluax,
+local main_luax = F.flatten { sources.luax_main_c_files }
+    : map(function(src)
+        return build("$tmp/obj"/src:splitext()..".o") { cc, src,
+            implicit_in = {
+                "$luax_config_h",
+                "$luax_app_bundle",
+            },
         }
-
-        local shared_library = so[target] and
-            build("$tmp/lib/libluax-"..target..libext(target)) { so[target],
-                main_libluax,
-                case(target_os(target)) {
-                    linux   = {},
-                    macos   = liblua,
-                    windows = liblua,
-                },
-                libluax,
-        }
-
-        return {runtime, shared_library or F.Nil}
-
     end)
-    : unzip()
 
-shared_libraries = shared_libraries : filter(F.partial(F.op.ne, F.Nil))
+local main_libluax = F.flatten { sources.libluax_main_c_files }
+    : map(function(src)
+            return build("$tmp/obj"/src:splitext()..".o") { cc, src,
+                build_as_dll = case(target_os) {
+                    windows = "-DLUA_BUILD_AS_DLL -DLUA_LIB",
+                },
+                implicit_in = {
+                    "$luax_runtime_bundle",
+                },
+            }
+        end)
+
+local binary = build("$tmp/bin/luax"..ext) { ld,
+    main_luax,
+    main_libluax,
+    liblua,
+    libluax,
+}
+
+local shared_library = target_abi~="musl" and
+    build("$tmp/lib/libluax"..libext) { so,
+        main_libluax,
+        case(target_os) {
+            linux   = {},
+            macos   = liblua,
+            windows = liblua,
+        },
+        libluax,
+}
 
 if upx and mode~="debug" then
     rule "upx" {
         description = "UPX $in",
         command = "rm -f $out; upx -qqq -o $out $in && touch $out",
     }
-    runtimes = runtimes : map(function(runtime)
-        return case(target_os(runtime:split("-", 1):snd():splitext())) {
-            macos = runtime,
-        } or build("$tmp/run-upx"/runtime:basename()) { "upx", runtime }
-    end)
-    shared_libraries = shared_libraries : map(function(library)
-        return case(target_os(library:split("-", 1):snd():splitext())) {
-            macos = library,
-        } or build("$tmp/lib-upx"/library:basename()) { "upx", library }
-    end)
+    binary = case(target_os) {
+        macos   = binary,
+        [F.Nil] = build("$tmp/bin-upx"/binary:basename()) { "upx", binary },
+    }
+    shared_library = shared_library and case(target_os) {
+        macos   = shared_library,
+        [F.Nil] = build("$tmp/lib-upx"/shared_library:basename()) { "upx", shared_library },
+    }
 end
 
 rule "cp" {
@@ -844,67 +816,17 @@ rule "cp" {
     command = "cp -f $in $out",
 }
 
-shared_libraries = shared_libraries : map(function(library)
-    return build("$lib"/library:basename()) { "cp", library }
-end)
-
---===================================================================
-section "LuaX binaries"
----------------------------------------------------------------------
-
-local luax_packages = {
-    ls "luax/*.lua",
-    "$luax_config_lua",
-}
-
-local binaries = {}
-local libraries = {}
-
-F{targets, runtimes} : zip(function(target, runtime)
-
-    section("LuaX "..target)
-
-    local e = ext(target)
-
-    acc(binaries) {
-        build("$bin/luax-"..target..e) { luax_packages,
-        description = "LUAX $out",
-            command = {
-                ". tools/build_env.sh;",
-                "cp", runtime, "$out",
-                "&&",
-                "PATH=$tmp:$$PATH",
-                "LUA_PATH=\"$lua_path\"",
-                "$lua -l tools/rc4_runtime luax/bundle.lua -binary $in >> $out",
-            },
-            implicit_in = {
-                "tools/build_env.sh",
-                "$lz4",
-                "$lua",
-                "tools/rc4_runtime.lua",
-                "luax/bundle.lua",
-                runtime,
-            },
-        }
-    }
-
-end)
-
-var "luax" "$bin/luax"
+var "luax" ("$bin"/binary:basename())
 
 acc(binaries) {
-    build "$luax" {
-        description = "CP $out",
-        command = {
-            ". tools/build_env.sh;",
-            "cp -f $bin/luax-$$ARCH-$$OS-$$LIBC$$EXT $out$$EXT",
-        },
-        implicit_in = {
-            "tools/build_env.sh",
-            binaries,
-        },
-    }
+    build "$luax" { "cp", binary }
 }
+
+if shared_library then
+    acc(libraries) {
+        build("$lib"/shared_library:basename()) { "cp", shared_library }
+    }
+end
 
 --===================================================================
 section "LuaX Lua implementation"
@@ -923,16 +845,15 @@ acc(libraries) {
     build "$lib/luax.lua" { "$luax_config_lua", lib_luax_sources,
         description = "LUAX $out",
         command = {
-            ". tools/build_env.sh;",
             "PATH=$tmp:$$PATH",
             "LUA_PATH=\"$lua_path\"",
-            "$lua -l tools/rc4_runtime luax/bundle.lua -lib -lua $in > $out",
+            "CRYPT_KEY=\"$crypt_key\"",
+            "$lua -l tools/rc4_runtime luax/luax_bundle.lua -lib -lua $in > $out",
         },
         implicit_in = {
-            "tools/build_env.sh",
             "$lz4",
             "$lua",
-            "luax/bundle.lua",
+            "luax/luax_bundle.lua",
             "tools/rc4_runtime.lua",
         },
     }
@@ -943,10 +864,22 @@ section "$bin/luax-lua"
 ---------------------------------------------------------------------
 
 acc(binaries) {
-    build "$bin/luax-lua" { "luax/luax.lua",
+    build "$bin/luax-lua" { ls "luax/**.lua",
         description = "LUAX $out",
-        command = "$luax -q -t lua -o $out $in",
-        implicit_in = { "$luax", "$lib/luax.lua" },
+        command = {
+            "PATH=$tmp:$$PATH",
+            "LUA_PATH=\"$lua_path\"",
+            "CRYPT_KEY=\"$crypt_key\"",
+            "LUAX_LIB=$lib",
+            "$lua -l tools/rc4_runtime luax/luax.lua -q -t lua -o $out $in",
+        },
+        implicit_in = {
+            "$lz4",
+            "$lua",
+            "luax/luax_bundle.lua",
+            "tools/rc4_runtime.lua",
+            "$lib/luax.lua",
+        },
     }
 }
 
@@ -955,13 +888,26 @@ section "$bin/luax-pandoc"
 ---------------------------------------------------------------------
 
 acc(binaries) {
-    build "$bin/luax-pandoc" { "luax/luax.lua",
+    build "$bin/luax-pandoc" { ls "luax/**.lua",
         description = "LUAX $out",
-        command = "$luax -q -t pandoc -o $out $in",
-        implicit_in = { "$luax", "$lib/luax.lua" },
+        command = {
+            "PATH=$tmp:$$PATH",
+            "LUA_PATH=\"$lua_path\"",
+            "CRYPT_KEY=\"$crypt_key\"",
+            "LUAX_LIB=$lib",
+            "$lua -l tools/rc4_runtime luax/luax.lua -q -t pandoc -o $out $in",
+        },
+        implicit_in = {
+            "$lz4",
+            "$lua",
+            "luax/luax_bundle.lua",
+            "tools/rc4_runtime.lua",
+            "$lib/luax.lua",
+        },
     }
 }
 
+if not target then
 --===================================================================
 section "Tests"
 ---------------------------------------------------------------------
@@ -985,21 +931,20 @@ acc(test) {
     build "$test/test-1-luax_executable.ok" {
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh;",
             valgrind, "$luax -q -o $test/test-luax",
                 test_sources : difference(ls "tests/luax-tests/to_be_imported-*.lua"),
             "&&",
-            "PATH=$tmp:$$PATH",
+            "PATH=$bin:$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
             "LUA_CPATH='foo/?.so'",
             "TEST_NUM=1",
             "LUAX=$luax",
+            "ARCH="..host.zig_arch, "OS="..host.zig_os, "LIBC="..host.zig_libc,
             valgrind, "$test/test-luax Lua is great",
             "&&",
             "touch $out",
         },
         implicit_in = {
-            "tools/build_env.sh",
             "$luax",
             test_sources,
         },
@@ -1010,18 +955,17 @@ acc(test) {
     build "$test/test-2-lib.ok" {
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh;",
             "export LUA_CPATH=;",
             "eval \"$$($luax env)\";",
-            "PATH=$tmp:$$PATH",
+            "PATH=$bin:$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua'",
             "TEST_NUM=2",
+            "ARCH="..host.zig_arch, "OS="..host.zig_os, "LIBC="..host.zig_libc,
             valgrind, "$lua -l libluax", test_main, "Lua is great",
             "&&",
             "touch $out",
         },
         implicit_in = {
-            "tools/build_env.sh",
             "$lua",
             "$luax",
             shared_libraries,
@@ -1034,16 +978,15 @@ acc(test) {
     build "$test/test-3-lua.ok" {
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh;",
-            "PATH=$tmp:$$PATH",
+            "PATH=$bin:$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=3",
+            "ARCH="..host.zig_arch, "OS="..host.zig_os, "LIBC=lua",
             "$lua -l luax", test_main, "Lua is great",
             "&&",
             "touch $out",
         },
         implicit_in = {
-            "tools/build_env.sh",
             "$lua",
             "$lib/luax.lua",
             libraries,
@@ -1056,16 +999,15 @@ acc(test) {
     build "$test/test-4-lua-luax-lua.ok" {
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh;",
-            "PATH=$tmp:$$PATH",
+            "PATH=$bin:$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=4",
+            "ARCH="..host.zig_arch, "OS="..host.zig_os, "LIBC=lua",
             "$bin/luax-lua", test_main, "Lua is great",
             "&&",
             "touch $out",
         },
         implicit_in = {
-            "tools/build_env.sh",
             "$lua",
             "$bin/luax-lua",
             test_sources,
@@ -1077,16 +1019,15 @@ acc(test) {
     build "$test/test-5-pandoc-luax-lua.ok" {
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh;",
-            "PATH=$tmp:$$PATH",
+            "PATH=$bin:$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=5",
+            "ARCH="..host.zig_arch, "OS="..host.zig_os, "LIBC=lua",
             "pandoc lua -l luax", test_main, "Lua is great",
             "&&",
             "touch $out",
         },
         implicit_in = {
-            "tools/build_env.sh",
             "$lua",
             "$lib/luax.lua",
             libraries,
@@ -1099,18 +1040,16 @@ acc(test) {
     build "$test/test-ext-1-lua.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh;",
             "eval \"$$($luax env)\";",
             "$luax -q -t lua -o $test/ext-lua $in",
             "&&",
-            "PATH=$tmp:$$PATH",
+            "PATH=$bin:$tmp:$$PATH",
             "TARGET=lua",
             "$test/ext-lua Lua is great",
             "&&",
             "touch $out",
         },
         implicit_in = {
-            "tools/build_env.sh",
             "$lib/luax.lua",
             "$luax",
             binaries,
@@ -1119,44 +1058,19 @@ acc(test) {
 
 ---------------------------------------------------------------------
 
-    build "$test/test-ext-2-lua-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
-        description = "TEST $out",
-        command = {
-            ". tools/build_env.sh;",
-            "export LUA_CPATH=;",
-            "eval \"$$($luax env)\";",
-            "$luax -q -t lua-luax -o $test/ext-lua-luax $in",
-            "&&",
-            "PATH=$tmp:$$PATH",
-            "TARGET=lua-luax",
-            "$test/ext-lua-luax Lua is great",
-            "&&",
-            "touch $out",
-        },
-        implicit_in = {
-            "tools/build_env.sh",
-            "$lib/luax.lua",
-            "$luax",
-        },
-    },
-
----------------------------------------------------------------------
-
     build "$test/test-ext-3-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh;",
             "eval \"$$($luax env)\";",
             "$luax -q -t luax -o $test/ext-luax $in",
             "&&",
-            "PATH=$tmp:$$PATH",
+            "PATH=$bin:$tmp:$$PATH",
             "TARGET=luax",
             "$test/ext-luax Lua is great",
             "&&",
             "touch $out",
         },
         implicit_in = {
-            "tools/build_env.sh",
             "$lib/luax.lua",
             "$luax",
         },
@@ -1167,18 +1081,16 @@ acc(test) {
     build "$test/test-ext-4-pandoc.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
         description = "TEST $out",
         command = {
-            ". tools/build_env.sh;",
             "eval \"$$($luax env)\";",
             "$luax -q -t pandoc -o $test/ext-pandoc $in",
             "&&",
-            "PATH=$tmp:$$PATH",
+            "PATH=$bin:$tmp:$$PATH",
             "TARGET=pandoc",
             "$test/ext-pandoc Lua is great",
             "&&",
             "touch $out",
         },
         implicit_in = {
-            "tools/build_env.sh",
             "$lib/luax.lua",
             "$luax",
             binaries,
@@ -1188,7 +1100,9 @@ acc(test) {
 ---------------------------------------------------------------------
 
 }
+end
 
+if not target then
 --===================================================================
 section "Documentation"
 ---------------------------------------------------------------------
@@ -1254,6 +1168,8 @@ acc(doc) {
 
 }
 
+end
+
 --===================================================================
 section "Shorcuts"
 ---------------------------------------------------------------------
@@ -1269,16 +1185,22 @@ phony "compile" (compile)
 default "compile"
 help "compile" "compile LuaX"
 
-phony "test-fast" (test[1])
-help "test-fast" "run LuaX tests (fast, native tests only)"
+if not target and #test > 0 then
 
-phony "test" (test)
-help "test" "run all LuaX tests"
+    phony "test-fast" (test[1])
+    help "test-fast" "run LuaX tests (fast, native tests only)"
 
-phony "doc" (doc)
-help "doc" "update LuaX documentation"
+    phony "test" (test)
+    help "test" "run all LuaX tests"
 
-phony "all" {"compile", "test", "doc"}
+end
+
+if not target then
+    phony "doc" (doc)
+    help "doc" "update LuaX documentation"
+end
+
+phony "all" {"compile", not target and {"test", "doc"} or {}}
 help "all" "alias for compile, test and doc"
 
 phony "update" "update_modules"

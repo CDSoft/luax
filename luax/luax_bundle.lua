@@ -28,9 +28,7 @@ require "lz4"
 require "crypt"
 local config = require "luax_config"
 
-bundle.magic = "\0"..config.magic_id.."\0"
-
-local header_format = ("<I4c%d"):format(#bundle.magic)
+local magic_id = "LuaX"
 
 local function read(name)
     if not name:is_file() then
@@ -70,6 +68,7 @@ function bundle.bundle(arg, opts)
     local product_name = assert(opts.name, "Missing output name")
     for i = 1, #arg do
         if arg[i] == "-lib" then kind = "lib"
+        elseif arg[i] == "-app" then kind = "app"
         elseif arg[i] == "-binary" then format = "binary"
         elseif arg[i] == "-ascii"  then format = "ascii"
         elseif arg[i] == "-lua"    then format = "lua"
@@ -211,7 +210,7 @@ function bundle.bundle(arg, opts)
     local payload = plain_payload:lz4():rc4()
 
     if format == "binary" then
-        return payload .. header_format:pack(#payload, bundle.magic)
+        return F{magic_id, "\0", config.version, "\0", payload}:str()
     end
 
     if format == "ascii" then
@@ -226,20 +225,13 @@ function bundle.bundle(arg, opts)
 
 end
 
-local function drop_chunk(exe)
-    local header_size = header_format:packsize()
-    local size, magic = header_format:unpack(exe, #exe - header_size + 1)
-    if magic ~= bundle.magic then
-        io.stderr:write("error: no LuaX header found in the current target\n")
-        os.exit(1)
-    end
-    return exe:sub(1, #exe - header_size - size)
-end
-
-function bundle.combine(target, name, scripts)
-    local runtime = drop_chunk(read(target))
-    local chunk = bundle.bundle(scripts, {name=name})
-    return runtime..chunk, chunk
+function bundle.decrypt(script)
+    local pattern = "^[^\n]*%s+"..magic_id.."\0([^\0]+)\0(.*)"
+    local version, chunk = script:match(pattern)
+    return ( version
+           and assert(chunk:unrc4():unlz4()) -- binary bundle
+           or script                         -- Lua bundle
+           ) : gsub("^#!", "--")    -- comment the shebang before loading the script
 end
 
 function bundle.combine_lua(name, scripts)

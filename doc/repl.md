@@ -16,7 +16,7 @@ $ luax
 ### Shared library usable with a standard Lua interpreter
 
 ``` sh
-$ LUA_CPATH="lib/?.so" lua -l luax-x86_64-linux-gnu
+$ lua -l libluax
 ```
 
 ## Reduced version for plain Lua interpreters

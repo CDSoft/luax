@@ -32,7 +32,7 @@ local sys = require "sys"
 return function()
     local test_num = tonumber(os.getenv "TEST_NUM")
     if F.elem(test_num, {1}) then
-        local shell_env = require "shell_env"
+        local shell_env = require "luax_shell_env"
         local libext = F.case(sys.os) { linux="so",  macos="dylib", windows="dll" }
 
         local cwd = fs.getcwd()
@@ -41,14 +41,14 @@ return function()
 F.I{CWD=cwd, sys=sys, libext=libext, os=os}[[
 export PATH="$(CWD)/.build/bin:$(os.getenv'PATH')";
 export LUA_PATH="$(CWD)/.build/lib/?.lua;$(os.getenv'LUA_PATH')";
-export LUA_CPATH="$(CWD)/.build/lib/?-$(sys.arch)-$(sys.os)-$(sys.abi).$(libext);$(os.getenv'LUA_CPATH')";
+export LUA_CPATH="$(CWD)/.build/lib/?.$(libext);$(os.getenv'LUA_CPATH')";
 ]])
 
         eq(shell_env(os.getenv"LUAX", {}),
 F.I{CWD=cwd, sys=sys, libext=libext, os=os}[[
 export PATH="$(CWD)/.build/bin:$(os.getenv'PATH')";
 export LUA_PATH="$(CWD)/.build/lib/?.lua;$(os.getenv'LUA_PATH')";
-export LUA_CPATH="$(CWD)/.build/lib/?-$(sys.arch)-$(sys.os)-$(sys.abi).$(libext);$(os.getenv'LUA_CPATH')";
+export LUA_CPATH="$(CWD)/.build/lib/?.$(libext);$(os.getenv'LUA_CPATH')";
 ]])
 
         fs.with_tmpdir(function(tmp)

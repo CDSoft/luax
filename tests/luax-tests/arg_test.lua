@@ -26,15 +26,19 @@ local test = require "test"
 local eq = test.eq
 
 local sys = require "sys"
+local fs = require "fs"
 
 return function()
     local test_num = tonumber(os.getenv "TEST_NUM")
 
     if test_num == 1 then
         eq(arg, {
+            [-2] = "luax",
+            [-1] = "--",
             [0] = ".build/test/test-luax",
             "Lua", "is", "great"
         })
+        eq(fs.findpath(arg[-2]), ".build/bin/luax")
         assert(sys.abi == "gnu")
         assert(not pandoc)
 
@@ -65,6 +69,7 @@ return function()
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })
+        eq(fs.findpath(arg[-2]), ".build/tmp/lua")
         assert(sys.abi == "lua")
         assert(not pandoc)
 

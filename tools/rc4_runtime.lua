@@ -21,7 +21,7 @@ http://cdelord.fr/luax
 --@LOAD
 
 -- Override crypt.rc4 to use the runtime key if no key is given.
--- This script is used with bundle.lua when it is run with a standard Lua interpreter
+-- This script is used with luax_bundle.lua when it is run with a standard Lua interpreter
 -- (e.g. to bootstrap the first LuaX runtime).
 -- It is not embedded in the final LuaX binaries.
 

@@ -19,13 +19,10 @@
 
 #include "libluax.h"
 
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <libgen.h>
 
 #include "lauxlib.h"
 
@@ -146,7 +143,7 @@ LUAMOD_API int luaopen_libluax(lua_State *L)
     decode_runtime((const char *)runtime_chunk, sizeof(runtime_chunk), &rt_chunk, &rt_chunk_len);
     if (run_buffer(L, rt_chunk, rt_chunk_len, "=runtime") != LUA_OK)
     {
-        error(arg0(L), "can not initialize LuaX runtime\n");
+        error(arg0(L), "can not initialize the LuaX runtime\n");
     }
     free(rt_chunk);
 

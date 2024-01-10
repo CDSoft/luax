@@ -21,13 +21,8 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include <libgen.h>
 
 #include "lualib.h"
-
-#include "luax_config.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -39,35 +34,9 @@
 #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
 #endif
 
-typedef char t_magic[1+sizeof(LUAX_MAGIC_ID)];
-
-typedef struct __attribute__((__packed__))
-{
-    uint32_t size;
-    t_magic magic;
-} t_header;
-
-static const t_magic magic = "\0"LUAX_MAGIC_ID;
-
-static inline uint32_t littleendian(uint32_t n)
-{
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    n = __builtin_bswap32(n);
-#endif
-    return n;
-}
-
-static void get_exe(const char *arg0, char *name, size_t name_size)
-{
-#ifdef _WIN32
-    const DWORD n = GetModuleFileName(NULL, name, name_size);
-    if (n == 0) error(arg0, "Can not be found");
-#else
-    const ssize_t n = readlink("/proc/self/exe", name, name_size);
-    if (n < 0) perror(arg0);
-#endif
-    name[n] = '\0';
-}
+static const uint8_t app_chunk[] = {
+#include "lua_app_bundle.dat"
+};
 
 static void createargtable(lua_State *L, const char **argv, int argc, int shift)
 {
@@ -82,38 +51,17 @@ static void createargtable(lua_State *L, const char **argv, int argc, int shift)
 
 int main(int argc, const char *argv[])
 {
-    char exe[1024];
-    get_exe(argv[0], exe, sizeof(exe));
-
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
     createargtable(L, argv, argc, 0);
     luaopen_libluax(L);
 
-    FILE *f = fopen(exe, "rb");
-    if (f == NULL) perror(exe);
-
-    t_header header;
-    fseek(f, -(long)sizeof(header), SEEK_END);
-    if (fread(&header, sizeof(header), 1, f) != 1) perror(arg0(L));
-    header.size = littleendian(header.size);
-    if (memcmp(header.magic, magic, sizeof(magic)) != 0)
-    {
-        /* The runtime contains no application */
-        error(arg0(L), "LuaX application not found");
-    }
-
-    fseek(f, -(long)(header.size + sizeof(header)), SEEK_END);
-    char *chunk = safe_malloc(header.size);
-    if (fread(chunk, header.size, 1, f) != 1) perror(arg0(L));
-    fclose(f);
-    char *decoded_chunk = NULL;
-    size_t decoded_chunk_len = 0;
-    decode_runtime(chunk, header.size, &decoded_chunk, &decoded_chunk_len);
+    char *chunk = NULL;
+    size_t chunk_len = 0;
+    decode_runtime((const char *)app_chunk, sizeof(app_chunk), &chunk, &chunk_len);
+    (void)run_buffer(L, chunk, chunk_len, "=luax");
     free(chunk);
-    const int status = run_buffer(L, decoded_chunk, decoded_chunk_len, "=");
-    free(decoded_chunk);
 
     lua_close(L);
-    exit(status == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
+    exit(EXIT_SUCCESS);
 }

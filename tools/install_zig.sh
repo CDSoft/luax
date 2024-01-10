@@ -26,7 +26,21 @@ ZIG="$2"
 if ! [ -x "$ZIG" ]
 then
 
-    . tools/build_env.sh
+    ARCH="$(uname -m)"
+    case "$ARCH" in
+        (i386)  ARCH=x86 ;;
+        (i486)  ARCH=x86 ;;
+        (i586)  ARCH=x86 ;;
+        (i686)  ARCH=x86 ;;
+        (arm64) ARCH=aarch64 ;;
+    esac
+
+    case "$(uname -s)" in
+        (Linux)  OS=linux ;;
+        (Darwin) OS=macos ;;
+        (MINGW*) OS=windows ;;
+        (*)      OS=unknown ;;
+    esac
 
     ZIG_ARCHIVE="zig-$OS-$ARCH-$ZIG_VERSION.tar.xz"
     case $ZIG_VERSION in

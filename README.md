@@ -3,17 +3,16 @@
 # Lua eXtended
 
 `luax` is a Lua interpreter and REPL based on Lua 5.4, augmented with
-some useful packages. `luax` can also produce standalone executables
-from Lua scripts.
+some useful packages. `luax` can also produce executable scripts from
+Lua scripts.
 
 `luax` runs on several platforms with no dependency:
 
-- Linux (x86_64, x86, aarch64)
+- Linux (x86_64, aarch64)
 - MacOS (x86_64, aarch64)
 - Windows (x86_64, x86)
 
-`luax` can « cross-compile[^1] » scripts from and to any of these
-platforms.
+`luax` can « compile[^1] » scripts from and to any of these platforms.
 
 ## Getting in touch
 
@@ -25,8 +24,7 @@ platforms.
 
 - [Ninja](https://ninja-build.org): needed to compile LuaX using the
   LuaX Ninja file
-- [Bang](https://github.com/CDSoft/bang): optional, only needed to
-  update the Ninja file
+- [Lua](https://lua.org): optional, only needed to update the Ninja file
 
 ## Compilation
 
@@ -38,12 +36,26 @@ Just download `luax` (<https://github.com/CDSoft/luax>) and run `ninja`:
 ``` sh
 $ git clone https://github.com/CDSoft/luax
 $ cd luax
-$ ninja             # compile LuaX (all targets)
+$ ninja             # compile LuaX (for Linux)
 $ ninja test        # run tests on the host
 $ ninja doc         # generate LuaX documentation
 ```
 
 **Note**: `ninja` will download a Zig compiler.
+
+To compile LuaX on a different platform (e.g. MacOS or Windows),
+[Bang](https://github.com/CDSoft/bang) must be used to generate a new
+Ninja file (bang can be found in `tools/bang` and requires a
+preinstalled Lua interpreter).
+
+E.g. on MacOS:
+
+``` sh
+$ git clone https://github.com/CDSoft/luax
+$ cd luax
+$ tools/bang
+$ ninja
+```
 
 ### Compilation options
 
@@ -53,10 +65,9 @@ $ ninja doc         # generate LuaX documentation
 | `bang -- small [upx]` | Optimized for size, optionally compressed with [UPX](https://upx.github.io/)  |
 | `bang -- quick`       | Faster compilation, not optimized                                             |
 | `bang -- debug`       | Debug symbols kept, tests with [valgrind](https://valgrind.org/)              |
-| `bang -- zig`         | Compile LuaX with Zig, for all supported targets (default)                    |
-| `bang -- gcc`         | Compile LuaX with gcc (implies “host”)                                        |
-| `bang -- clang`       | Compile LuaX with clang (implies “host”)                                      |
-| `bang -- host`        | Compile LuaX for the current host only                                        |
+| `bang -- zig`         | Compile LuaX with Zig                                                         |
+| `bang -- gcc`         | Compile LuaX with gcc                                                         |
+| `bang -- clang`       | Compile LuaX with clang                                                       |
 | `bang -- upx`         | Compress LuaX with UPX                                                        |
 
 `bang` must be run before `ninja` to change the compilation options.
@@ -76,13 +87,11 @@ finding tricky bugs. [Bang](https://github.com/CDSoft/bang) must be
 installed first to generate `build.ninja`:
 
 ``` sh
-$ git clone https://github.com/CDSoft/bang
-$ ninja -C bang install
 $ git clone https://github.com/CDSoft/luax
 $ cd luax
-$ bang -- debug     # generate build.ninja in debug mode
-$ ninja             # compile LuaX (all targets)
-$ ninja test        # run tests on the host
+$ tools/bang -- debug   # generate build.ninja in debug mode
+$ ninja                 # compile LuaX (all targets)
+$ ninja test            # run tests on the host
 ```
 
 ## Precompiled LuaX binaries
@@ -111,19 +120,14 @@ installed and can be copied anywhere you want.
 
 `ninja install` installs:
 
-- `$PREFIX/bin/luax`: symbolic link to the LuaX binary for the host
-- `$PREFIX/bin/luax-<ARCH>-<OS>-<LIBC>`: LuaX binary for a specific
-  platform
-- `$PREFIX/bin/luax-pandoc`: LuaX run in a Pandoc Lua interpreter
+- `$PREFIX/bin/luax`: LuaX binary
 - `$PREFIX/bin/luax-lua`: a pure Lua REPL reimplementing some LuaX
   libraries, usable in any Lua 5.4 interpreter (e.g.: lua, pandoc lua,
   …)
-- `$PREFIX/lib/libluax-<ARCH>-<OS>-<LIBC>.so`: Linux LuaX shared
-  libraries
-- `$PREFIX/lib/libluax-<ARCH>-<OS>-<LIBC>.dylib`: MacOS LuaX shared
-  libraries
-- `$PREFIX/lib/libluax-<ARCH>-<OS>-<LIBC>.dll`: Windows LuaX shared
-  libraries
+- `$PREFIX/bin/luax-pandoc`: LuaX run in a Pandoc Lua interpreter
+- `$PREFIX/lib/libluax.so`: Linux LuaX shared libraries
+- `$PREFIX/lib/libluax.dylib`: MacOS LuaX shared libraries
+- `$PREFIX/lib/libluax.dll`: Windows LuaX shared libraries
 - `$PREFIX/lib/luax.lua`: a pure Lua reimplementation of some LuaX
   libraries, usable in any Lua 5.4 interpreter.
 
@@ -151,10 +155,7 @@ scripts:
 
     Compilation options:
       -t target         name of the targetted platform
-      -t all            compile for all available LuaX targets
       -t list           list available targets
-      -t list-luax      list available native LuaX targets
-      -t list-lua       list available Lua/Pandoc targets
       -o file           name the executable file to create
       -q                quiet compilation (error messages only)
 
@@ -216,35 +217,29 @@ LuaX can also embed files that are not Lua scripts. These files are
 embedded as Lua modules that return the file content as a string. In
 this case, the module name if the file name.
 
+**Note for Windows users**: since Windows does not support shebangs, a
+script `script` shall be explicitly launched with `luax` (e.g.:
+`luax script`). If `script` is not found, it is searched in the
+installation directory of `luax` or in `$PATH`.
+
 ### Examples
 
 ``` bash
-# Native compilation (luax is a symlink to the luax binary of the host)
+# Compilation (standalone executable script for LuaX)
 $ luax -o executable main.lua lib1.lua lib2.lua
 $ ./executable      # equivalent to luax main.lua
 
-# « Cross compilation » to MacOS x86_64
-$ luax -o executable -t x86_64-macos-none main.lua lib1.lua lib2.lua
+# Compilation for Lua
+$ luax -o executable -t lua main.lua lib1.lua lib2.lua
+
+# Compilation for Pandoc Lua
+$ luax -o executable -t pandoc main.lua lib1.lua lib2.lua
 
 # Available targets
 $ luax -t list
-Targets producing standalone LuaX executables:
-
-    x86_64-linux-musl
-    x86_64-linux-gnu
-    aarch64-linux-musl
-    aarch64-linux-gnu
-    x86_64-windows-gnu
-    x86_64-macos-none
-    aarch64-macos-none
-
-Targets based on an external Lua interpreter:
-
-    lua
-    lua-luax
-    luax
-    pandoc
-    pandoc-luax
+lua         ~/.local/bin/lua
+luax        ~/.local/bin/luax
+pandoc      ~/.local/bin/pandoc
 ```
 
 ## Built-in modules
@@ -292,7 +287,7 @@ than the LuaX executable and can be used by a regular Lua interpreter
 
 E.g.:
 
-    $ lua -l luax-x86_64-linux-gnu
+    $ lua -l libluax
     Lua 5.4.6  Copyright (C) 1994-2023 Lua.org, PUC-Rio
     > F = require "F"
     > F.range(100):sum()
@@ -362,7 +357,7 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
   library for Lua ([MIT
   license](https://github.com/rxi/json.lua/blob/master/LICENSE))
 
-[^1]: `luax` is actually not a « cross compiler ».
+[^1]: `luax` is actually not a « compiler ».
 
-    It just bundles Lua scripts with a precompiled LuaX runtime that can
-    be run on the target with no dependency.
+    It just bundles Lua scripts into a single script that can be run
+    everywhere LuaX is installed.

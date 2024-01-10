@@ -26,7 +26,7 @@ local F = require "F"
 local term = require "term"
 local luax_config = require "luax_config"
 
-local has_compiler = pcall(require, "bundle")
+local has_compiler, bundle = pcall(require, "luax_bundle")
 
 local welcome = F.I(_G){sys=sys}[[
  _               __  __  |  https://cdelord.fr/luax
@@ -66,10 +66,7 @@ Lua options:
     has_compiler and [==[
 Compilation options:
   -t target         name of the targetted platform
-  -t all            compile for all available LuaX targets
   -t list           list available targets
-  -t list-luax      list available native LuaX targets
-  -t list-lua       list available Lua/Pandoc targets
   -o file           name the executable file to create
   -q                quiet compilation (error messages only)
 
@@ -133,54 +130,28 @@ local function print_usage(fmt, ...)
     print(usage)
 end
 
-local function is_windows(compiler_target) return compiler_target:match "-windows-" end
-local function ext(compiler_target) return is_windows(compiler_target) and ".exe" or "" end
-
 local function findpath(name)
     if fs.is_file(name) then return name end
     local full_path = fs.findpath(name)
     return full_path and fs.realpath(full_path) or name
 end
 
-local external_interpreters = F{
-    -- Only the Lua format can be used with external interpreters
-    -- to avoid incompatibilities between the payload and the interpreter.
-    ["lua"]          = { interpreter="lua",        format="-lua", library={},             scripts={"luax.lua"} },
-    ["lua-luax"]     = { interpreter="lua",        format="-lua", library="-l _=libluax", scripts={} },
-    ["luax"]         = { interpreter="luax",       format="-lua", library={},             scripts={} },
-    ["pandoc"]       = { interpreter="pandoc lua", format="-lua", library={},             scripts={"luax.lua"} },
-    ["pandoc-luax"]  = { interpreter="pandoc lua", format="-lua", library="-l _=libluax", scripts={} },
+local lua_interpreters = F{
+    ["luax"]   = { interpreter="luax",       format="-binary", scripts={} },
+    ["lua"]    = { interpreter="lua",        format="-lua",    scripts={"luax.lua"} },
+    ["pandoc"] = { interpreter="pandoc lua", format="-lua",    scripts={"luax.lua"} },
 }
 
 local function print_targets()
-    print "Targets producing standalone LuaX executables:\n"
-    F(luax_config.targets):foreach(function(target)
-        local compiler = findpath(arg0):dirname() / "luax-"..target..ext(target)
-        print(("    %-22s%s%s"):format(
-            target,
-            compiler:gsub("^"..os.getenv"HOME", "~"),
-            fs.is_file(compiler) and "" or " [NOT FOUND]"
-        ))
-    end)
-    print ""
-    print "Targets based on an external Lua interpreter:\n"
-    external_interpreters:items():foreach(function(name_def)
+    lua_interpreters:items():foreach(function(name_def)
         local name, def = F.unpack(name_def)
         local exe = def.interpreter:words():head()
         local path = fs.findpath(exe)
-        print(("    %-22s%s%s"):format(
+        print(("%-12s%s%s"):format(
             name,
             path and path:gsub("^"..os.getenv"HOME", "~") or exe,
             path and "" or " [NOT FOUND]"))
     end)
-end
-
-local function print_luax_targets()
-    F(luax_config.targets):foreach(print)
-end
-
-local function print_lua_targets()
-    external_interpreters:keys():foreach(print)
 end
 
 local function err(fmt, ...)
@@ -247,7 +218,7 @@ $ luax
 ### Shared library usable with a standard Lua interpreter
 
 ``` sh
-$ LUA_CPATH="lib/?.so" lua -l luax-x86_64-linux-gnu
+$ lua -l libluax
 ```
 
 ## Reduced version for plain Lua interpreters
@@ -493,8 +464,6 @@ do
             if target then wrong_arg(a) end
             target = arg[i]
             if target == "list" then print_targets() os.exit() end
-            if target == "list-luax" then print_luax_targets() os.exit() end
-            if target == "list-lua" then print_lua_targets() os.exit() end
         elseif has_compiler and a == '-q' then
             compiler_mode = true
             quiet = true
@@ -565,12 +534,27 @@ local function run_interpreter()
         local script = args[1]
         local show, chunk, msg
         if script == "env" then
-            local shell_env = require "shell_env"
+            local shell_env = require "luax_shell_env"
             show, chunk = F.id, function() return shell_env(arg0, args:drop(1)) end
         elseif script == "-" then
-            chunk, msg = load(io.stdin:read "*a")
+            chunk, msg = load(bundle.decrypt(io.stdin:read "*a"))
         else
-            chunk, msg = loadfile(script)
+            local function findscript(name)
+                local candidates = F.nub({".", fs.dirname(arg[-1])} .. os.getenv"PATH":split(fs.path_sep))
+                for _, path in ipairs(candidates) do
+                    local candidate = path/name
+                    if fs.is_file(candidate) then
+                        if path=="." then return name end
+                        return candidate
+                    end
+                end
+                candidates : foreach(function(path)
+                    io.stderr:write(("    no file '%s' in '%s'\n"):format(name, path))
+                end)
+                os.exit(1)
+            end
+            local real_script = findscript(script)
+            chunk, msg = load(bundle.decrypt(assert(fs.read(real_script))), "@"..real_script)
         end
         if not chunk then
             io.stderr:write(("%s: %s\n"):format(script, msg))
@@ -651,55 +635,11 @@ local function run_compiler()
         print(("%-9s: %s"):format(k, fmt:format(...)))
     end
 
-    -- Check the target parameter
-    local valid_targets = F.from_set(F.const(true), luax_config.targets)
-    local compilers = {}
-    local function rmext(compiler_target, name) return name:gsub(ext(compiler_target):gsub("%.", "%%.").."$", "") end
-    F(target == "all" and valid_targets:keys() or target and {target} or {}):foreach(function(compiler_target)
-        if external_interpreters[compiler_target] then return end
-        if not valid_targets[compiler_target] then err("Invalid target: %s", compiler_target) end
-        local compiler = findpath(arg0):dirname() / "luax-"..compiler_target..ext(compiler_target)
-        if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, compiler_target} end
-    end)
-    if not target then
-        local compiler = findpath(arg0)
-        if fs.is_file(compiler) then compilers[#compilers+1] = {compiler, nil} end
-    end
-
     -- List scripts
     local head = "scripts"
     for i = 1, #scripts do
         log(head, "%s", scripts[i])
         head = ""
-    end
-
-    -- Compile scripts for each targets
-    local function compile_target(current_output, compiler)
-        local compiler_exe, compiler_target = table.unpack(compiler)
-        if target == "all" then
-            current_output = rmext(compiler_target, current_output).."-"..compiler_target..ext(compiler_target)
-        end
-        if compiler_target then
-            current_output = rmext(compiler_target, current_output)..ext(compiler_target)
-        end
-
-        if not quiet then print() end
-        log("compiler", "%s", compiler_exe)
-        log("output", "%s", current_output)
-
-        local bundle = require "bundle"
-        local exe, chunk = bundle.combine(compiler_exe, current_output:basename(), scripts)
-        log("Chunk", "%7d bytes", #chunk)
-        log("Total", "%7d bytes", #exe)
-
-        local f = io.open(current_output, "wb")
-        if f == nil then err("Can not create "..current_output)
-        else
-            f:write(exe)
-            f:close()
-        end
-
-        fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
     end
 
     -- Prepare scripts for a Lua / Pandoc Lua target
@@ -709,20 +649,18 @@ local function run_compiler()
         log("output", "%s", current_output)
 
         local function findscript(script_name)
-            return findpath(arg0):dirname():dirname() / "lib" / script_name
+            return (  os.getenv "LUAX_LIB"
+                   or (findpath(arg0):dirname():dirname() / "lib")
+                   ) / script_name
         end
         local luax_scripts = F.map(findscript, interpreter.scripts)
 
-        local bundle = require "bundle"
         local chunk = bundle.combine_lua(current_output:basename(), {interpreter.format, luax_scripts, scripts})
         local exe = F.flatten{
                 "#!/usr/bin/env -S",
 
                 -- "luax", "lua" or "pandoc lua" interpreter
                 interpreter.interpreter,
-
-                -- load luax library (.lua or .so)
-                interpreter.library,
 
                 -- remaining parameters are given to the main script
                 "--",
@@ -742,19 +680,20 @@ local function run_compiler()
         fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
     end
 
-    F(compilers):foreach(function(compiler)
-        compile_target(output, compiler)
-    end)
-    external_interpreters:foreachk(function(name, interpreter)
+    local valid_target = false
+    target = target or "luax"
+    lua_interpreters:foreachk(function(name, interpreter)
         if target == name then
             compile_lua(output, name, interpreter)
+            valid_target = true
         end
     end)
+    if not valid_target then
+        err(target..": unknown interpreter")
+    end
 
 end
 
 actions:add(compiler_mode and run_compiler or run_interpreter)
 
 actions:run()
-
--- vim: set ts=4 sw=4 foldmethod=marker :
