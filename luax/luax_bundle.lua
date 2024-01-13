@@ -228,10 +228,12 @@ end
 function bundle.decrypt(script)
     local pattern = "^[^\n]*%s+"..magic_id.."\0([^\0]+)\0(.*)"
     local version, chunk = script:match(pattern)
-    return ( version
-           and assert(chunk:unrc4():unlz4()) -- binary bundle
-           or script                         -- Lua bundle
-           ) : gsub("^#!", "--")    -- comment the shebang before loading the script
+    return (
+        ( version
+        and assert(chunk:unrc4():unlz4()) -- binary bundle
+        or script                         -- Lua bundle
+        ) : gsub("^#!", "--") -- comment the shebang before loading the script
+    )
 end
 
 function bundle.combine_lua(name, scripts)
