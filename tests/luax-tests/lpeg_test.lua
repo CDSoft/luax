@@ -25,7 +25,7 @@ http://cdelord.fr/luax
 local sys = require "sys"
 
 return function()
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    if sys.libc == "gnu" or sys.libc == "musl" then
         assert(require "lpeg")
         assert(require "re")
     end

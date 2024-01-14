@@ -50,7 +50,7 @@ local function fs_test(tmp)
     fs.remove(tmp)
 
     fs.mkdirs(tmp)
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    if sys.libc == "gnu" or sys.libc == "musl" then
         assert(fs.chdir(tmp))
         eq(fs.getcwd(), fs.absname(tmp))
         eq(fs.getcwd(), fs.realpath(tmp))
@@ -73,23 +73,23 @@ local function fs_test(tmp)
     eq(fs.is_dir(fs.join(tmp, "level1", "level2", "level3")), true)
 
     eq(fs.dir(tmp):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    if sys.libc == "gnu" or sys.libc == "musl" then
         eq(fs.dir():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         eq(fs.dir("."):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         eq(("."):dir():sort(), fs.dir("."):sort())
     end
-    if sys.os == "linux" and (sys.abi == "gnu" or sys.abi == "musl") then
+    if sys.os == "linux" and (sys.libc == "gnu" or sys.libc == "musl") then
         eq(fs.glob():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         eq(fs.glob("*.txt"):sort(),{"bar.txt","foo.txt"})
     end
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    if sys.libc == "gnu" or sys.libc == "musl" then
         fs.chdir(cwd)
         eq(fs.dir(tmp):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         fs.chdir(tmp)
     end
 
     local function test_files(f, testfiles, reverse)
-        if sys.abi == "gnu" or sys.abi == "musl" then
+        if sys.libc == "gnu" or sys.libc == "musl" then
             eq(f(".", {reverse=reverse}), F.map(function(name) return F.prefix"."(name:gsub("/", fs.sep)) end, testfiles))
             fs.chdir(cwd)
             eq(f(tmp, {reverse=reverse}), F.map(function(name) return F.prefix(tmp)(name:gsub("/", fs.sep)) end, testfiles))
@@ -120,7 +120,7 @@ local function fs_test(tmp)
     eq(fs.ls(tmp/"bar**"):map(trim_tmp),      {"/bar","/bar.txt","/bar/bar.txt"})
     eq(fs.ls(tmp/"**.txt"):map(trim_tmp),     {"/bar.txt","/bar/bar.txt","/bar/baz/baz.txt","/foo-bar/x-y+z.txt","/foo/foo.txt","/foo2.txt"})
     eq(fs.ls(tmp/"**-y+z.txt"):map(trim_tmp), {"/foo-bar/x-y+z.txt"})
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    if sys.libc == "gnu" or sys.libc == "musl" then
         fs.chdir(tmp)
         eq(fs.ls(),             {"bar","bar.txt","foo","foo-bar","foo2.txt","level1"})
         eq(fs.ls("."),          {"bar","bar.txt","foo","foo-bar","foo2.txt","level1"})
@@ -218,7 +218,7 @@ local function fs_test(tmp)
 
     local ft2 = fs.join(tmp, "ft2")
     assert(fs.touch(ft2, ft))
-    if sys.abi == "gnu" or sys.abu == "musl" then
+    if sys.libc == "gnu" or sys.abu == "musl" then
         eq(fs.stat(ft2).mtime, fs.stat(ft).mtime)
         eq(fs.stat(ft2).atime, fs.stat(ft).atime)
         eq(fs.stat(ft2).ctime, fs.stat(ft).ctime)
@@ -230,7 +230,7 @@ local function fs_test(tmp)
 
     local ok, err = fs.touch("/foo")
     eq(ok, nil)
-    if sys.abi == "gnu" or sys.abu == "musl" then
+    if sys.libc == "gnu" or sys.abu == "musl" then
         eq(err:gsub(":.*", ": ..."), "/foo: ...")
     end
 
@@ -267,26 +267,26 @@ local function fs_test(tmp)
     eq(fs.splitpath("usr/bin/lua"), {"usr", "bin", "lua"})
     eq(F"/usr/bin/lua":splitpath(), {"/", "usr", "bin", "lua"})
     eq(F"usr/bin/lua":splitpath(), {"usr", "bin", "lua"})
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    if sys.libc == "gnu" or sys.libc == "musl" then
         eq(fs.absname("."), fs.join(tmp, "."))
     end
     eq(fs.absname(tmp), tmp)
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    if sys.libc == "gnu" or sys.libc == "musl" then
         eq(fs.absname("foo"), fs.join(tmp, "foo"))
         eq(("foo"):absname(), tmp/"foo")
     end
     eq(fs.absname("/foo"), "/foo")
     eq(fs.absname("\\foo"), "\\foo")
     eq(fs.absname("Z:foo"), "Z:foo")
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    if sys.libc == "gnu" or sys.libc == "musl" then
         eq(fs.realpath("."), tmp)
         eq(("."):realpath(), tmp)
     end
     eq(fs.realpath(tmp), tmp)
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    if sys.libc == "gnu" or sys.libc == "musl" then
         eq(fs.realpath("foo"), fs.join(tmp, "foo"))
     end
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    if sys.libc == "gnu" or sys.libc == "musl" then
         eq(fs.realpath("/foo"), nil) -- unknown file
         eq(fs.realpath("\\foo"), nil) -- unknown file
         eq(fs.realpath("Z:foo"), nil) -- unknown file
@@ -315,7 +315,7 @@ local function fs_test(tmp)
 
     eq(fs.rmdir(tmp), true)
 
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    if sys.libc == "gnu" or sys.libc == "musl" then
         fs.chdir(cwd)
     end
 

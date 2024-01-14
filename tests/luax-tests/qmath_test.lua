@@ -103,7 +103,7 @@ return function()
     local function test_rat(f, eps, q)
         eq(qmath.torat(f, eps), q)
         assert(abs(qmath.torat(f, eps):tonumber() - f) <= (eps or 1e-6))
-        if sys.abi == "lua" and f == 0 then
+        if sys.libc == "lua" and f == 0 then
             eq(qmath.torat(-f, eps), q)
         else
             eq(qmath.torat(-f, eps), -q)

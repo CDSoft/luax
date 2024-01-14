@@ -34,7 +34,7 @@ local sys = require "sys"
 
 return function()
     local prng = crypt.prng()
-    local N = sys.abi == "lua" and 100 or 1000
+    local N = sys.libc == "lua" and 100 or 1000
     do
         local x = "foobarbaz"
         local y = crypt.hex(x)
@@ -152,7 +152,7 @@ return function()
         end
         do
             local s = "foobar!"
-            if sys.abi ~= "lua" then
+            if sys.libc ~= "lua" then
                 -- nil key is available to the LuaX runtime only
                 ne(s:rc4(), s:rc4(""))
                 ne(s:rc4(), s:rc4("x"))

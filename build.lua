@@ -55,10 +55,10 @@ and run bang to regenerate build.ninja.
 local luax_sys = dofile"libluax/sys/sys.lua"
 local targets = F(luax_sys.targets)
 local host = targets
-    : filter(function(t) return t.zig_os==luax_sys.os and t.zig_arch==luax_sys.arch and t.zig_abi~="musl" end)
+    : filter(function(t) return t.zig_os==luax_sys.os and t.zig_arch==luax_sys.arch end)
     : head()
 if not host then
-    F.error_without_stack_trace("Unknown platform")
+    F.error_without_stack_trace(luax_sys.os.." "..luax_sys.arch..": unknown host")
 end
 
 local usage = F.I{
@@ -357,7 +357,7 @@ local function zig_target(t)
     return t and {"-target", F{t.zig_arch, t.zig_os, t.zig_libc}:str"-"} or {}
 end
 
-rule "cc" {
+rule "cc-host" {
     description = "CC $in",
     command = {
         "$cc", "-c", native_cflags, "-MD -MF $depfile $in -o $out",
@@ -368,7 +368,7 @@ rule "cc" {
     depfile = "$out.d",
 }
 
-rule "ld" {
+rule "ld-host" {
     description = "LD $out",
     command = {
         "$ld", native_ldflags, "$in -o $out",
@@ -380,7 +380,7 @@ rule "ld" {
 
 local target_arch = target and target.zig_arch or host.zig_arch
 local target_os   = target and target.zig_os   or host.zig_os
-local target_abi  = target and target.zig_libc or host.zig_libc
+local target_libc = target and target.zig_libc or host.zig_libc
 
 local lto = case(mode) {
     fast = case(target_os) {
@@ -395,7 +395,7 @@ local lto = case(mode) {
 local target_flags = {
     "-DLUAX_ARCH='\""..target_arch.."\"'",
     "-DLUAX_OS='\""..target_os.."\"'",
-    "-DLUAX_ABI='\""..target_abi.."\"'",
+    "-DLUAX_LIBC='\""..target_libc.."\"'",
 }
 local lua_flags = {
     case(target_os) {
@@ -405,7 +405,7 @@ local lua_flags = {
     },
 }
 local target_ld_flags = {
-    case(target_abi) {
+    case(target_libc) {
         gnu  = "-rdynamic",
         musl = {},
         none = "-rdynamic",
@@ -468,7 +468,7 @@ local so = rule("so-target") {
     },
 }
 
-local ar = rule "ar" {
+local ar = rule "ar-target" {
     description = "AR $out",
     command = "$ar -crs $out $in",
     implicit_in = {
@@ -492,10 +492,10 @@ section "lz4 cli"
 
 var "lz4" "$tmp/lz4"
 
-build "$lz4" { "ld",
+build "$lz4" { "ld-host",
     ls "ext/c/lz4/**.c"
     : map(function(src)
-        return build("$tmp/obj/lz4"/src:splitext()..".o") { "cc", src }
+        return build("$tmp/obj/lz4"/src:splitext()..".o") { "cc-host", src }
     end),
 }
 
@@ -554,9 +554,9 @@ var "lua_path" (
     : str ";"
 )
 
-build "$lua" { "ld",
+build "$lua" { "ld-host",
     (sources.lua_c_files .. sources.lua_main_c_files) : map(function(src)
-        return build("$tmp/obj/lua"/src:splitext()..".o") { "cc", src }
+        return build("$tmp/obj/lua"/src:splitext()..".o") { "cc-host", src }
     end),
 }
 
@@ -785,7 +785,7 @@ local binary = build("$tmp/bin/luax"..ext) { ld,
     libluax,
 }
 
-local shared_library = target_abi~="musl" and
+local shared_library = target_libc~="musl" and
     build("$tmp/lib/libluax"..libext) { so,
         main_libluax,
         case(target_os) {

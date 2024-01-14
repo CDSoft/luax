@@ -39,7 +39,7 @@ return function()
             "Lua", "is", "great"
         })
         eq(fs.findpath(arg[-2]), ".build/bin/luax")
-        assert(sys.abi == "gnu")
+        assert(sys.libc == "gnu")
         assert(not pandoc)
 
     elseif test_num == 2 then
@@ -49,7 +49,7 @@ return function()
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })
-        assert(sys.abi == "gnu")
+        assert(sys.libc == "gnu")
         assert(not pandoc)
 
     elseif test_num == 3 then
@@ -59,7 +59,7 @@ return function()
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })
-        assert(sys.abi == "lua")
+        assert(sys.libc == "lua")
         assert(not pandoc)
 
     elseif test_num == 4 then
@@ -70,7 +70,7 @@ return function()
             "Lua", "is", "great"
         })
         eq(fs.findpath(arg[-2]), ".build/tmp/lua")
-        assert(sys.abi == "lua")
+        assert(sys.libc == "lua")
         assert(not pandoc)
 
     elseif test_num == 5 then
@@ -80,17 +80,17 @@ return function()
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })
-        assert(sys.abi == "lua")
+        assert(sys.libc == "lua")
         assert(pandoc)
 
     elseif test_num == 6 then
         eq(arg, {
             [-3] = "pandoc lua",
-            [-2] = "-l", [-1] = "libluax-"..sys.arch.."-"..sys.os.."-"..sys.abi,
+            [-2] = "-l", [-1] = "libluax",
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })
-        assert(sys.abi == "gnu")
+        assert(sys.libc == "gnu")
         assert(pandoc)
 
     else

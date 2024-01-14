@@ -25,7 +25,7 @@ http://cdelord.fr/luax
 local sys = require "sys"
 
 return function()
-    if sys.abi == "gnu" then
+    if sys.libc == "gnu" then
 
         local socket = assert(require "socket")
         assert(require "socket.core")

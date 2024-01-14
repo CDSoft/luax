@@ -53,9 +53,9 @@ sys.arch
 `"x86_64"`, `"x86"` or `"aarch64"`.
 
 ```lua
-sys.abi
+sys.libc
 ```
-`"musl"` or `"gnu"`.
+`"musl"` or `"gnu"`. Note that `libc` is `"lua"` when using the pure Lua implementation of LuaX.
 @@@*/
 
 LUAMOD_API int luaopen_sys (lua_State *L)
@@ -63,6 +63,6 @@ LUAMOD_API int luaopen_sys (lua_State *L)
     luaL_newlib(L, blsyslib);
     set_string(L, "arch", LUAX_ARCH);
     set_string(L, "os", LUAX_OS);
-    set_string(L, "abi", LUAX_ABI);
+    set_string(L, "libc", LUAX_LIBC);
     return 1;
 }

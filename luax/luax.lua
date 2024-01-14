@@ -34,7 +34,7 @@ local welcome = F.I(_G){sys=sys}[[
 | |  | | | |/ _` |\  /   |  Version $(_LUAX_VERSION) ($(_LUAX_DATE))
 | |__| |_| | (_| |/  \   |  Powered by $(_VERSION)
 |_____\__,_|\__,_/_/\_\  |$(PANDOC_VERSION and "  and Pandoc "..tostring(PANDOC_VERSION) or "")
-                         |  $(sys.os:cap()) $(sys.arch) $(sys.abi)
+                         |  $(sys.os:cap()) $(sys.arch) $(sys.libc)
 ]]
 
 local LUA_INIT = F{

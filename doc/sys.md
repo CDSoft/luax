@@ -17,7 +17,8 @@ sys.arch
 `"x86_64"`, `"x86"` or `"aarch64"`.
 
 ``` lua
-sys.abi
+sys.libc
 ```
 
-`"musl"` or `"gnu"`.
+`"musl"` or `"gnu"`. Note that `libc` is `"lua"` when using the pure Lua
+implementation of LuaX.

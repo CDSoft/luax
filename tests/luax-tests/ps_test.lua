@@ -26,7 +26,7 @@ local ps = require "ps"
 
 local sys = require "sys"
 
-local eps = sys.abi == "lua" and 1 or 0.01
+local eps = sys.libc == "lua" and 1 or 0.01
 
 local function try(test, ...)
     -- These tests may fail when the system is loaded.
@@ -40,7 +40,7 @@ local function time_test()
     assert(math.abs(ps.time() - os.time()) <= 1.0)
 
     -- time and clock variations shall be the same
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    if sys.libc == "gnu" or sys.libc == "musl" then
         local t0, c0 = ps.time(), os.clock()
         local dt, dc = 0, 0
         while dt < 0.15 do
@@ -93,7 +93,7 @@ end
 
 return function()
     try(time_test)
-    if sys.abi == "gnu" or sys.abi == "musl" then
+    if sys.libc == "gnu" or sys.libc == "musl" then
         try(sleep_test, 0)
         try(sleep_test, 0.142)
         try(profile_test, 0)

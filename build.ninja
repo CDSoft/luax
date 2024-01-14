@@ -68,18 +68,18 @@ cc = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$PWD/${
 ar = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache $zig ar
 ld = ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache $zig cc
 
-rule cc
+rule cc-host
   description = CC $in
   command = $cc -c -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -DLUA_USE_LINUX -Werror -Wall -Wextra -Wno-constant-logical-operand -MD -MF $depfile $in -o $out
   depfile = $out.d
 
-rule ld
+rule ld-host
   description = LD $out
   command = $ld -rdynamic -s -lm $in -o $out
 
 rule cc-target
   description = CC $in
-  command = $cc -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_LINUX -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"linux"' -DLUAX_ABI='"gnu"' -MD -MF $depfile $in -o $out
+  command = $cc -c -flto=thin -std=gnu2x -O3 -fPIC -I. -I$tmp -Ilua -Iext/c/lz4/lib -Ilibluax -Werror -Wall -Wextra -Weverything -Wno-padded -Wno-reserved-identifier -Wno-disabled-macro-expansion -Wno-used-but-marked-unused -Wno-documentation-unknown-command -Wno-declaration-after-statement -Wno-unsafe-buffer-usage -Wno-pre-c2x-compat -DLUA_USE_LINUX -DLUAX_ARCH='"x86_64"' -DLUAX_OS='"linux"' -DLUAX_LIBC='"gnu"' -MD -MF $depfile $in -o $out
   depfile = $out.d
 
 rule cc_ext-target
@@ -95,7 +95,7 @@ rule so-target
   description = SO $out
   command = $cc -flto=thin -s -lm -Wno-single-bit-bitfield-constant-conversion -rdynamic -shared $in -o $out
 
-rule ar
+rule ar-target
   description = AR $out
   command = $ar -crs $out $in
 
@@ -115,16 +115,16 @@ build update_modules: update_modules
 ######################################################################
 
 lz4 = $tmp/lz4
-build $tmp/obj/lz4/ext/c/lz4/lib/lz4.o: cc ext/c/lz4/lib/lz4.c | $zig
-build $tmp/obj/lz4/ext/c/lz4/lib/lz4file.o: cc ext/c/lz4/lib/lz4file.c | $zig
-build $tmp/obj/lz4/ext/c/lz4/lib/lz4frame.o: cc ext/c/lz4/lib/lz4frame.c | $zig
-build $tmp/obj/lz4/ext/c/lz4/lib/lz4hc.o: cc ext/c/lz4/lib/lz4hc.c | $zig
-build $tmp/obj/lz4/ext/c/lz4/lib/xxhash.o: cc ext/c/lz4/lib/xxhash.c | $zig
-build $tmp/obj/lz4/ext/c/lz4/programs/bench.o: cc ext/c/lz4/programs/bench.c | $zig
-build $tmp/obj/lz4/ext/c/lz4/programs/datagen.o: cc ext/c/lz4/programs/datagen.c | $zig
-build $tmp/obj/lz4/ext/c/lz4/programs/lz4cli.o: cc ext/c/lz4/programs/lz4cli.c | $zig
-build $tmp/obj/lz4/ext/c/lz4/programs/lz4io.o: cc ext/c/lz4/programs/lz4io.c | $zig
-build $lz4: ld $tmp/obj/lz4/ext/c/lz4/lib/lz4.o $tmp/obj/lz4/ext/c/lz4/lib/lz4file.o $tmp/obj/lz4/ext/c/lz4/lib/lz4frame.o $tmp/obj/lz4/ext/c/lz4/lib/lz4hc.o $tmp/obj/lz4/ext/c/lz4/lib/xxhash.o $tmp/obj/lz4/ext/c/lz4/programs/bench.o $tmp/obj/lz4/ext/c/lz4/programs/datagen.o $tmp/obj/lz4/ext/c/lz4/programs/lz4cli.o $tmp/obj/lz4/ext/c/lz4/programs/lz4io.o | $zig
+build $tmp/obj/lz4/ext/c/lz4/lib/lz4.o: cc-host ext/c/lz4/lib/lz4.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/lib/lz4file.o: cc-host ext/c/lz4/lib/lz4file.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/lib/lz4frame.o: cc-host ext/c/lz4/lib/lz4frame.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/lib/lz4hc.o: cc-host ext/c/lz4/lib/lz4hc.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/lib/xxhash.o: cc-host ext/c/lz4/lib/xxhash.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/programs/bench.o: cc-host ext/c/lz4/programs/bench.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/programs/datagen.o: cc-host ext/c/lz4/programs/datagen.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/programs/lz4cli.o: cc-host ext/c/lz4/programs/lz4cli.c | $zig
+build $tmp/obj/lz4/ext/c/lz4/programs/lz4io.o: cc-host ext/c/lz4/programs/lz4io.c | $zig
+build $lz4: ld-host $tmp/obj/lz4/ext/c/lz4/lib/lz4.o $tmp/obj/lz4/ext/c/lz4/lib/lz4file.o $tmp/obj/lz4/ext/c/lz4/lib/lz4frame.o $tmp/obj/lz4/ext/c/lz4/lib/lz4hc.o $tmp/obj/lz4/ext/c/lz4/lib/xxhash.o $tmp/obj/lz4/ext/c/lz4/programs/bench.o $tmp/obj/lz4/ext/c/lz4/programs/datagen.o $tmp/obj/lz4/ext/c/lz4/programs/lz4cli.o $tmp/obj/lz4/ext/c/lz4/programs/lz4io.o | $zig
 
 ######################################################################
 # LuaX sources
@@ -136,40 +136,40 @@ build $lz4: ld $tmp/obj/lz4/ext/c/lz4/lib/lz4.o $tmp/obj/lz4/ext/c/lz4/lib/lz4fi
 
 lua = $tmp/lua
 lua_path = ./?.lua;$tmp/?.lua;libluax/?.lua;libluax/F/?.lua;libluax/L/?.lua;libluax/complex/?.lua;libluax/crypt/?.lua;libluax/fs/?.lua;libluax/imath/?.lua;libluax/import/?.lua;libluax/linenoise/?.lua;libluax/lpeg/?.lua;libluax/lz4/?.lua;libluax/mathx/?.lua;libluax/package/?.lua;libluax/ps/?.lua;libluax/qmath/?.lua;libluax/sh/?.lua;libluax/socket/?.lua;libluax/sys/?.lua;libluax/term/?.lua;libluax/version/?.lua;luax/?.lua
-build $tmp/obj/lua/lua/lapi.o: cc lua/lapi.c | $zig
-build $tmp/obj/lua/lua/lauxlib.o: cc lua/lauxlib.c | $zig
-build $tmp/obj/lua/lua/lbaselib.o: cc lua/lbaselib.c | $zig
-build $tmp/obj/lua/lua/lcode.o: cc lua/lcode.c | $zig
-build $tmp/obj/lua/lua/lcorolib.o: cc lua/lcorolib.c | $zig
-build $tmp/obj/lua/lua/lctype.o: cc lua/lctype.c | $zig
-build $tmp/obj/lua/lua/ldblib.o: cc lua/ldblib.c | $zig
-build $tmp/obj/lua/lua/ldebug.o: cc lua/ldebug.c | $zig
-build $tmp/obj/lua/lua/ldo.o: cc lua/ldo.c | $zig
-build $tmp/obj/lua/lua/ldump.o: cc lua/ldump.c | $zig
-build $tmp/obj/lua/lua/lfunc.o: cc lua/lfunc.c | $zig
-build $tmp/obj/lua/lua/lgc.o: cc lua/lgc.c | $zig
-build $tmp/obj/lua/lua/linit.o: cc lua/linit.c | $zig
-build $tmp/obj/lua/lua/liolib.o: cc lua/liolib.c | $zig
-build $tmp/obj/lua/lua/llex.o: cc lua/llex.c | $zig
-build $tmp/obj/lua/lua/lmathlib.o: cc lua/lmathlib.c | $zig
-build $tmp/obj/lua/lua/lmem.o: cc lua/lmem.c | $zig
-build $tmp/obj/lua/lua/loadlib.o: cc lua/loadlib.c | $zig
-build $tmp/obj/lua/lua/lobject.o: cc lua/lobject.c | $zig
-build $tmp/obj/lua/lua/lopcodes.o: cc lua/lopcodes.c | $zig
-build $tmp/obj/lua/lua/loslib.o: cc lua/loslib.c | $zig
-build $tmp/obj/lua/lua/lparser.o: cc lua/lparser.c | $zig
-build $tmp/obj/lua/lua/lstate.o: cc lua/lstate.c | $zig
-build $tmp/obj/lua/lua/lstring.o: cc lua/lstring.c | $zig
-build $tmp/obj/lua/lua/lstrlib.o: cc lua/lstrlib.c | $zig
-build $tmp/obj/lua/lua/ltable.o: cc lua/ltable.c | $zig
-build $tmp/obj/lua/lua/ltablib.o: cc lua/ltablib.c | $zig
-build $tmp/obj/lua/lua/ltm.o: cc lua/ltm.c | $zig
-build $tmp/obj/lua/lua/lundump.o: cc lua/lundump.c | $zig
-build $tmp/obj/lua/lua/lutf8lib.o: cc lua/lutf8lib.c | $zig
-build $tmp/obj/lua/lua/lvm.o: cc lua/lvm.c | $zig
-build $tmp/obj/lua/lua/lzio.o: cc lua/lzio.c | $zig
-build $tmp/obj/lua/lua/lua.o: cc lua/lua.c | $zig
-build $lua: ld $tmp/obj/lua/lua/lapi.o $tmp/obj/lua/lua/lauxlib.o $tmp/obj/lua/lua/lbaselib.o $tmp/obj/lua/lua/lcode.o $tmp/obj/lua/lua/lcorolib.o $tmp/obj/lua/lua/lctype.o $tmp/obj/lua/lua/ldblib.o $tmp/obj/lua/lua/ldebug.o $tmp/obj/lua/lua/ldo.o $tmp/obj/lua/lua/ldump.o $tmp/obj/lua/lua/lfunc.o $tmp/obj/lua/lua/lgc.o $tmp/obj/lua/lua/linit.o $tmp/obj/lua/lua/liolib.o $tmp/obj/lua/lua/llex.o $tmp/obj/lua/lua/lmathlib.o $tmp/obj/lua/lua/lmem.o $tmp/obj/lua/lua/loadlib.o $tmp/obj/lua/lua/lobject.o $tmp/obj/lua/lua/lopcodes.o $tmp/obj/lua/lua/loslib.o $tmp/obj/lua/lua/lparser.o $tmp/obj/lua/lua/lstate.o $tmp/obj/lua/lua/lstring.o $tmp/obj/lua/lua/lstrlib.o $tmp/obj/lua/lua/ltable.o $tmp/obj/lua/lua/ltablib.o $tmp/obj/lua/lua/ltm.o $tmp/obj/lua/lua/lundump.o $tmp/obj/lua/lua/lutf8lib.o $tmp/obj/lua/lua/lvm.o $tmp/obj/lua/lua/lzio.o $tmp/obj/lua/lua/lua.o | $zig
+build $tmp/obj/lua/lua/lapi.o: cc-host lua/lapi.c | $zig
+build $tmp/obj/lua/lua/lauxlib.o: cc-host lua/lauxlib.c | $zig
+build $tmp/obj/lua/lua/lbaselib.o: cc-host lua/lbaselib.c | $zig
+build $tmp/obj/lua/lua/lcode.o: cc-host lua/lcode.c | $zig
+build $tmp/obj/lua/lua/lcorolib.o: cc-host lua/lcorolib.c | $zig
+build $tmp/obj/lua/lua/lctype.o: cc-host lua/lctype.c | $zig
+build $tmp/obj/lua/lua/ldblib.o: cc-host lua/ldblib.c | $zig
+build $tmp/obj/lua/lua/ldebug.o: cc-host lua/ldebug.c | $zig
+build $tmp/obj/lua/lua/ldo.o: cc-host lua/ldo.c | $zig
+build $tmp/obj/lua/lua/ldump.o: cc-host lua/ldump.c | $zig
+build $tmp/obj/lua/lua/lfunc.o: cc-host lua/lfunc.c | $zig
+build $tmp/obj/lua/lua/lgc.o: cc-host lua/lgc.c | $zig
+build $tmp/obj/lua/lua/linit.o: cc-host lua/linit.c | $zig
+build $tmp/obj/lua/lua/liolib.o: cc-host lua/liolib.c | $zig
+build $tmp/obj/lua/lua/llex.o: cc-host lua/llex.c | $zig
+build $tmp/obj/lua/lua/lmathlib.o: cc-host lua/lmathlib.c | $zig
+build $tmp/obj/lua/lua/lmem.o: cc-host lua/lmem.c | $zig
+build $tmp/obj/lua/lua/loadlib.o: cc-host lua/loadlib.c | $zig
+build $tmp/obj/lua/lua/lobject.o: cc-host lua/lobject.c | $zig
+build $tmp/obj/lua/lua/lopcodes.o: cc-host lua/lopcodes.c | $zig
+build $tmp/obj/lua/lua/loslib.o: cc-host lua/loslib.c | $zig
+build $tmp/obj/lua/lua/lparser.o: cc-host lua/lparser.c | $zig
+build $tmp/obj/lua/lua/lstate.o: cc-host lua/lstate.c | $zig
+build $tmp/obj/lua/lua/lstring.o: cc-host lua/lstring.c | $zig
+build $tmp/obj/lua/lua/lstrlib.o: cc-host lua/lstrlib.c | $zig
+build $tmp/obj/lua/lua/ltable.o: cc-host lua/ltable.c | $zig
+build $tmp/obj/lua/lua/ltablib.o: cc-host lua/ltablib.c | $zig
+build $tmp/obj/lua/lua/ltm.o: cc-host lua/ltm.c | $zig
+build $tmp/obj/lua/lua/lundump.o: cc-host lua/lundump.c | $zig
+build $tmp/obj/lua/lua/lutf8lib.o: cc-host lua/lutf8lib.c | $zig
+build $tmp/obj/lua/lua/lvm.o: cc-host lua/lvm.c | $zig
+build $tmp/obj/lua/lua/lzio.o: cc-host lua/lzio.c | $zig
+build $tmp/obj/lua/lua/lua.o: cc-host lua/lua.c | $zig
+build $lua: ld-host $tmp/obj/lua/lua/lapi.o $tmp/obj/lua/lua/lauxlib.o $tmp/obj/lua/lua/lbaselib.o $tmp/obj/lua/lua/lcode.o $tmp/obj/lua/lua/lcorolib.o $tmp/obj/lua/lua/lctype.o $tmp/obj/lua/lua/ldblib.o $tmp/obj/lua/lua/ldebug.o $tmp/obj/lua/lua/ldo.o $tmp/obj/lua/lua/ldump.o $tmp/obj/lua/lua/lfunc.o $tmp/obj/lua/lua/lgc.o $tmp/obj/lua/lua/linit.o $tmp/obj/lua/lua/liolib.o $tmp/obj/lua/lua/llex.o $tmp/obj/lua/lua/lmathlib.o $tmp/obj/lua/lua/lmem.o $tmp/obj/lua/lua/loadlib.o $tmp/obj/lua/lua/lobject.o $tmp/obj/lua/lua/lopcodes.o $tmp/obj/lua/lua/loslib.o $tmp/obj/lua/lua/lparser.o $tmp/obj/lua/lua/lstate.o $tmp/obj/lua/lua/lstring.o $tmp/obj/lua/lua/lstrlib.o $tmp/obj/lua/lua/ltable.o $tmp/obj/lua/lua/ltablib.o $tmp/obj/lua/lua/ltm.o $tmp/obj/lua/lua/lundump.o $tmp/obj/lua/lua/lutf8lib.o $tmp/obj/lua/lua/lvm.o $tmp/obj/lua/lua/lzio.o $tmp/obj/lua/lua/lua.o | $zig
 
 ######################################################################
 # LuaX configuration
@@ -257,7 +257,7 @@ build $tmp/obj/lua/lundump.o: cc_ext-target lua/lundump.c | $zig
 build $tmp/obj/lua/lutf8lib.o: cc_ext-target lua/lutf8lib.c | $zig
 build $tmp/obj/lua/lvm.o: cc_ext-target lua/lvm.c | $zig
 build $tmp/obj/lua/lzio.o: cc_ext-target lua/lzio.c | $zig
-build $tmp/lib/liblua.a: ar $tmp/obj/lua/lapi.o $tmp/obj/lua/lauxlib.o $tmp/obj/lua/lbaselib.o $tmp/obj/lua/lcode.o $tmp/obj/lua/lcorolib.o $tmp/obj/lua/lctype.o $tmp/obj/lua/ldblib.o $tmp/obj/lua/ldebug.o $tmp/obj/lua/ldo.o $tmp/obj/lua/ldump.o $tmp/obj/lua/lfunc.o $tmp/obj/lua/lgc.o $tmp/obj/lua/linit.o $tmp/obj/lua/liolib.o $tmp/obj/lua/llex.o $tmp/obj/lua/lmathlib.o $tmp/obj/lua/lmem.o $tmp/obj/lua/loadlib.o $tmp/obj/lua/lobject.o $tmp/obj/lua/lopcodes.o $tmp/obj/lua/loslib.o $tmp/obj/lua/lparser.o $tmp/obj/lua/lstate.o $tmp/obj/lua/lstring.o $tmp/obj/lua/lstrlib.o $tmp/obj/lua/ltable.o $tmp/obj/lua/ltablib.o $tmp/obj/lua/ltm.o $tmp/obj/lua/lundump.o $tmp/obj/lua/lutf8lib.o $tmp/obj/lua/lvm.o $tmp/obj/lua/lzio.o | $zig
+build $tmp/lib/liblua.a: ar-target $tmp/obj/lua/lapi.o $tmp/obj/lua/lauxlib.o $tmp/obj/lua/lbaselib.o $tmp/obj/lua/lcode.o $tmp/obj/lua/lcorolib.o $tmp/obj/lua/lctype.o $tmp/obj/lua/ldblib.o $tmp/obj/lua/ldebug.o $tmp/obj/lua/ldo.o $tmp/obj/lua/ldump.o $tmp/obj/lua/lfunc.o $tmp/obj/lua/lgc.o $tmp/obj/lua/linit.o $tmp/obj/lua/liolib.o $tmp/obj/lua/llex.o $tmp/obj/lua/lmathlib.o $tmp/obj/lua/lmem.o $tmp/obj/lua/loadlib.o $tmp/obj/lua/lobject.o $tmp/obj/lua/lopcodes.o $tmp/obj/lua/loslib.o $tmp/obj/lua/lparser.o $tmp/obj/lua/lstate.o $tmp/obj/lua/lstring.o $tmp/obj/lua/lstrlib.o $tmp/obj/lua/ltable.o $tmp/obj/lua/ltablib.o $tmp/obj/lua/ltm.o $tmp/obj/lua/lundump.o $tmp/obj/lua/lutf8lib.o $tmp/obj/lua/lvm.o $tmp/obj/lua/lzio.o | $zig
 build $tmp/obj/libluax/F/F.o: cc-target libluax/F/F.c | $zig
 build $tmp/obj/libluax/complex/complex.o: cc-target libluax/complex/complex.c | $zig
 build $tmp/obj/libluax/crypt/crypt.o: cc-target libluax/crypt/crypt.c | $zig $luax_crypt_key
@@ -309,7 +309,7 @@ build $tmp/obj/ext/c/luasocket/usocket.o: cc_ext-target ext/c/luasocket/usocket.
 build $tmp/obj/ext/c/luasocket/unix.o: cc_ext-target ext/c/luasocket/unix.c | $zig
 build $tmp/obj/ext/c/linenoise/linenoise.o: cc_ext-target ext/c/linenoise/linenoise.c | $zig
 build $tmp/obj/ext/c/linenoise/utf8.o: cc_ext-target ext/c/linenoise/utf8.c | $zig
-build $tmp/lib/libluax.a: ar $tmp/obj/libluax/F/F.o $tmp/obj/libluax/complex/complex.o $tmp/obj/libluax/crypt/crypt.o $tmp/obj/libluax/crypt/sha1.o $tmp/obj/libluax/fs/fs.o $tmp/obj/libluax/linenoise/linenoise.o $tmp/obj/libluax/lz4/lz4.o $tmp/obj/libluax/ps/ps.o $tmp/obj/libluax/socket/luasocket.o $tmp/obj/libluax/sys/sys.o $tmp/obj/libluax/term/term.o $tmp/obj/libluax/tools.o $tmp/obj/libluax/version/version.o $tmp/obj/ext/c/lcomplex/lcomplex.o $tmp/obj/ext/c/limath/limath.o $tmp/obj/ext/c/limath/src/imath.o $tmp/obj/ext/c/lpeg/lpcap.o $tmp/obj/ext/c/lpeg/lpcode.o $tmp/obj/ext/c/lpeg/lpcset.o $tmp/obj/ext/c/lpeg/lpprint.o $tmp/obj/ext/c/lpeg/lptree.o $tmp/obj/ext/c/lpeg/lpvm.o $tmp/obj/ext/c/lqmath/lqmath.o $tmp/obj/ext/c/lqmath/src/imrat.o $tmp/obj/ext/c/luasocket/auxiliar.o $tmp/obj/ext/c/luasocket/buffer.o $tmp/obj/ext/c/luasocket/compat.o $tmp/obj/ext/c/luasocket/except.o $tmp/obj/ext/c/luasocket/inet.o $tmp/obj/ext/c/luasocket/io.o $tmp/obj/ext/c/luasocket/luasocket.o $tmp/obj/ext/c/luasocket/mime.o $tmp/obj/ext/c/luasocket/options.o $tmp/obj/ext/c/luasocket/select.o $tmp/obj/ext/c/luasocket/tcp.o $tmp/obj/ext/c/luasocket/timeout.o $tmp/obj/ext/c/luasocket/udp.o $tmp/obj/ext/c/lz4/lib/lz4.o $tmp/obj/ext/c/lz4/lib/lz4file.o $tmp/obj/ext/c/lz4/lib/lz4frame.o $tmp/obj/ext/c/lz4/lib/lz4hc.o $tmp/obj/ext/c/lz4/lib/xxhash.o $tmp/obj/ext/c/mathx/lmathx.o $tmp/obj/ext/c/luasocket/serial.o $tmp/obj/ext/c/luasocket/unixdgram.o $tmp/obj/ext/c/luasocket/unixstream.o $tmp/obj/ext/c/luasocket/usocket.o $tmp/obj/ext/c/luasocket/unix.o $tmp/obj/ext/c/linenoise/linenoise.o $tmp/obj/ext/c/linenoise/utf8.o | $zig
+build $tmp/lib/libluax.a: ar-target $tmp/obj/libluax/F/F.o $tmp/obj/libluax/complex/complex.o $tmp/obj/libluax/crypt/crypt.o $tmp/obj/libluax/crypt/sha1.o $tmp/obj/libluax/fs/fs.o $tmp/obj/libluax/linenoise/linenoise.o $tmp/obj/libluax/lz4/lz4.o $tmp/obj/libluax/ps/ps.o $tmp/obj/libluax/socket/luasocket.o $tmp/obj/libluax/sys/sys.o $tmp/obj/libluax/term/term.o $tmp/obj/libluax/tools.o $tmp/obj/libluax/version/version.o $tmp/obj/ext/c/lcomplex/lcomplex.o $tmp/obj/ext/c/limath/limath.o $tmp/obj/ext/c/limath/src/imath.o $tmp/obj/ext/c/lpeg/lpcap.o $tmp/obj/ext/c/lpeg/lpcode.o $tmp/obj/ext/c/lpeg/lpcset.o $tmp/obj/ext/c/lpeg/lpprint.o $tmp/obj/ext/c/lpeg/lptree.o $tmp/obj/ext/c/lpeg/lpvm.o $tmp/obj/ext/c/lqmath/lqmath.o $tmp/obj/ext/c/lqmath/src/imrat.o $tmp/obj/ext/c/luasocket/auxiliar.o $tmp/obj/ext/c/luasocket/buffer.o $tmp/obj/ext/c/luasocket/compat.o $tmp/obj/ext/c/luasocket/except.o $tmp/obj/ext/c/luasocket/inet.o $tmp/obj/ext/c/luasocket/io.o $tmp/obj/ext/c/luasocket/luasocket.o $tmp/obj/ext/c/luasocket/mime.o $tmp/obj/ext/c/luasocket/options.o $tmp/obj/ext/c/luasocket/select.o $tmp/obj/ext/c/luasocket/tcp.o $tmp/obj/ext/c/luasocket/timeout.o $tmp/obj/ext/c/luasocket/udp.o $tmp/obj/ext/c/lz4/lib/lz4.o $tmp/obj/ext/c/lz4/lib/lz4file.o $tmp/obj/ext/c/lz4/lib/lz4frame.o $tmp/obj/ext/c/lz4/lib/lz4hc.o $tmp/obj/ext/c/lz4/lib/xxhash.o $tmp/obj/ext/c/mathx/lmathx.o $tmp/obj/ext/c/luasocket/serial.o $tmp/obj/ext/c/luasocket/unixdgram.o $tmp/obj/ext/c/luasocket/unixstream.o $tmp/obj/ext/c/luasocket/usocket.o $tmp/obj/ext/c/luasocket/unix.o $tmp/obj/ext/c/linenoise/linenoise.o $tmp/obj/ext/c/linenoise/utf8.o | $zig
 build $tmp/obj/luax/luax.o: cc-target luax/luax.c | $zig $luax_config_h $luax_app_bundle
 build $tmp/obj/luax/libluax.o: cc-target luax/libluax.c | $zig $luax_runtime_bundle
 build $tmp/bin/luax: ld-target $tmp/obj/luax/luax.o $tmp/obj/luax/libluax.o $tmp/lib/liblua.a $tmp/lib/libluax.a | $zig

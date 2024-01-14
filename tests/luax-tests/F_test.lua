@@ -356,7 +356,7 @@ local function numeric_type_classes()
     eq(F.is_infinite(42), false)
     eq(F.is_infinite(0/0), false)
     eq(F.is_infinite(1/0), true)
-    if sys.abi ~= "lua" then
+    if sys.libc ~= "lua" then
         eq(F.is_normalized(1), true)
         eq(F.is_normalized(0x1p-1024), false)           assert(0x1p-1024 > 0)
         eq(F.is_denormalized(1), false)

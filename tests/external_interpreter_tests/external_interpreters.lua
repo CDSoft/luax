@@ -14,7 +14,7 @@ if target == "lua" then
     assert(arg[-2] == "lua")
     assert(arg[-1] == "--")
     assert(arg[0] == ".build/test/ext-lua")
-    assert(sys.abi == "lua")
+    assert(sys.libc == "lua")
     assert(not pandoc)
 
 elseif target == "lua-luax" then
@@ -22,7 +22,7 @@ elseif target == "lua-luax" then
     assert(arg[-3] == "-l") assert(arg[-2] == "_=libluax")    -- load libluax.so
     assert(arg[-1] == "--")
     assert(arg[0] == ".build/test/ext-lua-luax")
-    assert(sys.abi == "gnu")
+    assert(sys.libc == "gnu")
     assert(not pandoc)
 
 elseif target == "luax" then
@@ -35,7 +35,7 @@ elseif target == "pandoc" then
     assert(arg[-2] == "pandoc lua")
     assert(arg[-1] == "--")
     assert(arg[0] == ".build/test/ext-pandoc")
-    assert(sys.abi == "lua")
+    assert(sys.libc == "lua")
     assert(pandoc and pandoc.Pandoc)
 
 elseif target == "pandoc-luax" then
@@ -43,7 +43,7 @@ elseif target == "pandoc-luax" then
     assert(arg[-3] == "-l") assert(arg[-2] == "libluax")    -- load libluax.so
     assert(arg[-1] == "--")
     assert(arg[0] == ".build/test/ext-pandoc-luax")
-    assert(sys.abi == "gnu")
+    assert(sys.libc == "gnu")
     assert(pandoc and pandoc.Pandoc)
 
 else
