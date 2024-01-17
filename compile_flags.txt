@@ -23,7 +23,6 @@
 -Iluax
 -Ilua
 -I.build/tmp
--DRUNTIME_NAME=luaxruntime
 -DLUAX_ARCH="x86_64"
 -DLUAX_OS="linux"
 -DLUAX_LIBC="gnu"

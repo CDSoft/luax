@@ -18,44 +18,45 @@ Lua scripts.
 
 - [cdelord.fr/luax](https://cdelord.fr/luax)
 - [github.com/CDSoft/luax](https://github.com/CDSoft/luax)
-- [LuaX on Discord](https://discord.gg/SzFUwYBAzF)
 
 ## Requirements
 
-- [Ninja](https://ninja-build.org): needed to compile LuaX using the
-  LuaX Ninja file
-- [Lua](https://lua.org): optional, only needed to update the Ninja file
+- [Ninja](https://ninja-build.org): to compile LuaX using the LuaX Ninja
+  file
+- C compiler (`cc`, `gcc`, `clang`, …), [Lua 5.4](https://lua.org): to
+  generate the Ninja file
 
 ## Compilation
 
 `luax` is written in C and Lua. The build system uses Ninja and Zig
 (automatically downloaded by the Ninja file).
 
-Just download `luax` (<https://github.com/CDSoft/luax>) and run `ninja`:
+Just download `luax` (<https://github.com/CDSoft/luax>), generate
+`build.ninja` and run `ninja`:
 
 ``` sh
 $ git clone https://github.com/CDSoft/luax
 $ cd luax
-$ ninja             # compile LuaX (for Linux)
-$ ninja test        # run tests on the host
+$ ninja -f bootstrap.ninja  # compile Lua and generate build.ninja
+$ ninja             # compile LuaX
+$ ninja test        # run tests
 $ ninja doc         # generate LuaX documentation
 ```
 
 **Note**: `ninja` will download a Zig compiler.
 
-To compile LuaX on a different platform (e.g. MacOS or Windows),
-[Bang](https://github.com/CDSoft/bang) must be used to generate a new
-Ninja file (bang can be found in `tools/bang` and requires a
-preinstalled Lua interpreter).
+If the bootstrap stage fails, you can try:
 
-E.g. on MacOS:
-
-``` sh
-$ git clone https://github.com/CDSoft/luax
-$ cd luax
-$ tools/bang
-$ ninja
-```
+1.  to use another C compiler:
+    - `CC=gcc ninja -f bootstrap.ninja` to compile Lua with `gcc`
+      instead of `cc`
+    - `CC=clang ninja -f bootstrap.ninja` to compile Lua with `clang`
+      instead of `cc`
+    - …
+2.  or install Lua and generate `build.ninja` manually:
+    - `apt install lua`, `dnf install lua`, …
+    - `lua tools/bang` to generate `build.lua` with the Lua interpreter
+      provided by your OS
 
 ### Compilation options
 
@@ -231,15 +232,17 @@ $ ./executable      # equivalent to luax main.lua
 
 # Compilation for Lua
 $ luax -o executable -t lua main.lua lib1.lua lib2.lua
+$ ./executable      # equivalent to lua main.lua
 
 # Compilation for Pandoc Lua
 $ luax -o executable -t pandoc main.lua lib1.lua lib2.lua
+$ ./executable      # equivalent to pandoc lua main.lua
 
 # Available targets
 $ luax -t list
-lua         ~/.local/bin/lua
-luax        ~/.local/bin/luax
-pandoc      ~/.local/bin/pandoc
+lua
+luax
+pandoc
 ```
 
 ## Built-in modules
