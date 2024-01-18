@@ -898,7 +898,7 @@ static int crypt_crc64(lua_State *L)
 ## RC4 encryption
 
 RC4 is a stream cipher (see <https://en.wikipedia.org/wiki/RC4>).
-It is design to be fast and simple.
+It is designed to be fast and simple.
 @@@*/
 
 /* https://en.wikipedia.org/wiki/RC4 */

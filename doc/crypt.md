@@ -204,7 +204,7 @@ computes the CRC64 of `data`.
 ## RC4 encryption
 
 RC4 is a stream cipher (see <https://en.wikipedia.org/wiki/RC4>). It is
-design to be fast and simple.
+designed to be fast and simple.
 
 ``` lua
 crypt.rc4(data, key, [drop])
