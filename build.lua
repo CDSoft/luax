@@ -968,7 +968,7 @@ acc(test) {
         implicit_in = {
             "$lua",
             "$luax",
-            shared_libraries,
+            libraries,
             test_sources,
         },
     },
@@ -1174,10 +1174,10 @@ end
 section "Shorcuts"
 ---------------------------------------------------------------------
 
-acc(compile) {binaries, libraries, shared_libraries}
+acc(compile) {binaries, libraries}
 
 install "bin" {binaries}
-install "lib" {libraries, shared_libraries}
+install "lib" {libraries}
 
 clean "$builddir"
 
