@@ -28,8 +28,6 @@
 #include <windows.h>
 #endif
 
-#include "tools.h"
-
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
 #endif
