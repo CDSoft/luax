@@ -77,7 +77,7 @@ Option                  Description
 
 `bang` must be run before `ninja` to change the compilation options.
 
-The default compilation options are `fast`, `zig`, for all targets, with no compression.
+The default compilation options are `fast`, `zig`, with no compression.
 
 Zig is downloaded by the ninja file.
 gcc and clang must be already installed.
