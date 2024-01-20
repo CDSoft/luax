@@ -10,7 +10,7 @@ Lua scripts.
 
 - Linux (x86_64, aarch64)
 - MacOS (x86_64, aarch64)
-- Windows (x86_64, x86)
+- Windows (x86_64)
 
 `luax` can « compile[^1] » scripts from and to any of these platforms.
 
