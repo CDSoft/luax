@@ -1117,9 +1117,11 @@ rule "lsvg" {
 local images = {
     build "doc/luax-banner.svg"         {"lsvg", "doc/src/luax-logo.lua", args={1024,  192}},
     build "doc/luax-logo.svg"           {"lsvg", "doc/src/luax-logo.lua", args={ 256,  256}},
-    build "$builddir/luax-banner.png"   {"lsvg", "doc/src/luax-logo.lua", args={1024,  192}},
+    build "$builddir/luax-banner.png"   {"lsvg", "doc/src/luax-logo.lua", args={1024,  192, "sky"}},
+    build "$builddir/luax-banner.jpg"   {"lsvg", "doc/src/luax-logo.lua", args={1024,  192, "sky"}},
     build "$builddir/luax-social.png"   {"lsvg", "doc/src/luax-logo.lua", args={1280,  640, F.show(URL)}},
     build "$builddir/luax-logo.png"     {"lsvg", "doc/src/luax-logo.lua", args={1024, 1024}},
+    build "$builddir/luax-logo.jpg"     {"lsvg", "doc/src/luax-logo.lua", args={1024, 1024}},
 }
 
 acc(doc)(images)

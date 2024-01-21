@@ -139,7 +139,7 @@ end
 local d = h * 16/1024
 
 if fill_the_sky_with_stars then
-	img { sky() }
+    img { sky() }
 end
 
 img {
