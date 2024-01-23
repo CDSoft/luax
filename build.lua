@@ -4,6 +4,7 @@ local fs = require "fs"
 local URL = "cdelord.fr/luax"
 local YEARS = os.date "2021-%Y"
 local AUTHORS = "Christophe Delord"
+local appname = "luax"
 local crypt_key = "LuaX"
 
 section(F.I{URL=URL}[[
@@ -104,6 +105,12 @@ $(title "Compression")
 bang -- upx         Compress LuaX with UPX
 
 By default LuaX is not compressed.
+
+$(title "Application bundle options")
+
+bang -- appname=... Name of the applicative bundle
+bang -- app=...     Sources of the applicative bundle
+bang -- key=...     Encryption key
 ]]
 
 if F.elem("help", arg) then
@@ -115,6 +122,8 @@ local target = nil
 local mode = nil -- fast, small, quick, debug
 local compiler = nil -- zig, gcc, clang
 local upx = false
+local myapp = nil -- scripts that may overload the default bundle
+local myappname = nil
 
 F.foreach(arg, function(a)
     local function set_mode()
@@ -130,15 +139,35 @@ F.foreach(arg, function(a)
         target = targets : filter(function(t) return t.name == a end) : head()
         if not target then F.error_without_stack_trace(a..": unknown target", 2) end
     end
-    case(a) {
-        fast   = set_mode,
-        small  = set_mode,
-        quick  = set_mode,
-        debug  = set_mode,
-        zig    = set_compiler,
-        gcc    = set_compiler,
-        clang  = set_compiler,
-        upx    = function() upx = true end,
+    local function set_key(k, v)
+        if not k or not v or #v==0 then F.error_without_stack_trace(a..": the key must be defined and not null", 2) end
+        crypt_key = v
+    end
+    local function set_appname(k, v)
+        if not k or not v or #v==0 then F.error_without_stack_trace(a..": the key must be defined and not null", 2) end
+        myappname = v
+    end
+    local function add_app(k, v)
+        if not k or not v or #v==0 then F.error_without_stack_trace(a..": the app must be defined and not null", 2) end
+        myapp = myapp or F{}
+        if fs.is_file(v) then myapp[#myapp+1] = v; return end
+        if fs.is_dir(v) then myapp[#myapp+1] = fs.ls(v/"**"); return end
+        myapp[#myapp+1] = fs.ls(v)
+    end
+
+    local k, v = a:match "^(%w+)=(.*)$"
+    case(k or a) {
+        fast    = set_mode,
+        small   = set_mode,
+        quick   = set_mode,
+        debug   = set_mode,
+        zig     = set_compiler,
+        gcc     = set_compiler,
+        clang   = set_compiler,
+        upx     = function() upx = true end,
+        key     = F.partial(set_key, k, v),
+        app     = F.partial(add_app, k, v),
+        appname = F.partial(set_appname, k, v),
         [F.Nil] = set_target,
     } ()
 end)
@@ -151,11 +180,22 @@ if compiler~="zig" and target then
     F.error_without_stack_trace("The compilation target can not be specified with "..compiler)
 end
 
+if myapp and not myappname then
+    F.error_without_stack_trace("The application name shall be defined with the appname option")
+end
+
+if myappname and not myapp then
+    F.error_without_stack_trace("The application content shall be defined with the app option")
+end
+
+appname = myappname or appname
+
 section("Compilation options")
 comment(("Compilation mode: %s"):format(mode))
 comment(("Compiler        : %s"):format(compiler))
 comment(("Target          : %s"):format(target or "native"))
 comment(("Compression     : %s"):format(upx and "UPX" or "none"))
+comment(("App bundle      : %s"):format(appname))
 
 --===================================================================
 section "Build environment"
@@ -663,20 +703,20 @@ build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
     },
 }
 
-local luax_app = {
+local luax_app = myapp or {
     ls "luax/**.lua",
     "$luax_config_lua",
 }
 
 var "luax_app_bundle" "$tmp/lua_app_bundle.dat"
 
-build "$luax_app_bundle" { "$luax_config_lua", luax_app,
+build "$luax_app_bundle" { luax_app,
     description = "BUNDLE $out",
     command = {
         "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
         "CRYPT_KEY=\"$crypt_key\"",
-        "$lua -l tools/rc4_runtime luax/luax_bundle.lua -app -ascii $in > $out",
+        "$lua -l tools/rc4_runtime luax/luax_bundle.lua", "-name="..appname, "-app -ascii $in > $out",
     },
     implicit_in = {
         "$lz4",
@@ -778,14 +818,14 @@ local main_libluax = F.flatten { sources.libluax_main_c_files }
             }
         end)
 
-local binary = build("$tmp/bin/luax"..ext) { ld,
+local binary = build("$tmp/bin"/appname..ext) { ld,
     main_luax,
     main_libluax,
     liblua,
     libluax,
 }
 
-local shared_library = target_libc~="musl" and
+local shared_library = target_libc~="musl" and not myapp and
     build("$tmp/lib/libluax"..libext) { so,
         main_libluax,
         case(target_os) {
@@ -828,6 +868,7 @@ if shared_library then
     }
 end
 
+if not myapp then
 --===================================================================
 section "LuaX Lua implementation"
 ---------------------------------------------------------------------
@@ -907,7 +948,9 @@ acc(binaries) {
     }
 }
 
-if not target then
+end
+
+if not target and not myapp then
 --===================================================================
 section "Tests"
 ---------------------------------------------------------------------
@@ -1102,7 +1145,7 @@ acc(test) {
 }
 end
 
-if not target then
+if not target and not myapp then
 --===================================================================
 section "Documentation"
 ---------------------------------------------------------------------
@@ -1179,7 +1222,9 @@ section "Shorcuts"
 acc(compile) {binaries, libraries}
 
 install "bin" {binaries}
-install "lib" {libraries}
+if not myapp then
+    install "lib" {libraries}
+end
 
 clean "$builddir"
 
@@ -1187,7 +1232,7 @@ phony "compile" (compile)
 default "compile"
 help "compile" "compile LuaX"
 
-if not target and #test > 0 then
+if not target and #test > 0 and not myapp then
 
     phony "test-fast" (test[1])
     help "test-fast" "run LuaX tests (fast, native tests only)"
@@ -1197,12 +1242,12 @@ if not target and #test > 0 then
 
 end
 
-if not target then
+if not target and not myapp then
     phony "doc" (doc)
     help "doc" "update LuaX documentation"
 end
 
-phony "all" {"compile", not target and {"test", "doc"} or {}}
+phony "all" {"compile", not target and not myapp and {"test", "doc"} or {}}
 help "all" "alias for compile, test and doc"
 
 phony "update" "update_modules"

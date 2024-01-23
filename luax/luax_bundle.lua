@@ -59,15 +59,35 @@ local function mlstr(code)
     return F.str{"[", eqs, "[", code, "]", eqs, "]"}
 end
 
+local function strip_common_path(ps)
+    local split = F.map(function(p) return p:split(fs.sep) end, ps)
+    local function join()
+        return split:map(fs.join)
+    end
+    while true do
+        local common = nil
+        for i = 1, #split do
+            if #split[i] <= 1 then return join() end
+            if common == nil then
+                common = split[i][1]
+            else
+                if split[i][1] ~= common then return join() end
+            end
+        end
+        split = split:map(F.partial(F.drop, 1))
+    end
+end
+
 function bundle.bundle(arg, opts)
 
     local kind = "prog"
     local format = "binary"
-    local scripts = {}
+    local scripts = F{}
     local explicit_main = false
     local product_name = assert(opts.name, "Missing output name")
     for i = 1, #arg do
-        if arg[i] == "-lib" then kind = "lib"
+        if arg[i]:match"^%-name=" then product_name = arg[i]:match"=(.*)"
+        elseif arg[i] == "-lib" then kind = "lib"
         elseif arg[i] == "-app" then kind = "app"
         elseif arg[i] == "-binary" then format = "binary"
         elseif arg[i] == "-ascii"  then format = "ascii"
@@ -117,6 +137,11 @@ function bundle.bundle(arg, opts)
                 content = content,
             }
         end
+    end
+
+    local shorts = strip_common_path(scripts:map(F.partial(F.nth, "path")))
+    for i = 1, #scripts do
+        scripts[i].short_path = shorts[i]
     end
 
     local main_scripts = {}
@@ -169,7 +194,7 @@ function bundle.bundle(arg, opts)
     plain.emit(("local function lib(path, src) return assert(load(src, '@$%s:'..path, 't')) end\n"):format(product_name))
     local function compile_library(script)
         assert(load(script.content, "@"..script.path, 't'))
-        plain.emit(("[%q] = lib(%q, %s),\n"):format(script.name, home_path(script.path), mlstr(script.content)))
+        plain.emit(("[%q] = lib(%q, %s),\n"):format(script.name, home_path(script.short_path), mlstr(script.content)))
     end
     local function load_library(script)
         if script.load_name == "_" then
@@ -180,7 +205,7 @@ function bundle.bundle(arg, opts)
     end
     local function run_script(script)
         assert(load(script.content, "@"..script.path, 't'))
-        plain.emit(("return lib(%q, %s)()\n"):format(home_path(script.path), mlstr(script.content)))
+        plain.emit(("return lib(%q, %s)()\n"):format(home_path(script.short_path), mlstr(script.content)))
     end
     if #scripts > 1 then -- there are libs
         plain.emit "local libs = {\n"
