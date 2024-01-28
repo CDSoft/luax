@@ -78,6 +78,16 @@ local function strip_common_path(ps)
     end
 end
 
+local function chunks_of(n, xs)
+    local xss = F{}
+    local ys = xs
+    while #ys > 0 do
+        xs, ys = F.split_at(n, ys)
+        xss[#xss+1] = xs
+    end
+    return xss
+end
+
 function bundle.bundle(arg, opts)
 
     local kind = "prog"
@@ -85,6 +95,11 @@ function bundle.bundle(arg, opts)
     local scripts = F{}
     local explicit_main = false
     local product_name = assert(opts.name, "Missing output name")
+    arg = F.map(function(a)
+        local fname = a:match"^@(.+)"
+        if not fname then return a end
+        return read(fname):words()
+    end, arg) : flatten()
     for i = 1, #arg do
         if arg[i]:match"^%-name=" then product_name = arg[i]:match"=(.*)"
         elseif arg[i] == "-lib" then kind = "lib"
@@ -92,6 +107,7 @@ function bundle.bundle(arg, opts)
         elseif arg[i] == "-binary" then format = "binary"
         elseif arg[i] == "-ascii"  then format = "ascii"
         elseif arg[i] == "-lua"    then format = "lua"
+        elseif arg[i] == "-c"      then format = "c"
         elseif arg[i]:ext() == ".lua" then
             local content = read(arg[i]):gsub("^#![^\n]*", "")
             local new_name = content:match("@".."LIB=([%w%._%-]+)")
@@ -240,6 +256,19 @@ function bundle.bundle(arg, opts)
 
     if format == "ascii" then
         return payload:bytes():str"," .. "\n"
+    end
+
+    if format == "c" then
+        return ([[
+#include <stdlib.h>
+extern const size_t %s_bundle_len;
+extern const unsigned char %s_bundle[];
+const size_t %s_bundle_len = %d;
+const unsigned char %s_bundle[] = {
+%s};
+]]):format(kind, kind, kind, #payload, kind,
+    chunks_of(16, payload:bytes()):map(function(g) return "    "..g:str",".."," end):unlines()
+)
     end
 
     if format == "lua" then

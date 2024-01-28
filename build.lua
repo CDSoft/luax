@@ -685,7 +685,7 @@ local luax_runtime = {
     ls "ext/**.lua",
 }
 
-var "luax_runtime_bundle" "$tmp/lua_runtime_bundle.dat"
+var "luax_runtime_bundle" "$tmp/lua_runtime_bundle.c"
 
 build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
     description = "BUNDLE $out",
@@ -693,7 +693,7 @@ build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
         "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
         "CRYPT_KEY=\"$crypt_key\"",
-        "$lua -l tools/rc4_runtime luax/luax_bundle.lua -lib -ascii $in > $out",
+        "$lua -l tools/rc4_runtime luax/luax_bundle.lua -lib -c $in > $out",
     },
     implicit_in = {
         "$lz4",
@@ -708,7 +708,7 @@ local luax_app = myapp or {
     "$luax_config_lua",
 }
 
-var "luax_app_bundle" "$tmp/lua_app_bundle.dat"
+var "luax_app_bundle" "$tmp/lua_app_bundle.c"
 
 build "$luax_app_bundle" { luax_app,
     description = "BUNDLE $out",
@@ -716,7 +716,7 @@ build "$luax_app_bundle" { luax_app,
         "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
         "CRYPT_KEY=\"$crypt_key\"",
-        "$lua -l tools/rc4_runtime luax/luax_bundle.lua", "-name="..appname, "-app -ascii $in > $out",
+        "$lua -l tools/rc4_runtime luax/luax_bundle.lua", "-name="..appname, "-app -c $in > $out",
     },
     implicit_in = {
         "$lz4",
@@ -823,6 +823,8 @@ local binary = build("$tmp/bin"/appname..ext) { ld,
     main_libluax,
     liblua,
     libluax,
+    "$tmp/lua_runtime_bundle.c",
+    "$tmp/lua_app_bundle.c",
 }
 
 local shared_library = target_libc~="musl" and not myapp and
@@ -834,6 +836,7 @@ local shared_library = target_libc~="musl" and not myapp and
             windows = liblua,
         },
         libluax,
+        "$tmp/lua_runtime_bundle.c",
 }
 
 if upx and mode~="debug" then

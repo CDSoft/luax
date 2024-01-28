@@ -60,9 +60,9 @@ static const luaL_Reg lrun_libs[] = {
     {NULL, NULL},
 };
 
-static const uint8_t runtime_chunk[] = {
-#include "lua_runtime_bundle.dat"
-};
+/* lib_bundle defined in lua_runtime_bundle.c (generated at compile time) */
+extern const size_t lib_bundle_len;
+extern const unsigned char lib_bundle[];
 
 void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
 {
@@ -140,7 +140,7 @@ LUAMOD_API int luaopen_libluax(lua_State *L)
 
     char *rt_chunk = NULL;
     size_t rt_chunk_len = 0;
-    decode_runtime((const char *)runtime_chunk, sizeof(runtime_chunk), &rt_chunk, &rt_chunk_len);
+    decode_runtime((const char *)lib_bundle, lib_bundle_len, &rt_chunk, &rt_chunk_len);
     if (run_buffer(L, rt_chunk, rt_chunk_len, "=runtime") != LUA_OK)
     {
         error(arg0(L), "can not initialize the LuaX runtime\n");

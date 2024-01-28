@@ -20,7 +20,6 @@
 #include "libluax.h"
 
 #include <stdlib.h>
-#include <stdint.h>
 
 #include "lualib.h"
 
@@ -32,9 +31,9 @@
 #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
 #endif
 
-static const uint8_t app_chunk[] = {
-#include "lua_app_bundle.dat"
-};
+/* app_bundle defined in lua_app_bundle.c (generated at compile time) */
+extern const size_t app_bundle_len;
+extern const unsigned char app_bundle[];
 
 static void createargtable(lua_State *L, const char **argv, int argc, int shift)
 {
@@ -56,7 +55,7 @@ int main(int argc, const char *argv[])
 
     char *chunk = NULL;
     size_t chunk_len = 0;
-    decode_runtime((const char *)app_chunk, sizeof(app_chunk), &chunk, &chunk_len);
+    decode_runtime((const char *)app_bundle, app_bundle_len, &chunk, &chunk_len);
     (void)run_buffer(L, chunk, chunk_len, "=luax");
     free(chunk);
 
