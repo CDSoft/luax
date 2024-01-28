@@ -1226,6 +1226,7 @@ acc(compile) {binaries, libraries}
 
 install "bin" {binaries}
 if not myapp then
+    install "bin" "tools/luaxc"
     install "lib" {libraries}
 end
 

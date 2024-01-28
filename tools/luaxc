@@ -1,0 +1,103 @@
+#!/bin/bash
+# This file is part of luax.
+# 
+# luax is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# luax is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with luax.  If not, see <https://www.gnu.org/licenses/>.
+# 
+# For further information about luax you can visit
+# http://cdelord.fr/luax
+
+set -e
+
+CACHE=$HOME/.local/var/cache/luax
+
+usage()
+{
+    cat <<EOF
+LuaX Compiler $VERSION
+
+usage: $(basename "$0") [-b branch] [-c compiler] [-t target] -o output inputs
+
+Branch
+    Git branch of the LuaX repository (default: master)
+
+Compiler
+    gcc, clang or zig (default: zig)
+
+Targets
+    see « luax -t list »
+
+Inputs
+    Lua scripts or data files
+
+LuaX sources and libraries are downloaded to
+$CACHE
+« $(basename "$0") clean » removes this directory.
+EOF
+    exit 0
+}
+
+case "$1" in
+    clean)  echo "Clean $CACHE"
+            rm -rf "$CACHE"
+            exit 0
+            ;;
+esac
+
+TARGET=
+COMPILER=
+OUTPUT=
+SOURCES=()
+KEY=LuaX
+BRANCH=master
+
+while [ -n "$1" ]
+do
+    case "$1" in
+        (-o)    OUTPUT="$2"; shift 2 ;;
+        (-t)    TARGET="$2"; shift 2 ;;
+        (-c)    COMPILER="$2"; shift 2 ;;
+        (-k)    KEY="$2"; shift 2 ;;
+        (-b)    BRANCH="$2"; shift 2 ;;
+        (-h)    usage ;;
+        (*)     SOURCES+=("app=$(realpath "$1")"); shift ;;
+    esac
+done
+
+function md5()
+{
+    echo "$@" | md5sum | tr -d " -"
+}
+
+CACHE="$CACHE/$BRANCH/$(md5 "$COMPILER" "$KEY")"
+
+
+[ -d "$CACHE" ] || git clone -b "$BRANCH" https://github.com/CDSoft/luax "$CACHE"
+[ -x "$CACHE"/.build/bin/luax ] || (cd "$CACHE" && ninja -f bootstrap.ninja && ninja compile)
+eval "$("$CACHE"/.build/bin/luax env)"
+
+case "$TARGET" in
+    (*windows*) APPNAME=$(basename "${OUTPUT%.exe}")
+                TMP_OUTPUT="$CACHE/dist/$APPNAME-${TARGET:-host}/bin/$APPNAME.exe"
+                OUTPUT="${OUTPUT%.exe}.exe"
+                ;;
+    (*)         APPNAME=$(basename "$OUTPUT")
+                TMP_OUTPUT="$CACHE/dist/$APPNAME-${TARGET:-host}/bin/$APPNAME"
+                ;;
+esac
+NINJA_FILE="$CACHE"/$APPNAME-${TARGET:-host}.ninja
+
+cd "$CACHE"
+luax tools/bang -o "$NINJA_FILE" -- $COMPILER $TARGET appname="$APPNAME" key="$KEY" "${SOURCES[*]}"
+PREFIX=$(dirname "$(dirname "$TMP_OUTPUT")") ninja -f "$NINJA_FILE" install
+install -v "$TMP_OUTPUT" "$OUTPUT"
