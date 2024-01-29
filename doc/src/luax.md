@@ -68,8 +68,8 @@ Option                  Description
 ----------------------- ------------------------------------------------------------------------------
 `bang -- fast [upx]`    Optimized for speed, optionally compressed with [UPX](https://upx.github.io/)
 `bang -- small [upx]`   Optimized for size, optionally compressed with [UPX](https://upx.github.io/)
-`bang -- quick`         Faster compilation, not optimized
-`bang -- debug`         Debug symbols kept, tests with [valgrind](https://valgrind.org/)
+`bang -- debug`         Debug symbols kept, not optimized
+`bang -- san`           Compiled with ASan and UBSan (implies clang)
 `bang -- zig`           Compile LuaX with Zig
 `bang -- gcc`           Compile LuaX with gcc
 `bang -- clang`         Compile LuaX with clang
@@ -86,17 +86,17 @@ gcc and clang must be already installed.
 
 LuaX can be compiled in debug mode
 (less optimization, debug symbols kept in the binaries).
-In this mode, the tests are executed with [valgrind](https://valgrind.org/).
-They run much slower but this helps finding tricky bugs.
-[Bang](https://github.com/CDSoft/bang) must be installed first
-to generate `build.ninja`:
+With the `san` option, the tests are executed with
+[ASan](https://clang.llvm.org/docs/AddressSanitizer.html)
+and [UBSan](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html).
+They run slower but this helps finding tricky bugs.
 
 ``` sh
 $ git clone https://github.com/CDSoft/luax
 $ cd luax
-$ tools/bang -- debug   # generate build.ninja in debug mode
-$ ninja                 # compile LuaX (all targets)
-$ ninja test            # run tests on the host
+$ tools/bang -- debug san # generate build.ninja in debug mode with sanitizers
+$ ninja                   # compile LuaX
+$ ninja test              # run tests on the host
 ```
 
 ## Precompiled LuaX binaries

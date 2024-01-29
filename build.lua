@@ -79,9 +79,8 @@ $(title "Compilation mode")
 
 bang -- fast        Code optimized for speed (default)
 bang -- small       Code optimized for size
-bang -- quick       Reduce compilation time (slow execution)
-bang -- debug       Compiled with debug informations
-                    Tests run with Valgrind (very slow)
+bang -- debug       Compiled with debug informations and no optimization
+bang -- san         Compiled with ASan and UBSan (implies clang)
 
 $(title "Compiler")
 
@@ -119,8 +118,9 @@ if F.elem("help", arg) then
 end
 
 local target = nil
-local mode = nil -- fast, small, quick, debug
+local mode = nil -- fast, small, debug
 local compiler = nil -- zig, gcc, clang
+local san = nil
 local upx = false
 local myapp = nil -- scripts that may overload the default bundle
 local myappname = nil
@@ -159,11 +159,11 @@ F.foreach(arg, function(a)
     case(k or a) {
         fast    = set_mode,
         small   = set_mode,
-        quick   = set_mode,
         debug   = set_mode,
         zig     = set_compiler,
         gcc     = set_compiler,
         clang   = set_compiler,
+        san     = function() san = true end,
         upx     = function() upx = true end,
         key     = F.partial(set_key, k, v),
         app     = F.partial(add_app, k, v),
@@ -174,10 +174,15 @@ end)
 
 mode = F.default("fast", mode)
 if mode=="debug" and upx then F.error_without_stack_trace("UPX compression not available in debug mode") end
+if san then compiler = "clang" end
 
 compiler = F.default("zig", compiler)
 if compiler~="zig" and target then
     F.error_without_stack_trace("The compilation target can not be specified with "..compiler)
+end
+
+if san and compiler~="clang" then
+    F.error_without_stack_trace("The sanitizers requires LuaX to be compiled with clang")
 end
 
 if myapp and not myappname then
@@ -280,6 +285,44 @@ local lto_opt = case(compiler) {
     clang = "-flto=thin",
 }
 
+local sanitizer_cflags = san and {
+    "-g -fno-omit-frame-pointer -fno-optimize-sibling-calls",
+    "-fsanitize=address",
+    "-fsanitize=undefined",
+    "-fsanitize=float-divide-by-zero",
+    --"-fsanitize=unsigned-integer-overflow",
+    "-fsanitize=implicit-conversion",
+    "-fsanitize=local-bounds",
+    "-fsanitize=float-cast-overflow",
+    "-fsanitize=nullability-arg",
+    "-fsanitize=nullability-assign",
+    "-fsanitize=nullability-return",
+} or {}
+
+local sanitizer_ext_cflags = san and {
+    "-g -fno-omit-frame-pointer -fno-optimize-sibling-calls",
+    "-fsanitize=address",
+    --"-fsanitize=undefined",
+    --"-fsanitize=float-divide-by-zero",
+    --"-fsanitize=unsigned-integer-overflow",
+    --"-fsanitize=implicit-conversion",
+    "-fsanitize=local-bounds",
+    "-fsanitize=float-cast-overflow",
+    "-fsanitize=nullability-arg",
+    "-fsanitize=nullability-assign",
+    "-fsanitize=nullability-return",
+} or {}
+
+local sanitizer_ldflags = san and {
+    "-fsanitize=address",
+    "-fsanitize=undefined",
+} or {}
+
+local sanitizer_options = san and {
+    "export ASAN_OPTIONS=check_initialization_order=1:detect_stack_use_after_return=1:detect_leaks=1;",
+    "export UBSAN_OPTIONS=print_stacktrace=1;",
+} or {}
+
 local native_cflags = {
     "-std=gnu2x",
     "-O3",
@@ -322,7 +365,6 @@ local cflags = {
     case(mode) {
         fast  = "-O3",
         small = "-Os",
-        quick = {},
         debug = "-g",
     },
     "-fPIC",
@@ -359,6 +401,7 @@ local luax_cflags = {
             "-Wno-pre-c2x-compat",
         },
     },
+    sanitizer_cflags,
 }
 
 local ext_cflags = {
@@ -372,13 +415,13 @@ local ext_cflags = {
             "-Wno-constant-logical-operand",
         },
     },
+    sanitizer_ext_cflags,
 }
 
 local ldflags = {
     case(mode) {
         fast  = "-s",
         small = "-s",
-        quick = {},
         debug = {},
     },
     "-lm",
@@ -391,6 +434,7 @@ local ldflags = {
         },
         clang = {},
     },
+    sanitizer_ldflags,
 }
 
 local function zig_target(t)
@@ -429,7 +473,6 @@ local lto = case(mode) {
         windows = lto_opt,
     },
     small = {},
-    quick = {},
     debug = {},
 }
 local target_flags = {
@@ -827,7 +870,7 @@ local binary = build("$tmp/bin"/appname..ext) { ld,
     "$tmp/lua_app_bundle.c",
 }
 
-local shared_library = target_libc~="musl" and not myapp and
+local shared_library = target_libc~="musl" and not myapp and not san and
     build("$tmp/lib/libluax"..libext) { so,
         main_libluax,
         case(target_os) {
@@ -839,7 +882,7 @@ local shared_library = target_libc~="musl" and not myapp and
         "$tmp/lua_runtime_bundle.c",
 }
 
-if upx and mode~="debug" then
+if upx and mode~="debug" and not san then
     rule "upx" {
         description = "UPX $in",
         command = "rm -f $out; upx -qqq -o $out $in && touch $out",
@@ -871,7 +914,7 @@ if shared_library then
     }
 end
 
-if not myapp then
+if not myapp and not san then
 --===================================================================
 section "LuaX Lua implementation"
 ---------------------------------------------------------------------
@@ -961,15 +1004,6 @@ section "Tests"
 local test_sources = ls "tests/luax-tests/*.*"
 local test_main = "tests/luax-tests/main.lua"
 
-local valgrind = {
-    case(mode) {
-        fast  = {},
-        small = {},
-        quick = {},
-        debug = "VALGRIND=true valgrind --quiet",
-    },
-}
-
 acc(test) {
 
 ---------------------------------------------------------------------
@@ -977,7 +1011,8 @@ acc(test) {
     build "$test/test-1-luax_executable.ok" {
         description = "TEST $out",
         command = {
-            valgrind, "$luax -q -o $test/test-luax",
+            sanitizer_options,
+            "$luax -q -o $test/test-luax",
                 test_sources : difference(ls "tests/luax-tests/to_be_imported-*.lua"),
             "&&",
             "PATH=$bin:$tmp:$$PATH",
@@ -986,7 +1021,7 @@ acc(test) {
             "TEST_NUM=1",
             "LUAX=$luax",
             "ARCH="..host.zig_arch, "OS="..host.zig_os, "LIBC="..host.zig_libc,
-            valgrind, "$test/test-luax Lua is great",
+            "$test/test-luax Lua is great",
             "&&",
             "touch $out",
         },
@@ -996,18 +1031,24 @@ acc(test) {
         },
     },
 
+}
+
+if not san then
+acc(test) {
+
 ---------------------------------------------------------------------
 
     build "$test/test-2-lib.ok" {
         description = "TEST $out",
         command = {
+            sanitizer_options,
             "export LUA_CPATH=;",
             "eval \"$$($luax env)\";",
             "PATH=$bin:$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua'",
             "TEST_NUM=2",
             "ARCH="..host.zig_arch, "OS="..host.zig_os, "LIBC="..host.zig_libc,
-            valgrind, "$lua -l libluax", test_main, "Lua is great",
+            "$lua -l libluax", test_main, "Lua is great",
             "&&",
             "touch $out",
         },
@@ -1024,6 +1065,7 @@ acc(test) {
     build "$test/test-3-lua.ok" {
         description = "TEST $out",
         command = {
+            sanitizer_options,
             "PATH=$bin:$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=3",
@@ -1045,6 +1087,7 @@ acc(test) {
     build "$test/test-4-lua-luax-lua.ok" {
         description = "TEST $out",
         command = {
+            sanitizer_options,
             "PATH=$bin:$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=4",
@@ -1065,6 +1108,7 @@ acc(test) {
     build "$test/test-5-pandoc-luax-lua.ok" {
         description = "TEST $out",
         command = {
+            sanitizer_options,
             "PATH=$bin:$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=5",
@@ -1086,6 +1130,7 @@ acc(test) {
     build "$test/test-ext-1-lua.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
         description = "TEST $out",
         command = {
+            sanitizer_options,
             "eval \"$$($luax env)\";",
             "$luax -q -t lua -o $test/ext-lua $in",
             "&&",
@@ -1107,6 +1152,7 @@ acc(test) {
     build "$test/test-ext-3-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
         description = "TEST $out",
         command = {
+            sanitizer_options,
             "eval \"$$($luax env)\";",
             "$luax -q -t luax -o $test/ext-luax $in",
             "&&",
@@ -1127,6 +1173,7 @@ acc(test) {
     build "$test/test-ext-4-pandoc.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
         description = "TEST $out",
         command = {
+            sanitizer_options,
             "eval \"$$($luax env)\";",
             "$luax -q -t pandoc -o $test/ext-pandoc $in",
             "&&",
@@ -1146,6 +1193,7 @@ acc(test) {
 ---------------------------------------------------------------------
 
 }
+end
 end
 
 if not target and not myapp then
