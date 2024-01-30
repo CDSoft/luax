@@ -2,7 +2,7 @@
 * lqmath.c
 * rational number library for Lua based on imath
 * Luiz Henrique de Figueiredo <lhf@tecgraf.puc-rio.br>
-* 12 Apr 2023 17:37:25
+* 29 Jan 2024 12:33:09
 * This code is hereby placed in the public domain and also under the MIT license
 */
 
@@ -16,7 +16,7 @@
 #include "mycompat.h"
 
 #define MYNAME		"qmath"
-#define MYVERSION	MYNAME " library for " LUA_VERSION " / Apr 2023"
+#define MYVERSION	MYNAME " library for " LUA_VERSION " / Jan 2024"
 #define MYTYPE		MYNAME " rational"
 
 static int report(lua_State *L, mp_result rc, int n)
@@ -216,9 +216,17 @@ static int Lint(lua_State *L)			/** int(x) */
  mp_int d=mp_rat_denom_ref(a);
  mp_int q=mp_int_alloc();
  mp_rat c=Pnew(L);
- if (q==NULL) return 0;
- report(L,mp_int_div(n,d,q,NULL),0);
- return report(L,mp_rat_add_int(c,q,c),1);
+ mp_result rc;
+ if (q==NULL) return report(L,MP_MEMORY,0);
+ rc=mp_int_div(n,d,q,NULL);
+ if (rc!=MP_OK) 
+ {
+  mp_int_free(q);
+  return report(L,rc,0);
+ }
+ rc=mp_rat_add_int(c,q,c);
+ mp_int_free(q);
+ return report(L,rc,1);
 }
 
 static int Linv(lua_State *L)			/** inv(x) */
