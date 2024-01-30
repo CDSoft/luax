@@ -443,23 +443,15 @@ end
 
 rule "cc-host" {
     description = "CC $in",
-    command = {
-        "$cc", "-c", native_cflags, "-MD -MF $depfile $in -o $out",
-    },
-    implicit_in = {
-        compiler_deps,
-    },
+    command = { "$cc", "-c", native_cflags, "-MD -MF $depfile $in -o $out" },
+    implicit_in = compiler_deps,
     depfile = "$out.d",
 }
 
 rule "ld-host" {
     description = "LD $out",
-    command = {
-        "$ld", native_ldflags, "$in -o $out",
-    },
-    implicit_in = {
-        compiler_deps,
-    },
+    command = { "$ld", native_ldflags, "$in -o $out" },
+    implicit_in = compiler_deps,
 }
 
 local target_arch = target and target.zig_arch or host.zig_arch
@@ -517,9 +509,7 @@ local cc = rule("cc-target") {
             windows = "$build_as_dll",
         }
     },
-    implicit_in = {
-        compiler_deps,
-    },
+    implicit_in = compiler_deps,
     depfile = "$out.d",
 }
 local cc_ext = rule("cc_ext-target") {
@@ -527,9 +517,7 @@ local cc_ext = rule("cc_ext-target") {
     command = {
         "$cc", target_opt, "-c", lto, ext_cflags, lua_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
     },
-    implicit_in = {
-        compiler_deps,
-    },
+    implicit_in = compiler_deps,
     depfile = "$out.d",
 }
 local ld = rule("ld-target") {
@@ -537,26 +525,20 @@ local ld = rule("ld-target") {
     command = {
         "$ld", target_opt, lto, ldflags, target_ld_flags, "$in -o $out",
     },
-    implicit_in = {
-        compiler_deps,
-    },
+    implicit_in = compiler_deps,
 }
 local so = rule("so-target") {
     description = "SO $out",
     command = {
         "$cc", target_opt, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out",
     },
-    implicit_in = {
-        compiler_deps,
-    },
+    implicit_in = compiler_deps,
 }
 
 local ar = rule "ar-target" {
     description = "AR $out",
     command = "$ar -crs $out $in",
-    implicit_in = {
-        compiler_deps,
-    },
+    implicit_in = compiler_deps,
 }
 
 --===================================================================
@@ -694,9 +676,7 @@ EOF
 
 rule "gen_config" {
     description = "GEN $out",
-    command = {
-        "bash", "$in", "$out",
-    },
+    command = "bash $in $out",
     implicit_in = {
         ".git/refs/tags",
         "$lua"
@@ -710,33 +690,24 @@ var "crypt_key" (crypt_key)
 
 build "$luax_crypt_key"  {
     description = "GEN $out",
-    command = {
-        "$lua tools/crypt_key.lua LUAX_CRYPT_KEY \"$crypt_key\" > $out",
-    },
+    command = "$lua tools/crypt_key.lua LUAX_CRYPT_KEY \"$crypt_key\" > $out",
     implicit_in = {
         "$lua",
         "tools/crypt_key.lua",
-    }
+    },
 }
 
 --===================================================================
 section "Lua runtime"
 ---------------------------------------------------------------------
 
-local luax_runtime = {
-    ls "libluax/**.lua",
-    ls "ext/**.lua",
-}
-
-var "luax_runtime_bundle" "$tmp/lua_runtime_bundle.c"
-
-build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
+rule "bundle" {
     description = "BUNDLE $out",
     command = {
         "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
         "CRYPT_KEY=\"$crypt_key\"",
-        "$lua -l tools/rc4_runtime luax/luax_bundle.lua -lib -c $in > $out",
+        "$lua -l tools/rc4_runtime luax/luax_bundle.lua $args $in > $out",
     },
     implicit_in = {
         "$lz4",
@@ -744,6 +715,16 @@ build "$luax_runtime_bundle" { "$luax_config_lua", luax_runtime,
         "luax/luax_bundle.lua",
         "tools/rc4_runtime.lua",
     },
+}
+
+local luax_runtime = {
+    ls "libluax/**.lua",
+    ls "ext/**.lua",
+}
+
+local luax_runtime_bundle = build "$tmp/lua_runtime_bundle.c" {
+    "bundle", "$luax_config_lua", luax_runtime,
+    args = "-lib -c",
 }
 
 local luax_app = myapp or {
@@ -751,21 +732,11 @@ local luax_app = myapp or {
     "$luax_config_lua",
 }
 
-var "luax_app_bundle" "$tmp/lua_app_bundle.c"
-
-build "$luax_app_bundle" { luax_app,
-    description = "BUNDLE $out",
-    command = {
-        "PATH=$tmp:$$PATH",
-        "LUA_PATH=\"$lua_path\"",
-        "CRYPT_KEY=\"$crypt_key\"",
-        "$lua -l tools/rc4_runtime luax/luax_bundle.lua", "-name="..appname, "-app -c $in > $out",
-    },
-    implicit_in = {
-        "$lz4",
-        "$lua",
-        "luax/luax_bundle.lua",
-        "tools/rc4_runtime.lua",
+local luax_app_bundle = build "$tmp/lua_app_bundle.c" {
+    "bundle", luax_app,
+    args = {
+        "-app -c",
+        "-name="..appname,
     },
 }
 
@@ -844,7 +815,7 @@ local main_luax = F.flatten { sources.luax_main_c_files }
         return build("$tmp/obj"/src:splitext()..".o") { cc, src,
             implicit_in = {
                 "$luax_config_h",
-                "$luax_app_bundle",
+                luax_app_bundle,
             },
         }
     end)
@@ -856,7 +827,7 @@ local main_libluax = F.flatten { sources.libluax_main_c_files }
                     windows = "-DLUA_BUILD_AS_DLL -DLUA_LIB",
                 },
                 implicit_in = {
-                    "$luax_runtime_bundle",
+                    luax_runtime_bundle,
                 },
             }
         end)
@@ -929,20 +900,9 @@ local lib_luax_sources = {
 }
 
 acc(libraries) {
-    build "$lib/luax.lua" { "$luax_config_lua", lib_luax_sources,
-        description = "LUAX $out",
-        command = {
-            "PATH=$tmp:$$PATH",
-            "LUA_PATH=\"$lua_path\"",
-            "CRYPT_KEY=\"$crypt_key\"",
-            "$lua -l tools/rc4_runtime luax/luax_bundle.lua -lib -lua $in > $out",
-        },
-        implicit_in = {
-            "$lz4",
-            "$lua",
-            "luax/luax_bundle.lua",
-            "tools/rc4_runtime.lua",
-        },
+    build "$lib/luax.lua" {
+        "bundle", "$luax_config_lua", lib_luax_sources,
+        args = "-lib -lua",
     }
 }
 
@@ -950,23 +910,28 @@ acc(libraries) {
 section "$bin/luax-lua"
 ---------------------------------------------------------------------
 
+rule "luax-bundle" {
+    description = "BUNDLE $out",
+    command = {
+        "PATH=$tmp:$$PATH",
+        "LUA_PATH=\"$lua_path\"",
+        "CRYPT_KEY=\"$crypt_key\"",
+        "LUAX_LIB=$lib",
+        "$lua -l tools/rc4_runtime luax/luax.lua -q $args -o $out $in",
+    },
+    implicit_in = {
+        "$lz4",
+        "$lua",
+        "luax/luax_bundle.lua",
+        "tools/rc4_runtime.lua",
+        "$lib/luax.lua",
+    },
+}
+
 acc(binaries) {
-    build "$bin/luax-lua" { ls "luax/**.lua",
-        description = "LUAX $out",
-        command = {
-            "PATH=$tmp:$$PATH",
-            "LUA_PATH=\"$lua_path\"",
-            "CRYPT_KEY=\"$crypt_key\"",
-            "LUAX_LIB=$lib",
-            "$lua -l tools/rc4_runtime luax/luax.lua -q -t lua -o $out $in",
-        },
-        implicit_in = {
-            "$lz4",
-            "$lua",
-            "luax/luax_bundle.lua",
-            "tools/rc4_runtime.lua",
-            "$lib/luax.lua",
-        },
+    build "$bin/luax-lua" {
+        "luax-bundle", ls "luax/**.lua",
+        args = "-t lua",
     }
 }
 
@@ -975,22 +940,9 @@ section "$bin/luax-pandoc"
 ---------------------------------------------------------------------
 
 acc(binaries) {
-    build "$bin/luax-pandoc" { ls "luax/**.lua",
-        description = "LUAX $out",
-        command = {
-            "PATH=$tmp:$$PATH",
-            "LUA_PATH=\"$lua_path\"",
-            "CRYPT_KEY=\"$crypt_key\"",
-            "LUAX_LIB=$lib",
-            "$lua -l tools/rc4_runtime luax/luax.lua -q -t pandoc -o $out $in",
-        },
-        implicit_in = {
-            "$lz4",
-            "$lua",
-            "luax/luax_bundle.lua",
-            "tools/rc4_runtime.lua",
-            "$lib/luax.lua",
-        },
+    build "$bin/luax-pandoc" {
+        "luax-bundle", ls "luax/**.lua",
+        args = "-t pandoc",
     }
 }
 
@@ -1227,39 +1179,34 @@ local pandoc_gfm = {
     "--fail-if-warnings",
 }
 
-rule "ypp" {
-    description = "YPP $in",
-    command = {
-        "LUAX=$luax",
-        "ypp --MD --MT $out --MF $depfile $in -o $out",
+local gfm = pipe {
+    rule "ypp.md" {
+        description = "YPP $in",
+        command = {
+            "LUAX=$luax",
+            "ypp --MD --MT $out --MF $depfile $in -o $out",
+        },
+        depfile = "$out.d",
+        implicit_in = {
+            "$luax",
+        },
     },
-    depfile = "$out.d",
-    implicit_in = {
-        "$luax",
-    },
-}
-
-rule "md_to_gfm" {
-    description = "PANDOC $out",
-    command = {
-        pandoc_gfm, "$in -o $out",
-    },
-    implicit_in = {
-        "doc/src/fix_links.lua",
-        images,
+    rule "pandoc" {
+        description = "PANDOC $out",
+        command = { pandoc_gfm, "$in -o $out" },
+        implicit_in = {
+            "doc/src/fix_links.lua",
+            images,
+        },
     },
 }
 
 acc(doc) {
 
-    build "README.md" { "md_to_gfm",
-        build "$tmp/doc/README.md" { "ypp", "doc/src/luax.md" },
-    },
+    gfm "README.md" { "doc/src/luax.md" },
 
     markdown_sources : map(function(src)
-        return build("doc"/src:basename()) { "md_to_gfm",
-            build("$tmp"/src) { "ypp", src },
-        }
+        return gfm("doc"/src:basename()) { src }
     end)
 
 }
