@@ -25,7 +25,7 @@
 # Then LuaX can be compiled with `ninja` using `build.ninja`.
 ######################################################################
 
-builddir = .bootstrap
+builddir = .build/boot
 
 kernel = "$$(uname -s)"
 linux_opts = $$([ $kernel = Linux ] && echo '-DLUA_USE_LINUX')

@@ -232,8 +232,14 @@ case(compiler) {
 
     zig = function()
         local zig_version = "0.11.0"
-        --local zig_version = "0.12.0-dev.2139+e025ad7b4"
-        var "zig" (".zig" / zig_version / "zig")
+        --local zig_version = "0.12.0-dev.2341+92211135f"
+
+        local cache = case(luax_sys.os) {
+            linux   = os.getenv"HOME"/".local/var/cache/luax",
+            macos   = os.getenv"HOME"/".local/var/cache/luax",
+            windows = os.getenv"LOCALAPPDATA"/"luax",
+        }
+        var "zig" (cache / "zig" / zig_version / "zig")
 
         build "$zig" { "tools/install_zig.sh",
             description = {"GET zig", zig_version},
@@ -243,8 +249,8 @@ case(compiler) {
 
         compiler_deps = { "$zig" }
         local zig_cache = {
-            "ZIG_GLOBAL_CACHE_DIR=$$PWD/${zig}-global-cache",
-            "ZIG_LOCAL_CACHE_DIR=$$PWD/${zig}-local-cache",
+            "ZIG_GLOBAL_CACHE_DIR=${zig}-global-cache",
+            "ZIG_LOCAL_CACHE_DIR=${zig}-local-cache",
         }
 
         var "cc" { zig_cache, "$zig cc" }
