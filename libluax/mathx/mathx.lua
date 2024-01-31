@@ -130,6 +130,10 @@ if not mathx then
     mathx.tanh = function(x) return (exp(x)-exp(-x))/(exp(x)+exp(-x)) end
     mathx.trunc = function(x) return x >= 0 and floor(x) or ceil(x) end
 
+    mathx.inf = inf
+    mathx.nan = math.abs(0/0)
+    mathx.pi = math.pi
+
 end
 
 return mathx

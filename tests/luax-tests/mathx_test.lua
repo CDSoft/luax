@@ -212,4 +212,15 @@ return function()
         eq(mathx.tanh(-x), -y)
     end
 
+    assert(mathx.inf >= 1/0)
+    assert(-mathx.inf <= -1/0)
+    assert(mathx.isinf(mathx.inf))
+    assert(mathx.isinf(-mathx.inf))
+
+    assert(mathx.nan ~= mathx.nan)
+    assert(mathx.isnan(mathx.nan))
+
+    assert(mathx.pi == math.pi)
+    eq(mathx.pi, 3.1415926535898)
+
 end
