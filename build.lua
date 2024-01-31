@@ -226,11 +226,6 @@ local doc = {}
 section "Compiler"
 ---------------------------------------------------------------------
 
-rule "mkdir" {
-    description = "MKDIR $out",
-    command = "mkdir -p $out",
-}
-
 local compiler_deps = {}
 
 case(compiler) {
