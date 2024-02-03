@@ -52,6 +52,7 @@ then
     wget "$ZIG_URL" -O "$(dirname "$ZIG")/$ZIG_ARCHIVE"
 
     tar xJf "$(dirname "$ZIG")/$ZIG_ARCHIVE" -C "$(dirname "$ZIG")" --strip-components 1
+    mkdir -p C "$(dirname "$ZIG")/cache"
 
 fi
 

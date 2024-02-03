@@ -239,7 +239,8 @@ case(compiler) {
             macos   = os.getenv"HOME"/".local/var/cache/luax",
             windows = os.getenv"LOCALAPPDATA"/"luax",
         }
-        var "zig" (cache / "zig" / zig_version / "zig")
+        var "zig"       (cache / "zig" / zig_version / "zig")
+        var "zig_cache" (cache / "zig" / zig_version / "cache")
 
         build "$zig" { "tools/install_zig.sh",
             description = {"GET zig", zig_version},
@@ -248,9 +249,16 @@ case(compiler) {
         }
 
         compiler_deps = { "$zig" }
+        local cache_dir = F{
+            appname,
+            mode,
+            san and "sanitizers" or {},
+            target or {},
+            upx and "upx" or {},
+        }:flatten():str"-"
         local zig_cache = {
-            "ZIG_GLOBAL_CACHE_DIR=${zig}-global-cache",
-            "ZIG_LOCAL_CACHE_DIR=${zig}-local-cache",
+            "ZIG_GLOBAL_CACHE_DIR=${zig_cache}"/cache_dir.."-global",
+            "ZIG_LOCAL_CACHE_DIR=${zig_cache}"/cache_dir.."-local",
         }
 
         var "cc" { zig_cache, "$zig cc" }
