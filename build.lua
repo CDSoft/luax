@@ -723,6 +723,7 @@ rule "bundle" {
         "$lua",
         "luax/luax_bundle.lua",
         "tools/rc4_runtime.lua",
+        "$luax_config_lua",
     },
 }
 
@@ -934,6 +935,7 @@ rule "luax-bundle" {
         "luax/luax_bundle.lua",
         "tools/rc4_runtime.lua",
         "$lib/luax.lua",
+        "$luax_config_lua",
     },
 }
 
