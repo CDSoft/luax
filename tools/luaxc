@@ -102,6 +102,6 @@ esac
 NINJA_FILE="$CACHE"/$APPNAME-${TARGET:-host}.ninja
 
 cd "$CACHE"
-luax tools/bang -o "$NINJA_FILE" -- $COMPILER $TARGET appname="$APPNAME" key="$KEY" "${SOURCES[*]}"
+luax tools/bang -o "$NINJA_FILE" -- $COMPILER $TARGET appname="$APPNAME" key="$KEY" "${SOURCES[@]}"
 PREFIX=$(dirname "$(dirname "$TMP_OUTPUT")") ninja -f "$NINJA_FILE" install
 install -v "$TMP_OUTPUT" "$OUTPUT"
