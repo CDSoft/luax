@@ -64,7 +64,7 @@ BRANCH=master
 while [ -n "$1" ]
 do
     case "$1" in
-        (-o)    OUTPUT="$2"; shift 2 ;;
+        (-o)    OUTPUT=$(realpath "$2"); shift 2 ;;
         (-t)    TARGET="$2"; shift 2 ;;
         (-c)    COMPILER="$2"; shift 2 ;;
         (-k)    KEY="$2"; shift 2 ;;
@@ -81,8 +81,12 @@ function md5()
 
 CACHE="$CACHE/$BRANCH/$(md5 "$COMPILER" "$KEY")"
 
-
-[ -d "$CACHE" ] || git clone -b "$BRANCH" https://github.com/CDSoft/luax "$CACHE"
+if [ -d "$CACHE" ]
+then
+    ( cd "$CACHE" && git checkout master && git fetch && git rebase && git checkout "$BRANCH" )
+else
+    git clone -b "$BRANCH" https://github.com/CDSoft/luax "$CACHE"
+fi
 [ -x "$CACHE"/.build/bin/luax ] || (cd "$CACHE" && ninja -f bootstrap.ninja && ninja compile)
 eval "$("$CACHE"/.build/bin/luax env)"
 
@@ -96,8 +100,6 @@ case "$TARGET" in
                 ;;
 esac
 NINJA_FILE="$CACHE"/$APPNAME-${TARGET:-host}.ninja
-
-OUTPUT=$(realpath "$OUTPUT")
 
 cd "$CACHE"
 luax tools/bang -o "$NINJA_FILE" -- $COMPILER $TARGET appname="$APPNAME" key="$KEY" "${SOURCES[*]}"
