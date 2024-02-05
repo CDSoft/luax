@@ -640,60 +640,26 @@ section "LuaX configuration"
 
 comment [[
 The configuration file (luax_config.h and luax_config.lua)
-are created in `libluax`
+are created in `$tmp`
 ]]
 
 var "luax_config_h"   "$tmp/luax_config.h"
 var "luax_config_lua" "$tmp/luax_config.lua"
 var "luax_crypt_key"  "$tmp/luax_crypt_key.h"
 
-local luax_config_table = (F.I % "%%()") {
+local luax_config_params = F {
     AUTHORS = AUTHORS,
     URL = URL,
-}
+} : items() : map(function(kv) return ("%s=%q"):format(kv:unpack()) end) : unwords()
 
-F.compose { file "tools/gen_config_h.sh", luax_config_table } [[
-#!/bin/bash
-
-LUAX_CONFIG_H="$1"
-
-cat <<EOF > "$LUAX_CONFIG_H"
-#pragma once
-#define LUAX_VERSION "$(git describe --tags)"
-#define LUAX_DATE "$(git show -s --format=%cd --date=format:'%Y-%m-%d')"
-#define LUAX_COPYRIGHT "LuaX "LUAX_VERSION"  Copyright (C) 2021-$(git show -s --format=%cd --date=format:'%Y') %(URL)"
-#define LUAX_AUTHORS "%(AUTHORS)"
-EOF
-]]
-
-F.compose { file "tools/gen_config_lua.sh", luax_config_table } [[
-#!/bin/bash
-
-LUAX_CONFIG_LUA="$1"
-
-cat <<EOF > "$LUAX_CONFIG_LUA"
---@LIB
-local version = "$(git describe --tags)"
-return {
-    version = version,
-    date = "$(git show -s --format=%cd --date=format:'%Y-%m-%d')",
-    copyright = "LuaX "..version.."  Copyright (C) 2021-$(git show -s --format=%cd --date=format:'%Y') %(URL)",
-    authors = "%(AUTHORS)",
-}
-EOF
-]]
-
-rule "gen_config" {
+rule "gen_conf" {
     description = "GEN $out",
-    command = "bash $in $out",
-    implicit_in = {
-        ".git/refs/tags",
-        "$lua"
-    },
+    command = { luax_config_params, "$in > $out" },
+    implicit_in = ".git/refs/tags",
 }
 
-build "$luax_config_h"   { "gen_config", "tools/gen_config_h.sh" }
-build "$luax_config_lua" { "gen_config", "tools/gen_config_lua.sh" }
+build "$luax_config_h"   { "gen_conf", "tools/luax_config.h.sh" }
+build "$luax_config_lua" { "gen_conf", "tools/luax_config.lua.sh" }
 
 var "crypt_key" (crypt_key)
 
