@@ -1137,8 +1137,12 @@ section "Documentation"
 local markdown_sources = ls "doc/src/*.md"
 
 rule "lsvg" {
-    command = "lsvg $in -o $out --MF $depfile -- $args",
+    command = "$luax tools/lsvg.lua $in -o $out --MF $depfile -- $args",
     depfile = "$builddir/tmp/lsvg/$out.d",
+    implicit_in = {
+        "$luax",
+        "tools/lsvg.lua",
+    },
 }
 
 local images = {
