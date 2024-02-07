@@ -1,7 +1,7 @@
 #!/usr/bin/env -S lua --
-local function lib(path, src) return assert(load(src, '@$bang.lua:'..path, 't')) end
+local function lib(path, src) return assert(load(src, '@$ypp.lua:'..path, 't')) end
 local libs = {
-["luax"] = lib("~/.local/lib/luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
+["luax"] = lib("~/.local/var/cache/hey/repos/luax/.build/lib/luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
 _LUAX_VERSION = '3.1.7'
 _LUAX_DATE = '2024-02-06'
 local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
@@ -10615,1132 +10615,1501 @@ require "fs"
 require "lz4"
 require "package_hook"
 ]===]),
-["atexit"] = lib("src/atexit.lua", [=[-- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
+["atexit"] = lib("src/atexit.lua", [=[--[[
+This file is part of ypp.
 
---@LIB
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-local F = require "F"
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-local registered_functions = F{}
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+http://cdelord.fr/ypp
+--]]
+
+--@LOAD
+
+--[[@@@
+* `atexit(func)`: execute `func` when the whole output is computed, before actually writing the output.
+@@@]]
+
+local _functions = {}
 
 return setmetatable({}, {
-    __call = function(_, f)
-        if type(f) ~= "function" then error(tostring(f).." is not a function", 2) end
-        registered_functions[#registered_functions+1] = f
+    __call = function(_, func)
+        table.insert(_functions, func)
     end,
     __index = {
-        run = function()
-            while not registered_functions:null() do
-                local funcs = registered_functions
-                registered_functions = F{}
-                funcs:foreach(F.call)
+        run = function(_)
+            while #_functions > 0 do
+                table.remove(_functions, #_functions)()
             end
         end,
     },
 })
 ]=]),
-["ident"] = lib("src/ident.lua", [=[-- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
-
---@LIB
-
-return function(s)
-    return s : gsub("[^a-zA-Z0-9_%.%-]+", "_")
-end
-]=]),
-["log"] = lib("src/log.lua", [=[-- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
-
-local F = require "F"
-
-local where = require "where"
-
-local log = {}
-
-local quiet = false
-
-function log.config(args)
-    quiet = args.quiet
-end
-
-function log.error(...)
-    log.error_at(where(), ...)
-end
-
-function log.error_at(loc, ...)
-    io.stderr:write(F.flatten{loc, "ERROR: ", {...}, "\n"}:unpack())
-    os.exit(1)
-end
-
-function log.warning(...)
-    io.stderr:write(F.flatten{where(), "WARNING: ", {...}, "\n"}:unpack())
-end
-
-function log.info(...)
-    if not quiet then
-        io.stdout:write(F.flatten{{...}, "\n"}:unpack())
-    end
-end
-
-return log
-]=]),
-["ninja"] = lib("src/ninja.lua", [=[-- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
-
---@LIB
-
-local F = require "F"
-local fs = require "fs"
-local atexit = require "atexit"
-local where = require "where"
-
-local log = require "log"
-local ident = require "ident"
-
-local ninja_required_version_for_bang = F"1.11.1"
-
-local tokens = F{
-    "# Ninja file generated by bang (https://cdelord.fr/bang)\n",
-    "\n",
-}
-
-local nbnl = 1
-
-function emit(x)
-    tokens[#tokens+1] = x
-    nbnl = 0
-end
-
-function comment(txt)
-    emit(txt
-        : lines()
-        : map(F.prefix "# ")
-        : unlines())
-end
-
-function nl()
-    if nbnl < 1 then
-        emit "\n"
-    end
-    nbnl = nbnl + 1
-end
-
-function section(...)
-    nl()
-    emit { F"#":rep(70), "\n" }
-    comment(...)
-    emit { F"#":rep(70), "\n" }
-    nl()
-end
-
-local trim_word = F.compose {
-    string.trim, ---@diagnostic disable-line: undefined-field
-    tostring,
-}
-
-local function stringify(value)
-    return F.flatten{value}
-    : map(trim_word)
-    : unwords()
-end
-
-local predicates_to_check_at_exit = F{}
-
-local function check_at_exit(predicate, error_message)
-    local loc = where()
-    predicates_to_check_at_exit[#predicates_to_check_at_exit+1] = function()
-        if not predicate() then
-            log.error_at(loc, error_message)
-        end
-    end
-end
-
-local nbvars = 0
-
-vars = {}
-
-function var(name)
-    check_at_exit(function() return vars[name] ~= nil end, "var "..name..": incomplete definition")
-    return function(value)
-        if vars[name] then
-            log.error("var "..name..": multiple definition")
-        end
-        value = stringify(value)
-        emit { name, " = ", value, "\n" }
-        vars[name] = value
-        nbvars = nbvars + 1
-        return "$"..name
-    end
-end
-
-local ninja_required_version_token = { ninja_required_version_for_bang }
-
-nl()
-emit { "ninja_required_version = ", ninja_required_version_token, "\n" }
-nl()
-
-function ninja_required_version(required_version)
-    local current = ninja_required_version_token[1] : split "%." : map(tonumber)
-    local new = required_version : split "%." : map(tonumber)
-    for i = 1, #new do
-        current[i] = current[i] or 0
-        if new[i] > current[i] then ninja_required_version_token[1] = required_version; return end
-        if new[i] < current[i] then return end
-    end
-end
-
-local rule_variables = F{
-    "description",
-    "command",
-    "in",
-    "in_newline",
-    "out",
-    "depfile",
-    "deps",
-    "dyndep",
-    "pool",
-    "msvc_deps_prefix",
-    "generator",
-    "restat",
-    "rspfile",
-    "rspfile_content",
-}
-
-local build_special_bang_variables = F{
-    "implicit_in",
-    "implicit_out",
-    "order_only_deps",
-    "validations",
-}
-
-local rules = {
---  "rule_name" = {
---      inherited_variables = {implicit_in=..., implicit_out=...}
---  }
-}
-
-local function new_rule(name)
-    rules[name] = { inherited_variables = {} }
-end
-
-new_rule "phony"
-
-local nbrules = 0
-
-function rule(name)
-    check_at_exit(function() return rules[name] ~= nil end, "rule "..name..": incomplete definition")
-    return function(opt)
-        if rules[name] then
-            log.error("rule "..name..": multiple definition")
-        end
-        if opt.command == nil then
-            log.error("rule "..name..": expected 'command' attribute")
-        end
-
-        new_rule(name)
-        nbrules = nbrules + 1
-
-        nl()
-
-        emit { "rule ", name, "\n" }
-
-        -- list of variables belonging to the rule definition
-        rule_variables : foreach(function(varname)
-            local value = opt[varname]
-            if value ~= nil then emit { "  ", varname, " = ", stringify(value), "\n" } end
-        end)
-
-        -- list of variables belonging to the associated build statements
-        build_special_bang_variables : foreach(function(varname)
-            rules[name].inherited_variables[varname] = opt[varname]
-        end)
-
-        -- other variables are unknown
-        local unknown_variables = F.keys(opt)
-            : difference(rule_variables)
-            : difference(build_special_bang_variables)
-        if #unknown_variables > 0 then
-            log.error("rule "..name..": unknown variables: "..unknown_variables:str", ")
-        end
-
-        nl()
-
-        return name
-    end
-end
-
-local function unique_rule_name(name)
-    local rule_name = name
-    local i = 0
-    while rules[rule_name] do
-        i = i + 1
-        rule_name = F{name, i}:str"-"
-    end
-    return rule_name
-end
-
-local builds = {}
-
-local default_build_statements = {}
-local custom_default_statement = false
-
-local nbbuilds = 0
-
-function build(outputs)
-    outputs = stringify(outputs)
-    check_at_exit(function()
-        return F(outputs):words():all(function(output) return builds[output] ~= nil end)
-    end, "build "..outputs..": incomplete definition")
-    return function(inputs)
-        -- variables defined in the current build statement
-        local build_opt = F.filterk(function(k, _) return type(k) == "string" and not k:has_prefix"$" end, inputs)
-        local no_default = inputs["$no_default"]
-
-        if build_opt.command then
-            -- the build statement contains its own rule
-            -- => create a new rule for this build statement only
-            local rule_name = unique_rule_name(ident(outputs))
-            local rule_opt = F.restrict_keys(build_opt, rule_variables)
-            rule(rule_name)(rule_opt)
-            build_opt = F.without_keys(build_opt, rule_variables)
-
-            -- add the rule name to the actuel build statement
-            inputs = {rule_name, inputs}
-        end
-
-        -- variables defined at the rule level and inherited by this statement
-        local rule_name = F{inputs}:flatten():head():words():head()
-        if not rules[rule_name] then
-            log.error(rule_name..": unknown rule")
-        end
-        local rule_opt = rules[rule_name].inherited_variables
-
-        -- merge both variable sets
-        local opt = F.clone(rule_opt)
-        build_opt:foreachk(function(varname, value)
-            opt[varname] = opt[varname]~=nil and {opt[varname], value} or value
-        end)
-
-        emit { "build ",
-            outputs,
-            opt.implicit_out and {" | ", stringify(opt.implicit_out)} or {},
-            ": ",
-            stringify(inputs),
-            opt.implicit_in and {" | ", stringify(opt.implicit_in)} or {},
-            opt.order_only_deps and {" || ", stringify(opt.order_only_deps)} or {},
-            opt.validations and {" |@ ", stringify(opt.validations)} or {},
-            "\n",
-        }
-
-        F.without_keys(opt, build_special_bang_variables)
-        : foreachk(function(varname, value)
-            emit { "  ", varname, " = ", stringify(value), "\n" }
-        end)
-
-        nbbuilds = nbbuilds + 1
-
-        local output_list = outputs:words()
-        output_list : foreach(function(output)
-            if builds[output] then
-                log.error("build "..output..": multiple definition")
-            end
-            builds[output] = true
-        end)
-        if not no_default then
-            default_build_statements[#default_build_statements+1] = output_list
-        end
-        return #output_list ~= 1 and output_list or output_list[1]
-    end
-end
-
-local pool_variables = F{
-    "depth",
-}
-
-local pools = {}
-
-function pool(name)
-    check_at_exit(function() return pools[name] ~= nil end, "pool "..name..": incomplete definition")
-    return function(opt)
-        if pools[name] then
-            log.error("pool "..name..": multiple definition")
-        end
-        pools[name] = true
-        emit { "pool ", name, "\n" }
-        pool_variables : foreach(function(varname)
-            local value = opt[varname]
-            if value ~= nil then emit { "  ", varname, " = ", stringify(value), "\n" } end
-        end)
-        local unknown_variables = F.keys(opt) : difference(pool_variables)
-        if #unknown_variables > 0 then
-            log.error("pool "..name..": unknown variables: "..unknown_variables:str", ")
-        end
-        return name
-    end
-end
-
-function default(targets)
-    custom_default_statement = true
-    nl()
-    emit { "default ", stringify(targets), "\n" }
-    nl()
-end
-
-local function generate_default()
-    if custom_default_statement then return end
-    if require"clean".default_target_needed()
-    or require"help".default_target_needed()
-    or require"install".default_target_needed()
-    then
-        section "Default targets"
-        default(default_build_statements)
-    end
-end
-
-function phony(outputs)
-    return function(inputs)
-        return build(outputs) {"phony", inputs,
-            ["$no_default"] = inputs["$no_default"],
-        }
-    end
-end
-
-local generator_flag = {}
-local generator_called = false
-
-function generator(flag)
-    if generator_called then
-        log.error("generator: multiple call")
-    end
-    generator_called = true
-
-    if flag == nil or flag == true then
-        flag = {}
-    end
-
-    if type(flag) ~= "boolean" and type(flag) ~= "table" then
-        log.error("generator: boolean or table expected")
-    end
-
-    generator_flag = flag
-end
-
-local function generator_rule(args)
-    if not generator_flag then return end
-
-    section(("Regenerate %s when %s changes"):format(args.output, args.input))
-
-    local bang = rule(unique_rule_name "bang") {
-        command = {
-            "bang",
-            args.quiet and "-q" or {},
-            "$in -o $out",
-            #_G.arg > 0 and {"--", _G.arg} or {},
-        },
-        generator = true,
-    }
-
-    local deps = F.values(package.modpath) ---@diagnostic disable-line: undefined-field
-    if not deps:null() then
-        generator_flag.implicit_in = F.flatten { generator_flag.implicit_in or {}, deps } : nub()
-    end
-
-    build(args.output) (F.merge{
-        { ["$no_default"] = true },
-        { bang, args.input },
-        generator_flag,
-    })
-end
-
-return function(args)
-    log.info("load ", args.input)
-    if not fs.is_file(args.input) then
-        log.error(args.input, ": file not found")
-    end
-    _G.bang = F.clone(args)
-    assert(loadfile(args.input, "t"))()
-    atexit.run()
-    install:gen()
-    clean:gen()
-    help:gen() -- help shall be generated after clean and install
-    generator_rule(args)
-    generate_default()
-    predicates_to_check_at_exit:foreach(F.call)
-    local ninja = tokens
-        : flatten()
-        : str()
-        : lines()
-        : map(string.rtrim) ---@diagnostic disable-line: undefined-field
-        : drop_while_end(string.null) ---@diagnostic disable-line: undefined-field
-        : unlines()
-    log.info(nbvars, " variables")
-    log.info(nbrules, " rules")
-    log.info(nbbuilds, " build statements")
-    log.info(#ninja:lines(), " lines")
-    log.info(#ninja, " bytes")
-    return ninja
-end
-]=]),
-["where"] = lib("src/where.lua", [=[-- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
-
---@LIB
-
-return function()
-    -- get the current location in the first user script in the call stack
-    local i = 2
-    while true do
-        local info_S = debug.getinfo(i, 'S')
-        local info_l = debug.getinfo(i, 'l')
-        if not info_S then
-            return ""
-        end
-        local file = info_S.source
-        local line = info_l.currentline
-        if not file then error "Can not locate the current source file" end
-        file = file:match "^@(.*)"
-        if file and not file:has_prefix "$" and file:is_file() then
-            return ("[%s:%d] "):format(file, line)
-        end
-        i = i+1
-    end
-end
-]=]),
-["acc"] = lib("lib/acc.lua", [=[-- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
+["comment"] = lib("src/comment.lua", [====[--[[
+This file is part of ypp.
+
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+http://cdelord.fr/ypp
+--]]
 
 --@LOAD
 
+--[[@@@
+* `comment(...)`: returns an empty string (useful for commenting some text)
+
+E.g.:
+
+?(false)
+```
+@comment [===[
+This paragraph is a comment
+and is not part of the output document.
+]===]
+```
+?(true)
+@@@]]
+
 local F = require "F"
 
-local function acc(list)
-    return function(xs)
-        F.flatten{xs} : foreach(function(x)
-            list[#list+1] = x
-        end)
-    end
-end
+return F.const ""
+]====]),
+["convert"] = lib("src/convert.lua", [====[--[[
+This file is part of ypp.
 
-return acc
-]=]),
-["case"] = lib("lib/case.lua", [=[-- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+http://cdelord.fr/ypp
+--]]
 
 --@LOAD
 
-local F = require "F"
+local flex = require "flex"
 
-return F.case
-]=]),
-["clean"] = lib("lib/clean.lua", [=[-- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
+--[[@@@
+* `convert(s, [opts])`:
+  convert the string `s` from the format `opts.from` to the format `opts.to` and shifts the header levels by `opts.shift`.
 
---@LOAD
+This function requires a Pandoc Lua interpreter. The conversion is made by [Pandoc] itself.
 
-local F = require "F"
-local help = require "help"
-local ident = require "ident"
+The `opts` parameter is optional.
+By default Pandoc converts documents from and to Markdown and the header level is not modified.
 
-local clean = {}
-local mt = {__index={}}
+?(false)
+The `convert` macro can also be called as a curried function (arguments can be swapped). E.g.:
 
-local directories_to_clean = F{}
-local directories_to_clean_more = F{}
+    @convert {from="csv"} (script.python [===[
+    # python script that produces a CVS document
+    ]===])
 
-local builddir = "$builddir"
+Notice that `convert` can be implicitely called by `include` or `script` by giving the appropriate options. E.g.:
 
-function mt.__call(_, dir)
-    directories_to_clean[#directories_to_clean+1] = dir
-end
+    @script.python {from="csv"} [===[
+    # python script that produces a CVS document
+    ]===]
 
-function clean.mrproper(dir)
-    directories_to_clean_more[#directories_to_clean_more+1] = dir
-end
+?(true)
+@@@]]
 
-function mt.__index:default_target_needed()
-    return #directories_to_clean > 0 or #directories_to_clean_more > 0
-end
-
-function mt.__index:gen()
-
-    if #directories_to_clean > 0 then
-
-        section("Clean")
-
-        help "clean" "clean generated files"
-
-        local targets = directories_to_clean : map(function(dir)
-            return build("clean-"..ident(dir)) {
-                ["$no_default"] = true,
-                description = {"CLEAN ", dir},
-                command = {"rm -rf ", dir..(dir==builddir and "/*" or "")},
-            }
-        end)
-
-        phony "clean" {
-            ["$no_default"] = true,
-            targets,
-        }
-
+local convert = flex.str(function(content, opts)
+    assert(pandoc, "The convert macro requires a Pandoc Lua interpreter")
+    opts = opts or {}
+    local doc = pandoc.read(tostring(content), opts.from)
+    local div = pandoc.Div(doc.blocks)
+    if opts.shift then
+        div = pandoc.walk_block(div, {
+            Header = function(h)
+                h = h:clone()
+                h.level = h.level + opts.shift
+                return h
+            end,
+        })
     end
+    return pandoc.write(pandoc.Pandoc(div.content), opts.to)
+end)
 
-    if #directories_to_clean_more > 0 then
-
-        section("Clean (mrproper)")
-
-        help "mrproper" "clean generated files and more"
-
-        local targets = directories_to_clean_more : map(function(dir)
-            return build("mrproper-"..ident(dir)) {
-                ["$no_default"] = true,
-                description = {"CLEAN ", dir},
-                command = {"rm -rf ", dir..(dir==builddir and "/*" or "")},
-            }
-        end)
-
-        phony "mrproper" {
-            ["$no_default"] = true,
-            #directories_to_clean > 0 and "clean" or {},
-            targets,
-        }
-
+local convert_if_required = function(content, opts)
+    opts = opts or {}
+    content = tostring(content)
+    if opts.from or opts.to or opts.shift then
+        content = tostring(convert(content)(opts))
     end
-
-end
-
-return setmetatable(clean, mt)
-]=]),
-["file"] = lib("lib/file.lua", [=[-- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
-
---@LOAD
-
-local fs = require "fs"
-local F = require "F"
-
-local file_mt = {__index = {}}
-
-function file_mt.__call(self, ...)
-    self.chunks[#self.chunks+1] = {...}
-end
-
--- TODO: remove the write method at the next major release
-function file_mt.__index:write(...)
-    local log = require "log"
-    log.warning("file:write(...) is deprecated, please use file(...) instead")
-    self(...)
-end
-
-function file_mt.__index:close()
-    local new_content = self.chunks:flatten():str()
-    local old_content = fs.read(self.name)
-    if old_content == new_content then
-        return -- keep the old file untouched
-    end
-    fs.mkdirs(self.name:dirname())
-    fs.write(self.name, new_content)
-end
-
-local flush_functions = F{}
-
-local function file(name)
-    local f = setmetatable({name=name, chunks=F{}}, file_mt)
-    flush_functions[#flush_functions+1] = function() f:close() end
-    return f
+    return content
 end
 
 return setmetatable({}, {
-    __call = function(_, name) return file(name) end,
+    __call = function(_, ...) return convert(...) end,
     __index = {
-        flush = function() flush_functions:foreach(F.call) end,
+        if_required = convert_if_required
     },
 })
-]=]),
-["help"] = lib("lib/help.lua", [=[-- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
+]====]),
+["doc"] = lib("src/doc.lua", [=[--[[
+This file is part of ypp.
+
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+http://cdelord.fr/ypp
+--]]
 
 --@LOAD
 
 local F = require "F"
+local flex = require "flex"
+local convert = require "convert"
 
-local product_name = ""
-local description = F{}
-local epilog = F{}
-local targets = F{}
+--[[@@@
+* `doc(filename, [opts])`: extract documentation fragments from the file `filename` (all fragments are concatenated).
 
-local help = {}
-local mt = {__index={}}
+    - `opts.pattern` is the Lua pattern used to identify the documentation fragments. The default pattern is `@("@".."@@(.-)@@".."@")`.
+    - `opts.from` is the format of the documentation fragments (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
+    - `opts.to` is the destination format of the documentation (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
+    - `opts.shift` is the offset applied to the header levels. The default offset is `0`.
 
-local function i(s)
-    return s : gsub("%$name", product_name)
-end
+?(false)
+The `doc` macro can also be called as a curried function (arguments can be swapped). E.g.:
 
-function help.name(txt)
-    product_name = txt
-end
+    @doc "file.c" {pattern="///(.-)///"}
 
-function help.description(txt)
-    description[#description+1] = i(txt:rtrim())
-end
+?(true)
+@@@]]
 
-function help.epilog(txt)
-    epilog[#epilog+1] = i(txt:rtrim())
-end
+local default_pattern = ("@"):rep(3).."(.-)"..("@"):rep(3)
 
-function help.target(name)
-    return function(txt)
-        targets[#targets+1] = F{name=name, txt=i(txt)}
-    end
-end
-
-function mt.__call(_, ...)
-    return help.target(...)
-end
-
-local function help_defined()
-    return not description:null() or not epilog:null() or not targets:null()
-end
-
-function mt.__index:default_target_needed()
-    return help_defined()
-end
-
-function mt.__index:gen()
-    if not help_defined() then return end
-
-    if not targets:null() then
-        table.insert(targets, 1, {name="help", txt="show this help message"})
-    end
-
-    local w = targets:map(function(t) return #t.name end):maximum()
-    local function justify(s)
-        return s..(" "):rep(w-#s)
-    end
-
-    section "Help"
-
-    build "help" {
-        ["$no_default"] = true,
-        description = "help",
-        command = F{
-            description:null() and {} or description:unlines(),
-            "",
-            targets:null() and {} or {
-                "Targets:",
-                targets : map(function(target)
-                    return F"  %s   %s":format(justify(target.name), target.txt)
-                end)
-            },
-            "",
-            epilog:null() and {} or epilog:unlines(),
-        } : flatten()
-          : unlines()
-          : trim()
-          : gsub("\n\n+", "\n\n")   -- remove duplicate blank lines
-          : lines()
-          : map(function(line) return ("echo %q"):format(line) end)
-          : str "; $\n            "
-    }
-
-end
-
-return setmetatable(help, mt)
-]=]),
-["install"] = lib("lib/install.lua", [=[-- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
-
---@LOAD
-
-local F = require "F"
-
-local ident = require "ident"
-
-local prefix = "~/.local"
-local targets = F{}
-
-local install = {}
-local mt = {__index={}}
-
-function install.prefix(dir)
-    prefix = dir
-end
-
-function mt.__call(_, name)
-    return function(sources)
-        targets[#targets+1] = F{name=name, sources=sources}
-    end
-end
-
-function mt.__index:default_target_needed()
-    return not targets:null()
-end
-
-function mt.__index:gen()
-    if targets:null() then
-        return
-    end
-
-    section "Installation"
-
-    help "install" ("install $name in PREFIX or "..prefix)
-
-    var "prefix" (prefix)
-
-    local rule_names = targets
-    : sort(function(a, b) return a.name < b.name end)
-    : group(function(a, b) return a.name == b.name end)
-    : map(function(target_group)
-        local target_name = target_group[1].name
-        local rule_name = "install-"..ident(target_name)
-        return build(rule_name) { target_group:map(function(target) return target.sources end),
-            ["$no_default"] = true,
-            description = "INSTALL $in to "..target_name,
-            command = { "install -v -D -t", "$${PREFIX:-$prefix}"/target_name, "$in" },
-        }
+return flex.str(function(filename, opts)
+    opts = opts or {}
+    local pattern = opts.pattern or default_pattern
+    local content = ypp.with_inputfile(filename, function(full_filepath)
+        local s = ypp.read_file(full_filepath)
+        local output = F{}
+        s:gsub(pattern, function(doc)
+            output[#output+1] = ypp(doc)
+        end)
+        return output:unlines()
     end)
+    content = convert.if_required(content, opts)
+    return content
+end)
+]=]),
+["flex"] = lib("src/flex.lua", [=[--[[
+This file is part of ypp.
 
-    phony "install" {
-        ["$no_default"] = true,
-        rule_names,
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+http://cdelord.fr/ypp
+--]]
+
+--@LIB
+
+local F = require "F"
+
+-- A flex function is a curried function with a variable number of parameters.
+-- It is implemented with a callable table.
+-- The actual value is computed when evaluated as a string.
+-- It takes several arguments:
+--      - exactly one string (the argument)
+--      - zero or many option tables (they are all merged until tostring is called)
+
+-- e.g.:
+--      function f(s, opt)
+--          ...
+--      end
+--
+--      g = flex(f)
+--
+--      g "foo" {x=1}       => calls f("foo", {x=1})
+--      g {y=2} "foo" {x=1} => calls f("foo", {x=1, y=2})
+--
+--      h = g{z=3} -- kind of "partial application"
+--
+--      h "foo"             => calls f("foo", {z=3})
+--      h "foo" {x=1}       => calls f("foo", {x=1, z=3})
+
+local flex_str_mt = {}
+
+function flex_str_mt:__call(x)
+    local xmt = getmetatable(x)
+    if type(x) ~= "table" or (xmt and xmt.__tostring) then
+        -- called with a string or a table with a __tostring metamethod
+        -- ==> store the string
+        assert(self.s == F.Nil, "Multiple argument")
+        return setmetatable({s=tostring(x), opt=self.opt, f=self.f}, flex_str_mt)
+    else
+        -- called with an option table
+        -- ==> add the new options to the current ones
+        return setmetatable({s=self.s, opt=self.opt:patch(x), f=self.f}, flex_str_mt)
+    end
+end
+
+function flex_str_mt:__tostring()
+    -- string value requested
+    -- convert to string and call f on this string
+    assert(self.s ~= F.Nil, "Missing argument")
+    return tostring(self.f(tostring(self.s), self.opt))
+end
+
+function flex_str_mt:__index(k)
+    -- string method requested but the object is not a string yet
+    -- ==> make a string proxy
+    if string[k] then
+        return function(s, ...)
+            return string[k](tostring(s), ...)
+        end
+    end
+end
+
+local function flex_str(f)
+    return setmetatable({s=F.Nil, opt=F{}, f=f}, flex_str_mt)
+end
+
+-- flex_array is similar to flex_str but cumulates any number of parameters in an array
+
+local flex_array_mt = {}
+
+function flex_array_mt:__call(x)
+    local xmt = getmetatable(x)
+    if type(x) ~= "table" or (xmt and xmt.__tostring) then
+        -- called with a string or a table with a __tostring metamethod
+        -- ==> store the string
+        return setmetatable({xs=self.xs..{x}, opt=self.opt, f=self.f}, flex_array_mt)
+    else
+        -- called with an option table
+        -- ==> add the new options to the current ones
+        return setmetatable({xs=self.xs, opt=self.opt:patch(x), f=self.f}, flex_array_mt)
+    end
+end
+
+function flex_array_mt:__tostring()
+    -- string value requested
+    -- convert the result of f to a string
+    return tostring(f(self.xs, self.opt))
+end
+
+local function flex_array(f)
+    return setmetatable({xs=F{}, opt=F{}, f=f}, flex_array_mt)
+end
+
+return {
+    str = flex_str,
+    array = flex_array,
+}
+]=]),
+["image"] = lib("src/image.lua", [====[--[[
+This file is part of ypp.
+
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+http://cdelord.fr/ypp
+--]]
+
+--@LOAD
+
+--[[@@@
+* `image(render, ext)(source)`: use the command `render` to produce an image from the source `source` with the format `ext` (`"svg"`, `"png"` or `"pdf"`).
+  `image` returns the name of the image (e.g. to point to the image once deployed) and the actual file path (e.g. to embed the image in the final document).
+
+The `render` parameter is a string that defines the command to execute to generate the image.
+It contains some parameters:
+
+- `%i` is replaced by the name of the input document (temporary file containing `source`).
+- `%o` is replaced by the name of the output image file (generated from a hash of `source`).
+
+Images are generated in a directory given by:
+
+- the environment variable `YPP_IMG` if it is defined
+- the directory name of the output file if the `-o` option is given
+- the `img` directory in the current directory
+
+If `source` starts with a `@` (e.g. `@q'"@filename"'`) then the actual image source is read from the file `filename`.
+
+The image link in the output document may have to be different than the
+actual path in the file system. This happens when the documents are not
+generated in the same path than the source document. Brackets can be used to
+specify the part of the path that belongs to the generated image but not to the
+link in the output document in `YPP_IMG`.
+E.g. if `YPP_IMG=[prefix]path` then images will be generated in `prefix/path`
+and the link used in the output document will be `path`.
+
+The file format (extension) must be in `render`, after the `%o` tag (e.g.: `%o.png`).
+
+If the program requires a specific input file extension, it can be specified in `render`,
+after the `%i` tag (e.g.: `%i.xyz`).
+
+Some render commands are predefined.
+For each render `X` (which produces images in the default format)
+there are 3 other render commands `X.svg`, `X.png` and `X.pdf` which explicitely specify the image format.
+They can be used similaryly to `image`: `X(source)`.
+
+An optional table can be given before `source` to set some options:
+
+* `X {name="output_name"} (source)` renders `source` and save the image to a file named `output_name`.
+  This can help distributing documents with user friendly image names.
+
+* `X {pp=func} (source)` renders `func(source)` instead of `source`.
+  E.g.: if `func` is `ypp` then `source` is preprocessed by `ypp` before being rendered.
+
+@@[===[
+    local engine = {
+        circo = "Graphviz",
+        dot = "Graphviz",
+        fdp = "Graphviz",
+        neato = "Graphviz",
+        osage = "Graphviz",
+        patchwork = "Graphviz",
+        sfdp = "Graphviz",
+        twopi = "Graphviz",
+        actdiag = "Blockdiag",
+        blockdiag = "Blockdiag",
+        nwdiag = "Blockdiag",
+        packetdiag = "Blockdiag",
+        rackdiag = "Blockdiag",
+        seqdiag = "Blockdiag",
+        mmdc = "Mermaid",
+        asy = "Asymptote",
+        plantuml = "PlantUML",
+        ditaa = "ditaa",
+        gnuplot = "gnuplot",
+        lsvg = "lsvg",
+        octave = "octave",
     }
+    local function cmp(x, y)
+        assert(engine[x], x.." engine unknown")
+        assert(engine[y], y.." engine unknown")
+        if engine[x] == engine[y] then return x < y end
+        return engine[x] < engine[y]
+    end
+    return F{
+        "Image engine | ypp function | Example",
+        "-------------|--------------|--------",
+    }
+    ..
+    F.keys(image):sort(cmp):map(function(x)
+        return ("[%s] | `%s` | `image.%s(source)`"):format(engine[x], x, x)
+    end)
+]===]
+
+Example:
+
+?(false)
+``` markdown
+![ypp image generation example](@image.dot [===[
+digraph {
+    rankdir=LR;
+    input -> ypp -> output
+    ypp -> image
+}
+]===])
+```
+?(true)
+
+is rendered as
+
+![ypp image generation example](@image.dot {name="image"} [===[
+digraph {
+    rankdir=LR;
+    input -> ypp -> output
+    ypp -> image
+}
+]===])
+
+@@@]]
+
+local F = require "F"
+local fs = require "fs"
+local sh = require "sh"
+
+local output_path   -- actual directory where images are saved
+local link_path     -- directory added to image filenames
+
+local function parse_output_path(path)
+    local prefix, link = path : match "^%[(.-)%](.*)"
+    if prefix then
+        output_path = fs.join(prefix, link)
+        link_path = link
+    else
+        output_path = path
+        link_path = path
+    end
+end
+
+local function get_input_ext(s)
+    return s:match("%%i(%.%w+)") or ""
+end
+
+local function get_ext(s, t)
+    return s:match("%%o(%.%w+)") or t:match("%%o(%.%w+)") or ""
+end
+
+local function make_diagram_cmd(src, out, render)
+    return render:gsub("%%i", src):gsub("%%o", out)
+end
+
+local function render_diagram(cmd)
+    -- stdout shall be discarded otherwise ypp can not be used in a pipe
+    assert(sh.read(cmd), "Diagram error")
+end
+
+local output_file -- filename given by the -o option
+
+local function default_image_output()
+    if not output_path then
+        local env = os.getenv "YPP_IMG"
+        parse_output_path(
+            (env and env ~= "" and env)
+            or (output_file and fs.join(fs.dirname(output_file), "img"))
+            or "img")
+    end
+end
+
+local function diagram(exe, render, default_ext)
+    local template
+    if type(render) == "table" then
+        render, template = F.unpack(render)
+    else
+        template = "%s"
+    end
+    render = render
+        : gsub("%%exe", exe or "%0")
+        : gsub("%%ext", default_ext or "%0")
+        : gsub("%%o", default_ext and ("%%o."..default_ext) or "%0")
+    template = template
+        : gsub("%%ext", default_ext or "%0")
+        : gsub("%%o", default_ext and ("%%o."..default_ext) or "%0")
+    render = F.I{ext=default_ext}(render)
+    local render_image = function(contents, opts)
+        local filename = contents:match("^@([^\n\r]+)$")
+        if filename then
+            contents = tostring(include.raw(filename))
+        end
+        contents = (opts.pp or F.id)(contents)
+        local input_ext = get_input_ext(render)
+        local ext = get_ext(render, template)
+        local hash = crypt.hash(render..contents)
+        default_image_output()
+        fs.mkdirs(output_path)
+        local out = fs.join(output_path, opts.name or hash)
+        local link = fs.join(link_path, fs.basename(out))
+        local meta = out..ext..".meta"
+        local meta_content = F.unlines {
+            "hash: "..hash,
+            "render: "..render,
+            "out: "..out,
+            "link: "..link,
+            "",
+            (template : gsub("%%s", contents)),
+        }
+        local old_meta = fs.read(meta) or ""
+        if not fs.is_file(out..ext) or meta_content ~= old_meta then
+            fs.with_tmpdir(function(tmpdir)
+                fs.mkdirs(fs.dirname(out))
+                local name = fs.join(tmpdir, "diagram")
+                local name_ext = name..input_ext
+                local templated_contents = template
+                    : gsub("%%o", out)
+                    : gsub("%%s", contents)
+                assert(fs.write(name_ext, templated_contents), "Can not create "..name_ext)
+                assert(fs.write(meta, meta_content), "Can not create "..meta)
+                local render_cmd = make_diagram_cmd(name, out, render)
+                render_diagram(render_cmd)
+            end)
+        end
+        return link..ext, out..ext
+    end
+    return function(param)
+        if type(param) == "table" then
+            local opts = param
+            return function(contents)
+                return render_image(contents, opts)
+            end
+        else
+            local contents = param
+            return render_image(contents, {})
+        end
+    end
+end
+
+local default_ext = "svg"
+
+local PLANTUML = _G["PLANTUML"] or os.getenv "PLANTUML" or fs.join(fs.dirname(arg[0]), "plantuml.jar")
+local DITAA = _G["DITAA"] or os.getenv "DITAA" or fs.join(fs.dirname(arg[0]), "ditaa.jar")
+
+local graphviz = "%exe -T%ext -o %o %i"
+local plantuml = "java -jar "..PLANTUML.." -pipe -charset UTF-8 -t%ext < %i > %o"
+local asymptote = "%exe -f %ext -o %o %i"
+local mermaid = "%exe --pdfFit -i %i -o %o"
+local blockdiag = "%exe -a -T%ext -o %o %i"
+local ditaa = "java -jar "..DITAA.." $(ext=='svg' and '--svg' or '') -o -e UTF-8 %i %o"
+local gnuplot = "%exe -e 'set terminal %ext' -e 'set output \"%o\"' -c %i"
+local lsvg = "%exe %i.lua -o %o"
+local octave = { "octave --no-gui %i", 'figure("visible", "off")\n\n%s\nprint %o;' }
+
+local function define(t)
+    local self = {}
+    local mt = {}
+    for k, v in pairs(t) do
+        if k:match "^__" then
+            mt[k] = v
+        else
+            self[k] = v
+        end
+    end
+    return setmetatable(self, mt)
+end
+
+local function instantiate(exe, render)
+    return define {
+        __call = function(_, ...) return diagram(exe, render, default_ext)(...) end,
+        svg = diagram(exe, render, "svg"),
+        png = diagram(exe, render, "png"),
+        pdf = diagram(exe, render, "pdf"),
+    }
+end
+
+return define {
+    dot         = instantiate("dot", graphviz),
+    neato       = instantiate("neato", graphviz),
+    twopi       = instantiate("twopi", graphviz),
+    circo       = instantiate("circo", graphviz),
+    fdp         = instantiate("fdp", graphviz),
+    sfdp        = instantiate("sfdp", graphviz),
+    patchwork   = instantiate("patchwork", graphviz),
+    osage       = instantiate("osage", graphviz),
+    plantuml    = instantiate("plantuml", plantuml),
+    asy         = instantiate("asy", asymptote),
+    mmdc        = instantiate("mmdc", mermaid),
+    actdiag     = instantiate("actdiag", blockdiag),
+    blockdiag   = instantiate("blockdiag", blockdiag),
+    nwdiag      = instantiate("nwdiag", blockdiag),
+    packetdiag  = instantiate("packetdiag", blockdiag),
+    rackdiag    = instantiate("rackdiag", blockdiag),
+    seqdiag     = instantiate("seqdiag", blockdiag),
+    ditaa       = instantiate("ditaa", ditaa),
+    gnuplot     = instantiate("gnuplot", gnuplot),
+    lsvg        = instantiate("lsvg", lsvg),
+    octave      = instantiate("octave", octave),
+    __call = function(_, render, ext) return diagram(nil, render, ext) end,
+    __index = {
+        format = function(fmt) default_ext = fmt end,
+        output = function(path) output_file = path end,
+    },
+}
+]====]),
+["include"] = lib("src/include.lua", [=[--[[
+This file is part of ypp.
+
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+http://cdelord.fr/ypp
+--]]
+
+--@LOAD
+
+local F = require "F"
+
+local flex = require "flex"
+local convert = require "convert"
+
+--[[@@@
+* `include(filename, [opts])`: include the file `filename`.
+
+    - `opts.pattern` is the Lua pattern used to identify the part of the file to include. If the pattern is not given, the whole file is included.
+    - `opts.from` is the format of the input file (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
+    - `opts.to` is the destination format (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
+    - `opts.shift` is the offset applied to the header levels. The default offset is `0`.
+
+* `include.raw(filename, [opts])`: like `include` but the content of the file is not preprocessed with `ypp`.
+
+?(false)
+The `include` macro can also be called as a curried function (arguments can be swapped). E.g.:
+
+    @include "file.csv" {from="csv"}
+    @include {from="csv"} "file.csv"
+
+?(true)
+@@@]]
+
+local function include(filename, opts, prepro)
+    opts = opts or {}
+    local content = ypp.with_inputfile(filename, function(full_filepath)
+        local s = ypp.read_file(full_filepath)
+        if opts.pattern then
+            s = s:match(opts.pattern)
+        end
+        return prepro(s)
+    end)
+    content = convert.if_required(content, opts)
+    return content
+end
+
+local flex_include     = flex.str(function(filename, opts) return include(filename, opts, ypp) end)
+local flex_include_raw = flex.str(function(filename, opts) return include(filename, opts, F.id) end)
+
+return setmetatable({
+    raw = flex_include_raw,
+}, {
+    __call = function(_, ...) return flex_include(...) end,
+})
+]=]),
+["parser"] = lib("src/parser.lua", [===[--[[
+This file is part of ypp.
+
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+http://cdelord.fr/ypp
+--]]
+
+--@LIB
+
+local function format_value(x)
+    local mt = getmetatable(x)
+    if mt and mt.__tostring then return tostring(x) end
+    if type(x) == "table" then return F.map(tostring, x):unlines() end
+    return tostring(x)
+end
+
+local function traceback(tag, expr)
+    if tag=="@" and expr:match("^[%w_.]*$") then return function() end end
+    return function(message)
+        local trace = F.flatten {
+            arg[0]:basename()..": "..message,
+            F(debug.traceback())
+                : lines()
+                : take_while(function(line)
+                    return not line:find("[C]: in function 'xpcall'", 1, true)
+                    and not line:find("src/parser%.lua:%d+: in local 'msgh'")
+                end)
+                : filter(function(line)
+                    return not line:find("src/parser%.lua:%d+:")
+                end),
+        }
+        io.stderr:write(trace:unlines())
+        io.stderr:flush()
+        os.exit(1)
+    end
+end
+
+local function eval(s, tag, expr, state)
+    if state.on then
+        local msgh = traceback(tag, expr)
+        local ok_compile, chunk, compile_error = xpcall(load, msgh, (tag=="@" and "return " or "")..expr, expr, "t")
+        if not ok_compile then return s end -- load execution error
+        if not chunk then -- compilation error
+            msgh(compile_error)
+            return s
+        end
+        local ok_eval, val = xpcall(chunk, msgh)
+        if not ok_eval then return s end
+        if val == nil and tag=="@" and expr:match("^[%w_]+$") then return s end
+        if tag == "@@" then
+            if val ~= nil then
+                return format_value(val)
+            else
+                return ""
+            end
+        end
+        return format_value(val)
+    else
+        return s
+    end
+end
+
+-- a parser is a function that takes a string, a position and returns the start and stop of the next expression and the expression
+
+local function parse_parentheses(s, i0)
+    -- (...)
+    local i1, expr, i2 = s:match("^%s*()(%b())()", i0)
+    if expr then
+        return i1, i2, expr:sub(2, -2)
+    end
+end
+
+local function parse_brackets(s, i0)
+    -- {...}
+    local i1, expr, i2 = s:match("^%s*()(%b{})()", i0)
+    if expr then
+        return i1, i2, expr:sub(2, -2)
+    end
+end
+
+local function parse_long_string(s, i0)
+    -- [==[ ... ]==]
+    local i1, sep, i2 = s:match("^%s*()%[(=-)%[()", i0)
+    if sep then
+        local i3, i4 = s:match("()%]"..sep.."%]()", i2)
+        if i3 then
+            return i1, i4, s:sub(i2, i3-1)
+        end
+    end
+end
+
+local function parse_quoted_string(s, i0, c)
+    -- "..."
+    local i1 = s:match('^%s*()'..c, i0)
+    if i1 then
+        local i = i1+1
+        while i <= #s do
+            if s:sub(i, i) == c then
+                return i1, i+1, s:sub(i1+1, i-1)
+            end
+            if s:sub(i, i) == '\\' then
+                i = i+1
+            end
+            i = i+1
+        end
+    end
+end
+
+local parse_sexpr
+
+local function parse_expr(s, i0)
+    -- E -> ident SE
+    local i1, ident, i2 = s:match("^%s*()([%w_]+)()", i0)
+    if ident then
+        local i3 = parse_sexpr(s, i2)
+        if i3 then return i1, i3, s:sub(i1, i3-1) end
+    end
+end
+
+parse_sexpr = function(s, i0)
+    -- SE -> [.:] E
+    do
+        local i1 = s:match("^%s*[.:]()", i0)
+        if i1 then
+            local _, i2, _ = parse_expr(s, i1)
+            if i2 then return i2 end
+        end
+    end
+    -- SE -> (...) SE
+    do
+        local _, i1, _ = parse_parentheses(s, i0)
+        if i1 then
+            local i2 = parse_sexpr(s, i1)
+            if i2 then return i2 end
+        end
+    end
+    -- SE -> {...} SE
+    do
+        local _, i1, _ = parse_brackets(s, i0)
+        if i1 then
+            local i2 = parse_sexpr(s, i1)
+            if i2 then return i2 end
+        end
+    end
+    -- SE -> "..." SE
+    do
+        local _, i1, _ = parse_quoted_string(s, i0, '"')
+        if i1 then
+            local i2 = parse_sexpr(s, i1)
+            if i2 then return i2 end
+        end
+    end
+    -- SE -> '...' SE
+    do
+        local _, i1, _ = parse_quoted_string(s, i0, "'")
+        if i1 then
+            local i2 = parse_sexpr(s, i1)
+            if i2 then return i2 end
+        end
+    end
+    -- SE -> [[...]] SE
+    do
+        local _, i1, _ = parse_long_string(s, i0)
+        if i1 then
+            local i2 = parse_sexpr(s, i1)
+            if i2 then return i2 end
+        end
+    end
+    -- SE -> nil
+    do
+        return i0
+    end
+end
+
+local function parse_lhs(s, i0)
+    -- LHS -> identifier ('.' identifier)*
+    local i1, i2 = s:match("^%s*()[%w_]+()", i0)
+    if i1 then
+        local i = i2
+        while true do
+            local i3, i4 = s:match("^%s*()%.%s*[%w_]+()", i)
+            if i3 then
+                i = i4
+            else
+                return i1, i
+            end
+        end
+    end
+end
+
+local atoms = {
+    "^%s*()%-?%d+%.%d+e%-?%d+()",
+    "^%s*()%-?%d+%.e%-?%d+()",
+    "^%s*()%-?%.%d+e%-?%d+()",
+    "^%s*()%-?%d+e%-?%d+()",
+    "^%s*()%-?%d+%.%d+()",
+    "^%s*()%-?%d+%.()",
+    "^%s*()%-?%.%d+()",
+    "^%s*()%-?%d+()",
+    "^%s*()true()",
+    "^%s*()false()",
+}
+
+local function parse_rhs(s, i0)
+    -- RHS -> number | bool
+    for _, atom in ipairs(atoms) do
+        local i1, i2 = s:match(atom, i0)
+        if i1 then return i1, i2 end
+    end
+    -- RHS = (...)
+    do
+        local i1, i2, _ = parse_parentheses(s, i0)
+        if i1 then
+            return i1, i2
+        end
+    end
+    -- RHS = {...}
+    do
+        local i1, i2, _ = parse_brackets(s, i0)
+        if i1 then
+            return i1, i2
+        end
+    end
+    -- RHS = "..."
+    do
+        local i1, i2, _ = parse_quoted_string(s, i0, '"')
+        if i1 then
+            return i1, i2
+        end
+    end
+    -- RHS = '...'
+    do
+        local i1, i2, _ = parse_quoted_string(s, i0, "'")
+        if i1 then
+            return i1, i2
+        end
+    end
+    -- RHS = [=[ ... ]=]
+    do
+        local i1, i2, _ = parse_long_string(s, i0)
+        if i1 then
+            return i1, i2
+        end
+    end
+    -- RHS -> expr
+    do
+        local i1, i2, _ = parse_expr(s, i0)
+        if i1 then
+            return i1, i2
+        end
+    end
+end
+
+local function parse(s, i0, state)
+
+    -- find the start of the next expression
+    local i1, tag, i2 = s:match("()([@?/]+)()", i0)
+    if not i1 then return #s+1, #s+1, "" end
+
+    -- S -> "@/"
+    if tag == "@/" then
+        return i1, i2, state.on and "" or tag
+    end
+
+    -- S -> "?%b()"
+    if tag == "?" then
+        local _, i3, cond = parse_parentheses(s, i2)
+        if cond then
+            state.on = assert(load("return "..cond, cond, "t"))()
+            return i1, i3, ""
+        end
+    end
+
+    -- S -> "@@ LHS = RHS
+    if tag == "@@" then
+        local i3, i4 = parse_lhs(s, i2)
+        if i3 then
+            local i5 = s:match("^%s*=()", i4)
+            if i5 then
+                local i6, i7 = parse_rhs(s, i5)
+                if i6 then
+                    return i1, i7, eval(s:sub(i1, i7-1), tag, s:sub(i3, i7-1), state)
+                end
+            end
+        end
+    end
+
+    -- S -> "@@?..."
+    if tag == "@" or tag == "@@" then
+        -- S -> "@@?(...)"
+        do
+            local _, i3, expr = parse_parentheses(s, i2)
+            if expr then
+                return i1, i3, eval(s:sub(i1, i3-1), tag, expr, state)
+            end
+        end
+        -- S -> "@@?[==[...]==]"
+        do
+            local _, i3, expr = parse_long_string(s, i2)
+            if expr then
+                return i1, i3, eval(s:sub(i1, i3-1), tag, expr, state)
+            end
+        end
+        -- S -> "@@?"expr
+        do
+            local _, i3, expr = parse_expr(s, i2)
+            if expr then
+                return i1, i3, eval(s:sub(i1, i3-1), tag, expr, state)
+            end
+        end
+
+    end
+
+    -- S -> {}
+    return i2, i2, ""
 
 end
 
-return setmetatable(install, mt)
-]=]),
-["ls"] = lib("lib/ls.lua", [=[-- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
+return function(s)
+    local ts = {}
+    local state = {on=true}
+    local i = 1
+    while i <= #s do
+        local i1, i2, out = parse(s, i, state)
+        if i1 then
+            if i1 > i then
+                ts[#ts+1] = s:sub(i, i1-1)
+            end
+            ts[#ts+1] = out
+            i = i2
+        else
+            ts[#ts+1] = s:sub(i, #s)
+            i = #s+1
+        end
+    end
+    return table.concat(ts)
+end
+]===]),
+["q"] = lib("src/q.lua", [=[--[[
+This file is part of ypp.
+
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+http://cdelord.fr/ypp
+--]]
 
 --@LOAD
+
+--[[@@@
+* `q(source)`: return `source` unpreprocessed.
+  `q` is used to avoid macro execution in a portion of text.
+@@@]]
+
+local F = require "F"
+
+return F.id
+]=]),
+["script"] = lib("src/script.lua", [=[--[[
+This file is part of ypp.
+
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+http://cdelord.fr/ypp
+--]]
+
+--@LOAD
+
+--[[@@@
+* `script(cmd)(source)`: execute `cmd` to interpret `source`.
+  `source` is first saved to a temporary file which name is added to the command `cmd`.
+  If `cmd` contains `%s` then `%s` is replaces by the temporary script name.
+  Otherwise the script name is appended to the command.
+  An explicit file extension can be given after `%s` for languages that require
+  specific file extensions (e.g. `%s.fs` for F#).
+
+`script` also predefines shortcuts for some popular languages:
+
+@@( local descr = {
+        bat = "`command` (DOS/Windows)",
+        cmd = "`cmd` (DOS/Windows)",
+        sh = "sh",
+        bash = "bash",
+        zsh = "zsh",
+    }
+    return F.keys(script):map(function(lang)
+        return ("- `script.%s(source)`: run a script with %s"):format(lang, descr[lang] or lang:cap())
+    end)
+)
+
+Example:
+
+?(false)
+```
+$\sum_{i=0}^100 = @script.python "print(sum(range(101)))"$
+```
+?(true)
+is rendered as
+```
+$\sum_{i=0}^100 = @script.python "print(sum(range(101)))"$
+```
+@@@]]
 
 local fs = require "fs"
+local sh = require "sh"
+local flex = require "flex"
+local convert = require "convert"
 
-return fs.ls
-]=]),
-["pipe"] = lib("lib/pipe.lua", [=[-- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
-
---@LOAD
-
-local F = require "F"
-
-local function split_hybrid_table(t)
-    local function is_numeric_key(k)
-        return math.type(k) == "integer"
-    end
-    return F.table_partition_with_key(is_numeric_key, t)
+local function make_script_cmd(cmd, arg, ext)
+    arg = arg..ext
+    local n1, n2
+    cmd, n1 = cmd:gsub("%%s"..(ext~="" and "%"..ext or ""), arg)
+    cmd, n2 = cmd:gsub("%%s", arg)
+    if n1+n2 == 0 then cmd = cmd .. " " .. arg end
+    return cmd
 end
 
-local function pipe(rules)
-    assert(#rules > 0, "pipe requires at least one rule")
-    return F.curry(function(output, inputs)
-        if type(inputs) == "string" then
-            inputs = {inputs}
-        end
-        local input_list, input_vars = split_hybrid_table(inputs)
-        local implicit_in = input_vars.implicit_in
-        local implicit_out = input_vars.implicit_out
-        input_vars.implicit_in = nil
-        input_vars.implicit_out = nil
-        local base = output:gsub("^%$builddir/", "")
-        local tmp = F.range(1, #rules-1):map(function(i)
-            return "$builddir/pipe"/base:splitext().."-pipe-"..tostring(i)..rules[i]:ext()
+local function script_ext(cmd)
+    local ext = cmd:match("%%s(%.%w+)") -- extension given by the command line
+    return ext or ""
+end
+
+local function run(cmd)
+    return flex.str(function(content, opts)
+        content = tostring(content)
+        return fs.with_tmpdir(function (tmpdir)
+            local name = fs.join(tmpdir, "script")
+            local ext = script_ext(cmd)
+            fs.write(name..ext, content)
+            local output = sh.read(make_script_cmd(cmd, name, ext))
+            if output then
+                output = output:gsub("%s*$", "")
+                output = convert.if_required(output, opts)
+                return output
+            else
+                error("script error")
+            end
         end)
-        for i = 1, #rules do
-            build(tmp[i] or output) (F.merge{
-                { rules[i], {tmp[i-1] or input_list} },
-                input_vars,
-                {
-                    implicit_in  = i==1      and implicit_in  or nil,
-                    implicit_out = i==#rules and implicit_out or nil,
-                },
-            })
-        end
-        return output
     end)
 end
 
-return pipe
+return setmetatable({
+    python = run "python %s.py",
+    lua = run "lua %s.lua",
+    bash = run "bash %s.sh",
+    zsh = run "zsh %s.sh",
+    sh = run "sh %s.sh",
+    cmd = run "cmd %s.cmd",
+    bat = run "command %s.bat",
+}, {
+    __call = function(_, cmd) return run(cmd) end,
+})
 ]=]),
-["version"] = lib(".build/version", [==[return [=[0.13.6]=]]==]),
+["when"] = lib("src/when.lua", [====[--[[
+This file is part of ypp.
+
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+http://cdelord.fr/ypp
+--]]
+
+--@LOAD
+
+--[[@@@
+* `when(cond)(text)`: emit `text` only if `cond` is true.
+
+E.g.:
+
+?(false)
+```
+@when(lang=="en")
+[===[
+The current language is English.
+]===]
+```
+?(true)
+@@@]]
+
+local F = require "F"
+
+return function(cond)
+    return cond and ypp or F.const ""
+end
+]====]),
+["_YPP_VERSION"] = lib(".build/src/_YPP_VERSION.lua", [=[return [[0.9.1]] --@LOAD
+]=]),
 }
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 require "luax"
-_ENV["acc"] = require "acc"
-_ENV["case"] = require "case"
-_ENV["clean"] = require "clean"
-_ENV["file"] = require "file"
-_ENV["help"] = require "help"
-_ENV["install"] = require "install"
-_ENV["ls"] = require "ls"
-_ENV["pipe"] = require "pipe"
-return lib("src/bang.lua", [=[
+_ENV["atexit"] = require "atexit"
+_ENV["comment"] = require "comment"
+_ENV["convert"] = require "convert"
+_ENV["doc"] = require "doc"
+_ENV["image"] = require "image"
+_ENV["include"] = require "include"
+_ENV["q"] = require "q"
+_ENV["script"] = require "script"
+_ENV["when"] = require "when"
+_ENV["_YPP_VERSION"] = require "_YPP_VERSION"
+return lib("src/ypp.lua", [=[--[[
+This file is part of ypp.
 
--- This file is part of bang.
---
--- bang is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- bang is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
--- You should have received a copy of the GNU General Public License
--- along with bang.  If not, see <https://www.gnu.org/licenses/>.
---
--- For further information about bang you can visit
--- https://cdelord.fr/bang
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-local F = require "F"
-local fs = require "fs"
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-local ninja = require "ninja"
-local log = require "log"
-local _, version = pcall(require, "version")
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+http://cdelord.fr/ypp
+--]]
+
+--@MAIN
+
+--[[@@@
+* `ypp(s)`: apply the `ypp` preprocessor to a string.
+* `ypp.input_file()`: return the name of the current input file.
+* `ypp.input_path()`: return the path of the current input file.
+* `ypp.input_file(n)`: return the name of the nth input file in the current *include* stack.
+* `ypp.input_path(n)`: return the path of the nth input file in the current *include* stack.
+@@@]]
+
+-- preload some LuaX modules
+_G.F = require "F"
+_G.crypt = require "crypt"
+_G.fs = require "fs"
+_G.sh = require "sh"
+_G.sys = require "sys"
+
+local F = _G.F
+local fs = _G.fs
+
+local ypp_mt = {__index={}}
+local ypp = setmetatable({}, ypp_mt)
+local known_input_files = F{}
+local output_contents = F{}
+local input_files = F{fs.join(fs.getcwd(), "-")} -- stack of input files (current branch from the root to the deepest included document)
+
+local function die(msg, ...)
+    io.stderr:write("ypp: ", msg:format(...), "\n")
+    os.exit(1)
+end
+
+local function load_script(filename)
+    local modname = filename:gsub("%.lua$", "")
+    _G[modname] = require(modname)
+end
+
+local function eval_expr(expr)
+    assert(load(expr, expr, "t"))()
+end
+
+local function add_path(paths)
+    if not paths then return end
+    local dir_sep, template_sep, template, _ = F(package.config):lines():unpack()
+    package.path = F.concat {
+        paths:split(template_sep):map(function(path) return path..dir_sep..template..".lua" end),
+        { package.path }
+    } : str(template_sep)
+end
+
+local function process(content)
+    output_contents[#output_contents+1] = ypp(content)
+end
+
+local function read_file(filename)
+    local content
+    if filename == "-" then
+        content = io.stdin:read "a"
+    else
+        content = assert(fs.read(filename))
+        known_input_files[#known_input_files+1] = filename:gsub("^"..fs.getcwd()..fs.sep, "")
+    end
+    return content
+end
+
+ypp.read_file = read_file
+
+local function find_file(filename)
+    local current_input_file = input_files:last()
+    local input_path = fs.dirname(current_input_file)
+    local full_filepath = F{
+        fs.join(input_path, filename),
+        filename,
+    } : filter(fs.is_file) : head()
+    assert(full_filepath, filename..": file not found")
+    return full_filepath
+end
+
+ypp.find_file = find_file
+
+local function with_inputfile(filename, func)
+    if filename == "-" then return func(filename) end
+    local full_filepath = find_file(filename)
+    input_files[#input_files+1] = full_filepath
+    local res = {func(full_filepath)}
+    input_files[#input_files] = nil
+    return F.unpack(res)
+end
+
+ypp.with_inputfile = with_inputfile
+
+local function process_file(filename)
+    return with_inputfile(filename, function(full_filepath)
+        return process(read_file(full_filepath))
+    end)
+end
+
+function ypp.input_file(level)
+    return input_files[#input_files-(level or 0)]
+end
+
+function ypp.input_path(level)
+    return fs.dirname(input_files[#input_files-(level or 0)])
+end
+
+function ypp_mt.__call(_, content)
+    if type(content) == "table" then return F.map(ypp, content) end
+    local parser = require "parser"
+    return parser(content)
+end
+
+local function write_outputs(args)
+    local content = output_contents:unlines()
+    if not args.output or args.output == "-" then
+        io.stdout:write(content)
+    else
+        fs.mkdirs(fs.dirname(args.output))
+        fs.write(args.output, content)
+    end
+end
+
+local function write_dep_file(args)
+    if not (args.gendep or args.depfile or #args.targets>0) then return end
+    local name = args.depfile or (args.output and fs.splitext(args.output)..".d")
+    if not name then die("The dependency file name is unknown, use --MF or -o") end
+    local function mklist(...)
+        return F{...}:flatten():from_set(F.const(true)):keys()
+            :filter(function(p) return p ~= "-" end)
+            :map(function(p) return p:gsub("^%."..fs.sep, "") end)
+            :sort()
+            :unwords()
+    end
+    local scripts = F.values(package.modpath)
+    local deps = mklist(args.targets, args.output or {}).." : "..mklist(known_input_files, scripts)
+    fs.mkdirs(fs.dirname(name))
+    fs.write(name, deps.."\n")
+end
 
 local function parse_args()
     local parser = require "argparse"()
-        : name "bang"
-        : description(F.unlines {
-            "Ninja file generator",
-            "",
-            "Arguments after \"--\" are given to the input script",
-        } : rtrim())
-        : epilog "For more information, see https://github.com/CDSoft/bang"
+        : name "ypp"
+        : description(("ypp %s\nYet a PreProcessor"):format(_YPP_VERSION))
+        : epilog "For more information, see https://github.com/CDSoft/ypp"
 
     parser : flag "-v"
-        : description(('Print Bang version ("%s")'):format(version))
-        : action(function() print(version); os.exit() end)
+        : description "Show yyp version"
+        : action(function(_, _, _, _) print(_YPP_VERSION); os.exit() end)
 
-    parser : flag "-q"
-        : description "Quiet mode (no output on stdout)"
-        : target "quiet"
+    parser : option "-l"
+        : description "Execute a Lua script"
+        : argname "script"
+        : count "*"
+        : action(function(_, _, name, _) load_script(name) end)
 
+    parser : option "-e"
+        : description "Execute a Lua expression"
+        : argname "expression"
+        : count "*"
+        : action(function(_, _, expr, _) eval_expr(expr) end)
+
+    parser : option "-p"
+        : description "Add a path to package.path"
+        : argname "path"
+        : count "*"
+        : action(function(_, _, path, _) add_path(path) end)
+
+    local output = nil
     parser : option "-o"
-        : description "Output file (default: build.ninja)"
-        : argname "output"
+        : description "Redirect the output to 'file'"
         : target "output"
+        : argname "file"
+        : action(function(_, _, path, _)
+            output = path
+            require"image".output(output)
+        end)
+
+    parser : option "-t"
+        : description "Set the default format of generated images"
+        : target "image_format"
+        : choices { "svg", "pdf", "png" }
+        : action(function(_, _, fmt, _) require"image".format(fmt) end)
+
+    parser : option "--MT"
+        : description "Add `name` to the target list (implies `--MD`)"
+        : target "targets"
+        : argname "target"
+        : count "*"
+
+    parser : option "--MF"
+        : description "Set the dependency file name (implies `--MD`)"
+        : target "depfile"
+        : argname "name"
+
+    parser : flag "--MD"
+        : description "Generate a dependency file"
+        : target "gendep"
 
     parser : argument "input"
-        : description "Lua script (default: build.lua)"
-        : args "0-1"
+        : description "Input file"
+        : args "*"
+        : action(function(_, _, names, _)
+            if #names == 0 then names = {"-"} end
+            F.foreach(names, process_file)
+        end)
 
-    local bang_arg, script_arg = F.break_(F.partial(F.op.eq, "--"), arg)
-    local args = F.merge{
-        { input="build.lua", output="build.ninja" },
-        parser:parse(bang_arg),
-    }
-
-    _G.arg = script_arg : drop(1)
-    _G.arg[0] = args.input
-
-    return args
+    return F.patch(parser:parse(), {output=output})
 end
 
+_ENV.ypp = ypp
 local args = parse_args()
-log.config(args)
-package.path = package.path..";"..args.input:dirname().."/?.lua"
-local ninja_file = ninja(args)
-log.info("write ", args.output)
-require "file" : flush()
-fs.write(args.output, ninja_file)
+require "atexit".run()
+write_dep_file(args)
+write_outputs(args)
 ]=])()

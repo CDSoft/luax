@@ -650,16 +650,20 @@ var "luax_crypt_key"  "$tmp/luax_crypt_key.h"
 local luax_config_params = F {
     AUTHORS = AUTHORS,
     URL = URL,
-} : items() : map(function(kv) return ("%s=%q"):format(kv:unpack()) end) : unwords()
+} : items() : map(function(kv) return ("-e '%s=%q'"):format(kv:unpack()) end) : unwords()
 
-rule "gen_conf" {
-    description = "GEN $out",
-    command = { luax_config_params, "$in > $out" },
-    implicit_in = ".git/refs/tags",
+rule "ypp" {
+    description = "YPP $out",
+    command = { "$lua tools/ypp.lua", luax_config_params, "$in -o $out" },
+    implicit_in = {
+        "$lua",
+        "tools/ypp.lua",
+        ".git/refs/tags",
+    },
 }
 
-build "$luax_config_h"   { "gen_conf", "tools/luax_config.h.sh" }
-build "$luax_config_lua" { "gen_conf", "tools/luax_config.lua.sh" }
+build "$luax_config_h"   { "ypp", "tools/luax_config.h.in" }
+build "$luax_config_lua" { "ypp", "tools/luax_config.lua.in" }
 
 var "crypt_key" (crypt_key)
 
@@ -1161,11 +1165,12 @@ local gfm = pipe {
         description = "YPP $in",
         command = {
             "LUAX=$luax",
-            "ypp --MD --MT $out --MF $depfile $in -o $out",
+            "$luax tools/ypp.lua --MD --MT $out --MF $depfile $in -o $out",
         },
         depfile = "$out.d",
         implicit_in = {
             "$luax",
+            "tools/ypp.lua",
         },
     },
     rule "pandoc" {
