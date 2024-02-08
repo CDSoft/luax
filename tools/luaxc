@@ -79,7 +79,16 @@ function md5()
     echo "$@" | md5sum | tr -d " -"
 }
 
-CACHE="$CACHE/$BRANCH/$(md5 "$COMPILER" "$KEY")"
+case "$TARGET" in
+    (*windows*) APPNAME=$(basename "${OUTPUT%.exe}")
+                TMP_OUTPUT="$CACHE/dist/$APPNAME-${TARGET:-host}/bin/$APPNAME.exe"
+                OUTPUT="${OUTPUT%.exe}.exe"
+                ;;
+    (*)         APPNAME=$(basename "$OUTPUT")
+                TMP_OUTPUT="$CACHE/dist/$APPNAME-${TARGET:-host}/bin/$APPNAME"
+                ;;
+esac
+CACHE="$CACHE/$BRANCH/$APPNAME/$TARGET/$(md5 "$COMPILER" "$KEY")"
 
 if [ -d "$CACHE" ]
 then
@@ -90,15 +99,6 @@ fi
 [ -x "$CACHE"/.build/bin/luax ] || (cd "$CACHE" && ninja -f bootstrap.ninja && ninja compile)
 eval "$("$CACHE"/.build/bin/luax env)"
 
-case "$TARGET" in
-    (*windows*) APPNAME=$(basename "${OUTPUT%.exe}")
-                TMP_OUTPUT="$CACHE/dist/$APPNAME-${TARGET:-host}/bin/$APPNAME.exe"
-                OUTPUT="${OUTPUT%.exe}.exe"
-                ;;
-    (*)         APPNAME=$(basename "$OUTPUT")
-                TMP_OUTPUT="$CACHE/dist/$APPNAME-${TARGET:-host}/bin/$APPNAME"
-                ;;
-esac
 NINJA_FILE="$CACHE"/$APPNAME-${TARGET:-host}.ninja
 
 cd "$CACHE"
