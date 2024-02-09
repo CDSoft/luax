@@ -226,14 +226,14 @@ local doc = {}
 section "Compiler"
 ---------------------------------------------------------------------
 
+local zig_version = "0.11.0"
+--local zig_version = "0.12.0-dev.2341+92211135f"
+
 local compiler_deps = {}
 
 case(compiler) {
 
     zig = function()
-        local zig_version = "0.11.0"
-        --local zig_version = "0.12.0-dev.2341+92211135f"
-
         local cache = case(luax_sys.os) {
             linux   = os.getenv"HOME"/".local/var/cache/luax",
             macos   = os.getenv"HOME"/".local/var/cache/luax",
@@ -760,6 +760,7 @@ local liblua = build("$tmp/lib/liblua.a") { ar,
 local libluax = build("$tmp/lib/libluax.a") { ar,
     F.flatten {
         sources.luax_c_files,
+        luax_runtime_bundle,
     } : map(function(src)
         return build("$tmp/obj"/src:splitext()..".o") { cc, src,
             implicit_in = {
@@ -817,7 +818,6 @@ local binary = build("$tmp/bin"/appname..ext) { ld,
     main_libluax,
     liblua,
     libluax,
-    "$tmp/lua_runtime_bundle.c",
     "$tmp/lua_app_bundle.c",
 }
 
@@ -830,7 +830,6 @@ local shared_library = target_libc~="musl" and not myapp and not san and
             windows = liblua,
         },
         libluax,
-        "$tmp/lua_runtime_bundle.c",
 }
 
 if upx and mode~="debug" and not san then
@@ -864,6 +863,14 @@ if shared_library then
         build("$lib"/shared_library:basename()) { "cp", shared_library }
     }
 end
+
+var "luaxc" "$bin/luaxc"
+
+build "$luaxc" {
+    description = "BUNDLE $out",
+    command = { "tools/bundle_luaxc.sh", "-zig", zig_version, "-k", ("%q"):format(crypt_key), "-o $out" },
+    pool = "console",
+}
 
 if not myapp and not san then
 --===================================================================
@@ -1207,7 +1214,6 @@ acc(compile) {binaries, libraries}
 
 install "bin" {binaries}
 if not myapp then
-    install "bin" "tools/luaxc"
     install "lib" {libraries}
 end
 
@@ -1234,6 +1240,11 @@ end
 
 phony "all" {"compile", not target and not myapp and {"test", "doc"} or {}}
 help "all" "alias for compile, test and doc"
+
+if not target and not myapp then
+    phony "luaxc" { "$luaxc" }
+    help "luaxc" "Bundle all LuaX binaries in a single compiler script"
+end
 
 phony "update" "update_modules"
 help "update" "update third-party modules"
