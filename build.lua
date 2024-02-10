@@ -870,6 +870,10 @@ build "$luaxc" {
     description = "BUNDLE $out",
     command = { "tools/bundle_luaxc.sh", "-zig", zig_version, "-k", ("%q"):format(crypt_key), "-o $out" },
     pool = "console",
+    implicit_in = {
+        "tools/bundle_luaxc.sh",
+        ".git/refs/tags",
+    },
 }
 
 if not myapp and not san then
