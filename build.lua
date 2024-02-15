@@ -198,7 +198,8 @@ appname = myappname or appname
 section("Compilation options")
 comment(("Compilation mode: %s"):format(mode))
 comment(("Compiler        : %s"):format(compiler))
-comment(("Target          : %s"):format(target or "native"))
+comment(("Sanitizers      : %s"):format(san and "ASan and UbSan" or "none"))
+comment(("Target          : %s"):format(target or "host"))
 comment(("Compression     : %s"):format(upx and "UPX" or "none"))
 comment(("App bundle      : %s"):format(appname))
 
@@ -332,7 +333,7 @@ local sanitizer_options = san and {
     "export UBSAN_OPTIONS=print_stacktrace=1;",
 } or {}
 
-local native_cflags = {
+local host_cflags = {
     "-std=gnu2x",
     "-O3",
     "-fPIC",
@@ -356,7 +357,7 @@ local native_cflags = {
     },
 }
 
-local native_ldflags = {
+local host_ldflags = {
     "-rdynamic",
     "-s",
     "-lm",
@@ -452,14 +453,14 @@ end
 
 rule "cc-host" {
     description = "CC $in",
-    command = { "$cc", "-c", native_cflags, "-MD -MF $depfile $in -o $out" },
+    command = { "$cc", "-c", host_cflags, "-MD -MF $depfile $in -o $out" },
     implicit_in = compiler_deps,
     depfile = "$out.d",
 }
 
 rule "ld-host" {
     description = "LD $out",
-    command = { "$ld", native_ldflags, "$in -o $out" },
+    command = { "$ld", host_ldflags, "$in -o $out" },
     implicit_in = compiler_deps,
 }
 
@@ -1230,7 +1231,7 @@ help "compile" "compile LuaX"
 if not target and #test > 0 and not myapp then
 
     phony "test-fast" (test[1])
-    help "test-fast" "run LuaX tests (fast, native tests only)"
+    help "test-fast" "run LuaX tests (fast, host tests only)"
 
     phony "test" (test)
     help "test" "run all LuaX tests"
