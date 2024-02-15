@@ -2,8 +2,8 @@
 VERSION = sh "git describe --tags" : trim()
 DATE    = sh "git show -s --format=%cd --date=format:'%Y-%m-%d'" : trim()
 YEAR    = sh "git show -s --format=%cd --date=format:'%Y'" : trim()
-AUTHORS = os.getenv "AUTHORS"
-URL     = os.getenv "URL"
+assert(AUTHORS, "AUTHORS: not defined")
+assert(URL, "URL: not defined")
 --]]@LIB
 local version = "@(VERSION)"
 return {
