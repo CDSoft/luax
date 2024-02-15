@@ -127,7 +127,7 @@ local function print_usage(fmt, ...)
         print(("error: %s"):format(fmt:format(...)))
         print("")
     end
-    print(usage)
+    print(usage:trim())
 end
 
 local function findpath(name)
