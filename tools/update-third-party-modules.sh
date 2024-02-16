@@ -38,6 +38,7 @@ update_all()
     update_cbor
     update_linenoise    utf8-support # switch to "master" when the UTF-8 support is merged
     update_json         master
+    update_djot         master
 }
 
 update_lua()
@@ -259,6 +260,30 @@ update_json()
     rm -rf ext/lua/json
     mkdir -p ext/lua/json
     unzip -j "$TMP/$JSON_ARCHIVE" '*/json.lua' '*/LICENSE' -d ext/lua/json
+}
+
+update_djot()
+{
+    local DJOT_REPO=jgm/djot.lua
+    local DJOT_VERSION="$1"
+    local DJOT_ARCHIVE="djot-$DJOT_VERSION.zip"
+    local DJOT_URL="https://github.com/$DJOT_REPO/archive/refs/heads/$DJOT_VERSION.zip"
+
+    mkdir -p "$TMP"
+    wget "$DJOT_URL" -O "$TMP/$DJOT_ARCHIVE"
+
+    rm -rf ext/lua/djot
+    mkdir -p ext/lua/djot/djot
+    unzip -j "$TMP/$DJOT_ARCHIVE" '*/djot.lua' '*/LICENSE' -d ext/lua/djot
+    unzip -j "$TMP/$DJOT_ARCHIVE" '*/djot/*.lua' -d ext/lua/djot/djot
+    echo "--@LIB=djot"              >> ext/lua/djot/djot.lua
+    echo "--@LIB=djot.ast"          >> ext/lua/djot/djot/ast.lua
+    echo "--@LIB=djot.attributes"   >> ext/lua/djot/djot/attributes.lua
+    echo "--@LIB=djot.block"        >> ext/lua/djot/djot/block.lua
+    echo "--@LIB=djot.filter"       >> ext/lua/djot/djot/filter.lua
+    echo "--@LIB=djot.html"         >> ext/lua/djot/djot/html.lua
+    echo "--@LIB=djot.inline"       >> ext/lua/djot/djot/inline.lua
+    echo "--@LIB=djot.json"         >> ext/lua/djot/djot/json.lua
 }
 
 update_all
