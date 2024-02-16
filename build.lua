@@ -795,10 +795,7 @@ local libluax = build("$tmp/lib/libluax.a") { ar,
 local main_luax = F.flatten { sources.luax_main_c_files }
     : map(function(src)
         return build("$tmp/obj"/src:splitext()..".o") { cc, src,
-            implicit_in = {
-                "$luax_config_h",
-                luax_app_bundle,
-            },
+            implicit_in = "$luax_config_h",
         }
     end)
 
@@ -808,9 +805,6 @@ local main_libluax = F.flatten { sources.libluax_main_c_files }
                 build_as_dll = case(target_os) {
                     windows = "-DLUA_BUILD_AS_DLL -DLUA_LIB",
                 },
-                implicit_in = {
-                    luax_runtime_bundle,
-                },
             }
         end)
 
@@ -819,7 +813,7 @@ local binary = build("$tmp/bin"/appname..ext) { ld,
     main_libluax,
     liblua,
     libluax,
-    "$tmp/lua_app_bundle.c",
+    build("$tmp/obj"/luax_app_bundle:splitext()..".o") { cc, luax_app_bundle },
 }
 
 local shared_library = target_libc~="musl" and not myapp and not san and
