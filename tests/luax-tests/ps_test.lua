@@ -30,10 +30,11 @@ local eps = sys.libc == "lua" and 1 or 0.01
 
 local function try(test, ...)
     -- These tests may fail when the system is loaded.
-    -- => Try to execute them three times before considering a failure.
-    return pcall(test, ...)
-        or pcall(test, ...)
-        or test(...)
+    -- => Try to execute them several times before considering a failure.
+    for _ = 1, 10 do
+        if pcall(test, ...) then return end
+    end
+    test(...)
 end
 
 local function time_test()
