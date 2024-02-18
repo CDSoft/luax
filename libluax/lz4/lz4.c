@@ -18,7 +18,7 @@
  */
 
 /***************************************************************************@@@
-# lz4:  Extremely Fast Compression algorithm
+# lz4: Extremely Fast Compression algorithm
 
 ```lua
 local lz4 = require "lz4"

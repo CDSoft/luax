@@ -222,6 +222,7 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 - [term](term.md): Terminal manipulation module
 - [crypt](crypt.md): cryptography module
 - [lz4](lz4.md): Extremely Fast Compression algorithm
+- [lzw](lzw.md): A relatively fast LZW compression algorithm in pure Lua
 - [lpeg](lpeg.md): Parsing Expression Grammars For Lua
 - [luasocket](luasocket.md): Network support for the Lua language
 - [argparse](argparse.md): Feature-rich command line parser for Lua
@@ -301,6 +302,9 @@ script `lib/luax.lua` can be reused in pure Lua programs:
   license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))
 * **[LZ4](https://github.com/lz4/lz4)**: Extremely Fast Compression algorithm
   ([License](https://github.com/lz4/lz4/blob/dev/lib/LICENSE))
+* **[LZW](https://github.com/Rochet2/lualzw)**: A relatively fast LZW
+  compression algorithm in pure Lua
+  ([License](https://github.com/Rochet2/lualzw/blob/master/LICENSE))
 - **[Argparse](https://github.com/mpeterv/argparse)**: a feature-rich command
   line parser for Lua ([MIT
   license](https://github.com/mpeterv/argparse/blob/master/LICENSE))
@@ -309,3 +313,5 @@ script `lib/luax.lua` can be reused in pure Lua programs:
   license](https://github.com/antirez/linenoise/blob/master/LICENSE))
 * **[json.lua](https://github.com/rxi/json.lua)**: A lightweight JSON library
   for Lua ([MIT license](https://github.com/rxi/json.lua/blob/master/LICENSE))
+* **[CBOR](https://www.zash.se/lua-cbor.html)**: pure Lua implementation of the
+  CBOR ([License](https://code.zash.se/lua-cbor/file/tip/COPYING))
