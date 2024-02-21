@@ -27,26 +27,6 @@ SOFTWARE.
 -- Load lzw.lua to add new methods to strings
 --@LOAD=_
 
--- TODO : documentation pour ypp
--- TODO : la compilation de scripts vers un script lua autonome peut utiliser compress
---  et ajouter une fonction de décompression en dur dans le script
---      ``` lua
---      #!/usr/bin/env lua ...
---      (function(input)
---         decompression... (algo simplifié, compressé)
---              - uniquement si chaine compressée
---              - pas besion du flag c ou u
---      )[===[
---      ... <= script compressé
---      ]===]
---      ```
---
---      !! il faut garder la possibilité de bundle sans compression (pratique pour mettre bang dans le dépot luax !
---
---      est-il vraiment intéressant de compresser un bundle lua ???
---          le bundle pour luax est déjà compressé (et mieux !)
---      ou faire un script externe qui compresse un script lua (bundle ou non) avec lzw
-
 --[[------------------------------------------------------------------------@@@
 # lzw: A relatively fast LZW compression algorithm in pure Lua
 
