@@ -1,19 +1,20 @@
 #!/usr/bin/env -S lua --
 local function lib(path, src) return assert(load(src, '@$lsvg.lua:'..path, 't')) end
 local libs = {
-["luax"] = lib("~/.local/var/cache/hey/repos/luax/.build/lib/luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '3.1.7'
-_LUAX_DATE = '2024-02-06'
+["luax"] = lib("~/.local/lib/luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
+_LUAX_VERSION = '3.2.1'
+_LUAX_DATE = '2024-02-21'
 local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
 local libs = {
 ["luax_config"] = lib(".build/tmp/luax_config.lua", [=[--@LIB
-local version = "3.1.7"
+local version = "3.2.1"
 return {
     version = version,
-    date = "2024-02-06",
+    date = "2024-02-21",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
+
 ]=]),
 ["F"] = lib("libluax/F/F.lua", [==[--[[
 This file is part of luax.
@@ -6085,9 +6086,6 @@ http://cdelord.fr/luax
 The `lz4` functions are also available as `string` methods:
 @@@]]
 
--- Load lz4.lua to add new methods to strings
---@LOAD=_
-
 local _, lz4 = pcall(require, "_lz4")
 lz4 = _ and lz4
 
@@ -6125,6 +6123,216 @@ function string.lz4(s)      return lz4.lz4(s) end
 function string.unlz4(s)    return lz4.unlz4(s) end
 
 return lz4
+]=]),
+["lzw"] = lib("libluax/lzw/lzw.lua", [=[--[[
+MIT License
+
+Copyright (c) 2016 Rochet2
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+]]
+
+-- Adapted for LuaX
+
+-- Load lzw.lua to add new methods to strings
+--@LOAD=_
+
+--[[------------------------------------------------------------------------@@@
+# lzw: A relatively fast LZW compression algorithm in pure Lua
+
+```lua
+local lzw = require "lzw"
+```
+
+LZW is a relatively fast LZW compression algorithm in pure Lua.
+
+The source code in on Github: <https://github.com/Rochet2/lualzw>.
+
+## LZW compression
+
+```lua
+lzw.lzw(data)
+```
+compresses `data` with LZW.
+
+## LZW decompression
+
+```lua
+lzw.unlzw(data)
+```
+decompresses `data` with LZW.
+@@@]]
+
+local char = string.char
+local type = type
+local sub = string.sub
+local tconcat = table.concat
+
+local basedictcompress = {}
+local basedictdecompress = {}
+for i = 0, 255 do
+    local ic, iic = char(i), char(i, 0)
+    basedictcompress[ic] = iic
+    basedictdecompress[iic] = ic
+end
+
+local function dictAddA(str, dict, a, b)
+    if a >= 256 then
+        a, b = 0, b+1
+        if b >= 256 then
+            dict = {}
+            b = 1
+        end
+    end
+    dict[str] = char(a,b)
+    a = a+1
+    return dict, a, b
+end
+
+local function compress(input)
+    if type(input) ~= "string" then
+        return nil, "string expected, got "..type(input)
+    end
+    local len = #input
+    if len <= 1 then
+        return "u"..input
+    end
+
+    local dict = {}
+    local a, b = 0, 1
+
+    local result = {"c"}
+    local resultlen = 1
+    local n = 2
+    local word = ""
+    for i = 1, len do
+        local c = sub(input, i, i)
+        local wc = word..c
+        if not (basedictcompress[wc] or dict[wc]) then
+            local write = basedictcompress[word] or dict[word]
+            if not write then
+                return nil, "algorithm error, could not fetch word"
+            end
+            result[n] = write
+            resultlen = resultlen + #write
+            n = n+1
+            if  len <= resultlen then
+                return "u"..input
+            end
+            dict, a, b = dictAddA(wc, dict, a, b)
+            word = c
+        else
+            word = wc
+        end
+    end
+    result[n] = basedictcompress[word] or dict[word]
+    resultlen = resultlen+#result[n]
+    n = n+1
+    if  len <= resultlen then
+        return "u"..input
+    end
+    return tconcat(result)
+end
+
+local function dictAddB(str, dict, a, b)
+    if a >= 256 then
+        a, b = 0, b+1
+        if b >= 256 then
+            dict = {}
+            b = 1
+        end
+    end
+    dict[char(a,b)] = str
+    a = a+1
+    return dict, a, b
+end
+
+local function decompress(input)
+    if type(input) ~= "string" then
+        return nil, "string expected, got "..type(input)
+    end
+
+    if #input < 1 then
+        return nil, "invalid input - not a compressed string"
+    end
+
+    local control = sub(input, 1, 1)
+    if control == "u" then
+        return sub(input, 2)
+    elseif control ~= "c" then
+        return nil, "invalid input - not a compressed string"
+    end
+    input = sub(input, 2)
+    local len = #input
+
+    if len < 2 then
+        return nil, "invalid input - not a compressed string"
+    end
+
+    local dict = {}
+    local a, b = 0, 1
+
+    local result = {}
+    local n = 1
+    local last = sub(input, 1, 2)
+    result[n] = basedictdecompress[last] or dict[last]
+    n = n+1
+    for i = 3, len, 2 do
+        local code = sub(input, i, i+1)
+        local lastStr = basedictdecompress[last] or dict[last]
+        if not lastStr then
+            return nil, "could not find last from dict. Invalid input?"
+        end
+        local toAdd = basedictdecompress[code] or dict[code]
+        if toAdd then
+            result[n] = toAdd
+            n = n+1
+            dict, a, b = dictAddB(lastStr..sub(toAdd, 1, 1), dict, a, b)
+        else
+            local tmp = lastStr..sub(lastStr, 1, 1)
+            result[n] = tmp
+            n = n+1
+            dict, a, b = dictAddB(tmp, dict, a, b)
+        end
+        last = code
+    end
+    return tconcat(result)
+end
+
+--[[------------------------------------------------------------------------@@@
+## String methods
+
+The `lzw` functions are also available as `string` methods:
+
+```lua
+s:lzw()         == lzw.lzw(s)
+s:unlzw()       == lzw.unlzw(s)
+```
+@@@]]
+
+string.lzw = compress
+string.unlzw = decompress
+
+return {
+    lzw = compress,
+    unlzw = decompress,
+}
 ]=]),
 ["mathx"] = lib("libluax/mathx/mathx.lua", [=[--[[
 This file is part of luax.
@@ -10613,6 +10821,7 @@ require "F"
 require "crypt"
 require "fs"
 require "lz4"
+require "lzw"
 require "package_hook"
 ]===]),
 ["svg"] = lib("src/svg.lua", [=[--[[

@@ -47,7 +47,7 @@ figlet Bootstrap
 ninja -f bootstrap.ninja
 
 figlet Compile
-.build/boot/lua tools/bang -- key="$KEY"
+.build/boot/lua tools/bang.lua -- key="$KEY"
 ninja compile
 
 eval "$(.build/bin/luax env)"
@@ -69,7 +69,7 @@ for target in "${TARGETS[@]}"
 do
     figlet -t "$target"
 
-    luax tools/bang -o ".build/build-$target.ninja" -- "$target" key="$KEY"
+    luax tools/bang.lua -o ".build/build-$target.ninja" -- "$target" key="$KEY"
 
     (   PREFIX="$ARCHIVE/$target" ninja -f ".build/build-$target.ninja" install
         rm -f ".build/build-$target.ninja"

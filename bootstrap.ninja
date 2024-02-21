@@ -73,8 +73,8 @@ build $builddir/lua: cc $
 
 rule bang
     description = Generate $out
-    command = $builddir/lua tools/bang -o $out $in $
+    command = $builddir/lua tools/bang.lua -o $out $in $
         && echo You can now execute ninja to build LuaX
     pool = console
 
-build build.ninja: bang build.lua | $builddir/lua tools/bang
+build build.ninja: bang build.lua | $builddir/lua tools/bang.lua

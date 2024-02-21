@@ -55,8 +55,8 @@ If the bootstrap stage fails, you can try:
     - …
 2.  or install Lua and generate `build.ninja` manually:
     - `apt install lua`, `dnf install lua`, …
-    - `lua tools/bang` to generate `build.lua` with the Lua interpreter
-      provided by your OS
+    - `lua tools/bang.lua` to generate `build.lua` with the Lua
+      interpreter provided by your OS
 
 ### Compilation options
 
@@ -72,6 +72,9 @@ If the bootstrap stage fails, you can try:
 | `bang -- upx`         | Compress LuaX with UPX                                                        |
 
 `bang` must be run before `ninja` to change the compilation options.
+
+`lua tools/bang.lua` can be used instead of
+[bang](https://cdelord.fr/bang) if it is not installed.
 
 The default compilation options are `fast`, `zig`, with no compression.
 
@@ -89,9 +92,9 @@ They run slower but this helps finding tricky bugs.
 ``` sh
 $ git clone https://github.com/CDSoft/luax
 $ cd luax
-$ tools/bang -- debug san # generate build.ninja in debug mode with sanitizers
-$ ninja                   # compile LuaX
-$ ninja test              # run tests on the host
+$ tools/bang.lua -- debug san # generate build.ninja in debug mode with sanitizers
+$ ninja                       # compile LuaX
+$ ninja test                  # run tests on the host
 ```
 
 ## Precompiled LuaX binaries
