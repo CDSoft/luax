@@ -59,23 +59,38 @@ local function mlstr(code)
     return F.str{"[", eqs, "[", code, "]", eqs, "]"}
 end
 
-local function strip_common_path(ps)
-    local split = F.map(function(p) return p:split(fs.sep) end, ps)
-    local function join()
-        return split:map(fs.join)
-    end
-    while true do
-        local common = nil
-        for i = 1, #split do
-            if #split[i] <= 1 then return join() end
-            if common == nil then
-                common = split[i][1]
-            else
-                if split[i][1] ~= common then return join() end
-            end
+local function path_shortener(path_list)
+
+    local function strip_common_path(ps)
+        local split = F.map(function(p) return p:split(fs.sep) end, ps)
+        local function join()
+            return split:map(fs.join)
         end
-        split = split:map(F.partial(F.drop, 1))
+        while true do
+            local common = nil
+            for i = 1, #split do
+                if #split[i] <= 1 then return join() end
+                if common == nil then
+                    common = split[i][1]
+                else
+                    if split[i][1] ~= common then return join() end
+                end
+            end
+            split = split:map(F.partial(F.drop, 1))
+        end
     end
+
+    local function external(p)
+        -- remove full path from sources generated in local cache or build directories
+        return p:has_prefix "~/." or p:has_prefix "."
+    end
+
+    local exts, ints = path_list:partition(external)
+
+    return
+        (  F{ints, strip_common_path(ints)}:zip()
+        .. F{exts, exts:map(fs.basename)}:zip()
+        ) : from_list()
 end
 
 local function chunks_of(n, xs)
@@ -155,9 +170,9 @@ function bundle.bundle(arg, opts)
         end
     end
 
-    local shorts = strip_common_path(scripts:map(F.partial(F.nth, "path")))
+    local shortener = path_shortener(scripts:map(F.partial(F.nth, "path")))
     for i = 1, #scripts do
-        scripts[i].short_path = shorts[i]
+        scripts[i].short_path = shortener[scripts[i].path]
     end
 
     local main_scripts = {}
