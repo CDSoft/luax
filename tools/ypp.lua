@@ -1,16 +1,16 @@
 #!/usr/bin/env -S lua --
 local function lib(path, src) return assert(load(src, '@$ypp.lua:'..path, 't')) end
 local libs = {
-["luax"] = lib("~/.local/lib/luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '3.2.1'
-_LUAX_DATE = '2024-02-21'
+["luax"] = lib("luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
+_LUAX_VERSION = '3.2.2'
+_LUAX_DATE = '2024-02-22'
 local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
 local libs = {
-["luax_config"] = lib(".build/tmp/luax_config.lua", [=[--@LIB
-local version = "3.2.1"
+["luax_config"] = lib("luax_config.lua", [=[--@LIB
+local version = "3.2.2"
 return {
     version = version,
-    date = "2024-02-21",
+    date = "2024-02-22",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
@@ -10865,7 +10865,7 @@ return setmetatable({}, {
     },
 })
 ]=]),
-["comment"] = lib("src/comment.lua", [====[--[[
+["comment"] = lib("comment.lua", [====[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -10906,7 +10906,7 @@ local F = require "F"
 
 return F.const ""
 ]====]),
-["convert"] = lib("src/convert.lua", [====[--[[
+["convert"] = lib("convert.lua", [====[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -10988,7 +10988,7 @@ return setmetatable({}, {
     },
 })
 ]====]),
-["doc"] = lib("src/doc.lua", [=[--[[
+["doc"] = lib("doc.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -11047,7 +11047,7 @@ return flex.str(function(filename, opts)
     return content
 end)
 ]=]),
-["flex"] = lib("src/flex.lua", [=[--[[
+["flex"] = lib("flex.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -11162,7 +11162,7 @@ return {
     array = flex_array,
 }
 ]=]),
-["image"] = lib("src/image.lua", [====[--[[
+["image"] = lib("image.lua", [====[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -11474,7 +11474,7 @@ return define {
     },
 }
 ]====]),
-["include"] = lib("src/include.lua", [=[--[[
+["include"] = lib("include.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -11542,7 +11542,7 @@ return setmetatable({
     __call = function(_, ...) return flex_include(...) end,
 })
 ]=]),
-["parser"] = lib("src/parser.lua", [===[--[[
+["parser"] = lib("parser.lua", [===[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -11893,7 +11893,7 @@ return function(s)
     return table.concat(ts)
 end
 ]===]),
-["q"] = lib("src/q.lua", [=[--[[
+["q"] = lib("q.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -11924,7 +11924,7 @@ local F = require "F"
 
 return F.id
 ]=]),
-["script"] = lib("src/script.lua", [=[--[[
+["script"] = lib("script.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -12031,7 +12031,7 @@ return setmetatable({
     __call = function(_, cmd) return run(cmd) end,
 })
 ]=]),
-["when"] = lib("src/when.lua", [====[--[[
+["when"] = lib("when.lua", [====[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -12074,7 +12074,7 @@ return function(cond)
     return cond and ypp or F.const ""
 end
 ]====]),
-["_YPP_VERSION"] = lib(".build/src/_YPP_VERSION.lua", [=[return [[0.9.1]] --@LOAD
+["_YPP_VERSION"] = lib("_YPP_VERSION.lua", [=[return [[0.9.1]] --@LOAD
 ]=]),
 }
 table.insert(package.searchers, 2, function(name) return libs[name] end)
@@ -12089,7 +12089,7 @@ _ENV["q"] = require "q"
 _ENV["script"] = require "script"
 _ENV["when"] = require "when"
 _ENV["_YPP_VERSION"] = require "_YPP_VERSION"
-return lib("src/ypp.lua", [=[--[[
+return lib("ypp.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify

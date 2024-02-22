@@ -1,16 +1,16 @@
 #!/usr/bin/env -S lua --
 local function lib(path, src) return assert(load(src, '@$bang.lua:'..path, 't')) end
 local libs = {
-["luax"] = lib("~/.local/lib/luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '3.2.1'
-_LUAX_DATE = '2024-02-21'
+["luax"] = lib("luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
+_LUAX_VERSION = '3.2.2'
+_LUAX_DATE = '2024-02-22'
 local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
 local libs = {
-["luax_config"] = lib(".build/tmp/luax_config.lua", [=[--@LIB
-local version = "3.2.1"
+["luax_config"] = lib("luax_config.lua", [=[--@LIB
+local version = "3.2.2"
 return {
     version = version,
-    date = "2024-02-21",
+    date = "2024-02-22",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
@@ -11867,7 +11867,7 @@ end
 
 return pipe
 ]=]),
-["version"] = lib(".build/version", [==[return [=[0.13.7]=]]==]),
+["version"] = lib("version", [==[return [=[0.13.7]=]]==]),
 }
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 require "luax"
