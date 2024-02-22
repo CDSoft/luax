@@ -82,7 +82,7 @@ local function path_shortener(path_list)
 
     local function external(p)
         -- remove full path from sources generated in local cache or build directories
-        return p:has_prefix "~/." or p:has_prefix "."
+        return p:has_prefix "~/." or p:has_prefix "." or p:has_prefix(fs.sep)
     end
 
     local exts, ints = path_list:partition(external)
