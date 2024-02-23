@@ -62,6 +62,7 @@ end
 local function path_shortener(path_list)
 
     local function strip_common_path(ps)
+        if #ps == 0 then return {} end
         local split = F.map(function(p) return p:split(fs.sep) end, ps)
         local function join()
             return split:map(fs.join)
