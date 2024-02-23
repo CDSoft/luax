@@ -94,6 +94,7 @@ gcc and clang must be already installed.
 $(title "Compilation targets")
 
 bang -- <target>    Compile LuaX for <target> (with zig only)
+bang -- luaxc       Compiles and installs luaxc along with luax
 
 By default LuaX is compiled for the current platform.
 Supported targets:
@@ -124,6 +125,7 @@ local san = nil
 local upx = false
 local myapp = nil -- scripts that may overload the default bundle
 local myappname = nil
+local luaxc = false
 
 F.foreach(arg, function(a)
     local function set_mode()
@@ -168,6 +170,7 @@ F.foreach(arg, function(a)
         key     = F.partial(set_key, k, v),
         app     = F.partial(add_app, k, v),
         appname = F.partial(set_appname, k, v),
+        luaxc   = function() luaxc = true end,
         [F.Nil] = set_target,
     } ()
 end)
@@ -193,6 +196,14 @@ if myappname and not myapp then
     F.error_without_stack_trace("The application content shall be defined with the app option")
 end
 
+if luaxc and compiler~="zig" then
+    F.error_without_stack_trace("LuaXC can only be compiled with zig")
+end
+
+if luaxc and myapp then
+    F.error_without_stack_trace("luaxc and myapp options are not compatible")
+end
+
 appname = myappname or appname
 
 section("Compilation options")
@@ -202,6 +213,7 @@ comment(("Sanitizers      : %s"):format(san and "ASan and UbSan" or "none"))
 comment(("Target          : %s"):format(target or "host"))
 comment(("Compression     : %s"):format(upx and "UPX" or "none"))
 comment(("App bundle      : %s"):format(appname))
+comment(("LuaXC           : %s"):format(luaxc and "yes" or "no"))
 
 --===================================================================
 section "Build environment"
@@ -866,10 +878,13 @@ build "$luaxc" {
     command = { "tools/bundle_luaxc.sh", "-zig", zig_version, "-k", ("%q"):format(crypt_key), "-o $out" },
     pool = "console",
     implicit_in = {
+        "$luax",
         "tools/bundle_luaxc.sh",
         ".git/refs/tags",
     },
 }
+
+if luaxc then acc(binaries){"$luaxc"} end
 
 if not myapp and not san then
 --===================================================================
@@ -1222,7 +1237,7 @@ phony "compile" (compile)
 default "compile"
 help "compile" "compile LuaX"
 
-if not target and #test > 0 and not myapp then
+if not target and #test > 0 and not myapp and not luaxc then
 
     phony "test-fast" (test[1])
     help "test-fast" "run LuaX tests (fast, host tests only)"
@@ -1232,15 +1247,15 @@ if not target and #test > 0 and not myapp then
 
 end
 
-if not target and not myapp then
+if not target and not myapp and not luaxc then
     phony "doc" (doc)
     help "doc" "update LuaX documentation"
 end
 
-phony "all" {"compile", not target and not myapp and {"test", "doc"} or {}}
+phony "all" {"compile", not target and not myapp and not luaxc and {"test", "doc"} or {}}
 help "all" "alias for compile, test and doc"
 
-if not target and not myapp then
+if not target and not myapp and not luaxc then
     phony "luaxc" { "$luaxc" }
     help "luaxc" "Bundle all LuaX binaries in a single compiler script"
 end

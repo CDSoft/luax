@@ -21,11 +21,9 @@
 set -e
 
 #####################################################################
-# Compile luax
+# Set luax environment
 #####################################################################
 
-ZIG_VERSION=0.11.0
-KEY=LuaX
 OUTPUT=
 while [ -n "$1" ]
 do
@@ -43,13 +41,25 @@ then
     exit 1
 fi
 
-figlet Bootstrap
-ninja -f bootstrap.ninja
+if [ -z "$ZIG_VERSION" ]
+then
+    echo "Zig version argument missing"
+    exit 1
+fi
 
-figlet Compile
-.build/boot/lua tools/bang.lua -- key="$KEY"
-ninja compile
+if [ -z "$KEY" ]
+then
+    echo "Encryption key argument missing"
+    exit 1
+fi
 
+if ! [ -x .build/bin/luax ]
+then
+    echo "luax shall be compiled"
+    exit 1
+fi
+
+# luax is already compiled by ninja before calling bundle_luaxc.sh
 eval "$(.build/bin/luax env)"
 
 #####################################################################
@@ -67,12 +77,9 @@ mkdir -p $ARCHIVE
 
 for target in "${TARGETS[@]}"
 do
-    figlet -t "$target"
-
     luax tools/bang.lua -o ".build/build-$target.ninja" -- "$target" key="$KEY"
 
     (   PREFIX="$ARCHIVE/$target" ninja -f ".build/build-$target.ninja" install
-        rm -f ".build/build-$target.ninja"
 
         OBJ=$ARCHIVE/$target/obj
 
@@ -93,8 +100,7 @@ cp luax/*.lua "$ARCHIVE/luax"
 # LuaXC script + precompiled library archive
 #####################################################################
 
-figlet "Archive"
-tar cJf .build/luaxc/luaxc.tar.xz .build/luaxc/archive --transform "s#$ARCHIVE##"
+XZ_OPT="-9" tar cJf .build/luaxc/luaxc.tar.xz .build/luaxc/archive --transform "s#$ARCHIVE##"
 
 cat <<EOF > .build/bin/luaxc
 $(sed '20,$d' "$0")
