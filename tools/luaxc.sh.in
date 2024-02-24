@@ -41,6 +41,10 @@ $(basename "$0") help
 $(basename "$0") clean
     Clean the LuaXC cache.
 
+$(basename "$0") extract
+    Extract the LuaX archive to the cache
+    and exit.
+
 $(basename "$0") install [-t target] [-p prefix]
     Install LuaX for the target "target"
     in "prefix"/bin and "prefix"/lib.
@@ -60,6 +64,7 @@ clean()
 case "$1" in
     help)       usage ;;
     clean)      clean ;;
+    extract)    COMMAND=extract ;;
     install)    COMMAND=install ;;
     *)          COMMAND=compile ;;
 esac
@@ -137,6 +142,10 @@ then
     echo "$LUAX can not be installed"
     exit 1
 fi
+
+case "$COMMAND" in
+    extract)    exit ;;
+esac
 
 eval "$($LUAX env)"
 
