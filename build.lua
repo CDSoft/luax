@@ -134,6 +134,9 @@ F.foreach(arg, function(a)
         clang   = set_compiler,
         san     = function() san = true end,
         key     = F.partial(set_key, k, v),
+        [F.Nil] = function()
+            F.error_without_stack_trace((k or a)..": unknown parameter\n\n"..usage, 1)
+        end,
     } ()
 end)
 
