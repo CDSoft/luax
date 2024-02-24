@@ -95,13 +95,17 @@ local function path_shortener(path_list)
 end
 
 local function chunks_of(n, xs)
-    local xss = F{}
-    local ys = xs
-    while #ys > 0 do
-        xs, ys = F.split_at(n, ys)
-        xss[#xss+1] = xs
+    local chunks = F{}
+    local i = 1
+    while i <= #xs do
+        local chunk = F{}
+        for j = 1, n do
+            chunk[j] = xs[i]
+            i = i+1
+        end
+        chunks[#chunks+1] = chunk
     end
-    return xss
+    return chunks
 end
 
 function bundle.bundle(arg, opts)

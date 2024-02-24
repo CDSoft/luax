@@ -60,23 +60,22 @@ If the bootstrap stage fails, you can try:
 
 ### Compilation options
 
-| Option                | Description                                                                   |
-|:----------------------|:------------------------------------------------------------------------------|
-| `bang -- fast [upx]`  | Optimized for speed, optionally compressed with [UPX](https://upx.github.io/) |
-| `bang -- small [upx]` | Optimized for size, optionally compressed with [UPX](https://upx.github.io/)  |
-| `bang -- debug`       | Debug symbols kept, not optimized                                             |
-| `bang -- san`         | Compiled with ASan and UBSan (implies clang)                                  |
-| `bang -- zig`         | Compile LuaX with Zig                                                         |
-| `bang -- gcc`         | Compile LuaX with gcc                                                         |
-| `bang -- clang`       | Compile LuaX with clang                                                       |
-| `bang -- upx`         | Compress LuaX with UPX                                                        |
+| Option          | Description                                  |
+|:----------------|:---------------------------------------------|
+| `bang -- fast`  | Optimized for speed                          |
+| `bang -- small` | Optimized for size                           |
+| `bang -- debug` | Debug symbols kept, not optimized            |
+| `bang -- san`   | Compiled with ASan and UBSan (implies clang) |
+| `bang -- zig`   | Compile LuaX with Zig                        |
+| `bang -- gcc`   | Compile LuaX with gcc                        |
+| `bang -- clang` | Compile LuaX with clang                      |
 
 `bang` must be run before `ninja` to change the compilation options.
 
 `lua tools/bang.lua` can be used instead of
 [bang](https://cdelord.fr/bang) if it is not installed.
 
-The default compilation options are `fast`, `zig`, with no compression.
+The default compilation options are `fast` and `zig`.
 
 Zig is downloaded by the ninja file. gcc and clang must be already
 installed.
@@ -95,6 +94,21 @@ $ cd luax
 $ tools/bang.lua -- debug san # generate build.ninja in debug mode with sanitizers
 $ ninja                       # compile LuaX
 $ ninja test                  # run tests on the host
+```
+
+## Cross-compilation
+
+When compiled with Zig, ninja will compile `luax` and `luaxc`.
+
+`luaxc` is a Bash script containing precompiled libraries for all
+supported targets. This script can bundle Lua scripts and link them with
+the LuaX runtime of the specified target.
+
+E.g.: to produce an executable containing the LuaX runtime for
+`linux-x86_64` and `hello.lua`:
+
+``` sh
+$ luaxc -t linux-x86_64-musl -o hello hello.lua
 ```
 
 ## Precompiled LuaX binaries
