@@ -2,12 +2,11 @@ local URL = "cdelord.fr/luax"
 local YEARS = os.date "2021-%Y"
 local AUTHORS = "Christophe Delord"
 local appname = "luax"
-local crypt_key = "LuaX"
 
 local F = require "F"
 local fs = require "fs"
 
-local I = F.I{URL=URL, YEARS=YEARS, AUTHORS=AUTHORS, KEY=KEY}
+local I = F.I{URL=URL, YEARS=YEARS, AUTHORS=AUTHORS}
 
 section(I[[
 This file is part of luax.
@@ -95,10 +94,6 @@ gcc and clang must be already installed.
 
 Supported targets:
 $(list(targets))
-
-$(title "Application bundle options")
-
-bang -- key=...     Encryption key
 ]]
 
 if F.elem("help", arg) then
@@ -119,13 +114,8 @@ F.foreach(arg, function(a)
         if compiler~=nil then F.error_without_stack_trace(a..": duplicate compiler specification", 2) end
         compiler = a
     end
-    local function set_key(k, v)
-        if not k or not v or #v==0 then F.error_without_stack_trace(a..": the key must be defined and not null", 2) end
-        crypt_key = v
-    end
 
-    local k, v = a:match "^(%w+)=(.*)$"
-    case(k or a) {
+    case(a) {
         fast    = set_mode,
         small   = set_mode,
         debug   = set_mode,
@@ -133,9 +123,8 @@ F.foreach(arg, function(a)
         gcc     = set_compiler,
         clang   = set_compiler,
         san     = function() san = true end,
-        key     = F.partial(set_key, k, v),
         [F.Nil] = function()
-            F.error_without_stack_trace((k or a)..": unknown parameter\n\n"..usage, 1)
+            F.error_without_stack_trace((a)..": unknown parameter\n\n"..usage, 1)
         end,
     } ()
 end)
@@ -609,7 +598,6 @@ are created in `$tmp`
 
 var "luax_config_h"   "$tmp/luax_config.h"
 var "luax_config_lua" "$tmp/luax_config.lua"
-var "luax_crypt_key"  "$tmp/luax_crypt_key.h"
 
 local luax_config_params = F {
     AUTHORS = AUTHORS,
@@ -629,17 +617,6 @@ rule "ypp" {
 build "$luax_config_h"   { "ypp", "tools/luax_config.h.in" }
 build "$luax_config_lua" { "ypp", "tools/luax_config.lua.in" }
 
-var "crypt_key" (crypt_key)
-
-build "$luax_crypt_key"  {
-    description = "GEN $out",
-    command = "$lua tools/crypt_key.lua LUAX_CRYPT_KEY \"$crypt_key\" > $out",
-    implicit_in = {
-        "$lua",
-        "tools/crypt_key.lua",
-    },
-}
-
 --===================================================================
 section "Lua runtime"
 ---------------------------------------------------------------------
@@ -649,14 +626,12 @@ rule "bundle" {
     command = {
         "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
-        "CRYPT_KEY=\"$crypt_key\"",
-        "$lua -l tools/rc4_runtime luax/luax_bundle.lua $args $in > $out",
+        "$lua luax/luax_bundle.lua $args $in > $out",
     },
     implicit_in = {
         "$lz4",
         "$lua",
         "luax/luax_bundle.lua",
-        "tools/rc4_runtime.lua",
         "$luax_config_lua",
     },
 }
@@ -739,7 +714,6 @@ targets:foreach(function(target)
                 implicit_in = {
                     case(src:basename():splitext()) {
                         version = "$luax_config_h",
-                        crypt = "$luax_crypt_key",
                     } or {},
                 },
             }
@@ -823,7 +797,6 @@ if cross_compilation then
 
     local luaxc_config_params = F {
         ZIG_VERSION = zig_version,
-        CRYPT_KEY = crypt_key,
     } : items() : map(function(kv) return ("-e '%s=%q'"):format(kv:unpack()) end) : unwords()
 
     rule "ypp-luaxc" {
@@ -892,8 +865,6 @@ if cross_compilation then
         command = "cat $in > $out && chmod +x $out",
     }
 
-    acc(binaries) { "$luaxc" }
-
 end
 
 --===================================================================
@@ -925,15 +896,13 @@ rule "luax-bundle" {
     command = {
         "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
-        "CRYPT_KEY=\"$crypt_key\"",
         "LUAX_LIB=$lib",
-        "$lua -l tools/rc4_runtime luax/luax.lua -q $args -o $out $in",
+        "$lua luax/luax.lua -q $args -o $out $in",
     },
     implicit_in = {
         "$lz4",
         "$lua",
         "luax/luax_bundle.lua",
-        "tools/rc4_runtime.lua",
         "$lib/luax.lua",
         "$luax_config_lua",
     },
@@ -1226,9 +1195,9 @@ acc(doc) {
 section "Shorcuts"
 ---------------------------------------------------------------------
 
-acc(compile) {binaries, libraries}
+acc(compile) {binaries, libraries, "$luaxc"}
 
-install "bin" {binaries}
+install "bin" {binaries, "$luaxc"}
 install "lib" {libraries}
 
 clean "$builddir"

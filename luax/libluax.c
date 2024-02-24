@@ -63,11 +63,20 @@ static const luaL_Reg lrun_libs[] = {
 extern const size_t lib_bundle_len;
 extern const unsigned char lib_bundle[];
 
+static char *invert(const char *input, size_t input_len)
+{
+    char *output = safe_malloc(input_len);
+    for (size_t i = 0; i < input_len; i++) {
+        output[i] = (char)(~input[i]);
+    }
+    return output;
+}
+
 void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
 {
-    char *rc4_buffer = rc4_runtime(input, input_len);
-    const char *err = lz4_decompress(rc4_buffer, input_len, output, output_len);
-    free(rc4_buffer);
+    char *tmp_buffer = invert(input, input_len);
+    const char *err = lz4_decompress(tmp_buffer, input_len, output, output_len);
+    free(tmp_buffer);
     if (err != NULL)
     {
         fprintf(stderr, "Runtime error: %s\n", err);

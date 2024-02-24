@@ -152,11 +152,6 @@ return function()
         end
         do
             local s = "foobar!"
-            if sys.libc ~= "lua" then
-                -- nil key is available to the LuaX runtime only
-                ne(s:rc4(), s:rc4(""))
-                ne(s:rc4(), s:rc4("x"))
-            end
             ne(s:rc4(""), s:rc4("x"))
         end
         do

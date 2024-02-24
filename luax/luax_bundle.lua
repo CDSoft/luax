@@ -28,6 +28,8 @@ require "lz4"
 require "crypt"
 local config = require "luax_config"
 
+local char = string.char
+
 local magic_id = "LuaX"
 
 local function read(name)
@@ -106,6 +108,10 @@ local function chunks_of(n, xs)
         chunks[#chunks+1] = chunk
     end
     return chunks
+end
+
+local function invert(s)
+    return s:bytes():map(function(b) return char(b~0xff) end):str()
 end
 
 function bundle.bundle(arg, opts)
@@ -268,7 +274,7 @@ function bundle.bundle(arg, opts)
     end
 
     local plain_payload = plain.get()
-    local payload = plain_payload:lz4():rc4()
+    local payload = invert(plain_payload:lz4())
 
     if format == "binary" then
         return F{magic_id, "\0", config.version, "\0", payload}:str()
@@ -304,8 +310,8 @@ function bundle.decrypt(script)
     local version, chunk = script:match(pattern)
     return (
         ( version
-        and assert(chunk:unrc4():unlz4()) -- binary bundle
-        or script                         -- Lua bundle
+        and assert(invert(chunk):unlz4()) -- binary bundle
+        or script                               -- Lua bundle
         ) : gsub("^#!", "--") -- comment the shebang before loading the script
     )
 end

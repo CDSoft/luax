@@ -23,6 +23,3 @@
 
 /* C module registration function */
 LUAMOD_API int luaopen_crypt(lua_State *L);
-
-/* RC4 algorithm exported to be used by run.c to decrypt the payload */
-char *rc4_runtime(const char *input, size_t input_len);

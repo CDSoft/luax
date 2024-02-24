@@ -35,14 +35,9 @@ local targets = {
     {name="macos-aarch64",      uname_kernel="Darwin", uname_machine="arm64",   zig_os="macos",   zig_arch="aarch64", zig_libc="none"},
     {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  zig_os="windows", zig_arch="x86_64",  zig_libc="gnu" },
 }
-setmetatable(targets, {
-    __index = function(_, name)
-        for _, target in ipairs(targets) do
-            if target.name == name then return target end
-        end
-        error(name..": unknown target")
-    end,
-})
+for _, target in ipairs(targets) do
+    targets[target.name] = target
+end
 
 local function detect_target(field)
     local sh = require "sh"

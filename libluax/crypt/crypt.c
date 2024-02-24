@@ -36,8 +36,6 @@ local crypt = require "crypt"
 
 #include "tools.h"
 
-#include "luax_crypt_key.h"
-
 #include "lua.h"
 #include "lauxlib.h"
 
@@ -904,7 +902,6 @@ It is designed to be fast and simple.
 /* https://en.wikipedia.org/wiki/RC4 */
 
 #define RC4_DROP        768
-#define RC4_DROP_3072   3072
 
 typedef struct
 {
@@ -986,14 +983,6 @@ static char *rc4(const char *key, size_t key_size, size_t drop, const char *inpu
     return output;
 }
 
-char *rc4_runtime(const char *input, size_t input_len)
-{
-    LUAX_CRYPT_KEY(key)
-    char * output = rc4((const char *)key, sizeof(key), RC4_DROP_3072, input, input_len);
-    memset(&key, 0, sizeof(key));
-    return output;
-}
-
 /*@@@
 ```lua
 crypt.rc4(data, key, [drop])
@@ -1006,29 +995,22 @@ steps, the default value of `drop` is 768).
 
 static int crypt_rc4(lua_State *L)
 {
-    const char *key = NULL;     /* default key to encrypt the runtime payload */
-    size_t key_size = 0;
     size_t drop = RC4_DROP;     /* default number of steps dropped before encryption */
-    const char *in = NULL;
-    size_t n;
 
     /* arg 1: input data */
-    in = luaL_checkstring(L, 1);
-    n = (size_t)lua_rawlen(L, 1);
+    const char *in = luaL_checkstring(L, 1);
+    const size_t n = (size_t)lua_rawlen(L, 1);
 
-    /* arg 2: key (optional) */
-    if (!lua_isnoneornil(L, 2)) {
-        key = luaL_checkstring(L, 2);
-        key_size = (size_t)lua_rawlen(L, 2);
-    }
+    /* arg 2: key */
+    const char *key = luaL_checkstring(L, 2);
+    const size_t key_size = (size_t)lua_rawlen(L, 2);
 
     /* arg 3: drop (optional) */
     if (!lua_isnoneornil(L, 3)) {
         drop = (size_t)luaL_checkinteger(L, 3);
     }
 
-    char *out = (key == NULL) ? rc4_runtime(in, n)
-                              : rc4(key, key_size, drop, in, n);
+    char *out = rc4(key, key_size, drop, in, n);
     lua_pushlstring(L, out, n);
     free(out);
     return 1;
