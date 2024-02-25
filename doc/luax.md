@@ -14,8 +14,8 @@ Lua scripts.
 
 `luax` can « compile[^1] » scripts from and to any of these platforms.
 
-`luaxc` compile[^2] scripts into a single executable containing the LuaX
-runtime and the Lua scripts. The target platform can be explicitly
+`luaxc` compiles[^2] scripts into a single executable containing the
+LuaX runtime and the Lua scripts. The target platform can be explicitly
 specified to cross-compile scripts for a supported platform.
 
 ## Getting in touch

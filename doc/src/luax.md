@@ -23,7 +23,7 @@ useful packages. `luax` can also produce executable scripts from Lua scripts.
     It just bundles Lua scripts into a single script that can be run everywhere
     LuaX is installed.
 
-`luaxc` compile[^cross-compilation] scripts into a single executable containing
+`luaxc` compiles[^cross-compilation] scripts into a single executable containing
 the LuaX runtime and the Lua scripts. The target platform can be explicitly
 specified to cross-compile scripts for a supported platform.
 
