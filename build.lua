@@ -805,10 +805,7 @@ if cross_compilation then
 
     rule "ypp-luaxc" {
         description = "YPP $out",
-        command = {
-            "$luax tools/ypp.lua", luaxc_config_params, "$in -o $out.tmp",
-            "&& head -n -1 $out.tmp > $out",
-        },
+        command = { "$luax tools/ypp.lua", luaxc_config_params, "$in -o $out" },
         implicit_in = {
             "$luax",
             "tools/ypp.lua",

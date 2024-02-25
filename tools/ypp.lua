@@ -12077,7 +12077,7 @@ return function(cond)
     return cond and ypp or F.const ""
 end
 ]====]),
-["_YPP_VERSION"] = lib("_YPP_VERSION.lua", [=[return [[0.9.1]] --@LOAD
+["_YPP_VERSION"] = lib("_YPP_VERSION.lua", [=[return [[0.9.2]] --@LOAD
 ]=]),
 }
 table.insert(package.searchers, 2, function(name) return libs[name] end)
@@ -12223,7 +12223,7 @@ function ypp_mt.__call(_, content)
 end
 
 local function write_outputs(args)
-    local content = output_contents:unlines()
+    local content = output_contents:str()
     if not args.output or args.output == "-" then
         io.stdout:write(content)
     else
