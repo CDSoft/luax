@@ -137,9 +137,9 @@ local function findpath(name)
 end
 
 local lua_interpreters = F{
-    ["luax"]   = { interpreter="luax",       format="-binary", scripts={} },
-    ["lua"]    = { interpreter="lua",        format="-lua",    scripts={"luax.lua"} },
-    ["pandoc"] = { interpreter="pandoc lua", format="-lua",    scripts={"luax.lua"} },
+    ["luax"]   = { interpreter="luax",       format="-lua", scripts={} },
+    ["lua"]    = { interpreter="lua",        format="-lua", scripts={"luax.lua"} },
+    ["pandoc"] = { interpreter="pandoc lua", format="-lua", scripts={"luax.lua"} },
 }
 
 local function print_targets()
