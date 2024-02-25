@@ -50,7 +50,7 @@ local function detect_target(field)
                         : words() ---@diagnostic disable-line: undefined-field
                         : unpack()
     for _, target in ipairs(targets) do
-        if os:match(target.uname_kernel) then
+        if os:match(target.uname_kernel) and arch:match(target.uname_machine) then
             sys.os = target.zig_os
             sys.arch = target.zig_arch
             return rawget(sys, field)
