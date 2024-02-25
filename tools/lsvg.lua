@@ -2,15 +2,15 @@
 local function lib(path, src) return assert(load(src, '@$lsvg.lua:'..path, 't')) end
 local libs = {
 ["luax"] = lib("luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '3.2.2'
-_LUAX_DATE = '2024-02-22'
+_LUAX_VERSION = '4.0.1'
+_LUAX_DATE = '2024-02-25'
 local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
 local libs = {
 ["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "3.2.2"
+local version = "4.0.1"
 return {
     version = version,
-    date = "2024-02-22",
+    date = "2024-02-25",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
@@ -6912,6 +6912,9 @@ local targets = {
     {name="macos-aarch64",      uname_kernel="Darwin", uname_machine="arm64",   zig_os="macos",   zig_arch="aarch64", zig_libc="none"},
     {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  zig_os="windows", zig_arch="x86_64",  zig_libc="gnu" },
 }
+for _, target in ipairs(targets) do
+    targets[target.name] = target
+end
 
 local function detect_target(field)
     local sh = require "sh"
@@ -6919,7 +6922,7 @@ local function detect_target(field)
                         : words() ---@diagnostic disable-line: undefined-field
                         : unpack()
     for _, target in ipairs(targets) do
-        if os:match(target.uname_kernel) then
+        if os:match(target.uname_kernel) and arch:match(target.uname_machine) then
             sys.os = target.zig_os
             sys.arch = target.zig_arch
             return rawget(sys, field)
