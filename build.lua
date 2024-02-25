@@ -798,6 +798,9 @@ if cross_compilation then
 
     local luaxc_config_params = F {
         ZIG_VERSION = zig_version,
+        URL = URL,
+        YEARS = YEARS,
+        AUTHORS = AUTHORS,
     } : items() : map(function(kv) return ("-e '%s=%q'"):format(kv:unpack()) end) : unwords()
 
     rule "ypp-luaxc" {

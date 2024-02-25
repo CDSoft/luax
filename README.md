@@ -14,6 +14,10 @@ Lua scripts.
 
 `luax` can « compile[^1] » scripts from and to any of these platforms.
 
+`luaxc` compile[^2] scripts into a single executable containing the LuaX
+runtime and the Lua scripts. The target platform can be explicitly
+specified to cross-compile scripts for a supported platform.
+
 ## Getting in touch
 
 - [cdelord.fr/luax](https://cdelord.fr/luax)
@@ -388,3 +392,8 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
 
     It just bundles Lua scripts into a single script that can be run
     everywhere LuaX is installed.
+
+[^2]: `luaxc` uses `zig` to link the LuaX runtime with the Lua scripts
+    but the Lua scripts actually not compiled. Contrary to `luax`,
+    `luaxc` produces executables that do not require LuaX to be
+    installed.

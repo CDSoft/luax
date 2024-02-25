@@ -28,7 +28,12 @@ CACHE=$HOME/.local/var/cache/luax
 usage()
 {
     cat <<END_OF_HELP
-LuaX Compiler $VERSION
+ _               __  ______   |  @URL
+| |   _   _  __ _\\ \\/ / ___|  |
+| |  | | | |/ _\` |\\  / |      |  Version $VERSION
+| |__| |_| | (_| |/  \\ |___   |
+|_____\\__,_|\\__,_/_/\\_\\____|  |  Copyright @YEARS
+                              |  @AUTHORS
 
 $(basename "$0") [-t target] -o output inputs
     Compile and link "inputs" with the LuaX runtime
@@ -49,7 +54,6 @@ $(basename "$0") install [-t target] [-p prefix]
     Install LuaX for the target "target"
     in "prefix"/bin and "prefix"/lib.
     The default prefix is "~/.local".
-
 END_OF_HELP
     exit 0
 }
@@ -62,10 +66,11 @@ clean()
 }
 
 case "$1" in
+    "")         COMMAND=extract-and-usage ;;
     help)       usage ;;
     clean)      clean ;;
-    extract)    COMMAND=extract ;;
-    install)    COMMAND=install ;;
+    extract)    COMMAND=extract; shift ;;
+    install)    COMMAND=install; shift ;;
     *)          COMMAND=compile ;;
 esac
 
@@ -145,7 +150,8 @@ then
 fi
 
 case "$COMMAND" in
-    extract)    exit ;;
+    extract)            exit ;;
+    extract-and-usage)  usage ;;
 esac
 
 eval "$($LUAX env)"
@@ -190,6 +196,18 @@ esac
 case "$TARGET" in
     windows*)   ZIG_OPT+=(-lws2_32 -ladvapi32) ;;
 esac
+
+if [ -z "$OUTPUT" ]
+then
+    echo "Output file not defined"
+    exit 1
+fi
+
+if [ ${#SOURCES[@]} -eq 0 ]
+then
+    echo "No source files"
+    exit 1
+fi
 
 luax "$LUAXC_DIR/luax/luax_bundle.lua" -app -c -name="$OUTPUT" "${SOURCES[@]}" > "$TMP/app_bundle.c"
 zig cc "${ZIG_OPT[@]}" "$LUAXC_DIR/$TARGET/obj"/*.{o,a} "$TMP/app_bundle.c" -o "$OUTPUT"
