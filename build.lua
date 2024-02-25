@@ -858,7 +858,7 @@ if cross_compilation then
         description = "TAR $out",
         command = {
             "XZ_OPT='-9'",
-            "tar cJf $out", files,
+            "tar cJf $out $in",
             [[--transform "s#$tmp/luaxc##"]],
         },
     }
