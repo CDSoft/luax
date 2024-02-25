@@ -142,10 +142,10 @@ installed and can be copied anywhere you want.
 `ninja install` installs:
 
 - `$PREFIX/bin/luax`: LuaX binary
-- `$PREFIX/bin/luax-lua`: a pure Lua REPL reimplementing some LuaX
+- `$PREFIX/bin/luax.lua`: a pure Lua REPL reimplementing some LuaX
   libraries, usable in any Lua 5.4 interpreter (e.g.: lua, pandoc lua,
   …)
-- `$PREFIX/bin/luax-pandoc`: LuaX run in a Pandoc Lua interpreter
+- `$PREFIX/bin/luax-pandoc.lua`: LuaX run in a Pandoc Lua interpreter
 - `$PREFIX/lib/libluax.so`: Linux LuaX shared libraries
 - `$PREFIX/lib/libluax.dylib`: MacOS LuaX shared libraries
 - `$PREFIX/lib/libluax.dll`: Windows LuaX shared libraries
@@ -394,6 +394,6 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
     everywhere LuaX is installed.
 
 [^2]: `luaxc` uses `zig` to link the LuaX runtime with the Lua scripts
-    but the Lua scripts actually not compiled. Contrary to `luax`,
+    but the Lua scripts are actually not compiled. Contrary to `luax`,
     `luaxc` produces executables that do not require LuaX to be
     installed.

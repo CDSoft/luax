@@ -839,8 +839,8 @@ if cross_compilation then
             return {
                 F{
                     binary[target.name],
-                    "$bin/luax-lua",
-                    "$bin/luax-pandoc",
+                    "$bin/luax.lua",
+                    "$bin/luax-pandoc.lua",
                 } : map(function(bin)
                     return build(luaxc_archive/target.name/"bin"/bin:basename()) { "cp", bin }
                 end),
@@ -894,7 +894,7 @@ acc(libraries) {
 }
 
 --===================================================================
-section "$bin/luax-lua"
+section "$bin/luax.lua"
 ---------------------------------------------------------------------
 
 rule "luax-bundle" {
@@ -915,18 +915,18 @@ rule "luax-bundle" {
 }
 
 acc(binaries) {
-    build "$bin/luax-lua" {
+    build "$bin/luax.lua" {
         "luax-bundle", ls "luax/**.lua",
         args = "-t lua",
     }
 }
 
 --===================================================================
-section "$bin/luax-pandoc"
+section "$bin/luax-pandoc.lua"
 ---------------------------------------------------------------------
 
 acc(binaries) {
-    build "$bin/luax-pandoc" {
+    build "$bin/luax-pandoc.lua" {
         "luax-bundle", ls "luax/**.lua",
         args = "-t pandoc",
     }
@@ -1027,13 +1027,13 @@ acc(test) {
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=4",
             "ARCH="..host.zig_arch, "OS="..host.zig_os, "LIBC=lua",
-            "$bin/luax-lua", test_main, "Lua is great",
+            "$bin/luax.lua", test_main, "Lua is great",
             "&&",
             "touch $out",
         },
         implicit_in = {
             "$lua",
-            "$bin/luax-lua",
+            "$bin/luax.lua",
             test_sources,
         },
     },

@@ -16,7 +16,7 @@ $ luax
 ### Shared library usable with a standard Lua interpreter
 
 ``` sh
-$ lua -l libluax
+$ lua -l luax
 ```
 
 ## Reduced version for plain Lua interpreters
@@ -24,20 +24,20 @@ $ lua -l libluax
 ### LuaX with a plain Lua interpreter
 
 ``` sh
-luax-lua
+luax.lua
 ```
 
 ### LuaX with the Pandoc Lua interpreter
 
 ``` sh
-luax-pandoc
+luax-pandoc.lua
 ```
 
 The integration with Pandoc is interesting to debug Pandoc Lua filters
 and inspect Pandoc AST. E.g.:
 
 ``` sh
-$ rlwrap luax-pandoc
+$ rlwrap luax-pandoc.lua
 
  _               __  __  |  https://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |
