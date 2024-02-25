@@ -665,6 +665,7 @@ section "Binaries and shared libraries"
 
 local binaries = {}
 local libraries = {}
+local cross_binaries = {}
 
 local liblua = {}
 local libluax = {}
@@ -860,9 +861,11 @@ if cross_compilation then
 
     build "$tmp/luaxc.sh" { "ypp-luaxc", "tools/luaxc.sh.in" }
 
-    build "$luaxc" { "$tmp/luaxc.sh", "$tmp/luaxc.tar.xz",
-        description = "CAT $out",
-        command = "cat $in > $out && chmod +x $out",
+    acc(cross_binaries) {
+        build "$luaxc" { "$tmp/luaxc.sh", "$tmp/luaxc.tar.xz",
+            description = "CAT $out",
+            command = "cat $in > $out && chmod +x $out",
+        }
     }
 
 end
@@ -1195,9 +1198,9 @@ acc(doc) {
 section "Shorcuts"
 ---------------------------------------------------------------------
 
-acc(compile) {binaries, libraries, "$luaxc"}
+acc(compile) {binaries, libraries, cross_binaries}
 
-install "bin" {binaries, "$luaxc"}
+install "bin" {binaries, cross_binaries}
 install "lib" {libraries}
 
 clean "$builddir"

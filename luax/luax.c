@@ -27,10 +27,6 @@
 #include <windows.h>
 #endif
 
-#ifdef __clang__
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
-#endif
-
 /* app_bundle defined in lua_app_bundle.c (generated at compile time) */
 extern const size_t app_bundle_len;
 extern const unsigned char app_bundle[];
