@@ -846,6 +846,7 @@ if cross_compilation then
                 end),
                 F{
                     shared_library[target.name],
+                    "$lib/luax.lua",
                 } : map(function(lib)
                     return build(luaxc_archive/target.name/"lib"/lib:basename()) { "cp", lib }
                 end),
