@@ -53,6 +53,10 @@ If you need to update the build system, please modify build.lua
 and run bang to regenerate build.ninja.
 ]]
 
+generator {
+    implicit_in = "libluax/sys/sys.lua",
+}
+
 -- list of targets used for cross compilation (with Zig only)
 local luax_sys = dofile"libluax/sys/sys.lua"
 local targets = F(luax_sys.targets)
