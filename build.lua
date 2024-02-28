@@ -404,6 +404,7 @@ local cc_ext = {}
 local ar = {}
 local ld = {}
 local so = {}
+local partial_ld = {}
 
 cc.host = rule "cc-host" {
     description = "CC $in",
@@ -493,6 +494,13 @@ targets:foreach(function(target)
         description = "SO $out",
         command = {
             "$cc-"..target.name, target_opt, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out",
+        },
+        implicit_in = compiler_deps,
+    }
+    partial_ld[target.name] = rule("partial-ld-"..target.name) {
+        description = "LD $out",
+        command = {
+            "$ld-"..target.name, target_opt, "-r", "$in -o $out",
         },
         implicit_in = compiler_deps,
     }
@@ -857,15 +865,21 @@ if cross_compilation then
 
         -- precompiled luax libraries
         targets : map(function(target)
-            return F{
+            local libs = F{
                 "$tmp"/target.name/"lib/liblua.a",
                 "$tmp"/target.name/"lib/libluax.a",
                 "$tmp"/target.name/"obj/luax/libluax.o",
                 "$tmp"/target.name/"obj/luax/luax.o",
-            } : map(function(arch)
-                return build(luaxc_archive/target.name/arch:basename()) { "cp", arch }
-            end)
+            }
+            if target.zig_os == "linux" then
+                return build(luaxc_archive/target.name/"luax.o") { partial_ld[target.name], libs }
+            else
+                return libs : map(function(arch)
+                    return build(luaxc_archive/target.name/arch:basename()) { "cp", arch }
+                end)
+            end
         end),
+
     }
 
     build "$tmp/luaxc.tar.xz" { files,

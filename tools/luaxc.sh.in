@@ -227,6 +227,12 @@ then
     exit 1
 fi
 
+case "$TARGET" in
+    linux*)     LIBS=("$LUAXC_DIR/$TARGET"/*.o) ;;
+    macos*)     LIBS=("$LUAXC_DIR/$TARGET"/*.{o,a}) ;;
+    windows*)   LIBS=("$LUAXC_DIR/$TARGET"/*.{o,a}) ;;
+esac
+
 TMP=$(mktemp --tmpdir -d "$(basename "$0")-XXXXXX")
 trap 'rm -rf $TMP' EXIT
 
@@ -239,6 +245,6 @@ then
 fi
 
 luax "$LUAXC_DIR/luax_bundle.lua" -app -c -name="$OUTPUT" "${SOURCES[@]}" > "$TMP/app_bundle.c"
-zig cc "${ZIG_OPT[@]}" "$LUAXC_DIR/$TARGET"/*.{o,a} "$TMP/app_bundle.c" -o "$OUTPUT"
+zig cc "${ZIG_OPT[@]}" "${LIBS[@]}" "$TMP/app_bundle.c" -o "$OUTPUT"
 
 exit # ------------------------------8<------------------------------
