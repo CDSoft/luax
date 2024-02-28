@@ -766,7 +766,7 @@ targets:foreach(function(target)
         build("$tmp"/target.name/"obj"/luax_app_bundle:splitext()..".o") { cc[target.name], luax_app_bundle },
     }
 
-    shared_library[target.name] = target_libc~="musl" and not san and
+    shared_library[target.name] = target.zig_libc~="musl" and not san and
         build("$tmp"/target.name/"lib/libluax"..libext) { so[target.name],
             main_libluax[target.name],
             case(target.zig_os) {
@@ -818,40 +818,53 @@ if cross_compilation then
 
     local luaxc_archive = "$tmp/luaxc"
     local files = {
+
+        -- script used by luaxc to create the application bundle
+        F{
+            "luax/luax_bundle.lua",
+        } : map(function(src)
+            return build(luaxc_archive/src:basename()) { "cp", src }
+        end),
+
+        -- target independant scripts and libraries
+        F{
+            "$bin/luax.lua",
+            "$bin/luax-pandoc.lua",
+        } : map(function(bin)
+            return build(luaxc_archive/"noarch"/"bin"/bin:basename()) { "cp", bin }
+        end),
+        F{
+            "$lib/luax.lua",
+        } : map(function(lib)
+            return build(luaxc_archive/"noarch"/"lib"/lib:basename()) { "cp", lib }
+        end),
+
+        -- luax binaries and shared libraries
         targets : map(function(target)
-            local obj = luaxc_archive/target.name/"obj"
+            return {
+                F{
+                    binary[target.name],
+                } : map(function(bin)
+                    return build(luaxc_archive/target.name/"bin"/bin:basename()) { "cp", bin }
+                end),
+                F{
+                    shared_library[target.name] or nil,
+                } : map(function(lib)
+                    return build(luaxc_archive/target.name/"lib"/lib:basename()) { "cp", lib }
+                end),
+            }
+        end),
+
+        -- precompiled luax libraries
+        targets : map(function(target)
             return F{
                 "$tmp"/target.name/"lib/liblua.a",
                 "$tmp"/target.name/"lib/libluax.a",
                 "$tmp"/target.name/"obj/luax/libluax.o",
                 "$tmp"/target.name/"obj/luax/luax.o",
-                "$tmp/luax_config.h",
-                "$tmp/luax_config.lua",
-            } : map(function(src_obj)
-                return build(obj/src_obj:basename()) { "cp", src_obj }
+            } : map(function(arch)
+                return build(luaxc_archive/target.name/arch:basename()) { "cp", arch }
             end)
-        end),
-        F{
-            "luax/luax_bundle.lua",
-        } : map(function(src)
-            return build(luaxc_archive/"luax"/src:basename()) { "cp", src }
-        end),
-        targets : map(function(target)
-            return {
-                F{
-                    binary[target.name],
-                    "$bin/luax.lua",
-                    "$bin/luax-pandoc.lua",
-                } : map(function(bin)
-                    return build(luaxc_archive/target.name/"bin"/bin:basename()) { "cp", bin }
-                end),
-                F{
-                    shared_library[target.name],
-                    "$lib/luax.lua",
-                } : map(function(lib)
-                    return build(luaxc_archive/target.name/"lib"/lib:basename()) { "cp", lib }
-                end),
-            }
         end),
     }
 

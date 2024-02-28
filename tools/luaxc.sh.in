@@ -78,6 +78,7 @@ TARGET=
 OUTPUT=
 SOURCES=()
 PREFIX=$HOME/.local
+VERBOSE=true
 
 while [ -n "$1" ]
 do
@@ -85,6 +86,7 @@ do
         (-o)    OUTPUT=$(realpath "$2"); shift 2 ;;
         (-t)    TARGET="$2"; shift 2 ;;
         (-p)    PREFIX="$2"; shift 2 ;;
+        (-q)    VERBOSE=false; shift ;;
         (-h)    usage ;;
         (*)     SOURCES+=("$(realpath "$1")"); shift ;;
     esac
@@ -154,7 +156,7 @@ case "$COMMAND" in
     extract-and-usage)  usage ;;
 esac
 
-eval "$($LUAX env)"
+eval "$("$LUAX" env)"
 
 if [ -z "$TARGET" ]
 then
@@ -168,16 +170,26 @@ then
 fi
 
 case "$COMMAND" in
-    install)    install -v -D -t "$PREFIX/bin" "$LUAXC_DIR/$TARGET/bin"/*
-                install -v -D -t "$PREFIX/lib" "$LUAXC_DIR/$TARGET/lib"/*
+    install)    install -v -D -t "$PREFIX/bin" "$LUAXC_DIR/noarch/bin"/*
+                install -v -D -t "$PREFIX/bin" "$LUAXC_DIR/$TARGET/bin"/*
+                install -v -D -t "$PREFIX/lib" "$LUAXC_DIR/noarch/lib"/*
+                if [ -d "$LUAXC_DIR/$TARGET/lib" ]
+                then
+                    install -v -D -t "$PREFIX/lib" "$LUAXC_DIR/$TARGET/lib"/*
+                fi
                 exit
                 ;;
 esac
 
-TMP=$(mktemp --tmpdir -d "$(basename "$0")-XXXXXX")
-trap "rm -rf $TMP" EXIT
-
-ZIG_TARGET=$(luax -l F -l sys -e "target = F.filter(function(t) return t.name=='$TARGET' end, sys.targets):head(); print(target.zig_arch..'-'..target.zig_os..'-'..target.zig_libc)")
+ZIG_TARGET=$(luax -l F -l sys - <<EOF
+local t = sys.targets["$TARGET"]
+if not t then
+    io.stderr:write("$TARGET: unknown target\n")
+    os.exit(1)
+end
+print(F{t.zig_arch, t.zig_os, t.zig_libc}:str"-")
+EOF
+)
 ZIG_OPT=(-target "$ZIG_TARGET")
 ZIG_OPT+=(-std=gnu2x)
 ZIG_OPT+=(-O3)
@@ -197,6 +209,12 @@ case "$TARGET" in
     windows*)   ZIG_OPT+=(-lws2_32 -ladvapi32) ;;
 esac
 
+if [ -z "$TARGET" ]
+then
+    echo "Undefined target"
+    exit 1
+fi
+
 if [ -z "$OUTPUT" ]
 then
     echo "Output file not defined"
@@ -209,7 +227,18 @@ then
     exit 1
 fi
 
-luax "$LUAXC_DIR/luax/luax_bundle.lua" -app -c -name="$OUTPUT" "${SOURCES[@]}" > "$TMP/app_bundle.c"
-zig cc "${ZIG_OPT[@]}" "$LUAXC_DIR/$TARGET/obj"/*.{o,a} "$TMP/app_bundle.c" -o "$OUTPUT"
+TMP=$(mktemp --tmpdir -d "$(basename "$0")-XXXXXX")
+trap 'rm -rf $TMP' EXIT
+
+if $VERBOSE
+then
+    echo "luaxc $VERSION"
+    echo "target : $TARGET"
+    echo "output : $OUTPUT"
+    echo "sources: ${SOURCES[*]}"
+fi
+
+luax "$LUAXC_DIR/luax_bundle.lua" -app -c -name="$OUTPUT" "${SOURCES[@]}" > "$TMP/app_bundle.c"
+zig cc "${ZIG_OPT[@]}" "$LUAXC_DIR/$TARGET"/*.{o,a} "$TMP/app_bundle.c" -o "$OUTPUT"
 
 exit # ------------------------------8<------------------------------
