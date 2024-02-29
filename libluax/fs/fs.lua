@@ -193,7 +193,8 @@ if not fs then
         fs.dirname = pandoc.path.directory
     else
         function fs.dirname(path)
-            return (path:gsub("[/\\][^/\\]*$", ""))
+            local dir, n = path:gsub("[/\\][^/\\]*$", "")
+            return n > 0 and dir or "."
         end
     end
 

@@ -2,19 +2,18 @@
 local function lib(path, src) return assert(load(src, '@$ypp.lua:'..path, 't')) end
 local libs = {
 ["luax"] = lib("luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '4.0.1'
-_LUAX_DATE = '2024-02-25'
+_LUAX_VERSION = '4.0.5'
+_LUAX_DATE = '2024-02-29'
 local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
 local libs = {
 ["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "4.0.1"
+local version = "4.0.5"
 return {
     version = version,
-    date = "2024-02-25",
+    date = "2024-02-29",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
-
 ]=]),
 ["F"] = lib("libluax/F/F.lua", [==[--[[
 This file is part of luax.
@@ -4962,7 +4961,8 @@ if not fs then
         fs.dirname = pandoc.path.directory
     else
         function fs.dirname(path)
-            return (path:gsub("[/\\][^/\\]*$", ""))
+            local dir, n = path:gsub("[/\\][^/\\]*$", "")
+            return n > 0 and dir or "."
         end
     end
 

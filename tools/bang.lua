@@ -2,19 +2,18 @@
 local function lib(path, src) return assert(load(src, '@$bang.lua:'..path, 't')) end
 local libs = {
 ["luax"] = lib("luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '4.0.1'
-_LUAX_DATE = '2024-02-25'
+_LUAX_VERSION = '4.0.5'
+_LUAX_DATE = '2024-02-29'
 local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
 local libs = {
 ["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "4.0.1"
+local version = "4.0.5"
 return {
     version = version,
-    date = "2024-02-25",
+    date = "2024-02-29",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
-
 ]=]),
 ["F"] = lib("libluax/F/F.lua", [==[--[[
 This file is part of luax.
@@ -4962,7 +4961,8 @@ if not fs then
         fs.dirname = pandoc.path.directory
     else
         function fs.dirname(path)
-            return (path:gsub("[/\\][^/\\]*$", ""))
+            local dir, n = path:gsub("[/\\][^/\\]*$", "")
+            return n > 0 and dir or "."
         end
     end
 
@@ -11303,9 +11303,14 @@ local function generator_rule(args)
 
     section(("Regenerate %s when %s changes"):format(args.output, args.input))
 
+    local bang_cmd= args.gen_cmd or
+        F.filterk(function(k)
+            return math.type(k) == "integer" and k <= 0
+        end, args.cli_args) : values() : unwords()
+
     local bang = rule(unique_rule_name "bang") {
         command = {
-            "bang",
+            bang_cmd,
             args.quiet and "-q" or {},
             "$in -o $out",
             #_G.arg > 0 and {"--", _G.arg} or {},
@@ -11870,7 +11875,7 @@ end
 
 return pipe
 ]=]),
-["version"] = lib("version", [==[return [=[0.13.8]=]]==]),
+["version"] = lib("version", [==[return [=[0.14]=]]==]),
 }
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 require "luax"
@@ -11927,6 +11932,11 @@ local function parse_args()
         : description "Quiet mode (no output on stdout)"
         : target "quiet"
 
+    parser : option "-g"
+        : description "Set a custom command for the generator rule"
+        : argname "cmd"
+        : target "gen_cmd"
+
     parser : option "-o"
         : description "Output file (default: build.ninja)"
         : argname "output"
@@ -11938,6 +11948,7 @@ local function parse_args()
 
     local bang_arg, script_arg = F.break_(F.partial(F.op.eq, "--"), arg)
     local args = F.merge{
+        { cli_args = arg },
         { input="build.lua", output="build.ninja" },
         parser:parse(bang_arg),
     }
