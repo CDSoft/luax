@@ -29,13 +29,13 @@ local _, fs = pcall(require, "_fs")
 fs = _ and fs
 
 local F = require "F"
+local sys = require "sys"
 
 -- Pure Lua / Pandoc Lua implementation
 if not fs then
     fs = {}
 
     local sh = require "sh"
-    local sys = require "sys"
 
     if pandoc and pandoc.path then
         fs.sep = pandoc.path.separator
@@ -527,6 +527,13 @@ if pandoc and pandoc.system then
             return f(fs.join(tmpdir, "tmpfile"))
         end)
     end
+elseif sys.os == "windows" then
+    function fs.with_tmpfile(f)
+        local tmp = os.getenv "TMP" / os.tmpname():basename()
+        local ret = {f(tmp)}
+        fs.rm(tmp)
+        return table.unpack(ret)
+    end
 else
     function fs.with_tmpfile(f)
         local tmp = os.tmpname()
@@ -546,6 +553,15 @@ calls `f(tmp)` where `tmp` is the name of a temporary directory.
 if pandoc and pandoc.system then
     function fs.with_tmpdir(f)
         return pandoc.system.with_temporary_directory("luax", f)
+    end
+elseif sys.os == "windows" then
+    function fs.with_tmpdir(f)
+        local tmp = os.getenv "TMP" / os.tmpname():basename()
+        fs.rm(tmp)
+        fs.mkdir(tmp)
+        local ret = {f(tmp)}
+        fs.rmdir(tmp)
+        return table.unpack(ret)
     end
 else
     function fs.with_tmpdir(f)
