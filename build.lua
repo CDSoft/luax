@@ -61,7 +61,7 @@ generator {
 local luax_sys = dofile"libluax/sys/sys.lua"
 local targets = F(luax_sys.targets)
 local host = targets
-    : filter(function(t) return t.zig_os==luax_sys.os and t.zig_arch==luax_sys.arch end)
+    : filter(function(t) return t.os==luax_sys.os and t.arch==luax_sys.arch end)
     : head()
 if not host then
     F.error_without_stack_trace(luax_sys.os.." "..luax_sys.arch..": unknown host")
@@ -179,7 +179,7 @@ local zig_version = "0.11.0"
 local compiler_deps = {}
 
 local function zig_target(t)
-    return {"-target", F{t.zig_arch, t.zig_os, t.zig_libc}:str"-"}
+    return {"-target", F{t.arch, t.os, t.libc}:str"-"}
 end
 
 case(compiler) {
@@ -290,7 +290,7 @@ local host_cflags = {
     "-O3",
     "-fPIC",
     F.map(F.prefix"-I", include_path),
-    case(host.zig_os) {
+    case(host.os) {
         linux = "-DLUA_USE_LINUX",
         macos = "-DLUA_USE_MACOSX",
         windows = {},
@@ -422,7 +422,7 @@ ld.host = rule "ld-host" {
 targets:foreach(function(target)
 
     local lto = case(mode) {
-        fast = case(target.zig_os) {
+        fast = case(target.os) {
             linux   = lto_opt,
             macos   = {},
             windows = lto_opt,
@@ -431,24 +431,24 @@ targets:foreach(function(target)
         debug = {},
     }
     local target_flags = {
-        "-DLUAX_ARCH='\""..target.zig_arch.."\"'",
-        "-DLUAX_OS='\""..target.zig_os.."\"'",
-        "-DLUAX_LIBC='\""..target.zig_libc.."\"'",
+        "-DLUAX_ARCH='\""..target.arch.."\"'",
+        "-DLUAX_OS='\""..target.os.."\"'",
+        "-DLUAX_LIBC='\""..target.libc.."\"'",
     }
     local lua_flags = {
-        case(target.zig_os) {
+        case(target.os) {
             linux   = "-DLUA_USE_LINUX",
             macos   = "-DLUA_USE_MACOSX",
             windows = {},
         },
     }
     local target_ld_flags = {
-        case(target.zig_libc) {
+        case(target.libc) {
             gnu  = "-rdynamic",
             musl = {},
             none = "-rdynamic",
         },
-        case(target.zig_os) {
+        case(target.os) {
             linux   = {},
             macos   = {},
             windows = "-lws2_32 -ladvapi32",
@@ -466,7 +466,7 @@ targets:foreach(function(target)
         description = "CC $in",
         command = {
             "$cc-"..target.name, target_opt, "-c", lto, luax_cflags, lua_flags, target_flags, "-MD -MF $depfile $in -o $out",
-            case(target.zig_os) {
+            case(target.os) {
                 linux   = {},
                 macos   = {},
                 windows = "$build_as_dll",
@@ -698,13 +698,13 @@ phony "check_limath_version" {
 
 targets:foreach(function(target)
 
-    local ext = case(target.zig_os) {
+    local ext = case(target.os) {
         linux   = "",
         macos   = "",
         windows = ".exe",
     }
 
-    local libext = case(target.zig_os) {
+    local libext = case(target.os) {
         linux   = ".so",
         macos   = ".dylib",
         windows = ".dll",
@@ -733,7 +733,7 @@ targets:foreach(function(target)
         end),
         F.flatten {
             sources.third_party_c_files,
-            case(target.zig_os) {
+            case(target.os) {
                 linux   = sources.linux_third_party_c_files,
                 macos   = sources.linux_third_party_c_files,
                 windows = sources.windows_third_party_c_files,
@@ -761,7 +761,7 @@ targets:foreach(function(target)
     main_libluax[target.name] = F.flatten { sources.libluax_main_c_files }
         : map(function(src)
                 return build("$tmp"/target.name/"obj"/src:splitext()..".o") { cc[target.name], src,
-                    build_as_dll = case(target.zig_os) {
+                    build_as_dll = case(target.os) {
                         windows = "-DLUA_BUILD_AS_DLL -DLUA_LIB",
                     },
                 }
@@ -774,10 +774,10 @@ targets:foreach(function(target)
         build("$tmp"/target.name/"obj"/luax_app_bundle:splitext()..".o") { cc[target.name], luax_app_bundle },
     }
 
-    shared_library[target.name] = target.zig_libc~="musl" and not san and
+    shared_library[target.name] = target.libc~="musl" and not san and
         build("$tmp"/target.name/"lib/libluax"..libext) { so[target.name],
             main_libluax[target.name],
-            case(target.zig_os) {
+            case(target.os) {
                 linux   = {},
                 macos   = liblua[target.name],
                 windows = liblua[target.name],
@@ -871,7 +871,7 @@ if cross_compilation then
                 "$tmp"/target.name/"obj/luax/libluax.o",
                 "$tmp"/target.name/"obj/luax/luax.o",
             }
-            if target.zig_os == "linux" then
+            if target.os == "linux" then
                 return build(luaxc_archive/target.name/"luax.o") { partial_ld[target.name], libs }
             else
                 return libs : map(function(arch)
@@ -984,7 +984,7 @@ acc(test) {
             "LUA_CPATH='foo/?.so'",
             "TEST_NUM=1",
             "LUAX=$luax",
-            "ARCH="..host.zig_arch, "OS="..host.zig_os, "LIBC="..host.zig_libc,
+            "ARCH="..host.arch, "OS="..host.os, "LIBC="..host.libc,
             "$test/test-luax Lua is great",
             "&&",
             "touch $out",
@@ -1011,7 +1011,7 @@ acc(test) {
             "PATH=$bin:$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua'",
             "TEST_NUM=2",
-            "ARCH="..host.zig_arch, "OS="..host.zig_os, "LIBC="..host.zig_libc,
+            "ARCH="..host.arch, "OS="..host.os, "LIBC="..host.libc,
             "$lua -l libluax", test_main, "Lua is great",
             "&&",
             "touch $out",
@@ -1033,7 +1033,7 @@ acc(test) {
             "PATH=$bin:$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=3",
-            "ARCH="..host.zig_arch, "OS="..host.zig_os, "LIBC=lua",
+            "ARCH="..host.arch, "OS="..host.os, "LIBC=lua",
             "$lua -l luax", test_main, "Lua is great",
             "&&",
             "touch $out",
@@ -1055,7 +1055,7 @@ acc(test) {
             "PATH=$bin:$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=4",
-            "ARCH="..host.zig_arch, "OS="..host.zig_os, "LIBC=lua",
+            "ARCH="..host.arch, "OS="..host.os, "LIBC=lua",
             "$bin/luax.lua", test_main, "Lua is great",
             "&&",
             "touch $out",
@@ -1076,7 +1076,7 @@ acc(test) {
             "PATH=$bin:$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=5",
-            "ARCH="..host.zig_arch, "OS="..host.zig_os, "LIBC=lua",
+            "ARCH="..host.arch, "OS="..host.os, "LIBC=lua",
             "pandoc lua -l luax", test_main, "Lua is great",
             "&&",
             "touch $out",

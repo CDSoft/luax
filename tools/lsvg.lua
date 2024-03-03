@@ -2,15 +2,15 @@
 local function lib(path, src) return assert(load(src, '@$lsvg.lua:'..path, 't')) end
 local libs = {
 ["luax"] = lib("luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '4.0.5'
-_LUAX_DATE = '2024-02-29'
+_LUAX_VERSION = '4.0.7'
+_LUAX_DATE = '2024-03-03'
 local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
 local libs = {
 ["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "4.0.5"
+local version = "4.0.7"
 return {
     version = version,
-    date = "2024-02-29",
+    date = "2024-03-03",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
@@ -4797,13 +4797,13 @@ local _, fs = pcall(require, "_fs")
 fs = _ and fs
 
 local F = require "F"
+local sys = require "sys"
 
 -- Pure Lua / Pandoc Lua implementation
 if not fs then
     fs = {}
 
     local sh = require "sh"
-    local sys = require "sys"
 
     if pandoc and pandoc.path then
         fs.sep = pandoc.path.separator
@@ -5295,6 +5295,13 @@ if pandoc and pandoc.system then
             return f(fs.join(tmpdir, "tmpfile"))
         end)
     end
+elseif sys.os == "windows" then
+    function fs.with_tmpfile(f)
+        local tmp = os.getenv "TMP" / os.tmpname():basename()
+        local ret = {f(tmp)}
+        fs.rm(tmp)
+        return table.unpack(ret)
+    end
 else
     function fs.with_tmpfile(f)
         local tmp = os.tmpname()
@@ -5314,6 +5321,15 @@ calls `f(tmp)` where `tmp` is the name of a temporary directory.
 if pandoc and pandoc.system then
     function fs.with_tmpdir(f)
         return pandoc.system.with_temporary_directory("luax", f)
+    end
+elseif sys.os == "windows" then
+    function fs.with_tmpdir(f)
+        local tmp = os.getenv "TMP" / os.tmpname():basename()
+        fs.rm(tmp)
+        fs.mkdir(tmp)
+        local ret = {f(tmp)}
+        fs.rmdir(tmp)
+        return table.unpack(ret)
     end
 else
     function fs.with_tmpdir(f)
@@ -6904,13 +6920,13 @@ sys = _ and sys or {
 }
 
 local targets = {
-    {name="linux-x86_64",       uname_kernel="Linux",  uname_machine="x86_64",  zig_os="linux",   zig_arch="x86_64",  zig_libc="gnu" },
-    {name="linux-x86_64-musl",  uname_kernel="Linux",  uname_machine="x86_64",  zig_os="linux",   zig_arch="x86_64",  zig_libc="musl"},
-    {name="linux-aarch64",      uname_kernel="Linux",  uname_machine="aarch64", zig_os="linux",   zig_arch="aarch64", zig_libc="gnu" },
-    {name="linux-aarch64-musl", uname_kernel="Linux",  uname_machine="aarch64", zig_os="linux",   zig_arch="aarch64", zig_libc="musl"},
-    {name="macos-x86_64",       uname_kernel="Darwin", uname_machine="x86_64",  zig_os="macos",   zig_arch="x86_64",  zig_libc="none"},
-    {name="macos-aarch64",      uname_kernel="Darwin", uname_machine="arm64",   zig_os="macos",   zig_arch="aarch64", zig_libc="none"},
-    {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  zig_os="windows", zig_arch="x86_64",  zig_libc="gnu" },
+    {name="linux-x86_64",       uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="gnu" },
+    {name="linux-x86_64-musl",  uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="musl"},
+    {name="linux-aarch64",      uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="gnu" },
+    {name="linux-aarch64-musl", uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="musl"},
+    {name="macos-x86_64",       uname_kernel="Darwin", uname_machine="x86_64",  os="macos",   arch="x86_64",  libc="none"},
+    {name="macos-aarch64",      uname_kernel="Darwin", uname_machine="arm64",   os="macos",   arch="aarch64", libc="none"},
+    {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  os="windows", arch="x86_64",  libc="gnu" },
 }
 for _, target in ipairs(targets) do
     targets[target.name] = target
@@ -6923,8 +6939,8 @@ local function detect_target(field)
                         : unpack()
     for _, target in ipairs(targets) do
         if os:match(target.uname_kernel) and arch:match(target.uname_machine) then
-            sys.os = target.zig_os
-            sys.arch = target.zig_arch
+            sys.os = target.os
+            sys.arch = target.arch
             return rawget(sys, field)
         end
     end

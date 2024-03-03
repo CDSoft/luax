@@ -27,13 +27,13 @@ sys = _ and sys or {
 }
 
 local targets = {
-    {name="linux-x86_64",       uname_kernel="Linux",  uname_machine="x86_64",  zig_os="linux",   zig_arch="x86_64",  zig_libc="gnu" },
-    {name="linux-x86_64-musl",  uname_kernel="Linux",  uname_machine="x86_64",  zig_os="linux",   zig_arch="x86_64",  zig_libc="musl"},
-    {name="linux-aarch64",      uname_kernel="Linux",  uname_machine="aarch64", zig_os="linux",   zig_arch="aarch64", zig_libc="gnu" },
-    {name="linux-aarch64-musl", uname_kernel="Linux",  uname_machine="aarch64", zig_os="linux",   zig_arch="aarch64", zig_libc="musl"},
-    {name="macos-x86_64",       uname_kernel="Darwin", uname_machine="x86_64",  zig_os="macos",   zig_arch="x86_64",  zig_libc="none"},
-    {name="macos-aarch64",      uname_kernel="Darwin", uname_machine="arm64",   zig_os="macos",   zig_arch="aarch64", zig_libc="none"},
-    {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  zig_os="windows", zig_arch="x86_64",  zig_libc="gnu" },
+    {name="linux-x86_64",       uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="gnu" },
+    {name="linux-x86_64-musl",  uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="musl"},
+    {name="linux-aarch64",      uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="gnu" },
+    {name="linux-aarch64-musl", uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="musl"},
+    {name="macos-x86_64",       uname_kernel="Darwin", uname_machine="x86_64",  os="macos",   arch="x86_64",  libc="none"},
+    {name="macos-aarch64",      uname_kernel="Darwin", uname_machine="arm64",   os="macos",   arch="aarch64", libc="none"},
+    {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  os="windows", arch="x86_64",  libc="gnu" },
 }
 for _, target in ipairs(targets) do
     targets[target.name] = target
@@ -46,8 +46,8 @@ local function detect_target(field)
                         : unpack()
     for _, target in ipairs(targets) do
         if os:match(target.uname_kernel) and arch:match(target.uname_machine) then
-            sys.os = target.zig_os
-            sys.arch = target.zig_arch
+            sys.os = target.os
+            sys.arch = target.arch
             return rawget(sys, field)
         end
     end

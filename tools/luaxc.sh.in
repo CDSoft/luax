@@ -187,7 +187,7 @@ if not t then
     io.stderr:write("$TARGET: unknown target\n")
     os.exit(1)
 end
-print(F{t.zig_arch, t.zig_os, t.zig_libc}:str"-")
+print(F{t.arch, t.os, t.libc}:str"-")
 EOF
 )
 ZIG_OPT=(-target "$ZIG_TARGET")
