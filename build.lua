@@ -425,7 +425,7 @@ targets:foreach(function(target)
         fast = case(target.os) {
             linux   = lto_opt,
             macos   = {},
-            windows = lto_opt,
+            windows = {},
         },
         small = {},
         debug = {},
