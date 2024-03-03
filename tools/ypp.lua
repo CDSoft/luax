@@ -2,15 +2,15 @@
 local function lib(path, src) return assert(load(src, '@$ypp.lua:'..path, 't')) end
 local libs = {
 ["luax"] = lib("luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '4.0.7'
-_LUAX_DATE = '2024-03-03'
+_LUAX_VERSION = '4.1'
+_LUAX_DATE = '2024-03-04'
 local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
 local libs = {
 ["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "4.0.7"
+local version = "4.1"
 return {
     version = version,
-    date = "2024-03-03",
+    date = "2024-03-04",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
@@ -6919,38 +6919,59 @@ sys = _ and sys or {
     libc = "lua",
 }
 
-local targets = {
-    {name="linux-x86_64",       uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="gnu" },
-    {name="linux-x86_64-musl",  uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="musl"},
-    {name="linux-aarch64",      uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="gnu" },
-    {name="linux-aarch64-musl", uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="musl"},
-    {name="macos-x86_64",       uname_kernel="Darwin", uname_machine="x86_64",  os="macos",   arch="x86_64",  libc="none"},
-    {name="macos-aarch64",      uname_kernel="Darwin", uname_machine="arm64",   os="macos",   arch="aarch64", libc="none"},
-    {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  os="windows", arch="x86_64",  libc="gnu" },
-}
-for _, target in ipairs(targets) do
-    targets[target.name] = target
-end
+local F = require "F"
 
-local function detect_target(field)
+--[[@@@
+```lua
+sys.build
+```
+Build platform used to compile LuaX.
+
+```lua
+sys.host
+```
+Host platform where LuaX is currently running.
+@@@]]
+
+
+local targets = F{
+    {name="linux-x86_64",       uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="gnu",   exe="",     so=".so" },
+    {name="linux-x86_64-musl",  uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="musl",  exe="",     so=".so"},
+    {name="linux-aarch64",      uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="gnu",   exe="",     so=".so" },
+    {name="linux-aarch64-musl", uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="musl",  exe="",     so=".so"},
+    {name="macos-x86_64",       uname_kernel="Darwin", uname_machine="x86_64",  os="macos",   arch="x86_64",  libc="none",  exe="",     so=".dylib"},
+    {name="macos-aarch64",      uname_kernel="Darwin", uname_machine="arm64",   os="macos",   arch="aarch64", libc="none",  exe="",     so=".dylib"},
+    {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll" },
+}
+targets : foreach(function(target) targets[target.name] = target end)
+
+sys.build = targets
+    : filter(function(target) return target.os == sys.os and target.arch == sys.arch and target.libc == sys.libc end)
+    : head()
+
+local function detect(field)
     local sh = require "sh"
     local os, arch = assert(sh.read"uname -s -m", "can not detect the current platform with uname")
                         : words() ---@diagnostic disable-line: undefined-field
                         : unpack()
-    for _, target in ipairs(targets) do
-        if os:match(target.uname_kernel) and arch:match(target.uname_machine) then
-            sys.os = target.os
-            sys.arch = target.arch
-            return rawget(sys, field)
-        end
+    local host = targets
+        : filter(function(target) return os:match(target.uname_kernel) and arch:match(target.uname_machine) end)
+        : head()
+    if host then
+        sys.os = host.os
+        sys.arch = host.arch
+        sys.host = host
+        return rawget(sys, field)
     end
     error("Unknown platform: "..os.." "..arch)
 end
 
 setmetatable(sys, {
     __index = function(_, param)
-        if param == "os"      then return detect_target "os" end
-        if param == "arch"    then return detect_target "arch" end
+        if param == "os"      then return detect "os" end
+        if param == "arch"    then return detect "arch" end
+        if param == "host"    then return detect "host" end
+        if param == "build"   then sys.build = sys.host; return sys.build end -- assume build == host when using the Lua implementation
         if param == "targets" then return targets end
     end,
 })
@@ -12093,7 +12114,7 @@ return function(cond)
     return cond and ypp or F.const ""
 end
 ]====]),
-["_YPP_VERSION"] = lib("_YPP_VERSION.lua", [=[return [[0.9.2]] --@LOAD
+["_YPP_VERSION"] = lib("_YPP_VERSION.lua", [=[return [[0.9.4]] --@LOAD
 ]=]),
 }
 table.insert(package.searchers, 2, function(name) return libs[name] end)

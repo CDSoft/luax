@@ -60,9 +60,7 @@ generator {
 -- list of targets used for cross compilation (with Zig only)
 local luax_sys = dofile"libluax/sys/sys.lua"
 local targets = F(luax_sys.targets)
-local host = targets
-    : filter(function(t) return t.os==luax_sys.os and t.arch==luax_sys.arch end)
-    : head()
+local host = luax_sys.build
 if not host then
     F.error_without_stack_trace(luax_sys.os.." "..luax_sys.arch..": unknown host")
 end
@@ -698,18 +696,6 @@ phony "check_limath_version" {
 
 targets:foreach(function(target)
 
-    local ext = case(target.os) {
-        linux   = "",
-        macos   = "",
-        windows = ".exe",
-    }
-
-    local libext = case(target.os) {
-        linux   = ".so",
-        macos   = ".dylib",
-        windows = ".dll",
-    }
-
     liblua[target.name] = build("$tmp"/target.name/"lib/liblua.a") { ar[target.name],
         F.flatten {
             sources.lua_c_files,
@@ -766,7 +752,7 @@ targets:foreach(function(target)
                     },
                 }
             end)
-    binary[target.name] = build("$tmp"/target.name/"bin"/appname..ext) { ld[target.name],
+    binary[target.name] = build("$tmp"/target.name/"bin"/appname..target.exe) { ld[target.name],
         main_luax[target.name],
         main_libluax[target.name],
         liblua[target.name],
@@ -775,7 +761,7 @@ targets:foreach(function(target)
     }
 
     shared_library[target.name] = target.libc~="musl" and not san and
-        build("$tmp"/target.name/"lib/libluax"..libext) { so[target.name],
+        build("$tmp"/target.name/"lib/libluax"..target.so) { so[target.name],
             main_libluax[target.name],
             case(target.os) {
                 linux   = {},

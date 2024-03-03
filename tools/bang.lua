@@ -2,15 +2,15 @@
 local function lib(path, src) return assert(load(src, '@$bang.lua:'..path, 't')) end
 local libs = {
 ["luax"] = lib("luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '4.0.7'
-_LUAX_DATE = '2024-03-03'
+_LUAX_VERSION = '4.1'
+_LUAX_DATE = '2024-03-04'
 local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
 local libs = {
 ["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "4.0.7"
+local version = "4.1"
 return {
     version = version,
-    date = "2024-03-03",
+    date = "2024-03-04",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
@@ -6919,38 +6919,59 @@ sys = _ and sys or {
     libc = "lua",
 }
 
-local targets = {
-    {name="linux-x86_64",       uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="gnu" },
-    {name="linux-x86_64-musl",  uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="musl"},
-    {name="linux-aarch64",      uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="gnu" },
-    {name="linux-aarch64-musl", uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="musl"},
-    {name="macos-x86_64",       uname_kernel="Darwin", uname_machine="x86_64",  os="macos",   arch="x86_64",  libc="none"},
-    {name="macos-aarch64",      uname_kernel="Darwin", uname_machine="arm64",   os="macos",   arch="aarch64", libc="none"},
-    {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  os="windows", arch="x86_64",  libc="gnu" },
-}
-for _, target in ipairs(targets) do
-    targets[target.name] = target
-end
+local F = require "F"
 
-local function detect_target(field)
+--[[@@@
+```lua
+sys.build
+```
+Build platform used to compile LuaX.
+
+```lua
+sys.host
+```
+Host platform where LuaX is currently running.
+@@@]]
+
+
+local targets = F{
+    {name="linux-x86_64",       uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="gnu",   exe="",     so=".so" },
+    {name="linux-x86_64-musl",  uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="musl",  exe="",     so=".so"},
+    {name="linux-aarch64",      uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="gnu",   exe="",     so=".so" },
+    {name="linux-aarch64-musl", uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="musl",  exe="",     so=".so"},
+    {name="macos-x86_64",       uname_kernel="Darwin", uname_machine="x86_64",  os="macos",   arch="x86_64",  libc="none",  exe="",     so=".dylib"},
+    {name="macos-aarch64",      uname_kernel="Darwin", uname_machine="arm64",   os="macos",   arch="aarch64", libc="none",  exe="",     so=".dylib"},
+    {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll" },
+}
+targets : foreach(function(target) targets[target.name] = target end)
+
+sys.build = targets
+    : filter(function(target) return target.os == sys.os and target.arch == sys.arch and target.libc == sys.libc end)
+    : head()
+
+local function detect(field)
     local sh = require "sh"
     local os, arch = assert(sh.read"uname -s -m", "can not detect the current platform with uname")
                         : words() ---@diagnostic disable-line: undefined-field
                         : unpack()
-    for _, target in ipairs(targets) do
-        if os:match(target.uname_kernel) and arch:match(target.uname_machine) then
-            sys.os = target.os
-            sys.arch = target.arch
-            return rawget(sys, field)
-        end
+    local host = targets
+        : filter(function(target) return os:match(target.uname_kernel) and arch:match(target.uname_machine) end)
+        : head()
+    if host then
+        sys.os = host.os
+        sys.arch = host.arch
+        sys.host = host
+        return rawget(sys, field)
     end
     error("Unknown platform: "..os.." "..arch)
 end
 
 setmetatable(sys, {
     __index = function(_, param)
-        if param == "os"      then return detect_target "os" end
-        if param == "arch"    then return detect_target "arch" end
+        if param == "os"      then return detect "os" end
+        if param == "arch"    then return detect "arch" end
+        if param == "host"    then return detect "host" end
+        if param == "build"   then sys.build = sys.host; return sys.build end -- assume build == host when using the Lua implementation
         if param == "targets" then return targets end
     end,
 })
@@ -11891,7 +11912,43 @@ end
 
 return pipe
 ]=]),
-["version"] = lib("version", [==[return [=[0.14]=]]==]),
+["target"] = lib("lib/target.lua", [=[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LOAD
+
+local F = require "F"
+local sys = require "sys"
+
+local function target(target_spec)
+    if type(target_spec) == "string" then target_spec = {target_spec} end
+    if type(target_spec) == "table" then
+        local names, other_args = F.partition(function(name) return sys.targets[name] end, target_spec)
+        if #names == 1 then return sys.targets[names:head()], other_args end
+        if #names > 1 then F.error_without_stack_trace("multiple target definition", 1) end
+        return nil, F(target_spec)
+    end
+    F.error_without_stack_trace("target() expects a string or a list of strings", 1)
+end
+
+return target
+]=]),
+["version"] = lib("version", [==[return [=[0.15]=]]==]),
 }
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 require "luax"
@@ -11903,6 +11960,7 @@ _ENV["help"] = require "help"
 _ENV["install"] = require "install"
 _ENV["ls"] = require "ls"
 _ENV["pipe"] = require "pipe"
+_ENV["target"] = require "target"
 return lib("src/bang.lua", [=[
 
 -- This file is part of bang.
