@@ -52,7 +52,7 @@ local function last_line(s)
     return s
     : lines()
     : drop_while_end(F.compose{string.null, string.trim})
-    : last()
+    : last() or ""
 end
 
 local function mlstr(code)
