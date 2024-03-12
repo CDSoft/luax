@@ -27,6 +27,9 @@
 
 builddir = .build/boot
 
+lua = $builddir/lua
+bang = tools/bang.lua
+
 kernel = "$$(uname -s)"
 linux_opts = $$([ $kernel = Linux ] && echo '-DLUA_USE_LINUX')
 macos_opts = $$([ $kernel = Darwin ] && echo '-DLUA_USE_MACOSX')
@@ -36,7 +39,7 @@ rule cc
     command = $${CC:-cc} $linux_opts $macos_opts $in -o $out -lm
     pool = console
 
-build $builddir/lua: cc $
+build $lua: cc $
     lua/lapi.c $
     lua/lauxlib.c $
     lua/lbaselib.c $
@@ -73,8 +76,8 @@ build $builddir/lua: cc $
 
 rule bang
     description = Generate $out
-    command = $builddir/lua tools/bang.lua -o $out $in $
+    command = $lua $bang -o $out $in $
         && echo You can now execute ninja to build LuaX
     pool = console
 
-build build.ninja: bang build.lua | $builddir/lua tools/bang.lua
+build build.ninja: bang build.lua | $lua $bang
