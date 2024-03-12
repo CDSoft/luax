@@ -36,21 +36,20 @@ local function luax_env(arg0)
     local function update(var_name, separator, new_path)
         return F{
             "export ", var_name, "=\"",
-            F{
+            F.flatten {
                 new_path,
-                (os.getenv(var_name) or "")
-                    : split(separator)
-                    : filter(F.partial(F.op.ne, new_path))
-                    : nub(),
-            } : flatten() : str(separator),
+                (os.getenv(var_name) or "") : split(separator),
+            } : nub() : str(separator),
             "\";",
         } : str()
     end
 
+    local lua_path_sep = package.config:words()[2]
+
     return F.unlines {
-        update("PATH",      fs.path_sep, bin),
-        update("LUA_PATH",  ";",         lib_lua),
-        update("LUA_CPATH", ";",         lib_so),
+        update("PATH",      fs.path_sep,  bin),
+        update("LUA_PATH",  lua_path_sep, lib_lua),
+        update("LUA_CPATH", lua_path_sep, lib_so),
     }
 end
 
