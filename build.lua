@@ -58,12 +58,8 @@ generator {
 }
 
 -- list of targets used for cross compilation (with Zig only)
-local luax_sys = dofile"libluax/sys/sys.lua"
-local targets = F(luax_sys.targets)
-local host = luax_sys.build
-if not host then
-    F.error_without_stack_trace(luax_sys.os.." "..luax_sys.arch..": unknown host")
-end
+local sys = dofile "libluax/sys/sys.lua" -- load sys from luax, not from bang!
+local targets = F(sys.targets)
 
 local usage = I{
     title = function(s) return F.unlines {s, (s:gsub(".", "="))}:rtrim() end,
@@ -139,7 +135,7 @@ compiler = F.default("zig", compiler)
 -- Only zig can cross-compile LuaX for all targets
 local cross_compilation = compiler=="zig"
 if not cross_compilation then
-    targets = F{host}
+    targets = F{sys}
 end
 
 if san and compiler~="clang" then
@@ -183,7 +179,7 @@ end
 case(compiler) {
 
     zig = function()
-        local cache = case(luax_sys.os) {
+        local cache = case(sys.os) {
             linux   = os.getenv"HOME"/".local/var/cache/luax",
             macos   = os.getenv"HOME"/".local/var/cache/luax",
             windows = os.getenv"LOCALAPPDATA"/"luax",
@@ -218,15 +214,15 @@ case(compiler) {
     end,
 
     gcc = function()
-        var("cc-"..host.name) "gcc"
-        var("ar-"..host.name) "ar"
-        var("ld-"..host.name) "gcc"
+        var("cc-"..sys.name) "gcc"
+        var("ar-"..sys.name) "ar"
+        var("ld-"..sys.name) "gcc"
     end,
 
     clang = function()
-        var("cc-"..host.name) "clang"
-        var("ar-"..host.name) "ar"
-        var("ld-"..host.name) "clang"
+        var("cc-"..sys.name) "clang"
+        var("ar-"..sys.name) "ar"
+        var("ld-"..sys.name) "clang"
     end,
 
 }()
@@ -288,7 +284,7 @@ local host_cflags = {
     "-O3",
     "-fPIC",
     F.map(F.prefix"-I", include_path),
-    case(host.os) {
+    case(sys.os) {
         linux = "-DLUA_USE_LINUX",
         macos = "-DLUA_USE_MACOSX",
         windows = {},
@@ -406,14 +402,14 @@ local partial_ld = {}
 
 cc.host = rule "cc-host" {
     description = "CC $in",
-    command = { "$cc-"..host.name, "-c", host_cflags, "-MD -MF $depfile $in -o $out" },
+    command = { "$cc-"..sys.name, "-c", host_cflags, "-MD -MF $depfile $in -o $out" },
     implicit_in = compiler_deps,
     depfile = "$out.d",
 }
 
 ld.host = rule "ld-host" {
     description = "LD $out",
-    command = { "$ld-"..host.name, host_ldflags, "$in -o $out" },
+    command = { "$ld-"..sys.name, host_ldflags, "$in -o $out" },
     implicit_in = compiler_deps,
 }
 
@@ -432,6 +428,9 @@ targets:foreach(function(target)
         "-DLUAX_ARCH='\""..target.arch.."\"'",
         "-DLUAX_OS='\""..target.os.."\"'",
         "-DLUAX_LIBC='\""..target.libc.."\"'",
+        "-DLUAX_EXE='\""..target.exe.."\"'",
+        "-DLUAX_SO='\""..target.so.."\"'",
+        "-DLUAX_NAME='\""..target.name.."\"'",
     }
     local lua_flags = {
         case(target.os) {
@@ -778,15 +777,15 @@ rule "cp" {
     command = "cp -f $in $out",
 }
 
-var "luax" ("$bin"/binary[host.name]:basename())
+var "luax" ("$bin"/binary[sys.name]:basename())
 
 acc(binaries) {
-    build "$luax" { "cp", binary[host.name] }
+    build "$luax" { "cp", binary[sys.name] }
 }
 
-if shared_library[host.name] then
+if shared_library[sys.name] then
     acc(libraries) {
-        build("$lib"/shared_library[host.name]:basename()) { "cp", shared_library[host.name] }
+        build("$lib"/shared_library[sys.name]:basename()) { "cp", shared_library[sys.name] }
     }
 end
 
@@ -954,6 +953,12 @@ section "Tests"
 local test_sources = ls "tests/luax-tests/*.*"
 local test_main = "tests/luax-tests/main.lua"
 
+local libc = case(sys.os) {
+    linux   = "gnu",
+    macos   = "none",
+    windows = "gnu",
+}
+
 acc(test) {
 
 ---------------------------------------------------------------------
@@ -970,7 +975,7 @@ acc(test) {
             "LUA_CPATH='foo/?.so'",
             "TEST_NUM=1",
             "LUAX=$luax",
-            "ARCH="..host.arch, "OS="..host.os, "LIBC="..host.libc,
+            "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
             "$test/test-luax Lua is great",
             "&&",
             "touch $out",
@@ -997,7 +1002,7 @@ acc(test) {
             "PATH=$bin:$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua'",
             "TEST_NUM=2",
-            "ARCH="..host.arch, "OS="..host.os, "LIBC="..host.libc,
+            "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
             "$lua -l libluax", test_main, "Lua is great",
             "&&",
             "touch $out",
@@ -1019,7 +1024,7 @@ acc(test) {
             "PATH=$bin:$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=3",
-            "ARCH="..host.arch, "OS="..host.os, "LIBC=lua",
+            "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
             "$lua -l luax", test_main, "Lua is great",
             "&&",
             "touch $out",
@@ -1041,7 +1046,7 @@ acc(test) {
             "PATH=$bin:$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=4",
-            "ARCH="..host.arch, "OS="..host.os, "LIBC=lua",
+            "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
             "$bin/luax.lua", test_main, "Lua is great",
             "&&",
             "touch $out",
@@ -1062,7 +1067,7 @@ acc(test) {
             "PATH=$bin:$tmp:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=5",
-            "ARCH="..host.arch, "OS="..host.os, "LIBC=lua",
+            "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
             "pandoc lua -l luax", test_main, "Lua is great",
             "&&",
             "touch $out",

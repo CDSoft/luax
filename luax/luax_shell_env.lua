@@ -31,7 +31,7 @@ local function luax_env(arg0)
     local bin = exe:dirname():realpath()
     local prefix = bin:dirname()
     local lib_lua = prefix / "lib" / "?.lua"
-    local lib_so = prefix / "lib" / "?"..sys.build.so
+    local lib_so = prefix / "lib" / "?"..sys.so
 
     local function update(var_name, separator, new_path)
         return F{

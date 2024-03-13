@@ -2,15 +2,15 @@
 local function lib(path, src) return assert(load(src, '@$lsvg.lua:'..path, 't')) end
 local libs = {
 ["luax"] = lib("luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '4.1'
-_LUAX_DATE = '2024-03-04'
+_LUAX_VERSION = '4.2'
+_LUAX_DATE = '2024-03-13'
 local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
 local libs = {
 ["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "4.1"
+local version = "4.2"
 return {
     version = version,
-    date = "2024-03-04",
+    date = "2024-03-13",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
@@ -6914,69 +6914,79 @@ http://cdelord.fr/luax
 --@LIB
 local _, sys = pcall(require, "_sys")
 sys = _ and sys or {
-    os   = pandoc and pandoc.system.os,
-    arch = pandoc and pandoc.system.arch,
     libc = "lua",
 }
 
 local F = require "F"
 
---[[@@@
-```lua
-sys.build
-```
-Build platform used to compile LuaX.
-
-```lua
-sys.host
-```
-Host platform where LuaX is currently running.
-@@@]]
-
-
 local targets = F{
-    {name="linux-x86_64",       uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="gnu",   exe="",     so=".so" },
-    {name="linux-x86_64-musl",  uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="musl",  exe="",     so=".so"},
-    {name="linux-aarch64",      uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="gnu",   exe="",     so=".so" },
-    {name="linux-aarch64-musl", uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="musl",  exe="",     so=".so"},
+    {name="linux-x86_64",       uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="gnu",   exe="",     so=".so"   },
+    {name="linux-x86_64-musl",  uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="musl",  exe="",     so=".so"   },
+    {name="linux-aarch64",      uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="gnu",   exe="",     so=".so"   },
+    {name="linux-aarch64-musl", uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="musl",  exe="",     so=".so"   },
     {name="macos-x86_64",       uname_kernel="Darwin", uname_machine="x86_64",  os="macos",   arch="x86_64",  libc="none",  exe="",     so=".dylib"},
     {name="macos-aarch64",      uname_kernel="Darwin", uname_machine="arm64",   os="macos",   arch="aarch64", libc="none",  exe="",     so=".dylib"},
-    {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll" },
+    {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll"  },
 }
 targets : foreach(function(target) targets[target.name] = target end)
 
-sys.build = targets
-    : filter(function(target) return target.os == sys.os and target.arch == sys.arch and target.libc == sys.libc end)
-    : head()
+if sys.libc == "lua" then
 
-local function detect(field)
-    local sh = require "sh"
-    local os, arch = assert(sh.read"uname -s -m", "can not detect the current platform with uname")
-                        : words() ---@diagnostic disable-line: undefined-field
-                        : unpack()
-    local host = targets
-        : filter(function(target) return os:match(target.uname_kernel) and arch:match(target.uname_machine) end)
-        : head()
-    if host then
-        sys.os = host.os
-        sys.arch = host.arch
-        sys.host = host
-        return rawget(sys, field)
+    if pandoc then
+
+        sys.os   = pandoc.system.os
+        sys.arch = pandoc.system.arch
+
+        if sys.os:match"mingw" then sys.os = "windows" end
+
+        targets : foreach(function(target)
+            if not sys.name and sys.os == target.os and sys.arch == target.arch then
+                sys.exe  = target.exe
+                sys.so   = target.so
+                sys.name = target.name
+            end
+        end)
+
+    else
+
+        local sh = require "sh"
+        local os, arch = F(sh.read"uname -s -m" or "")
+                            : words() ---@diagnostic disable-line: undefined-field
+                            : unpack()
+        local host = targets
+            : filter(function(target) return os:match(target.uname_kernel) and arch:match(target.uname_machine) end)
+            : head()
+        if host then
+            -- Linux/MacOS detected with uname
+            sys.os   = host.os
+            sys.arch = host.arch
+            sys.exe  = host.exe
+            sys.so   = host.so
+            sys.name = host.name
+        else
+            local win_os = os.getenv "OS"
+            if win_os:match "Windows" then
+                -- Assuming Windows
+                local win = targets
+                    : filter(function(target) return target.os=="windows" end)
+                    : head()
+                sys.os   = win.os
+                sys.arch = win.arch
+                sys.exe  = win.exe
+                sys.so   = win.so
+                sys.name = win.name
+            end
+        end
+
     end
-    error("Unknown platform: "..os.." "..arch)
+
 end
 
-setmetatable(sys, {
-    __index = function(_, param)
-        if param == "os"      then return detect "os" end
-        if param == "arch"    then return detect "arch" end
-        if param == "host"    then return detect "host" end
-        if param == "build"   then sys.build = sys.host; return sys.build end -- assume build == host when using the Lua implementation
-        if param == "targets" then return targets end
-    end,
+return setmetatable(sys, {
+    __index = {
+        targets = targets,
+    },
 })
-
-return sys
 ]=]),
 ["term"] = lib("libluax/term/term.lua", [=[--[[
 This file is part of luax.
@@ -11512,11 +11522,11 @@ end
 
 return setmetatable(svg, svg_mt)
 ]=]),
-["version"] = lib("version", [==[return [=[2.3.4]=]]==]),
+["version"] = lib("version", [==[return [=[2.4]=]]==]),
 }
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 require "luax"
-return lib("lsvg.lua", [=[
+return lib("lsvg.lua", [=[--/usr/bin/env luax
 
 --[[
 This file is part of lsvg.

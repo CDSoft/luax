@@ -30,7 +30,7 @@ local sys = require "sys"
 #include "lua.h"
 #include "lauxlib.h"
 
-static const luaL_Reg blsyslib[] =
+static const luaL_Reg luax_syslib[] =
 {
     {NULL, NULL}
 };
@@ -56,13 +56,31 @@ sys.arch
 sys.libc
 ```
 `"musl"` or `"gnu"`. Note that `libc` is `"lua"` when using the pure Lua implementation of LuaX.
+
+```lua
+sys.exe
+```
+Extension of executable files on the platform.
+
+```lua
+sys.so
+```
+Extension of shared libraries on the platform (`".so"`, `".dylib"` or `".dll"`).
+
+```lua
+sys.name
+```
+Name of the platform.
 @@@*/
 
 LUAMOD_API int luaopen_sys (lua_State *L)
 {
-    luaL_newlib(L, blsyslib);
+    luaL_newlib(L, luax_syslib);
     set_string(L, "arch", LUAX_ARCH);
-    set_string(L, "os", LUAX_OS);
+    set_string(L, "os",   LUAX_OS);
     set_string(L, "libc", LUAX_LIBC);
+    set_string(L, "exe",  LUAX_EXE);
+    set_string(L, "so",   LUAX_SO);
+    set_string(L, "name", LUAX_NAME);
     return 1;
 }

@@ -2,15 +2,15 @@
 local function lib(path, src) return assert(load(src, '@$ypp.lua:'..path, 't')) end
 local libs = {
 ["luax"] = lib("luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '4.1'
-_LUAX_DATE = '2024-03-04'
+_LUAX_VERSION = '4.2'
+_LUAX_DATE = '2024-03-13'
 local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
 local libs = {
 ["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "4.1"
+local version = "4.2"
 return {
     version = version,
-    date = "2024-03-04",
+    date = "2024-03-13",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
@@ -6914,69 +6914,79 @@ http://cdelord.fr/luax
 --@LIB
 local _, sys = pcall(require, "_sys")
 sys = _ and sys or {
-    os   = pandoc and pandoc.system.os,
-    arch = pandoc and pandoc.system.arch,
     libc = "lua",
 }
 
 local F = require "F"
 
---[[@@@
-```lua
-sys.build
-```
-Build platform used to compile LuaX.
-
-```lua
-sys.host
-```
-Host platform where LuaX is currently running.
-@@@]]
-
-
 local targets = F{
-    {name="linux-x86_64",       uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="gnu",   exe="",     so=".so" },
-    {name="linux-x86_64-musl",  uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="musl",  exe="",     so=".so"},
-    {name="linux-aarch64",      uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="gnu",   exe="",     so=".so" },
-    {name="linux-aarch64-musl", uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="musl",  exe="",     so=".so"},
+    {name="linux-x86_64",       uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="gnu",   exe="",     so=".so"   },
+    {name="linux-x86_64-musl",  uname_kernel="Linux",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="musl",  exe="",     so=".so"   },
+    {name="linux-aarch64",      uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="gnu",   exe="",     so=".so"   },
+    {name="linux-aarch64-musl", uname_kernel="Linux",  uname_machine="aarch64", os="linux",   arch="aarch64", libc="musl",  exe="",     so=".so"   },
     {name="macos-x86_64",       uname_kernel="Darwin", uname_machine="x86_64",  os="macos",   arch="x86_64",  libc="none",  exe="",     so=".dylib"},
     {name="macos-aarch64",      uname_kernel="Darwin", uname_machine="arm64",   os="macos",   arch="aarch64", libc="none",  exe="",     so=".dylib"},
-    {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll" },
+    {name="windows-x86_64",     uname_kernel="MINGW",  uname_machine="x86_64",  os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll"  },
 }
 targets : foreach(function(target) targets[target.name] = target end)
 
-sys.build = targets
-    : filter(function(target) return target.os == sys.os and target.arch == sys.arch and target.libc == sys.libc end)
-    : head()
+if sys.libc == "lua" then
 
-local function detect(field)
-    local sh = require "sh"
-    local os, arch = assert(sh.read"uname -s -m", "can not detect the current platform with uname")
-                        : words() ---@diagnostic disable-line: undefined-field
-                        : unpack()
-    local host = targets
-        : filter(function(target) return os:match(target.uname_kernel) and arch:match(target.uname_machine) end)
-        : head()
-    if host then
-        sys.os = host.os
-        sys.arch = host.arch
-        sys.host = host
-        return rawget(sys, field)
+    if pandoc then
+
+        sys.os   = pandoc.system.os
+        sys.arch = pandoc.system.arch
+
+        if sys.os:match"mingw" then sys.os = "windows" end
+
+        targets : foreach(function(target)
+            if not sys.name and sys.os == target.os and sys.arch == target.arch then
+                sys.exe  = target.exe
+                sys.so   = target.so
+                sys.name = target.name
+            end
+        end)
+
+    else
+
+        local sh = require "sh"
+        local os, arch = F(sh.read"uname -s -m" or "")
+                            : words() ---@diagnostic disable-line: undefined-field
+                            : unpack()
+        local host = targets
+            : filter(function(target) return os:match(target.uname_kernel) and arch:match(target.uname_machine) end)
+            : head()
+        if host then
+            -- Linux/MacOS detected with uname
+            sys.os   = host.os
+            sys.arch = host.arch
+            sys.exe  = host.exe
+            sys.so   = host.so
+            sys.name = host.name
+        else
+            local win_os = os.getenv "OS"
+            if win_os:match "Windows" then
+                -- Assuming Windows
+                local win = targets
+                    : filter(function(target) return target.os=="windows" end)
+                    : head()
+                sys.os   = win.os
+                sys.arch = win.arch
+                sys.exe  = win.exe
+                sys.so   = win.so
+                sys.name = win.name
+            end
+        end
+
     end
-    error("Unknown platform: "..os.." "..arch)
+
 end
 
-setmetatable(sys, {
-    __index = function(_, param)
-        if param == "os"      then return detect "os" end
-        if param == "arch"    then return detect "arch" end
-        if param == "host"    then return detect "host" end
-        if param == "build"   then sys.build = sys.host; return sys.build end -- assume build == host when using the Lua implementation
-        if param == "targets" then return targets end
-    end,
+return setmetatable(sys, {
+    __index = {
+        targets = targets,
+    },
 })
-
-return sys
 ]=]),
 ["term"] = lib("libluax/term/term.lua", [=[--[[
 This file is part of luax.
@@ -11087,6 +11097,69 @@ return flex.str(function(filename, opts)
     return content
 end)
 ]=]),
+["file"] = lib("file.lua", [=[--[[
+This file is part of ypp.
+
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+http://cdelord.fr/ypp
+--]]
+
+--@LOAD
+
+--[[@@@
+* `f = file(name)`: return a file object that can be used to create files incrementally.
+  Files are only saved once ypp succeed
+* `f(s)`: add `s` to the file
+* `f:ypp(s)`: preprocess and add `s` to the file
+@@@]]
+
+local F = require "F"
+
+local file = {}
+local file_mt = {__index={}}
+local file_object_mt = {__index={}}
+
+local outputs = F{}
+file_mt.__index.outputs = outputs
+
+local files = F{}
+file_mt.__index.files = files
+
+function file_mt:__call(name)
+    outputs[#outputs+1] = name
+    local f = setmetatable(F{name=name}, file_object_mt)
+    files[#files+1] = f
+    return f
+end
+
+function file_object_mt:__call(...)
+    self[#self+1] = F.flatten{...}
+end
+
+function file_object_mt.__index:ypp(...)
+    self[#self+1] = F.flatten{...}:map(ypp)
+end
+
+function file_object_mt.__index:flush()
+    fs.mkdirs(self.name:dirname())
+    fs.write(self.name, F.flatten(self):str())
+end
+
+return setmetatable(file, file_mt)
+]=]),
 ["flex"] = lib("flex.lua", [=[--[[
 This file is part of ypp.
 
@@ -12114,7 +12187,7 @@ return function(cond)
     return cond and ypp or F.const ""
 end
 ]====]),
-["_YPP_VERSION"] = lib("_YPP_VERSION.lua", [=[return [[0.9.4]] --@LOAD
+["_YPP_VERSION"] = lib("_YPP_VERSION.lua", [=[return [[0.11]] --@LOAD
 ]=]),
 }
 table.insert(package.searchers, 2, function(name) return libs[name] end)
@@ -12123,6 +12196,7 @@ _ENV["atexit"] = require "atexit"
 _ENV["comment"] = require "comment"
 _ENV["convert"] = require "convert"
 _ENV["doc"] = require "doc"
+_ENV["file"] = require "file"
 _ENV["image"] = require "image"
 _ENV["include"] = require "include"
 _ENV["q"] = require "q"
@@ -12174,6 +12248,7 @@ local ypp = setmetatable({}, ypp_mt)
 local known_input_files = F{}
 local output_contents = F{}
 local input_files = F{fs.join(fs.getcwd(), "-")} -- stack of input files (current branch from the root to the deepest included document)
+local output_file = "-"
 
 local function die(msg, ...)
     io.stderr:write("ypp: ", msg:format(...), "\n")
@@ -12253,6 +12328,10 @@ function ypp.input_path(level)
     return fs.dirname(input_files[#input_files-(level or 0)])
 end
 
+function ypp.output_file()
+    return output_file
+end
+
 function ypp_mt.__call(_, content)
     if type(content) == "table" then return F.map(ypp, content) end
     local parser = require "parser"
@@ -12267,6 +12346,8 @@ local function write_outputs(args)
         fs.mkdirs(fs.dirname(args.output))
         fs.write(args.output, content)
     end
+    local file = require "file"
+    file.files:foreach(function(f) f:flush() end)
 end
 
 local function write_dep_file(args)
@@ -12281,7 +12362,8 @@ local function write_dep_file(args)
             :unwords()
     end
     local scripts = F.values(package.modpath)
-    local deps = mklist(args.targets, args.output or {}).." : "..mklist(known_input_files, scripts)
+    local file = require "file"
+    local deps = mklist(args.targets, args.output or {}, file.outputs).." : "..mklist(known_input_files, scripts)
     fs.mkdirs(fs.dirname(name))
     fs.write(name, deps.."\n")
 end
@@ -12321,6 +12403,7 @@ local function parse_args()
         : argname "file"
         : action(function(_, _, path, _)
             output = path
+            output_file = path
             require"image".output(output)
         end)
 

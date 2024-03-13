@@ -31,4 +31,7 @@ return function()
     eq(sys.arch, os.getenv "ARCH")
     eq(sys.os,   os.getenv "OS")
     eq(sys.libc, os.getenv "LIBC")
+    eq(sys.exe,  os.getenv "EXE")
+    eq(sys.so,   os.getenv "SO")
+    eq(sys.name, os.getenv "NAME")
 end

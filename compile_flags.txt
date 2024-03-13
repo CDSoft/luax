@@ -26,3 +26,6 @@
 -DLUAX_ARCH="x86_64"
 -DLUAX_OS="linux"
 -DLUAX_LIBC="gnu"
+-DLUAX_EXE=""
+-DLUAX_SO="so"
+-DLUAX_NAME="linux-x86_64-gnu"

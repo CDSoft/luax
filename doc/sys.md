@@ -24,13 +24,20 @@ sys.libc
 implementation of LuaX.
 
 ``` lua
-sys.build
+sys.exe
 ```
 
-Build platform used to compile LuaX.
+Extension of executable files on the platform.
 
 ``` lua
-sys.host
+sys.so
 ```
 
-Host platform where LuaX is currently running.
+Extension of shared libraries on the platform (`".so"`, `".dylib"` or
+`".dll"`).
+
+``` lua
+sys.name
+```
+
+Name of the platform.
