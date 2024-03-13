@@ -28,8 +28,12 @@ img {
 local w = tonumber(arg[1]) or 1024
 local h = tonumber(arg[2]) or w
 local fh = h/4
+arg = F.drop(2, arg)
 
-local fill_the_sky_with_stars = F.elem("sky", arg)
+local fill_the_sky_with_stars = arg:head() == "sky"
+if fill_the_sky_with_stars then arg = F.drop(1, arg) end
+
+local text = arg
 
 img {
     width = w,
@@ -154,9 +158,9 @@ img {
     },
 }
 
-if arg[3] then
+if #text > 0 then
     img {
-        Text(arg[3]) {
+        Text(text:unwords()) {
             x = w - fh/8, y = h - fh/8,
             text_anchor = "end",
             font_size = fh/4,
