@@ -537,7 +537,7 @@ local function run_interpreter()
             local shell_env = require "luax_shell_env"
             show, chunk = F.id, function() return shell_env(arg0, args:drop(1)) end
         elseif script == "-" then
-            chunk, msg = load(bundle.decrypt(io.stdin:read "*a"))
+            chunk, msg = load(bundle.comment_shebang(io.stdin:read "*a"))
         else
             local function findscript(name)
                 local candidates = F.nub({".", fs.dirname(arg[-1])} .. os.getenv"PATH":split(fs.path_sep))
@@ -554,7 +554,7 @@ local function run_interpreter()
                 os.exit(1)
             end
             local real_script = findscript(script)
-            chunk, msg = load(bundle.decrypt(assert(fs.read(real_script))), "@"..real_script)
+            chunk, msg = load(bundle.comment_shebang(assert(fs.read(real_script))), "@"..real_script)
         end
         if not chunk then
             io.stderr:write(("%s: %s\n"):format(script, msg))

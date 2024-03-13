@@ -30,8 +30,6 @@ local config = require "luax_config"
 
 local char = string.char
 
-local magic_id = "LuaX"
-
 local function read(name)
     if not name:is_file() then
         io.stderr:write("error: ", name, ": File not found\n")
@@ -116,8 +114,8 @@ end
 
 function bundle.bundle(arg, opts)
 
-    local kind = "prog"
-    local format = "binary"
+    local kind = "app"
+    local format = nil
     local scripts = F{}
     local explicit_main = false
     local product_name = assert(opts.name, "Missing output name")
@@ -130,12 +128,10 @@ function bundle.bundle(arg, opts)
         if arg[i]:match"^%-name=" then product_name = arg[i]:match"=(.*)"
         elseif arg[i] == "-lib" then kind = "lib"
         elseif arg[i] == "-app" then kind = "app"
-        elseif arg[i] == "-binary" then format = "binary"
-        elseif arg[i] == "-ascii"  then format = "ascii"
-        elseif arg[i] == "-lua"    then format = "lua"
-        elseif arg[i] == "-c"      then format = "c"
+        elseif arg[i] == "-lua" then format = "lua"
+        elseif arg[i] == "-c"   then format = "c"
         elseif arg[i]:ext() == ".lua" then
-            local content = read(arg[i]):gsub("^#![^\n]*", "")
+            local content = bundle.comment_shebang(read(arg[i]))
             local new_name = content:match("@".."LIB=([%w%._%-]+)")
             local name = new_name or arg[i]:basename():splitext()
             local main = content:match("@".."MAIN")
@@ -221,8 +217,8 @@ function bundle.bundle(arg, opts)
     local home = os.getenv"HOME"
 
     local function home_path(name)
-        if name:match("^"..home) then
-            return name:realpath():gsub("^"..home, "~")
+        if name:has_prefix(home) then
+            return "~"..name:sub(#home+1)
         end
         return name
     end
@@ -274,15 +270,12 @@ function bundle.bundle(arg, opts)
     end
 
     local plain_payload = plain.get()
+
+    if format == "lua" then
+        return plain_payload
+    end
+
     local payload = invert(plain_payload:lz4())
-
-    if format == "binary" then
-        return F{magic_id, "\0", config.version, "\0", payload}:str()
-    end
-
-    if format == "ascii" then
-        return payload:bytes():str"," .. "\n"
-    end
 
     if format == "c" then
         return ([[
@@ -297,28 +290,16 @@ const unsigned char %s_bundle[] = {
 )
     end
 
-    if format == "lua" then
-        return plain_payload
-    end
-
     error(format..": invalid format")
 
 end
 
-function bundle.decrypt(script)
-    local pattern = "^[^\n]*%s+"..magic_id.."\0([^\0]+)\0(.*)"
-    local version, chunk = script:match(pattern)
-    return (
-        ( version
-        and assert(invert(chunk):unlz4()) -- binary bundle
-        or script                               -- Lua bundle
-        ) : gsub("^#!", "--") -- comment the shebang before loading the script
-    )
+function bundle.comment_shebang(script)
+    return script : gsub("^#!", "--") -- comment the shebang before loading the script
 end
 
 function bundle.combine_lua(name, scripts)
-    local chunk = bundle.bundle(F.flatten{scripts}, {name=name})
-    return chunk
+    return bundle.bundle(F.flatten{scripts}, {name=name})
 end
 
 local function called_by(f, level)
