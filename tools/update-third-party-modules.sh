@@ -24,7 +24,8 @@ TMP="$1"
 
 update_all()
 {
-    update_lua          5.4.6
+    #update_lua          5.4.6
+    update_lua-git      v5.4
     update_lcomplex     100
     update_limath       104
     update_lqmath       106
@@ -52,6 +53,22 @@ update_lua()
     rm -rf lua
     mkdir -p lua
     tar -xzf "$TMP/$LUA_ARCHIVE" -C lua --exclude=Makefile --exclude=lua.hpp --strip-components=2 "lua-$LUA_VERSION/src"
+}
+
+update_lua-git()
+{
+    local LUA_VERSION="$1"
+    local LUA_ARCHIVE="lua-$LUA_VERSION.zip"
+    local LUA_URL="https://codeload.github.com/lua/lua/zip/refs/heads/$LUA_VERSION"
+
+    mkdir -p "$TMP"
+    wget "$LUA_URL" -O "$TMP/$LUA_ARCHIVE"
+
+    rm -rf lua "$TMP/lua"
+    mkdir -p lua
+    unzip "$TMP/$LUA_ARCHIVE" -d "$TMP/lua"
+    mv "$TMP"/lua/*/l*.[ch] lua/
+    rm lua/ltests.[ch]
 }
 
 update_lcomplex()
