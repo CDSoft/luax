@@ -177,6 +177,8 @@ function bundle.bundle(arg, opts)
         end
     end
 
+    product_name = product_name : basename() : splitext()
+
     local shortener = path_shortener(scripts:map(F.partial(F.nth, "path")))
     for i = 1, #scripts do
         scripts[i].short_path = shortener[scripts[i].path]
