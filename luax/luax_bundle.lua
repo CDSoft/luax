@@ -130,6 +130,7 @@ function bundle.bundle(arg, opts)
         elseif arg[i] == "-app" then kind = "app"
         elseif arg[i] == "-lua" then format = "lua"
         elseif arg[i] == "-c"   then format = "c"
+        elseif arg[i]:match"^%-" then io.stderr:write("error: ", arg[i], ": invalid argument\n"); os.exit(1)
         elseif arg[i]:ext() == ".lua" then
             local content = bundle.comment_shebang(read(arg[i]))
             local new_name = content:match("@".."LIB=([%w%._%-]+)")
