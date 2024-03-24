@@ -1,16 +1,16 @@
 #!/usr/bin/env -S lua --
-local function lib(path, src) return assert(load(src, '@$bang.lua:'..path, 't')) end
+local function lib(path, src) return assert(load(src, '@$bang:'..path)) end
 local libs = {
 ["luax"] = lib("luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '4.3'
-_LUAX_DATE = '2024-03-16'
-local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
+_LUAX_VERSION = '4.4'
+_LUAX_DATE = '2024-03-24'
+local function lib(path, src) return assert(load(src, '@$luax:'..path)) end
 local libs = {
 ["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "4.3"
+local version = "4.4"
 return {
     version = version,
-    date = "2024-03-16",
+    date = "2024-03-24",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
@@ -11050,7 +11050,23 @@ end
 
 local nbvars = 0
 
-vars = {}
+local vars = {}
+local function expand(s)
+    if type(s) == "string" then
+        for _ in pairs(vars) do
+            local s1 = s:gsub("%$(%w+)", vars)
+            if s1 == s then break end
+            s = s1
+        end
+        return s
+    end
+    if type(s) == "table" then
+        return F.map(expand, s)
+    end
+    log.error("vars.expand expects a string or a list of strings")
+end
+
+_G.vars = setmetatable(vars, { __index = {expand = expand} })
 
 function var(name)
     check_at_exit(function() return vars[name] ~= nil end, "var "..name..": incomplete definition")
@@ -11931,7 +11947,7 @@ end
 
 return target
 ]=]),
-["version"] = lib("version", [==[return [=[0.16]=]]==]),
+["version"] = lib("version", [==[return [=[0.17]=]]==]),
 }
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 require "luax"

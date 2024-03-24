@@ -1,16 +1,16 @@
 #!/usr/bin/env -S lua --
-local function lib(path, src) return assert(load(src, '@$lsvg.lua:'..path, 't')) end
+local function lib(path, src) return assert(load(src, '@$lsvg:'..path)) end
 local libs = {
 ["luax"] = lib("luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '4.3'
-_LUAX_DATE = '2024-03-16'
-local function lib(path, src) return assert(load(src, '@$luax:'..path, 't')) end
+_LUAX_VERSION = '4.4'
+_LUAX_DATE = '2024-03-24'
+local function lib(path, src) return assert(load(src, '@$luax:'..path)) end
 local libs = {
 ["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "4.3"
+local version = "4.4"
 return {
     version = version,
-    date = "2024-03-16",
+    date = "2024-03-24",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }

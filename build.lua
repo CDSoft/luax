@@ -163,6 +163,8 @@ local compile = {}
 local test = {}
 local doc = {}
 
+local compile_flags = file "compile_flags.txt"
+
 --===================================================================
 section "Compiler"
 ---------------------------------------------------------------------
@@ -227,7 +229,7 @@ case(compiler) {
 
 }()
 
-local include_path = {
+local include_path = F{
     ".",
     "$tmp",
     "lua",
@@ -283,7 +285,7 @@ local host_cflags = {
     "-std=gnu2x",
     "-O3",
     "-fPIC",
-    F.map(F.prefix"-I", include_path),
+    include_path:map(F.prefix"-I"),
     case(sys.os) {
         linux = "-DLUA_USE_LINUX",
         macos = "-DLUA_USE_MACOSX",
@@ -324,14 +326,22 @@ local cflags = {
         debug = "-g",
     },
     "-fPIC",
-    F.map(F.prefix"-I", include_path),
+    include_path:map(F.prefix"-I"),
 }
 
-local luax_cflags = {
+local luax_cflags = F{
     cflags,
     "-Werror",
     "-Wall",
     "-Wextra",
+    "-pedantic",
+    "-Wstrict-prototypes",
+    "-Wmissing-field-initializers",
+    "-Wmissing-prototypes",
+    "-Wmissing-declarations",
+    "-Werror=switch-enum",
+    "-Werror=implicit-fallthrough",
+    "-Werror=missing-prototypes",
     case(compiler) {
         zig = {
             "-Weverything",
@@ -372,6 +382,10 @@ local ext_cflags = {
         },
     },
     sanitizer_ext_cflags,
+}
+
+compile_flags {
+    vars.expand(luax_cflags) : flatten() : unlines(),
 }
 
 local ldflags = {
@@ -439,6 +453,14 @@ targets:foreach(function(target)
             windows = {},
         },
     }
+    if target.name == sys.name then
+        compile_flags {
+            F{target_flags, lua_flags}
+                : flatten()
+                : map(function(s) return s:gsub("'", "") end)
+                : unlines()
+        }
+    end
     local target_ld_flags = {
         case(target.libc) {
             gnu  = "-rdynamic",

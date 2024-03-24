@@ -3,3 +3,4 @@
 .zig
 zig-cache
 build.ninja
+compile_flags.txt
