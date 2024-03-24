@@ -35,10 +35,12 @@ usage()
 |_____\\__,_|\\__,_/_/\\_\\____|  |  Copyright @YEARS
                               |  @AUTHORS
 
-$(basename "$0") [-t target] -o output inputs
+$(basename "$0") [-t target] [-b] [-s] -o output inputs
     Compile and link "inputs" with the LuaX runtime
     of the target "target".
     The default target is the host.
+    -b precompiles sources to Lua bytecode.
+    -s remove debug information in Lua bytecode.
 
 $(basename "$0") help
     Show this help text.
@@ -74,6 +76,7 @@ case "$1" in
     *)          COMMAND=compile ;;
 esac
 
+BYTECODE=
 TARGET=
 OUTPUT=
 SOURCES=()
@@ -83,12 +86,19 @@ VERBOSE=true
 while [ -n "$1" ]
 do
     case "$1" in
+        (-b)    BYTECODE="-b"; shift ;;
+        (-s)    BYTECODE="-s"; shift ;;
         (-o)    OUTPUT=$(realpath "$2"); shift 2 ;;
         (-t)    TARGET="$2"; shift 2 ;;
         (-p)    PREFIX="$2"; shift 2 ;;
         (-q)    VERBOSE=false; shift ;;
         (-h)    usage ;;
-        (*)     SOURCES+=("$(realpath "$1")"); shift ;;
+        (*)     if ! [ -f "$1" ]
+                then
+                    echo "$1: file not found" >&2
+                    exit 1
+                fi
+                SOURCES+=("$(realpath "$1")"); shift ;;
     esac
 done
 
@@ -244,7 +254,7 @@ then
     echo "sources: ${SOURCES[*]}"
 fi
 
-luax "$LUAXC_DIR/luax_bundle.lua" -app -c -name="$OUTPUT" "${SOURCES[@]}" > "$TMP/app_bundle.c"
+luax "$LUAXC_DIR/luax_bundle.lua" -app $BYTECODE -c -name="$OUTPUT" "${SOURCES[@]}" > "$TMP/app_bundle.c"
 zig cc "${ZIG_OPT[@]}" "${LIBS[@]}" "$TMP/app_bundle.c" -o "$OUTPUT"
 
 exit # ------------------------------8<------------------------------

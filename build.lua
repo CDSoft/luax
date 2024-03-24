@@ -80,6 +80,7 @@ bang -- fast        Code optimized for speed (default)
 bang -- small       Code optimized for size
 bang -- debug       Compiled with debug informations and no optimization
 bang -- san         Compiled with ASan and UBSan (implies clang)
+bang -- strip       Remove debug information from precompiled bytecode
 
 $(title "Compiler")
 
@@ -103,6 +104,8 @@ local mode = nil -- fast, small, debug
 local compiler = nil -- zig, gcc, clang
 local san = nil
 
+local bytecode = "-b"
+
 F.foreach(arg, function(a)
     local function set_mode()
         if mode~=nil then F.error_without_stack_trace(a..": duplicate compilation mode", 2) end
@@ -121,6 +124,7 @@ F.foreach(arg, function(a)
         gcc     = set_compiler,
         clang   = set_compiler,
         san     = function() san = true end,
+        strip   = function() bytecode = "-s" end,
         [F.Nil] = function()
             F.error_without_stack_trace((a)..": unknown parameter\n\n"..usage, 1)
         end,
@@ -674,7 +678,10 @@ local luax_runtime = {
 
 local luax_runtime_bundle = build "$tmp/lua_runtime_bundle.c" {
     "bundle", "$luax_config_lua", luax_runtime,
-    args = "-lib -c",
+    args = {
+        "-lib -c",
+        bytecode or {},
+    }
 }
 
 local luax_app = {
@@ -686,6 +693,7 @@ local luax_app_bundle = build "$tmp/lua_app_bundle.c" {
     "bundle", luax_app,
     args = {
         "-app -c",
+        bytecode or {},
         "-name=luax",
     },
 }

@@ -59,6 +59,10 @@ local function mlstr(code)
     return F.str{"[", eqs, "[", code, "]", eqs, "]"}
 end
 
+local function qstr(code)
+    return string.format("%q", code)
+end
+
 local function path_shortener(path_list)
 
     local function strip_common_path(ps)
@@ -119,6 +123,7 @@ function bundle.bundle(arg, opts)
     local scripts = F{}
     local explicit_main = false
     local product_name = assert(opts.name, "Missing output name")
+    local bytecode = F{ compile = false, strip = false }
     arg = F.map(function(a)
         local fname = a:match"^@(.+)"
         if not fname then return a end
@@ -130,6 +135,8 @@ function bundle.bundle(arg, opts)
         elseif arg[i] == "-app" then kind = "app"
         elseif arg[i] == "-lua" then format = "lua"
         elseif arg[i] == "-c"   then format = "c"
+        elseif arg[i] == "-b"   then bytecode = bytecode:patch { compile=true }
+        elseif arg[i] == "-s"   then bytecode = bytecode:patch { compile=true, strip=true }
         elseif arg[i]:match"^%-" then io.stderr:write("error: ", arg[i], ": invalid argument\n"); os.exit(1)
         elseif arg[i]:ext() == ".lua" then
             local content = bundle.comment_shebang(read(arg[i]))
@@ -232,10 +239,11 @@ function bundle.bundle(arg, opts)
         plain.emit("_LUAX_VERSION = '"..config.version.."'\n");
         plain.emit("_LUAX_DATE = '"..config.date.."'\n");
     end
-    plain.emit(("local function lib(path, src) return assert(load(src, '@$%s:'..path, 't')) end\n"):format(product_name))
+    plain.emit(("local function lib(path, src) return assert(load(src, '@$%s:'..path)) end\n"):format(product_name))
     local function compile_library(script)
-        assert(load(script.content, "@"..script.path, 't'))
-        plain.emit(("[%q] = lib(%q, %s),\n"):format(script.name, home_path(script.short_path), mlstr(script.content)))
+        local chunk = assert(load(script.content, "@"..script.path))
+        local code = bytecode.compile and qstr(string.dump(chunk, bytecode.strip)) or mlstr(script.content)
+        plain.emit(("[%q] = lib(%q, %s),\n"):format(script.name, home_path(script.short_path), code))
     end
     local function load_library(script)
         if script.load_name == "_" then
@@ -245,8 +253,9 @@ function bundle.bundle(arg, opts)
         end
     end
     local function run_script(script)
-        assert(load(script.content, "@"..script.path, 't'))
-        plain.emit(("return lib(%q, %s)()\n"):format(home_path(script.short_path), mlstr(script.content)))
+        local chunk = assert(load(script.content, "@"..script.path))
+        local code = bytecode.compile and qstr(string.dump(chunk, bytecode.strip)) or mlstr(script.content)
+        plain.emit(("return lib(%q, %s)()\n"):format(home_path(script.short_path), code))
     end
     if #scripts > 1 then -- there are libs
         plain.emit "local libs = {\n"
@@ -273,6 +282,10 @@ function bundle.bundle(arg, opts)
     end
 
     local plain_payload = plain.get()
+
+    if bytecode.compile then
+        plain_payload = string.dump(assert(load(plain_payload, product_name)), true)
+    end
 
     if format == "lua" then
         return plain_payload
