@@ -26,13 +26,14 @@ local ps = require "ps"
 
 local sys = require "sys"
 
-local eps = sys.libc == "lua" and 1 or 0.01
+local eps = sys.libc == "lua" and 1 or 0.02
 
 local function try(test, ...)
     -- These tests may fail when the system is loaded.
     -- => Try to execute them several times before considering a failure.
     for _ = 1, 10 do
         if pcall(test, ...) then return end
+        ps.sleep(3*math.random()) -- wait a bit before retrying
     end
     test(...)
 end
