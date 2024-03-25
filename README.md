@@ -115,6 +115,17 @@ E.g.: to produce an executable containing the LuaX runtime for
 $ luaxc -t linux-x86_64-musl -o hello hello.lua
 ```
 
+E.g.: to produce an executable with the compiled Lua bytecode with no
+debug information:
+
+``` sh
+$ luaxc -s -t linux-x86_64-musl -o hello hello.lua
+```
+
+`luaxc` can compile Lua scripts to Lua bytecode. If scripts are large
+they will start quickly but will run as fast as the original Lua
+scripts.
+
 ## Precompiled LuaX binaries
 
 In case precompiled binaries are needed (GNU/Linux, MacOS, Windows),
@@ -393,7 +404,7 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
     It just bundles Lua scripts into a single script that can be run
     everywhere LuaX is installed.
 
-[^2]: `luaxc` uses `zig` to link the LuaX runtime with the Lua scripts
-    but the Lua scripts are actually not compiled. Contrary to `luax`,
-    `luaxc` produces executables that do not require LuaX to be
+[^2]: `luaxc` uses `zig` to link the LuaX runtime with the Lua scripts.
+    The Lua scripts are actually compiled to Lua bytecode. Contrary to
+    `luax`, `luaxc` produces executables that do not require LuaX to be
     installed.

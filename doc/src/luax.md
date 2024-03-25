@@ -28,8 +28,11 @@ the LuaX runtime and the Lua scripts. The target platform can be explicitly
 specified to cross-compile scripts for a supported platform.
 
 [^cross-compilation]: `luaxc` uses `zig` to link the LuaX runtime with the Lua
-    scripts but the Lua scripts are actually not compiled. Contrary to `luax`,
-    `luaxc` produces executables that do not require LuaX to be installed.
+    scripts. @[[BYTECODE
+        and "The Lua scripts are actually compiled to Lua bytecode."
+        or  "The Lua scripts are actually not compiled to Lua bytecode unless explicitely required."
+    ]] Contrary to `luax`, `luaxc` produces executables that do not require LuaX
+    to be installed.
 
 ## Getting in touch
 
@@ -123,6 +126,26 @@ and `hello.lua`:
 ``` sh
 $ luaxc -t linux-x86_64-musl -o hello hello.lua
 ```
+
+@when(not BYTECODE)[===[
+
+E.g.: to produce an executable with the compiled Lua bytecode:
+
+``` sh
+$ luaxc -b -t linux-x86_64-musl -o hello hello.lua
+```
+
+]===]
+
+E.g.: to produce an executable with the compiled Lua bytecode with no debug
+information:
+
+``` sh
+$ luaxc -s -t linux-x86_64-musl -o hello hello.lua
+```
+
+`luaxc` can compile Lua scripts to Lua bytecode. If scripts are large they will
+start quickly but will run as fast as the original Lua scripts.
 
 ## Precompiled LuaX binaries
 

@@ -828,6 +828,7 @@ if cross_compilation then
         URL = URL,
         YEARS = YEARS,
         AUTHORS = AUTHORS,
+        BYTECODE = bytecode,
     } : items() : map(function(kv) return ("-e '%s=%q'"):format(kv:unpack()) end) : unwords()
 
     rule "ypp-luaxc" {
@@ -1219,12 +1220,18 @@ local pandoc_gfm = {
     "--fail-if-warnings",
 }
 
+local ypp_config_params = F {
+    BYTECODE = bytecode,
+} : items() : map(function(kv) return ("-e '%s=%q'"):format(kv:unpack()) end) : unwords()
+
 local gfm = pipe {
     rule "ypp.md" {
         description = "YPP $in",
         command = {
             "LUAX=$luax",
-            "$luax tools/ypp.lua --MD --MT $out --MF $depfile $in -o $out",
+            "$luax tools/ypp.lua",
+            ypp_config_params,
+            "--MD --MT $out --MF $depfile $in -o $out",
         },
         depfile = "$out.d",
         implicit_in = {

@@ -35,12 +35,12 @@ usage()
 |_____\\__,_|\\__,_/_/\\_\\____|  |  Copyright @YEARS
                               |  @AUTHORS
 
-$(basename "$0") [-t target] [-b] [-s] -o output inputs
+$(basename "$0") [-t target] @when(BYTECODE=="")"[-b] "[-s] -o output inputs
     Compile and link "inputs" with the LuaX runtime
     of the target "target".
     The default target is the host.
-    -b precompiles sources to Lua bytecode.
-    -s remove debug information in Lua bytecode.
+@when(BYTECODE=="")[[    -b precompiles sources to Lua bytecode.
+]]    -s removes debug information in Lua bytecode.
 
 $(basename "$0") help
     Show this help text.
@@ -76,7 +76,7 @@ case "$1" in
     *)          COMMAND=compile ;;
 esac
 
-BYTECODE=
+BYTECODE=@BYTECODE
 TARGET=
 OUTPUT=
 SOURCES=()
