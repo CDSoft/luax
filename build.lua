@@ -897,10 +897,15 @@ if cross_compilation then
 
     }
 
+    local compression_level = case(mode) {
+        debug   = 1,
+        [F.Nil] = 9,
+    }
+
     build "$tmp/luaxc.tar.xz" { files,
         description = "TAR $out",
         command = {
-            "XZ_OPT='-9'",
+            ("XZ_OPT='-%d'"):format(compression_level),
             "tar cJf $out $in",
             [[--transform "s#$tmp/luaxc##"]],
         },
