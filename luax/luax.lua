@@ -680,17 +680,9 @@ local function run_compiler()
         fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
     end
 
-    local valid_target = false
-    target = target or "luax"
-    lua_interpreters:foreachk(function(name, interpreter)
-        if target == name then
-            compile_lua(output, name, interpreter)
-            valid_target = true
-        end
-    end)
-    if not valid_target then
-        err(target..": unknown interpreter")
-    end
+    local interpreter = lua_interpreters[target or "luax"]
+        or err(target..": unknown interpreter")
+    compile_lua(output, name, interpreter)
 
 end
 
