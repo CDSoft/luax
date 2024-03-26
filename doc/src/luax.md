@@ -187,7 +187,7 @@ It does not need to be installed and can be copied anywhere you want.
 `luax` is very similar to `lua` and adds more options to compile scripts:
 
 ```
-@sh(os.getenv'LUAX', '-h')
+@sh(LUAX, '-h')
     : lines()
     : drop_while(function(l) return not l:match"^usage:" end)
     : take_while(function(l) return not l:match"^Copyright:" end)
@@ -242,7 +242,7 @@ $ ./executable      # equivalent to pandoc lua main.lua
 
 # Available targets
 $ luax -t list
-@sh(os.getenv'LUAX', '-t list')
+@sh(LUAX, '-t list')
     : lines()
     : map(F.compose{F.head, string.words})
 ```

@@ -1222,13 +1222,13 @@ local pandoc_gfm = {
 
 local ypp_config_params = F {
     BYTECODE = bytecode,
+    LUAX = "$luax",
 } : items() : map(function(kv) return ("-e '%s=%q'"):format(kv:unpack()) end) : unwords()
 
 local gfm = pipe {
     rule "ypp.md" {
         description = "YPP $in",
         command = {
-            "LUAX=$luax",
             "$luax tools/ypp.lua",
             ypp_config_params,
             "--MD --MT $out --MF $depfile $in -o $out",
