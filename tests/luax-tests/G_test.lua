@@ -26,12 +26,10 @@ local test = require "test"
 local eq = test.eq
 
 local F = require "F"
-local fs = require "fs"
-local sys = require "sys"
 
 local is_luax =
-    (arg[0] and fs.basename(arg[0]):match"^test%-")
-    or (arg[-2] == "-l" and fs.basename(arg[-1]):match"^libluax%-")
+    (arg[0] and arg[0]:basename():match"^test%-")
+    or (arg[-2] == "-l" and arg[-1]:basename():match"^libluax%-")
 
 local luax_packages = F.flatten{
     "argparse",
@@ -70,7 +68,8 @@ local luax_packages = F.flatten{
         "socket.smtp",
         "socket.tp",
         "socket.url",
-        sys.os == "linux" and {
+        package.config:match"^/" and {
+            -- available on linux only
             "socket.unix",
             "socket.serial",
         } or {},
@@ -128,9 +127,11 @@ return function()
         "xpcall",
     }
     local new_variables = F.difference(global_variables, expected_global_variables):sort()
+    local missing_variables = F.difference(expected_global_variables, global_variables):sort()
     eq(new_variables, F.flatten {
-        arg[-3] and fs.basename(arg[-3]) == "lua" and arg[-2] == "-l" and arg[-1] or {},
+        arg[-3] and arg[-3]:basename() == "lua" and arg[-2] == "-l" and arg[-1] or {},
         arg[-3] == "pandoc lua" and {"PANDOC_API_VERSION","PANDOC_STATE","PANDOC_VERSION","lpeg","pandoc","re"} or {},
-        arg[-3] == "pandoc lua" and arg[-2] == "-l" and fs.basename(arg[-1]) or {},
+        arg[-3] == "pandoc lua" and arg[-2] == "-l" and arg[-1]:basename() or {},
     }:sort())
+    eq(missing_variables, {})
 end
