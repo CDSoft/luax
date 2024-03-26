@@ -28,10 +28,12 @@ local eq = test.eq
 local sys = require "sys"
 
 return function()
-    eq(sys.arch, os.getenv "ARCH")
-    eq(sys.os,   os.getenv "OS")
-    eq(sys.libc, os.getenv "LIBC")
-    eq(sys.exe,  os.getenv "EXE")
-    eq(sys.so,   os.getenv "SO")
-    eq(sys.name, os.getenv "NAME")
+    eq(sys, {
+        name = os.getenv "NAME",
+        arch = os.getenv "ARCH",
+        os   = os.getenv "OS",
+        libc = os.getenv "LIBC",
+        exe  = os.getenv "EXE",
+        so   = os.getenv "SO",
+    })
 end
