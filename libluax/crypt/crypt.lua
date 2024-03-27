@@ -63,9 +63,9 @@ if not crypt then
         self.state = 6364136223846793005*self.state + self.inc
     end
 
-    function prng_mt.__index:int(a, b)
+    local function prng_int(self, a, b)
         local oldstate = self.state
-        self.state = 6364136223846793005*self.state + self.inc
+        self.state = 6364136223846793005*oldstate + self.inc
         local xorshifted = (((oldstate >> 18) ~ oldstate) >> 27) & 0xFFFFFFFF
         local rot = oldstate >> 59;
         local r = ((xorshifted >> rot) | (xorshifted << ((-rot) & 31))) & 0xFFFFFFFF
@@ -74,21 +74,24 @@ if not crypt then
         if not b then return r % (a+1) end
         return r % (b-a+1) + a
     end
+    prng_mt.__index.int = prng_int
 
-    function prng_mt.__index:float(a, b)
-        local r = self:int()
+    local function prng_float(self, a, b)
+        local r = prng_int(self)
         if not a then return r / RAND_MAX end
         if not b then return r * a/RAND_MAX end
         return r * (b-a)/RAND_MAX + a
     end
+    prng_mt.__index.float = prng_float
 
-    function prng_mt.__index:str(n)
+    local function prng_str(self, n)
         local bs = {}
         for i = 1, n do
-            bs[i] = char(self:int(0, 255))
+            bs[i] = char(prng_int(self, 0, 255))
         end
         return concat(bs)
     end
+    prng_mt.__index.str = prng_str
 
     -- global random number generator
     local _rng = crypt.prng()
