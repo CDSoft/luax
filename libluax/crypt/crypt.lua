@@ -505,17 +505,17 @@ s:hash()            == crypt.hash(s)
 ```
 @@@]]
 
-function string.hex(s)          return crypt.hex(s) end
-function string.unhex(s)        return crypt.unhex(s) end
-function string.base64(s)       return crypt.base64(s) end
-function string.unbase64(s)     return crypt.unbase64(s) end
-function string.base64url(s)    return crypt.base64url(s) end
-function string.unbase64url(s)  return crypt.unbase64url(s) end
-function string.rc4(s, k, d)    return crypt.rc4(s, k, d) end
-function string.unrc4(s, k, d)  return crypt.unrc4(s, k, d) end
-function string.sha1(s)         return crypt.sha1(s) end
-function string.hash(s)         return crypt.hash(s) end
-function string.crc32(s)        return crypt.crc32(s) end
-function string.crc64(s)        return crypt.crc64(s) end
+string.hex          = crypt.hex
+string.unhex        = crypt.unhex
+string.base64       = crypt.base64
+string.unbase64     = crypt.unbase64
+string.base64url    = crypt.base64url
+string.unbase64url  = crypt.unbase64url
+string.rc4          = crypt.rc4
+string.unrc4        = crypt.unrc4
+string.sha1         = crypt.sha1
+string.hash         = crypt.hash
+string.crc32        = crypt.crc32
+string.crc64        = crypt.crc64
 
 return crypt

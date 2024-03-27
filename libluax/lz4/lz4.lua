@@ -60,7 +60,7 @@ s:unlz4()       == lz4.unlz4(s)
 ```
 @@@]]
 
-function string.lz4(s)      return lz4.lz4(s) end
-function string.unlz4(s)    return lz4.unlz4(s) end
+string.lz4      = lz4.lz4
+string.unlz4    = lz4.unlz4
 
 return lz4

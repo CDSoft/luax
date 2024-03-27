@@ -693,25 +693,22 @@ path:walk(...)          == fs.walk(path, ...)
 ```
 @@@]]
 
-function string.dir(path)                   return fs.dir(path) end
-function string.stat(path)                  return fs.stat(path) end
-function string.inode(path)                 return fs.inode(path) end
-function string.basename(path)              return fs.basename(path) end
-function string.dirname(path)               return fs.dirname(path) end
-function string.splitext(path)              return fs.splitext(path) end
-function string.ext(path)                   return fs.ext(path) end
-function string.splitpath(path)             return fs.splitpath(path) end
-function string.realpath(path)              return fs.realpath(path) end
-function string.readlink(path)              return fs.readlink(path) end
-function string.absname(path)               return fs.absname(path) end
+string.dir              = fs.dir
+string.stat             = fs.stat
+string.inode            = fs.inode
+string.basename         = fs.basename
+string.dirname          = fs.dirname
+string.splitext         = fs.splitext
+string.ext              = fs.ext
+string.splitpath        = fs.splitpath
+string.realpath         = fs.realpath
+string.readlink         = fs.readlink
+string.absname          = fs.absname
+string.is_file          = fs.is_file
+string.is_dir           = fs.is_dir
+string.findpath         = fs.findpath
+string.walk             = fs.walk
 
-getmetatable("").__div = function(path1, path2)
-    return fs.join(path1, path2)
-end
-
-function string.is_file(path)               return fs.is_file(path) end
-function string.is_dir(path)                return fs.is_dir(path) end
-function string.findpath(path)              return fs.findpath(path) end
-function string.walk(path, ...)             return fs.walk(path, ...) end
+getmetatable("").__div  = fs.join
 
 return fs
