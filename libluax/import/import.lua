@@ -45,12 +45,14 @@ local mt = {}
 
 import.files = F{}
 
+local file_set = {}
+
 function mt.__call(self, fname)
     local mod = setmetatable({}, {__index = _ENV})
     assert(loadfile(fname, "t", mod))()
-    if F.not_elem(fname, self.files) then
+    if not file_set[fname] then
         self.files[#self.files+1] = fname
-        table.sort(self.files)
+        file_set[fname] = true
     end
     return mod
 end
