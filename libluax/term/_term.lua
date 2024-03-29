@@ -18,7 +18,26 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
---@LIB
-local lpeg = require "_lpeg"
+-- Pure Lua implementation of term.c
 
-return lpeg
+local term = {}
+
+local sh = require "sh"
+
+local _isatty = nil
+
+function term.isatty()
+    if _isatty == nil then
+        _isatty = (sh.run("tty", "--silent", "2>/dev/null"))
+    end
+    return _isatty
+end
+
+function term.size()
+    local rows, cols = sh.read("stty", "size")
+        : words() ---@diagnostic disable-line: undefined-field
+        : map(tonumber):unpack()
+    return {rows=rows, cols=cols}
+end
+
+return term

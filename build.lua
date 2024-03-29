@@ -55,12 +55,15 @@ and run bang to regenerate build.ninja.
 ]]
 
 generator {
-    implicit_in = "libluax/sys/sys.lua",
+    implicit_in = {
+        "libluax/sys/sys.lua",
+        "libluax/sys/targets.lua",
+    },
 }
 
 -- list of targets used for cross compilation (with Zig only)
-local sys = dofile "libluax/sys/sys.lua" -- load sys from luax, not from bang!
-local targets = F(sys.targets)
+local sys = require "sys"
+local targets = dofile "libluax/sys/targets.lua"
 
 local usage = I{
     title = function(s) return F.unlines {s, (s:gsub(".", "="))}:rtrim() end,
@@ -672,10 +675,58 @@ rule "bundle" {
     },
 }
 
-local luax_runtime = {
-    ls "libluax/**.lua",
-    ls "ext/**.lua",
-}
+local luax_runtime, lua_runtime = {}, {}
+
+acc(luax_runtime) { "libluax/F/F.lua" }
+acc(lua_runtime)  { "libluax/F/F.lua" }
+
+acc(luax_runtime) { }
+acc(lua_runtime)  { "libluax/complex/complex.lua" }
+
+acc(luax_runtime) { "libluax/crypt/crypt.lua" }
+acc(lua_runtime)  { "libluax/crypt/crypt.lua", "libluax/crypt/_crypt.lua" }
+
+acc(luax_runtime) { "libluax/fs/fs.lua" }
+acc(lua_runtime)  { "libluax/fs/fs.lua", "libluax/fs/_fs.lua" }
+
+acc(luax_runtime) { }
+acc(lua_runtime)  { "libluax/imath/imath.lua" }
+
+acc(luax_runtime) { "libluax/import/import.lua" }
+acc(lua_runtime)  { "libluax/import/import.lua" }
+
+acc(luax_runtime) { }
+acc(lua_runtime)  { "libluax/linenoise/linenoise.lua" }
+
+acc(luax_runtime) { "libluax/lz4/lz4.lua" }
+acc(lua_runtime)  { "libluax/lz4/lz4.lua", "libluax/lz4/_lz4.lua" }
+
+acc(luax_runtime) { "libluax/lzw/lzw.lua" }
+acc(lua_runtime)  { "libluax/lzw/lzw.lua" }
+
+acc(luax_runtime) { }
+acc(lua_runtime)  { "libluax/mathx/mathx.lua" }
+
+acc(luax_runtime) { "libluax/package/package_hook.lua" }
+acc(lua_runtime)  { "libluax/package/package_hook.lua" }
+
+acc(luax_runtime) { }
+acc(lua_runtime)  { "libluax/ps/ps.lua" }
+
+acc(luax_runtime) { "libluax/qmath/qmath.lua"}
+acc(lua_runtime)  { "libluax/qmath/qmath.lua", "libluax/qmath/_qmath.lua" }
+
+acc(luax_runtime) { "libluax/sh/sh.lua" }
+acc(lua_runtime)  { "libluax/sh/sh.lua" }
+
+acc(luax_runtime) { }
+acc(lua_runtime)  { "libluax/sys/sys.lua", "libluax/sys/targets.lua" }
+
+acc(luax_runtime) { "libluax/term/term.lua" }
+acc(lua_runtime)  { "libluax/term/term.lua", "libluax/term/_term.lua" }
+
+acc(luax_runtime) { ls "ext/**.lua" }
+acc(lua_runtime)  { ls "ext/lua/**.lua" }
 
 local luax_runtime_bundle = build "$tmp/lua_runtime_bundle.c" {
     "bundle", "$luax_config_lua", luax_runtime,
@@ -932,14 +983,9 @@ section "LuaX Lua implementation"
 section "$lib/luax.lua"
 ---------------------------------------------------------------------
 
-local lib_luax_sources = {
-    ls "libluax/**.lua",
-    ls "ext/lua/**.lua",
-}
-
 acc(libraries) {
     build "$lib/luax.lua" {
-        "bundle", "$luax_config_lua", lib_luax_sources,
+        "bundle", "$luax_config_lua", lua_runtime,
         args = "-lib -lua",
     }
 }
@@ -965,9 +1011,11 @@ rule "luax-bundle" {
     },
 }
 
+local luax_sources = ls "luax/**.lua"
+
 acc(binaries) {
     build "$bin/luax.lua" {
-        "luax-bundle", ls "luax/**.lua",
+        "luax-bundle", luax_sources,
         args = "-t lua",
     }
 }
@@ -978,7 +1026,7 @@ section "$bin/luax-pandoc.lua"
 
 acc(binaries) {
     build "$bin/luax-pandoc.lua" {
-        "luax-bundle", ls "luax/**.lua",
+        "luax-bundle", luax_sources,
         args = "-t pandoc",
     }
 }

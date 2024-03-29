@@ -27,31 +27,7 @@ http://cdelord.fr/luax
 The `lz4` functions are also available as `string` methods:
 @@@]]
 
-local _, lz4 = pcall(require, "_lz4")
-lz4 = _ and lz4
-
-if not lz4 then
-
-    lz4 = {}
-
-    local fs = require "fs"
-    local sh = require "sh"
-
-    function lz4.lz4(s)
-        return fs.with_tmpfile(function(tmp)
-            assert(sh.write("lz4 -q -z -BD -9 --frame-crc -f -", tmp)(s))
-            return fs.read_bin(tmp)
-        end)
-    end
-
-    function lz4.unlz4(s)
-        return fs.with_tmpfile(function(tmp)
-            assert(sh.write("lz4 -q -d -f -", tmp)(s))
-            return fs.read_bin(tmp)
-        end)
-    end
-
-end
+local lz4 = require "_lz4"
 
 --[[@@@
 ```lua

@@ -44,18 +44,18 @@
 
 static const luaL_Reg lrun_libs[] = {
     {"_fs", luaopen_fs},
-    {"_ps", luaopen_ps},
-    {"_sys", luaopen_sys},
-    {"_lpeg", luaopen_lpeg},
+    {"ps", luaopen_ps},
+    {"sys", luaopen_sys},
+    {"lpeg", luaopen_lpeg},
     {"_crypt", luaopen_crypt},
-    {"_mathx", luaopen_mathx},
-    {"_imath", luaopen_imath},
+    {"mathx", luaopen_mathx},
+    {"imath", luaopen_imath},
     {"_qmath", luaopen_qmath},
-    {"_complex", luaopen_complex},
+    {"complex", luaopen_complex},
     {"socket", luaopen_luasocket},
     {"_lz4", luaopen_lz4},
     {"_term", luaopen_term},
-    {"_linenoise", luaopen_linenoise},
+    {"linenoise", luaopen_linenoise},
     {NULL, NULL},
 };
 

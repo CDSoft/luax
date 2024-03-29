@@ -19,34 +19,31 @@ http://cdelord.fr/luax
 --]]
 
 --@LIB
-local _, ps = pcall(require, "_ps")
-ps = _ and ps
 
-if not ps then
-    ps = {}
+-- Pure Lua implementation of ps.c
 
-    function ps.sleep(n)
-        io.popen("sleep "..tostring(n)):close()
-    end
+local ps = {}
 
-    ps.time = os.time
+function ps.sleep(n)
+    io.popen("sleep "..tostring(n)):close()
+end
 
-    ps.clock = os.clock
+ps.time = os.time
 
-    function ps.profile(func)
-        local clock = ps.clock
-        local ok, dt = pcall(function()
-            local t0 = clock()
-            func()
-            local t1 = clock()
-            return t1 - t0
-        end)
-        if ok then
-            return dt
-        else
-            return ok, dt
-        end
+ps.clock = os.clock
 
+function ps.profile(func)
+    local clock = ps.clock
+    local ok, dt = pcall(function()
+        local t0 = clock()
+        func()
+        local t1 = clock()
+        return t1 - t0
+    end)
+    if ok then
+        return dt
+    else
+        return ok, dt
     end
 
 end

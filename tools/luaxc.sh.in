@@ -193,7 +193,7 @@ esac
 
 case "$TARGET" in
 @[===[
-dofile "libluax/sys/sys.lua".targets : map(function(target)
+dofile "libluax/sys/targets.lua" : map(function(target)
     return ('    ("%s")%s ZIG_TARGET="%s-%s-%s" ;;')
         : format(target.name, (" "):rep(19-#target.name), target.arch, target.os, target.libc)
 end)

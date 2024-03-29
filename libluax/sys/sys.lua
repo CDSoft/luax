@@ -19,51 +19,36 @@ http://cdelord.fr/luax
 --]]
 
 --@LIB
-local _, sys = pcall(require, "_sys")
-sys = _ and sys or {
+
+-- Pure Lua implementation of sys.c
+
+local sys = {
     libc = "lua",
 }
 
 local F = require "F"
 
-local targets = F{
-    {name="linux-x86_64",       uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="gnu",   exe="",     so=".so"   },
-    {name="linux-x86_64-musl",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="musl",  exe="",     so=".so"   },
-    {name="linux-aarch64",      uname_machine="aarch64", os="linux",   arch="aarch64", libc="gnu",   exe="",     so=".so"   },
-    {name="linux-aarch64-musl", uname_machine="aarch64", os="linux",   arch="aarch64", libc="musl",  exe="",     so=".so"   },
-    {name="macos-x86_64",       uname_machine="x86_64",  os="macos",   arch="x86_64",  libc="none",  exe="",     so=".dylib"},
-    {name="macos-aarch64",      uname_machine="arm64",   os="macos",   arch="aarch64", libc="none",  exe="",     so=".dylib"},
-    {name="windows-x86_64",     uname_machine="AMD64",   os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll"  },
-}
-targets : foreach(function(target) targets[target.name] = target end)
+local targets = require "targets"
 
-if sys.libc == "lua" then
+local function uname() return io.popen("uname -m", "r") : read "a" : trim() end
 
-    local function uname() return io.popen("uname -m", "r") : read "a" : trim() end
+-- the libraries extension in package.cpath is specific to the OS
+sys.so = package.cpath:match "%.[^%.]-$"
+sys.os = assert(targets : find(function(t) return t.so == sys.so end), "Unknown OS").os
 
-    -- the libraries extension in package.cpath is specific to the OS
-    sys.so = package.cpath:match "%.[^%.]-$"
-    sys.os = assert(targets : find(function(t) return t.so == sys.so end), "Unknown OS").os
+sys.arch = pandoc and pandoc.system.arch or
+    (function()
+        local machine = F.case(sys.os) {
+            linux   = uname,
+            macos   = uname,
+            windows = function() return os.getenv "PROCESSOR_ARCHITECTURE" end,
+        }()
+        return assert(targets : find(function(t) return t.os==sys.os and t.uname_machine==machine end), "Unknown architecture").arch
+    end)()
 
-    sys.arch = pandoc and pandoc.system.arch or
-        (function()
-            local machine = F.case(sys.os) {
-                linux   = uname,
-                macos   = uname,
-                windows = function() return os.getenv "PROCESSOR_ARCHITECTURE" end,
-            }()
-            return assert(targets : find(function(t) return t.os==sys.os and t.uname_machine==machine end), "Unknown architecture").arch
-        end)()
+local host = assert(targets : find(function(t) return t.os==sys.os and t.arch==sys.arch end), "Unknown platform")
 
-    local host = assert(targets : find(function(t) return t.os==sys.os and t.arch==sys.arch end), "Unknown platform")
+sys.exe  = host.exe
+sys.name = host.name
 
-    sys.exe  = host.exe
-    sys.name = host.name
-
-end
-
-return setmetatable(sys, {
-    __index = {
-        targets = targets,
-    },
-})
+return sys

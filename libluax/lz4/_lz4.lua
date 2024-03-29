@@ -20,25 +20,25 @@ http://cdelord.fr/luax
 
 --@LIB
 
--- Pure Lua implementation of linenoise.c
+-- Pure Lua implementation of lz4.lua
 
-local F = require "F"
-local term = require "term"
+local lz4 = {}
 
-local nop = F.const()
+local fs = require "fs"
+local sh = require "sh"
 
-local linenoise = {}
+function lz4.lz4(s)
+    return fs.with_tmpfile(function(tmp)
+        assert(sh.write("lz4 -q -z -BD -9 --frame-crc -f -", tmp)(s))
+        return fs.read_bin(tmp)
+    end)
+end
 
-linenoise.read = term.prompt
-linenoise.read_mask = linenoise.read
+function lz4.unlz4(s)
+    return fs.with_tmpfile(function(tmp)
+        assert(sh.write("lz4 -q -d -f -", tmp)(s))
+        return fs.read_bin(tmp)
+    end)
+end
 
-linenoise.add = nop
-linenoise.set_len = nop
-linenoise.save = nop
-linenoise.load = nop
-linenoise.multi_line = nop
-linenoise.mask = nop
-
-linenoise.clear = term.clear
-
-return linenoise
+return lz4
