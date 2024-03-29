@@ -239,11 +239,28 @@ function bundle.bundle(arg, opts)
         plain.emit("_LUAX_VERSION = '"..config.version.."'\n");
         plain.emit("_LUAX_DATE = '"..config.date.."'\n");
     end
-    plain.emit(("local function lib(path, src) return assert(load(src, '@$%s:'..path)) end\n"):format(product_name))
+    if bytecode.strip then
+        plain.emit("local function lib(src) return assert(load(src)) end\n")
+    else
+        plain.emit(("local function lib(path, src) return assert(load(src, '@$%s:'..path)) end\n"):format(product_name))
+    end
+    local function compile(script)
+        -- check script compilation (with the actual file path in error messages)
+        assert(load(script.content, ("@%s"):format(script.path)))
+        if bytecode.compile then
+            -- compile the script with file path containing the product name
+            local chunk = assert(load(script.content, ("@$%s:%s"):format(product_name, script.path)))
+            return qstr(string.dump(chunk, bytecode.strip))
+        else
+            return mlstr(script.content)
+        end
+    end
     local function compile_library(script)
-        local chunk = assert(load(script.content, "@"..script.path))
-        local code = bytecode.compile and qstr(string.dump(chunk, bytecode.strip)) or mlstr(script.content)
-        plain.emit(("[%q] = lib(%q, %s),\n"):format(script.name, home_path(script.short_path), code))
+        if bytecode.strip then
+            plain.emit(("[%q] = lib(%s),\n"):format(script.name, compile(script)))
+        else
+            plain.emit(("[%q] = lib(%q, %s),\n"):format(script.name, home_path(script.short_path), compile(script)))
+        end
     end
     local function load_library(script)
         if script.load_name == "_" then
@@ -253,9 +270,11 @@ function bundle.bundle(arg, opts)
         end
     end
     local function run_script(script)
-        local chunk = assert(load(script.content, "@"..script.path))
-        local code = bytecode.compile and qstr(string.dump(chunk, bytecode.strip)) or mlstr(script.content)
-        plain.emit(("return lib(%q, %s)()\n"):format(home_path(script.short_path), code))
+        if bytecode.strip then
+            plain.emit(("return lib(%s)()\n"):format(compile(script)))
+        else
+            plain.emit(("return lib(%q, %s)()\n"):format(home_path(script.short_path), compile(script)))
+        end
     end
     if #scripts > 1 then -- there are libs
         plain.emit "local libs = {\n"

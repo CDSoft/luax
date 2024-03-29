@@ -88,7 +88,7 @@ do
     case "$1" in
         (-b)    BYTECODE="-b"; shift ;;
         (-s)    BYTECODE="-s"; shift ;;
-        (-o)    OUTPUT=$(realpath "$2"); shift 2 ;;
+        (-o)    OUTPUT="$2"; shift 2 ;;
         (-t)    TARGET="$2"; shift 2 ;;
         (-p)    PREFIX="$2"; shift 2 ;;
         (-q)    VERBOSE=false; shift ;;
@@ -98,7 +98,7 @@ do
                     echo "$1: file not found" >&2
                     exit 1
                 fi
-                SOURCES+=("$(realpath "$1")"); shift ;;
+                SOURCES+=("$1"); shift ;;
     esac
 done
 
@@ -191,15 +191,14 @@ case "$COMMAND" in
                 ;;
 esac
 
-ZIG_TARGET=$(luax -l F -l sys - <<EOF
-local t = sys.targets["$TARGET"]
-if not t then
-    io.stderr:write("$TARGET: unknown target\n")
-    os.exit(1)
-end
-print(F{t.arch, t.os, t.libc}:str"-")
-EOF
-)
+case "$TARGET" in
+@[===[
+dofile "libluax/sys/sys.lua".targets : map(function(target)
+    return ('    ("%s")%s ZIG_TARGET="%s-%s-%s" ;;')
+        : format(target.name, (" "):rep(19-#target.name), target.arch, target.os, target.libc)
+end)
+]===]    (*) echo "$TARGET: unknown target"; exit 1 ;;
+esac
 ZIG_OPT=(-target "$ZIG_TARGET")
 ZIG_OPT+=(-std=gnu2x)
 ZIG_OPT+=(-O3)
