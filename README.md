@@ -288,7 +288,6 @@ and [lapp](http://cdelord.fr/lapp).
 - [import](doc/import.md): import Lua scripts to user table instead of
   `_G`
 - [F](doc/F.md): functional programming inspired functions
-- [L](doc/L.md): `pandoc.List` module from the Pandoc Lua interpreter
 - [fs](doc/fs.md): file system management
 - [sh](doc/sh.md): shell command execution
 - [mathx](doc/mathx.md): complete math library for Lua

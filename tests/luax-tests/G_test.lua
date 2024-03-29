@@ -42,7 +42,6 @@ local luax_packages = F.flatten{
     "import",
     "inspect",
     "json",
-    "L",
     "linenoise",
     "lz4",
     "lzw",

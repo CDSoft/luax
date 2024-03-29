@@ -287,7 +287,6 @@ and [lapp](http://cdelord.fr/lapp).
 - [package](package.md): modified Lua package `package`
 - [import](import.md): import Lua scripts to user table instead of `_G`
 - [F](F.md): functional programming inspired functions
-- [L](L.md): `pandoc.List` module from the Pandoc Lua interpreter
 - [fs](fs.md): file system management
 - [sh](sh.md): shell command execution
 - [mathx](mathx.md): complete math library for Lua
