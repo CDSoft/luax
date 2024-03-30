@@ -719,7 +719,7 @@ acc(lua_runtime)  { "libluax/qmath/qmath.lua", "libluax/qmath/_qmath.lua" }
 acc(luax_runtime) { "libluax/sh/sh.lua" }
 acc(lua_runtime)  { "libluax/sh/sh.lua" }
 
-acc(luax_runtime) { }
+acc(luax_runtime) { "libluax/sys/targets.lua" }
 acc(lua_runtime)  { "libluax/sys/sys.lua", "libluax/sys/targets.lua" }
 
 acc(luax_runtime) { "libluax/term/term.lua" }
