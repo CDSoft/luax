@@ -70,4 +70,20 @@ return function()
         end
     end
 
+    -- order
+    do
+        local F = require "F"
+        local sort = F.keys
+        local reverse = F.compose{F.reverse, F.keys}
+        local input = {x=1, y=2, z=3, t={a=1, b=2, c=3}}
+        local tests = {
+            { input, sort,    [[{"t":{"a":1,"b":2,"c":3},"x":1,"y":2,"z":3}]] },
+            { input, reverse, [[{"z":3,"y":2,"x":1,"t":{"c":3,"b":2,"a":1}}]] },
+        }
+        for _, t in ipairs(tests) do
+            eq(json.encode(t[1], {keyorder=t[2]}), t[3])
+            eq(json.decode(json.encode(t[1], {keyorder=t[2]})), input)
+        end
+    end
+
 end

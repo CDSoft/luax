@@ -308,7 +308,7 @@ and [lapp](http://cdelord.fr/lapp).
 - [cbor](cbor.md): pure Lua implementation of the CBOR
 - [linenoise](linenoise.md): A small, portable GNU readline replacement
   with UTF-8 support
-- [json](json.md): A lightweight JSON library for Lua
+- [json](json.md): JSON Module for Lua
 
 ## Shared libraries
 

@@ -38,7 +38,8 @@ update_all()
     update_lz4          release
     update_cbor
     update_linenoise    utf8-support # switch to "master" when the UTF-8 support is merged
-    update_json         master
+    #update_json         master
+    update_dkjson       2.7
 }
 
 update_lua()
@@ -276,6 +277,34 @@ update_json()
     rm -rf ext/lua/json
     mkdir -p ext/lua/json
     unzip -j "$TMP/$JSON_ARCHIVE" '*/json.lua' '*/LICENSE' -d ext/lua/json
+}
+
+update_dkjson()
+{
+    local JSON_VERSION="$1"
+    local JSON_SCRIPT="dkjson-$JSON_VERSION.lua"
+    local JSON_URL="http://dkolf.de/dkjson-lua/$JSON_SCRIPT"
+
+    mkdir -p "$TMP"
+    wget "$JSON_URL" -O "$TMP/$JSON_SCRIPT"
+
+    rm -rf ext/lua/json
+    mkdir -p ext/lua/json
+    cp "$TMP/$JSON_SCRIPT" ext/lua/json/json.lua
+    patch -p1 <<EOF
+diff --git a/ext/lua/json/json.lua b/ext/lua/json/json.lua
+index 7a86724..076f679 100644
+--- a/ext/lua/json/json.lua
++++ b/ext/lua/json/json.lua
+@@ -321,6 +321,7 @@ encode2 = function (value, indent, level, buffer, buflen, tables, globalorder, s
+       local order = valmeta and valmeta.__jsonorder or globalorder
+       if order then
+         local used = {}
++        if type(order) == "function" then order = order(value) end
+         n = #order
+         for i = 1, n do
+           local k = order[i]
+EOF
 }
 
 update_all
