@@ -5,6 +5,7 @@ local appname = "luax"
 
 local F = require "F"
 local fs = require "fs"
+local sh = require "sh"
 
 local I = F.I{URL=URL, YEARS=YEARS, AUTHORS=AUTHORS}
 
@@ -1024,6 +1025,9 @@ acc(test) {
 
 }
 
+local pandoc_version = (sh"pandoc --version" or "0") : match"[%d%.]+" : split"%." : map(tonumber)
+local has_pandoc = F.op.uge(pandoc_version, {3, 1, 2})
+
 if not san then
 acc(test) {
 
@@ -1096,7 +1100,7 @@ acc(test) {
 
 ---------------------------------------------------------------------
 
-    build "$test/test-5-pandoc-luax-lua.ok" {
+    has_pandoc and build "$test/test-5-pandoc-luax-lua.ok" {
         description = "TEST $out",
         command = {
             sanitizer_options,
@@ -1114,7 +1118,7 @@ acc(test) {
             libraries,
             test_sources,
         },
-    },
+    } or {},
 
 ---------------------------------------------------------------------
 
@@ -1161,7 +1165,7 @@ acc(test) {
 
 ---------------------------------------------------------------------
 
-    build "$test/test-ext-4-pandoc.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
+    has_pandoc and build "$test/test-ext-4-pandoc.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
         description = "TEST $out",
         command = {
             sanitizer_options,
@@ -1179,7 +1183,7 @@ acc(test) {
             "$luax",
             binaries,
         },
-    },
+    } or {},
 
 ---------------------------------------------------------------------
 
@@ -1189,6 +1193,8 @@ end
 --===================================================================
 section "Documentation"
 ---------------------------------------------------------------------
+
+if has_pandoc then
 
 local markdown_sources = ls "doc/src/*.md"
 
@@ -1259,6 +1265,8 @@ acc(doc) {
 
 }
 
+end
+
 --===================================================================
 section "Shorcuts"
 ---------------------------------------------------------------------
@@ -1284,10 +1292,18 @@ if #test > 0 then
 
 end
 
-phony "doc" (doc)
-help "doc" "update LuaX documentation"
+if #doc > 0 then
 
-phony "all" {"compile", "test", "doc"}
+    phony "doc" (doc)
+    help "doc" "update LuaX documentation"
+
+end
+
+phony "all" {
+    "compile",
+    "test",
+    #doc > 0 and "doc" or {},
+}
 help "all" "alias for compile, test and doc"
 
 phony "update" "update_modules"
