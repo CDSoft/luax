@@ -1,16 +1,16 @@
 #!/usr/bin/env -S lua --
 local function lib(path, src) return assert(load(src, '@$ypp:'..path)) end
 local libs = {
-["luax"] = lib("luax.lua", [===[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '4.4'
-_LUAX_DATE = '2024-03-24'
+["luax"] = lib("luax.lua", [====[--@LOAD=_: load luax to expose LuaX modules
+_LUAX_VERSION = '4.5'
+_LUAX_DATE = '2024-03-30'
 local function lib(path, src) return assert(load(src, '@$luax:'..path)) end
 local libs = {
 ["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "4.4"
+local version = "4.5"
 return {
     version = version,
-    date = "2024-03-24",
+    date = "2024-03-30",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
@@ -3877,130 +3877,6 @@ return setmetatable(F, {
     end,
 })
 ]==]),
-["L"] = lib("libluax/L/L.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-http://cdelord.fr/luax
---]]
-
---@LIB
-
---[[------------------------------------------------------------------------@@@
-# L: Pandoc List package
-
-```lua
-local L = require "L"
-```
-
-`L` is just a shortcut to `Pandoc.List`.
-
-@@@]]
-
-local L = pandoc and pandoc.List
-
-local F = require "F"
-
-if not L then
-
-    local mt = {__index={}}
-
-    L = {}
-
-    function mt.__concat(l1, l2)
-        return setmetatable(F.concat{l1, l2}, mt)
-    end
-
-    function mt.__eq(l1, l2)
-        return F.ueq(l1, l2)
-    end
-
-    function mt.__index:clone()
-        return setmetatable(F.clone(self), mt)
-    end
-
-    function mt.__index:extend(l)
-        for i = 1, #l do
-            self[#self+1] = l[i]
-        end
-    end
-
-    function mt.__index:find(needle, init)
-        for i = init or 1, #self do
-            if F.ueq(self[i], needle) then
-                return self[i], i
-            end
-        end
-    end
-
-    function mt.__index:find_if(pred, init)
-        for i = init or 1, #self do
-            if pred(self[i]) then
-                return self[i], i
-            end
-        end
-    end
-
-    function mt.__index:filter(pred)
-        return setmetatable(F.filter(pred, self), mt)
-    end
-
-    function mt.__index:includes(needle, init)
-        for i = init or 1, #self do
-            if F.ueq(self[i], needle) then
-                return true
-            end
-        end
-        return false
-    end
-
-    function mt.__index:insert(pos, value)
-        return table.insert(self, pos, value)
-    end
-
-    function mt.__index:map(fn)
-        return setmetatable(F.map(fn, self), mt)
-    end
-
-    function mt.__index:new(t)
-        return setmetatable(t or {}, mt)
-    end
-
-    function mt.__index:remove(pos)
-        return table.remove(self, pos)
-    end
-
-    function mt.__index:sort(comp)
-        return table.sort(self, comp)
-    end
-
-    setmetatable(L, {
-        __index = {
-            __call = function(self) return L.new(self) end,
-        },
-    })
-
-end
-
--------------------------------------------------------------------------------
--- module
--------------------------------------------------------------------------------
-
-return L
-]=]),
 ["complex"] = lib("libluax/complex/complex.lua", [=[--[[
 This file is part of luax.
 
@@ -4022,228 +3898,223 @@ http://cdelord.fr/luax
 --]]
 
 --@LIB
-local _, complex = pcall(require, "_complex")
-complex = _ and complex
+local complex = {}
 
-if not complex then
+-- see https://github.com/krakow10/Complex-Number-Library/blob/master/Lua/Complex.lua
 
-    -- see https://github.com/krakow10/Complex-Number-Library/blob/master/Lua/Complex.lua
+local mathx = require "mathx"
 
-    local mathx = require "mathx"
+local e = math.exp(1)
+local pi = math.pi
+local abs = math.abs
+local exp = math.exp
+local log = math.log
+local cos = math.cos
+local sin = math.sin
+local cosh = mathx.cosh
+local sinh = mathx.sinh
+local atan2 = math.atan
 
-    local e = math.exp(1)
-    local pi = math.pi
-    local abs = math.abs
-    local exp = math.exp
-    local log = math.log
-    local cos = math.cos
-    local sin = math.sin
-    local cosh = mathx.cosh
-    local sinh = mathx.sinh
-    local atan2 = math.atan
+local mt = {__index={}}
 
-    local mt = {__index={}}
+---@diagnostic disable:unused-vararg
+local function ni(f) return function(...) error(f.." not implemented") end end
 
-    ---@diagnostic disable:unused-vararg
-    local function ni(f) return function(...) error(f.." not implemented") end end
+local forget = 1e-14
 
-    local forget = 1e-14
-
-    local function new(x, y)
-        if forget then
-            if x and abs(x) <= forget then x = 0 end
-            if y and abs(y) <= forget then y = 0 end
-        end
-        return setmetatable({x=x or 0, y=y or 0}, mt)
+local function new(x, y)
+    if forget then
+        if x and abs(x) <= forget then x = 0 end
+        if y and abs(y) <= forget then y = 0 end
     end
-
-    local i = new(0, 1)
-
-    local function _z(z)
-        if type(z) == "table" and getmetatable(z) == mt then return z end
-        return new(tonumber(z), 0)
-    end
-
-    function mt.__index.real(z) return z.x end
-
-    function mt.__index.imag(z) return z.y end
-
-    local function rect(r, phi)
-        return new(r*cos(phi), r*sin(phi))
-    end
-
-    local function arg(z)
-        return atan2(z.y, z.x)
-    end
-
-    local function ln(z)
-        return new(log(z.x^2+z.y^2)/2, atan2(z.y, z.x))
-    end
-
-    function mt.__index.conj(z)
-        return new(z.x, -z.y)
-    end
-
-    function mt.__add(z1, z2)
-        z1 = _z(z1)
-        z2 = _z(z2)
-        return new(z1.x+z2.x, z1.y+z2.y)
-    end
-
-    function mt.__sub(z1, z2)
-        z1 = _z(z1)
-        z2 = _z(z2)
-        return new(z1.x-z2.x, z1.y-z2.y)
-    end
-
-    function mt.__mul(z1, z2)
-        z1 = _z(z1)
-        z2 = _z(z2)
-        return new(z1.x*z2.x-z1.y*z2.y, z1.x*z2.y+z2.x*z1.y)
-    end
-
-    function mt.__div(z1, z2)
-        z1 = _z(z1)
-        z2 = _z(z2)
-        local d = z2.x^2 + z2.y^2
-        return new((z1.x*z2.x+z1.y*z2.y)/d, (z2.x*z1.y-z1.x*z2.y)/d)
-    end
-
-    function mt.__pow(z1, z2)
-        z1 = _z(z1)
-        z2 = _z(z2)
-        local z1sq = z1.x^2 + z1.y^2
-        if z1sq == 0 then
-            if z2.x == 0 and z2.y == 0 then return 1 end
-            return 0
-        end
-        local phi = arg(z1)
-        return rect(z1sq^(z2.x/2)*exp(-z2.y*phi), z2.y*log(z1sq)/2+z2.x*phi)
-    end
-
-    function mt.__unm(z)
-        return new(-z.x, -z.y)
-    end
-
-    function mt.__eq(z1, z2)
-        z1 = _z(z1)
-        z2 = _z(z2)
-        return z1.x == z2.x and z1.y == z2.y
-    end
-
-    function mt.__tostring(z)
-        if z.y == 0 then return tostring(z.x) end
-        if z.x == 0 then
-            if z.y == 1 then return "i" end
-            if z.y == -1 then return "-i" end
-            return z.y.."i"
-        end
-        if z.y == 1 then return z.x.."+i" end
-        if z.y == -1 then return z.x.."-i" end
-        if z.y < 0 then return z.x..z.y.."i" end
-        return z.x.."+"..z.y.."i"
-    end
-
-    function mt.__index.abs(z)
-        return (z.x^2+z.y^2)^0.5
-    end
-
-    mt.__index.arg = arg
-
-    function mt.__index.exp(z)
-        return e^z
-    end
-
-    function mt.__index.sqrt(z)
-        return z^0.5
-    end
-
-    function mt.__index.sin(z)
-        return new(sin(z.x)*cosh(z.y), cos(z.x)*sinh(z.y))
-    end
-
-    function mt.__index.cos(z)
-        return new(cos(z.x)*cosh(z.y), -sin(z.x)*sinh(z.y))
-    end
-
-    function mt.__index.tan(z)
-        z = 2*z
-        local div = cos(z.x) + cosh(z.y)
-        return new(sin(z.x)/div, sinh(z.y)/div)
-    end
-
-    function mt.__index.sinh(z)
-        return new(cos(z.y)*sinh(z.x), sin(z.y)*cosh(z.x))
-    end
-
-    function mt.__index.cosh(z)
-        return new(cos(z.y)*cosh(z.x), sin(z.y)*sinh(z.x))
-    end
-
-    function mt.__index.tanh(z)
-        z = 2*z
-        local div = cos(z.y) + cosh(z.x)
-        return new(sinh(z.x)/div, sin(z.y)/div)
-    end
-
-    function mt.__index.asin(z)
-        return -i*ln(i*z+(1-z^2)^0.5)
-    end
-
-    function mt.__index.acos(z)
-        return pi/2 + i*ln(i*z+(1-z^2)^0.5)
-    end
-
-    function mt.__index.atan(z)
-        local z3, z4 = new(1-z.y, z.x), new(1+z.x^2-z.y^2, 2*z.x*z.y)
-        return new(arg(z3/z4^0.5), -log(z3:abs()/z4:abs()^0.5))
-    end
-
-    function mt.__index.asinh(z)
-        return ln(z+(1+z^2)^0.5)
-    end
-
-    function mt.__index.acosh(z)
-        return 2*ln((z-1)^0.5+(z+1)^0.5)-log(2)
-    end
-
-    function mt.__index.atanh(z)
-        return (ln(1+z)-ln(1-z))/2
-    end
-
-    mt.__index.log = ln
-
-    mt.__index.proj = ni "proj"
-
-    complex = {
-        new = new,
-        I = i,
-        real = function(z) return _z(z):real() end,
-        imag = function(z) return _z(z):imag() end,
-        abs = function(z) return _z(z):abs() end,
-        arg = function(z) return _z(z):arg() end,
-        exp = function(z) return _z(z):exp() end,
-        sqrt = function(z) return _z(z):sqrt() end,
-        sin = function(z) return _z(z):sin() end,
-        cos = function(z) return _z(z):cos() end,
-        tan = function(z) return _z(z):tan() end,
-        sinh = function(z) return _z(z):sinh() end,
-        cosh = function(z) return _z(z):cosh() end,
-        tanh = function(z) return _z(z):tanh() end,
-        asin = function(z) return _z(z):asin() end,
-        acos = function(z) return _z(z):acos() end,
-        atan = function(z) return _z(z):atan() end,
-        asinh = function(z) return _z(z):asinh() end,
-        acosh = function(z) return _z(z):acosh() end,
-        atanh = function(z) return _z(z):atanh() end,
-        pow = function(z, z2) return _z(z) ^ z2 end,
-        log = function(z) return _z(z):log() end,
-        proj = function(z) return _z(z):proj() end,
-        conj = function(z) return _z(z):conj() end,
-        tostring = function(z) return _z(z):tostring() end,
-    }
-
+    return setmetatable({x=x or 0, y=y or 0}, mt)
 end
+
+local i = new(0, 1)
+
+local function _z(z)
+    if type(z) == "table" and getmetatable(z) == mt then return z end
+    return new(tonumber(z), 0)
+end
+
+function mt.__index.real(z) return z.x end
+
+function mt.__index.imag(z) return z.y end
+
+local function rect(r, phi)
+    return new(r*cos(phi), r*sin(phi))
+end
+
+local function arg(z)
+    return atan2(z.y, z.x)
+end
+
+local function ln(z)
+    return new(log(z.x^2+z.y^2)/2, atan2(z.y, z.x))
+end
+
+function mt.__index.conj(z)
+    return new(z.x, -z.y)
+end
+
+function mt.__add(z1, z2)
+    z1 = _z(z1)
+    z2 = _z(z2)
+    return new(z1.x+z2.x, z1.y+z2.y)
+end
+
+function mt.__sub(z1, z2)
+    z1 = _z(z1)
+    z2 = _z(z2)
+    return new(z1.x-z2.x, z1.y-z2.y)
+end
+
+function mt.__mul(z1, z2)
+    z1 = _z(z1)
+    z2 = _z(z2)
+    return new(z1.x*z2.x-z1.y*z2.y, z1.x*z2.y+z2.x*z1.y)
+end
+
+function mt.__div(z1, z2)
+    z1 = _z(z1)
+    z2 = _z(z2)
+    local d = z2.x^2 + z2.y^2
+    return new((z1.x*z2.x+z1.y*z2.y)/d, (z2.x*z1.y-z1.x*z2.y)/d)
+end
+
+function mt.__pow(z1, z2)
+    z1 = _z(z1)
+    z2 = _z(z2)
+    local z1sq = z1.x^2 + z1.y^2
+    if z1sq == 0 then
+        if z2.x == 0 and z2.y == 0 then return 1 end
+        return 0
+    end
+    local phi = arg(z1)
+    return rect(z1sq^(z2.x/2)*exp(-z2.y*phi), z2.y*log(z1sq)/2+z2.x*phi)
+end
+
+function mt.__unm(z)
+    return new(-z.x, -z.y)
+end
+
+function mt.__eq(z1, z2)
+    z1 = _z(z1)
+    z2 = _z(z2)
+    return z1.x == z2.x and z1.y == z2.y
+end
+
+function mt.__tostring(z)
+    if z.y == 0 then return tostring(z.x) end
+    if z.x == 0 then
+        if z.y == 1 then return "i" end
+        if z.y == -1 then return "-i" end
+        return z.y.."i"
+    end
+    if z.y == 1 then return z.x.."+i" end
+    if z.y == -1 then return z.x.."-i" end
+    if z.y < 0 then return z.x..z.y.."i" end
+    return z.x.."+"..z.y.."i"
+end
+
+function mt.__index.abs(z)
+    return (z.x^2+z.y^2)^0.5
+end
+
+mt.__index.arg = arg
+
+function mt.__index.exp(z)
+    return e^z
+end
+
+function mt.__index.sqrt(z)
+    return z^0.5
+end
+
+function mt.__index.sin(z)
+    return new(sin(z.x)*cosh(z.y), cos(z.x)*sinh(z.y))
+end
+
+function mt.__index.cos(z)
+    return new(cos(z.x)*cosh(z.y), -sin(z.x)*sinh(z.y))
+end
+
+function mt.__index.tan(z)
+    z = 2*z
+    local div = cos(z.x) + cosh(z.y)
+    return new(sin(z.x)/div, sinh(z.y)/div)
+end
+
+function mt.__index.sinh(z)
+    return new(cos(z.y)*sinh(z.x), sin(z.y)*cosh(z.x))
+end
+
+function mt.__index.cosh(z)
+    return new(cos(z.y)*cosh(z.x), sin(z.y)*sinh(z.x))
+end
+
+function mt.__index.tanh(z)
+    z = 2*z
+    local div = cos(z.y) + cosh(z.x)
+    return new(sinh(z.x)/div, sin(z.y)/div)
+end
+
+function mt.__index.asin(z)
+    return -i*ln(i*z+(1-z^2)^0.5)
+end
+
+function mt.__index.acos(z)
+    return pi/2 + i*ln(i*z+(1-z^2)^0.5)
+end
+
+function mt.__index.atan(z)
+    local z3, z4 = new(1-z.y, z.x), new(1+z.x^2-z.y^2, 2*z.x*z.y)
+    return new(arg(z3/z4^0.5), -log(z3:abs()/z4:abs()^0.5))
+end
+
+function mt.__index.asinh(z)
+    return ln(z+(1+z^2)^0.5)
+end
+
+function mt.__index.acosh(z)
+    return 2*ln((z-1)^0.5+(z+1)^0.5)-log(2)
+end
+
+function mt.__index.atanh(z)
+    return (ln(1+z)-ln(1-z))/2
+end
+
+mt.__index.log = ln
+
+mt.__index.proj = ni "proj"
+
+complex = {
+    new = new,
+    I = i,
+    real = function(z) return _z(z):real() end,
+    imag = function(z) return _z(z):imag() end,
+    abs = function(z) return _z(z):abs() end,
+    arg = function(z) return _z(z):arg() end,
+    exp = function(z) return _z(z):exp() end,
+    sqrt = function(z) return _z(z):sqrt() end,
+    sin = function(z) return _z(z):sin() end,
+    cos = function(z) return _z(z):cos() end,
+    tan = function(z) return _z(z):tan() end,
+    sinh = function(z) return _z(z):sinh() end,
+    cosh = function(z) return _z(z):cosh() end,
+    tanh = function(z) return _z(z):tanh() end,
+    asin = function(z) return _z(z):asin() end,
+    acos = function(z) return _z(z):acos() end,
+    atan = function(z) return _z(z):atan() end,
+    asinh = function(z) return _z(z):asinh() end,
+    acosh = function(z) return _z(z):acosh() end,
+    atanh = function(z) return _z(z):atanh() end,
+    pow = function(z, z2) return _z(z) ^ z2 end,
+    log = function(z) return _z(z):log() end,
+    proj = function(z) return _z(z):proj() end,
+    conj = function(z) return _z(z):conj() end,
+    tostring = function(z) return _z(z):tostring() end,
+}
 
 return complex
 ]=]),
@@ -4270,413 +4141,9 @@ http://cdelord.fr/luax
 -- Load crypt.lua to add new methods to strings
 --@LOAD=_
 
-local _, crypt = pcall(require, "_crypt")
-crypt = _ and crypt
+local crypt = require "_crypt"
 
 local F = require "F"
-
--- Pure Lua implementation
-if not crypt then
-
-    crypt = {}
-
-    -- Random number generator
-
-    local prng_mt = {__index={}}
-
-    local random = math.random
-
-    local byte = string.byte
-    local char = string.char
-    local format = string.format
-    local gsub = string.gsub
-
-    local concat = table.concat
-
-    local tonumber = tonumber
-
-    local RAND_MAX = 0xFFFFFFFF
-
-    crypt.RAND_MAX = RAND_MAX
-
-    function crypt.prng(seed, inc)
-        local self = setmetatable({}, prng_mt)
-        self:seed(seed or random(0), inc)
-        return self
-    end
-
-    function prng_mt.__index:seed(seed, inc)
-        self.state = assert(seed, "seed parameter missing")
-        self.inc = (inc or 1) | 1
-        self.state = 6364136223846793005*self.state + self.inc
-        self.state = 6364136223846793005*self.state + self.inc
-    end
-
-    function prng_mt.__index:int(a, b)
-        local oldstate = self.state
-        self.state = 6364136223846793005*self.state + self.inc
-        local xorshifted = (((oldstate >> 18) ~ oldstate) >> 27) & 0xFFFFFFFF
-        local rot = oldstate >> 59;
-        local r = ((xorshifted >> rot) | (xorshifted << ((-rot) & 31))) & 0xFFFFFFFF
-
-        if not a then return r end
-        if not b then return r % (a+1) end
-        return r % (b-a+1) + a
-    end
-
-    function prng_mt.__index:float(a, b)
-        local r = self:int()
-        if not a then return r / RAND_MAX end
-        if not b then return r * a/RAND_MAX end
-        return r * (b-a)/RAND_MAX + a
-    end
-
-    function prng_mt.__index:str(n)
-        local bs = {}
-        for i = 1, n do
-            bs[i] = char(self:int(0, 255))
-        end
-        return concat(bs)
-    end
-
-    -- global random number generator
-    local _rng = crypt.prng()
-    function crypt.seed(...) return _rng:seed(...) end
-    function crypt.int(...) return _rng:int(...) end
-    function crypt.float(...) return _rng:float(...) end
-    function crypt.str(...) return _rng:str(...) end
-
-    -- Hexadecimal encoding
-
-    function crypt.hex(s)
-        return (gsub(s, '.', function(c) return format("%02x", byte(c)) end))
-    end
-
-    function crypt.unhex(s)
-        return (gsub(s, '..', function(h) return char(tonumber(h, 16)) end))
-    end
-
-    -- Base64 encoding
-
-    -- see <https://en.wikipedia.org/wiki/Base64>
-
-    local b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-
-    function crypt.base64(s)
-        return ((s:gsub('.', function(x)
-            local r,b='',x:byte()
-            for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
-            return r;
-        end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
-            if (#x < 6) then return '' end
-            local c=0
-            for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
-            return b64chars:sub(c+1,c+1)
-        end)..({ '', '==', '=' })[#s%3+1])
-    end
-
-    function crypt.base64url(s)
-        return crypt.base64(s):gsub("+", "-"):gsub("/", "_")
-    end
-
-    function crypt.unbase64(s)
-        s = string.gsub(s, '[^'..b64chars..'=]', '')
-        return (s:gsub('.', function(x)
-            if (x == '=') then return '' end
-            local r,f='',(b64chars:find(x)-1)
-            for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
-            return r;
-        end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
-            if (#x ~= 8) then return '' end
-            local c=0
-            for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
-            return string.char(c)
-        end))
-    end
-
-    function crypt.unbase64url(s)
-        return crypt.unbase64(s:gsub("-", "+"):gsub("_", "/"))
-    end
-
-    -- CRC32 hash
-
-    local crc32_table = { [0]=
-        0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
-        0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988, 0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91,
-        0x1db71064, 0x6ab020f2, 0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,
-        0x136c9856, 0x646ba8c0, 0xfd62f97a, 0x8a65c9ec, 0x14015c4f, 0x63066cd9, 0xfa0f3d63, 0x8d080df5,
-        0x3b6e20c8, 0x4c69105e, 0xd56041e4, 0xa2677172, 0x3c03e4d1, 0x4b04d447, 0xd20d85fd, 0xa50ab56b,
-        0x35b5a8fa, 0x42b2986c, 0xdbbbc9d6, 0xacbcf940, 0x32d86ce3, 0x45df5c75, 0xdcd60dcf, 0xabd13d59,
-        0x26d930ac, 0x51de003a, 0xc8d75180, 0xbfd06116, 0x21b4f4b5, 0x56b3c423, 0xcfba9599, 0xb8bda50f,
-        0x2802b89e, 0x5f058808, 0xc60cd9b2, 0xb10be924, 0x2f6f7c87, 0x58684c11, 0xc1611dab, 0xb6662d3d,
-        0x76dc4190, 0x01db7106, 0x98d220bc, 0xefd5102a, 0x71b18589, 0x06b6b51f, 0x9fbfe4a5, 0xe8b8d433,
-        0x7807c9a2, 0x0f00f934, 0x9609a88e, 0xe10e9818, 0x7f6a0dbb, 0x086d3d2d, 0x91646c97, 0xe6635c01,
-        0x6b6b51f4, 0x1c6c6162, 0x856530d8, 0xf262004e, 0x6c0695ed, 0x1b01a57b, 0x8208f4c1, 0xf50fc457,
-        0x65b0d9c6, 0x12b7e950, 0x8bbeb8ea, 0xfcb9887c, 0x62dd1ddf, 0x15da2d49, 0x8cd37cf3, 0xfbd44c65,
-        0x4db26158, 0x3ab551ce, 0xa3bc0074, 0xd4bb30e2, 0x4adfa541, 0x3dd895d7, 0xa4d1c46d, 0xd3d6f4fb,
-        0x4369e96a, 0x346ed9fc, 0xad678846, 0xda60b8d0, 0x44042d73, 0x33031de5, 0xaa0a4c5f, 0xdd0d7cc9,
-        0x5005713c, 0x270241aa, 0xbe0b1010, 0xc90c2086, 0x5768b525, 0x206f85b3, 0xb966d409, 0xce61e49f,
-        0x5edef90e, 0x29d9c998, 0xb0d09822, 0xc7d7a8b4, 0x59b33d17, 0x2eb40d81, 0xb7bd5c3b, 0xc0ba6cad,
-        0xedb88320, 0x9abfb3b6, 0x03b6e20c, 0x74b1d29a, 0xead54739, 0x9dd277af, 0x04db2615, 0x73dc1683,
-        0xe3630b12, 0x94643b84, 0x0d6d6a3e, 0x7a6a5aa8, 0xe40ecf0b, 0x9309ff9d, 0x0a00ae27, 0x7d079eb1,
-        0xf00f9344, 0x8708a3d2, 0x1e01f268, 0x6906c2fe, 0xf762575d, 0x806567cb, 0x196c3671, 0x6e6b06e7,
-        0xfed41b76, 0x89d32be0, 0x10da7a5a, 0x67dd4acc, 0xf9b9df6f, 0x8ebeeff9, 0x17b7be43, 0x60b08ed5,
-        0xd6d6a3e8, 0xa1d1937e, 0x38d8c2c4, 0x4fdff252, 0xd1bb67f1, 0xa6bc5767, 0x3fb506dd, 0x48b2364b,
-        0xd80d2bda, 0xaf0a1b4c, 0x36034af6, 0x41047a60, 0xdf60efc3, 0xa867df55, 0x316e8eef, 0x4669be79,
-        0xcb61b38c, 0xbc66831a, 0x256fd2a0, 0x5268e236, 0xcc0c7795, 0xbb0b4703, 0x220216b9, 0x5505262f,
-        0xc5ba3bbe, 0xb2bd0b28, 0x2bb45a92, 0x5cb36a04, 0xc2d7ffa7, 0xb5d0cf31, 0x2cd99e8b, 0x5bdeae1d,
-        0x9b64c2b0, 0xec63f226, 0x756aa39c, 0x026d930a, 0x9c0906a9, 0xeb0e363f, 0x72076785, 0x05005713,
-        0x95bf4a82, 0xe2b87a14, 0x7bb12bae, 0x0cb61b38, 0x92d28e9b, 0xe5d5be0d, 0x7cdcefb7, 0x0bdbdf21,
-        0x86d3d2d4, 0xf1d4e242, 0x68ddb3f8, 0x1fda836e, 0x81be16cd, 0xf6b9265b, 0x6fb077e1, 0x18b74777,
-        0x88085ae6, 0xff0f6a70, 0x66063bca, 0x11010b5c, 0x8f659eff, 0xf862ae69, 0x616bffd3, 0x166ccf45,
-        0xa00ae278, 0xd70dd2ee, 0x4e048354, 0x3903b3c2, 0xa7672661, 0xd06016f7, 0x4969474d, 0x3e6e77db,
-        0xaed16a4a, 0xd9d65adc, 0x40df0b66, 0x37d83bf0, 0xa9bcae53, 0xdebb9ec5, 0x47b2cf7f, 0x30b5ffe9,
-        0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693, 0x54de5729, 0x23d967bf,
-        0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
-    }
-
-    function crypt.crc32(s)
-        local crc = 0xFFFFFFFF
-        for i = 1, #s do
-            crc = (crc>>8) ~ crc32_table[(crc~byte(s, i))&0xFF]
-        end
-        return crc ~ 0xFFFFFFFF
-    end
-
-    -- CRC64 hash
-
-    local crc64_table = { [0]=
-        0x0000000000000000, 0xb32e4cbe03a75f6f, 0xf4843657a840a05b, 0x47aa7ae9abe7ff34,
-        0x7bd0c384ff8f5e33, 0xc8fe8f3afc28015c, 0x8f54f5d357cffe68, 0x3c7ab96d5468a107,
-        0xf7a18709ff1ebc66, 0x448fcbb7fcb9e309, 0x0325b15e575e1c3d, 0xb00bfde054f94352,
-        0x8c71448d0091e255, 0x3f5f08330336bd3a, 0x78f572daa8d1420e, 0xcbdb3e64ab761d61,
-        0x7d9ba13851336649, 0xceb5ed8652943926, 0x891f976ff973c612, 0x3a31dbd1fad4997d,
-        0x064b62bcaebc387a, 0xb5652e02ad1b6715, 0xf2cf54eb06fc9821, 0x41e11855055bc74e,
-        0x8a3a2631ae2dda2f, 0x39146a8fad8a8540, 0x7ebe1066066d7a74, 0xcd905cd805ca251b,
-        0xf1eae5b551a2841c, 0x42c4a90b5205db73, 0x056ed3e2f9e22447, 0xb6409f5cfa457b28,
-        0xfb374270a266cc92, 0x48190ecea1c193fd, 0x0fb374270a266cc9, 0xbc9d3899098133a6,
-        0x80e781f45de992a1, 0x33c9cd4a5e4ecdce, 0x7463b7a3f5a932fa, 0xc74dfb1df60e6d95,
-        0x0c96c5795d7870f4, 0xbfb889c75edf2f9b, 0xf812f32ef538d0af, 0x4b3cbf90f69f8fc0,
-        0x774606fda2f72ec7, 0xc4684a43a15071a8, 0x83c230aa0ab78e9c, 0x30ec7c140910d1f3,
-        0x86ace348f355aadb, 0x3582aff6f0f2f5b4, 0x7228d51f5b150a80, 0xc10699a158b255ef,
-        0xfd7c20cc0cdaf4e8, 0x4e526c720f7dab87, 0x09f8169ba49a54b3, 0xbad65a25a73d0bdc,
-        0x710d64410c4b16bd, 0xc22328ff0fec49d2, 0x85895216a40bb6e6, 0x36a71ea8a7ace989,
-        0x0adda7c5f3c4488e, 0xb9f3eb7bf06317e1, 0xfe5991925b84e8d5, 0x4d77dd2c5823b7ba,
-        0x64b62bcaebc387a1, 0xd7986774e864d8ce, 0x90321d9d438327fa, 0x231c512340247895,
-        0x1f66e84e144cd992, 0xac48a4f017eb86fd, 0xebe2de19bc0c79c9, 0x58cc92a7bfab26a6,
-        0x9317acc314dd3bc7, 0x2039e07d177a64a8, 0x67939a94bc9d9b9c, 0xd4bdd62abf3ac4f3,
-        0xe8c76f47eb5265f4, 0x5be923f9e8f53a9b, 0x1c4359104312c5af, 0xaf6d15ae40b59ac0,
-        0x192d8af2baf0e1e8, 0xaa03c64cb957be87, 0xeda9bca512b041b3, 0x5e87f01b11171edc,
-        0x62fd4976457fbfdb, 0xd1d305c846d8e0b4, 0x96797f21ed3f1f80, 0x2557339fee9840ef,
-        0xee8c0dfb45ee5d8e, 0x5da24145464902e1, 0x1a083bacedaefdd5, 0xa9267712ee09a2ba,
-        0x955cce7fba6103bd, 0x267282c1b9c65cd2, 0x61d8f8281221a3e6, 0xd2f6b4961186fc89,
-        0x9f8169ba49a54b33, 0x2caf25044a02145c, 0x6b055fede1e5eb68, 0xd82b1353e242b407,
-        0xe451aa3eb62a1500, 0x577fe680b58d4a6f, 0x10d59c691e6ab55b, 0xa3fbd0d71dcdea34,
-        0x6820eeb3b6bbf755, 0xdb0ea20db51ca83a, 0x9ca4d8e41efb570e, 0x2f8a945a1d5c0861,
-        0x13f02d374934a966, 0xa0de61894a93f609, 0xe7741b60e174093d, 0x545a57dee2d35652,
-        0xe21ac88218962d7a, 0x5134843c1b317215, 0x169efed5b0d68d21, 0xa5b0b26bb371d24e,
-        0x99ca0b06e7197349, 0x2ae447b8e4be2c26, 0x6d4e3d514f59d312, 0xde6071ef4cfe8c7d,
-        0x15bb4f8be788911c, 0xa6950335e42fce73, 0xe13f79dc4fc83147, 0x521135624c6f6e28,
-        0x6e6b8c0f1807cf2f, 0xdd45c0b11ba09040, 0x9aefba58b0476f74, 0x29c1f6e6b3e0301b,
-        0xc96c5795d7870f42, 0x7a421b2bd420502d, 0x3de861c27fc7af19, 0x8ec62d7c7c60f076,
-        0xb2bc941128085171, 0x0192d8af2baf0e1e, 0x4638a2468048f12a, 0xf516eef883efae45,
-        0x3ecdd09c2899b324, 0x8de39c222b3eec4b, 0xca49e6cb80d9137f, 0x7967aa75837e4c10,
-        0x451d1318d716ed17, 0xf6335fa6d4b1b278, 0xb199254f7f564d4c, 0x02b769f17cf11223,
-        0xb4f7f6ad86b4690b, 0x07d9ba1385133664, 0x4073c0fa2ef4c950, 0xf35d8c442d53963f,
-        0xcf273529793b3738, 0x7c0979977a9c6857, 0x3ba3037ed17b9763, 0x888d4fc0d2dcc80c,
-        0x435671a479aad56d, 0xf0783d1a7a0d8a02, 0xb7d247f3d1ea7536, 0x04fc0b4dd24d2a59,
-        0x3886b22086258b5e, 0x8ba8fe9e8582d431, 0xcc0284772e652b05, 0x7f2cc8c92dc2746a,
-        0x325b15e575e1c3d0, 0x8175595b76469cbf, 0xc6df23b2dda1638b, 0x75f16f0cde063ce4,
-        0x498bd6618a6e9de3, 0xfaa59adf89c9c28c, 0xbd0fe036222e3db8, 0x0e21ac88218962d7,
-        0xc5fa92ec8aff7fb6, 0x76d4de52895820d9, 0x317ea4bb22bfdfed, 0x8250e80521188082,
-        0xbe2a516875702185, 0x0d041dd676d77eea, 0x4aae673fdd3081de, 0xf9802b81de97deb1,
-        0x4fc0b4dd24d2a599, 0xfceef8632775faf6, 0xbb44828a8c9205c2, 0x086ace348f355aad,
-        0x34107759db5dfbaa, 0x873e3be7d8faa4c5, 0xc094410e731d5bf1, 0x73ba0db070ba049e,
-        0xb86133d4dbcc19ff, 0x0b4f7f6ad86b4690, 0x4ce50583738cb9a4, 0xffcb493d702be6cb,
-        0xc3b1f050244347cc, 0x709fbcee27e418a3, 0x3735c6078c03e797, 0x841b8ab98fa4b8f8,
-        0xadda7c5f3c4488e3, 0x1ef430e13fe3d78c, 0x595e4a08940428b8, 0xea7006b697a377d7,
-        0xd60abfdbc3cbd6d0, 0x6524f365c06c89bf, 0x228e898c6b8b768b, 0x91a0c532682c29e4,
-        0x5a7bfb56c35a3485, 0xe955b7e8c0fd6bea, 0xaeffcd016b1a94de, 0x1dd181bf68bdcbb1,
-        0x21ab38d23cd56ab6, 0x9285746c3f7235d9, 0xd52f0e859495caed, 0x6601423b97329582,
-        0xd041dd676d77eeaa, 0x636f91d96ed0b1c5, 0x24c5eb30c5374ef1, 0x97eba78ec690119e,
-        0xab911ee392f8b099, 0x18bf525d915feff6, 0x5f1528b43ab810c2, 0xec3b640a391f4fad,
-        0x27e05a6e926952cc, 0x94ce16d091ce0da3, 0xd3646c393a29f297, 0x604a2087398eadf8,
-        0x5c3099ea6de60cff, 0xef1ed5546e415390, 0xa8b4afbdc5a6aca4, 0x1b9ae303c601f3cb,
-        0x56ed3e2f9e224471, 0xe5c372919d851b1e, 0xa26908783662e42a, 0x114744c635c5bb45,
-        0x2d3dfdab61ad1a42, 0x9e13b115620a452d, 0xd9b9cbfcc9edba19, 0x6a978742ca4ae576,
-        0xa14cb926613cf817, 0x1262f598629ba778, 0x55c88f71c97c584c, 0xe6e6c3cfcadb0723,
-        0xda9c7aa29eb3a624, 0x69b2361c9d14f94b, 0x2e184cf536f3067f, 0x9d36004b35545910,
-        0x2b769f17cf112238, 0x9858d3a9ccb67d57, 0xdff2a94067518263, 0x6cdce5fe64f6dd0c,
-        0x50a65c93309e7c0b, 0xe388102d33392364, 0xa4226ac498dedc50, 0x170c267a9b79833f,
-        0xdcd7181e300f9e5e, 0x6ff954a033a8c131, 0x28532e49984f3e05, 0x9b7d62f79be8616a,
-        0xa707db9acf80c06d, 0x14299724cc279f02, 0x5383edcd67c06036, 0xe0ada17364673f59
-    }
-
-    function crypt.crc64(s)
-        local crc = 0xFFFFFFFFFFFFFFFF
-        for i = 1, #s do
-            crc = (crc>>8) ~ crc64_table[(crc~byte(s, i))&0xFF]
-        end
-        return crc ~ 0xFFFFFFFFFFFFFFFF
-    end
-
-    -- RC4 encryption
-
-    function crypt.rc4(input, key, drop)
-        assert(type(key) == "string", "rc4 key shall be a string")
-        drop = drop or 768
-        local S = {}
-        for i = 0, 255 do S[i] = i end
-        local j = 0
-        if #key > 0 then
-            for i = 0, 255 do
-                j = (j + S[i] + byte(key, i%#key+1)) % 256
-                S[i], S[j] = S[j], S[i]
-            end
-        end
-        local i = 0
-        j = 0
-        for _ = 1, drop do
-            i = (i + 1) % 256
-            j = (j + S[i]) % 256
-            S[i], S[j] = S[j], S[i]
-        end
-        local output = {}
-        for k = 1, #input do
-            i = (i + 1) % 256
-            j = (j + S[i]) % 256
-            S[i], S[j] = S[j], S[i]
-            output[k] = char(byte(input, k) ~ S[(S[i] + S[j]) % 256])
-        end
-        return concat(output)
-    end
-
-    crypt.unrc4 = crypt.rc4
-
-    if pandoc then
-        crypt.sha1 = pandoc.utils.sha1
-    else
-        -------------------------------------------------
-        ---      *** SHA-1 algorithm for Lua ***      ---
-        -------------------------------------------------
-        --- Author:  Martin Huesser                   ---
-        --- Date:    2008-06-16                       ---
-        --- License: You may use this code in your    ---
-        ---          projects as long as this header  ---
-        ---          stays intact.                    ---
-        -------------------------------------------------
-        -- Adapted for LuaX                           --
-        -------------------------------------------------
-
-        local strlen  = string.len
-        local strchar = string.char
-        local strbyte = string.byte
-        local strsub  = string.sub
-        local lshift  = function(a,n) return (a << n) & 0xFFFFFFFF end
-        local rshift  = function(a,n) return (a&0xFFFFFFFF) >> n end
-        local lrot    = function(a,n) return lshift(a, n) | rshift(a, 32-n) end
-        local pack = string.pack
-
-        local h0, h1, h2, h3, h4
-
-        -------------------------------------------------
-
-        local function preprocess(str)
-            local bitlen, i
-            local str2 = ""
-            bitlen = strlen(str) * 8
-            str = str .. strchar(128)
-            i = 56 - (strlen(str)&63)
-            if i < 0 then
-                i = i + 64
-            end
-            for _ = 1, i do
-                str = str .. strchar(0)
-            end
-            for _ = 1, 8 do
-                str2 = strchar(bitlen & 0xFF) .. str2
-                bitlen = bitlen >> 8
-            end
-            return str .. str2
-        end
-
-        -------------------------------------------------
-
-        local function main_loop(str)
-            local a, b, c, d, e, f, k, t
-            local w = {}
-            while (str ~= "") do
-                for i = 0, 15 do
-                    w[i] = 0
-                    for j = 1, 4 do
-                        w[i] = w[i] * 256 + strbyte(str, i * 4 + j)
-                    end
-                end
-                for i = 16, 79 do
-                    w[i] = lrot(w[i - 3] ~ w[i - 8] ~ w[i - 14] ~ w[i - 16], 1)
-                end
-                a = h0
-                b = h1
-                c = h2
-                d = h3
-                e = h4
-                for i = 0, 79 do
-                    if i < 20 then
-                        f = (b&c) ~ ((~b)&d)
-                        k = 1518500249
-                    elseif i < 40 then
-                        f = b ~ c ~ d
-                        k = 1859775393
-                    elseif i < 60 then
-                        f = (b&c) | (b&d) | (c&d)
-                        k = 2400959708
-                    else
-                        f = b ~ c ~ d
-                        k = 3395469782
-                    end
-                    t = lrot(a, 5) + f + e + k + w[i]
-                    e = d
-                    d = c
-                    c = lrot(b, 30)
-                    b = a
-                    a = t
-                end
-                h0 = (h0 + a) & 0xFFFFFFFF
-                h1 = (h1 + b) & 0xFFFFFFFF
-                h2 = (h2 + c) & 0xFFFFFFFF
-                h3 = (h3 + d) & 0xFFFFFFFF
-                h4 = (h4 + e) & 0xFFFFFFFF
-                str = strsub(str, 65)
-            end
-        end
-
-        -------------------------------------------------
-
-        function crypt.sha1(s)
-            s = preprocess(s)
-            h0  = 1732584193
-            h1  = 4023233417
-            h2  = 2562383102
-            h3  = 0271733878
-            h4  = 3285377520
-            main_loop(s)
-            return pack(">I4I4I4I4I4", h0, h1, h2, h3, h4):hex()
-        end
-
-    end
-
-    function crypt.hash(s)
-        local hash = 1844674407370955155*10+7
-        hash = hash * 6364136223846793005 + 1
-        for i = 1, #s do
-            local c = byte(s, i)
-            hash = hash * 6364136223846793005 + ((c << 1) | 1)
-        end
-        hash = hash * 6364136223846793005 + 1
-        return ("<I8"):pack(hash):hex()
-    end
-
-end
 
 --[[------------------------------------------------------------------------@@@
 ## Random array access
@@ -4751,18 +4218,445 @@ s:hash()            == crypt.hash(s)
 ```
 @@@]]
 
-function string.hex(s)          return crypt.hex(s) end
-function string.unhex(s)        return crypt.unhex(s) end
-function string.base64(s)       return crypt.base64(s) end
-function string.unbase64(s)     return crypt.unbase64(s) end
-function string.base64url(s)    return crypt.base64url(s) end
-function string.unbase64url(s)  return crypt.unbase64url(s) end
-function string.rc4(s, k, d)    return crypt.rc4(s, k, d) end
-function string.unrc4(s, k, d)  return crypt.unrc4(s, k, d) end
-function string.sha1(s)         return crypt.sha1(s) end
-function string.hash(s)         return crypt.hash(s) end
-function string.crc32(s)        return crypt.crc32(s) end
-function string.crc64(s)        return crypt.crc64(s) end
+string.hex          = crypt.hex
+string.unhex        = crypt.unhex
+string.base64       = crypt.base64
+string.unbase64     = crypt.unbase64
+string.base64url    = crypt.base64url
+string.unbase64url  = crypt.unbase64url
+string.rc4          = crypt.rc4
+string.unrc4        = crypt.unrc4
+string.sha1         = crypt.sha1
+string.hash         = crypt.hash
+string.crc32        = crypt.crc32
+string.crc64        = crypt.crc64
+
+return crypt
+]=]),
+["_crypt"] = lib("libluax/crypt/_crypt.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--@LIB
+
+-- Pure Lua implementation of crypt.c
+
+local crypt = {}
+
+-- Random number generator
+
+local prng_mt = {__index={}}
+
+local random = math.random
+
+local byte = string.byte
+local char = string.char
+local format = string.format
+local gsub = string.gsub
+
+local concat = table.concat
+
+local tonumber = tonumber
+
+local RAND_MAX = 0xFFFFFFFF
+
+crypt.RAND_MAX = RAND_MAX
+
+function crypt.prng(seed, inc)
+    local self = setmetatable({}, prng_mt)
+    self:seed(seed or random(0), inc)
+    return self
+end
+
+function prng_mt.__index:seed(seed, inc)
+    self.state = assert(seed, "seed parameter missing")
+    self.inc = (inc or 1) | 1
+    self.state = 6364136223846793005*self.state + self.inc
+    self.state = 6364136223846793005*self.state + self.inc
+end
+
+local function prng_int(self, a, b)
+    local oldstate = self.state
+    self.state = 6364136223846793005*oldstate + self.inc
+    local xorshifted = (((oldstate >> 18) ~ oldstate) >> 27) & 0xFFFFFFFF
+    local rot = oldstate >> 59;
+    local r = ((xorshifted >> rot) | (xorshifted << ((-rot) & 31))) & 0xFFFFFFFF
+
+    if not a then return r end
+    if not b then return r % (a+1) end
+    return r % (b-a+1) + a
+end
+prng_mt.__index.int = prng_int
+
+local function prng_float(self, a, b)
+    local r = prng_int(self)
+    if not a then return r / RAND_MAX end
+    if not b then return r * a/RAND_MAX end
+    return r * (b-a)/RAND_MAX + a
+end
+prng_mt.__index.float = prng_float
+
+local function prng_str(self, n)
+    local bs = {}
+    for i = 1, n do
+        bs[i] = char(prng_int(self, 0, 255))
+    end
+    return concat(bs)
+end
+prng_mt.__index.str = prng_str
+
+-- global random number generator
+local _rng = crypt.prng()
+function crypt.seed(...) return _rng:seed(...) end
+function crypt.int(...) return _rng:int(...) end
+function crypt.float(...) return _rng:float(...) end
+function crypt.str(...) return _rng:str(...) end
+
+-- Hexadecimal encoding
+
+function crypt.hex(s)
+    return (gsub(s, '.', function(c) return format("%02x", byte(c)) end))
+end
+
+function crypt.unhex(s)
+    return (gsub(s, '..', function(h) return char(tonumber(h, 16)) end))
+end
+
+-- Base64 encoding
+
+-- see <https://en.wikipedia.org/wiki/Base64>
+
+local b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+function crypt.base64(s)
+    return ((s:gsub('.', function(x)
+        local r,b='',x:byte()
+        for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
+        return r;
+    end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
+        if (#x < 6) then return '' end
+        local c=0
+        for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
+        return b64chars:sub(c+1,c+1)
+    end)..({ '', '==', '=' })[#s%3+1])
+end
+
+function crypt.base64url(s)
+    return crypt.base64(s):gsub("+", "-"):gsub("/", "_")
+end
+
+function crypt.unbase64(s)
+    s = string.gsub(s, '[^'..b64chars..'=]', '')
+    return (s:gsub('.', function(x)
+        if (x == '=') then return '' end
+        local r,f='',(b64chars:find(x)-1)
+        for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
+        return r;
+    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
+        if (#x ~= 8) then return '' end
+        local c=0
+        for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
+        return string.char(c)
+    end))
+end
+
+function crypt.unbase64url(s)
+    return crypt.unbase64(s:gsub("-", "+"):gsub("_", "/"))
+end
+
+-- CRC32 hash
+
+local crc32_table = { [0]=
+    0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
+    0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988, 0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91,
+    0x1db71064, 0x6ab020f2, 0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,
+    0x136c9856, 0x646ba8c0, 0xfd62f97a, 0x8a65c9ec, 0x14015c4f, 0x63066cd9, 0xfa0f3d63, 0x8d080df5,
+    0x3b6e20c8, 0x4c69105e, 0xd56041e4, 0xa2677172, 0x3c03e4d1, 0x4b04d447, 0xd20d85fd, 0xa50ab56b,
+    0x35b5a8fa, 0x42b2986c, 0xdbbbc9d6, 0xacbcf940, 0x32d86ce3, 0x45df5c75, 0xdcd60dcf, 0xabd13d59,
+    0x26d930ac, 0x51de003a, 0xc8d75180, 0xbfd06116, 0x21b4f4b5, 0x56b3c423, 0xcfba9599, 0xb8bda50f,
+    0x2802b89e, 0x5f058808, 0xc60cd9b2, 0xb10be924, 0x2f6f7c87, 0x58684c11, 0xc1611dab, 0xb6662d3d,
+    0x76dc4190, 0x01db7106, 0x98d220bc, 0xefd5102a, 0x71b18589, 0x06b6b51f, 0x9fbfe4a5, 0xe8b8d433,
+    0x7807c9a2, 0x0f00f934, 0x9609a88e, 0xe10e9818, 0x7f6a0dbb, 0x086d3d2d, 0x91646c97, 0xe6635c01,
+    0x6b6b51f4, 0x1c6c6162, 0x856530d8, 0xf262004e, 0x6c0695ed, 0x1b01a57b, 0x8208f4c1, 0xf50fc457,
+    0x65b0d9c6, 0x12b7e950, 0x8bbeb8ea, 0xfcb9887c, 0x62dd1ddf, 0x15da2d49, 0x8cd37cf3, 0xfbd44c65,
+    0x4db26158, 0x3ab551ce, 0xa3bc0074, 0xd4bb30e2, 0x4adfa541, 0x3dd895d7, 0xa4d1c46d, 0xd3d6f4fb,
+    0x4369e96a, 0x346ed9fc, 0xad678846, 0xda60b8d0, 0x44042d73, 0x33031de5, 0xaa0a4c5f, 0xdd0d7cc9,
+    0x5005713c, 0x270241aa, 0xbe0b1010, 0xc90c2086, 0x5768b525, 0x206f85b3, 0xb966d409, 0xce61e49f,
+    0x5edef90e, 0x29d9c998, 0xb0d09822, 0xc7d7a8b4, 0x59b33d17, 0x2eb40d81, 0xb7bd5c3b, 0xc0ba6cad,
+    0xedb88320, 0x9abfb3b6, 0x03b6e20c, 0x74b1d29a, 0xead54739, 0x9dd277af, 0x04db2615, 0x73dc1683,
+    0xe3630b12, 0x94643b84, 0x0d6d6a3e, 0x7a6a5aa8, 0xe40ecf0b, 0x9309ff9d, 0x0a00ae27, 0x7d079eb1,
+    0xf00f9344, 0x8708a3d2, 0x1e01f268, 0x6906c2fe, 0xf762575d, 0x806567cb, 0x196c3671, 0x6e6b06e7,
+    0xfed41b76, 0x89d32be0, 0x10da7a5a, 0x67dd4acc, 0xf9b9df6f, 0x8ebeeff9, 0x17b7be43, 0x60b08ed5,
+    0xd6d6a3e8, 0xa1d1937e, 0x38d8c2c4, 0x4fdff252, 0xd1bb67f1, 0xa6bc5767, 0x3fb506dd, 0x48b2364b,
+    0xd80d2bda, 0xaf0a1b4c, 0x36034af6, 0x41047a60, 0xdf60efc3, 0xa867df55, 0x316e8eef, 0x4669be79,
+    0xcb61b38c, 0xbc66831a, 0x256fd2a0, 0x5268e236, 0xcc0c7795, 0xbb0b4703, 0x220216b9, 0x5505262f,
+    0xc5ba3bbe, 0xb2bd0b28, 0x2bb45a92, 0x5cb36a04, 0xc2d7ffa7, 0xb5d0cf31, 0x2cd99e8b, 0x5bdeae1d,
+    0x9b64c2b0, 0xec63f226, 0x756aa39c, 0x026d930a, 0x9c0906a9, 0xeb0e363f, 0x72076785, 0x05005713,
+    0x95bf4a82, 0xe2b87a14, 0x7bb12bae, 0x0cb61b38, 0x92d28e9b, 0xe5d5be0d, 0x7cdcefb7, 0x0bdbdf21,
+    0x86d3d2d4, 0xf1d4e242, 0x68ddb3f8, 0x1fda836e, 0x81be16cd, 0xf6b9265b, 0x6fb077e1, 0x18b74777,
+    0x88085ae6, 0xff0f6a70, 0x66063bca, 0x11010b5c, 0x8f659eff, 0xf862ae69, 0x616bffd3, 0x166ccf45,
+    0xa00ae278, 0xd70dd2ee, 0x4e048354, 0x3903b3c2, 0xa7672661, 0xd06016f7, 0x4969474d, 0x3e6e77db,
+    0xaed16a4a, 0xd9d65adc, 0x40df0b66, 0x37d83bf0, 0xa9bcae53, 0xdebb9ec5, 0x47b2cf7f, 0x30b5ffe9,
+    0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693, 0x54de5729, 0x23d967bf,
+    0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
+}
+
+function crypt.crc32(s)
+    local crc = 0xFFFFFFFF
+    for i = 1, #s do
+        crc = (crc>>8) ~ crc32_table[(crc~byte(s, i))&0xFF]
+    end
+    return crc ~ 0xFFFFFFFF
+end
+
+-- CRC64 hash
+
+local crc64_table = { [0]=
+    0x0000000000000000, 0xb32e4cbe03a75f6f, 0xf4843657a840a05b, 0x47aa7ae9abe7ff34,
+    0x7bd0c384ff8f5e33, 0xc8fe8f3afc28015c, 0x8f54f5d357cffe68, 0x3c7ab96d5468a107,
+    0xf7a18709ff1ebc66, 0x448fcbb7fcb9e309, 0x0325b15e575e1c3d, 0xb00bfde054f94352,
+    0x8c71448d0091e255, 0x3f5f08330336bd3a, 0x78f572daa8d1420e, 0xcbdb3e64ab761d61,
+    0x7d9ba13851336649, 0xceb5ed8652943926, 0x891f976ff973c612, 0x3a31dbd1fad4997d,
+    0x064b62bcaebc387a, 0xb5652e02ad1b6715, 0xf2cf54eb06fc9821, 0x41e11855055bc74e,
+    0x8a3a2631ae2dda2f, 0x39146a8fad8a8540, 0x7ebe1066066d7a74, 0xcd905cd805ca251b,
+    0xf1eae5b551a2841c, 0x42c4a90b5205db73, 0x056ed3e2f9e22447, 0xb6409f5cfa457b28,
+    0xfb374270a266cc92, 0x48190ecea1c193fd, 0x0fb374270a266cc9, 0xbc9d3899098133a6,
+    0x80e781f45de992a1, 0x33c9cd4a5e4ecdce, 0x7463b7a3f5a932fa, 0xc74dfb1df60e6d95,
+    0x0c96c5795d7870f4, 0xbfb889c75edf2f9b, 0xf812f32ef538d0af, 0x4b3cbf90f69f8fc0,
+    0x774606fda2f72ec7, 0xc4684a43a15071a8, 0x83c230aa0ab78e9c, 0x30ec7c140910d1f3,
+    0x86ace348f355aadb, 0x3582aff6f0f2f5b4, 0x7228d51f5b150a80, 0xc10699a158b255ef,
+    0xfd7c20cc0cdaf4e8, 0x4e526c720f7dab87, 0x09f8169ba49a54b3, 0xbad65a25a73d0bdc,
+    0x710d64410c4b16bd, 0xc22328ff0fec49d2, 0x85895216a40bb6e6, 0x36a71ea8a7ace989,
+    0x0adda7c5f3c4488e, 0xb9f3eb7bf06317e1, 0xfe5991925b84e8d5, 0x4d77dd2c5823b7ba,
+    0x64b62bcaebc387a1, 0xd7986774e864d8ce, 0x90321d9d438327fa, 0x231c512340247895,
+    0x1f66e84e144cd992, 0xac48a4f017eb86fd, 0xebe2de19bc0c79c9, 0x58cc92a7bfab26a6,
+    0x9317acc314dd3bc7, 0x2039e07d177a64a8, 0x67939a94bc9d9b9c, 0xd4bdd62abf3ac4f3,
+    0xe8c76f47eb5265f4, 0x5be923f9e8f53a9b, 0x1c4359104312c5af, 0xaf6d15ae40b59ac0,
+    0x192d8af2baf0e1e8, 0xaa03c64cb957be87, 0xeda9bca512b041b3, 0x5e87f01b11171edc,
+    0x62fd4976457fbfdb, 0xd1d305c846d8e0b4, 0x96797f21ed3f1f80, 0x2557339fee9840ef,
+    0xee8c0dfb45ee5d8e, 0x5da24145464902e1, 0x1a083bacedaefdd5, 0xa9267712ee09a2ba,
+    0x955cce7fba6103bd, 0x267282c1b9c65cd2, 0x61d8f8281221a3e6, 0xd2f6b4961186fc89,
+    0x9f8169ba49a54b33, 0x2caf25044a02145c, 0x6b055fede1e5eb68, 0xd82b1353e242b407,
+    0xe451aa3eb62a1500, 0x577fe680b58d4a6f, 0x10d59c691e6ab55b, 0xa3fbd0d71dcdea34,
+    0x6820eeb3b6bbf755, 0xdb0ea20db51ca83a, 0x9ca4d8e41efb570e, 0x2f8a945a1d5c0861,
+    0x13f02d374934a966, 0xa0de61894a93f609, 0xe7741b60e174093d, 0x545a57dee2d35652,
+    0xe21ac88218962d7a, 0x5134843c1b317215, 0x169efed5b0d68d21, 0xa5b0b26bb371d24e,
+    0x99ca0b06e7197349, 0x2ae447b8e4be2c26, 0x6d4e3d514f59d312, 0xde6071ef4cfe8c7d,
+    0x15bb4f8be788911c, 0xa6950335e42fce73, 0xe13f79dc4fc83147, 0x521135624c6f6e28,
+    0x6e6b8c0f1807cf2f, 0xdd45c0b11ba09040, 0x9aefba58b0476f74, 0x29c1f6e6b3e0301b,
+    0xc96c5795d7870f42, 0x7a421b2bd420502d, 0x3de861c27fc7af19, 0x8ec62d7c7c60f076,
+    0xb2bc941128085171, 0x0192d8af2baf0e1e, 0x4638a2468048f12a, 0xf516eef883efae45,
+    0x3ecdd09c2899b324, 0x8de39c222b3eec4b, 0xca49e6cb80d9137f, 0x7967aa75837e4c10,
+    0x451d1318d716ed17, 0xf6335fa6d4b1b278, 0xb199254f7f564d4c, 0x02b769f17cf11223,
+    0xb4f7f6ad86b4690b, 0x07d9ba1385133664, 0x4073c0fa2ef4c950, 0xf35d8c442d53963f,
+    0xcf273529793b3738, 0x7c0979977a9c6857, 0x3ba3037ed17b9763, 0x888d4fc0d2dcc80c,
+    0x435671a479aad56d, 0xf0783d1a7a0d8a02, 0xb7d247f3d1ea7536, 0x04fc0b4dd24d2a59,
+    0x3886b22086258b5e, 0x8ba8fe9e8582d431, 0xcc0284772e652b05, 0x7f2cc8c92dc2746a,
+    0x325b15e575e1c3d0, 0x8175595b76469cbf, 0xc6df23b2dda1638b, 0x75f16f0cde063ce4,
+    0x498bd6618a6e9de3, 0xfaa59adf89c9c28c, 0xbd0fe036222e3db8, 0x0e21ac88218962d7,
+    0xc5fa92ec8aff7fb6, 0x76d4de52895820d9, 0x317ea4bb22bfdfed, 0x8250e80521188082,
+    0xbe2a516875702185, 0x0d041dd676d77eea, 0x4aae673fdd3081de, 0xf9802b81de97deb1,
+    0x4fc0b4dd24d2a599, 0xfceef8632775faf6, 0xbb44828a8c9205c2, 0x086ace348f355aad,
+    0x34107759db5dfbaa, 0x873e3be7d8faa4c5, 0xc094410e731d5bf1, 0x73ba0db070ba049e,
+    0xb86133d4dbcc19ff, 0x0b4f7f6ad86b4690, 0x4ce50583738cb9a4, 0xffcb493d702be6cb,
+    0xc3b1f050244347cc, 0x709fbcee27e418a3, 0x3735c6078c03e797, 0x841b8ab98fa4b8f8,
+    0xadda7c5f3c4488e3, 0x1ef430e13fe3d78c, 0x595e4a08940428b8, 0xea7006b697a377d7,
+    0xd60abfdbc3cbd6d0, 0x6524f365c06c89bf, 0x228e898c6b8b768b, 0x91a0c532682c29e4,
+    0x5a7bfb56c35a3485, 0xe955b7e8c0fd6bea, 0xaeffcd016b1a94de, 0x1dd181bf68bdcbb1,
+    0x21ab38d23cd56ab6, 0x9285746c3f7235d9, 0xd52f0e859495caed, 0x6601423b97329582,
+    0xd041dd676d77eeaa, 0x636f91d96ed0b1c5, 0x24c5eb30c5374ef1, 0x97eba78ec690119e,
+    0xab911ee392f8b099, 0x18bf525d915feff6, 0x5f1528b43ab810c2, 0xec3b640a391f4fad,
+    0x27e05a6e926952cc, 0x94ce16d091ce0da3, 0xd3646c393a29f297, 0x604a2087398eadf8,
+    0x5c3099ea6de60cff, 0xef1ed5546e415390, 0xa8b4afbdc5a6aca4, 0x1b9ae303c601f3cb,
+    0x56ed3e2f9e224471, 0xe5c372919d851b1e, 0xa26908783662e42a, 0x114744c635c5bb45,
+    0x2d3dfdab61ad1a42, 0x9e13b115620a452d, 0xd9b9cbfcc9edba19, 0x6a978742ca4ae576,
+    0xa14cb926613cf817, 0x1262f598629ba778, 0x55c88f71c97c584c, 0xe6e6c3cfcadb0723,
+    0xda9c7aa29eb3a624, 0x69b2361c9d14f94b, 0x2e184cf536f3067f, 0x9d36004b35545910,
+    0x2b769f17cf112238, 0x9858d3a9ccb67d57, 0xdff2a94067518263, 0x6cdce5fe64f6dd0c,
+    0x50a65c93309e7c0b, 0xe388102d33392364, 0xa4226ac498dedc50, 0x170c267a9b79833f,
+    0xdcd7181e300f9e5e, 0x6ff954a033a8c131, 0x28532e49984f3e05, 0x9b7d62f79be8616a,
+    0xa707db9acf80c06d, 0x14299724cc279f02, 0x5383edcd67c06036, 0xe0ada17364673f59
+}
+
+function crypt.crc64(s)
+    local crc = 0xFFFFFFFFFFFFFFFF
+    for i = 1, #s do
+        crc = (crc>>8) ~ crc64_table[(crc~byte(s, i))&0xFF]
+    end
+    return crc ~ 0xFFFFFFFFFFFFFFFF
+end
+
+-- RC4 encryption
+
+function crypt.rc4(input, key, drop)
+    assert(type(key) == "string", "rc4 key shall be a string")
+    drop = drop or 768
+    local S = {}
+    for i = 0, 255 do S[i] = i end
+    local j = 0
+    if #key > 0 then
+        for i = 0, 255 do
+            j = (j + S[i] + byte(key, i%#key+1)) % 256
+            S[i], S[j] = S[j], S[i]
+        end
+    end
+    local i = 0
+    j = 0
+    for _ = 1, drop do
+        i = (i + 1) % 256
+        j = (j + S[i]) % 256
+        S[i], S[j] = S[j], S[i]
+    end
+    local output = {}
+    for k = 1, #input do
+        i = (i + 1) % 256
+        j = (j + S[i]) % 256
+        S[i], S[j] = S[j], S[i]
+        output[k] = char(byte(input, k) ~ S[(S[i] + S[j]) % 256])
+    end
+    return concat(output)
+end
+
+crypt.unrc4 = crypt.rc4
+
+if pandoc then
+    crypt.sha1 = pandoc.utils.sha1
+else
+    -------------------------------------------------
+    ---      *** SHA-1 algorithm for Lua ***      ---
+    -------------------------------------------------
+    --- Author:  Martin Huesser                   ---
+    --- Date:    2008-06-16                       ---
+    --- License: You may use this code in your    ---
+    ---          projects as long as this header  ---
+    ---          stays intact.                    ---
+    -------------------------------------------------
+    -- Adapted for LuaX                           --
+    -------------------------------------------------
+
+    local strlen  = string.len
+    local strchar = string.char
+    local strbyte = string.byte
+    local strsub  = string.sub
+    local lshift  = function(a,n) return (a << n) & 0xFFFFFFFF end
+    local rshift  = function(a,n) return (a&0xFFFFFFFF) >> n end
+    local lrot    = function(a,n) return lshift(a, n) | rshift(a, 32-n) end
+    local pack = string.pack
+
+    local h0, h1, h2, h3, h4
+
+    -------------------------------------------------
+
+    local function preprocess(str)
+        local bitlen, i
+        local str2 = ""
+        bitlen = strlen(str) * 8
+        str = str .. strchar(128)
+        i = 56 - (strlen(str)&63)
+        if i < 0 then
+            i = i + 64
+        end
+        for _ = 1, i do
+            str = str .. strchar(0)
+        end
+        for _ = 1, 8 do
+            str2 = strchar(bitlen & 0xFF) .. str2
+            bitlen = bitlen >> 8
+        end
+        return str .. str2
+    end
+
+    -------------------------------------------------
+
+    local function main_loop(str)
+        local a, b, c, d, e, f, k, t
+        local w = {}
+        while (str ~= "") do
+            for i = 0, 15 do
+                w[i] = 0
+                for j = 1, 4 do
+                    w[i] = w[i] * 256 + strbyte(str, i * 4 + j)
+                end
+            end
+            for i = 16, 79 do
+                w[i] = lrot(w[i - 3] ~ w[i - 8] ~ w[i - 14] ~ w[i - 16], 1)
+            end
+            a = h0
+            b = h1
+            c = h2
+            d = h3
+            e = h4
+            for i = 0, 79 do
+                if i < 20 then
+                    f = (b&c) ~ ((~b)&d)
+                    k = 1518500249
+                elseif i < 40 then
+                    f = b ~ c ~ d
+                    k = 1859775393
+                elseif i < 60 then
+                    f = (b&c) | (b&d) | (c&d)
+                    k = 2400959708
+                else
+                    f = b ~ c ~ d
+                    k = 3395469782
+                end
+                t = lrot(a, 5) + f + e + k + w[i]
+                e = d
+                d = c
+                c = lrot(b, 30)
+                b = a
+                a = t
+            end
+            h0 = (h0 + a) & 0xFFFFFFFF
+            h1 = (h1 + b) & 0xFFFFFFFF
+            h2 = (h2 + c) & 0xFFFFFFFF
+            h3 = (h3 + d) & 0xFFFFFFFF
+            h4 = (h4 + e) & 0xFFFFFFFF
+            str = strsub(str, 65)
+        end
+    end
+
+    -------------------------------------------------
+
+    function crypt.sha1(s)
+        s = preprocess(s)
+        h0  = 1732584193
+        h1  = 4023233417
+        h2  = 2562383102
+        h3  = 0271733878
+        h4  = 3285377520
+        main_loop(s)
+        return pack(">I4I4I4I4I4", h0, h1, h2, h3, h4):hex()
+    end
+
+end
+
+function crypt.hash(s)
+    local hash = 1844674407370955155*10+7
+    hash = hash * 6364136223846793005 + 1
+    for i = 1, #s do
+        local c = byte(s, i)
+        hash = hash * 6364136223846793005 + ((c << 1) | 1)
+    end
+    hash = hash * 6364136223846793005 + 1
+    return ("<I8"):pack(hash):hex()
+end
 
 return crypt
 ]=]),
@@ -4793,229 +4687,10 @@ http://cdelord.fr/luax
 -- Load fs.lua to add new methods to strings
 --@LOAD=_
 
-local _, fs = pcall(require, "_fs")
-fs = _ and fs
+local fs = require "_fs"
 
 local F = require "F"
 local sys = require "sys"
-
--- Pure Lua / Pandoc Lua implementation
-if not fs then
-    fs = {}
-
-    local sh = require "sh"
-
-    if pandoc and pandoc.path then
-        fs.sep = pandoc.path.separator
-        fs.path_sep = pandoc.path.search_path_separator
-    else
-        fs.sep = package.config:match("^([^\n]-)\n")
-        fs.path_sep = fs.sep == '\\' and ";" or ":"
-    end
-
-    if pandoc and pandoc.system then
-        fs.getcwd = pandoc.system.get_working_directory
-    else
-        function fs.getcwd()
-            return sh.read "pwd" : trim() ---@diagnostic disable-line:undefined-field
-        end
-    end
-
-    if pandoc and pandoc.system then
-        fs.dir = F.compose{F, pandoc.system.list_directory}
-    else
-        function fs.dir(path)
-            return sh.read("ls", path) : lines() : sort() ---@diagnostic disable-line:undefined-field
-        end
-    end
-
-    function fs.remove(name)
-        return os.remove(name)
-    end
-
-    function fs.rename(old_name, new_name)
-        return os.rename(old_name, new_name)
-    end
-
-    function fs.copy(source_name, target_name)
-        local from, err_from = io.open(source_name, "rb")
-        if not from then return from, err_from end
-        local to, err_to = io.open(target_name, "wb")
-        if not to then from:close(); return to, err_to end
-        while true do
-            local block = from:read(64*1024)
-            if not block then break end
-            local ok, err = to:write(block)
-            if not ok then
-                from:close()
-                to:close()
-                return ok, err
-            end
-        end
-        from:close()
-        to:close()
-    end
-
-    if pandoc and pandoc.system then
-        fs.mkdir = pandoc.system.make_directory
-    else
-        function fs.mkdir(path)
-            return sh.run("mkdir", path)
-        end
-    end
-
-    local S_IRUSR = 1 << 8
-    local S_IWUSR = 1 << 7
-    local S_IXUSR = 1 << 6
-    local S_IRGRP = 1 << 5
-    local S_IWGRP = 1 << 4
-    local S_IXGRP = 1 << 3
-    local S_IROTH = 1 << 2
-    local S_IWOTH = 1 << 1
-    local S_IXOTH = 1 << 0
-
-    fs.uR = S_IRUSR
-    fs.uW = S_IWUSR
-    fs.uX = S_IXUSR
-    fs.aR = S_IRUSR|S_IRGRP|S_IROTH
-    fs.aW = S_IWUSR|S_IWGRP|S_IWOTH
-    fs.aX = S_IXUSR|S_IXGRP|S_IXOTH
-    fs.gR = S_IRGRP
-    fs.gW = S_IWGRP
-    fs.gX = S_IXGRP
-    fs.oR = S_IROTH
-    fs.oW = S_IWOTH
-    fs.oX = S_IXOTH
-
-    local stat = sys.os=="macos" and "gstat" or "stat"
-
-    function fs.stat(name)
-        local st = sh.read("LC_ALL=C", stat, "-L", "-c '%s;%Y;%X;%W;%F;%f'", name, "2>/dev/null")
-        if not st then return nil, "cannot stat "..name end
-        local size, mtime, atime, ctime, type, mode = st:trim():split ";":unpack()
-        mode = tonumber(mode, 16)
-        if type == "regular file" then type = "file" end
-        return F{
-            name = name,
-            size = tonumber(size),
-            mtime = tonumber(mtime),
-            atime = tonumber(atime),
-            ctime = tonumber(ctime),
-            type = type,
-            mode = mode,
-            uR = (mode & S_IRUSR) ~= 0,
-            uW = (mode & S_IWUSR) ~= 0,
-            uX = (mode & S_IXUSR) ~= 0,
-            gR = (mode & S_IRGRP) ~= 0,
-            gW = (mode & S_IWGRP) ~= 0,
-            gX = (mode & S_IXGRP) ~= 0,
-            oR = (mode & S_IROTH) ~= 0,
-            oW = (mode & S_IWOTH) ~= 0,
-            oX = (mode & S_IXOTH) ~= 0,
-            aR = (mode & (S_IRUSR|S_IRGRP|S_IROTH)) ~= 0,
-            aW = (mode & (S_IWUSR|S_IWGRP|S_IWOTH)) ~= 0,
-            aX = (mode & (S_IXUSR|S_IXGRP|S_IXOTH)) ~= 0,
-        }
-    end
-
-    function fs.inode(name)
-        local st = sh.read("LC_ALL=C", stat, "-L", "-c '%d;%i'", name, "2>/dev/null")
-        if not st then return nil, "cannot stat "..name end
-        local dev, ino = st:trim():split ";":unpack()
-        return F{
-            ino = tonumber(ino),
-            dev = tonumber(dev),
-        }
-    end
-
-    function fs.chmod(name, ...)
-        local mode = {...}
-        if type(mode[1]) == "string" then
-            return sh.run("chmod", "--reference="..mode[1], name, "2>/dev/null")
-        else
-            return sh.run("chmod", ("%o"):format(F(mode):fold(F.op.bor, 0)), name)
-        end
-    end
-
-    function fs.touch(name, opt)
-        if opt == nil then
-            return sh.run("touch", name, "2>/dev/null")
-        elseif type(opt) == "number" then
-            return sh.run("touch", "-d", '"'..os.date("%c", opt)..'"', name, "2>/dev/null")
-        elseif type(opt) == "string" then
-            return sh.run("touch", "--reference="..opt, name, "2>/dev/null")
-        else
-            error "bad argument #2 to touch (none, nil, number or string expected)"
-        end
-    end
-
-    if pandoc and pandoc.path then
-        fs.basename = pandoc.path.filename
-    else
-        function fs.basename(path)
-            return (path:gsub(".*[/\\]", ""))
-        end
-    end
-
-    if pandoc and pandoc.path then
-        fs.dirname = pandoc.path.directory
-    else
-        function fs.dirname(path)
-            local dir, n = path:gsub("[/\\][^/\\]*$", "")
-            return n > 0 and dir or "."
-        end
-    end
-
-    if pandoc and pandoc.path then
-        function fs.splitext(path)
-            if fs.basename(path):match "^%." then
-                return path, ""
-            end
-            return pandoc.path.split_extension(path)
-        end
-    else
-        function fs.splitext(path)
-            local name, ext = path:match("^(.*)(%.[^/\\]-)$")
-            if name and ext and #name > 0 and not name:has_suffix(fs.sep) then
-                return name, ext
-            end
-            return path, ""
-        end
-    end
-
-    function fs.ext(path)
-        local _, ext = fs.splitext(path)
-        return ext
-    end
-
-    if pandoc and pandoc.path then
-        fs.realpath = pandoc.path.normalize
-    else
-        function fs.realpath(path)
-            return sh.read("realpath", path) : trim() ---@diagnostic disable-line:undefined-field
-        end
-    end
-
-    function fs.readlink(path)
-        return sh.read("readlink", path) : trim() ---@diagnostic disable-line:undefined-field
-    end
-
-    function fs.absname(path)
-        if path:match "^[/\\]" or path:match "^.:" then return path end
-        return fs.getcwd()..fs.sep..path
-    end
-
-    if pandoc and pandoc.system then
-        function fs.mkdirs(path)
-            return pandoc.system.make_directory(path, true)
-        end
-    else
-        function fs.mkdirs(path)
-            return sh.run("mkdir", "-p", path)
-        end
-    end
-
-end
 
 --[[@@@
 ```lua
@@ -5461,26 +5136,270 @@ path:walk(...)          == fs.walk(path, ...)
 ```
 @@@]]
 
-function string.dir(path)                   return fs.dir(path) end
-function string.stat(path)                  return fs.stat(path) end
-function string.inode(path)                 return fs.inode(path) end
-function string.basename(path)              return fs.basename(path) end
-function string.dirname(path)               return fs.dirname(path) end
-function string.splitext(path)              return fs.splitext(path) end
-function string.ext(path)                   return fs.ext(path) end
-function string.splitpath(path)             return fs.splitpath(path) end
-function string.realpath(path)              return fs.realpath(path) end
-function string.readlink(path)              return fs.readlink(path) end
-function string.absname(path)               return fs.absname(path) end
+string.dir              = fs.dir
+string.stat             = fs.stat
+string.inode            = fs.inode
+string.basename         = fs.basename
+string.dirname          = fs.dirname
+string.splitext         = fs.splitext
+string.ext              = fs.ext
+string.splitpath        = fs.splitpath
+string.realpath         = fs.realpath
+string.readlink         = fs.readlink
+string.absname          = fs.absname
+string.is_file          = fs.is_file
+string.is_dir           = fs.is_dir
+string.findpath         = fs.findpath
+string.walk             = fs.walk
 
-getmetatable("").__div = function(path1, path2)
-    return fs.join(path1, path2)
+getmetatable("").__div  = fs.join
+
+return fs
+]=]),
+["_fs"] = lib("libluax/fs/_fs.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--[[------------------------------------------------------------------------@@@
+## Additional functions (Lua)
+@@@]]
+
+--@LIB
+
+local F = require "F"
+local sys = require "sys"
+
+-- Pure Lua / Pandoc Lua implementation of fs.c
+
+local fs = {}
+
+local sh = require "sh"
+
+if pandoc and pandoc.path then
+    fs.sep = pandoc.path.separator
+    fs.path_sep = pandoc.path.search_path_separator
+else
+    fs.sep = package.config:match("^([^\n]-)\n")
+    fs.path_sep = fs.sep == '\\' and ";" or ":"
 end
 
-function string.is_file(path)               return fs.is_file(path) end
-function string.is_dir(path)                return fs.is_dir(path) end
-function string.findpath(path)              return fs.findpath(path) end
-function string.walk(path, ...)             return fs.walk(path, ...) end
+if pandoc and pandoc.system then
+    fs.getcwd = pandoc.system.get_working_directory
+else
+    function fs.getcwd()
+        return sh.read "pwd" : trim() ---@diagnostic disable-line:undefined-field
+    end
+end
+
+if pandoc and pandoc.system then
+    fs.dir = F.compose{F, pandoc.system.list_directory}
+else
+    function fs.dir(path)
+        return sh.read("ls", path) : lines() : sort() ---@diagnostic disable-line:undefined-field
+    end
+end
+
+function fs.remove(name)
+    return os.remove(name)
+end
+
+function fs.rename(old_name, new_name)
+    return os.rename(old_name, new_name)
+end
+
+function fs.copy(source_name, target_name)
+    local from, err_from = io.open(source_name, "rb")
+    if not from then return from, err_from end
+    local to, err_to = io.open(target_name, "wb")
+    if not to then from:close(); return to, err_to end
+    while true do
+        local block = from:read(64*1024)
+        if not block then break end
+        local ok, err = to:write(block)
+        if not ok then
+            from:close()
+            to:close()
+            return ok, err
+        end
+    end
+    from:close()
+    to:close()
+end
+
+if pandoc and pandoc.system then
+    fs.mkdir = pandoc.system.make_directory
+else
+    function fs.mkdir(path)
+        return sh.run("mkdir", path)
+    end
+end
+
+local S_IRUSR = 1 << 8
+local S_IWUSR = 1 << 7
+local S_IXUSR = 1 << 6
+local S_IRGRP = 1 << 5
+local S_IWGRP = 1 << 4
+local S_IXGRP = 1 << 3
+local S_IROTH = 1 << 2
+local S_IWOTH = 1 << 1
+local S_IXOTH = 1 << 0
+
+fs.uR = S_IRUSR
+fs.uW = S_IWUSR
+fs.uX = S_IXUSR
+fs.aR = S_IRUSR|S_IRGRP|S_IROTH
+fs.aW = S_IWUSR|S_IWGRP|S_IWOTH
+fs.aX = S_IXUSR|S_IXGRP|S_IXOTH
+fs.gR = S_IRGRP
+fs.gW = S_IWGRP
+fs.gX = S_IXGRP
+fs.oR = S_IROTH
+fs.oW = S_IWOTH
+fs.oX = S_IXOTH
+
+local stat = sys.os=="macos" and "gstat" or "stat"
+
+function fs.stat(name)
+    local st = sh.read("LC_ALL=C", stat, "-L", "-c '%s;%Y;%X;%W;%F;%f'", name, "2>/dev/null")
+    if not st then return nil, "cannot stat "..name end
+    local size, mtime, atime, ctime, type, mode = st:trim():split ";":unpack()
+    mode = tonumber(mode, 16)
+    if type == "regular file" then type = "file" end
+    return F{
+        name = name,
+        size = tonumber(size),
+        mtime = tonumber(mtime),
+        atime = tonumber(atime),
+        ctime = tonumber(ctime),
+        type = type,
+        mode = mode,
+        uR = (mode & S_IRUSR) ~= 0,
+        uW = (mode & S_IWUSR) ~= 0,
+        uX = (mode & S_IXUSR) ~= 0,
+        gR = (mode & S_IRGRP) ~= 0,
+        gW = (mode & S_IWGRP) ~= 0,
+        gX = (mode & S_IXGRP) ~= 0,
+        oR = (mode & S_IROTH) ~= 0,
+        oW = (mode & S_IWOTH) ~= 0,
+        oX = (mode & S_IXOTH) ~= 0,
+        aR = (mode & (S_IRUSR|S_IRGRP|S_IROTH)) ~= 0,
+        aW = (mode & (S_IWUSR|S_IWGRP|S_IWOTH)) ~= 0,
+        aX = (mode & (S_IXUSR|S_IXGRP|S_IXOTH)) ~= 0,
+    }
+end
+
+function fs.inode(name)
+    local st = sh.read("LC_ALL=C", stat, "-L", "-c '%d;%i'", name, "2>/dev/null")
+    if not st then return nil, "cannot stat "..name end
+    local dev, ino = st:trim():split ";":unpack()
+    return F{
+        ino = tonumber(ino),
+        dev = tonumber(dev),
+    }
+end
+
+function fs.chmod(name, ...)
+    local mode = {...}
+    if type(mode[1]) == "string" then
+        return sh.run("chmod", "--reference="..mode[1], name, "2>/dev/null")
+    else
+        return sh.run("chmod", ("%o"):format(F(mode):fold(F.op.bor, 0)), name)
+    end
+end
+
+function fs.touch(name, opt)
+    if opt == nil then
+        return sh.run("touch", name, "2>/dev/null")
+    elseif type(opt) == "number" then
+        return sh.run("touch", "-d", '"'..os.date("%c", opt)..'"', name, "2>/dev/null")
+    elseif type(opt) == "string" then
+        return sh.run("touch", "--reference="..opt, name, "2>/dev/null")
+    else
+        error "bad argument #2 to touch (none, nil, number or string expected)"
+    end
+end
+
+if pandoc and pandoc.path then
+    fs.basename = pandoc.path.filename
+else
+    function fs.basename(path)
+        return (path:gsub(".*[/\\]", ""))
+    end
+end
+
+if pandoc and pandoc.path then
+    fs.dirname = pandoc.path.directory
+else
+    function fs.dirname(path)
+        local dir, n = path:gsub("[/\\][^/\\]*$", "")
+        return n > 0 and dir or "."
+    end
+end
+
+if pandoc and pandoc.path then
+    function fs.splitext(path)
+        if fs.basename(path):match "^%." then
+            return path, ""
+        end
+        return pandoc.path.split_extension(path)
+    end
+else
+    function fs.splitext(path)
+        local name, ext = path:match("^(.*)(%.[^/\\]-)$")
+        if name and ext and #name > 0 and not name:has_suffix(fs.sep) then
+            return name, ext
+        end
+        return path, ""
+    end
+end
+
+function fs.ext(path)
+    local _, ext = fs.splitext(path)
+    return ext
+end
+
+if pandoc and pandoc.path then
+    fs.realpath = pandoc.path.normalize
+else
+    function fs.realpath(path)
+        return sh.read("realpath", path) : trim() ---@diagnostic disable-line:undefined-field
+    end
+end
+
+function fs.readlink(path)
+    return sh.read("readlink", path) : trim() ---@diagnostic disable-line:undefined-field
+end
+
+function fs.absname(path)
+    if path:match "^[/\\]" or path:match "^.:" then return path end
+    return fs.getcwd()..fs.sep..path
+end
+
+if pandoc and pandoc.system then
+    function fs.mkdirs(path)
+        return pandoc.system.make_directory(path, true)
+    end
+else
+    function fs.mkdirs(path)
+        return sh.run("mkdir", "-p", path)
+    end
+end
 
 return fs
 ]=]),
@@ -5505,437 +5424,433 @@ http://cdelord.fr/luax
 --]]
 
 --@LIB
-local _, imath = pcall(require, "_imath")
-imath = _ and imath
 
-if not imath then
+-- Pure Lua implementation of imath.c
 
-    imath = {}
-    local mt = {__index={}}
+local imath = {}
+local mt = {__index={}}
 
-    ---@diagnostic disable:unused-vararg
-    local function ni(f) return function(...) error(f.." not implemented") end end
+---@diagnostic disable:unused-vararg
+local function ni(f) return function(...) error(f.." not implemented") end end
 
-    local floor = math.floor
-    local ceil = math.ceil
-    local sqrt = math.sqrt
-    local log = math.log
-    local max = math.max
+local floor = math.floor
+local ceil = math.ceil
+local sqrt = math.sqrt
+local log = math.log
+local max = math.max
 
-    local RADIX = 10000000
-    local RADIX_LEN = floor(log(RADIX, 10))
+local RADIX = 10000000
+local RADIX_LEN = floor(log(RADIX, 10))
 
-    assert(RADIX^2 < 2^53, "RADIX^2 shall be storable on a Lua number")
+assert(RADIX^2 < 2^53, "RADIX^2 shall be storable on a Lua number")
 
-    local int_add, int_sub, int_mul, int_divmod, int_abs
+local int_add, int_sub, int_mul, int_divmod, int_abs
 
-    local function int_trim(a)
-        for i = #a, 1, -1 do
-            if a[i] and a[i] ~= 0 then break end
-            a[i] = nil
-        end
-        if #a == 0 then a.sign = 1 end
+local function int_trim(a)
+    for i = #a, 1, -1 do
+        if a[i] and a[i] ~= 0 then break end
+        a[i] = nil
     end
+    if #a == 0 then a.sign = 1 end
+end
 
-    local function int(n, base)
-        n = n or 0
-        if type(n) == "table" then return n end
-        if type(n) == "number" then n = ("%.0f"):format(floor(n)) end
-        assert(type(n) == "string")
-        n = n:gsub("[ _]", "")
-        local sign = 1
-        local d = 1 -- current digit index
-        if n:sub(d, d) == "+" then d = d+1
-        elseif n:sub(d, d) == "-" then sign = -1; d = d+1
-        end
-        if n:sub(d, d+1) == "0x" then d = d+2; base = 16
-        elseif n:sub(d, d+1) == "0o" then d = d+2; base = 8
-        elseif n:sub(d, d+1) == "0b" then d = d+2; base = 2
-        else base = base or 10
-        end
-        local self = {sign=1}
-        if base == 10 then
-            for i = #n, d, -RADIX_LEN do
-                local digit = n:sub(max(d, i-RADIX_LEN+1), i)
-                self[#self+1] = tonumber(digit)
-            end
-        else
-            local bn_base = {sign=1, base}
-            local bn_shift = {sign=1, 1}
-            local bn_digit = {sign=1, 0}
-            for i = #n, d, -1 do
-                bn_digit[1] = tonumber(n:sub(i, i), base)
-                self = int_add(self, int_mul(bn_digit, bn_shift))
-                bn_shift = int_mul(bn_shift, bn_base)
-            end
-        end
-        self.sign = sign
-        int_trim(self)
-        return setmetatable(self, mt)
+local function int(n, base)
+    n = n or 0
+    if type(n) == "table" then return n end
+    if type(n) == "number" then n = ("%.0f"):format(floor(n)) end
+    assert(type(n) == "string")
+    n = n:gsub("[ _]", "")
+    local sign = 1
+    local d = 1 -- current digit index
+    if n:sub(d, d) == "+" then d = d+1
+    elseif n:sub(d, d) == "-" then sign = -1; d = d+1
     end
-
-    local int_zero = int(0)
-    local int_one = int(1)
-    local int_two = int(2)
-
-    local function int_copy(n)
-        local c = {sign=n.sign}
-        for i = 1, #n do
-            c[i] = n[i]
-        end
-        return setmetatable(c, mt)
+    if n:sub(d, d+1) == "0x" then d = d+2; base = 16
+    elseif n:sub(d, d+1) == "0o" then d = d+2; base = 8
+    elseif n:sub(d, d+1) == "0b" then d = d+2; base = 2
+    else base = base or 10
     end
+    local self = {sign=1}
+    if base == 10 then
+        for i = #n, d, -RADIX_LEN do
+            local digit = n:sub(max(d, i-RADIX_LEN+1), i)
+            self[#self+1] = tonumber(digit)
+        end
+    else
+        local bn_base = {sign=1, base}
+        local bn_shift = {sign=1, 1}
+        local bn_digit = {sign=1, 0}
+        for i = #n, d, -1 do
+            bn_digit[1] = tonumber(n:sub(i, i), base)
+            self = int_add(self, int_mul(bn_digit, bn_shift))
+            bn_shift = int_mul(bn_shift, bn_base)
+        end
+    end
+    self.sign = sign
+    int_trim(self)
+    return setmetatable(self, mt)
+end
+
+local int_zero = int(0)
+local int_one = int(1)
+local int_two = int(2)
+
+local function int_copy(n)
+    local c = {sign=n.sign}
+    for i = 1, #n do
+        c[i] = n[i]
+    end
+    return setmetatable(c, mt)
+end
 
 
-    local function int_tonumber(n)
-        local s = n.sign < 0 and "-0" or "0"
+local function int_tonumber(n)
+    local s = n.sign < 0 and "-0" or "0"
+    local fmt = ("%%0%dd"):format(RADIX_LEN)
+    for i = #n, 1, -1 do
+        s = s..fmt:format(n[i])
+    end
+    return tonumber(s..".")
+end
+
+local function int_tostring(n, base)
+    base = base or 10
+    local s = ""
+    local sign = n.sign
+    if base == 10 then
         local fmt = ("%%0%dd"):format(RADIX_LEN)
-        for i = #n, 1, -1 do
-            s = s..fmt:format(n[i])
+        for i = 1, #n do
+            s = fmt:format(n[i]) .. s
         end
-        return tonumber(s..".")
-    end
-
-    local function int_tostring(n, base)
-        base = base or 10
-        local s = ""
-        local sign = n.sign
-        if base == 10 then
-            local fmt = ("%%0%dd"):format(RADIX_LEN)
-            for i = 1, #n do
-                s = fmt:format(n[i]) .. s
-            end
-            s = s:gsub("^[_0]+", "")
-            if s == "" then s = "0" end
-        else
-            local bn_base = int(base)
-            local absn = int_abs(n)
-            while #absn > 0 do
-                local d
-                absn, d = int_divmod(absn, bn_base)
-                d = int_tonumber(d)
-                s = ("0123456789ABCDEF"):sub(d+1, d+1) .. s
-            end
-            s = s:gsub("^0+", "")
-            if s == "" then s = "0" end
+        s = s:gsub("^[_0]+", "")
+        if s == "" then s = "0" end
+    else
+        local bn_base = int(base)
+        local absn = int_abs(n)
+        while #absn > 0 do
+            local d
+            absn, d = int_divmod(absn, bn_base)
+            d = int_tonumber(d)
+            s = ("0123456789ABCDEF"):sub(d+1, d+1) .. s
         end
-        if sign < 0 then s = "-" .. s end
-        return s
+        s = s:gsub("^0+", "")
+        if s == "" then s = "0" end
     end
+    if sign < 0 then s = "-" .. s end
+    return s
+end
 
-    local function int_iszero(a)
-        return #a == 0
+local function int_iszero(a)
+    return #a == 0
+end
+
+local function int_isone(a)
+    return #a == 1 and a[1] == 1 and a.sign == 1
+end
+
+local function int_cmp(a, b)
+    if #a == 0 and #b == 0 then return 0 end -- 0 == -0
+    if a.sign > b.sign then return 1 end
+    if a.sign < b.sign then return -1 end
+    if #a > #b then return a.sign end
+    if #a < #b then return -a.sign end
+    for i = #a, 1, -1 do
+        if a[i] > b[i] then return a.sign end
+        if a[i] < b[i] then return -a.sign end
     end
+    return 0
+end
 
-    local function int_isone(a)
-        return #a == 1 and a[1] == 1 and a.sign == 1
+local function int_abscmp(a, b)
+    if #a > #b then return 1 end
+    if #a < #b then return -1 end
+    for i = #a, 1, -1 do
+        if a[i] > b[i] then return 1 end
+        if a[i] < b[i] then return -1 end
     end
+    return 0
+end
 
-    local function int_cmp(a, b)
-        if #a == 0 and #b == 0 then return 0 end -- 0 == -0
-        if a.sign > b.sign then return 1 end
-        if a.sign < b.sign then return -1 end
-        if #a > #b then return a.sign end
-        if #a < #b then return -a.sign end
-        for i = #a, 1, -1 do
-            if a[i] > b[i] then return a.sign end
-            if a[i] < b[i] then return -a.sign end
-        end
-        return 0
-    end
+local function int_neg(a)
+    local b = int_copy(a)
+    b.sign = -a.sign
+    return b
+end
 
-    local function int_abscmp(a, b)
-        if #a > #b then return 1 end
-        if #a < #b then return -1 end
-        for i = #a, 1, -1 do
-            if a[i] > b[i] then return 1 end
-            if a[i] < b[i] then return -1 end
-        end
-        return 0
-    end
-
-    local function int_neg(a)
-        local b = int_copy(a)
-        b.sign = -a.sign
-        return b
-    end
-
-    int_add = function(a, b)
-        if a.sign == b.sign then            -- a+b = a+b, (-a)+(-b) = -(a+b)
-            local c = int()
-            c.sign = a.sign
-            local carry = 0
-            for i = 1, max(#a, #b) + 1 do -- +1 for the last carry
-                c[i] = carry + (a[i] or 0) + (b[i] or 0)
-                if c[i] >= RADIX then
-                    c[i] = c[i] - RADIX
-                    carry = 1
-                else
-                    carry = 0
-                end
-            end
-            int_trim(c)
-            return c
-        else
-            return int_sub(a, int_neg(b))
-        end
-    end
-
-    int_sub = function(a, b)
-        if a.sign == b.sign then
-            local A, B
-            local cmp = int_abscmp(a, b)
-            if cmp >= 0 then A = a; B = b; else A = b; B = a; end
-            local c = int()
-            local carry = 0
-            for i = 1, #A do
-                c[i] = A[i] - (B[i] or 0) - carry
-                if c[i] < 0 then
-                    c[i] = c[i] + RADIX
-                    carry = 1
-                else
-                    carry = 0
-                end
-            end
-            assert(carry == 0) -- should be true if |A| >= |B|
-            c.sign = (cmp >= 0) and a.sign or -a.sign
-            int_trim(c)
-            return c
-        else
-            local c = int_add(a, int_neg(b))
-            c.sign = a.sign
-            return c
-        end
-    end
-
-    int_mul = function(a, b)
+int_add = function(a, b)
+    if a.sign == b.sign then            -- a+b = a+b, (-a)+(-b) = -(a+b)
         local c = int()
-        for i = 1, #a do
-            local carry = 0
-            for j = 1, #b do
-                carry = (c[i+j-1] or 0) + a[i]*b[j] + carry
-                c[i+j-1] = carry % RADIX
-                carry = math.floor(carry / RADIX)
-            end
-            if carry ~= 0 then
-                c[i + #b] = carry
-            end
-        end
-        int_trim(c)
-        c.sign = a.sign * b.sign
-        return c
-    end
-
-    local function int_absdiv2(a)
-        local c = int()
+        c.sign = a.sign
         local carry = 0
-        for i = 1, #a do
-            c[i] = 0
-        end
-        for i = #a, 1, -1 do
-            c[i] = floor(carry + a[i] / 2)
-            if a[i] % 2 ~= 0 then
-                carry = RADIX // 2
+        for i = 1, max(#a, #b) + 1 do -- +1 for the last carry
+            c[i] = carry + (a[i] or 0) + (b[i] or 0)
+            if c[i] >= RADIX then
+                c[i] = c[i] - RADIX
+                carry = 1
             else
                 carry = 0
             end
         end
-        c.sign = a.sign
         int_trim(c)
-        return c, (a[1] or 0) % 2
+        return c
+    else
+        return int_sub(a, int_neg(b))
     end
+end
 
-    int_divmod = function(a, b)
-        -- euclidian division using dichotomie
-        -- searching q and r such that a = q*b + r and |r| < |b|
-        assert(not int_iszero(b), "Division by zero")
-        if int_iszero(a) then return int_zero, int_zero end
-        if int_isone(b) then return a, int_zero end
-        if b.sign < 0 then a = int_neg(a); b = int_neg(b) end
-        local qmin = int_neg(a)
-        local qmax = a
-        if int_cmp(qmax, qmin) < 0 then qmin, qmax = qmax, qmin end
-        local rmin = int_sub(a, int_mul(qmin, b))
-        if rmin.sign > 0 and int_cmp(rmin, b) < 0 then return qmin, rmin end
-        local rmax = int_sub(a, int_mul(qmax, b))
-        if rmax.sign > 0 and int_cmp(rmax, b) < 0 then return qmax, rmax end
-        assert(rmin.sign ~= rmax.sign)
-        local q = int_absdiv2(int_add(qmin, qmax))
-        local r = int_sub(a, int_mul(q, b))
-        while r.sign < 0 or int_cmp(r, b) >= 0 do
-            if r.sign == rmin.sign then
-                qmin, qmax = q, qmax
-                rmin, rmax = r, rmax
-            else
-                qmin, qmax = qmin, q
-                rmin, rmax = rmin, r
-            end
-            q = int_absdiv2(int_add(qmin, qmax))
-            r = int_sub(a, int_mul(q, b))
-        end
-        return q, r
-    end
-
-    local function int_sqrt(a)
-        assert(a.sign >= 0, "Square root of a negative number")
-        if int_iszero(a) then return int_zero end
-        local b = int()
+int_sub = function(a, b)
+    if a.sign == b.sign then
+        local A, B
+        local cmp = int_abscmp(a, b)
+        if cmp >= 0 then A = a; B = b; else A = b; B = a; end
         local c = int()
-        for i = #a//2+1, #a do b[#b+1] = ceil(sqrt(a[i])) end
-        while b ~= c do
-            c = b
-            local q, _ = int_divmod(a, b)
-            b = int_absdiv2(int_add(b, q))
-            --if b^2 <= a and (b+1)^2 > a then break end
+        local carry = 0
+        for i = 1, #A do
+            c[i] = A[i] - (B[i] or 0) - carry
+            if c[i] < 0 then
+                c[i] = c[i] + RADIX
+                carry = 1
+            else
+                carry = 0
+            end
         end
-        assert(b^2 <= a and (b+1)^2 > a)
-        return b
-    end
-
-    local function int_pow(a, b)
-        assert(b.sign > 0)
-        if #b == 0 then return int_one end
-        if #b == 1 and b[1] == 1 then return a end
-        if #b == 1 and b[1] == 2 then return int_mul(a, a) end
-        local c
-        local q, r = int_absdiv2(b)
-        c = int_pow(a, q)
-        c = int_mul(c, c)
-        if r == 1 then c = int_mul(c, a) end
+        assert(carry == 0) -- should be true if |A| >= |B|
+        c.sign = (cmp >= 0) and a.sign or -a.sign
+        int_trim(c)
+        return c
+    else
+        local c = int_add(a, int_neg(b))
+        c.sign = a.sign
         return c
     end
-
-    int_abs = function(a)
-        local b = int_copy(a)
-        b.sign = 1
-        return b
-    end
-
-    local function int_gcd(a, b)
-        a = int_abs(a)
-        b = int_abs(b)
-        while true do
-            local _
-            local order = int_cmp(a, b)
-            if order == 0 then return a end
-            if order > 0 then
-                _, a = int_divmod(a, b)
-                if int_iszero(a) then return b end
-            else
-                _, b = int_divmod(b, a)
-                if int_iszero(b) then return a end
-            end
-        end
-    end
-
-    local function int_lcm(a, b)
-        a = int_abs(a)
-        b = int_abs(b)
-        return int_mul((int_divmod(a, int_gcd(a, b))), b)
-    end
-
-    local function int_iseven(a)
-        return #a == 0 or a[1]%2 == 0
-    end
-
-    local function int_isodd(a)
-        return #a > 0 and a[1]%2 == 1
-    end
-
-    local int_shift_left, int_shift_right
-
-    int_shift_left = function(a, b)
-        if int_iszero(b) then return a end
-        if b.sign > 0 then
-            return int_mul(a, int_two^b)
-        else
-            return int_shift_right(a, int_neg(b))
-        end
-    end
-
-    int_shift_right = function(a, b)
-        if int_iszero(b) then return a end
-        if b.sign < 0 then
-            return int_shift_left(a, int_neg(b))
-        else
-            return (int_divmod(a, int_two^b))
-        end
-    end
-
-    mt.__add = function(a, b) return int_add(int(a), int(b)) end
-    mt.__div = function(a, b) local q, _ = int_divmod(int(a), int(b)); return q end
-    mt.__eq = function(a, b) return int_cmp(int(a), int(b)) == 0 end
-    mt.__idiv = mt.__div
-    mt.__le = function(a, b) return int_cmp(int(a), int(b)) <= 0 end
-    mt.__lt = function(a, b) return int_cmp(int(a), int(b)) < 0 end
-    mt.__mod = function(a, b) local _, r = int_divmod(int(a), int(b)); return r end
-    mt.__mul = function(a, b) return int_mul(int(a), int(b)) end
-    mt.__pow = function(a, b) return int_pow(int(a), int(b)) end
-    mt.__shl = function(a, b) return int_shift_left(int(a), int(b)) end
-    mt.__shr = function(a, b) return int_shift_right(int(a), int(b)) end
-    mt.__sub = function(a, b) return int_sub(int(a), int(b)) end
-    mt.__tostring = function(a, base) return int_tostring(a, base) end
-    mt.__unm = function(a) return int_neg(a) end
-
-    mt.__index.add = mt.__add
-    mt.__index.bits = ni "bits"
-    mt.__index.compare = function(a, b) return int_cmp(int(a), int(b)) end
-    mt.__index.div = mt.__div
-    mt.__index.egcd = ni "egcd"
-    mt.__index.gcd = function(a, b) return int_gcd(int(a), int(b)) end
-    mt.__index.invmod = ni "invmod"
-    mt.__index.iseven = int_iseven
-    mt.__index.isodd = int_isodd
-    mt.__index.iszero = int_iszero
-    mt.__index.isone = int_isone
-    mt.__index.lcm = function(a, b) return int_lcm(int(a), int(b)) end
-    mt.__index.mod = mt.__mod
-    mt.__index.mul = mt.__mul
-    mt.__index.neg = mt.__unm
-    mt.__index.pow = mt.__pow
-    mt.__index.powmod = ni "powmod"
-    mt.__index.quotrem = function(a, b) return int_divmod(int(a), int(b)) end
-    mt.__index.root = ni "root"
-    mt.__index.shift = mt.__index.shl
-    mt.__index.sqr = function(a) return int_mul(a, a) end
-    mt.__index.sqrt = int_sqrt
-    mt.__index.sub = mt.__sub
-    mt.__index.abs = function(a) return int_abs(a) end
-    mt.__index.tonumber = int_tonumber
-    mt.__index.tostring = mt.__tostring
-    mt.__index.totext = ni "totext"
-
-    imath.abs = function(a) return int(a):abs() end
-    imath.add = function(a, b) return int(a) + int(b) end
-    imath.bits = function(a) return int(a):bits() end
-    imath.compare = function(a, b) return int(a):compare(int(b)) end
-    imath.div = function(a, b) return int(a) / int(b) end
-    imath.egcd = function(a, b) return int(a):egcd(int(b)) end
-    imath.gcd = function(a, b) return int(a):gcd(int(b)) end
-    imath.invmod = function(a, b) return int(a):invmod(int(b)) end
-    imath.iseven = function(a) return int(a):iseven() end
-    imath.isodd = function(a) return int(a):isodd() end
-    imath.iszero = function(a) return int(a):iszero() end
-    imath.isone = function(a) return int(a):isone() end
-    imath.lcm = function(a, b) return int(a):lcm(int(b)) end
-    imath.mod = function(a, b) return int(a) % int(b) end
-    imath.mul = function(a, b) return int(a) * int(b) end
-    imath.neg = function(a) return -int(a) end
-    imath.new = int
-    imath.pow = function(a, b) return int(a) ^ b end
-    imath.powmod = function(a, b) return int(a):powmod(int(b)) end
-    imath.quotrem = function(a, b) return int(a):quotrem(int(b)) end
-    imath.root = function(a) return int(a):root() end
-    imath.shift = function(a, b) return int(a) << b end
-    imath.sqr = function(a) return int(a):sqr() end
-    imath.sqrt = function(a) return int(a):sqrt() end
-    imath.sub = function(a, b) return int(a) - int(b) end
-    imath.text = ni "text"
-    imath.tonumber = function(a) return int(a):tonumber() end
-    imath.tostring = function(a) return int(a):tostring() end
-    imath.totext = function(a) return int(a):totext() end
-
 end
+
+int_mul = function(a, b)
+    local c = int()
+    for i = 1, #a do
+        local carry = 0
+        for j = 1, #b do
+            carry = (c[i+j-1] or 0) + a[i]*b[j] + carry
+            c[i+j-1] = carry % RADIX
+            carry = math.floor(carry / RADIX)
+        end
+        if carry ~= 0 then
+            c[i + #b] = carry
+        end
+    end
+    int_trim(c)
+    c.sign = a.sign * b.sign
+    return c
+end
+
+local function int_absdiv2(a)
+    local c = int()
+    local carry = 0
+    for i = 1, #a do
+        c[i] = 0
+    end
+    for i = #a, 1, -1 do
+        c[i] = floor(carry + a[i] / 2)
+        if a[i] % 2 ~= 0 then
+            carry = RADIX // 2
+        else
+            carry = 0
+        end
+    end
+    c.sign = a.sign
+    int_trim(c)
+    return c, (a[1] or 0) % 2
+end
+
+int_divmod = function(a, b)
+    -- euclidian division using dichotomie
+    -- searching q and r such that a = q*b + r and |r| < |b|
+    assert(not int_iszero(b), "Division by zero")
+    if int_iszero(a) then return int_zero, int_zero end
+    if int_isone(b) then return a, int_zero end
+    if b.sign < 0 then a = int_neg(a); b = int_neg(b) end
+    local qmin = int_neg(a)
+    local qmax = a
+    if int_cmp(qmax, qmin) < 0 then qmin, qmax = qmax, qmin end
+    local rmin = int_sub(a, int_mul(qmin, b))
+    if rmin.sign > 0 and int_cmp(rmin, b) < 0 then return qmin, rmin end
+    local rmax = int_sub(a, int_mul(qmax, b))
+    if rmax.sign > 0 and int_cmp(rmax, b) < 0 then return qmax, rmax end
+    assert(rmin.sign ~= rmax.sign)
+    local q = int_absdiv2(int_add(qmin, qmax))
+    local r = int_sub(a, int_mul(q, b))
+    while r.sign < 0 or int_cmp(r, b) >= 0 do
+        if r.sign == rmin.sign then
+            qmin, qmax = q, qmax
+            rmin, rmax = r, rmax
+        else
+            qmin, qmax = qmin, q
+            rmin, rmax = rmin, r
+        end
+        q = int_absdiv2(int_add(qmin, qmax))
+        r = int_sub(a, int_mul(q, b))
+    end
+    return q, r
+end
+
+local function int_sqrt(a)
+    assert(a.sign >= 0, "Square root of a negative number")
+    if int_iszero(a) then return int_zero end
+    local b = int()
+    local c = int()
+    for i = #a//2+1, #a do b[#b+1] = ceil(sqrt(a[i])) end
+    while b ~= c do
+        c = b
+        local q, _ = int_divmod(a, b)
+        b = int_absdiv2(int_add(b, q))
+        --if b^2 <= a and (b+1)^2 > a then break end
+    end
+    assert(b^2 <= a and (b+1)^2 > a)
+    return b
+end
+
+local function int_pow(a, b)
+    assert(b.sign > 0)
+    if #b == 0 then return int_one end
+    if #b == 1 and b[1] == 1 then return a end
+    if #b == 1 and b[1] == 2 then return int_mul(a, a) end
+    local c
+    local q, r = int_absdiv2(b)
+    c = int_pow(a, q)
+    c = int_mul(c, c)
+    if r == 1 then c = int_mul(c, a) end
+    return c
+end
+
+int_abs = function(a)
+    local b = int_copy(a)
+    b.sign = 1
+    return b
+end
+
+local function int_gcd(a, b)
+    a = int_abs(a)
+    b = int_abs(b)
+    while true do
+        local _
+        local order = int_cmp(a, b)
+        if order == 0 then return a end
+        if order > 0 then
+            _, a = int_divmod(a, b)
+            if int_iszero(a) then return b end
+        else
+            _, b = int_divmod(b, a)
+            if int_iszero(b) then return a end
+        end
+    end
+end
+
+local function int_lcm(a, b)
+    a = int_abs(a)
+    b = int_abs(b)
+    return int_mul((int_divmod(a, int_gcd(a, b))), b)
+end
+
+local function int_iseven(a)
+    return #a == 0 or a[1]%2 == 0
+end
+
+local function int_isodd(a)
+    return #a > 0 and a[1]%2 == 1
+end
+
+local int_shift_left, int_shift_right
+
+int_shift_left = function(a, b)
+    if int_iszero(b) then return a end
+    if b.sign > 0 then
+        return int_mul(a, int_two^b)
+    else
+        return int_shift_right(a, int_neg(b))
+    end
+end
+
+int_shift_right = function(a, b)
+    if int_iszero(b) then return a end
+    if b.sign < 0 then
+        return int_shift_left(a, int_neg(b))
+    else
+        return (int_divmod(a, int_two^b))
+    end
+end
+
+mt.__add = function(a, b) return int_add(int(a), int(b)) end
+mt.__div = function(a, b) local q, _ = int_divmod(int(a), int(b)); return q end
+mt.__eq = function(a, b) return int_cmp(int(a), int(b)) == 0 end
+mt.__idiv = mt.__div
+mt.__le = function(a, b) return int_cmp(int(a), int(b)) <= 0 end
+mt.__lt = function(a, b) return int_cmp(int(a), int(b)) < 0 end
+mt.__mod = function(a, b) local _, r = int_divmod(int(a), int(b)); return r end
+mt.__mul = function(a, b) return int_mul(int(a), int(b)) end
+mt.__pow = function(a, b) return int_pow(int(a), int(b)) end
+mt.__shl = function(a, b) return int_shift_left(int(a), int(b)) end
+mt.__shr = function(a, b) return int_shift_right(int(a), int(b)) end
+mt.__sub = function(a, b) return int_sub(int(a), int(b)) end
+mt.__tostring = function(a, base) return int_tostring(a, base) end
+mt.__unm = function(a) return int_neg(a) end
+
+mt.__index.add = mt.__add
+mt.__index.bits = ni "bits"
+mt.__index.compare = function(a, b) return int_cmp(int(a), int(b)) end
+mt.__index.div = mt.__div
+mt.__index.egcd = ni "egcd"
+mt.__index.gcd = function(a, b) return int_gcd(int(a), int(b)) end
+mt.__index.invmod = ni "invmod"
+mt.__index.iseven = int_iseven
+mt.__index.isodd = int_isodd
+mt.__index.iszero = int_iszero
+mt.__index.isone = int_isone
+mt.__index.lcm = function(a, b) return int_lcm(int(a), int(b)) end
+mt.__index.mod = mt.__mod
+mt.__index.mul = mt.__mul
+mt.__index.neg = mt.__unm
+mt.__index.pow = mt.__pow
+mt.__index.powmod = ni "powmod"
+mt.__index.quotrem = function(a, b) return int_divmod(int(a), int(b)) end
+mt.__index.root = ni "root"
+mt.__index.shift = mt.__index.shl
+mt.__index.sqr = function(a) return int_mul(a, a) end
+mt.__index.sqrt = int_sqrt
+mt.__index.sub = mt.__sub
+mt.__index.abs = function(a) return int_abs(a) end
+mt.__index.tonumber = int_tonumber
+mt.__index.tostring = mt.__tostring
+mt.__index.totext = ni "totext"
+
+imath.abs = function(a) return int(a):abs() end
+imath.add = function(a, b) return int(a) + int(b) end
+imath.bits = function(a) return int(a):bits() end
+imath.compare = function(a, b) return int(a):compare(int(b)) end
+imath.div = function(a, b) return int(a) / int(b) end
+imath.egcd = function(a, b) return int(a):egcd(int(b)) end
+imath.gcd = function(a, b) return int(a):gcd(int(b)) end
+imath.invmod = function(a, b) return int(a):invmod(int(b)) end
+imath.iseven = function(a) return int(a):iseven() end
+imath.isodd = function(a) return int(a):isodd() end
+imath.iszero = function(a) return int(a):iszero() end
+imath.isone = function(a) return int(a):isone() end
+imath.lcm = function(a, b) return int(a):lcm(int(b)) end
+imath.mod = function(a, b) return int(a) % int(b) end
+imath.mul = function(a, b) return int(a) * int(b) end
+imath.neg = function(a) return -int(a) end
+imath.new = int
+imath.pow = function(a, b) return int(a) ^ b end
+imath.powmod = function(a, b) return int(a):powmod(int(b)) end
+imath.quotrem = function(a, b) return int(a):quotrem(int(b)) end
+imath.root = function(a) return int(a):root() end
+imath.shift = function(a, b) return int(a) << b end
+imath.sqr = function(a) return int(a):sqr() end
+imath.sqrt = function(a) return int(a):sqrt() end
+imath.sub = function(a, b) return int(a) - int(b) end
+imath.text = ni "text"
+imath.tonumber = function(a) return int(a):tonumber() end
+imath.tostring = function(a) return int(a):tostring() end
+imath.totext = function(a) return int(a):totext() end
 
 return imath
 ]=]),
@@ -5986,12 +5901,14 @@ local mt = {}
 
 import.files = F{}
 
+local file_set = {}
+
 function mt.__call(self, fname)
     local mod = setmetatable({}, {__index = _ENV})
     assert(loadfile(fname, "t", mod))()
-    if F.not_elem(fname, self.files) then
+    if not file_set[fname] then
         self.files[#self.files+1] = fname
-        table.sort(self.files)
+        file_set[fname] = true
     end
     return mod
 end
@@ -6020,58 +5937,28 @@ http://cdelord.fr/luax
 
 --@LIB
 
-local _, linenoise = pcall(require, "_linenoise")
-linenoise = _ and linenoise
+-- Pure Lua implementation of linenoise.c
 
-if not linenoise then
+local F = require "F"
+local term = require "term"
 
-    local F = require "F"
-    local term = require "term"
+local nop = F.const()
 
-    local nop = F.const()
+local linenoise = {}
 
-    linenoise = {}
+linenoise.read = term.prompt
+linenoise.read_mask = linenoise.read
 
-    linenoise.read = term.prompt
-    linenoise.read_mask = linenoise.read
+linenoise.add = nop
+linenoise.set_len = nop
+linenoise.save = nop
+linenoise.load = nop
+linenoise.multi_line = nop
+linenoise.mask = nop
 
-    linenoise.add = nop
-    linenoise.set_len = nop
-    linenoise.save = nop
-    linenoise.load = nop
-    linenoise.multi_line = nop
-    linenoise.mask = nop
-
-    linenoise.clear = term.clear
-
-end
+linenoise.clear = term.clear
 
 return linenoise
-]=]),
-["lpeg"] = lib("libluax/lpeg/lpeg.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-http://cdelord.fr/luax
---]]
-
---@LIB
-local lpeg = require "_lpeg"
-
-return lpeg
 ]=]),
 ["lz4"] = lib("libluax/lz4/lz4.lua", [=[--[[
 This file is part of luax.
@@ -6102,31 +5989,7 @@ http://cdelord.fr/luax
 The `lz4` functions are also available as `string` methods:
 @@@]]
 
-local _, lz4 = pcall(require, "_lz4")
-lz4 = _ and lz4
-
-if not lz4 then
-
-    lz4 = {}
-
-    local fs = require "fs"
-    local sh = require "sh"
-
-    function lz4.lz4(s)
-        return fs.with_tmpfile(function(tmp)
-            assert(sh.write("lz4 -q -z -BD -9 --frame-crc -f -", tmp)(s))
-            return fs.read_bin(tmp)
-        end)
-    end
-
-    function lz4.unlz4(s)
-        return fs.with_tmpfile(function(tmp)
-            assert(sh.write("lz4 -q -d -f -", tmp)(s))
-            return fs.read_bin(tmp)
-        end)
-    end
-
-end
+local lz4 = require "_lz4"
 
 --[[@@@
 ```lua
@@ -6135,8 +5998,53 @@ s:unlz4()       == lz4.unlz4(s)
 ```
 @@@]]
 
-function string.lz4(s)      return lz4.lz4(s) end
-function string.unlz4(s)    return lz4.unlz4(s) end
+string.lz4      = lz4.lz4
+string.unlz4    = lz4.unlz4
+
+return lz4
+]=]),
+["_lz4"] = lib("libluax/lz4/_lz4.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--@LIB
+
+-- Pure Lua implementation of lz4.lua
+
+local lz4 = {}
+
+local fs = require "fs"
+local sh = require "sh"
+
+function lz4.lz4(s)
+    return fs.with_tmpfile(function(tmp)
+        assert(sh.write("lz4 -q -z -BD -9 --frame-crc -f -", tmp)(s))
+        return fs.read_bin(tmp)
+    end)
+end
+
+function lz4.unlz4(s)
+    return fs.with_tmpfile(function(tmp)
+        assert(sh.write("lz4 -q -d -f -", tmp)(s))
+        return fs.read_bin(tmp)
+    end)
+end
 
 return lz4
 ]=]),
@@ -6371,122 +6279,118 @@ http://cdelord.fr/luax
 --]]
 
 --@LIB
-local _, mathx = pcall(require, "_mathx")
-mathx = _ and mathx
 
-if not mathx then
+-- Pure Lua implementation of mathx.c
 
-    mathx = {}
+local mathx = {}
 
-    local exp = math.exp
-    local log = math.log
-    local log2 = function(x) return log(x, 2) end
-    local abs = math.abs
-    local max = math.max
-    local floor = math.floor
-    local ceil = math.ceil
-    local modf = math.modf
+local exp = math.exp
+local log = math.log
+local log2 = function(x) return log(x, 2) end
+local abs = math.abs
+local max = math.max
+local floor = math.floor
+local ceil = math.ceil
+local modf = math.modf
 
-    local pack = string.pack
-    local unpack = string.unpack
+local pack = string.pack
+local unpack = string.unpack
 
-    local inf = 1/0
+local inf = 1/0
 
-    ---@diagnostic disable:unused-vararg
-    local function ni(f) return function(...) error(f.." not implemented") end end
+---@diagnostic disable:unused-vararg
+local function ni(f) return function(...) error(f.." not implemented") end end
 
-    local function sign(x) return x < 0 and -1 or 1 end
+local function sign(x) return x < 0 and -1 or 1 end
 
-    mathx.fabs = math.abs
-    mathx.acos = math.acos
-    mathx.acosh = function(x) return log(x + (x^2-1)^0.5) end
-    mathx.asin = math.asin
-    mathx.asinh = function(x) return log(x + (x^2+1)^0.5) end
-    mathx.atan = math.atan
-    mathx.atan2 = math.atan
-    mathx.atanh = function(x) return 0.5*log((1+x)/(1-x)) end
-    mathx.cbrt = function(x) return x < 0 and -(-x)^(1/3) or x^(1/3) end
-    mathx.ceil = math.ceil
-    mathx.copysign = function(x, y) return abs(x) * sign(y) end
-    mathx.cos = math.cos
-    mathx.cosh = function(x) return (exp(x)+exp(-x))/2 end
-    mathx.deg = math.deg
-    mathx.erf = ni "erf"
-    mathx.erfc = ni "erfc"
-    mathx.exp = math.exp
-    mathx.exp2 = function(x) return 2^x end
-    mathx.expm1 = function(x) return exp(x)-1 end
-    mathx.fdim = function(x, y) return max(x-y, 0) end
-    mathx.floor = math.floor
-    mathx.fma = function(x, y, z) return x*y + z end
-    mathx.fmax = math.max
-    mathx.fmin = math.min
-    mathx.fmod = math.fmod
-    mathx.frexp = function(x)
-        if x == 0 then return 0, 0 end
-        local ax = abs(x)
-        local e = ceil(log2(ax))
-        local m = ax / (2^e)
-        if m == 1 then m, e = m/2, e+1 end
-        return m*sign(x), e
-    end
-    mathx.gamma = ni "gamma"
-    mathx.hypot = function(x, y)
-        if x == 0 and y == 0 then return 0.0 end
-        local ax, ay = abs(x), abs(y)
-        if ax > ay then return ax * (1+(y/x)^2)^0.5 end
-        return ay * (1+(x/y)^2)^0.5
-    end
-    mathx.isfinite = function(x) return abs(x) < inf end
-    mathx.isinf = function(x) return abs(x) == inf end
-    mathx.isnan = function(x) return x ~= x end
-    mathx.isnormal = ni "isnormal"
-    mathx.ldexp = function(x, e) return x*2^e end
-    mathx.lgamma = ni "lgamma"
-    mathx.log = math.log
-    mathx.log10 = function(x) return log(x, 10) end
-    mathx.log1p = function(x) return log(1+x) end
-    mathx.log2 = function(x) return log(x, 2) end
-    mathx.logb = ni "logb"
-    mathx.modf = math.modf
-    mathx.nearbyint = function(x)
-        local m = modf(x)
-        if m%2 == 0 then
-            return x < 0 and floor(x+0.5) or ceil(x-0.5)
-        else
-            return x >= 0 and floor(x+0.5) or ceil(x-0.5)
-        end
-    end
-    mathx.nextafter = function(x, y)
-        if x == y then return x end
-        if x == 0 then
-            if y > 0 then return 0x0.0000000000001p-1022 end
-            if y < 0 then return -0x0.0000000000001p-1022 end
-        end
-        local i = unpack("i8", pack("d", x))
-        i = i + (  y > x and x < 0 and -1
-                or y < x and x < 0 and 1
-                or y > x and x > 0 and 1
-                or y < x and x > 0 and -1
-                )
-        return unpack("d", pack("i8", i))
-    end
-    mathx.pow = function(x, y) return x^y end
-    mathx.rad = math.rad
-    mathx.round = function(x) return x >= 0 and floor(x+0.5) or ceil(x-0.5) end
-    mathx.scalbn = ni "scalbn"
-    mathx.sin = math.sin
-    mathx.sinh = function(x) return (exp(x)-exp(-x))/2 end
-    mathx.sqrt = math.sqrt
-    mathx.tan = math.tan
-    mathx.tanh = function(x) return (exp(x)-exp(-x))/(exp(x)+exp(-x)) end
-    mathx.trunc = function(x) return x >= 0 and floor(x) or ceil(x) end
-
-    mathx.inf = inf
-    mathx.nan = math.abs(0/0)
-    mathx.pi = math.pi
-
+mathx.fabs = math.abs
+mathx.acos = math.acos
+mathx.acosh = function(x) return log(x + (x^2-1)^0.5) end
+mathx.asin = math.asin
+mathx.asinh = function(x) return log(x + (x^2+1)^0.5) end
+mathx.atan = math.atan
+mathx.atan2 = math.atan
+mathx.atanh = function(x) return 0.5*log((1+x)/(1-x)) end
+mathx.cbrt = function(x) return x < 0 and -(-x)^(1/3) or x^(1/3) end
+mathx.ceil = math.ceil
+mathx.copysign = function(x, y) return abs(x) * sign(y) end
+mathx.cos = math.cos
+mathx.cosh = function(x) return (exp(x)+exp(-x))/2 end
+mathx.deg = math.deg
+mathx.erf = ni "erf"
+mathx.erfc = ni "erfc"
+mathx.exp = math.exp
+mathx.exp2 = function(x) return 2^x end
+mathx.expm1 = function(x) return exp(x)-1 end
+mathx.fdim = function(x, y) return max(x-y, 0) end
+mathx.floor = math.floor
+mathx.fma = function(x, y, z) return x*y + z end
+mathx.fmax = math.max
+mathx.fmin = math.min
+mathx.fmod = math.fmod
+mathx.frexp = function(x)
+    if x == 0 then return 0, 0 end
+    local ax = abs(x)
+    local e = ceil(log2(ax))
+    local m = ax / (2^e)
+    if m == 1 then m, e = m/2, e+1 end
+    return m*sign(x), e
 end
+mathx.gamma = ni "gamma"
+mathx.hypot = function(x, y)
+    if x == 0 and y == 0 then return 0.0 end
+    local ax, ay = abs(x), abs(y)
+    if ax > ay then return ax * (1+(y/x)^2)^0.5 end
+    return ay * (1+(x/y)^2)^0.5
+end
+mathx.isfinite = function(x) return abs(x) < inf end
+mathx.isinf = function(x) return abs(x) == inf end
+mathx.isnan = function(x) return x ~= x end
+mathx.isnormal = ni "isnormal"
+mathx.ldexp = function(x, e) return x*2^e end
+mathx.lgamma = ni "lgamma"
+mathx.log = math.log
+mathx.log10 = function(x) return log(x, 10) end
+mathx.log1p = function(x) return log(1+x) end
+mathx.log2 = function(x) return log(x, 2) end
+mathx.logb = ni "logb"
+mathx.modf = math.modf
+mathx.nearbyint = function(x)
+    local m = modf(x)
+    if m%2 == 0 then
+        return x < 0 and floor(x+0.5) or ceil(x-0.5)
+    else
+        return x >= 0 and floor(x+0.5) or ceil(x-0.5)
+    end
+end
+mathx.nextafter = function(x, y)
+    if x == y then return x end
+    if x == 0 then
+        if y > 0 then return 0x0.0000000000001p-1022 end
+        if y < 0 then return -0x0.0000000000001p-1022 end
+    end
+    local i = unpack("i8", pack("d", x))
+    i = i + (  y > x and x < 0 and -1
+            or y < x and x < 0 and 1
+            or y > x and x > 0 and 1
+            or y < x and x > 0 and -1
+            )
+    return unpack("d", pack("i8", i))
+end
+mathx.pow = function(x, y) return x^y end
+mathx.rad = math.rad
+mathx.round = function(x) return x >= 0 and floor(x+0.5) or ceil(x-0.5) end
+mathx.scalbn = ni "scalbn"
+mathx.sin = math.sin
+mathx.sinh = function(x) return (exp(x)-exp(-x))/2 end
+mathx.sqrt = math.sqrt
+mathx.tan = math.tan
+mathx.tanh = function(x) return (exp(x)-exp(-x))/(exp(x)+exp(-x)) end
+mathx.trunc = function(x) return x >= 0 and floor(x) or ceil(x) end
+
+mathx.inf = inf
+mathx.nan = math.abs(0/0)
+mathx.pi = math.pi
 
 return mathx
 ]=]),
@@ -6570,34 +6474,31 @@ http://cdelord.fr/luax
 --]]
 
 --@LIB
-local _, ps = pcall(require, "_ps")
-ps = _ and ps
 
-if not ps then
-    ps = {}
+-- Pure Lua implementation of ps.c
 
-    function ps.sleep(n)
-        io.popen("sleep "..tostring(n)):close()
-    end
+local ps = {}
 
-    ps.time = os.time
+function ps.sleep(n)
+    io.popen("sleep "..tostring(n)):close()
+end
 
-    ps.clock = os.clock
+ps.time = os.time
 
-    function ps.profile(func)
-        local clock = ps.clock
-        local ok, dt = pcall(function()
-            local t0 = clock()
-            func()
-            local t1 = clock()
-            return t1 - t0
-        end)
-        if ok then
-            return dt
-        else
-            return ok, dt
-        end
+ps.clock = os.clock
 
+function ps.profile(func)
+    local clock = ps.clock
+    local ok, dt = pcall(function()
+        local t0 = clock()
+        func()
+        local t1 = clock()
+        return t1 - t0
+    end)
+    if ok then
+        return dt
+    else
+        return ok, dt
     end
 
 end
@@ -6625,112 +6526,11 @@ http://cdelord.fr/luax
 --]]
 
 --@LIB
-local _, qmath = pcall(require, "_qmath")
-qmath = _ and qmath
+local qmath = require "_qmath"
 
 --[[@@@
 ## qmath additional functions
 @@@]]
-
-if not qmath then
-
-    qmath = {}
-    local mt = {__index={}}
-
-    local imath = require "imath"
-    local Z = imath.new
-    local gcd = imath.gcd
-
-    local function rat(num, den)
-        if not den then
-            if type(num) == "table" and num.num and num.den then return num end
-            den = 1
-        end
-        num, den = Z(num), Z(den)
-        assert(den ~= 0, "(qmath) result undefined")
-        if den < 0 then num, den = -num, -den end
-        if num:iszero() then
-            den = Z(1)
-        else
-            local d = gcd(num, den)
-            num, den = num/d, den/d
-        end
-        return setmetatable({num=num, den=den}, mt)
-    end
-
-    local rat_zero = rat(0)
-    local rat_one = rat(1)
-
-    local function rat_tostring(r)
-        if r.den:isone() then return tostring(r.num) end
-        return ("%s/%s"):format(r.num, r.den)
-    end
-
-    local function compare(a, b)
-        return (a.num*b.den):compare(b.num*a.den)
-    end
-
-    mt.__add = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den + b.num*a.den, a.den*b.den) end
-    mt.__div = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den, a.den*b.num) end
-    mt.__eq = function(a, b) a, b = rat(a), rat(b); return compare(a, b) == 0 end
-    mt.__le = function(a, b) a, b = rat(a), rat(b); return compare(a, b) <= 0 end
-    mt.__lt = function(a, b) a, b = rat(a), rat(b); return compare(a, b) < 0 end
-    mt.__mul = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.num, a.den*b.den) end
-    mt.__pow = function(a, b)
-        if type(b) == "number" and math.type(b) == "float" then
-            error("bad argument #2 to 'pow' (number has no integer representation)")
-        end
-        if b == 0 then return rat_one end
-        if a == 0 then return rat_zero end
-        if a == 1 then return rat_one end
-        if b < 0 then
-            b = -b
-            return rat(a.den^b, a.num^b)
-        end
-        return rat(a.num^b, a.den^b)
-    end
-    mt.__sub = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den - b.num*a.den, a.den*b.den) end
-    mt.__tostring = rat_tostring
-    mt.__unm = function(a) return rat(-a.num, a.den) end
-    mt.__index.abs = function(a) return rat(a.num:abs(), a.den) end
-    mt.__index.add = mt.__add
-    mt.__index.compare = function(a, b) return compare(rat(a), rat(b)) end
-    mt.__index.denom = function(a) return rat(a.den) end
-    mt.__index.div = mt.__div
-    mt.__index.int = function(a) return rat(a.num / a.den) end
-    mt.__index.inv = function(a) return rat(a.den, a.num) end
-    mt.__index.isinteger = function(a) return a.den:isone() end
-    mt.__index.iszero = function(a) return a.num:iszero() end
-    mt.__index.mul = mt.__mul
-    mt.__index.neg = mt.__unm
-    mt.__index.numer = function(a) return rat(a.num) end
-    mt.__index.pow = mt.__pow
-    mt.__index.sign = function(a) return compare(a, rat_zero) end
-    mt.__index.sub = mt.__sub
-    mt.__index.todecimal = function(a) return tostring(a.num // a.den) end
-    mt.__index.tonumber = function(a) return a.num:tonumber()/a.den:tonumber() end
-
-    qmath.abs = function(a) return rat(a):abs() end
-    qmath.add = function(a, b) return rat(a) + rat(b) end
-    qmath.compare = function(a, b) return rat(a):compare(rat(b)) end
-    qmath.denom = function(a) return rat(a):denom() end
-    qmath.div = function(a, b) return rat(a) / rat(b) end
-    qmath.int = function(a) return rat(a):int() end
-    qmath.inv = function(a) return rat(a):inv() end
-    qmath.isinteger = function(a) return rat(a):isinteger() end
-    qmath.iszero = function(a) return rat(a):iszero() end
-    qmath.mul = function(a, b) return rat(a) * rat(b) end
-    qmath.neg = function(a) return -rat(a) end
-    qmath.new = rat
-    qmath.numer = function(a) return rat(a):numer() end
-    qmath.pow = function(a, b) return rat(a) ^ b end
-    qmath.sign = function(a) return rat(a):sign() end
-    qmath.sub = function(a, b) return rat(a) - rat(b) end
-    qmath.todecimal = function(a) return rat(a):todecimal() end
-    qmath.tonumber = function(a) return rat(a):tonumber() end
-    qmath.tostring = mt.__tostring
-
-end
 
 --[[@@@
 ```lua
@@ -6767,6 +6567,128 @@ function qmath.torat(x, eps)
     end
     return q
 end
+
+return qmath
+]=]),
+["_qmath"] = lib("libluax/qmath/_qmath.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--@LIB
+
+-- Pure Lua implementation of qmath.c
+
+local qmath = {}
+local mt = {__index={}}
+
+local imath = require "imath"
+local Z = imath.new
+local gcd = imath.gcd
+
+local function rat(num, den)
+    if not den then
+        if type(num) == "table" and num.num and num.den then return num end
+        den = 1
+    end
+    num, den = Z(num), Z(den)
+    assert(den ~= 0, "(qmath) result undefined")
+    if den < 0 then num, den = -num, -den end
+    if num:iszero() then
+        den = Z(1)
+    else
+        local d = gcd(num, den)
+        num, den = num/d, den/d
+    end
+    return setmetatable({num=num, den=den}, mt)
+end
+
+local rat_zero = rat(0)
+local rat_one = rat(1)
+
+local function rat_tostring(r)
+    if r.den:isone() then return tostring(r.num) end
+    return ("%s/%s"):format(r.num, r.den)
+end
+
+local function compare(a, b)
+    return (a.num*b.den):compare(b.num*a.den)
+end
+
+mt.__add = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den + b.num*a.den, a.den*b.den) end
+mt.__div = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den, a.den*b.num) end
+mt.__eq = function(a, b) a, b = rat(a), rat(b); return compare(a, b) == 0 end
+mt.__le = function(a, b) a, b = rat(a), rat(b); return compare(a, b) <= 0 end
+mt.__lt = function(a, b) a, b = rat(a), rat(b); return compare(a, b) < 0 end
+mt.__mul = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.num, a.den*b.den) end
+mt.__pow = function(a, b)
+    if type(b) == "number" and math.type(b) == "float" then
+        error("bad argument #2 to 'pow' (number has no integer representation)")
+    end
+    if b == 0 then return rat_one end
+    if a == 0 then return rat_zero end
+    if a == 1 then return rat_one end
+    if b < 0 then
+        b = -b
+        return rat(a.den^b, a.num^b)
+    end
+    return rat(a.num^b, a.den^b)
+end
+mt.__sub = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den - b.num*a.den, a.den*b.den) end
+mt.__tostring = rat_tostring
+mt.__unm = function(a) return rat(-a.num, a.den) end
+mt.__index.abs = function(a) return rat(a.num:abs(), a.den) end
+mt.__index.add = mt.__add
+mt.__index.compare = function(a, b) return compare(rat(a), rat(b)) end
+mt.__index.denom = function(a) return rat(a.den) end
+mt.__index.div = mt.__div
+mt.__index.int = function(a) return rat(a.num / a.den) end
+mt.__index.inv = function(a) return rat(a.den, a.num) end
+mt.__index.isinteger = function(a) return a.den:isone() end
+mt.__index.iszero = function(a) return a.num:iszero() end
+mt.__index.mul = mt.__mul
+mt.__index.neg = mt.__unm
+mt.__index.numer = function(a) return rat(a.num) end
+mt.__index.pow = mt.__pow
+mt.__index.sign = function(a) return compare(a, rat_zero) end
+mt.__index.sub = mt.__sub
+mt.__index.todecimal = function(a) return tostring(a.num // a.den) end
+mt.__index.tonumber = function(a) return a.num:tonumber()/a.den:tonumber() end
+
+qmath.abs = function(a) return rat(a):abs() end
+qmath.add = function(a, b) return rat(a) + rat(b) end
+qmath.compare = function(a, b) return rat(a):compare(rat(b)) end
+qmath.denom = function(a) return rat(a):denom() end
+qmath.div = function(a, b) return rat(a) / rat(b) end
+qmath.int = function(a) return rat(a):int() end
+qmath.inv = function(a) return rat(a):inv() end
+qmath.isinteger = function(a) return rat(a):isinteger() end
+qmath.iszero = function(a) return rat(a):iszero() end
+qmath.mul = function(a, b) return rat(a) * rat(b) end
+qmath.neg = function(a) return -rat(a) end
+qmath.new = rat
+qmath.numer = function(a) return rat(a):numer() end
+qmath.pow = function(a, b) return rat(a) ^ b end
+qmath.sign = function(a) return rat(a):sign() end
+qmath.sub = function(a, b) return rat(a) - rat(b) end
+qmath.todecimal = function(a) return rat(a):todecimal() end
+qmath.tonumber = function(a) return rat(a):tonumber() end
+qmath.tostring = mt.__tostring
 
 return qmath
 ]=]),
@@ -6912,14 +6834,65 @@ http://cdelord.fr/luax
 --]]
 
 --@LIB
-local _, sys = pcall(require, "_sys")
-sys = _ and sys or {
+
+-- Pure Lua implementation of sys.c
+
+local sys = {
     libc = "lua",
 }
 
 local F = require "F"
 
-local targets = F{
+local targets = require "targets"
+
+local function uname() return io.popen("uname -m", "r") : read "a" : trim() end
+
+-- the libraries extension in package.cpath is specific to the OS
+sys.so = package.cpath:match "%.[^%.]-$"
+sys.os = assert(targets : find(function(t) return t.so == sys.so end), "Unknown OS").os
+
+sys.arch = pandoc and pandoc.system.arch or
+    (function()
+        local machine = F.case(sys.os) {
+            linux   = uname,
+            macos   = uname,
+            windows = function() return os.getenv "PROCESSOR_ARCHITECTURE" end,
+        }()
+        return assert(targets : find(function(t) return t.os==sys.os and t.uname_machine==machine end), "Unknown architecture").arch
+    end)()
+
+local host = assert(targets : find(function(t) return t.os==sys.os and t.arch==sys.arch end), "Unknown platform")
+
+sys.exe  = host.exe
+sys.name = host.name
+
+return sys
+]=]),
+["targets"] = lib("libluax/sys/targets.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--@LIB
+
+local F = require "F"
+
+return F{
     {name="linux-x86_64",       uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="gnu",   exe="",     so=".so"   },
     {name="linux-x86_64-musl",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="musl",  exe="",     so=".so"   },
     {name="linux-aarch64",      uname_machine="aarch64", os="linux",   arch="aarch64", libc="gnu",   exe="",     so=".so"   },
@@ -6928,38 +6901,6 @@ local targets = F{
     {name="macos-aarch64",      uname_machine="arm64",   os="macos",   arch="aarch64", libc="none",  exe="",     so=".dylib"},
     {name="windows-x86_64",     uname_machine="AMD64",   os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll"  },
 }
-targets : foreach(function(target) targets[target.name] = target end)
-
-if sys.libc == "lua" then
-
-    local function uname() return io.popen("uname -m", "r") : read "a" : trim() end
-
-    -- the libraries extension in package.cpath is specific to the OS
-    sys.so = package.cpath:match "%.[^%.]-$"
-    sys.os = assert(targets : find(function(t) return t.so == sys.so end), "Unknown OS").os
-
-    sys.arch = pandoc and pandoc.system.arch or
-        (function()
-            local machine = F.case(sys.os) {
-                linux   = uname,
-                macos   = uname,
-                windows = function() return os.getenv "PROCESSOR_ARCHITECTURE" end,
-            }()
-            return assert(targets : find(function(t) return t.os==sys.os and t.uname_machine==machine end), "Unknown architecture").arch
-        end)()
-
-    local host = assert(targets : find(function(t) return t.os==sys.os and t.arch==sys.arch end), "Unknown platform")
-
-    sys.exe  = host.exe
-    sys.name = host.name
-
-end
-
-return setmetatable(sys, {
-    __index = {
-        targets = targets,
-    },
-})
 ]=]),
 ["term"] = lib("libluax/term/term.lua", [=[--[[
 This file is part of luax.
@@ -6995,39 +6936,7 @@ local term = require "term"
 ```
 @@@]]
 
-local _, term = pcall(require, "_term")
-term = _ and term
-
-if not term then
-    term = {}
-
-    local sh = require "sh"
-
-    if not term.isatty then
-
-        local _isatty = nil
-
-        function term.isatty()
-            if _isatty == nil then
-                _isatty = (sh.run("tty", "--silent", "2>/dev/null"))
-            end
-            return _isatty
-        end
-
-    end
-
-    if not term.size then
-
-        function term.size()
-            local rows, cols = sh.read("stty", "size")
-                : words() ---@diagnostic disable-line: undefined-field
-                : map(tonumber):unpack()
-            return {rows=rows, cols=cols}
-        end
-
-    end
-
-end
+local term = require "_term"
 
 local ESC = '\027'
 local CSI = ESC..'['
@@ -7229,6 +7138,50 @@ function term.prompt(p)
         io.flush()
     end
     return io.read "l"
+end
+
+return term
+]=]),
+["_term"] = lib("libluax/term/_term.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+-- Pure Lua implementation of term.c
+
+local term = {}
+
+local sh = require "sh"
+
+local _isatty = nil
+
+function term.isatty()
+    if _isatty == nil then
+        _isatty = (sh.run("tty", "--silent", "2>/dev/null"))
+    end
+    return _isatty
+end
+
+function term.size()
+    local rows, cols = sh.read("stty", "size")
+        : words() ---@diagnostic disable-line: undefined-field
+        : map(tonumber):unpack()
+    return {rows=rows, cols=cols}
 end
 
 return term
@@ -10296,395 +10249,757 @@ setmetatable(inspect, {
 return inspect
 --@LIB
 ]=]),
-["json"] = lib("ext/lua/json/json.lua", [=[--
--- json.lua
---
--- Copyright (c) 2020 rxi
---
--- Permission is hereby granted, free of charge, to any person obtaining a copy of
--- this software and associated documentation files (the "Software"), to deal in
--- the Software without restriction, including without limitation the rights to
--- use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
--- of the Software, and to permit persons to whom the Software is furnished to do
--- so, subject to the following conditions:
---
--- The above copyright notice and this permission notice shall be included in all
--- copies or substantial portions of the Software.
---
--- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
--- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
--- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
--- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
--- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
--- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
--- SOFTWARE.
---
+["json"] = lib("ext/lua/json/json.lua", [===[-- Module options:
+local always_use_lpeg = false
+local register_global_module_table = false
+local global_module_name = 'json'
 
-local json = { _version = "0.1.2" }
+--[==[
 
--------------------------------------------------------------------------------
--- Encode
--------------------------------------------------------------------------------
+David Kolf's JSON module for Lua 5.1 - 5.4
 
-local encode
+Version 2.7
 
-local escape_char_map = {
-  [ "\\" ] = "\\",
-  [ "\"" ] = "\"",
-  [ "\b" ] = "b",
-  [ "\f" ] = "f",
-  [ "\n" ] = "n",
-  [ "\r" ] = "r",
-  [ "\t" ] = "t",
-}
 
-local escape_char_map_inv = { [ "/" ] = "/" }
-for k, v in pairs(escape_char_map) do
-  escape_char_map_inv[v] = k
+For the documentation see the corresponding readme.txt or visit
+<http://dkolf.de/src/dkjson-lua.fsl/>.
+
+You can contact the author by sending an e-mail to 'david' at the
+domain 'dkolf.de'.
+
+
+Copyright (C) 2010-2024 David Heiko Kolf
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--]==]
+
+-- global dependencies:
+local pairs, type, tostring, tonumber, getmetatable, setmetatable, rawset =
+      pairs, type, tostring, tonumber, getmetatable, setmetatable, rawset
+local error, require, pcall, select = error, require, pcall, select
+local floor, huge = math.floor, math.huge
+local strrep, gsub, strsub, strbyte, strchar, strfind, strlen, strformat =
+      string.rep, string.gsub, string.sub, string.byte, string.char,
+      string.find, string.len, string.format
+local strmatch = string.match
+local concat = table.concat
+
+local json = { version = "dkjson 2.7" }
+
+local jsonlpeg = {}
+
+if register_global_module_table then
+  if always_use_lpeg then
+    _G[global_module_name] = jsonlpeg
+  else
+    _G[global_module_name] = json
+  end
 end
 
+local _ENV = nil -- blocking globals in Lua 5.2 and later
 
-local function escape_char(c)
-  return "\\" .. (escape_char_map[c] or string.format("u%04x", c:byte()))
-end
+pcall (function()
+  -- Enable access to blocked metatables.
+  -- Don't worry, this module doesn't change anything in them.
+  local debmeta = require "debug".getmetatable
+  if debmeta then getmetatable = debmeta end
+end)
 
+json.null = setmetatable ({}, {
+  __tojson = function () return "null" end
+})
 
-local function encode_nil(val)
-  return "null"
-end
-
-
-local function encode_table(val, stack)
-  local res = {}
-  stack = stack or {}
-
-  -- Circular reference?
-  if stack[val] then error("circular reference") end
-
-  stack[val] = true
-
-  if rawget(val, 1) ~= nil or next(val) == nil then
-    -- Treat as array -- check keys are valid and it is not sparse
-    local n = 0
-    for k in pairs(val) do
-      if type(k) ~= "number" then
-        error("invalid table: mixed or invalid key types")
+local function isarray (tbl)
+  local max, n, arraylen = 0, 0, 0
+  for k,v in pairs (tbl) do
+    if k == 'n' and type(v) == 'number' then
+      arraylen = v
+      if v > max then
+        max = v
+      end
+    else
+      if type(k) ~= 'number' or k < 1 or floor(k) ~= k then
+        return false
+      end
+      if k > max then
+        max = k
       end
       n = n + 1
     end
-    if n ~= #val then
-      error("invalid table: sparse array")
-    end
-    -- Encode
-    for i, v in ipairs(val) do
-      table.insert(res, encode(v, stack))
-    end
-    stack[val] = nil
-    return "[" .. table.concat(res, ",") .. "]"
-
-  else
-    -- Treat as an object
-    for k, v in pairs(val) do
-      if type(k) ~= "string" then
-        error("invalid table: mixed or invalid key types")
-      end
-      table.insert(res, encode(k, stack) .. ":" .. encode(v, stack))
-    end
-    stack[val] = nil
-    return "{" .. table.concat(res, ",") .. "}"
   end
-end
-
-
-local function encode_string(val)
-  return '"' .. val:gsub('[%z\1-\31\\"]', escape_char) .. '"'
-end
-
-
-local function encode_number(val)
-  -- Check for NaN, -inf and inf
-  if val ~= val or val <= -math.huge or val >= math.huge then
-    error("unexpected number value '" .. tostring(val) .. "'")
+  if max > 10 and max > arraylen and max > n * 2 then
+    return false -- don't create an array with too many holes
   end
-  return string.format("%.14g", val)
+  return true, max
 end
 
-
-local type_func_map = {
-  [ "nil"     ] = encode_nil,
-  [ "table"   ] = encode_table,
-  [ "string"  ] = encode_string,
-  [ "number"  ] = encode_number,
-  [ "boolean" ] = tostring,
+local escapecodes = {
+  ["\""] = "\\\"", ["\\"] = "\\\\", ["\b"] = "\\b", ["\f"] = "\\f",
+  ["\n"] = "\\n",  ["\r"] = "\\r",  ["\t"] = "\\t"
 }
 
-
-encode = function(val, stack)
-  local t = type(val)
-  local f = type_func_map[t]
-  if f then
-    return f(val, stack)
+local function escapeutf8 (uchar)
+  local value = escapecodes[uchar]
+  if value then
+    return value
   end
-  error("unexpected type '" .. t .. "'")
-end
-
-
-function json.encode(val)
-  return ( encode(val) )
-end
-
-
--------------------------------------------------------------------------------
--- Decode
--------------------------------------------------------------------------------
-
-local parse
-
-local function create_set(...)
-  local res = {}
-  for i = 1, select("#", ...) do
-    res[ select(i, ...) ] = true
-  end
-  return res
-end
-
-local space_chars   = create_set(" ", "\t", "\r", "\n")
-local delim_chars   = create_set(" ", "\t", "\r", "\n", "]", "}", ",")
-local escape_chars  = create_set("\\", "/", '"', "b", "f", "n", "r", "t", "u")
-local literals      = create_set("true", "false", "null")
-
-local literal_map = {
-  [ "true"  ] = true,
-  [ "false" ] = false,
-  [ "null"  ] = nil,
-}
-
-
-local function next_char(str, idx, set, negate)
-  for i = idx, #str do
-    if set[str:sub(i, i)] ~= negate then
-      return i
-    end
-  end
-  return #str + 1
-end
-
-
-local function decode_error(str, idx, msg)
-  local line_count = 1
-  local col_count = 1
-  for i = 1, idx - 1 do
-    col_count = col_count + 1
-    if str:sub(i, i) == "\n" then
-      line_count = line_count + 1
-      col_count = 1
-    end
-  end
-  error( string.format("%s at line %d col %d", msg, line_count, col_count) )
-end
-
-
-local function codepoint_to_utf8(n)
-  -- http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=iws-appendixa
-  local f = math.floor
-  if n <= 0x7f then
-    return string.char(n)
-  elseif n <= 0x7ff then
-    return string.char(f(n / 64) + 192, n % 64 + 128)
-  elseif n <= 0xffff then
-    return string.char(f(n / 4096) + 224, f(n % 4096 / 64) + 128, n % 64 + 128)
-  elseif n <= 0x10ffff then
-    return string.char(f(n / 262144) + 240, f(n % 262144 / 4096) + 128,
-                       f(n % 4096 / 64) + 128, n % 64 + 128)
-  end
-  error( string.format("invalid unicode codepoint '%x'", n) )
-end
-
-
-local function parse_unicode_escape(s)
-  local n1 = tonumber( s:sub(1, 4),  16 )
-  local n2 = tonumber( s:sub(7, 10), 16 )
-   -- Surrogate pair?
-  if n2 then
-    return codepoint_to_utf8((n1 - 0xd800) * 0x400 + (n2 - 0xdc00) + 0x10000)
+  local a, b, c, d = strbyte (uchar, 1, 4)
+  a, b, c, d = a or 0, b or 0, c or 0, d or 0
+  if a <= 0x7f then
+    value = a
+  elseif 0xc0 <= a and a <= 0xdf and b >= 0x80 then
+    value = (a - 0xc0) * 0x40 + b - 0x80
+  elseif 0xe0 <= a and a <= 0xef and b >= 0x80 and c >= 0x80 then
+    value = ((a - 0xe0) * 0x40 + b - 0x80) * 0x40 + c - 0x80
+  elseif 0xf0 <= a and a <= 0xf7 and b >= 0x80 and c >= 0x80 and d >= 0x80 then
+    value = (((a - 0xf0) * 0x40 + b - 0x80) * 0x40 + c - 0x80) * 0x40 + d - 0x80
   else
-    return codepoint_to_utf8(n1)
+    return ""
+  end
+  if value <= 0xffff then
+    return strformat ("\\u%.4x", value)
+  elseif value <= 0x10ffff then
+    -- encode as UTF-16 surrogate pair
+    value = value - 0x10000
+    local highsur, lowsur = 0xD800 + floor (value/0x400), 0xDC00 + (value % 0x400)
+    return strformat ("\\u%.4x\\u%.4x", highsur, lowsur)
+  else
+    return ""
   end
 end
 
+local function fsub (str, pattern, repl)
+  -- gsub always builds a new string in a buffer, even when no match
+  -- exists. First using find should be more efficient when most strings
+  -- don't contain the pattern.
+  if strfind (str, pattern) then
+    return gsub (str, pattern, repl)
+  else
+    return str
+  end
+end
 
-local function parse_string(str, i)
-  local res = ""
-  local j = i + 1
-  local k = j
+local function quotestring (value)
+  -- based on the regexp "escapable" in https://github.com/douglascrockford/JSON-js
+  value = fsub (value, "[%z\1-\31\"\\\127]", escapeutf8)
+  if strfind (value, "[\194\216\220\225\226\239]") then
+    value = fsub (value, "\194[\128-\159\173]", escapeutf8)
+    value = fsub (value, "\216[\128-\132]", escapeutf8)
+    value = fsub (value, "\220\143", escapeutf8)
+    value = fsub (value, "\225\158[\180\181]", escapeutf8)
+    value = fsub (value, "\226\128[\140-\143\168-\175]", escapeutf8)
+    value = fsub (value, "\226\129[\160-\175]", escapeutf8)
+    value = fsub (value, "\239\187\191", escapeutf8)
+    value = fsub (value, "\239\191[\176-\191]", escapeutf8)
+  end
+  return "\"" .. value .. "\""
+end
+json.quotestring = quotestring
 
-  while j <= #str do
-    local x = str:byte(j)
+local function replace(str, o, n)
+  local i, j = strfind (str, o, 1, true)
+  if i then
+    return strsub(str, 1, i-1) .. n .. strsub(str, j+1, -1)
+  else
+    return str
+  end
+end
 
-    if x < 32 then
-      decode_error(str, j, "control character in string")
+-- locale independent num2str and str2num functions
+local decpoint, numfilter
 
-    elseif x == 92 then -- `\`: Escape
-      res = res .. str:sub(k, j - 1)
-      j = j + 1
-      local c = str:sub(j, j)
-      if c == "u" then
-        local hex = str:match("^[dD][89aAbB]%x%x\\u%x%x%x%x", j + 1)
-                 or str:match("^%x%x%x%x", j + 1)
-                 or decode_error(str, j - 1, "invalid unicode escape in string")
-        res = res .. parse_unicode_escape(hex)
-        j = j + #hex
-      else
-        if not escape_chars[c] then
-          decode_error(str, j - 1, "invalid escape char '" .. c .. "' in string")
+local function updatedecpoint ()
+  decpoint = strmatch(tostring(0.5), "([^05+])")
+  -- build a filter that can be used to remove group separators
+  numfilter = "[^0-9%-%+eE" .. gsub(decpoint, "[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0") .. "]+"
+end
+
+updatedecpoint()
+
+local function num2str (num)
+  return replace(fsub(tostring(num), numfilter, ""), decpoint, ".")
+end
+
+local function str2num (str)
+  local num = tonumber(replace(str, ".", decpoint))
+  if not num then
+    updatedecpoint()
+    num = tonumber(replace(str, ".", decpoint))
+  end
+  return num
+end
+
+local function addnewline2 (level, buffer, buflen)
+  buffer[buflen+1] = "\n"
+  buffer[buflen+2] = strrep ("  ", level)
+  buflen = buflen + 2
+  return buflen
+end
+
+function json.addnewline (state)
+  if state.indent then
+    state.bufferlen = addnewline2 (state.level or 0,
+                           state.buffer, state.bufferlen or #(state.buffer))
+  end
+end
+
+local encode2 -- forward declaration
+
+local function addpair (key, value, prev, indent, level, buffer, buflen, tables, globalorder, state)
+  local kt = type (key)
+  if kt ~= 'string' and kt ~= 'number' then
+    return nil, "type '" .. kt .. "' is not supported as a key by JSON."
+  end
+  if prev then
+    buflen = buflen + 1
+    buffer[buflen] = ","
+  end
+  if indent then
+    buflen = addnewline2 (level, buffer, buflen)
+  end
+  buffer[buflen+1] = quotestring (key)
+  buffer[buflen+2] = ":"
+  return encode2 (value, indent, level, buffer, buflen + 2, tables, globalorder, state)
+end
+
+local function appendcustom(res, buffer, state)
+  local buflen = state.bufferlen
+  if type (res) == 'string' then
+    buflen = buflen + 1
+    buffer[buflen] = res
+  end
+  return buflen
+end
+
+local function exception(reason, value, state, buffer, buflen, defaultmessage)
+  defaultmessage = defaultmessage or reason
+  local handler = state.exception
+  if not handler then
+    return nil, defaultmessage
+  else
+    state.bufferlen = buflen
+    local ret, msg = handler (reason, value, state, defaultmessage)
+    if not ret then return nil, msg or defaultmessage end
+    return appendcustom(ret, buffer, state)
+  end
+end
+
+function json.encodeexception(reason, value, state, defaultmessage)
+  return quotestring("<" .. defaultmessage .. ">")
+end
+
+encode2 = function (value, indent, level, buffer, buflen, tables, globalorder, state)
+  local valtype = type (value)
+  local valmeta = getmetatable (value)
+  valmeta = type (valmeta) == 'table' and valmeta -- only tables
+  local valtojson = valmeta and valmeta.__tojson
+  if valtojson then
+    if tables[value] then
+      return exception('reference cycle', value, state, buffer, buflen)
+    end
+    tables[value] = true
+    state.bufferlen = buflen
+    local ret, msg = valtojson (value, state)
+    if not ret then return exception('custom encoder failed', value, state, buffer, buflen, msg) end
+    tables[value] = nil
+    buflen = appendcustom(ret, buffer, state)
+  elseif value == nil then
+    buflen = buflen + 1
+    buffer[buflen] = "null"
+  elseif valtype == 'number' then
+    local s
+    if value ~= value or value >= huge or -value >= huge then
+      -- This is the behaviour of the original JSON implementation.
+      s = "null"
+    else
+      s = num2str (value)
+    end
+    buflen = buflen + 1
+    buffer[buflen] = s
+  elseif valtype == 'boolean' then
+    buflen = buflen + 1
+    buffer[buflen] = value and "true" or "false"
+  elseif valtype == 'string' then
+    buflen = buflen + 1
+    buffer[buflen] = quotestring (value)
+  elseif valtype == 'table' then
+    if tables[value] then
+      return exception('reference cycle', value, state, buffer, buflen)
+    end
+    tables[value] = true
+    level = level + 1
+    local isa, n = isarray (value)
+    if n == 0 and valmeta and valmeta.__jsontype == 'object' then
+      isa = false
+    end
+    local msg
+    if isa then -- JSON array
+      buflen = buflen + 1
+      buffer[buflen] = "["
+      for i = 1, n do
+        buflen, msg = encode2 (value[i], indent, level, buffer, buflen, tables, globalorder, state)
+        if not buflen then return nil, msg end
+        if i < n then
+          buflen = buflen + 1
+          buffer[buflen] = ","
         end
-        res = res .. escape_char_map_inv[c]
       end
-      k = j + 1
-
-    elseif x == 34 then -- `"`: End of string
-      res = res .. str:sub(k, j - 1)
-      return res, j + 1
+      buflen = buflen + 1
+      buffer[buflen] = "]"
+    else -- JSON object
+      local prev = false
+      buflen = buflen + 1
+      buffer[buflen] = "{"
+      local order = valmeta and valmeta.__jsonorder or globalorder
+      if order then
+        local used = {}
+        if type(order) == "function" then order = order(value) end
+        n = #order
+        for i = 1, n do
+          local k = order[i]
+          local v = value[k]
+          if v ~= nil then
+            used[k] = true
+            buflen, msg = addpair (k, v, prev, indent, level, buffer, buflen, tables, globalorder, state)
+            if not buflen then return nil, msg end
+            prev = true -- add a seperator before the next element
+          end
+        end
+        for k,v in pairs (value) do
+          if not used[k] then
+            buflen, msg = addpair (k, v, prev, indent, level, buffer, buflen, tables, globalorder, state)
+            if not buflen then return nil, msg end
+            prev = true -- add a seperator before the next element
+          end
+        end
+      else -- unordered
+        for k,v in pairs (value) do
+          buflen, msg = addpair (k, v, prev, indent, level, buffer, buflen, tables, globalorder, state)
+          if not buflen then return nil, msg end
+          prev = true -- add a seperator before the next element
+        end
+      end
+      if indent then
+        buflen = addnewline2 (level - 1, buffer, buflen)
+      end
+      buflen = buflen + 1
+      buffer[buflen] = "}"
     end
-
-    j = j + 1
+    tables[value] = nil
+  else
+    return exception ('unsupported type', value, state, buffer, buflen,
+      "type '" .. valtype .. "' is not supported by JSON.")
   end
-
-  decode_error(str, i, "expected closing quote for string")
+  return buflen
 end
 
-
-local function parse_number(str, i)
-  local x = next_char(str, i, delim_chars)
-  local s = str:sub(i, x - 1)
-  local n = tonumber(s)
-  if not n then
-    decode_error(str, i, "invalid number '" .. s .. "'")
+function json.encode (value, state)
+  state = state or {}
+  local oldbuffer = state.buffer
+  local buffer = oldbuffer or {}
+  state.buffer = buffer
+  updatedecpoint()
+  local ret, msg = encode2 (value, state.indent, state.level or 0,
+                   buffer, state.bufferlen or 0, state.tables or {}, state.keyorder, state)
+  if not ret then
+    error (msg, 2)
+  elseif oldbuffer == buffer then
+    state.bufferlen = ret
+    return true
+  else
+    state.bufferlen = nil
+    state.buffer = nil
+    return concat (buffer)
   end
-  return n, x
 end
 
-
-local function parse_literal(str, i)
-  local x = next_char(str, i, delim_chars)
-  local word = str:sub(i, x - 1)
-  if not literals[word] then
-    decode_error(str, i, "invalid literal '" .. word .. "'")
-  end
-  return literal_map[word], x
-end
-
-
-local function parse_array(str, i)
-  local res = {}
-  local n = 1
-  i = i + 1
-  while 1 do
-    local x
-    i = next_char(str, i, space_chars, true)
-    -- Empty / end of array?
-    if str:sub(i, i) == "]" then
-      i = i + 1
+local function loc (str, where)
+  local line, pos, linepos = 1, 1, 0
+  while true do
+    pos = strfind (str, "\n", pos, true)
+    if pos and pos < where then
+      line = line + 1
+      linepos = pos
+      pos = pos + 1
+    else
       break
     end
-    -- Read token
-    x, i = parse(str, i)
-    res[n] = x
-    n = n + 1
-    -- Next token
-    i = next_char(str, i, space_chars, true)
-    local chr = str:sub(i, i)
-    i = i + 1
-    if chr == "]" then break end
-    if chr ~= "," then decode_error(str, i, "expected ']' or ','") end
   end
-  return res, i
+  return "line " .. line .. ", column " .. (where - linepos)
 end
 
-
-local function parse_object(str, i)
-  local res = {}
-  i = i + 1
-  while 1 do
-    local key, val
-    i = next_char(str, i, space_chars, true)
-    -- Empty / end of object?
-    if str:sub(i, i) == "}" then
-      i = i + 1
-      break
-    end
-    -- Read key
-    if str:sub(i, i) ~= '"' then
-      decode_error(str, i, "expected string for key")
-    end
-    key, i = parse(str, i)
-    -- Read ':' delimiter
-    i = next_char(str, i, space_chars, true)
-    if str:sub(i, i) ~= ":" then
-      decode_error(str, i, "expected ':' after key")
-    end
-    i = next_char(str, i + 1, space_chars, true)
-    -- Read value
-    val, i = parse(str, i)
-    -- Set
-    res[key] = val
-    -- Next token
-    i = next_char(str, i, space_chars, true)
-    local chr = str:sub(i, i)
-    i = i + 1
-    if chr == "}" then break end
-    if chr ~= "," then decode_error(str, i, "expected '}' or ','") end
-  end
-  return res, i
+local function unterminated (str, what, where)
+  return nil, strlen (str) + 1, "unterminated " .. what .. " at " .. loc (str, where)
 end
 
+local function scanwhite (str, pos)
+  while true do
+    pos = strfind (str, "%S", pos)
+    if not pos then return nil end
+    local sub2 = strsub (str, pos, pos + 1)
+    if sub2 == "\239\187" and strsub (str, pos + 2, pos + 2) == "\191" then
+      -- UTF-8 Byte Order Mark
+      pos = pos + 3
+    elseif sub2 == "//" then
+      pos = strfind (str, "[\n\r]", pos + 2)
+      if not pos then return nil end
+    elseif sub2 == "/*" then
+      pos = strfind (str, "*/", pos + 2)
+      if not pos then return nil end
+      pos = pos + 2
+    else
+      return pos
+    end
+  end
+end
 
-local char_func_map = {
-  [ '"' ] = parse_string,
-  [ "0" ] = parse_number,
-  [ "1" ] = parse_number,
-  [ "2" ] = parse_number,
-  [ "3" ] = parse_number,
-  [ "4" ] = parse_number,
-  [ "5" ] = parse_number,
-  [ "6" ] = parse_number,
-  [ "7" ] = parse_number,
-  [ "8" ] = parse_number,
-  [ "9" ] = parse_number,
-  [ "-" ] = parse_number,
-  [ "t" ] = parse_literal,
-  [ "f" ] = parse_literal,
-  [ "n" ] = parse_literal,
-  [ "[" ] = parse_array,
-  [ "{" ] = parse_object,
+local escapechars = {
+  ["\""] = "\"", ["\\"] = "\\", ["/"] = "/", ["b"] = "\b", ["f"] = "\f",
+  ["n"] = "\n", ["r"] = "\r", ["t"] = "\t"
 }
 
-
-parse = function(str, idx)
-  local chr = str:sub(idx, idx)
-  local f = char_func_map[chr]
-  if f then
-    return f(str, idx)
+local function unichar (value)
+  if value < 0 then
+    return nil
+  elseif value <= 0x007f then
+    return strchar (value)
+  elseif value <= 0x07ff then
+    return strchar (0xc0 + floor(value/0x40),
+                    0x80 + (floor(value) % 0x40))
+  elseif value <= 0xffff then
+    return strchar (0xe0 + floor(value/0x1000),
+                    0x80 + (floor(value/0x40) % 0x40),
+                    0x80 + (floor(value) % 0x40))
+  elseif value <= 0x10ffff then
+    return strchar (0xf0 + floor(value/0x40000),
+                    0x80 + (floor(value/0x1000) % 0x40),
+                    0x80 + (floor(value/0x40) % 0x40),
+                    0x80 + (floor(value) % 0x40))
+  else
+    return nil
   end
-  decode_error(str, idx, "unexpected character '" .. chr .. "'")
 end
 
-
-function json.decode(str)
-  if type(str) ~= "string" then
-    error("expected argument of type string, got " .. type(str))
+local function scanstring (str, pos)
+  local lastpos = pos + 1
+  local buffer, n = {}, 0
+  while true do
+    local nextpos = strfind (str, "[\"\\]", lastpos)
+    if not nextpos then
+      return unterminated (str, "string", pos)
+    end
+    if nextpos > lastpos then
+      n = n + 1
+      buffer[n] = strsub (str, lastpos, nextpos - 1)
+    end
+    if strsub (str, nextpos, nextpos) == "\"" then
+      lastpos = nextpos + 1
+      break
+    else
+      local escchar = strsub (str, nextpos + 1, nextpos + 1)
+      local value
+      if escchar == "u" then
+        value = tonumber (strsub (str, nextpos + 2, nextpos + 5), 16)
+        if value then
+          local value2
+          if 0xD800 <= value and value <= 0xDBff then
+            -- we have the high surrogate of UTF-16. Check if there is a
+            -- low surrogate escaped nearby to combine them.
+            if strsub (str, nextpos + 6, nextpos + 7) == "\\u" then
+              value2 = tonumber (strsub (str, nextpos + 8, nextpos + 11), 16)
+              if value2 and 0xDC00 <= value2 and value2 <= 0xDFFF then
+                value = (value - 0xD800)  * 0x400 + (value2 - 0xDC00) + 0x10000
+              else
+                value2 = nil -- in case it was out of range for a low surrogate
+              end
+            end
+          end
+          value = value and unichar (value)
+          if value then
+            if value2 then
+              lastpos = nextpos + 12
+            else
+              lastpos = nextpos + 6
+            end
+          end
+        end
+      end
+      if not value then
+        value = escapechars[escchar] or escchar
+        lastpos = nextpos + 2
+      end
+      n = n + 1
+      buffer[n] = value
+    end
   end
-  local res, idx = parse(str, next_char(str, 1, space_chars, true))
-  idx = next_char(str, idx, space_chars, true)
-  if idx <= #str then
-    decode_error(str, idx, "trailing garbage")
+  if n == 1 then
+    return buffer[1], lastpos
+  elseif n > 1 then
+    return concat (buffer), lastpos
+  else
+    return "", lastpos
   end
-  return res
 end
 
+local scanvalue -- forward declaration
+
+local function scantable (what, closechar, str, startpos, nullval, objectmeta, arraymeta)
+  local len = strlen (str)
+  local tbl, n = {}, 0
+  local pos = startpos + 1
+  if what == 'object' then
+    setmetatable (tbl, objectmeta)
+  else
+    setmetatable (tbl, arraymeta)
+  end
+  while true do
+    pos = scanwhite (str, pos)
+    if not pos then return unterminated (str, what, startpos) end
+    local char = strsub (str, pos, pos)
+    if char == closechar then
+      return tbl, pos + 1
+    end
+    local val1, err
+    val1, pos, err = scanvalue (str, pos, nullval, objectmeta, arraymeta)
+    if err then return nil, pos, err end
+    pos = scanwhite (str, pos)
+    if not pos then return unterminated (str, what, startpos) end
+    char = strsub (str, pos, pos)
+    if char == ":" then
+      if val1 == nil then
+        return nil, pos, "cannot use nil as table index (at " .. loc (str, pos) .. ")"
+      end
+      pos = scanwhite (str, pos + 1)
+      if not pos then return unterminated (str, what, startpos) end
+      local val2
+      val2, pos, err = scanvalue (str, pos, nullval, objectmeta, arraymeta)
+      if err then return nil, pos, err end
+      tbl[val1] = val2
+      pos = scanwhite (str, pos)
+      if not pos then return unterminated (str, what, startpos) end
+      char = strsub (str, pos, pos)
+    else
+      n = n + 1
+      tbl[n] = val1
+    end
+    if char == "," then
+      pos = pos + 1
+    end
+  end
+end
+
+scanvalue = function (str, pos, nullval, objectmeta, arraymeta)
+  pos = pos or 1
+  pos = scanwhite (str, pos)
+  if not pos then
+    return nil, strlen (str) + 1, "no valid JSON value (reached the end)"
+  end
+  local char = strsub (str, pos, pos)
+  if char == "{" then
+    return scantable ('object', "}", str, pos, nullval, objectmeta, arraymeta)
+  elseif char == "[" then
+    return scantable ('array', "]", str, pos, nullval, objectmeta, arraymeta)
+  elseif char == "\"" then
+    return scanstring (str, pos)
+  else
+    local pstart, pend = strfind (str, "^%-?[%d%.]+[eE]?[%+%-]?%d*", pos)
+    if pstart then
+      local number = str2num (strsub (str, pstart, pend))
+      if number then
+        return number, pend + 1
+      end
+    end
+    pstart, pend = strfind (str, "^%a%w*", pos)
+    if pstart then
+      local name = strsub (str, pstart, pend)
+      if name == "true" then
+        return true, pend + 1
+      elseif name == "false" then
+        return false, pend + 1
+      elseif name == "null" then
+        return nullval, pend + 1
+      end
+    end
+    return nil, pos, "no valid JSON value at " .. loc (str, pos)
+  end
+end
+
+local function optionalmetatables(...)
+  if select("#", ...) > 0 then
+    return ...
+  else
+    return {__jsontype = 'object'}, {__jsontype = 'array'}
+  end
+end
+
+function json.decode (str, pos, nullval, ...)
+  local objectmeta, arraymeta = optionalmetatables(...)
+  return scanvalue (str, pos, nullval, objectmeta, arraymeta)
+end
+
+function json.use_lpeg ()
+  local g = require ("lpeg")
+
+  if type(g.version) == 'function' and g.version() == "0.11" then
+    error "due to a bug in LPeg 0.11, it cannot be used for JSON matching"
+  end
+
+  local pegmatch = g.match
+  local P, S, R = g.P, g.S, g.R
+
+  local function ErrorCall (str, pos, msg, state)
+    if not state.msg then
+      state.msg = msg .. " at " .. loc (str, pos)
+      state.pos = pos
+    end
+    return false
+  end
+
+  local function Err (msg)
+    return g.Cmt (g.Cc (msg) * g.Carg (2), ErrorCall)
+  end
+
+  local function ErrorUnterminatedCall (str, pos, what, state)
+    return ErrorCall (str, pos - 1, "unterminated " .. what, state)
+  end
+
+  local SingleLineComment = P"//" * (1 - S"\n\r")^0
+  local MultiLineComment = P"/*" * (1 - P"*/")^0 * P"*/"
+  local Space = (S" \n\r\t" + P"\239\187\191" + SingleLineComment + MultiLineComment)^0
+
+  local function ErrUnterminated (what)
+    return g.Cmt (g.Cc (what) * g.Carg (2), ErrorUnterminatedCall)
+  end
+
+  local PlainChar = 1 - S"\"\\\n\r"
+  local EscapeSequence = (P"\\" * g.C (S"\"\\/bfnrt" + Err "unsupported escape sequence")) / escapechars
+  local HexDigit = R("09", "af", "AF")
+  local function UTF16Surrogate (match, pos, high, low)
+    high, low = tonumber (high, 16), tonumber (low, 16)
+    if 0xD800 <= high and high <= 0xDBff and 0xDC00 <= low and low <= 0xDFFF then
+      return true, unichar ((high - 0xD800)  * 0x400 + (low - 0xDC00) + 0x10000)
+    else
+      return false
+    end
+  end
+  local function UTF16BMP (hex)
+    return unichar (tonumber (hex, 16))
+  end
+  local U16Sequence = (P"\\u" * g.C (HexDigit * HexDigit * HexDigit * HexDigit))
+  local UnicodeEscape = g.Cmt (U16Sequence * U16Sequence, UTF16Surrogate) + U16Sequence/UTF16BMP
+  local Char = UnicodeEscape + EscapeSequence + PlainChar
+  local String = P"\"" * (g.Cs (Char ^ 0) * P"\"" + ErrUnterminated "string")
+  local Integer = P"-"^(-1) * (P"0" + (R"19" * R"09"^0))
+  local Fractal = P"." * R"09"^0
+  local Exponent = (S"eE") * (S"+-")^(-1) * R"09"^1
+  local Number = (Integer * Fractal^(-1) * Exponent^(-1))/str2num
+  local Constant = P"true" * g.Cc (true) + P"false" * g.Cc (false) + P"null" * g.Carg (1)
+  local SimpleValue = Number + String + Constant
+  local ArrayContent, ObjectContent
+
+  -- The functions parsearray and parseobject parse only a single value/pair
+  -- at a time and store them directly to avoid hitting the LPeg limits.
+  local function parsearray (str, pos, nullval, state)
+    local obj, cont
+    local start = pos
+    local npos
+    local t, nt = {}, 0
+    repeat
+      obj, cont, npos = pegmatch (ArrayContent, str, pos, nullval, state)
+      if cont == 'end' then
+        return ErrorUnterminatedCall (str, start, "array", state)
+      end
+      pos = npos
+      if cont == 'cont' or cont == 'last' then
+        nt = nt + 1
+        t[nt] = obj
+      end
+    until cont ~= 'cont'
+    return pos, setmetatable (t, state.arraymeta)
+  end
+
+  local function parseobject (str, pos, nullval, state)
+    local obj, key, cont
+    local start = pos
+    local npos
+    local t = {}
+    repeat
+      key, obj, cont, npos = pegmatch (ObjectContent, str, pos, nullval, state)
+      if cont == 'end' then
+        return ErrorUnterminatedCall (str, start, "object", state)
+      end
+      pos = npos
+      if cont == 'cont' or cont == 'last' then
+        t[key] = obj
+      end
+    until cont ~= 'cont'
+    return pos, setmetatable (t, state.objectmeta)
+  end
+
+  local Array = P"[" * g.Cmt (g.Carg(1) * g.Carg(2), parsearray)
+  local Object = P"{" * g.Cmt (g.Carg(1) * g.Carg(2), parseobject)
+  local Value = Space * (Array + Object + SimpleValue)
+  local ExpectedValue = Value + Space * Err "value expected"
+  local ExpectedKey = String + Err "key expected"
+  local End = P(-1) * g.Cc'end'
+  local ErrInvalid = Err "invalid JSON"
+  ArrayContent = (Value * Space * (P"," * g.Cc'cont' + P"]" * g.Cc'last'+ End + ErrInvalid)  + g.Cc(nil) * (P"]" * g.Cc'empty' + End  + ErrInvalid)) * g.Cp()
+  local Pair = g.Cg (Space * ExpectedKey * Space * (P":" + Err "colon expected") * ExpectedValue)
+  ObjectContent = (g.Cc(nil) * g.Cc(nil) * P"}" * g.Cc'empty' + End + (Pair * Space * (P"," * g.Cc'cont' + P"}" * g.Cc'last' + End + ErrInvalid) + ErrInvalid)) * g.Cp()
+  local DecodeValue = ExpectedValue * g.Cp ()
+
+  jsonlpeg.version = json.version
+  jsonlpeg.encode = json.encode
+  jsonlpeg.null = json.null
+  jsonlpeg.quotestring = json.quotestring
+  jsonlpeg.addnewline = json.addnewline
+  jsonlpeg.encodeexception = json.encodeexception
+  jsonlpeg.using_lpeg = true
+
+  function jsonlpeg.decode (str, pos, nullval, ...)
+    local state = {}
+    state.objectmeta, state.arraymeta = optionalmetatables(...)
+    local obj, retpos = pegmatch (DecodeValue, str, pos, nullval, state)
+    if state.msg then
+      return nil, state.pos, state.msg
+    else
+      return obj, retpos
+    end
+  end
+
+  -- cache result of this function:
+  json.use_lpeg = function () return jsonlpeg end
+  jsonlpeg.use_lpeg = json.use_lpeg
+
+  return jsonlpeg
+end
+
+if always_use_lpeg then
+  return json.use_lpeg()
+end
 
 return json
-]=]),
+
+]===]),
 ["serpent"] = lib("ext/lua/serpent/serpent.lua", [=[local n, v = "serpent", "0.303" -- (C) 2012-18 Paul Kulchenko; MIT License
 local c, d = "Paul Kulchenko", "Lua serializer and pretty printer"
 local snum = {[tostring(1/0)]='1/0 --[[math.huge]]',[tostring(-1/0)]='-1/0 --[[-math.huge]]',[tostring(0/0)]='0/0'}
@@ -10846,7 +11161,7 @@ require "fs"
 require "lz4"
 require "lzw"
 require "package_hook"
-]===]),
+]====]),
 ["atexit"] = lib("atexit.lua", [=[--[[
 This file is part of ypp.
 
