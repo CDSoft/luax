@@ -391,9 +391,8 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
 - **[Linenoise](https://github.com/yhirose/linenoise/tree/utf8-support)**:
   A minimal, zero-config, BSD licensed, readline replacement ([BSD
   license](https://github.com/antirez/linenoise/blob/master/LICENSE))
-- **[json.lua](https://github.com/rxi/json.lua)**: A lightweight JSON
-  library for Lua ([MIT
-  license](https://github.com/rxi/json.lua/blob/master/LICENSE))
+- **[dkjson.lua](http://dkolf.de/dkjson-lua/)**: JSON Module for Lua
+  ([MIT license](http://www.lua.org/license.html))
 - **[CBOR](https://www.zash.se/lua-cbor.html)**: pure Lua implementation
   of the CBOR
   ([License](https://code.zash.se/lua-cbor/file/tip/COPYING))
