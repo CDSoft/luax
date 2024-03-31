@@ -239,6 +239,51 @@ update_cbor()
     rm -rf ext/lua/cbor/lua-cbor-*
     echo "--@LIB" >> ext/lua/cbor/cbor.lua
 
+    patch -p1 <<EOF
+diff --git a/ext/lua/cbor/cbor.lua b/ext/lua/cbor/cbor.lua
+index 2b6cc0b..322f8ef 100644
+--- a/ext/lua/cbor/cbor.lua
++++ b/ext/lua/cbor/cbor.lua
+@@ -230,6 +230,7 @@ function encoder.table(t, opts)
+ 			return encode_t(t, opts);
+ 		end
+ 	end
++    local custom_pairs = opts and opts.pairs or pairs
+ 	-- the table is encoded as an array iff when we iterate over it,
+ 	-- we see successive integer keys starting from 1.  The lua
+ 	-- language doesn't actually guarantee that this will be the case
+@@ -240,7 +241,7 @@ function encoder.table(t, opts)
+ 	-- back to a map with integer keys, which becomes a bit larger.
+ 	local array, map, i, p = { integer(#t, 128) }, { "\191" }, 1, 2;
+ 	local is_array = true;
+-	for k, v in pairs(t) do
++	for k, v in custom_pairs(t) do
+ 		is_array = is_array and i == k;
+ 		i = i + 1;
+
+@@ -265,8 +266,9 @@ function encoder.array(t, opts)
+ end
+
+ function encoder.map(t, opts)
++    local custom_pairs = opts and opts.pairs or pairs
+ 	local map, p, len = { "\191" }, 2, 0;
+-	for k, v in pairs(t) do
++	for k, v in custom_pairs(t) do
+ 		map[p], p = encode(k, opts), p + 1;
+ 		map[p], p = encode(v, opts), p + 1;
+ 		len = len + 1;
+@@ -280,8 +282,9 @@ encoder.dict = encoder.map; -- COMPAT
+ function encoder.ordered_map(t, opts)
+ 	local map = {};
+ 	if not t[1] then -- no predefined order
++        local custom_pairs = opts and opts.pairs or pairs
+ 		local i = 0;
+-		for k in pairs(t) do
++		for k in custom_pairs(t) do
+ 			i = i + 1;
+ 			map[i] = k;
+ 		end
+EOF
 }
 
 update_linenoise()
@@ -291,6 +336,7 @@ update_dkjson()
     rm -rf ext/lua/json
     mkdir -p ext/lua/json
     cp "$TMP/$JSON_SCRIPT" ext/lua/json/json.lua
+
     patch -p1 <<EOF
 diff --git a/ext/lua/json/json.lua b/ext/lua/json/json.lua
 index 7a86724..076f679 100644
