@@ -677,56 +677,28 @@ rule "bundle" {
 
 local luax_runtime, lua_runtime = {}, {}
 
-acc(luax_runtime) { "libluax/F/F.lua" }
-acc(lua_runtime)  { "libluax/F/F.lua" }
+local function rt(t)
+    acc(luax_runtime) { t.luax }
+    acc(lua_runtime)  { t.lua  }
+end
 
-acc(luax_runtime) { }
-acc(lua_runtime)  { "libluax/complex/complex.lua" }
-
-acc(luax_runtime) { "libluax/crypt/crypt.lua" }
-acc(lua_runtime)  { "libluax/crypt/crypt.lua", "libluax/crypt/_crypt.lua" }
-
-acc(luax_runtime) { "libluax/fs/fs.lua" }
-acc(lua_runtime)  { "libluax/fs/fs.lua", "libluax/fs/_fs.lua" }
-
-acc(luax_runtime) { }
-acc(lua_runtime)  { "libluax/imath/imath.lua" }
-
-acc(luax_runtime) { "libluax/import/import.lua" }
-acc(lua_runtime)  { "libluax/import/import.lua" }
-
-acc(luax_runtime) { }
-acc(lua_runtime)  { "libluax/linenoise/linenoise.lua" }
-
-acc(luax_runtime) { "libluax/lz4/lz4.lua" }
-acc(lua_runtime)  { "libluax/lz4/lz4.lua", "libluax/lz4/_lz4.lua" }
-
-acc(luax_runtime) { "libluax/lzw/lzw.lua" }
-acc(lua_runtime)  { "libluax/lzw/lzw.lua" }
-
-acc(luax_runtime) { }
-acc(lua_runtime)  { "libluax/mathx/mathx.lua" }
-
-acc(luax_runtime) { "libluax/package/package_hook.lua" }
-acc(lua_runtime)  { "libluax/package/package_hook.lua" }
-
-acc(luax_runtime) { }
-acc(lua_runtime)  { "libluax/ps/ps.lua" }
-
-acc(luax_runtime) { "libluax/qmath/qmath.lua"}
-acc(lua_runtime)  { "libluax/qmath/qmath.lua", "libluax/qmath/_qmath.lua" }
-
-acc(luax_runtime) { "libluax/sh/sh.lua" }
-acc(lua_runtime)  { "libluax/sh/sh.lua" }
-
-acc(luax_runtime) { "libluax/sys/targets.lua" }
-acc(lua_runtime)  { "libluax/sys/sys.lua", "libluax/sys/targets.lua" }
-
-acc(luax_runtime) { "libluax/term/term.lua" }
-acc(lua_runtime)  { "libluax/term/term.lua", "libluax/term/_term.lua" }
-
-acc(luax_runtime) { ls "ext/**.lua" }
-acc(lua_runtime)  { ls "ext/lua/**.lua" }
+rt { luax="libluax/F/F.lua",                    lua="libluax/F/F.lua"                                       }
+rt {                                            lua="libluax/complex/complex.lua"                           }
+rt { luax="libluax/crypt/crypt.lua",            lua={"libluax/crypt/crypt.lua", "libluax/crypt/_crypt.lua"} }
+rt { luax="libluax/fs/fs.lua",                  lua={"libluax/fs/fs.lua", "libluax/fs/_fs.lua"}             }
+rt {                                            lua="libluax/imath/imath.lua"                               }
+rt { luax="libluax/import/import.lua",          lua="libluax/import/import.lua"                             }
+rt {                                            lua="libluax/linenoise/linenoise.lua"                       }
+rt { luax="libluax/lz4/lz4.lua",                lua={"libluax/lz4/lz4.lua", "libluax/lz4/_lz4.lua"}         }
+rt { luax="libluax/lzw/lzw.lua",                lua="libluax/lzw/lzw.lua"                                   }
+rt {                                            lua="libluax/mathx/mathx.lua"                               }
+rt { luax="libluax/package/package_hook.lua",   lua="libluax/package/package_hook.lua"                      }
+rt {                                            lua="libluax/ps/ps.lua"                                     }
+rt { luax="libluax/qmath/qmath.lua",            lua={"libluax/qmath/qmath.lua", "libluax/qmath/_qmath.lua"} }
+rt { luax="libluax/sh/sh.lua",                  lua="libluax/sh/sh.lua"                                     }
+rt { luax="libluax/sys/targets.lua",            lua={"libluax/sys/sys.lua", "libluax/sys/targets.lua"}      }
+rt { luax="libluax/term/term.lua",              lua={"libluax/term/term.lua", "libluax/term/_term.lua"}     }
+rt { luax={ls "ext/**.lua"},                    lua={ls "ext/lua/**.lua"}                                   }
 
 local luax_runtime_bundle = build "$tmp/lua_runtime_bundle.c" {
     "bundle", "$luax_config_lua", luax_runtime,
