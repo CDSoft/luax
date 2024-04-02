@@ -53,6 +53,7 @@ require "qmath_test"()
 require "linenoise_test"()
 require "json_test"()
 require "package_test"()
+require "debug_test"()
 require "resource_test"()
 require "import_test"()
 

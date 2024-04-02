@@ -692,12 +692,15 @@ rt {                                            lua="libluax/linenoise/linenoise
 rt { luax="libluax/lz4/lz4.lua",                lua={"libluax/lz4/lz4.lua", "libluax/lz4/_lz4.lua"}         }
 rt { luax="libluax/lzw/lzw.lua",                lua="libluax/lzw/lzw.lua"                                   }
 rt {                                            lua="libluax/mathx/mathx.lua"                               }
-rt { luax="libluax/package/package_hook.lua",   lua="libluax/package/package_hook.lua"                      }
 rt {                                            lua="libluax/ps/ps.lua"                                     }
 rt { luax="libluax/qmath/qmath.lua",            lua={"libluax/qmath/qmath.lua", "libluax/qmath/_qmath.lua"} }
 rt { luax="libluax/sh/sh.lua",                  lua="libluax/sh/sh.lua"                                     }
 rt { luax="libluax/sys/targets.lua",            lua={"libluax/sys/sys.lua", "libluax/sys/targets.lua"}      }
 rt { luax="libluax/term/term.lua",              lua={"libluax/term/term.lua", "libluax/term/_term.lua"}     }
+
+rt { luax="libluax/package/package_hook.lua",   lua="libluax/package/package_hook.lua"                      }
+rt { luax="libluax/debug/debug_hook.lua",       lua="libluax/debug/debug_hook.lua"                          }
+
 rt { luax={ls "ext/**.lua"},                    lua={ls "ext/lua/**.lua"}                                   }
 
 local luax_runtime_bundle = build "$tmp/lua_runtime_bundle.c" {

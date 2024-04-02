@@ -256,6 +256,7 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 
 - [LuaX interactive usage](repl.md): improved Lua REPL
 - [package](package.md): modified Lua package `package`
+- [debug](debug.md): modified Lua package `debug`
 - [import](import.md): import Lua scripts to user table instead of `_G`
 - [F](F.md): functional programming inspired functions
 - [fs](fs.md): file system management

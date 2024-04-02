@@ -285,6 +285,7 @@ and [lapp](http://cdelord.fr/lapp).
 
 - [LuaX interactive usage](doc/repl.md): improved Lua REPL
 - [package](doc/package.md): modified Lua package `package`
+- [debug](doc/debug.md): modified Lua package `debug`
 - [import](doc/import.md): import Lua scripts to user table instead of
   `_G`
 - [F](doc/F.md): functional programming inspired functions
