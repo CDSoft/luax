@@ -32,7 +32,6 @@ local ps = require "ps"
 #include <dirent.h>
 #include <fcntl.h>
 #include <math.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -89,9 +88,7 @@ static inline lua_Number gettime(void)
 #else
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
-    const uint64_t sec_in_nsec = (uint64_t)ts.tv_sec * 1000000000;
-    const uint64_t nsec = (uint64_t)ts.tv_nsec;
-    const lua_Number t = (double)(sec_in_nsec + nsec) / 1e9;
+    const lua_Number t = (double)ts.tv_sec + (double)(ts.tv_nsec) / 1e9;
 #endif
     return t;
 }
