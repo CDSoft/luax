@@ -110,7 +110,7 @@ static int traceback(lua_State *L)
 
 const char *arg0(lua_State *L)
 {
-    int type = lua_getglobal(L, "arg");
+    const int type = lua_getglobal(L, "arg");
     if (type == LUA_TTABLE)
     {
         lua_rawgeti(L, -1, 0);

@@ -77,18 +77,16 @@ static inline void set_integer(lua_State *L, const char *name, lua_Integer val)
 
 static int term_size(lua_State *L)
 {
-    int cols;
-    int rows;
 #ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-    cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-    rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+    const int cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    const int rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 #else
     struct winsize win;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &win);
-    cols = win.ws_col;
-    rows = win.ws_row;
+    const int cols = win.ws_col;
+    const int rows = win.ws_row;
 #endif
     lua_newtable(L);
     set_integer(L, "rows", rows);

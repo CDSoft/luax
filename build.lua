@@ -186,6 +186,12 @@ local function zig_target(t)
     return {"-target", F{t.arch, t.os, t.libc}:str"-"}
 end
 
+local function optional(cond)
+    return function(t)
+        return cond and t or {}
+    end
+end
+
 case(compiler) {
 
     zig = function()
@@ -208,7 +214,7 @@ case(compiler) {
             local cache_dir = F{
                 target.name,
                 mode,
-                san and "sanitizers" or {},
+                optional(san) "sanitizers",
             }:flatten():str"-"
             local zig_cache = {
                 "ZIG_GLOBAL_CACHE_DIR=${zig_cache}"/cache_dir.."-global",
@@ -251,7 +257,7 @@ local lto_opt = case(compiler) {
     clang = "-flto=thin",
 }
 
-local sanitizer_cflags = san and {
+local sanitizer_cflags = optional(san) {
     "-g -fno-omit-frame-pointer -fno-optimize-sibling-calls",
     "-fsanitize=address",
     "-fsanitize=undefined",
@@ -263,9 +269,9 @@ local sanitizer_cflags = san and {
     "-fsanitize=nullability-arg",
     "-fsanitize=nullability-assign",
     "-fsanitize=nullability-return",
-} or {}
+}
 
-local sanitizer_ext_cflags = san and {
+local sanitizer_ext_cflags = optional(san) {
     "-g -fno-omit-frame-pointer -fno-optimize-sibling-calls",
     "-fsanitize=address",
     --"-fsanitize=undefined",
@@ -277,17 +283,17 @@ local sanitizer_ext_cflags = san and {
     "-fsanitize=nullability-arg",
     "-fsanitize=nullability-assign",
     "-fsanitize=nullability-return",
-} or {}
+}
 
-local sanitizer_ldflags = san and {
+local sanitizer_ldflags = optional(san) {
     "-fsanitize=address",
     "-fsanitize=undefined",
-} or {}
+}
 
-local sanitizer_options = san and {
+local sanitizer_options = optional(san) {
     "export ASAN_OPTIONS=check_initialization_order=1:detect_stack_use_after_return=1:detect_leaks=1;",
     "export UBSAN_OPTIONS=print_stacktrace=1;",
-} or {}
+}
 
 local host_cflags = {
     "-std=gnu2x",
@@ -638,10 +644,16 @@ are created in `$tmp`
 var "luax_config_h"   "$tmp/luax_config.h"
 var "luax_config_lua" "$tmp/luax_config.lua"
 
-local luax_config_params = F {
+local function ypp_vars(t)
+    return F.items(t)
+        : map(function(kv) return ("-e '%s=%q'"):format(kv:unpack()) end)
+        : unwords()
+end
+
+local luax_config_params = ypp_vars {
     AUTHORS = AUTHORS,
     URL = URL,
-} : items() : map(function(kv) return ("-e '%s=%q'"):format(kv:unpack()) end) : unwords()
+}
 
 rule "ypp" {
     description = "YPP $out",
@@ -707,7 +719,7 @@ local luax_runtime_bundle = build "$tmp/lua_runtime_bundle.c" {
     "bundle", "$luax_config_lua", luax_runtime,
     args = {
         "-lib -c",
-        bytecode or {},
+        bytecode,
     }
 }
 
@@ -720,7 +732,7 @@ local luax_app_bundle = build "$tmp/lua_app_bundle.c" {
     "bundle", luax_app,
     args = {
         "-app -c",
-        bytecode or {},
+        bytecode,
         "-name=luax",
     },
 }
@@ -769,7 +781,8 @@ targets:foreach(function(target)
                 implicit_in = {
                     case(src:basename():splitext()) {
                         version = "$luax_config_h",
-                    } or {},
+                        [F.Nil] = {},
+                    },
                 },
             }
         end),
@@ -850,13 +863,13 @@ if cross_compilation then
 
     var "luaxc" "$bin/luaxc"
 
-    local luaxc_config_params = F {
+    local luaxc_config_params = ypp_vars {
         ZIG_VERSION = zig_version,
         URL = URL,
         YEARS = YEARS,
         AUTHORS = AUTHORS,
         BYTECODE = bytecode,
-    } : items() : map(function(kv) return ("-e '%s=%q'"):format(kv:unpack()) end) : unwords()
+    }
 
     rule "ypp-luaxc" {
         description = "YPP $out",
@@ -1249,10 +1262,10 @@ local pandoc_gfm = {
     "--fail-if-warnings",
 }
 
-local ypp_config_params = F {
+local ypp_config_params = ypp_vars {
     BYTECODE = bytecode,
     LUAX = "$luax",
-} : items() : map(function(kv) return ("-e '%s=%q'"):format(kv:unpack()) end) : unwords()
+}
 
 local gfm = pipe {
     rule "ypp.md" {
@@ -1325,7 +1338,7 @@ end
 phony "all" {
     "compile",
     "test",
-    #doc > 0 and "doc" or {},
+    optional(#doc > 0) "doc",
 }
 help "all" "alias for compile, test and doc"
 

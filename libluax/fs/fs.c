@@ -111,12 +111,12 @@ static int fs_dir(lua_State *L)
         return luax_pusherror(L, "bad argument #1 to dir (none, nil or string expected)");
     }
     DIR *dir = opendir(path);
-    struct dirent *file;
-    int n = 0;
     if (dir)
     {
         lua_newtable(L); /* file list */
-        while ((file = readdir(dir)))
+        struct dirent *file;
+        int n = 0;
+        while ((file = readdir(dir)) != NULL)
         {
             if (strcmp(file->d_name, ".")==0) continue;
             if (strcmp(file->d_name, "..")==0) continue;
@@ -170,12 +170,11 @@ static int fs_glob(lua_State *L)
         return luax_pusherror(L, "bad argument #1 to pattern (none, nil or string expected)");
     }
     glob_t globres;
-    unsigned int i;
-    int r = glob(pattern, 0, NULL, &globres);
+    const int r = glob(pattern, 0, NULL, &globres);
     if (r == 0 || r == GLOB_NOMATCH)
     {
         lua_newtable(L); /* file list */
-        for (i=1; i<=globres.gl_pathc; i++)
+        for (unsigned int i=1; i<=globres.gl_pathc; i++)
         {
             lua_pushstring(L, globres.gl_pathv[i-1]);
             lua_rawseti(L, -2, i);
@@ -239,27 +238,23 @@ static int fs_copy(lua_State *L)
 {
     const char *fromname = luaL_checkstring(L, 1);
     const char *toname = luaL_checkstring(L, 2);
-    int _en;
-    FILE *from, *to;
-    size_t n;
-    char buffer[FS_BUFSIZE];
-    struct stat st;
-    struct utimbuf t;
-    from = fopen(fromname, "rb");
+    FILE *from = fopen(fromname, "rb");
     if (!from) return luax_pushresult(L, 0, fromname);
-    to = fopen(toname, "wb");
+    FILE *to = fopen(toname, "wb");
     if (!to)
     {
-        _en = errno;
+        const int _en = errno;
         fclose(from);
         errno = _en;
         return luax_pushresult(L, 0, toname);
     }
+    size_t n;
+    char buffer[FS_BUFSIZE];
     while ((n = fread(buffer, sizeof(char), FS_BUFSIZE, from)))
     {
         if (fwrite(buffer, sizeof(char), n, to) != n)
         {
-            _en = errno;
+            const int _en = errno;
             fclose(from);
             fclose(to);
             remove(toname);
@@ -269,7 +264,7 @@ static int fs_copy(lua_State *L)
     }
     if (ferror(from))
     {
-        _en = errno;
+        const int _en = errno;
         fclose(from);
         fclose(to);
         remove(toname);
@@ -278,12 +273,11 @@ static int fs_copy(lua_State *L)
     }
     fclose(from);
     fclose(to);
+    struct stat st;
     if (stat(fromname, &st) != 0) return luax_pushresult(L, 0, fromname);
-    t.actime = st.st_atime;
-    t.modtime = st.st_mtime;
-    return luax_pushresult(L,
-        utime(toname, &t) == 0 && chmod(toname, st.st_mode) == 0,
-        toname);
+    const bool time_ok = utime(toname, &(struct utimbuf){.actime=st.st_atime, .modtime=st.st_mtime}) == 0;
+    const bool chmod_ok = chmod(toname, st.st_mode) == 0;
+    return luax_pushresult(L, time_ok && chmod_ok, toname);
 }
 
 /*@@@
@@ -542,7 +536,7 @@ static int fs_touch(lua_State *L)
     }
     if (access(path, F_OK) != 0)
     {
-        int fd = open(path, O_CREAT, S_IRUSR | S_IWUSR);
+        const int fd = open(path, O_CREAT, S_IRUSR | S_IWUSR);
         if (fd < 0) return luax_pushresult(L, 0, path);
         if (fd >= 0) close(fd);
     }

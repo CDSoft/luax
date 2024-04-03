@@ -70,10 +70,10 @@ end
 prng_mt.__index.int = prng_int
 
 local function prng_float(self, a, b)
-    local r = prng_int(self)
-    if not a then return r / RAND_MAX end
-    if not b then return r * a/RAND_MAX end
-    return r * (b-a)/RAND_MAX + a
+    local r = prng_int(self) / RAND_MAX
+    if not a then return r end
+    if not b then return r * a end
+    return r*(b-a) + a
 end
 prng_mt.__index.float = prng_float
 

@@ -107,8 +107,8 @@ static inline double prng_float(t_prng *prng)
 
 static inline double prng_float_range(t_prng *prng, double a, double b)
 {
-    const double x = prng_int(prng);
-    return x*(b-a)/(double)(CRYPT_RAND_MAX) + a;
+    const double x = prng_float(prng);
+    return x*(b-a) + a;
 }
 
 static inline char *prng_str(t_prng *prng, size_t size)
