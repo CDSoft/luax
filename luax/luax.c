@@ -23,10 +23,6 @@
 
 #include "lualib.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 /* app_bundle defined in lua_app_bundle.c (generated at compile time) */
 extern const size_t app_bundle_len;
 extern const unsigned char app_bundle[];
