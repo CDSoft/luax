@@ -59,31 +59,6 @@ static const luaL_Reg lrun_libs[] = {
     {NULL, NULL},
 };
 
-/* lib_bundle defined in lua_runtime_bundle.c (generated at compile time) */
-extern const size_t lib_bundle_len;
-extern const unsigned char lib_bundle[];
-
-static char *invert(const char *input, size_t input_len)
-{
-    char *output = safe_malloc(input_len);
-    for (size_t i = 0; i < input_len; i++) {
-        output[i] = (char)(~input[i]);
-    }
-    return output;
-}
-
-void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len)
-{
-    char *tmp_buffer = invert(input, input_len);
-    const char *err = lz4_decompress(tmp_buffer, input_len, output, output_len);
-    free(tmp_buffer);
-    if (err != NULL)
-    {
-        fprintf(stderr, "Runtime error: %s\n", err);
-        exit(EXIT_FAILURE);
-    }
-}
-
 static int traceback(lua_State *L)
 {
     const char *msg = lua_tostring(L, 1);
@@ -108,7 +83,7 @@ static int traceback(lua_State *L)
     return 0;
 }
 
-const char *arg0(lua_State *L)
+static const char *arg0(lua_State *L)
 {
     const int type = lua_getglobal(L, "arg");
     if (type == LUA_TTABLE)
@@ -122,13 +97,13 @@ const char *arg0(lua_State *L)
     return luaL_checkstring(L, -1);
 }
 
-int run_buffer(lua_State *L, char *buffer, size_t size, const char *name)
+int run_buffer(lua_State *L, char *(*chunk)(void), size_t (*size)(void), const char *name, void (*free_chunk)(void))
 {
-    if (luaL_loadbuffer(L, buffer, size, name) != LUA_OK)
+    if (luaL_loadbuffer(L, chunk(), size(), name) != LUA_OK)
     {
         error(arg0(L), lua_tostring(L, -1));
     }
-    memset(buffer, 0, size);
+    free_chunk();
     const int base = lua_gettop(L);         /* function index */
     lua_pushcfunction(L, traceback);        /* push message handler */
     lua_insert(L, base);                    /* put it under function and args */
@@ -146,14 +121,11 @@ LUAMOD_API int luaopen_libluax(lua_State *L)
         lua_pop(L, 1);
     }
 
-    char *rt_chunk = NULL;
-    size_t rt_chunk_len = 0;
-    decode_runtime((const char *)lib_bundle, lib_bundle_len, &rt_chunk, &rt_chunk_len);
-    if (run_buffer(L, rt_chunk, rt_chunk_len, "=runtime") != LUA_OK)
+    CHUNK_PROTO(lib)
+    if (run_buffer(L, lib_chunk, lib_size, "=runtime", lib_free) != LUA_OK)
     {
         error(arg0(L), "can not initialize the LuaX runtime\n");
     }
-    free(rt_chunk);
 
     return 1;
 }

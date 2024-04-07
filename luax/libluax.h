@@ -26,11 +26,12 @@ LUAMOD_API int luaopen_libluax(lua_State *L);
 
 /* libluax functions to decode and execute a LuaX chunk of Lua code */
 
-/* decrypt and decompress a LuaX/app runtime */
-void decode_runtime(const char *input, size_t input_len, char **output, size_t *output_len);
+/* accessors to the chunks (generated at compile time) */
+#define CHUNK_PROTO(kind)               \
+    extern size_t kind##_size(void);    \
+    extern char *kind##_chunk(void);    \
+    extern void kind##_clean(void);     \
+    extern void kind##_free(void);
 
-/* get arg[0] */
-const char *arg0(lua_State *L);
-
-/* run a decrypted and decompressed chunk */
-int run_buffer(lua_State *L, char *buffer, size_t size, const char *name);
+/* run a chunk */
+int run_buffer(lua_State *L, char *(*chunk)(void), size_t (*size)(void), const char *name, void (*clean)(void));

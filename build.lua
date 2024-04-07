@@ -130,7 +130,7 @@ F.foreach(arg, function(a)
         san     = function() san = true end,
         strip   = function() bytecode = "-s" end,
         [F.Nil] = function()
-            F.error_without_stack_trace((a)..": unknown parameter\n\n"..usage, 1)
+            F.error_without_stack_trace(a..": unknown parameter\n\n"..usage, 1)
         end,
     } ()
 end)
@@ -734,6 +734,10 @@ local luax_app_bundle = build "$tmp/lua_app_bundle.c" {
         "-app -c",
         bytecode,
         "-name=luax",
+        case(mode) {
+            debug = "-crypt", -- in debug mode also test the chunk encryption
+            [F.Nil] = {},
+        },
     },
 }
 
@@ -1058,6 +1062,33 @@ acc(test) {
             test_sources,
         },
     },
+
+    cross_compilation and {
+        build "$test/test-1-luaxc_executable.ok" {
+            description = "TEST $out",
+            command = {
+                sanitizer_options,
+                "$luaxc -q -crypt -o $test/test-luaxc",
+                    test_sources : difference(ls "tests/luax-tests/to_be_imported-*.lua"),
+                "&&",
+                "PATH=$bin:$tmp:$$PATH",
+                "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
+                "LUA_CPATH='foo/?.so'",
+                "TEST_NUM=1",
+                "LUAX=$luax",
+                "LUAXC=$luaxc",
+                "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
+                "$test/test-luaxc Lua is great",
+                "&&",
+                "touch $out",
+            },
+            implicit_in = {
+                "$luax",
+                "$luaxc",
+                test_sources,
+            },
+        },
+    } or {},
 
 }
 

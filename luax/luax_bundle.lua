@@ -112,10 +112,6 @@ local function chunks_of(n, xs)
     return chunks
 end
 
-local function invert(s)
-    return s:bytes():map(function(b) return char(b~0xff) end):str()
-end
-
 function bundle.bundle(arg, opts)
 
     local kind = "app"
@@ -131,12 +127,13 @@ function bundle.bundle(arg, opts)
     end, arg) : flatten()
     for i = 1, #arg do
         if arg[i]:match"^%-name=" then product_name = arg[i]:match"=(.*)"
-        elseif arg[i] == "-lib" then kind = "lib"
-        elseif arg[i] == "-app" then kind = "app"
-        elseif arg[i] == "-lua" then format = "lua"
-        elseif arg[i] == "-c"   then format = "c"
-        elseif arg[i] == "-b"   then bytecode = bytecode:patch { compile=true }
-        elseif arg[i] == "-s"   then bytecode = bytecode:patch { compile=true, strip=true }
+        elseif arg[i] == "-lib"   then kind = "lib"
+        elseif arg[i] == "-app"   then kind = "app"
+        elseif arg[i] == "-lua"   then format = "lua"
+        elseif arg[i] == "-c"     then format = "c"
+        elseif arg[i] == "-crypt" then format = "crypt"
+        elseif arg[i] == "-b"     then bytecode = bytecode:patch { compile=true }
+        elseif arg[i] == "-s"     then bytecode = bytecode:patch { compile=true, strip=true }
         elseif arg[i]:match"^%-" then io.stderr:write("error: ", arg[i], ": invalid argument\n"); os.exit(1)
         elseif arg[i]:ext() == ".lua" then
             local content = bundle.comment_shebang(read(arg[i]))
@@ -249,7 +246,7 @@ function bundle.bundle(arg, opts)
         assert(load(script.content, ("@%s"):format(script.path)))
         if bytecode.compile then
             -- compile the script with file path containing the product name
-            local chunk = assert(load(script.content, ("@$%s:%s"):format(product_name, script.path)))
+            local chunk = assert(load(script.content, ("@$%s:%s"):format(product_name, home_path(script.short_path))))
             return qstr(string.dump(chunk, bytecode.strip))
         else
             return mlstr(script.content)
@@ -310,19 +307,137 @@ function bundle.bundle(arg, opts)
         return plain_payload
     end
 
-    local payload = invert(plain_payload:lz4())
-
     if format == "c" then
-        return ([[
+        local payload = plain_payload:bytes():map(function(b) return char(b~0xff) end):str()
+        local size = #payload
+        local padded_size = size % 8 > 0 and size + (8-size%8) or size
+        local I = (F.I % "%${}") {
+            kind = kind,
+            size = size,
+            padded_size = padded_size,
+            bundle = chunks_of(16, payload:bytes()):map(function(g) return "    "..g:str",".."," end):unlines(),
+        }
+        return I[[
+#include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
-extern const size_t %s_bundle_len;
-extern const unsigned char %s_bundle[];
-const size_t %s_bundle_len = %d;
-const unsigned char %s_bundle[] = {
-%s};
-]]):format(kind, kind, kind, #payload, kind,
-    chunks_of(16, payload:bytes()):map(function(g) return "    "..g:str",".."," end):unlines()
-)
+
+size_t ${kind}_size(void);
+char *${kind}_chunk(void);
+void ${kind}_free(void);
+
+typedef union {
+    unsigned char bytes[${padded_size}];
+    uint64_t words[${padded_size}/sizeof(uint64_t)];
+} t_chunk;
+
+static const size_t size = ${size};
+static const t_chunk bundle = { .bytes = {
+${bundle}}};
+
+static t_chunk *chunk;
+
+size_t ${kind}_size(void) {
+    return size;
+}
+
+char *${kind}_chunk(void) {
+    chunk = (t_chunk *)malloc(sizeof(t_chunk));
+    if (chunk == NULL) { perror("malloc"); exit(EXIT_FAILURE); }
+    for (size_t i = 0; i < sizeof(t_chunk)/sizeof(uint64_t); i++) {
+        chunk->words[i] = ~bundle.words[i];
+    }
+    return (char *)&chunk->bytes;
+}
+
+void ${kind}_free(void) {
+    free(chunk);
+}
+]]
+    end
+
+    if format == "crypt" then
+
+        local size = #plain_payload
+        local padded_size = size % 8 > 0 and size + (8-size%8) or size
+
+        -- Linear congruential generator used to encrypt the bundle
+        -- (see https://en.wikipedia.org/wiki/Linear_congruential_generator (Turbo Pascal random number generator)
+        local a = 134775813
+        local c = 1
+
+        -- Seed value of the generator
+        local payload_hash = tonumber(plain_payload:hash(), 16)
+        local r0 = payload_hash
+
+        -- Drop some values to make it less predictable
+        for _ = 1, 3072 + (payload_hash&0xffff) do
+            r0 = (r0*a + c)
+        end
+        r0 = r0 & ~(1<<63)
+
+        -- Encrypt the bundle by xoring bytes with pseudo random values
+        local encrypted_bundle = {}
+        local r = r0
+        for i = 1, padded_size, 8 do
+            r = (r*a + c)
+            for j = 0, 7 do
+                local b = plain_payload:byte(i+j)
+                if not b then break end
+                encrypted_bundle[i+j] = (b ~ (r>>32)) & 0xff
+            end
+        end
+
+        local I = (F.I % "%${}") {
+            kind = kind,
+            size = size,
+            padded_size = padded_size,
+            a = a, c = c, r0 = r0,
+            encrypted_bundle = chunks_of(16, encrypted_bundle):map(function(g) return "    "..g:str",".."," end):unlines(),
+        }
+
+        return I[[
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+size_t ${kind}_size(void);
+char *${kind}_chunk(void);
+void ${kind}_free(void);
+
+typedef union {
+    unsigned char bytes[${padded_size}];
+    uint64_t words[${padded_size}/sizeof(uint64_t)];
+} t_chunk;
+
+static const size_t size = ${size};
+static const t_chunk bundle = { .bytes = {
+${encrypted_bundle}}};
+
+static t_chunk *chunk;
+
+size_t ${kind}_size(void) {
+    return size;
+}
+
+char *${kind}_chunk(void) {
+    chunk = malloc(sizeof(t_chunk));
+    if (chunk == NULL) { perror("malloc"); exit(EXIT_FAILURE); }
+    uint64_t r = ${r0};
+    for (size_t i = 0; i < sizeof(t_chunk)/sizeof(uint64_t); i++) {
+        r = r*${a} + ${c};
+        chunk->words[i] = bundle.words[i] ^ (((r>>32)&0xff)*0x0101010101010101ULL);
+    }
+    return (char *)&chunk->bytes;
+}
+
+void ${kind}_free(void) {
+    for (size_t i = 0; i < sizeof(t_chunk)/sizeof(uint64_t); i++) {
+        *(volatile uint64_t *)&chunk->words[i] = 0;
+    }
+    free(chunk);
+}
+]]
     end
 
     error(format..": invalid format")

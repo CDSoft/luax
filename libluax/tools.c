@@ -38,28 +38,29 @@ void error(const char *what, const char *message)
     exit(EXIT_FAILURE);
 }
 
-static inline void *check_ptr(void *ptr)
+static inline void *check_ptr(void *ptr, const char *func)
 {
     if (ptr == NULL)
     {
-        error(NULL, "Memory allocation error\n");
+        perror(func);
+        exit(EXIT_FAILURE);
     }
     return ptr;
 }
 
 void *safe_malloc(size_t size)
 {
-    return check_ptr(malloc(size));
+    return check_ptr(malloc(size), "malloc");
 }
 
 void *safe_realloc(void *ptr, size_t size)
 {
-    return check_ptr(realloc(ptr, size));
+    return check_ptr(realloc(ptr, size), "realloc");
 }
 
 char *safe_strdup(const char *s)
 {
-    return check_ptr(strdup(s));
+    return check_ptr(strdup(s), "strdup");
 }
 
 static size_t last_index(const char *s, char c)

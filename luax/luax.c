@@ -23,10 +23,6 @@
 
 #include "lualib.h"
 
-/* app_bundle defined in lua_app_bundle.c (generated at compile time) */
-extern const size_t app_bundle_len;
-extern const unsigned char app_bundle[];
-
 static void createargtable(lua_State *L, const char **argv, int argc, int shift)
 {
     const int narg = argc - 1 - shift;  /* number of positive indices */
@@ -45,11 +41,8 @@ int main(int argc, const char *argv[])
     createargtable(L, argv, argc, 0);
     luaopen_libluax(L);
 
-    char *chunk = NULL;
-    size_t chunk_len = 0;
-    decode_runtime((const char *)app_bundle, app_bundle_len, &chunk, &chunk_len);
-    (void)run_buffer(L, chunk, chunk_len, "=luax");
-    free(chunk);
+    CHUNK_PROTO(app)
+    (void)run_buffer(L, app_chunk, app_size, "=luax", app_free);
 
     lua_close(L);
     exit(EXIT_SUCCESS);

@@ -32,15 +32,24 @@ return function()
     local test_num = tonumber(os.getenv "TEST_NUM")
 
     if test_num == 1 then
-        eq(arg, {
-            [-2] = "luax",
-            [-1] = "--",
-            [0] = ".build/test/test-luax",
-            "Lua", "is", "great"
-        })
-        eq(fs.findpath(arg[-2]), ".build/bin/luax")
-        assert(sys.libc == "gnu")
-        assert(not pandoc)
+        if os.getenv "LUAXC" then
+            eq(arg, {
+                [0] = ".build/test/test-luaxc",
+                "Lua", "is", "great"
+            })
+            assert(sys.libc == "gnu")
+            assert(not pandoc)
+        else
+            eq(arg, {
+                [-2] = "luax",
+                [-1] = "--",
+                [0] = ".build/test/test-luax",
+                "Lua", "is", "great"
+            })
+            eq(fs.findpath(arg[-2]), ".build/bin/luax")
+            assert(sys.libc == "gnu")
+            assert(not pandoc)
+        end
 
     elseif test_num == 2 then
         eq(arg, {
