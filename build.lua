@@ -258,7 +258,7 @@ local lto_opt = case(compiler) {
 }
 
 local sanitizer_cflags = optional(san) {
-    "-g -fno-omit-frame-pointer -fno-optimize-sibling-calls",
+    "-g", "-fno-omit-frame-pointer", "-fno-optimize-sibling-calls",
     "-fsanitize=address",
     "-fsanitize=undefined",
     "-fsanitize=float-divide-by-zero",
@@ -272,7 +272,7 @@ local sanitizer_cflags = optional(san) {
 }
 
 local sanitizer_ext_cflags = optional(san) {
-    "-g -fno-omit-frame-pointer -fno-optimize-sibling-calls",
+    "-g", "-fno-omit-frame-pointer", "-fno-optimize-sibling-calls",
     "-fsanitize=address",
     --"-fsanitize=undefined",
     --"-fsanitize=float-divide-by-zero",
