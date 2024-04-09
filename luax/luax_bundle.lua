@@ -308,9 +308,13 @@ function bundle.bundle(arg, opts)
     end
 
     if format == "c" then
+
         local payload = plain_payload:bytes():map(function(b) return char(b~0xff) end):str()
+
         local size = #payload
-        local padded_size = size % 8 > 0 and size + (8-size%8) or size
+        -- size shall be padded to an 8 byte boundary.
+        local padded_size = size + (8-size%8)%8
+
         local I = (F.I % "%${}") {
             kind = kind,
             size = size,
@@ -359,7 +363,9 @@ void ${kind}_free(void) {
     if format == "crypt" then
 
         local size = #plain_payload
-        local padded_size = size % 8 > 0 and size + (8-size%8) or size
+        -- size shall be padded to an 8 byte boundary.
+        -- The optimized code is better with a multiple of 16 bytes (two 64 bit words per iteration)
+        local padded_size = size + (16-size%16)%16
 
         -- Linear congruential generator used to encrypt the bundle
         -- (see https://en.wikipedia.org/wiki/Linear_congruential_generator (Turbo Pascal random number generator)
@@ -372,7 +378,7 @@ void ${kind}_free(void) {
 
         -- Drop some values to make it less predictable
         for _ = 1, 3072 + (payload_hash&0xffff) do
-            r0 = (r0*a + c)
+            r0 = r0*a + c
         end
         r0 = r0 & ~(1<<63)
 
@@ -380,11 +386,11 @@ void ${kind}_free(void) {
         local encrypted_bundle = {}
         local r = r0
         for i = 1, padded_size, 8 do
-            r = (r*a + c)
+            r = r*a + c
             for j = 0, 7 do
                 local b = plain_payload:byte(i+j)
                 if not b then break end
-                encrypted_bundle[i+j] = (b ~ (r>>32)) & 0xff
+                encrypted_bundle[i+j] = (b ~ (r>>(8*j))) & 0xff
             end
         end
 
@@ -420,13 +426,22 @@ size_t ${kind}_size(void) {
     return size;
 }
 
+static inline uint64_t le64(uint64_t n) {
+    /* This is optimized by the compiler according to the endianness. */
+    union { uint64_t w; uint8_t b[sizeof(uint64_t)]; } x;
+    for (size_t i = 0; i < sizeof(uint64_t); i++) {
+        x.b[i] = (n >> (8*i)) & 0xff;
+    }
+    return x.w;
+}
+
 char *${kind}_chunk(void) {
-    chunk = malloc(sizeof(t_chunk));
+    chunk = (t_chunk *)malloc(sizeof(t_chunk));
     if (chunk == NULL) { perror("malloc"); exit(EXIT_FAILURE); }
     uint64_t r = ${r0};
     for (size_t i = 0; i < sizeof(t_chunk)/sizeof(uint64_t); i++) {
         r = r*${a} + ${c};
-        chunk->words[i] = bundle.words[i] ^ (((r>>32)&0xff)*0x0101010101010101ULL);
+        chunk->words[i] = bundle.words[i] ^ le64(r);
     }
     return (char *)&chunk->bytes;
 }
