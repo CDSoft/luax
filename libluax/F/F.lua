@@ -3654,6 +3654,44 @@ end
 
 --[[@@@
 ```lua
+string.ljust(s, w)
+s:ljust(w)
+```
+> Left-justify `s` by appending spaces. The result is at least `w` byte long. `s` is not truncated.
+@@@]]
+
+function string.ljust(s, w)
+    return s .. (" "):rep(w-#s)
+end
+
+--[[@@@
+```lua
+string.rjust(s, w)
+s:rjust(w)
+```
+> Right-justify `s` by prepending spaces. The result is at least `w` byte long. `s` is not truncated.
+@@@]]
+
+function string.rjust(s, w)
+    return (" "):rep(w-#s) .. s
+end
+
+--[[@@@
+```lua
+string.center(s, w)
+s:center(w)
+```
+> Center `s` by appending and prepending spaces. The result is at least `w` byte long. `s` is not truncated.
+@@@]]
+
+function string.center(s, w)
+    local l = (w-#s)//2
+    local r = (w-#s)-l
+    return (" "):rep(l) .. s .. (" "):rep(r)
+end
+
+--[[@@@
+```lua
 string.cap(s)
 s:cap()
 ```

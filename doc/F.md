@@ -1692,6 +1692,30 @@ s:trim()
 > Removes heading and trailing spaces
 
 ``` lua
+string.ljust(s, w)
+s:ljust(w)
+```
+
+> Left-justify `s` by appending spaces. The result is at least `w` byte
+> long. `s` is not truncated.
+
+``` lua
+string.rjust(s, w)
+s:rjust(w)
+```
+
+> Right-justify `s` by prepending spaces. The result is at least `w`
+> byte long. `s` is not truncated.
+
+``` lua
+string.center(s, w)
+s:center(w)
+```
+
+> Center `s` by appending and prepending spaces. The result is at least
+> `w` byte long. `s` is not truncated.
+
+``` lua
 string.cap(s)
 s:cap()
 ```

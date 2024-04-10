@@ -194,10 +194,15 @@ case "$COMMAND" in
 esac
 
 case "$TARGET" in
-@[===[
-dofile "libluax/sys/targets.lua" : map(function(target)
-    return ('    ("%s")%s ZIG_TARGET="%s-%s-%s" ;;')
-        : format(target.name, (" "):rep(19-#target.name), target.arch, target.os, target.libc)
+@@[===[
+local targets = dofile "libluax/sys/targets.lua"
+local w = targets : map(F.compose{F.op.len, F.partial(F.nth, "name")}) : maximum()
+return targets : map(function(t)
+    return F.str {
+        '    ',
+        F.str{'("', t.name, '")'}:ljust(2+w+2+1),
+        'ZIG_TARGET="', F{t.arch, t.os, t.libc}:str'-', '" ;;'
+    }
 end)
 ]===]    (*) echo "$TARGET: unknown target"; exit 1 ;;
 esac
