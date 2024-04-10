@@ -226,7 +226,7 @@ case(compiler) {
             var("ar-"..target.name) { zig_cache, "$zig ar" }
             var("ld-"..target.name) { zig_cache, "$zig cc", target_opt }
         end
-        targets:foreach(function(target) zig_rules(target) end)
+        targets:foreach(zig_rules)
     end,
 
     gcc = function()
@@ -943,7 +943,7 @@ if cross_compilation then
     }
 
     local compression_level = case(mode) {
-        debug   = 1,
+        debug   = 0,
         [F.Nil] = 9,
     }
 
