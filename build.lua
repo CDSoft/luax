@@ -559,19 +559,6 @@ build "update_modules" {
 }
 
 --===================================================================
-section "lz4 cli"
----------------------------------------------------------------------
-
-var "lz4" "$tmp/lz4"
-
-build "$lz4" { ld.host,
-    ls "ext/c/lz4/**.c"
-    : map(function(src)
-        return build("$tmp/obj/lz4"/src:splitext()..".o") { "cc-host", src }
-    end),
-}
-
---===================================================================
 section "LuaX sources"
 ---------------------------------------------------------------------
 
@@ -633,6 +620,19 @@ build "$lua" { ld.host,
 }
 
 --===================================================================
+section "lz4 cli"
+---------------------------------------------------------------------
+
+var "lz4" "$tmp/lz4"
+
+build "$lz4" { ld.host,
+    ls "ext/c/lz4/**.c"
+    : map(function(src)
+        return build("$tmp/obj/lz4"/src:splitext()..".o") { "cc-host", src }
+    end),
+}
+
+--===================================================================
 section "LuaX configuration"
 ---------------------------------------------------------------------
 
@@ -680,7 +680,6 @@ rule "bundle" {
         "$lua luax/luax_bundle.lua $args $in > $out",
     },
     implicit_in = {
-        "$lz4",
         "$lua",
         "luax/luax_bundle.lua",
         "$luax_config_lua",
@@ -995,7 +994,6 @@ rule "luax-bundle" {
         "$lua luax/luax.lua -q $args -o $out $in",
     },
     implicit_in = {
-        "$lz4",
         "$lua",
         "luax/luax_bundle.lua",
         "$lib/luax.lua",
@@ -1139,6 +1137,7 @@ acc(test) {
         implicit_in = {
             "$lua",
             "$lib/luax.lua",
+            "$lz4",
             libraries,
             test_sources,
         },
@@ -1161,6 +1160,7 @@ acc(test) {
         implicit_in = {
             "$lua",
             "$bin/luax.lua",
+            "$lz4",
             test_sources,
         },
     },
@@ -1182,6 +1182,7 @@ acc(test) {
         implicit_in = {
             "$lua",
             "$lib/luax.lua",
+            "$lz4",
             libraries,
             test_sources,
         },
