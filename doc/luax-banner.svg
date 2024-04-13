@@ -50,7 +50,7 @@ http://cdelord.fr/luax
 <ellipse fill-opacity="0" rx="90" ry="29.7" stroke="url(#BottomRingGradient)" stroke-width="15"/>
 <circle fill="url(#PlanetGradient)" r="72"/>
 <text dx="0" dy="12.0" fill="black" stroke="black" stroke-width="1.5">LuaX</text>
-<text dx="-3.0" dy="9.0" fill="white">LuaX</text>
+<text dx="-3.0" dy="9.0" fill="SeaShell">LuaX</text>
 <ellipse fill-opacity="0" rx="90" ry="29.7" stroke="url(#TopRingGradient)" stroke-width="15"/>
 </g>
 </svg>

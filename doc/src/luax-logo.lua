@@ -41,6 +41,7 @@ img {
     font_size = fh,
     text_anchor = "middle",
     font_family = "Liberation Sans Bold",
+    transparent = "white",
 }
 
 local r_planet = h*3/8
@@ -153,7 +154,7 @@ img {
         ring(-1),
         planet(),
         Text "LuaX" { dx =  0, dy = fh/4,   fill="black", stroke="black", stroke_width=d/2 },
-        Text "LuaX" { dx = -d, dy = fh/4-d, fill="white" },
+        Text "LuaX" { dx = -d, dy = fh/4-d, fill="SeaShell" },
         ring(1),
     },
 }

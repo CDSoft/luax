@@ -2,15 +2,15 @@
 local function lib(path, src) return assert(load(src, '@$bang:'..path)) end
 local libs = {
 ["luax"] = lib("luax.lua", [====[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '4.5'
-_LUAX_DATE = '2024-03-30'
+_LUAX_VERSION = '4.8.2'
+_LUAX_DATE = '2024-04-12'
 local function lib(path, src) return assert(load(src, '@$luax:'..path)) end
 local libs = {
 ["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "4.5"
+local version = "4.8.2"
 return {
     version = version,
-    date = "2024-03-30",
+    date = "2024-04-12",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
@@ -3671,6 +3671,44 @@ end
 
 --[[@@@
 ```lua
+string.ljust(s, w)
+s:ljust(w)
+```
+> Left-justify `s` by appending spaces. The result is at least `w` byte long. `s` is not truncated.
+@@@]]
+
+function string.ljust(s, w)
+    return s .. (" "):rep(w-#s)
+end
+
+--[[@@@
+```lua
+string.rjust(s, w)
+s:rjust(w)
+```
+> Right-justify `s` by prepending spaces. The result is at least `w` byte long. `s` is not truncated.
+@@@]]
+
+function string.rjust(s, w)
+    return (" "):rep(w-#s) .. s
+end
+
+--[[@@@
+```lua
+string.center(s, w)
+s:center(w)
+```
+> Center `s` by appending and prepending spaces. The result is at least `w` byte long. `s` is not truncated.
+@@@]]
+
+function string.center(s, w)
+    local l = (w-#s)//2
+    local r = (w-#s)-l
+    return (" "):rep(l) .. s .. (" "):rep(r)
+end
+
+--[[@@@
+```lua
 string.cap(s)
 s:cap()
 ```
@@ -4305,10 +4343,10 @@ end
 prng_mt.__index.int = prng_int
 
 local function prng_float(self, a, b)
-    local r = prng_int(self)
-    if not a then return r / RAND_MAX end
-    if not b then return r * a/RAND_MAX end
-    return r * (b-a)/RAND_MAX + a
+    local r = prng_int(self) / RAND_MAX
+    if not a then return r end
+    if not b then return r * a end
+    return r*(b-a) + a
 end
 prng_mt.__index.float = prng_float
 
@@ -6394,65 +6432,6 @@ mathx.pi = math.pi
 
 return mathx
 ]=]),
-["package_hook"] = lib("libluax/package/package_hook.lua", [==[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-http://cdelord.fr/luax
---]]
-
---@LOAD=_
-
-local F = require "F"
-
--- inspired by https://stackoverflow.com/questions/60283272/how-to-get-the-exact-path-to-the-script-that-was-loaded-in-lua
-
--- This module wraps package searchers in a function that tracks package paths.
--- The paths are stored in package.modpath, which can be used to generate dependency files
--- for [ypp](https://cdelord.fr/ypp) or [panda](https://cdelord.fr/panda).
-
---[=[-----------------------------------------------------------------------@@@
-# package
-
-The standard Lua package `package` is added some information about packages loaded by LuaX.
-@@@]=]
-
---[[@@@
-```lua
-package.modpath      -- { module_name = module_path }
-```
-> table containing the names of the loaded packages and their actual paths.
-@@@]]
-
-package.modpath = F{}
-
-local function wrap_searcher(searcher)
-    return function(modname)
-        local loader, path = searcher(modname)
-        if type(loader) == "function" then
-            package.modpath[modname] = path
-        end
-        return loader, path
-    end
-end
-
-for i = 2, #package.searchers do
-    package.searchers[i] = wrap_searcher(package.searchers[i])
-end
-]==]),
 ["ps"] = lib("libluax/ps/ps.lua", [=[--[[
 This file is part of luax.
 
@@ -7186,6 +7165,135 @@ end
 
 return term
 ]=]),
+["package_hook"] = lib("libluax/package/package_hook.lua", [==[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--@LOAD=_
+
+local F = require "F"
+
+-- inspired by https://stackoverflow.com/questions/60283272/how-to-get-the-exact-path-to-the-script-that-was-loaded-in-lua
+
+-- This module wraps package searchers in a function that tracks package paths.
+-- The paths are stored in package.modpath, which can be used to generate dependency files
+-- for [ypp](https://cdelord.fr/ypp) or [panda](https://cdelord.fr/panda).
+
+--[=[-----------------------------------------------------------------------@@@
+# package
+
+The standard Lua package `package` is added some information about packages loaded by LuaX.
+@@@]=]
+
+--[[@@@
+```lua
+package.modpath      -- { module_name = module_path }
+```
+> table containing the names of the loaded packages and their actual paths.
+@@@]]
+
+package.modpath = F{}
+
+local function wrap_searcher(searcher)
+    return function(modname)
+        local loader, path = searcher(modname)
+        if type(loader) == "function" then
+            package.modpath[modname] = path
+        end
+        return loader, path
+    end
+end
+
+for i = 2, #package.searchers do
+    package.searchers[i] = wrap_searcher(package.searchers[i])
+end
+]==]),
+["debug_hook"] = lib("libluax/debug/debug_hook.lua", [==[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--@LOAD=_
+
+local F = require "F"
+
+-- This module adds some functions to the debug package.
+
+--[=[-----------------------------------------------------------------------@@@
+# debug
+
+The standard Lua package `debug` is added some functions to help debugging.
+@@@]=]
+
+--[[@@@
+```lua
+debug.locals(level)
+```
+> table containing the local variables at a given level `level`.
+  The default level is the caller level (1).
+  If `level` is a function, `locals` returns the names of the function parameters.
+@@@]]
+
+local function locals(level)
+    local vars = F{}
+    if type(level) == "function" then
+        local i = 1
+        while true do
+            local name = debug.getlocal(level, i)
+            if name==nil then break end
+            if not name:match "^%(" then
+                vars[#vars+1] = name
+            end
+            i = i+1
+        end
+    else
+        level = (level or 1) + 1
+        local i = 1
+        while true do
+            local name, val = debug.getlocal(level, i)
+            if name==nil then break end
+            if not name:match "^%(" then
+                vars[name] = val
+            end
+            i = i+1
+        end
+    end
+    return vars
+end
+
+debug.locals = locals
+]==]),
 ["argparse"] = lib("ext/lua/argparse/argparse.lua", [==[-- The MIT License (MIT)
 
 -- Copyright (c) 2013 - 2018 Peter Melnichenko
@@ -9519,6 +9627,7 @@ function encoder.table(t, opts)
 			return encode_t(t, opts);
 		end
 	end
+    local custom_pairs = opts and opts.pairs or pairs
 	-- the table is encoded as an array iff when we iterate over it,
 	-- we see successive integer keys starting from 1.  The lua
 	-- language doesn't actually guarantee that this will be the case
@@ -9529,7 +9638,7 @@ function encoder.table(t, opts)
 	-- back to a map with integer keys, which becomes a bit larger.
 	local array, map, i, p = { integer(#t, 128) }, { "\191" }, 1, 2;
 	local is_array = true;
-	for k, v in pairs(t) do
+	for k, v in custom_pairs(t) do
 		is_array = is_array and i == k;
 		i = i + 1;
 
@@ -9554,8 +9663,9 @@ function encoder.array(t, opts)
 end
 
 function encoder.map(t, opts)
+    local custom_pairs = opts and opts.pairs or pairs
 	local map, p, len = { "\191" }, 2, 0;
-	for k, v in pairs(t) do
+	for k, v in custom_pairs(t) do
 		map[p], p = encode(k, opts), p + 1;
 		map[p], p = encode(v, opts), p + 1;
 		len = len + 1;
@@ -9569,8 +9679,9 @@ encoder.dict = encoder.map; -- COMPAT
 function encoder.ordered_map(t, opts)
 	local map = {};
 	if not t[1] then -- no predefined order
+        local custom_pairs = opts and opts.pairs or pairs
 		local i = 0;
-		for k in pairs(t) do
+		for k in custom_pairs(t) do
 			i = i + 1;
 			map[i] = k;
 		end
@@ -11161,6 +11272,7 @@ require "fs"
 require "lz4"
 require "lzw"
 require "package_hook"
+require "debug_hook"
 ]====]),
 ["atexit"] = lib("src/atexit.lua", [=[-- This file is part of bang.
 --
@@ -12247,13 +12359,15 @@ return pipe
 --@LOAD
 
 local F = require "F"
-local sys = require "sys"
+local targets = require "targets"
+    : map(function(t) return {t.name, t} end)
+    : from_list()
 
 local function target(target_spec)
     if type(target_spec) == "string" then target_spec = {target_spec} end
     if type(target_spec) == "table" then
-        local names, other_args = F.partition(function(name) return sys.targets[name] end, target_spec)
-        if #names == 1 then return sys.targets[names:head()], other_args end
+        local names, other_args = F.partition(function(name) return targets[name] end, target_spec)
+        if #names == 1 then return targets[names:head()], other_args end
         if #names > 1 then F.error_without_stack_trace("multiple target definition", 1) end
         return nil, F(target_spec)
     end
@@ -12262,7 +12376,7 @@ end
 
 return target
 ]=]),
-["version"] = lib("version", [==[return [=[0.17]=]]==]),
+["version"] = lib("version", [==[return [=[0.17.1]=]]==]),
 }
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 require "luax"
