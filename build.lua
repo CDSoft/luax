@@ -177,7 +177,7 @@ local compile_flags = file "compile_flags.txt"
 section "Compiler"
 ---------------------------------------------------------------------
 
-local zig_version = "0.11.0"
+local zig_version = "0.12.0"
 --local zig_version = "0.12.0-dev.2341+92211135f"
 
 local compiler_deps = {}
