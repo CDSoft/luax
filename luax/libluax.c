@@ -27,34 +27,34 @@
 
 #include "version/version.h"
 
-#include "fs/fs.h"
-#include "ps/ps.h"
-#include "sys/sys.h"
-#include "lpeg/lpeg.h"
-#include "crypt/crypt.h"
-#include "mathx/mathx.h"
-#include "imath/imath.h"
-#include "qmath/qmath.h"
 #include "complex/complex.h"
-#include "socket/luasocket.h"
-#include "lz4/lz4.h"
-#include "term/term.h"
+#include "crypt/crypt.h"
+#include "fs/fs.h"
+#include "imath/imath.h"
 #include "linenoise/linenoise.h"
+#include "lpeg/lpeg.h"
+#include "lz4/lz4.h"
+#include "mathx/mathx.h"
+#include "ps/ps.h"
+#include "qmath/qmath.h"
+#include "socket/luasocket.h"
+#include "sys/sys.h"
+#include "term/term.h"
 
 static const luaL_Reg lrun_libs[] = {
-    {"_fs", luaopen_fs},
-    {"ps", luaopen_ps},
-    {"sys", luaopen_sys},
-    {"lpeg", luaopen_lpeg},
-    {"_crypt", luaopen_crypt},
-    {"mathx", luaopen_mathx},
-    {"imath", luaopen_imath},
-    {"_qmath", luaopen_qmath},
-    {"complex", luaopen_complex},
-    {"socket", luaopen_luasocket},
-    {"_lz4", luaopen_lz4},
-    {"_term", luaopen_term},
-    {"linenoise", luaopen_linenoise},
+    {"complex",     luaopen_complex},
+    {"_crypt",      luaopen_crypt},
+    {"_fs",         luaopen_fs},
+    {"imath",       luaopen_imath},
+    {"linenoise",   luaopen_linenoise},
+    {"lpeg",        luaopen_lpeg},
+    {"_lz4",        luaopen_lz4},
+    {"mathx",       luaopen_mathx},
+    {"ps",          luaopen_ps},
+    {"_qmath",      luaopen_qmath},
+    {"socket",      luaopen_luasocket},
+    {"sys",         luaopen_sys},
+    {"_term",       luaopen_term},
     {NULL, NULL},
 };
 
