@@ -117,11 +117,9 @@
 #include <unistd.h>
 #include "linenoise.h"
 
-#include "tools.h"
-
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
 #define LINENOISE_MAX_LINE 4096
-#define UNUSED_ARG(x) (void)(x)
+#define UNUSED(x) (void)(x)
 static char *unsupported_term[] = {"dumb","cons25","emacs",NULL};
 static linenoiseCompletionCallback *completionCallback = NULL;
 static linenoiseHintsCallback *hintsCallback = NULL;
@@ -191,14 +189,14 @@ FILE *lndebug_fp = NULL;
 
 /* Get byte length and column length of the previous character */
 static size_t defaultPrevCharLen(const char *buf, size_t buf_len, size_t pos, size_t *col_len) {
-    UNUSED_ARG(buf); UNUSED_ARG(buf_len); UNUSED_ARG(pos);
+    UNUSED(buf); UNUSED(buf_len); UNUSED(pos);
     if (col_len != NULL) *col_len = 1;
     return 1;
 }
 
 /* Get byte length and column length of the next character */
 static size_t defaultNextCharLen(const char *buf, size_t buf_len, size_t pos, size_t *col_len) {
-    UNUSED_ARG(buf); UNUSED_ARG(buf_len); UNUSED_ARG(pos);
+    UNUSED(buf); UNUSED(buf_len); UNUSED(pos);
     if (col_len != NULL) *col_len = 1;
     return 1;
 }
@@ -546,10 +544,10 @@ void linenoiseAddCompletion(linenoiseCompletions *lc, const char *str) {
     size_t len = strlen(str);
     char *copy, **cvec;
 
-    copy = safe_malloc(len+1);
+    copy = malloc(len+1);
     if (copy == NULL) return;
     memcpy(copy,str,len+1);
-    cvec = safe_realloc(lc->cvec,sizeof(char*)*(lc->len+1));
+    cvec = realloc(lc->cvec,sizeof(char*)*(lc->len+1));
     if (cvec == NULL) {
         free(copy);
         return;
@@ -575,7 +573,7 @@ static void abInit(struct abuf *ab) {
 }
 
 static void abAppend(struct abuf *ab, const char *s, int len) {
-    char *new = safe_realloc(ab->b,ab->len+len);
+    char *new = realloc(ab->b,ab->len+len);
 
     if (new == NULL) return;
     memcpy(new+ab->len,s,len);
@@ -1291,7 +1289,7 @@ static char *linenoiseNoTTY(void) {
             if (maxlen == 0) maxlen = 16;
             maxlen *= 2;
             char *oldval = line;
-            line = safe_realloc(line,maxlen);
+            line = realloc(line,maxlen);
             if (line == NULL) {
                 if (oldval) free(oldval);
                 return NULL;
@@ -1386,7 +1384,7 @@ int linenoiseHistoryAdd(const char *line) {
 
     /* Initialization on first call. */
     if (history == NULL) {
-        history = safe_malloc(sizeof(char*)*history_max_len);
+        history = malloc(sizeof(char*)*history_max_len);
         if (history == NULL) return 0;
         memset(history,0,(sizeof(char*)*history_max_len));
     }
@@ -1419,7 +1417,7 @@ int linenoiseHistorySetMaxLen(int len) {
     if (history) {
         int tocopy = history_len;
 
-        new = safe_malloc(sizeof(char*)*len);
+        new = malloc(sizeof(char*)*len);
         if (new == NULL) return 0;
 
         /* If we can't copy everything, free the elements we'll not use. */

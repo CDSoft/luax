@@ -25,7 +25,6 @@
 
 #include "lauxlib.h"
 
-#include "tools.h"
 #include "version/version.h"
 
 #include "fs/fs.h"
@@ -63,7 +62,12 @@ static int traceback(lua_State *L)
 {
     const char *msg = lua_tostring(L, 1);
     luaL_traceback(L, L, msg, 1);
-    char *tb = safe_strdup(lua_tostring(L, -1));
+    char *tb = strdup(lua_tostring(L, -1));
+    if (tb == NULL) {
+        fprintf(stderr, "%s\n", msg);
+        lua_pop(L, 1);
+        return 0;
+    }
     size_t nb_nl = 0;
     for (size_t p = strlen(tb)-1; p > 0; p--) {
         if (tb[p] == '\n') {
@@ -89,6 +93,13 @@ static const char *arg0(lua_State *L)
         lua_pushstring(L, "<LuaX>");
     }
     return luaL_checkstring(L, -1);
+}
+
+__attribute__((noreturn))
+static void error(const char *what, const char *message)
+{
+    fprintf(stderr, "%s: %s\n", what, message);
+    exit(EXIT_FAILURE);
 }
 
 int run_buffer(lua_State *L, const char *name, char *(*chunk)(void), size_t (*size)(void), void (*free_chunk)(void))

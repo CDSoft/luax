@@ -155,7 +155,7 @@ static int compress(lua_State *L)
     const char *err = lz4_compress(srcBuffer, srcSize, &B);
     if (err != NULL) {
         lua_pop(L, 1);
-        return luax_pusherror1(L, "LZ4 compression error: %s", err);
+        return luax_pusherror(L, "LZ4 compression error: %s", err);
     }
     luaL_pushresult(&B);
     return 1;
@@ -231,7 +231,7 @@ static int decompress(lua_State *L)
     if (err != NULL)
     {
         lua_pop(L, 1);
-        return luax_pusherror1(L, "LZ4 decompression error: %s", err);
+        return luax_pusherror(L, "LZ4 decompression error: %s", err);
     }
     luaL_pushresult(&B);
     return 1;

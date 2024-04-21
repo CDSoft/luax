@@ -19,30 +19,7 @@
 
 #pragma once
 
-#include <lstate.h>
+#include "lua.h"
 
-#include <stdbool.h>
-
-struct lrun_Reg
-{
-    const char *name;
-    const unsigned char *chunk;
-    const unsigned int *size;
-    bool autoload;
-};
-
-typedef const struct lrun_Reg *luax_Lib;
-
-void error(const char *what, const char *message);
-
-void *safe_malloc(size_t size);
-void *safe_realloc(void *ptr, size_t size);
-char *safe_strdup(const char *s);
-
-const char *ext(const char *name);
-void strip_ext(char *name);
-
-int luax_pushresult(lua_State *L, int i, const char *filename);
-int luax_pusherror(lua_State *L, const char *msg);
-int luax_pusherror1(lua_State *L, const char *msg, const char *arg1);
-int luax_pusherror2(lua_State *L, const char *msg, const char *arg1, int arg2);
+int luax_push_result_or_errno(lua_State *L, int res, const char *filename);
+int luax_pusherror(lua_State *L, const char *msg, ...);

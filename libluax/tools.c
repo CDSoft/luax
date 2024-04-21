@@ -18,107 +18,36 @@
  */
 
 #include "tools.h"
+#include "lua.h"
 
 #include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 
-__attribute__((noreturn))
-void error(const char *what, const char *message)
-{
-    if (what != NULL)
-    {
-        fprintf(stderr, "%s: %s\n", what, message);
-    }
-    else
-    {
-        fprintf(stderr, "%s\n", message);
-    }
-    exit(EXIT_FAILURE);
-}
-
-static inline void *check_ptr(void *ptr, const char *func)
-{
-    if (ptr == NULL)
-    {
-        perror(func);
-        exit(EXIT_FAILURE);
-    }
-    return ptr;
-}
-
-void *safe_malloc(size_t size)
-{
-    return check_ptr(malloc(size), "malloc");
-}
-
-void *safe_realloc(void *ptr, size_t size)
-{
-    return check_ptr(realloc(ptr, size), "realloc");
-}
-
-char *safe_strdup(const char *s)
-{
-    return check_ptr(strdup(s), "strdup");
-}
-
-static size_t last_index(const char *s, char c)
-{
-    size_t idx = MAX_SIZET;
-    size_t i;
-    for (i = 0; s[i] != '\0'; i++)
-    {
-        if (s[i] == c) idx = i;
-    }
-    if (idx == MAX_SIZET) idx = i;
-    return idx;
-}
-
-const char *ext(const char *name)
-{
-    return &name[last_index(name, '.')];
-}
-
-void strip_ext(char *name)
-{
-    name[last_index(name, '.')] = '\0';
-}
-
-int luax_pushresult(lua_State *L, int i, const char *filename)
+int luax_push_result_or_errno(lua_State *L, int res, const char *filename)
 {
     const int en = errno;  /* calls to Lua API may change this value */
-    if (i)
-    {
-        lua_pushboolean(L, 1);
-        return 1;
-    }
-    else
-    {
+
+    if (!res) {
         lua_pushnil(L);
         lua_pushfstring(L, "%s: %s", filename, strerror(en));
         lua_pushinteger(L, en);
         return 3;
     }
+
+    lua_pushboolean(L, 1);
+    return 1;
 }
 
-int luax_pusherror(lua_State *L, const char *msg)
+int luax_pusherror(lua_State *L, const char *msg, ...)
 {
-    lua_pushnil(L);
-    lua_pushstring(L, msg);
-    return 2;
-}
+    va_list args;
+    va_start(args, msg);
 
-int luax_pusherror1(lua_State *L, const char *msg, const char *arg1)
-{
     lua_pushnil(L);
-    lua_pushfstring(L, msg, arg1);
-    return 2;
-}
+    lua_pushvfstring(L, msg, args);
 
-int luax_pusherror2(lua_State *L, const char *msg, const char *arg1, int arg2)
-{
-    lua_pushnil(L);
-    lua_pushfstring(L, msg, arg1, arg2);
+    va_end(args);
+
     return 2;
 }

@@ -301,11 +301,7 @@ update_linenoise()
     unzip -j "$TMP/$LINENOISE_ARCHIVE" '*/linenoise.[ch]' '*/encodings/*.[ch]' '*/LICENSE' -d ext/c/linenoise
     sed -i                                                              \
         -e 's/case ENTER:/case ENTER: case 10:/'                        \
-        -e 's/malloc(/safe_malloc(/'                                    \
-        -e 's/realloc(/safe_realloc(/'                                  \
-        -e 's/\(#include "linenoise.h"\)/\1\n\n#include "tools.h"/'     \
         -e 's/TCSAFLUSH/TCSADRAIN/'                                     \
-        -e 's/UNUSED/UNUSED_ARG/g'                                      \
         ext/c/linenoise/linenoise.c
 }
 
