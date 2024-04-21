@@ -364,8 +364,10 @@ void ${kind}_free(void) {
 
         local size = #plain_payload
         -- size shall be padded to an 8 byte boundary.
-        -- The optimized code is better with a multiple of 16 bytes (two 64 bit words per iteration)
-        local padded_size = size + (16-size%16)%16
+        -- The optimized code is better with:
+        -- - a multiple of 16 bytes (two 64 bit words per decoding iteration)
+        -- - a multiple of 64 bytes (eight 64 bit words per zeroing iteration)
+        local padded_size = size + (64-size%64)%64
 
         -- Linear congruential generator used to encrypt the bundle
         -- (see https://en.wikipedia.org/wiki/Linear_congruential_generator (Turbo Pascal random number generator)
@@ -380,7 +382,6 @@ void ${kind}_free(void) {
         for _ = 1, 3072 + (payload_hash&0xffff) do
             r0 = r0*a + c
         end
-        r0 = r0 & ~(1<<63)
 
         -- Encrypt the bundle by xoring bytes with pseudo random values
         local encrypted_bundle = {}
@@ -438,7 +439,7 @@ static inline uint64_t le64(uint64_t n) {
 char *${kind}_chunk(void) {
     chunk = (t_chunk *)malloc(sizeof(t_chunk));
     if (chunk == NULL) { perror("malloc"); exit(EXIT_FAILURE); }
-    uint64_t r = ${r0};
+    uint64_t r = ${("0x%016x"):format(r0)};
     for (size_t i = 0; i < sizeof(t_chunk)/sizeof(uint64_t); i++) {
         r = r*${a} + ${c};
         chunk->words[i] = bundle.words[i] ^ le64(r);
