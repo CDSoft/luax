@@ -34,4 +34,4 @@ LUAMOD_API int luaopen_libluax(lua_State *L);
     extern void kind##_free(void);
 
 /* run a chunk */
-int run_buffer(lua_State *L, char *(*chunk)(void), size_t (*size)(void), const char *name, void (*clean)(void));
+int run_buffer(lua_State *L, const char *name, char *(*chunk)(void), size_t (*size)(void), void (*clean)(void));

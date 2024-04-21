@@ -42,7 +42,7 @@ int main(int argc, const char *argv[])
     luaopen_libluax(L);
 
     CHUNK_PROTO(app)
-    (void)run_buffer(L, app_chunk, app_size, "=luax", app_free);
+    (void)run_buffer(L, "=luax", app_chunk, app_size, app_free);
 
     lua_close(L);
     exit(EXIT_SUCCESS);

@@ -97,7 +97,7 @@ static const char *arg0(lua_State *L)
     return luaL_checkstring(L, -1);
 }
 
-int run_buffer(lua_State *L, char *(*chunk)(void), size_t (*size)(void), const char *name, void (*free_chunk)(void))
+int run_buffer(lua_State *L, const char *name, char *(*chunk)(void), size_t (*size)(void), void (*free_chunk)(void))
 {
     if (luaL_loadbuffer(L, chunk(), size(), name) != LUA_OK)
     {
@@ -122,7 +122,7 @@ LUAMOD_API int luaopen_libluax(lua_State *L)
     }
 
     CHUNK_PROTO(lib)
-    if (run_buffer(L, lib_chunk, lib_size, "=runtime", lib_free) != LUA_OK)
+    if (run_buffer(L, "=runtime", lib_chunk, lib_size, lib_free) != LUA_OK)
     {
         error(arg0(L), "can not initialize the LuaX runtime\n");
     }

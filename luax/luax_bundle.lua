@@ -331,7 +331,7 @@ char *${kind}_chunk(void);
 void ${kind}_free(void);
 
 typedef union {
-    unsigned char bytes[${padded_size}];
+    uint8_t bytes[${padded_size}];
     uint64_t words[${padded_size}/sizeof(uint64_t)];
 } t_chunk;
 
@@ -412,7 +412,7 @@ char *${kind}_chunk(void);
 void ${kind}_free(void);
 
 typedef union {
-    unsigned char bytes[${padded_size}];
+    uint8_t bytes[${padded_size}];
     uint64_t words[${padded_size}/sizeof(uint64_t)];
 } t_chunk;
 
