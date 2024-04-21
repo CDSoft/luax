@@ -111,14 +111,14 @@ static inline double prng_float_range(t_prng *prng, double a, double b)
     return x*(b-a) + a;
 }
 
-static inline char *prng_str(t_prng *prng, size_t size)
+static inline void prng_str(t_prng *prng, size_t size, luaL_Buffer *B)
 {
-    char *buffer = safe_malloc(size);
+    char *buf = luaL_prepbuffsize(B, size);
     for (size_t i = 0; i < size; i++)
     {
-        buffer[i] = (char)prng_int(prng);
+        buf[i] = (char)prng_int(prng);
     }
-    return buffer;
+    luaL_addsize(B, size);
 }
 
 static inline void prng_seed(t_prng *prng, uint64_t state, uint64_t inc)
@@ -281,9 +281,10 @@ static int crypt_prng_str(lua_State *L)
 {
     t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
     const size_t bytes = (size_t)luaL_checkinteger(L, 2);
-    char *buffer = prng_str(prng, bytes);
-    lua_pushlstring(L, buffer, bytes);
-    free(buffer);
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    prng_str(prng, bytes, &B);
+    luaL_pushresult(&B);
     return 1;
 }
 
@@ -415,9 +416,10 @@ returns a string with `bytes` random bytes.
 static int crypt_str(lua_State *L)
 {
     const size_t bytes = (size_t)luaL_checkinteger(L, 1);
-    char *buffer = prng_str(&prng, bytes);
-    lua_pushlstring(L, buffer, bytes);
-    free(buffer);
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    prng_str(&prng, bytes, &B);
+    luaL_pushresult(&B);
     return 1;
 }
 
@@ -444,35 +446,30 @@ static const char digit[256] =
     ['9'] = 9,
 };
 
-static void hex_encode(const char *plain, size_t n_in, char **hex_out, size_t *n_out)
+static void hex_encode(const char *plain, size_t n_in, luaL_Buffer *B)
 {
-    *hex_out = safe_malloc(n_in*2);
-    char *hex = *hex_out;
-    *n_out = n_in*2;
-    size_t p = 0;
-
+    const size_t n_out = n_in*2;
+    char *buf = luaL_prepbuffsize(B, n_out);
     for (size_t i = 0; i < n_in; i++)
     {
         const char c = plain[i];
-        hex[p++] = hex_map[(c>>4)&0xF];
-        hex[p++] = hex_map[c&0xF];
+        buf[2*i+0] = hex_map[(c>>4)&0xF];
+        buf[2*i+1] = hex_map[c&0xF];
     }
+    luaL_addsize(B, n_out);
 }
 
-static void hex_decode(const char *hex, size_t n_in, char **plain_out, size_t *n_out)
+static void hex_decode(const char *hex, size_t n_in, luaL_Buffer *B)
 {
-    *plain_out = safe_malloc(n_in/2);
-    char *plain = *plain_out;
-    size_t p = 0;
-
+    const size_t n_out = n_in/2;
+    char *buf = luaL_prepbuffsize(B, n_out);
     for (size_t i = 0; i < n_in-1; i += 2)
     {
         const size_t d1 = hex[i] & 0xFF;
         const size_t d2 = hex[i+1] & 0xFF;
-        plain[p++] = (char)((digit[d1]<<4) | digit[d2]);
+        buf[i/2] = (char)((digit[d1]<<4) | digit[d2]);
     }
-
-    *n_out = p;
+    luaL_addsize(B, n_out);
 }
 
 /*@@@
@@ -486,11 +483,10 @@ static int crypt_hex_encode(lua_State *L)
 {
     const char *plain = luaL_checkstring(L, 1);
     const size_t n_in = (size_t)lua_rawlen(L, 1);
-    char *hex;
-    size_t n_out;
-    hex_encode(plain, n_in, &hex, &n_out);
-    lua_pushlstring(L, hex, n_out);
-    free(hex);
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    hex_encode(plain, n_in, &B);
+    luaL_pushresult(&B);
     return 1;
 }
 
@@ -505,11 +501,10 @@ static int crypt_hex_decode(lua_State *L)
 {
     const char *hex = luaL_checkstring(L, 1);
     const size_t n_in = (size_t)lua_rawlen(L, 1);
-    char *plain;
-    size_t n_out;
-    hex_decode(hex, n_in, &plain, &n_out);
-    lua_pushlstring(L, plain, n_out);
-    free(plain);
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    hex_decode(hex, n_in, &B);
+    luaL_pushresult(&B);
     return 1;
 }
 
@@ -520,11 +515,11 @@ The base64 encoder transforms a string with non printable characters
 into a printable string (see <https://en.wikipedia.org/wiki/Base64>)
 @@@*/
 
-static const unsigned char base64_map[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                            "abcdefghijklmnopqrstuvwxyz"
-                                            "0123456789+/";
+static const char base64_map[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                   "abcdefghijklmnopqrstuvwxyz"
+                                   "0123456789+/";
 
-static const unsigned char base64_rev[256] =
+static const char base64_rev[256] =
 {
     ['A'] = 0,      ['a'] = 26+0,       ['0'] = 2*26+0,
     ['B'] = 1,      ['b'] = 26+1,       ['1'] = 2*26+1,
@@ -554,11 +549,11 @@ static const unsigned char base64_rev[256] =
     ['Z'] = 25,     ['z'] = 26+25,
 };
 
-static const unsigned char base64url_map[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                               "abcdefghijklmnopqrstuvwxyz"
-                                               "0123456789-_";
+static const char base64url_map[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                      "abcdefghijklmnopqrstuvwxyz"
+                                      "0123456789-_";
 
-static const unsigned char base64url_rev[256] =
+static const char base64url_rev[256] =
 {
     ['A'] = 0,      ['a'] = 26+0,       ['0'] = 2*26+0,
     ['B'] = 1,      ['b'] = 26+1,       ['1'] = 2*26+1,
@@ -588,62 +583,62 @@ static const unsigned char base64url_rev[256] =
     ['Z'] = 25,     ['z'] = 26+25,
 };
 
-static void base64_encode(const unsigned char *map, const unsigned char *plain, size_t n_in, unsigned char **b64_out, size_t *n_out)
+static void base64_encode(const char *map, const unsigned char *plain, size_t n_in, luaL_Buffer *B)
 {
-    *b64_out = safe_malloc(n_in*4/3 + 4);
-    unsigned char *b64 = *b64_out;
+    const size_t n_out = n_in*4/3 + 4;
+    char *buf = luaL_prepbuffsize(B, n_out);
 
     size_t i = 0;
-    size_t b = 0;
+    size_t j = 0;
     while (i + 2 < n_in)
     {
-        b64[b++] = map[plain[i] >> 2];
-        b64[b++] = map[((plain[i] & 0x03) << 4) | (plain[i+1] >> 4)];
-        b64[b++] = map[((plain[i+1] & 0x0f) << 2) | (plain[i+2] >> 6)];
-        b64[b++] = map[(plain[i+2] & 0x3f)];
+        buf[j++] = map[plain[i] >> 2];
+        buf[j++] = map[((plain[i] & 0x03) << 4) | (plain[i+1] >> 4)];
+        buf[j++] = map[((plain[i+1] & 0x0f) << 2) | (plain[i+2] >> 6)];
+        buf[j++] = map[(plain[i+2] & 0x3f)];
         i = i + 3;
     }
     switch (n_in - i)
     {
         case 1:     /* i == n_in - 1 */
-            b64[b++] = map[plain[i] >> 2];
-            b64[b++] = map[(plain[i] & 0x03) << 4];
-            b64[b++] = '=';
-            b64[b++] = '=';
+            buf[j++] = map[plain[i] >> 2];
+            buf[j++] = map[(plain[i] & 0x03) << 4];
+            buf[j++] = '=';
+            buf[j++] = '=';
             break;
         case 2:     /* i+1 == n_in - 1 */
-            b64[b++] = map[plain[i] >> 2];
-            b64[b++] = map[((plain[i] & 0x03) << 4) | (plain[i+1] >> 4)];
-            b64[b++] = map[(plain[i+1] & 0x0f) << 2];
-            b64[b++] = '=';
+            buf[j++] = map[plain[i] >> 2];
+            buf[j++] = map[((plain[i] & 0x03) << 4) | (plain[i+1] >> 4)];
+            buf[j++] = map[(plain[i+1] & 0x0f) << 2];
+            buf[j++] = '=';
             break;
     }
-    *n_out = b;
+    luaL_addsize(B, j);
 }
 
-static void base64_decode(const unsigned char *rev, const unsigned char *b64, size_t n_in, unsigned char **plain_out, size_t *n_out)
+static void base64_decode(const char *rev, const unsigned char *b64, size_t n_in, luaL_Buffer *B)
 {
-    *plain_out = safe_malloc(n_in*3 / 4);
-    unsigned char *plain = *plain_out;
+    const size_t n_out = n_in*3 / 4;
+    char *buf = luaL_prepbuffsize(B, n_out);
 
     size_t i = 0;
-    size_t p = 0;
+    size_t j = 0;
     while (i + 3 < n_in)
     {
-        plain[p++] = (unsigned char)((rev[b64[i]]   << 2) | (rev[b64[i+1]] >> 4));
-        plain[p++] = (unsigned char)((rev[b64[i+1]] << 4) | (rev[b64[i+2]] >> 2));
-        plain[p++] = (unsigned char)((rev[b64[i+2]] << 6) |  rev[b64[i+3]]);
+        buf[j++] = (char)((rev[b64[i]]   << 2) | (rev[b64[i+1]] >> 4));
+        buf[j++] = (char)((rev[b64[i+1]] << 4) | (rev[b64[i+2]] >> 2));
+        buf[j++] = (char)((rev[b64[i+2]] << 6) |  rev[b64[i+3]]);
         i = i + 4;
     }
     if (n_in >= 1)
     {
-        if (b64[n_in-1] == '=') p--;
+        if (b64[n_in-1] == '=') j--;
         if (n_in >= 2)
         {
-            if (b64[n_in-2] == '=') p--;
+            if (b64[n_in-2] == '=') j--;
         }
     }
-    *n_out = p;
+    luaL_addsize(B, j);
 }
 
 /*@@@
@@ -657,11 +652,10 @@ static int crypt_base64_encode(lua_State *L)
 {
     const unsigned char *plain = (const unsigned char *)luaL_checkstring(L, 1);
     const size_t n_in = (size_t)lua_rawlen(L, 1);
-    unsigned char *b64;
-    size_t n_out;
-    base64_encode(base64_map, plain, n_in, &b64, &n_out);
-    lua_pushlstring(L, (const char *)b64, n_out);
-    free(b64);
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    base64_encode(base64_map, plain, n_in, &B);
+    luaL_pushresult(&B);
     return 1;
 }
 
@@ -676,11 +670,10 @@ static int crypt_base64_decode(lua_State *L)
 {
     const unsigned char *b64 = (const unsigned char *)luaL_checkstring(L, 1);
     const size_t n_in = (size_t)lua_rawlen(L, 1);
-    unsigned char *plain;
-    size_t n_out;
-    base64_decode(base64_rev, b64, n_in, &plain, &n_out);
-    lua_pushlstring(L, (char *)plain, n_out);
-    free(plain);
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    base64_decode(base64_rev, b64, n_in, &B);
+    luaL_pushresult(&B);
     return 1;
 }
 
@@ -695,11 +688,10 @@ static int crypt_base64url_encode(lua_State *L)
 {
     const unsigned char *plain = (const unsigned char *)luaL_checkstring(L, 1);
     const size_t n_in = (size_t)lua_rawlen(L, 1);
-    unsigned char *b64;
-    size_t n_out;
-    base64_encode(base64url_map, plain, n_in, &b64, &n_out);
-    lua_pushlstring(L, (const char *)b64, n_out);
-    free(b64);
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    base64_encode(base64url_map, plain, n_in, &B);
+    luaL_pushresult(&B);
     return 1;
 }
 
@@ -714,11 +706,10 @@ static int crypt_base64url_decode(lua_State *L)
 {
     const unsigned char *b64 = (const unsigned char *)luaL_checkstring(L, 1);
     const size_t n_in = (size_t)lua_rawlen(L, 1);
-    unsigned char *plain;
-    size_t n_out;
-    base64_decode(base64url_rev, b64, n_in, &plain, &n_out);
-    lua_pushlstring(L, (char *)plain, n_out);
-    free(plain);
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    base64_decode(base64url_rev, b64, n_in, &B);
+    luaL_pushresult(&B);
     return 1;
 }
 
@@ -963,24 +954,24 @@ static inline uint8_t rc4_byte(t_rc4 *rc4)
     return S[(S[rc4->i] + S[rc4->j]) % 256];
 }
 
-static inline void rc4_xor(t_rc4 *rc4, size_t n, const char *input, char *output)
+static inline void rc4_xor(t_rc4 *rc4, size_t n, const char *input, luaL_Buffer *B)
 {
+    char *buf = luaL_prepbuffsize(B, n);
     for (size_t k = 0; k < n; k++)
     {
         rc4_step(rc4);
-        output[k] = (char)(input[k] ^ rc4_byte(rc4));
+        buf[k] = (char)(input[k] ^ rc4_byte(rc4));
     }
+    luaL_addsize(B, n);
 }
 
-static char *rc4(const char *key, size_t key_size, size_t drop, const char *input, size_t size)
+static void rc4(const char *key, size_t key_size, size_t drop, const char *input, size_t size, luaL_Buffer *B)
 {
     t_rc4 rc4;
     rc4_init(&rc4);
     rc4_schedule(&rc4, key, key_size);
     rc4_drop(&rc4, drop);
-    char *output = safe_malloc(size);
-    rc4_xor(&rc4, size, input, output);
-    return output;
+    rc4_xor(&rc4, size, input, B);
 }
 
 /*@@@
@@ -1010,9 +1001,10 @@ static int crypt_rc4(lua_State *L)
         drop = (size_t)luaL_checkinteger(L, 3);
     }
 
-    char *out = rc4(key, key_size, drop, in, n);
-    lua_pushlstring(L, out, n);
-    free(out);
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    rc4(key, key_size, drop, in, n, &B);
+    luaL_pushresult(&B);
     return 1;
 }
 

@@ -57,7 +57,7 @@ The compression preferences are hard coded:
 ## LZ4 frame compression
 @@@*/
 
-const char *lz4_compress(const char *src, const size_t src_len, char **dst, size_t *dst_len)
+static const char *lz4_compress(const char *src, const size_t src_len, luaL_Buffer *B)
 {
     const char *srcBuffer = src;
     const size_t srcSize = src_len;
@@ -66,15 +66,12 @@ const char *lz4_compress(const char *src, const size_t src_len, char **dst, size
     prefs.frameInfo.contentChecksumFlag = LZ4F_contentChecksumEnabled;
     prefs.compressionLevel = LZ4HC_CLEVEL_DEFAULT;
     const size_t dstCapacity = LZ4F_compressFrameBound(srcSize, &prefs);
-    char *dstBuffer = safe_malloc(dstCapacity);
+    char *dstBuffer = luaL_prepbuffsize(B, dstCapacity);
     const size_t n = LZ4F_compressFrame(dstBuffer, dstCapacity, srcBuffer, srcSize, &prefs);
-    if (LZ4F_isError(n))
-    {
-        free(dstBuffer);
+    if (LZ4F_isError(n)) {
         return LZ4F_getErrorName(n);
     }
-    *dst = dstBuffer;
-    *dst_len = n;
+    luaL_addsize(B, n);
     return NULL; /* no error */
 }
 
@@ -91,15 +88,14 @@ static int compress(lua_State *L)
 {
     const char *srcBuffer = luaL_checkstring(L, 1);
     const size_t srcSize = (size_t)lua_rawlen(L, 1);
-    char *dstBuffer = NULL;
-    size_t dstSize = 0;
-    const char *err = lz4_compress(srcBuffer, srcSize, &dstBuffer, &dstSize);
-    if (err != NULL)
-    {
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    const char *err = lz4_compress(srcBuffer, srcSize, &B);
+    if (err != NULL) {
+        lua_pop(L, 1);
         return luax_pusherror1(L, "LZ4 compression error: %s", err);
     }
-    lua_pushlstring(L, dstBuffer, dstSize);
-    free(dstBuffer);
+    luaL_pushresult(&B);
     return 1;
 }
 
@@ -107,53 +103,51 @@ static int compress(lua_State *L)
 ## LZ4 frame decompression
 @@@*/
 
-#define MIN_DECOMPRESSION_BUFFER_SIZE 4096
-#define COMPRESSION_RATIO_GUESS 4 /* The compression ratio of the LuaX library is about 3.5 */
+#define MIN_DECOMPRESSION_BUFFER_SIZE (4*1024)
+#define MAX_DECOMPRESSION_BUFFER_SIZE (4*1024*1024)
 
-const char *lz4_decompress(const char *src, const size_t src_len, char **dst, size_t *dst_len)
+static const char *lz4_decompress(const char *src, const size_t src_len, luaL_Buffer *B)
 {
-    const char *srcBuffer = src;
-    const size_t srcTotalSize = src_len;
-    const char *srcPtr = srcBuffer;
-    size_t srcSize = srcTotalSize;
     LZ4F_dctx *dctx;
     const LZ4F_errorCode_t dctxRet = LZ4F_createDecompressionContext(&dctx, LZ4F_VERSION);
-    if (LZ4F_isError(dctxRet))
-    {
+    if (LZ4F_isError(dctxRet)) {
         return LZ4F_getErrorName(dctxRet);
     }
-    size_t dstBufferCapacity = COMPRESSION_RATIO_GUESS*srcTotalSize + MIN_DECOMPRESSION_BUFFER_SIZE;
-    char *dstBuffer = safe_malloc(dstBufferCapacity);
-    char *dstPtr = dstBuffer;
-    size_t dstSize = dstBufferCapacity;
-    size_t dstOffset = 0;
-    while (srcSize > 0)
-    {
-        if (dstSize < MIN_DECOMPRESSION_BUFFER_SIZE)
-        {
-            dstSize += dstBufferCapacity;
-            dstBufferCapacity += dstBufferCapacity;
-            dstBuffer = safe_realloc(dstBuffer, dstBufferCapacity);
-            dstPtr = dstBuffer + dstOffset;
+
+    const char *srcBuffer = src;            /* current byte address to decompress */
+    size_t src_remaining_size = src_len;    /* remaining bytes to decompress */
+
+    size_t realloc_size = MIN_DECOMPRESSION_BUFFER_SIZE;
+    char *dstBuffer = luaL_prepbuffsize(B, realloc_size);
+    size_t dst_capacity = realloc_size;
+
+    while (src_remaining_size > 0) {
+        if (dst_capacity < MIN_DECOMPRESSION_BUFFER_SIZE) {
+            dstBuffer = luaL_prepbuffsize(B, realloc_size);
+            dst_capacity = realloc_size;
+            if (realloc_size < MAX_DECOMPRESSION_BUFFER_SIZE) {
+                realloc_size *= 2;
+            }
         }
-        size_t consumedSize = srcSize;
-        size_t decompressedSize = dstSize;
-        const size_t n = LZ4F_decompress(dctx, dstPtr, &decompressedSize, srcPtr, &consumedSize, NULL);
-        if (LZ4F_isError(n))
-        {
-            free(dstBuffer);
+
+        size_t srcSize = src_remaining_size;
+        size_t dstSize = dst_capacity;
+        const size_t n = LZ4F_decompress(dctx, dstBuffer, &dstSize, srcBuffer, &srcSize, NULL);
+
+        if (LZ4F_isError(n)) {
             LZ4F_freeDecompressionContext(dctx);
             return LZ4F_getErrorName(n);
         }
-        srcPtr += consumedSize;
-        srcSize -= consumedSize;
-        dstPtr += decompressedSize;
-        dstOffset += decompressedSize;
-        dstSize -= decompressedSize;
+
+        srcBuffer += srcSize;
+        src_remaining_size -= srcSize;
+
+        luaL_addsize(B, dstSize);
+        dstBuffer += dstSize;
+        dst_capacity -= dstSize;
     }
+
     LZ4F_freeDecompressionContext(dctx);
-    *dst = dstBuffer;
-    *dst_len = dstOffset;
     return NULL; /* no error */
 }
 
@@ -170,15 +164,15 @@ static int decompress(lua_State *L)
 {
     const char *srcBuffer = luaL_checkstring(L, 1);
     const size_t srcTotalSize = (size_t)lua_rawlen(L, 1);
-    char *dstBuffer = NULL;
-    size_t dstOffset = 0;
-    const char *err = lz4_decompress(srcBuffer, srcTotalSize, &dstBuffer, &dstOffset);
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    const char *err = lz4_decompress(srcBuffer, srcTotalSize, &B);
     if (err != NULL)
     {
+        lua_pop(L, 1);
         return luax_pusherror1(L, "LZ4 decompression error: %s", err);
     }
-    lua_pushlstring(L, dstBuffer, dstOffset);
-    free(dstBuffer);
+    luaL_pushresult(&B);
     return 1;
 }
 
