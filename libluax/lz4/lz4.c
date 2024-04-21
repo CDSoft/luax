@@ -57,21 +57,83 @@ The compression preferences are hard coded:
 ## LZ4 frame compression
 @@@*/
 
+#define COMPRESS_BLOCK_SIZE     (64*1024)
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 static const char *lz4_compress(const char *src, const size_t src_len, luaL_Buffer *B)
 {
-    const char *srcBuffer = src;
-    const size_t srcSize = src_len;
-    LZ4F_preferences_t prefs = LZ4F_INIT_PREFERENCES;
-    prefs.frameInfo.blockMode = LZ4F_blockLinked;
-    prefs.frameInfo.contentChecksumFlag = LZ4F_contentChecksumEnabled;
-    prefs.compressionLevel = LZ4HC_CLEVEL_DEFAULT;
-    const size_t dstCapacity = LZ4F_compressFrameBound(srcSize, &prefs);
+    const LZ4F_preferences_t prefs = {
+        .frameInfo = {
+            .blockSizeID = src_len <=     64*1024 ? LZ4F_max64KB
+                         : src_len <=    256*1024 ? LZ4F_max256KB
+                         : src_len <= 1*1024*1024 ? LZ4F_max1MB
+                         :                          LZ4F_max4MB,
+            .blockMode = LZ4F_blockLinked,
+            .contentChecksumFlag = LZ4F_contentChecksumEnabled,
+            .frameType = LZ4F_frame,
+            .contentSize = 0ULL,
+            .dictID = 0U,
+            .blockChecksumFlag = LZ4F_noBlockChecksum,
+        },
+        .compressionLevel = LZ4HC_CLEVEL_MIN,
+        .autoFlush = 0U,
+        .favorDecSpeed = 0U,
+    };
+
+    static const LZ4F_compressOptions_t copt = {
+        .stableSrc = 1,
+    };
+
+    LZ4F_cctx *cctx;
+    const LZ4F_errorCode_t cctxRet = LZ4F_createCompressionContext(&cctx, LZ4F_VERSION);
+    if (LZ4F_isError(cctxRet)) {
+        return LZ4F_getErrorName(cctxRet);
+    }
+
+    const char *srcBuffer = src;            /* current byte address to compress */
+    size_t src_remaining_size = src_len;    /* remaining bytes to compress */
+
+    size_t dstCapacity = LZ4F_HEADER_SIZE_MAX;
     char *dstBuffer = luaL_prepbuffsize(B, dstCapacity);
-    const size_t n = LZ4F_compressFrame(dstBuffer, dstCapacity, srcBuffer, srcSize, &prefs);
+
+    size_t header_size = LZ4F_compressBegin(cctx, dstBuffer, dstCapacity, &prefs);
+    if (LZ4F_isError(header_size)) {
+        return LZ4F_getErrorName(header_size);
+    }
+    dstBuffer += header_size;
+    dstCapacity -= header_size;
+    luaL_addsize(B, header_size);
+
+    const size_t compress_bound = LZ4F_compressBound(MIN(src_len, COMPRESS_BLOCK_SIZE), &prefs);
+
+    while (src_remaining_size > 0) {
+        if (dstCapacity < compress_bound) {
+            dstCapacity = compress_bound;
+            dstBuffer = luaL_prepbuffsize(B, dstCapacity);
+        }
+
+        const size_t srcSize = MIN(src_remaining_size, COMPRESS_BLOCK_SIZE);
+        const size_t n = LZ4F_compressUpdate(cctx, dstBuffer, dstCapacity, srcBuffer, srcSize, &copt);
+        if (LZ4F_isError(n)) {
+            return LZ4F_getErrorName(n);
+        }
+
+        srcBuffer += srcSize;
+        src_remaining_size -= srcSize;
+
+        luaL_addsize(B, n);
+        dstBuffer += n;
+        dstCapacity -= n;
+    }
+
+    const size_t n = LZ4F_compressEnd(cctx, dstBuffer, dstCapacity, &copt);
     if (LZ4F_isError(n)) {
         return LZ4F_getErrorName(n);
     }
     luaL_addsize(B, n);
+
+    LZ4F_freeCompressionContext(cctx);
     return NULL; /* no error */
 }
 
@@ -133,7 +195,6 @@ static const char *lz4_decompress(const char *src, const size_t src_len, luaL_Bu
         size_t srcSize = src_remaining_size;
         size_t dstSize = dst_capacity;
         const size_t n = LZ4F_decompress(dctx, dstBuffer, &dstSize, srcBuffer, &srcSize, NULL);
-
         if (LZ4F_isError(n)) {
             LZ4F_freeDecompressionContext(dctx);
             return LZ4F_getErrorName(n);

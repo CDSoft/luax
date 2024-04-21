@@ -29,7 +29,14 @@ local sh = require "sh"
 
 function lz4.lz4(s)
     return fs.with_tmpfile(function(tmp)
-        assert(sh.write("lz4 -q -z -BD -9 --frame-crc -f -", tmp)(s))
+        local n = #s
+        assert(sh.write(
+            "lz4 -q -z",
+               n <=   64*1024 and "-B4"
+            or n <=  256*1024 and "-B5"
+            or n <= 1024*1024 and "-B6"
+            or                    "-B7",
+            "-BD -3 --frame-crc -f -", tmp)(s))
         return fs.read_bin(tmp)
     end)
 end
