@@ -30,7 +30,6 @@ LUAMOD_API int luaopen_libluax(lua_State *L);
 #define CHUNK_PROTO(kind)               \
     extern size_t kind##_size(void);    \
     extern char *kind##_chunk(void);    \
-    extern void kind##_clean(void);     \
     extern void kind##_free(void);
 
 /* run a chunk */

@@ -65,13 +65,10 @@ static int traceback(lua_State *L)
     luaL_traceback(L, L, msg, 1);
     char *tb = safe_strdup(lua_tostring(L, -1));
     size_t nb_nl = 0;
-    for (size_t p = strlen(tb)-1; p > 0; p--)
-    {
-        if (tb[p] == '\n')
-        {
+    for (size_t p = strlen(tb)-1; p > 0; p--) {
+        if (tb[p] == '\n') {
             nb_nl++;
-            if (nb_nl == 2)     /* Skip the last two lines that do not belong to the chunk */
-            {
+            if (nb_nl == 2) {   /* Skip the last two lines that do not belong to the chunk */
                 tb[p] = '\0';
                 break;
             }
@@ -86,12 +83,9 @@ static int traceback(lua_State *L)
 static const char *arg0(lua_State *L)
 {
     const int type = lua_getglobal(L, "arg");
-    if (type == LUA_TTABLE)
-    {
+    if (type == LUA_TTABLE) {
         lua_rawgeti(L, -1, 0);
-    }
-    else
-    {
+    } else {
         lua_pushstring(L, "<LuaX>");
     }
     return luaL_checkstring(L, -1);
@@ -99,11 +93,11 @@ static const char *arg0(lua_State *L)
 
 int run_buffer(lua_State *L, const char *name, char *(*chunk)(void), size_t (*size)(void), void (*free_chunk)(void))
 {
-    if (luaL_loadbuffer(L, chunk(), size(), name) != LUA_OK)
-    {
+    const int load_status = luaL_loadbuffer(L, chunk(), size(), name);
+    free_chunk();
+    if (load_status != LUA_OK) {
         error(arg0(L), lua_tostring(L, -1));
     }
-    free_chunk();
     const int base = lua_gettop(L);         /* function index */
     lua_pushcfunction(L, traceback);        /* push message handler */
     lua_insert(L, base);                    /* put it under function and args */
@@ -115,15 +109,13 @@ int run_buffer(lua_State *L, const char *name, char *(*chunk)(void), size_t (*si
 LUAMOD_API int luaopen_libluax(lua_State *L)
 {
     set_version(L);
-    for (const luaL_Reg *lib = lrun_libs; lib->func != NULL; lib++)
-    {
+    for (const luaL_Reg *lib = lrun_libs; lib->func != NULL; lib++) {
         luaL_requiref(L, lib->name, lib->func, 0);
         lua_pop(L, 1);
     }
 
     CHUNK_PROTO(lib)
-    if (run_buffer(L, "=runtime", lib_chunk, lib_size, lib_free) != LUA_OK)
-    {
+    if (run_buffer(L, "=runtime", lib_chunk, lib_size, lib_free) != LUA_OK) {
         error(arg0(L), "can not initialize the LuaX runtime\n");
     }
 

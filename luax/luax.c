@@ -38,8 +38,9 @@ int main(int argc, const char *argv[])
 {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
-    createargtable(L, argv, argc, 0);
     luaopen_libluax(L);
+
+    createargtable(L, argv, argc, 0);
 
     CHUNK_PROTO(app)
     (void)run_buffer(L, "=luax", app_chunk, app_size, app_free);
