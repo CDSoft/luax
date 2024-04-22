@@ -76,10 +76,13 @@ typedef struct
 
 /* Low level random functions */
 
+static const uint64_t prng_a = 6364136223846793005ULL;
+static const uint64_t prng_c = 1ULL;
+
 static inline void prng_advance(t_prng *prng)
 {
     // Advance internal state
-    prng->state = prng->state * 6364136223846793005ULL + prng->inc;
+    prng->state = prng->state*prng_a + prng->inc;
 }
 
 static inline uint32_t prng_int(t_prng *prng)
@@ -124,7 +127,7 @@ static inline void prng_str(t_prng *prng, size_t size, luaL_Buffer *B)
 static inline void prng_seed(t_prng *prng, uint64_t state, uint64_t inc)
 {
     prng->state = state;
-    prng->inc = inc | 1;
+    prng->inc = inc | prng_c;
     /* drop the first values */
     prng_advance(prng);
     prng_advance(prng);
@@ -158,7 +161,7 @@ static int crypt_prng(lua_State *L)
         : prng_default_seed();
     const uint64_t inc = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
-        : 1;
+        : prng_c;
     luaL_setmetatable(L, PRNG_MT);
     prng_seed(prng, seed, inc);
     return 1;
@@ -1060,13 +1063,13 @@ static inline uint64_t prng_hash(const char *input, size_t input_size)
 {
     /* 2^64-59 = 18446744073709551557 */
     register uint64_t hash = 18446744073709551557ULL;
-    hash = hash * 6364136223846793005ULL + 1;
+    hash = hash*prng_a + prng_c;
     for (size_t i = 0; i < input_size; i++)
     {
         const uint64_t c = (uint64_t)input[i];
-        hash = hash * 6364136223846793005ULL + ((c << 1) | 1);
+        hash = hash*prng_a + ((c << 1) | prng_c);
     }
-    hash = hash * 6364136223846793005ULL + 1;
+    hash = hash*prng_a + prng_c;
     return hash;
 }
 
@@ -1134,7 +1137,7 @@ LUAMOD_API int luaopen_crypt(lua_State *L)
     lua_pushvalue(L, -2);
     lua_settable(L, -3);
 
-    prng_seed(&prng, prng_default_seed(), 1);
+    prng_seed(&prng, prng_default_seed(), prng_c);
 
     /* module initialization */
 

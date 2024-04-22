@@ -43,6 +43,9 @@ local RAND_MAX = 0xFFFFFFFF
 
 crypt.RAND_MAX = RAND_MAX
 
+local prng_a = 6364136223846793005
+local prng_c = 1
+
 function crypt.prng(seed, inc)
     local self = setmetatable({}, prng_mt)
     self:seed(seed or random(0), inc)
@@ -51,14 +54,14 @@ end
 
 function prng_mt.__index:seed(seed, inc)
     self.state = assert(seed, "seed parameter missing")
-    self.inc = (inc or 1) | 1
-    self.state = 6364136223846793005*self.state + self.inc
-    self.state = 6364136223846793005*self.state + self.inc
+    self.inc = (inc or prng_c) | prng_c
+    self.state = prng_a*self.state + self.inc
+    self.state = prng_a*self.state + self.inc
 end
 
 local function prng_int(self, a, b)
     local oldstate = self.state
-    self.state = 6364136223846793005*oldstate + self.inc
+    self.state = prng_a*oldstate + self.inc
     local xorshifted = (((oldstate >> 18) ~ oldstate) >> 27) & 0xFFFFFFFF
     local rot = oldstate >> 59;
     local r = ((xorshifted >> rot) | (xorshifted << ((-rot) & 31))) & 0xFFFFFFFF
@@ -414,12 +417,12 @@ end
 
 function crypt.hash(s)
     local hash = 1844674407370955155*10+7
-    hash = hash * 6364136223846793005 + 1
+    hash = hash*prng_a + prng_c
     for i = 1, #s do
         local c = byte(s, i)
-        hash = hash * 6364136223846793005 + ((c << 1) | 1)
+        hash = hash*prng_a + ((c << 1) | prng_c)
     end
-    hash = hash * 6364136223846793005 + 1
+    hash = hash*prng_a + prng_c
     return ("<I8"):pack(hash):hex()
 end
 
