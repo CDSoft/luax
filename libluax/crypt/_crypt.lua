@@ -304,7 +304,7 @@ end
 crypt.unrc4 = crypt.rc4
 
 function crypt.hash(s)
-    local hash = 1844674407370955155*10+7
+    local hash = 0xFFFFFFFFFFFFFFC5
     hash = hash*prng_a + prng_c
     for i = 1, #s do
         local c = byte(s, i)

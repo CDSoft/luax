@@ -1022,8 +1022,8 @@ returns digest of `data` based on the LuaX PRNG (not suitable for cryptographic 
 
 static inline uint64_t prng_hash(const char *input, size_t input_size)
 {
-    /* 2^64-59 = 18446744073709551557 */
-    register uint64_t hash = 18446744073709551557ULL;
+    /* 2^64-59 = 0xFFFFFFFFFFFFFFC5 */
+    register uint64_t hash = 0xFFFFFFFFFFFFFFC5;
     hash = hash*prng_a + prng_c;
     for (size_t i = 0; i < input_size; i++)
     {
