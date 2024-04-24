@@ -43,8 +43,9 @@ int main(int argc, const char *argv[])
     createargtable(L, argv, argc, 0);
 
     CHUNK_PROTO(app)
-    (void)run_buffer(L, "=luax", app_chunk, app_size, app_free);
+    const int status = run_buffer(L, "=luax", app_chunk, app_size, app_free);
 
     lua_close(L);
-    exit(EXIT_SUCCESS);
+
+    exit(status==LUA_OK ? EXIT_SUCCESS : EXIT_FAILURE);
 }
