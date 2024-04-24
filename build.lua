@@ -701,7 +701,6 @@ rt {                                            lua="libluax/imath/imath.lua"   
 rt { luax="libluax/import/import.lua",          lua="libluax/import/import.lua"                             }
 rt {                                            lua="libluax/linenoise/linenoise.lua"                       }
 rt { luax="libluax/lz4/lz4.lua",                lua={"libluax/lz4/lz4.lua", "libluax/lz4/_lz4.lua"}         }
-rt { luax="libluax/lzw/lzw.lua",                lua="libluax/lzw/lzw.lua"                                   }
 rt {                                            lua="libluax/mathx/mathx.lua"                               }
 rt {                                            lua="libluax/ps/ps.lua"                                     }
 rt { luax="libluax/qmath/qmath.lua",            lua={"libluax/qmath/qmath.lua", "libluax/qmath/_qmath.lua"} }
