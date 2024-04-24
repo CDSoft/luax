@@ -215,16 +215,6 @@ encrypts/decrypts `data` using the RC4Drop algorithm and the encryption
 key `key` (drops the first `drop` encryption steps, the default value of
 `drop` is 768).
 
-### SHA-1 hash
-
-See https://www.rfc-editor.org/rfc/rfc3174
-
-``` lua
-crypt.sha1(data)
-```
-
-returns a SHA-1 digest of `data`.
-
 ### Fast PRNG-base hash
 
 ``` lua
@@ -265,6 +255,5 @@ s:crc32()           == crypt.crc32(s)
 s:crc64()           == crypt.crc64(s)
 s:rc4(key, drop)    == crypt.rc4(s, key, drop)
 s:unrc4(key, drop)  == crypt.unrc4(s, key, drop)
-s:sha1()            == crypt.sha1(s)
 s:hash()            == crypt.hash(s)
 ```

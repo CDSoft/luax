@@ -32,13 +32,10 @@ local crypt = require "crypt"
 
 #include "crypt.h"
 
-#include "sha1.h"
-
-#include "tools.h"
-
 #include "lua.h"
 #include "lauxlib.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -1012,42 +1009,6 @@ static int crypt_rc4(lua_State *L)
 }
 
 /***************************************************************************@@@
-### SHA-1 hash
-
-See https://www.rfc-editor.org/rfc/rfc3174
-
-@@@*/
-
-/*@@@
-```lua
-crypt.sha1(data)
-```
-returns a SHA-1 digest of `data`.
-@@@*/
-
-static int crypt_sha1(lua_State *L)
-{
-    const uint8_t *data = (const uint8_t *)luaL_checkstring(L, 1);
-    const size_t datalen = (size_t)lua_rawlen(L, 1);
-
-    uint8_t Message_Digest[20];
-
-    int err = sha1digest(Message_Digest, data, datalen);
-    if (err != 0) { return luax_pusherror(L, "sha1 error"); }
-
-    char hex_digest[2*sizeof(Message_Digest)];
-    for (size_t i = 0; i < sizeof(Message_Digest); i++)
-    {
-        const char c = (char)Message_Digest[i];
-        hex_digest[2*i+0] = hex_map[(c>>4)&0xF];
-        hex_digest[2*i+1] = hex_map[(c>>0)&0xF];
-    }
-
-    lua_pushlstring(L, (const char *)hex_digest, sizeof(hex_digest));
-    return 1;
-}
-
-/***************************************************************************@@@
 ### Fast PRNG-base hash
 
 @@@*/
@@ -1115,7 +1076,6 @@ static const luaL_Reg crypt_module[] =
     {"unrc4", crypt_rc4},   /* unrc4 == rc4 */
     {"crc32", crypt_crc32},
     {"crc64", crypt_crc64},
-    {"sha1", crypt_sha1},
     {"hash", crypt_hash},
 
     {NULL, NULL}

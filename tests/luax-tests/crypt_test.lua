@@ -161,23 +161,6 @@ return function()
             eq({s:rc4("key"):byte(1, -1)}, {217,183,168,237,133,97,233})
         end
         do
-            eq(crypt.sha1 "", "da39a3ee5e6b4b0d3255bfef95601890afd80709")
-            eq(crypt.sha1 "abc", "a9993e364706816aba3e25717850c26c9cd0d89d")
-            eq(crypt.sha1 "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "84983e441c3bd26ebaae4aa1f95129e5e54670f1")
-            eq(crypt.sha1 "a", "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8")
-            eq(crypt.sha1 "0123456701234567012345670123456701234567012345670123456701234567", "e0c094e867ef46c350ef54a7f59dd60bed92ae83")
-            eq(crypt.sha1 "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu", "a49b2446a02c645bf419f995b67091253a04a259")
-            eq(crypt.sha1(string.rep("a", 1000000)), "34aa973cd4c4daa4f61eeb2bdbad27316534016f")
-            eq(crypt.sha1 "The quick brown fox jumps over the lazy dog", "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12")
-            eq(crypt.sha1 "The quick brown fox jumps over the lazy cog", "de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3")
-            eq(crypt.sha1 "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu", "a49b2446a02c645bf419f995b67091253a04a259")
-            ne(crypt.sha1 "aa", crypt.sha1 "ab")
-            for _ = 1, N do
-                local s = crypt.str(crypt.int()%1024)
-                eq(s:sha1(), crypt.sha1(s))
-            end
-        end
-        do
             eq(crypt.hash "", "7b6a78f0d6c6494a")
             eq(crypt.hash "abc", "aad997d90d2fc60c")
             eq(crypt.hash "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "43b171325717ed36")
