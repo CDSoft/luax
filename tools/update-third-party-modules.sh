@@ -33,7 +33,6 @@ update_all()
     update_luasocket    3.1.0
     update_lpeg         1.1.0
     update_argparse     master
-    update_inspect      master
     update_serpent      master
     update_lz4          release
     update_cbor
@@ -172,22 +171,8 @@ update_argparse()
     mkdir -p "$TMP"
     wget "$ARGPARSE_URL" -O "$TMP/$ARGPARSE_ARCHIVE"
 
-    rm -f ext/lua//argparse/argparse.lua
-    unzip -j -o "$TMP/$ARGPARSE_ARCHIVE" '*/argparse.lua' -d ext/lua//argparse
-}
-
-update_inspect()
-{
-    local INSPECT_VERSION="$1"
-    local INSPECT_ARCHIVE="inspect-$INSPECT_VERSION.zip"
-    local INSPECT_URL="https://github.com/kikito/inspect.lua/archive/refs/heads/$INSPECT_VERSION.zip"
-
-    mkdir -p "$TMP"
-    wget "$INSPECT_URL" -O "$TMP/$INSPECT_ARCHIVE"
-
-    rm -f ext/lua//inspect/inspect.lua
-    unzip -j "$TMP/$INSPECT_ARCHIVE" '*/inspect.lua' -d ext/lua//inspect
-    echo "--@LIB" >> ext/lua//inspect/inspect.lua
+    rm -f ext/lua/argparse/argparse.lua
+    unzip -j -o "$TMP/$ARGPARSE_ARCHIVE" '*/argparse.lua' -d ext/lua/argparse
 }
 
 update_serpent()
@@ -199,12 +184,12 @@ update_serpent()
     mkdir -p "$TMP"
     wget "$SERPENT_URL" -O "$TMP/$SERPENT_ARCHIVE"
 
-    rm -f ext/lua//serpent/serpent.lua
-    unzip -j "$TMP/$SERPENT_ARCHIVE" '*/serpent.lua' -d ext/lua//serpent
+    rm -f ext/lua/serpent/serpent.lua
+    unzip -j "$TMP/$SERPENT_ARCHIVE" '*/serpent.lua' -d ext/lua/serpent
     sed -i -e 's/(loadstring or load)/load/g'                   \
            -e '/^ *if setfenv then setfenv(f, env) end *$/d'    \
-           ext/lua//serpent/serpent.lua
-    echo "--@LIB" >> ext/lua//serpent/serpent.lua
+           ext/lua/serpent/serpent.lua
+    echo "--@LIB" >> ext/lua/serpent/serpent.lua
 }
 
 update_lz4()

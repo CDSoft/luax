@@ -40,7 +40,6 @@ return function()
         crypt_test      = "tests/luax-tests/crypt_test.lua",
         fs_test         = "tests/luax-tests/fs_test.lua",
         imath_test      = "tests/luax-tests/imath_test.lua",
-        inspect_test    = "tests/luax-tests/inspect_test.lua",
         lib             = "tests/luax-tests/lib.lua",
         linenoise_test  = "tests/luax-tests/linenoise_test.lua",
         lpeg_test       = "tests/luax-tests/lpeg_test.lua",

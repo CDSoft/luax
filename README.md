@@ -325,7 +325,6 @@ and [lapp](http://cdelord.fr/lapp).
 - [lpeg](doc/lpeg.md): Parsing Expression Grammars For Lua
 - [luasocket](doc/luasocket.md): Network support for the Lua language
 - [argparse](doc/argparse.md): Feature-rich command line parser for Lua
-- [inspect](doc/inspect.md): Human-readable representation of Lua tables
 - [serpent](doc/serpent.md): Lua serializer and pretty printer
 - [cbor](doc/cbor.md): pure Lua implementation of the CBOR
 - [linenoise](doc/linenoise.md): A small, portable GNU readline
@@ -393,9 +392,6 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
 - **[luasocket](https://github.com/diegonehab/luasocket)**: Network
   support for the Lua language ([LuaSocket 3.0
   license](https://github.com/diegonehab/luasocket/blob/master/LICENSE))
-- **[inspect](https://github.com/kikito/inspect.lua)**: Human-readable
-  representation of Lua tables ([MIT
-  license](https://github.com/kikito/inspect.lua/blob/master/MIT-LICENSE.txt))
 - **[serpent](https://github.com/pkulchenko/serpent)**: Lua serializer
   and pretty printer. ([MIT
   license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))
