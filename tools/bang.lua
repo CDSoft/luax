@@ -2,15 +2,15 @@
 local function lib(path, src) return assert(load(src, '@$bang:'..path)) end
 local libs = {
 ["luax"] = lib("luax.lua", [====[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '4.8.2'
-_LUAX_DATE = '2024-04-12'
+_LUAX_VERSION = '5.0'
+_LUAX_DATE = '2024-04-25'
 local function lib(path, src) return assert(load(src, '@$luax:'..path)) end
 local libs = {
 ["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "4.8.2"
+local version = "5.0"
 return {
     version = version,
-    date = "2024-04-12",
+    date = "2024-04-25",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
@@ -4251,7 +4251,6 @@ s:crc32()           == crypt.crc32(s)
 s:crc64()           == crypt.crc64(s)
 s:rc4(key, drop)    == crypt.rc4(s, key, drop)
 s:unrc4(key, drop)  == crypt.unrc4(s, key, drop)
-s:sha1()            == crypt.sha1(s)
 s:hash()            == crypt.hash(s)
 ```
 @@@]]
@@ -4264,7 +4263,6 @@ string.base64url    = crypt.base64url
 string.unbase64url  = crypt.unbase64url
 string.rc4          = crypt.rc4
 string.unrc4        = crypt.unrc4
-string.sha1         = crypt.sha1
 string.hash         = crypt.hash
 string.crc32        = crypt.crc32
 string.crc64        = crypt.crc64
@@ -4316,6 +4314,9 @@ local RAND_MAX = 0xFFFFFFFF
 
 crypt.RAND_MAX = RAND_MAX
 
+local prng_a = 6364136223846793005
+local prng_c = 1
+
 function crypt.prng(seed, inc)
     local self = setmetatable({}, prng_mt)
     self:seed(seed or random(0), inc)
@@ -4324,14 +4325,14 @@ end
 
 function prng_mt.__index:seed(seed, inc)
     self.state = assert(seed, "seed parameter missing")
-    self.inc = (inc or 1) | 1
-    self.state = 6364136223846793005*self.state + self.inc
-    self.state = 6364136223846793005*self.state + self.inc
+    self.inc = (inc or prng_c) | prng_c
+    self.state = prng_a*self.state + self.inc
+    self.state = prng_a*self.state + self.inc
 end
 
 local function prng_int(self, a, b)
     local oldstate = self.state
-    self.state = 6364136223846793005*oldstate + self.inc
+    self.state = prng_a*oldstate + self.inc
     local xorshifted = (((oldstate >> 18) ~ oldstate) >> 27) & 0xFFFFFFFF
     local rot = oldstate >> 59;
     local r = ((xorshifted >> rot) | (xorshifted << ((-rot) & 31))) & 0xFFFFFFFF
@@ -4573,126 +4574,14 @@ end
 
 crypt.unrc4 = crypt.rc4
 
-if pandoc then
-    crypt.sha1 = pandoc.utils.sha1
-else
-    -------------------------------------------------
-    ---      *** SHA-1 algorithm for Lua ***      ---
-    -------------------------------------------------
-    --- Author:  Martin Huesser                   ---
-    --- Date:    2008-06-16                       ---
-    --- License: You may use this code in your    ---
-    ---          projects as long as this header  ---
-    ---          stays intact.                    ---
-    -------------------------------------------------
-    -- Adapted for LuaX                           --
-    -------------------------------------------------
-
-    local strlen  = string.len
-    local strchar = string.char
-    local strbyte = string.byte
-    local strsub  = string.sub
-    local lshift  = function(a,n) return (a << n) & 0xFFFFFFFF end
-    local rshift  = function(a,n) return (a&0xFFFFFFFF) >> n end
-    local lrot    = function(a,n) return lshift(a, n) | rshift(a, 32-n) end
-    local pack = string.pack
-
-    local h0, h1, h2, h3, h4
-
-    -------------------------------------------------
-
-    local function preprocess(str)
-        local bitlen, i
-        local str2 = ""
-        bitlen = strlen(str) * 8
-        str = str .. strchar(128)
-        i = 56 - (strlen(str)&63)
-        if i < 0 then
-            i = i + 64
-        end
-        for _ = 1, i do
-            str = str .. strchar(0)
-        end
-        for _ = 1, 8 do
-            str2 = strchar(bitlen & 0xFF) .. str2
-            bitlen = bitlen >> 8
-        end
-        return str .. str2
-    end
-
-    -------------------------------------------------
-
-    local function main_loop(str)
-        local a, b, c, d, e, f, k, t
-        local w = {}
-        while (str ~= "") do
-            for i = 0, 15 do
-                w[i] = 0
-                for j = 1, 4 do
-                    w[i] = w[i] * 256 + strbyte(str, i * 4 + j)
-                end
-            end
-            for i = 16, 79 do
-                w[i] = lrot(w[i - 3] ~ w[i - 8] ~ w[i - 14] ~ w[i - 16], 1)
-            end
-            a = h0
-            b = h1
-            c = h2
-            d = h3
-            e = h4
-            for i = 0, 79 do
-                if i < 20 then
-                    f = (b&c) ~ ((~b)&d)
-                    k = 1518500249
-                elseif i < 40 then
-                    f = b ~ c ~ d
-                    k = 1859775393
-                elseif i < 60 then
-                    f = (b&c) | (b&d) | (c&d)
-                    k = 2400959708
-                else
-                    f = b ~ c ~ d
-                    k = 3395469782
-                end
-                t = lrot(a, 5) + f + e + k + w[i]
-                e = d
-                d = c
-                c = lrot(b, 30)
-                b = a
-                a = t
-            end
-            h0 = (h0 + a) & 0xFFFFFFFF
-            h1 = (h1 + b) & 0xFFFFFFFF
-            h2 = (h2 + c) & 0xFFFFFFFF
-            h3 = (h3 + d) & 0xFFFFFFFF
-            h4 = (h4 + e) & 0xFFFFFFFF
-            str = strsub(str, 65)
-        end
-    end
-
-    -------------------------------------------------
-
-    function crypt.sha1(s)
-        s = preprocess(s)
-        h0  = 1732584193
-        h1  = 4023233417
-        h2  = 2562383102
-        h3  = 0271733878
-        h4  = 3285377520
-        main_loop(s)
-        return pack(">I4I4I4I4I4", h0, h1, h2, h3, h4):hex()
-    end
-
-end
-
 function crypt.hash(s)
-    local hash = 1844674407370955155*10+7
-    hash = hash * 6364136223846793005 + 1
+    local hash = 0xFFFFFFFFFFFFFFC5
+    hash = hash*prng_a + prng_c
     for i = 1, #s do
         local c = byte(s, i)
-        hash = hash * 6364136223846793005 + ((c << 1) | 1)
+        hash = hash*prng_a + ((c << 1) | prng_c)
     end
-    hash = hash * 6364136223846793005 + 1
+    hash = hash*prng_a + prng_c
     return ("<I8"):pack(hash):hex()
 end
 
@@ -6072,7 +5961,14 @@ local sh = require "sh"
 
 function lz4.lz4(s)
     return fs.with_tmpfile(function(tmp)
-        assert(sh.write("lz4 -q -z -BD -9 --frame-crc -f -", tmp)(s))
+        local n = #s
+        assert(sh.write(
+            "lz4 -q -z",
+               n <=   64*1024 and "-B4"
+            or n <=  256*1024 and "-B5"
+            or n <= 1024*1024 and "-B6"
+            or                    "-B7",
+            "-BD -3 --frame-crc -f -", tmp)(s))
         return fs.read_bin(tmp)
     end)
 end
@@ -6085,216 +5981,6 @@ function lz4.unlz4(s)
 end
 
 return lz4
-]=]),
-["lzw"] = lib("libluax/lzw/lzw.lua", [=[--[[
-MIT License
-
-Copyright (c) 2016 Rochet2
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-]]
-
--- Adapted for LuaX
-
--- Load lzw.lua to add new methods to strings
---@LOAD=_
-
---[[------------------------------------------------------------------------@@@
-# lzw: A relatively fast LZW compression algorithm in pure Lua
-
-```lua
-local lzw = require "lzw"
-```
-
-LZW is a relatively fast LZW compression algorithm in pure Lua.
-
-The source code in on Github: <https://github.com/Rochet2/lualzw>.
-
-## LZW compression
-
-```lua
-lzw.lzw(data)
-```
-compresses `data` with LZW.
-
-## LZW decompression
-
-```lua
-lzw.unlzw(data)
-```
-decompresses `data` with LZW.
-@@@]]
-
-local char = string.char
-local type = type
-local sub = string.sub
-local tconcat = table.concat
-
-local basedictcompress = {}
-local basedictdecompress = {}
-for i = 0, 255 do
-    local ic, iic = char(i), char(i, 0)
-    basedictcompress[ic] = iic
-    basedictdecompress[iic] = ic
-end
-
-local function dictAddA(str, dict, a, b)
-    if a >= 256 then
-        a, b = 0, b+1
-        if b >= 256 then
-            dict = {}
-            b = 1
-        end
-    end
-    dict[str] = char(a,b)
-    a = a+1
-    return dict, a, b
-end
-
-local function compress(input)
-    if type(input) ~= "string" then
-        return nil, "string expected, got "..type(input)
-    end
-    local len = #input
-    if len <= 1 then
-        return "u"..input
-    end
-
-    local dict = {}
-    local a, b = 0, 1
-
-    local result = {"c"}
-    local resultlen = 1
-    local n = 2
-    local word = ""
-    for i = 1, len do
-        local c = sub(input, i, i)
-        local wc = word..c
-        if not (basedictcompress[wc] or dict[wc]) then
-            local write = basedictcompress[word] or dict[word]
-            if not write then
-                return nil, "algorithm error, could not fetch word"
-            end
-            result[n] = write
-            resultlen = resultlen + #write
-            n = n+1
-            if  len <= resultlen then
-                return "u"..input
-            end
-            dict, a, b = dictAddA(wc, dict, a, b)
-            word = c
-        else
-            word = wc
-        end
-    end
-    result[n] = basedictcompress[word] or dict[word]
-    resultlen = resultlen+#result[n]
-    n = n+1
-    if  len <= resultlen then
-        return "u"..input
-    end
-    return tconcat(result)
-end
-
-local function dictAddB(str, dict, a, b)
-    if a >= 256 then
-        a, b = 0, b+1
-        if b >= 256 then
-            dict = {}
-            b = 1
-        end
-    end
-    dict[char(a,b)] = str
-    a = a+1
-    return dict, a, b
-end
-
-local function decompress(input)
-    if type(input) ~= "string" then
-        return nil, "string expected, got "..type(input)
-    end
-
-    if #input < 1 then
-        return nil, "invalid input - not a compressed string"
-    end
-
-    local control = sub(input, 1, 1)
-    if control == "u" then
-        return sub(input, 2)
-    elseif control ~= "c" then
-        return nil, "invalid input - not a compressed string"
-    end
-    input = sub(input, 2)
-    local len = #input
-
-    if len < 2 then
-        return nil, "invalid input - not a compressed string"
-    end
-
-    local dict = {}
-    local a, b = 0, 1
-
-    local result = {}
-    local n = 1
-    local last = sub(input, 1, 2)
-    result[n] = basedictdecompress[last] or dict[last]
-    n = n+1
-    for i = 3, len, 2 do
-        local code = sub(input, i, i+1)
-        local lastStr = basedictdecompress[last] or dict[last]
-        if not lastStr then
-            return nil, "could not find last from dict. Invalid input?"
-        end
-        local toAdd = basedictdecompress[code] or dict[code]
-        if toAdd then
-            result[n] = toAdd
-            n = n+1
-            dict, a, b = dictAddB(lastStr..sub(toAdd, 1, 1), dict, a, b)
-        else
-            local tmp = lastStr..sub(lastStr, 1, 1)
-            result[n] = tmp
-            n = n+1
-            dict, a, b = dictAddB(tmp, dict, a, b)
-        end
-        last = code
-    end
-    return tconcat(result)
-end
-
---[[------------------------------------------------------------------------@@@
-## String methods
-
-The `lzw` functions are also available as `string` methods:
-
-```lua
-s:lzw()         == lzw.lzw(s)
-s:unlzw()       == lzw.unlzw(s)
-```
-@@@]]
-
-string.lzw = compress
-string.unlzw = decompress
-
-return {
-    lzw = compress,
-    unlzw = decompress,
-}
 ]=]),
 ["mathx"] = lib("libluax/mathx/mathx.lua", [=[--[[
 This file is part of luax.
@@ -9987,379 +9673,6 @@ return {
 };
 --@LIB
 ]=]),
-["inspect"] = lib("ext/lua/inspect/inspect.lua", [=[local _tl_compat; if (tonumber((_VERSION or ''):match('[%d.]*$')) or 0) < 5.3 then local p, m = pcall(require, 'compat53.module'); if p then _tl_compat = m end end; local math = _tl_compat and _tl_compat.math or math; local string = _tl_compat and _tl_compat.string or string; local table = _tl_compat and _tl_compat.table or table
-local inspect = {Options = {}, }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-inspect._VERSION = 'inspect.lua 3.1.0'
-inspect._URL = 'http://github.com/kikito/inspect.lua'
-inspect._DESCRIPTION = 'human-readable representations of tables'
-inspect._LICENSE = [[
-  MIT LICENSE
-
-  Copyright (c) 2022 Enrique García Cota
-
-  Permission is hereby granted, free of charge, to any person obtaining a
-  copy of this software and associated documentation files (the
-  "Software"), to deal in the Software without restriction, including
-  without limitation the rights to use, copy, modify, merge, publish,
-  distribute, sublicense, and/or sell copies of the Software, and to
-  permit persons to whom the Software is furnished to do so, subject to
-  the following conditions:
-
-  The above copyright notice and this permission notice shall be included
-  in all copies or substantial portions of the Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-]]
-inspect.KEY = setmetatable({}, { __tostring = function() return 'inspect.KEY' end })
-inspect.METATABLE = setmetatable({}, { __tostring = function() return 'inspect.METATABLE' end })
-
-local tostring = tostring
-local rep = string.rep
-local match = string.match
-local char = string.char
-local gsub = string.gsub
-local fmt = string.format
-
-local _rawget
-if rawget then
-   _rawget = rawget
-else
-   _rawget = function(t, k) return t[k] end
-end
-
-local function rawpairs(t)
-   return next, t, nil
-end
-
-
-
-local function smartQuote(str)
-   if match(str, '"') and not match(str, "'") then
-      return "'" .. str .. "'"
-   end
-   return '"' .. gsub(str, '"', '\\"') .. '"'
-end
-
-
-local shortControlCharEscapes = {
-   ["\a"] = "\\a", ["\b"] = "\\b", ["\f"] = "\\f", ["\n"] = "\\n",
-   ["\r"] = "\\r", ["\t"] = "\\t", ["\v"] = "\\v", ["\127"] = "\\127",
-}
-local longControlCharEscapes = { ["\127"] = "\127" }
-for i = 0, 31 do
-   local ch = char(i)
-   if not shortControlCharEscapes[ch] then
-      shortControlCharEscapes[ch] = "\\" .. i
-      longControlCharEscapes[ch] = fmt("\\%03d", i)
-   end
-end
-
-local function escape(str)
-   return (gsub(gsub(gsub(str, "\\", "\\\\"),
-   "(%c)%f[0-9]", longControlCharEscapes),
-   "%c", shortControlCharEscapes))
-end
-
-local luaKeywords = {
-   ['and'] = true,
-   ['break'] = true,
-   ['do'] = true,
-   ['else'] = true,
-   ['elseif'] = true,
-   ['end'] = true,
-   ['false'] = true,
-   ['for'] = true,
-   ['function'] = true,
-   ['goto'] = true,
-   ['if'] = true,
-   ['in'] = true,
-   ['local'] = true,
-   ['nil'] = true,
-   ['not'] = true,
-   ['or'] = true,
-   ['repeat'] = true,
-   ['return'] = true,
-   ['then'] = true,
-   ['true'] = true,
-   ['until'] = true,
-   ['while'] = true,
-}
-
-local function isIdentifier(str)
-   return type(str) == "string" and
-   not not str:match("^[_%a][_%a%d]*$") and
-   not luaKeywords[str]
-end
-
-local flr = math.floor
-local function isSequenceKey(k, sequenceLength)
-   return type(k) == "number" and
-   flr(k) == k and
-   1 <= (k) and
-   k <= sequenceLength
-end
-
-local defaultTypeOrders = {
-   ['number'] = 1, ['boolean'] = 2, ['string'] = 3, ['table'] = 4,
-   ['function'] = 5, ['userdata'] = 6, ['thread'] = 7,
-}
-
-local function sortKeys(a, b)
-   local ta, tb = type(a), type(b)
-
-
-   if ta == tb and (ta == 'string' or ta == 'number') then
-      return (a) < (b)
-   end
-
-   local dta = defaultTypeOrders[ta] or 100
-   local dtb = defaultTypeOrders[tb] or 100
-
-
-   return dta == dtb and ta < tb or dta < dtb
-end
-
-local function getKeys(t)
-
-   local seqLen = 1
-   while _rawget(t, seqLen) ~= nil do
-      seqLen = seqLen + 1
-   end
-   seqLen = seqLen - 1
-
-   local keys, keysLen = {}, 0
-   for k in rawpairs(t) do
-      if not isSequenceKey(k, seqLen) then
-         keysLen = keysLen + 1
-         keys[keysLen] = k
-      end
-   end
-   table.sort(keys, sortKeys)
-   return keys, keysLen, seqLen
-end
-
-local function countCycles(x, cycles)
-   if type(x) == "table" then
-      if cycles[x] then
-         cycles[x] = cycles[x] + 1
-      else
-         cycles[x] = 1
-         for k, v in rawpairs(x) do
-            countCycles(k, cycles)
-            countCycles(v, cycles)
-         end
-         countCycles(getmetatable(x), cycles)
-      end
-   end
-end
-
-local function makePath(path, a, b)
-   local newPath = {}
-   local len = #path
-   for i = 1, len do newPath[i] = path[i] end
-
-   newPath[len + 1] = a
-   newPath[len + 2] = b
-
-   return newPath
-end
-
-
-local function processRecursive(process,
-   item,
-   path,
-   visited)
-   if item == nil then return nil end
-   if visited[item] then return visited[item] end
-
-   local processed = process(item, path)
-   if type(processed) == "table" then
-      local processedCopy = {}
-      visited[item] = processedCopy
-      local processedKey
-
-      for k, v in rawpairs(processed) do
-         processedKey = processRecursive(process, k, makePath(path, k, inspect.KEY), visited)
-         if processedKey ~= nil then
-            processedCopy[processedKey] = processRecursive(process, v, makePath(path, processedKey), visited)
-         end
-      end
-
-      local mt = processRecursive(process, getmetatable(processed), makePath(path, inspect.METATABLE), visited)
-      if type(mt) ~= 'table' then mt = nil end
-      setmetatable(processedCopy, mt)
-      processed = processedCopy
-   end
-   return processed
-end
-
-local function puts(buf, str)
-   buf.n = buf.n + 1
-   buf[buf.n] = str
-end
-
-
-
-local Inspector = {}
-
-
-
-
-
-
-
-
-
-
-local Inspector_mt = { __index = Inspector }
-
-local function tabify(inspector)
-   puts(inspector.buf, inspector.newline .. rep(inspector.indent, inspector.level))
-end
-
-function Inspector:getId(v)
-   local id = self.ids[v]
-   local ids = self.ids
-   if not id then
-      local tv = type(v)
-      id = (ids[tv] or 0) + 1
-      ids[v], ids[tv] = id, id
-   end
-   return tostring(id)
-end
-
-function Inspector:putValue(v)
-   local buf = self.buf
-   local tv = type(v)
-   if tv == 'string' then
-      puts(buf, smartQuote(escape(v)))
-   elseif tv == 'number' or tv == 'boolean' or tv == 'nil' or
-      tv == 'cdata' or tv == 'ctype' then
-      puts(buf, tostring(v))
-   elseif tv == 'table' and not self.ids[v] then
-      local t = v
-
-      if t == inspect.KEY or t == inspect.METATABLE then
-         puts(buf, tostring(t))
-      elseif self.level >= self.depth then
-         puts(buf, '{...}')
-      else
-         if self.cycles[t] > 1 then puts(buf, fmt('<%d>', self:getId(t))) end
-
-         local keys, keysLen, seqLen = getKeys(t)
-
-         puts(buf, '{')
-         self.level = self.level + 1
-
-         for i = 1, seqLen + keysLen do
-            if i > 1 then puts(buf, ',') end
-            if i <= seqLen then
-               puts(buf, ' ')
-               self:putValue(t[i])
-            else
-               local k = keys[i - seqLen]
-               tabify(self)
-               if isIdentifier(k) then
-                  puts(buf, k)
-               else
-                  puts(buf, "[")
-                  self:putValue(k)
-                  puts(buf, "]")
-               end
-               puts(buf, ' = ')
-               self:putValue(t[k])
-            end
-         end
-
-         local mt = getmetatable(t)
-         if type(mt) == 'table' then
-            if seqLen + keysLen > 0 then puts(buf, ',') end
-            tabify(self)
-            puts(buf, '<metatable> = ')
-            self:putValue(mt)
-         end
-
-         self.level = self.level - 1
-
-         if keysLen > 0 or type(mt) == 'table' then
-            tabify(self)
-         elseif seqLen > 0 then
-            puts(buf, ' ')
-         end
-
-         puts(buf, '}')
-      end
-
-   else
-      puts(buf, fmt('<%s %d>', tv, self:getId(v)))
-   end
-end
-
-
-
-
-function inspect.inspect(root, options)
-   options = options or {}
-
-   local depth = options.depth or (math.huge)
-   local newline = options.newline or '\n'
-   local indent = options.indent or '  '
-   local process = options.process
-
-   if process then
-      root = processRecursive(process, root, {}, {})
-   end
-
-   local cycles = {}
-   countCycles(root, cycles)
-
-   local inspector = setmetatable({
-      buf = { n = 0 },
-      ids = {},
-      cycles = cycles,
-      depth = depth,
-      level = 0,
-      newline = newline,
-      indent = indent,
-   }, Inspector_mt)
-
-   inspector:putValue(root)
-
-   return table.concat(inspector.buf)
-end
-
-setmetatable(inspect, {
-   __call = function(_, root, options)
-      return inspect.inspect(root, options)
-   end,
-})
-
-return inspect
---@LIB
-]=]),
 ["json"] = lib("ext/lua/json/json.lua", [===[-- Module options:
 local always_use_lpeg = false
 local register_global_module_table = false
@@ -11270,7 +10583,6 @@ require "F"
 require "crypt"
 require "fs"
 require "lz4"
-require "lzw"
 require "package_hook"
 require "debug_hook"
 ]====]),
