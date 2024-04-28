@@ -110,8 +110,6 @@ ZIG_CACHE=$ZIG_DIR/cache
 
 LUAXC_DIR=$CACHE/luaxc/$VERSION
 
-LUAXC_ARCHIVE=$LUAXC_DIR/luaxc.tar.xz
-
 case "$(uname -s)" in
     Linux)      HOST_OS=linux ;;
     Darwin)     HOST_OS=macos ;;
@@ -153,8 +151,7 @@ export PATH="$ZIG_DIR:$PATH"
 if ! [ -f "$LUAX" ]
 then
     mkdir -p "$LUAXC_DIR"
-    sed '1,/---*8<---*/d' "$0" > "$LUAXC_ARCHIVE"
-    tar xJf "$LUAXC_ARCHIVE" -C "$LUAXC_DIR"
+    sed '1,/---*8<---*/d' "$0" | tar xJ -C "$LUAXC_DIR"
 fi
 
 if ! [ -f "$LUAX" ]
