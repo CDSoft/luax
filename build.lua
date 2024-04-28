@@ -56,7 +56,6 @@ and run bang to regenerate build.ninja.
 
 generator {
     implicit_in = {
-        "libluax/sys/sys.lua",
         "libluax/sys/targets.lua",
     },
 }
