@@ -461,7 +461,9 @@ void ${kind}_free(void) {
 end
 
 function bundle.comment_shebang(script)
-    return script : gsub("^#!", "--") -- comment the shebang before loading the script
+    return script
+        : gsub("^#!.-\n(\x1b)", "%1")   -- remove the whole shebang of compiled scripts
+        : gsub("^#!", "--")             -- comment the shebang before loading the script
 end
 
 function bundle.combine_lua(name, scripts)
