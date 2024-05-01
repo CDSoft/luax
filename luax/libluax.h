@@ -19,18 +19,7 @@
 
 #pragma once
 
-#include "lauxlib.h"
+#include "lua.h"
 
 /* C module registration function */
 LUAMOD_API int luaopen_libluax(lua_State *L);
-
-/* libluax functions to decode and execute a LuaX chunk of Lua code */
-
-/* accessors to the chunks (generated at compile time) */
-#define CHUNK_PROTO(kind)               \
-    extern size_t kind##_size(void);    \
-    extern char *kind##_chunk(void);    \
-    extern void kind##_free(void);
-
-/* run a chunk */
-int run_buffer(lua_State *L, const char *name, char *(*chunk)(void), size_t (*size)(void), void (*clean)(void));

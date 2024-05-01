@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 
+#include "lauxlib.h"
 #include "lualib.h"
 
 static void createargtable(lua_State *L, const char **argv, int argc, int shift)
@@ -42,8 +43,8 @@ int main(int argc, const char *argv[])
 
     createargtable(L, argv, argc, 0);
 
-    CHUNK_PROTO(app)
-    const int status = run_buffer(L, "=luax", app_chunk, app_size, app_free);
+    extern int run_app(lua_State  *);
+    const int status = run_app(L);
 
     lua_close(L);
 

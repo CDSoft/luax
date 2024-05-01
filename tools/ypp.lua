@@ -1,21 +1,19 @@
 #!/usr/bin/env -S lua --
+_LUAX_VERSION = '5.1'
+_LUAX_DATE    = '2024-05-01'
+local libs = {}
+table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$ypp:'..path)) end
-local libs = {
-["luax"] = lib("luax.lua", [====[--@LOAD=_: load luax to expose LuaX modules
-_LUAX_VERSION = '5.0'
-_LUAX_DATE = '2024-04-25'
-local function lib(path, src) return assert(load(src, '@$luax:'..path)) end
-local libs = {
-["luax_config"] = lib("luax_config.lua", [=[--@LIB
-local version = "5.0"
+libs["luax_config"] = lib(".build/tmp/luax_config.lua", [[--@LIB
+local version = "5.1"
 return {
     version = version,
-    date = "2024-04-25",
+    date = "2024-05-01",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
 }
-]=]),
-["F"] = lib("libluax/F/F.lua", [==[--[[
+]])
+libs["F"] = lib("libluax/F/F.lua", [==[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -3914,8 +3912,8 @@ return setmetatable(F, {
         return t
     end,
 })
-]==]),
-["complex"] = lib("libluax/complex/complex.lua", [=[--[[
+]==])
+libs["complex"] = lib("libluax/complex/complex.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -4155,8 +4153,8 @@ complex = {
 }
 
 return complex
-]=]),
-["crypt"] = lib("libluax/crypt/crypt.lua", [=[--[[
+]=])
+libs["crypt"] = lib("libluax/crypt/crypt.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -4268,8 +4266,8 @@ string.crc32        = crypt.crc32
 string.crc64        = crypt.crc64
 
 return crypt
-]=]),
-["_crypt"] = lib("libluax/crypt/_crypt.lua", [=[--[[
+]=])
+libs["_crypt"] = lib("libluax/crypt/_crypt.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -4586,8 +4584,8 @@ function crypt.hash(s)
 end
 
 return crypt
-]=]),
-["fs"] = lib("libluax/fs/fs.lua", [=[--[[
+]=])
+libs["fs"] = lib("libluax/fs/fs.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -5082,8 +5080,8 @@ string.walk             = fs.walk
 getmetatable("").__div  = fs.join
 
 return fs
-]=]),
-["_fs"] = lib("libluax/fs/_fs.lua", [=[--[[
+]=])
+libs["_fs"] = lib("libluax/fs/_fs.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -5329,8 +5327,8 @@ else
 end
 
 return fs
-]=]),
-["imath"] = lib("libluax/imath/imath.lua", [=[--[[
+]=])
+libs["imath"] = lib("libluax/imath/imath.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -5780,8 +5778,8 @@ imath.tostring = function(a) return int(a):tostring() end
 imath.totext = function(a) return int(a):totext() end
 
 return imath
-]=]),
-["import"] = lib("libluax/import/import.lua", [=[--[[
+]=])
+libs["import"] = lib("libluax/import/import.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -5841,8 +5839,8 @@ function mt.__call(self, fname)
 end
 
 return setmetatable(import, mt)
-]=]),
-["linenoise"] = lib("libluax/linenoise/linenoise.lua", [=[--[[
+]=])
+libs["linenoise"] = lib("libluax/linenoise/linenoise.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -5886,8 +5884,8 @@ linenoise.mask = nop
 linenoise.clear = term.clear
 
 return linenoise
-]=]),
-["lz4"] = lib("libluax/lz4/lz4.lua", [=[--[[
+]=])
+libs["lz4"] = lib("libluax/lz4/lz4.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -5929,8 +5927,8 @@ string.lz4      = lz4.lz4
 string.unlz4    = lz4.unlz4
 
 return lz4
-]=]),
-["_lz4"] = lib("libluax/lz4/_lz4.lua", [=[--[[
+]=])
+libs["_lz4"] = lib("libluax/lz4/_lz4.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -5981,8 +5979,8 @@ function lz4.unlz4(s)
 end
 
 return lz4
-]=]),
-["mathx"] = lib("libluax/mathx/mathx.lua", [=[--[[
+]=])
+libs["mathx"] = lib("libluax/mathx/mathx.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -6117,8 +6115,8 @@ mathx.nan = math.abs(0/0)
 mathx.pi = math.pi
 
 return mathx
-]=]),
-["ps"] = lib("libluax/ps/ps.lua", [=[--[[
+]=])
+libs["ps"] = lib("libluax/ps/ps.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -6169,8 +6167,8 @@ function ps.profile(func)
 end
 
 return ps
-]=]),
-["qmath"] = lib("libluax/qmath/qmath.lua", [=[--[[
+]=])
+libs["qmath"] = lib("libluax/qmath/qmath.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -6234,8 +6232,8 @@ function qmath.torat(x, eps)
 end
 
 return qmath
-]=]),
-["_qmath"] = lib("libluax/qmath/_qmath.lua", [=[--[[
+]=])
+libs["_qmath"] = lib("libluax/qmath/_qmath.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -6356,8 +6354,8 @@ qmath.tonumber = function(a) return rat(a):tonumber() end
 qmath.tostring = mt.__tostring
 
 return qmath
-]=]),
-["sh"] = lib("libluax/sh/sh.lua", [=[--[[
+]=])
+libs["sh"] = lib("libluax/sh/sh.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -6477,8 +6475,8 @@ setmetatable(sh, {
 })
 
 return sh
-]=]),
-["sys"] = lib("libluax/sys/sys.lua", [=[--[[
+]=])
+libs["sys"] = lib("libluax/sys/sys.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -6532,8 +6530,8 @@ sys.exe  = host.exe
 sys.name = host.name
 
 return sys
-]=]),
-["targets"] = lib("libluax/sys/targets.lua", [=[--[[
+]=])
+libs["targets"] = lib("libluax/sys/targets.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -6566,8 +6564,8 @@ return F{
     {name="macos-aarch64",      uname_machine="arm64",   os="macos",   arch="aarch64", libc="none",  exe="",     so=".dylib"},
     {name="windows-x86_64",     uname_machine="AMD64",   os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll"  },
 }
-]=]),
-["term"] = lib("libluax/term/term.lua", [=[--[[
+]=])
+libs["term"] = lib("libluax/term/term.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -6806,8 +6804,8 @@ function term.prompt(p)
 end
 
 return term
-]=]),
-["_term"] = lib("libluax/term/_term.lua", [=[--[[
+]=])
+libs["_term"] = lib("libluax/term/_term.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -6850,8 +6848,8 @@ function term.size()
 end
 
 return term
-]=]),
-["package_hook"] = lib("libluax/package/package_hook.lua", [==[--[[
+]=])
+libs["package_hook"] = lib("libluax/package/package_hook.lua", [==[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -6909,8 +6907,8 @@ end
 for i = 2, #package.searchers do
     package.searchers[i] = wrap_searcher(package.searchers[i])
 end
-]==]),
-["debug_hook"] = lib("libluax/debug/debug_hook.lua", [==[--[[
+]==])
+libs["debug_hook"] = lib("libluax/debug/debug_hook.lua", [==[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -6979,8 +6977,8 @@ local function locals(level)
 end
 
 debug.locals = locals
-]==]),
-["argparse"] = lib("ext/lua/argparse/argparse.lua", [==[-- The MIT License (MIT)
+]==])
+libs["argparse"] = lib("ext/lua/argparse/argparse.lua", [==[-- The MIT License (MIT)
 
 -- Copyright (c) 2013 - 2018 Peter Melnichenko
 --                      2019 Paul Ouellette
@@ -9080,8 +9078,8 @@ setmetatable(argparse, {__call = function(_, ...)
 end})
 
 return argparse
-]==]),
-["cbor"] = lib("ext/lua/cbor/cbor.lua", [=[-- Concise Binary Object Representation (CBOR)
+]==])
+libs["cbor"] = lib("ext/lua/cbor/cbor.lua", [[-- Concise Binary Object Representation (CBOR)
 -- RFC 7049
 
 local function softreq(pkg, field)
@@ -9672,8 +9670,8 @@ return {
 	undefined = undefined;
 };
 --@LIB
-]=]),
-["json"] = lib("ext/lua/json/json.lua", [===[-- Module options:
+]])
+libs["json"] = lib("ext/lua/json/json.lua", [===[-- Module options:
 local always_use_lpeg = false
 local register_global_module_table = false
 local global_module_name = 'json'
@@ -10423,8 +10421,8 @@ end
 
 return json
 
-]===]),
-["serpent"] = lib("ext/lua/serpent/serpent.lua", [=[local n, v = "serpent", "0.303" -- (C) 2012-18 Paul Kulchenko; MIT License
+]===])
+libs["serpent"] = lib("ext/lua/serpent/serpent.lua", [=[local n, v = "serpent", "0.303" -- (C) 2012-18 Paul Kulchenko; MIT License
 local c, d = "Paul Kulchenko", "Lua serializer and pretty printer"
 local snum = {[tostring(1/0)]='1/0 --[[math.huge]]',[tostring(-1/0)]='-1/0 --[[-math.huge]]',[tostring(0/0)]='0/0'}
 local badtype = {thread = true, userdata = true, cdata = true}
@@ -10576,17 +10574,8 @@ return { _NAME = n, _COPYRIGHT = c, _DESCRIPTION = d, _VERSION = v, serialize = 
   line = function(a, opts) return s(a, merge({sortkeys = true, comment = true}, opts)) end,
   block = function(a, opts) return s(a, merge({indent = '  ', sortkeys = true, comment = true}, opts)) end }
 --@LIB
-]=]),
-}
-table.insert(package.searchers, 2, function(name) return libs[name] end)
-require "F"
-require "crypt"
-require "fs"
-require "lz4"
-require "package_hook"
-require "debug_hook"
-]====]),
-["atexit"] = lib("atexit.lua", [=[--[[
+]=])
+libs["atexit"] = lib("src/atexit.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -10626,8 +10615,8 @@ return setmetatable({}, {
         end,
     },
 })
-]=]),
-["comment"] = lib("comment.lua", [====[--[[
+]=])
+libs["comment"] = lib("src/comment.lua", [====[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -10667,8 +10656,8 @@ and is not part of the output document.
 local F = require "F"
 
 return F.const ""
-]====]),
-["convert"] = lib("convert.lua", [====[--[[
+]====])
+libs["convert"] = lib("src/convert.lua", [====[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -10749,8 +10738,8 @@ return setmetatable({}, {
         if_required = convert_if_required
     },
 })
-]====]),
-["doc"] = lib("doc.lua", [=[--[[
+]====])
+libs["doc"] = lib("src/doc.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -10808,8 +10797,8 @@ return flex.str(function(filename, opts)
     content = convert.if_required(content, opts)
     return content
 end)
-]=]),
-["file"] = lib("file.lua", [=[--[[
+]=])
+libs["file"] = lib("src/file.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -10871,8 +10860,8 @@ function file_object_mt.__index:flush()
 end
 
 return setmetatable(file, file_mt)
-]=]),
-["flex"] = lib("flex.lua", [=[--[[
+]=])
+libs["flex"] = lib("src/flex.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -10986,8 +10975,8 @@ return {
     str = flex_str,
     array = flex_array,
 }
-]=]),
-["image"] = lib("image.lua", [====[--[[
+]=])
+libs["image"] = lib("src/image.lua", [====[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -11298,8 +11287,8 @@ return define {
         output = function(path) output_file = path end,
     },
 }
-]====]),
-["include"] = lib("include.lua", [=[--[[
+]====])
+libs["include"] = lib("src/include.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -11366,8 +11355,8 @@ return setmetatable({
 }, {
     __call = function(_, ...) return flex_include(...) end,
 })
-]=]),
-["parser"] = lib("parser.lua", [===[--[[
+]=])
+libs["parser"] = lib("src/parser.lua", [===[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -11717,8 +11706,8 @@ return function(s)
     end
     return table.concat(ts)
 end
-]===]),
-["q"] = lib("q.lua", [=[--[[
+]===])
+libs["q"] = lib("src/q.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -11748,8 +11737,8 @@ http://cdelord.fr/ypp
 local F = require "F"
 
 return F.id
-]=]),
-["script"] = lib("script.lua", [=[--[[
+]=])
+libs["script"] = lib("src/script.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -11855,8 +11844,8 @@ return setmetatable({
 }, {
     __call = function(_, cmd) return run(cmd) end,
 })
-]=]),
-["when"] = lib("when.lua", [====[--[[
+]=])
+libs["when"] = lib("src/when.lua", [====[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -11898,12 +11887,15 @@ local F = require "F"
 return function(cond)
     return cond and ypp or F.const ""
 end
-]====]),
-["_YPP_VERSION"] = lib("_YPP_VERSION.lua", [=[return [[0.11.1]] --@LOAD
-]=]),
-}
-table.insert(package.searchers, 2, function(name) return libs[name] end)
-require "luax"
+]====])
+libs["_YPP_VERSION"] = lib(".build/src/_YPP_VERSION.lua", [=[return [[0.11.1]] --@LOAD
+]=])
+require "F"
+require "crypt"
+require "fs"
+require "lz4"
+require "package_hook"
+require "debug_hook"
 _ENV["atexit"] = require "atexit"
 _ENV["comment"] = require "comment"
 _ENV["convert"] = require "convert"
@@ -11915,7 +11907,7 @@ _ENV["q"] = require "q"
 _ENV["script"] = require "script"
 _ENV["when"] = require "when"
 _ENV["_YPP_VERSION"] = require "_YPP_VERSION"
-return lib("ypp.lua", [=[--[[
+return lib("src/ypp.lua", [=[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify

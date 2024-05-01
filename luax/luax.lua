@@ -26,15 +26,17 @@ local F = require "F"
 local term = require "term"
 local luax_config = require "luax_config"
 
-local has_compiler, bundle = pcall(require, "luax_bundle")
+local bundle = require "luax_bundle"
 
-local welcome = F.I(_G){sys=sys}[[
+local I = F.I % "%%{}"
+
+local welcome = I(_G){sys=sys}[[
  _               __  __  |  https://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |
-| |  | | | |/ _` |\  /   |  Version $(_LUAX_VERSION) ($(_LUAX_DATE))
-| |__| |_| | (_| |/  \   |  Powered by $(_VERSION)
-|_____\__,_|\__,_/_/\_\  |$(PANDOC_VERSION and "  and Pandoc "..tostring(PANDOC_VERSION) or "")
-                         |  $(sys.os:cap()) $(sys.arch) $(sys.libc)
+| |  | | | |/ _` |\  /   |  Version %{_LUAX_VERSION} (%{_LUAX_DATE})
+| |__| |_| | (_| |/  \   |  Powered by %{_VERSION}
+|_____\__,_|\__,_/_/\_\  |%{PANDOC_VERSION and "  and Pandoc "..tostring(PANDOC_VERSION) or ""}
+                         |  %{sys.os:cap()} %{sys.arch} %{sys.libc}
 ]]
 
 local LUA_INIT = F{
@@ -44,9 +46,8 @@ local LUA_INIT = F{
 
 local arg0 = arg[0]
 
-local usage = F.unlines(F.flatten {
-    F.I{arg0=arg0}[==[
-usage: $(arg0:basename()) [options] [script [args]]
+local usage = I{arg0=arg0, init=LUA_INIT}(luax_config)[==[
+usage: %{arg0:basename()} [options] [script [args]]
 
 General options:
   -h                show this help
@@ -62,12 +63,13 @@ Lua options:
   -l _=name         require library 'name' (no global variable)
   -                 stop handling options and execute stdin
                     (incompatible with -i)
-]==],
-    has_compiler and [==[
+
 Compilation options:
   -t target         name of the targetted platform
   -t list           list available targets
   -o file           name the executable file to create
+  -b                compile to Lua bytecode
+  -s                emit bytecode without debug information
   -q                quiet compilation (error messages only)
 
 Scripts for compilation:
@@ -76,15 +78,14 @@ Scripts for compilation:
                     returning the content of the file.
 
 Lua and Compilation options can not be mixed.
-]==] or {},
-    F.I{init=LUA_INIT}[==[
+
 Environment variables:
 
-  $(init[1]), $(init[2])
+  %{init[1]}, %{init[2]}
                     code executed before handling command line
                     options and scripts (not in compilation
-                    mode). When $(init[1]) is defined,
-                    $(init[2]) is ignored.
+                    mode). When %{init[1]} is defined,
+                    %{init[2]} is ignored.
 
   PATH              PATH shall contain the bin directory where
                     LuaX is installed
@@ -95,21 +96,18 @@ Environment variables:
 
   LUA_CPATH         LUA_CPATH shall point to the lib directory
                     where LuaX shared libraries are installed
-]==],
-    [==[
+
 PATH, LUA_PATH and LUA_CPATH can be set in .bashrc or .zshrc
 with « luax env ».
 E.g.: eval $(luax env)
 
 « luax env » can also generate shell variables from a script.
 E.g.: eval $(luax env script.lua)
-]==],
-    F.I(luax_config)[==[
+
 Copyright:
-  $(copyright)
-  $(authors)
-]==],
-    })
+  %{copyright}
+  %{authors}
+]==]
 
 local welcome_already_printed = false
 
@@ -137,15 +135,15 @@ local function findpath(name)
 end
 
 local lua_interpreters = F{
-    ["luax"]   = { interpreter="luax",       format="-lua", scripts={} },
-    ["lua"]    = { interpreter="lua",        format="-lua", scripts={"luax.lua"} },
-    ["pandoc"] = { interpreter="pandoc lua", format="-lua", scripts={"luax.lua"} },
+    ["luax"]   = { interpreter="luax",   scripts={} },
+    ["lua"]    = { interpreter="lua",    scripts={"luax.lib"} },
+    ["pandoc"] = { interpreter="pandoc", scripts={"luax.lib"} },
 }
 
 local function print_targets()
     lua_interpreters:items():foreach(function(name_def)
-        local name, def = F.unpack(name_def)
-        local exe = def.interpreter:words():head()
+        local name, _ = F.unpack(name_def)
+        local exe = name
         local path = fs.findpath(exe)
         print(("%-12s%s%s"):format(
             name,
@@ -187,6 +185,8 @@ local args = F{}
 local output = nil
 local target = nil
 local quiet = false
+local bytecode = nil
+local strip = nil
 
 local luax_loaded = false
 
@@ -453,18 +453,25 @@ do
                     _G[modname] = mod
                 end
             end)
-        elseif has_compiler and a == '-o' then
+        elseif a == '-o' then
             compiler_mode = true
             i = i+1
             if output then wrong_arg(a) end
             output = arg[i]
-        elseif has_compiler and a == '-t' then
+        elseif a == '-t' then
             compiler_mode = true
             i = i+1
             if target then wrong_arg(a) end
             target = arg[i]
             if target == "list" then print_targets() os.exit() end
-        elseif has_compiler and a == '-q' then
+        elseif a == '-b' then
+            compiler_mode = true
+            bytecode = true
+        elseif a == '-s' then
+            compiler_mode = true
+            bytecode = true
+            strip = true
+        elseif a == '-q' then
             compiler_mode = true
             quiet = true
         elseif a == '-v' then
@@ -655,19 +662,14 @@ local function run_compiler()
         end
         local luax_scripts = F.map(findscript, interpreter.scripts)
 
-        local chunk = bundle.combine_lua(current_output:basename(), {interpreter.format, luax_scripts, scripts})
-        local exe = F.flatten{
-                "#!/usr/bin/env -S",
-
-                -- "luax", "lua" or "pandoc lua" interpreter
-                interpreter.interpreter,
-
-                -- remaining parameters are given to the main script
-                "--",
-            }:unwords()
-            .."\n"
-            ..chunk
-        log("Chunk", "%7d bytes", #chunk)
+        local files = bundle.bundle {
+            scripts = F.flatten{luax_scripts, scripts},
+            output = current_output,
+            target = interpreter.interpreter,
+            bytecode = bytecode,
+            strip = strip,
+        }
+        local exe = files[current_output]
         log("Total", "%7d bytes", #exe)
 
         local f = io.open(current_output, "wb")

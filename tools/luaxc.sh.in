@@ -77,7 +77,6 @@ case "$1" in
 esac
 
 BYTECODE=@BYTECODE
-CRYPT=
 TARGET=
 OUTPUT=
 SOURCES=()
@@ -89,7 +88,6 @@ do
     case "$1" in
         (-b)        BYTECODE="-b"; shift ;;
         (-s)        BYTECODE="-s"; shift ;;
-        (-crypt)    CRYPT="-crypt"; shift ;;
         (-o)        OUTPUT="$2"; shift 2 ;;
         (-t)        TARGET="$2"; shift 2 ;;
         (-p)        PREFIX="$2"; shift 2 ;;
@@ -206,6 +204,7 @@ esac
 ZIG_OPT=(-target "$ZIG_TARGET")
 ZIG_OPT+=(-std=gnu2x)
 ZIG_OPT+=(-O3)
+ZIG_OPT+=(-I$LUAXC_DIR/lua)
 ZIG_OPT+=(-fPIC)
 ZIG_OPT+=(-s)
 ZIG_OPT+=(-lm)
@@ -257,7 +256,7 @@ then
     echo "sources: ${SOURCES[*]}"
 fi
 
-luax "$LUAXC_DIR/luax_bundle.lua" -app $BYTECODE -c $CRYPT -name="$OUTPUT" "${SOURCES[@]}" > "$TMP/app_bundle.c"
+luax "$LUAXC_DIR/luax_bundle.lua" -t c -e app -n "$(basename $OUTPUT)" $BYTECODE "${SOURCES[@]}" -o $TMP/app_bundle.c
 zig cc "${ZIG_OPT[@]}" "${LIBS[@]}" "$TMP/app_bundle.c" -o "$OUTPUT"
 
 exit # ------------------------------8<------------------------------

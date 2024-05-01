@@ -58,32 +58,6 @@ static const luaL_Reg lrun_libs[] = {
     {NULL, NULL},
 };
 
-static int traceback(lua_State *L)
-{
-    const char *msg = lua_tostring(L, 1);
-    luaL_traceback(L, L, msg, 1);
-    char *tb = strdup(lua_tostring(L, -1));
-    if (tb == NULL) {
-        fprintf(stderr, "%s\n", msg);
-        lua_pop(L, 1);
-        return 0;
-    }
-    size_t nb_nl = 0;
-    for (size_t p = strlen(tb)-1; p > 0; p--) {
-        if (tb[p] == '\n') {
-            nb_nl++;
-            if (nb_nl == 2) {   /* Skip the last two lines that do not belong to the chunk */
-                tb[p] = '\0';
-                break;
-            }
-        }
-    }
-    fprintf(stderr, "%s\n", tb);
-    free(tb);
-    lua_pop(L, 1);
-    return 0;
-}
-
 static const char *arg0(lua_State *L)
 {
     const int type = lua_getglobal(L, "arg");
@@ -102,21 +76,6 @@ static void error(const char *what, const char *message)
     exit(EXIT_FAILURE);
 }
 
-int run_buffer(lua_State *L, const char *name, char *(*chunk)(void), size_t (*size)(void), void (*free_chunk)(void))
-{
-    const int load_status = luaL_loadbuffer(L, chunk(), size(), name);
-    free_chunk();
-    if (load_status != LUA_OK) {
-        error(arg0(L), lua_tostring(L, -1));
-    }
-    const int base = lua_gettop(L);         /* function index */
-    lua_pushcfunction(L, traceback);        /* push message handler */
-    lua_insert(L, base);                    /* put it under function and args */
-    const int status = lua_pcall(L, 0, 0, base);
-    lua_remove(L, base);                    /* remove message handler from the stack */
-    return status;
-}
-
 LUAMOD_API int luaopen_libluax(lua_State *L)
 {
     set_version(L);
@@ -125,8 +84,8 @@ LUAMOD_API int luaopen_libluax(lua_State *L)
         lua_pop(L, 1);
     }
 
-    CHUNK_PROTO(lib)
-    if (run_buffer(L, "=runtime", lib_chunk, lib_size, lib_free) != LUA_OK) {
+    extern int run_lib(lua_State  *);
+    if (run_lib(L) != LUA_OK) {
         error(arg0(L), "can not initialize the LuaX runtime\n");
     }
 

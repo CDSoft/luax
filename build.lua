@@ -605,6 +605,8 @@ var "lua_path" (
         "$tmp",
         "libluax",
         ls "libluax/*" : filter(fs.is_dir),
+        "ext/lua/argparse",
+        "ext/lua/cbor",
         "luax",
     }
     : flatten()
@@ -676,7 +678,7 @@ rule "bundle" {
     command = {
         "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
-        "$lua luax/luax_bundle.lua $args $in > $out",
+        "$lua luax/luax_bundle.lua $args $in -o $out",
     },
     implicit_in = {
         "$lua",
@@ -715,8 +717,10 @@ rt { luax={ls "ext/**.lua"},                    lua={ls "ext/lua/**.lua"}       
 local luax_runtime_bundle = build "$tmp/lua_runtime_bundle.c" {
     "bundle", "$luax_config_lua", luax_runtime,
     args = {
-        "-lib -c",
+        "-e lib",
+        "-t c",
         bytecode,
+        "-n luax",
     }
 }
 
@@ -728,13 +732,10 @@ local luax_app = {
 local luax_app_bundle = build "$tmp/lua_app_bundle.c" {
     "bundle", luax_app,
     args = {
-        "-app -c",
+        "-e app",
+        "-t c",
         bytecode,
-        "-name=luax",
-        case(mode) {
-            debug = "-crypt", -- in debug mode also test the chunk encryption
-            [F.Nil] = {},
-        },
+        "-n luax",
     },
 }
 
@@ -891,6 +892,11 @@ if cross_compilation then
             return build(luaxc_archive/src:basename()) { "cp", src }
         end),
 
+        -- Lua headers
+        ls "lua/*.h" : map(function(header)
+            return build(luaxc_archive/"lua"/header:basename()) { "cp", header }
+        end),
+
         -- target independant scripts and libraries
         F{
             "$bin/luax.lua",
@@ -969,13 +975,32 @@ section "LuaX Lua implementation"
 ---------------------------------------------------------------------
 
 --===================================================================
+section "$lib/luax.lib"
+---------------------------------------------------------------------
+
+acc(libraries) {
+    build "$lib/luax.lib" {
+        "bundle", "$luax_config_lua", lua_runtime,
+        args = {
+            "-e lib",
+            "-t lib",
+            "-n luax",
+        },
+    }
+}
+
+--===================================================================
 section "$lib/luax.lua"
 ---------------------------------------------------------------------
 
 acc(libraries) {
     build "$lib/luax.lua" {
         "bundle", "$luax_config_lua", lua_runtime,
-        args = "-lib -lua",
+        args = {
+            "-e lib",
+            "-t lua",
+            "-n luax",
+        },
     }
 }
 
@@ -1064,7 +1089,7 @@ acc(test) {
             description = "TEST $out",
             command = {
                 sanitizer_options,
-                "$luaxc -q -crypt -o $test/test-luaxc",
+                "$luaxc -q -o $test/test-luaxc",
                     test_sources : difference(ls "tests/luax-tests/to_be_imported-*.lua"),
                 "&&",
                 "PATH=$bin:$tmp:$$PATH",

@@ -207,6 +207,8 @@ scripts:
       -t target         name of the targetted platform
       -t list           list available targets
       -o file           name the executable file to create
+      -b                compile to Lua bytecode
+      -s                emit bytecode without debug information
       -q                quiet compilation (error messages only)
 
     Scripts for compilation:
