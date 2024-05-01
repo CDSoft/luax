@@ -905,6 +905,7 @@ if cross_compilation then
             return build(luaxc_archive/"noarch"/"bin"/bin:basename()) { "cp", bin }
         end),
         F{
+            "$lib/luax.lib",
             "$lib/luax.lua",
         } : map(function(lib)
             return build(luaxc_archive/"noarch"/"lib"/lib:basename()) { "cp", lib }
