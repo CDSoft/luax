@@ -1049,7 +1049,8 @@ acc(binaries) {
 section "Tests"
 ---------------------------------------------------------------------
 
-local test_sources = ls "tests/luax-tests/*.*"
+local imported_test_sources = ls "tests/luax-tests/to_be_imported-*.lua"
+local test_sources = ls "tests/luax-tests/*.*" : difference(imported_test_sources)
 local test_main = "tests/luax-tests/main.lua"
 
 local libc = case(sys.os) {
@@ -1062,12 +1063,11 @@ acc(test) {
 
 ---------------------------------------------------------------------
 
-    build "$test/test-1-luax_executable.ok" {
+    build "$test/test-1-luax_executable.ok" { test_sources,
         description = "TEST $out",
         command = {
             sanitizer_options,
-            "$luax -q -o $test/test-luax",
-                test_sources : difference(ls "tests/luax-tests/to_be_imported-*.lua"),
+            "$luax -q -o $test/test-luax $in",
             "&&",
             "PATH=$bin:$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
@@ -1081,17 +1081,16 @@ acc(test) {
         },
         implicit_in = {
             "$luax",
-            test_sources,
+            imported_test_sources,
         },
     },
 
     cross_compilation and {
-        build "$test/test-1-luaxc_executable.ok" {
+        build "$test/test-1-luaxc_executable.ok" { test_sources,
             description = "TEST $out",
             command = {
                 sanitizer_options,
-                "$luaxc -q -o $test/test-luaxc",
-                    test_sources : difference(ls "tests/luax-tests/to_be_imported-*.lua"),
+                "$luaxc -q -o $test/test-luaxc $in",
                 "&&",
                 "PATH=$bin:$tmp:$$PATH",
                 "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
@@ -1107,7 +1106,7 @@ acc(test) {
             implicit_in = {
                 "$luax",
                 "$luaxc",
-                test_sources,
+                imported_test_sources,
             },
         },
     } or {},
@@ -1122,7 +1121,7 @@ acc(test) {
 
 ---------------------------------------------------------------------
 
-    build "$test/test-2-lib.ok" {
+    build "$test/test-2-lib.ok" { test_main,
         description = "TEST $out",
         command = {
             sanitizer_options,
@@ -1132,7 +1131,7 @@ acc(test) {
             "LUA_PATH='tests/luax-tests/?.lua'",
             "TEST_NUM=2",
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
-            "$lua -l libluax", test_main, "Lua is great",
+            "$lua -l libluax $in Lua is great",
             "&&",
             "touch $out",
         },
@@ -1141,12 +1140,13 @@ acc(test) {
             "$luax",
             libraries,
             test_sources,
+            imported_test_sources,
         },
     },
 
 ---------------------------------------------------------------------
 
-    build "$test/test-3-lua.ok" {
+    build "$test/test-3-lua.ok" { test_main,
         description = "TEST $out",
         command = {
             sanitizer_options,
@@ -1154,7 +1154,7 @@ acc(test) {
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=3",
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
-            "$lua -l luax", test_main, "Lua is great",
+            "$lua -l luax $in Lua is great",
             "&&",
             "touch $out",
         },
@@ -1164,12 +1164,13 @@ acc(test) {
             "$lz4",
             libraries,
             test_sources,
+            imported_test_sources,
         },
     },
 
 ---------------------------------------------------------------------
 
-    build "$test/test-4-lua-luax-lua.ok" {
+    build "$test/test-4-lua-luax-lua.ok" { test_main,
         description = "TEST $out",
         command = {
             sanitizer_options,
@@ -1177,7 +1178,7 @@ acc(test) {
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=4",
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
-            "$bin/luax.lua", test_main, "Lua is great",
+            "$bin/luax.lua $in Lua is great",
             "&&",
             "touch $out",
         },
@@ -1186,12 +1187,13 @@ acc(test) {
             "$bin/luax.lua",
             "$lz4",
             test_sources,
+            imported_test_sources,
         },
     },
 
 ---------------------------------------------------------------------
 
-    has_pandoc and build "$test/test-5-pandoc-luax-lua.ok" {
+    has_pandoc and build "$test/test-5-pandoc-luax-lua.ok" { test_main,
         description = "TEST $out",
         command = {
             sanitizer_options,
@@ -1199,7 +1201,7 @@ acc(test) {
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=5",
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
-            "pandoc lua -l luax", test_main, "Lua is great",
+            "pandoc lua -l luax $in Lua is great",
             "&&",
             "touch $out",
         },
@@ -1209,6 +1211,7 @@ acc(test) {
             "$lz4",
             libraries,
             test_sources,
+            imported_test_sources,
         },
     } or {},
 
