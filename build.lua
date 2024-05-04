@@ -1067,7 +1067,7 @@ acc(test) {
         description = "TEST $out",
         command = {
             sanitizer_options,
-            "$luax -q -o $test/test-luax $in",
+            "$luax -q -b -k test-1-key -o $test/test-luax $in",
             "&&",
             "PATH=$bin:$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
@@ -1090,7 +1090,7 @@ acc(test) {
             description = "TEST $out",
             command = {
                 sanitizer_options,
-                "$luaxc -q -o $test/test-luaxc $in",
+                "$luaxc -q -b -k test-2-key -o $test/test-luaxc $in",
                 "&&",
                 "PATH=$bin:$tmp:$$PATH",
                 "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
@@ -1222,7 +1222,7 @@ acc(test) {
         command = {
             sanitizer_options,
             "eval \"$$($luax env)\";",
-            "$luax -q -t lua -o $test/ext-lua $in",
+            "$luax -q -b -k test-ext-1-key -t lua -o $test/ext-lua $in",
             "&&",
             "PATH=$bin:$tmp:$$PATH",
             "TARGET=lua",
@@ -1244,7 +1244,7 @@ acc(test) {
         command = {
             sanitizer_options,
             "eval \"$$($luax env)\";",
-            "$luax -q -t luax -o $test/ext-luax $in",
+            "$luax -q -b -k test-ext-3-key -t luax -o $test/ext-luax $in",
             "&&",
             "PATH=$bin:$tmp:$$PATH",
             "TARGET=luax",
@@ -1265,7 +1265,7 @@ acc(test) {
         command = {
             sanitizer_options,
             "eval \"$$($luax env)\";",
-            "$luax -q -t pandoc -o $test/ext-pandoc $in",
+            "$luax -q -b -k test-ext-4-key -t pandoc -o $test/ext-pandoc $in",
             "&&",
             "PATH=$bin:$tmp:$$PATH",
             "TARGET=pandoc",

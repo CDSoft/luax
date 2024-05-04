@@ -209,6 +209,7 @@ scripts:
       -o file           name the executable file to create
       -b                compile to Lua bytecode
       -s                emit bytecode without debug information
+      -k key            script encryption key
       -q                quiet compilation (error messages only)
 
     Scripts for compilation:

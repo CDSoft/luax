@@ -70,6 +70,7 @@ Compilation options:
   -o file           name the executable file to create
   -b                compile to Lua bytecode
   -s                emit bytecode without debug information
+  -k key            script encryption key
   -q                quiet compilation (error messages only)
 
 Scripts for compilation:
@@ -187,6 +188,7 @@ local target = nil
 local quiet = false
 local bytecode = nil
 local strip = nil
+local key = nil
 
 local luax_loaded = false
 
@@ -471,6 +473,11 @@ do
             compiler_mode = true
             bytecode = true
             strip = true
+        elseif a == '-k' then
+            compiler_mode = true
+            i = i+1
+            if key then wrong_arg(a) end
+            key = arg[i]
         elseif a == '-q' then
             compiler_mode = true
             quiet = true
@@ -668,6 +675,7 @@ local function run_compiler()
             target = interpreter.interpreter,
             bytecode = bytecode,
             strip = strip,
+            key = key,
         }
         local exe = files[current_output]
         log("Total", "%7d bytes", #exe)

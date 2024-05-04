@@ -25,8 +25,12 @@ local M = {}
 
 local F = require "F"
 local fs = require "fs"
+local crypt = require "crypt"
+require "lz4"
 
 local format = string.format
+local byte = string.byte
+local char = string.char
 
 local function parse_args(args)
     local parser = require "argparse"()
@@ -59,6 +63,10 @@ local function parse_args(args)
     parser : flag "-s"
         : description "Strip debug information"
         : target "strip"
+    parser : option "-k"
+        : description "Encryption key"
+        : argname "key"
+        : target "key"
     return F{
         scripts = nil,              -- Lua script list
         output = nil,               -- output file
@@ -148,6 +156,64 @@ local function chunks_of(n, xs)
     return chunks
 end
 
+local function make_key(input, opt)
+    local function chunks_of_chars(n, s)
+        local chunks = F{}
+        while #s > 0 do
+            chunks[#chunks+1], s = s:split_at(n)
+        end
+        return chunks
+    end
+    local key_size = F.floor(16 + (#input-16)*(256-16)/(4096-16))
+    key_size = F.max(16, F.min(256, key_size))
+    return chunks_of_chars(key_size, input:rc4(opt.key)) : fold1(crypt.rc4)
+end
+
+local function escape(s)
+    return s:gsub(".", function(c) return ("\\%d"):format(byte(c)) end)
+end
+
+local function obfuscate_lua(code, opt, product_name)
+    if not opt.key then return code end
+    -- Encrypt code by xoring bytes with pseudo random values
+    local key = make_key(code, opt)
+    local a, c = 6364136223846793005, 1
+    local seed = tonumber(key:hash(), 16)
+    local r = seed
+    local xs = {}
+    for i = 1, #code do
+        local b = byte(code, i, i+1)
+        r = r*a + c
+        xs[i] = char(b ~ ((r>>33) & 0xff))
+    end
+    code = F.I { a=a, c=c, b=escape(table.concat(xs)), seed=seed } [===[
+local b,a,c,r,x,bt,ch,l,tc='$(b)',$(a),$(c),$(("0x%x"):format(seed)),{},string.byte,string.char,load,table.concat;for i=1,#b do r=r*a+c x[i]=ch(bt(b,i)~((r>>33)&0xff))end;return l(tc(x))()
+]===]
+    if opt.bytecode then
+        code = assert(string.dump(assert(load(code, "@$"..product_name)), opt.strip))
+    end
+    return code
+end
+
+local function obfuscate_luax(code, opt, product_name)
+    if not opt.key then return code end
+    -- Encrypt code with lz4 and rc4
+    local key = make_key(code, opt)
+    local unlz4 = ""
+    local compressed_code = code:lz4()
+    if #compressed_code < #code then
+        code = compressed_code
+        unlz4 = ":unlz4()"
+    end
+    code = F.I { b=escape(code:rc4(key)), k=escape(key), unlz4=unlz4 } [===[
+return load(('$(b)'):unrc4'$(k)'$(unlz4))()
+]===]
+    if opt.bytecode then
+        code = assert(string.dump(assert(load(code, "@$"..product_name)), opt.strip))
+    end
+    return code
+end
+
 function M.bundle(opt)
 
     local cbor = require "cbor"
@@ -213,8 +279,8 @@ function M.bundle(opt)
             pandoc = "pandoc lua",
             luax   = "luax",
         }
+        local shebang = "#!/usr/bin/env -S "..interpreter[opt.target].." --"
         local out = F{
-            "#!/usr/bin/env -S "..interpreter[opt.target].." --",
             interpreter[opt.target] ~= "luax" and {
                 "_LUAX_VERSION = '"..config.version.."'",
                 "_LUAX_DATE    = '"..config.date.."'",
@@ -271,14 +337,13 @@ function M.bundle(opt)
                 run_main[#run_main+1] = ("return lib(%q, %s)()"):format(script.path, compile(script))
             end
         end
-        if opt.bytecode then
-            out = F{
-                out:head(),
-                assert(string.dump(assert(load(out:drop(1):flatten():unlines(), "@$"..product_name)), opt.strip)),
-            }
-        end
+        local obfuscate = F.case(opt.target) {
+            luax = obfuscate_luax,
+            [F.Nil] = obfuscate_lua,
+        }
+        out = obfuscate(out:flatten():unlines(), F(opt):patch{strip=true}, product_name)
         return F{
-            [opt.output] = out:flatten():unlines(),
+            [opt.output] = F{shebang, out}:flatten():unlines(),
         }
     end
 
@@ -307,13 +372,24 @@ function M.bundle(opt)
         local function compile(script)
             -- check script compilation (with the actual file path in error messages)
             assert(load(script.content, ("@%s"):format(script.path)))
+            local code
             if opt.bytecode then
                 -- compile the script with file path containing the product name
                 local chunk = assert(load(script.content, ("@$%s:%s"):format(product_name, script.path)))
-                return string.dump(chunk, opt.strip)
+                code = string.dump(chunk, opt.strip)
             else
-                return script.content
+                code = script.content
             end
+            if opt.key then
+                code = obfuscate_luax(code, opt, product_name)
+                if opt.bytecode then
+                    code = string.dump(assert(load(code, "@"..product_name)), true)
+                end
+            end
+            return code
+        end
+        local function stripped(prefix, name)
+            return prefix .. (opt.strip and "" or ":"..name)
         end
         local main_script, libs = find_main(scripts)
         for i = 1, #libs do
@@ -327,7 +403,7 @@ function M.bundle(opt)
                 chunks_of(16, code) : map(function(g) return "    "..g:str",".."," end),
                 "  };",
                 "  const int arg = lua_gettop(L);",
-                "  if (luaL_loadbuffer(L, (const char*)code, sizeof(code), \"@$"..product_name..":"..script.path.."\") != LUA_OK) {",
+                "  if (luaL_loadbuffer(L, (const char*)code, sizeof(code), \"@$"..stripped(product_name, script.path).."\") != LUA_OK) {",
                 "    fprintf(stderr, \"%s\\n\", lua_tostring(L, -1));",
                 "    exit(EXIT_FAILURE);",
                 "  }",
@@ -370,7 +446,7 @@ function M.bundle(opt)
                 "  static const unsigned char code[] = {",
                 chunks_of(16, code) : map(function(g) return "    "..g:str",".."," end),
                 "  };",
-                "  if (luaL_loadbuffer(L, (const char*)code, sizeof(code), \"@$"..product_name..":"..script.path.."\") != LUA_OK) {",
+                "  if (luaL_loadbuffer(L, (const char*)code, sizeof(code), \"@$"..stripped(product_name, script.path).."\") != LUA_OK) {",
                 "    fprintf(stderr, \"%s\\n\", lua_tostring(L, -1));",
                 "    exit(EXIT_FAILURE);",
                 "  }",

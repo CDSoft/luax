@@ -35,12 +35,13 @@ usage()
 |_____\\__,_|\\__,_/_/\\_\\____|  |  Copyright @YEARS
                               |  @AUTHORS
 
-$(basename "$0") [-t target] @when(BYTECODE=="")"[-b] "[-s] -o output inputs
+$(basename "$0") [-t target] @when(BYTECODE=="")"[-b] "[-s] [-k key] -o output inputs
     Compile and link "inputs" with the LuaX runtime
     of the target "target".
     The default target is the host.
 @when(BYTECODE=="")[[    -b precompiles sources to Lua bytecode.
 ]]    -s removes debug information in Lua bytecode.
+    -k "key" encrypts Lua scripts with the key "key".
 
 $(basename "$0") help
     Show this help text.
@@ -77,6 +78,7 @@ case "$1" in
 esac
 
 BYTECODE=@BYTECODE
+KEY=
 TARGET=
 OUTPUT=
 SOURCES=()
@@ -88,6 +90,7 @@ do
     case "$1" in
         (-b)        BYTECODE="-b"; shift ;;
         (-s)        BYTECODE="-s"; shift ;;
+        (-k)        KEY="-k \"$2\""; shift 2 ;;
         (-o)        OUTPUT="$2"; shift 2 ;;
         (-t)        TARGET="$2"; shift 2 ;;
         (-p)        PREFIX="$2"; shift 2 ;;
@@ -256,7 +259,7 @@ then
     echo "sources: ${SOURCES[*]}"
 fi
 
-luax "$LUAXC_DIR/luax_bundle.lua" -t c -e app -n "$(basename $OUTPUT)" $BYTECODE "${SOURCES[@]}" -o $TMP/app_bundle.c
+luax "$LUAXC_DIR/luax_bundle.lua" -t c -e app -n "$(basename $OUTPUT)" $BYTECODE $KEY "${SOURCES[@]}" -o $TMP/app_bundle.c
 zig cc "${ZIG_OPT[@]}" "${LIBS[@]}" "$TMP/app_bundle.c" -o "$OUTPUT"
 
 exit # ------------------------------8<------------------------------
