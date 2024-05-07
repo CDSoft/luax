@@ -802,10 +802,20 @@ local function table_predicates()
     eq(F{x=1,y=2}:is_submap_of{x=3}, false)
     eq(F{x=1,y=2}:is_submap_of{x=3,z=5}, false)
 
+    eq(F{x=3,y=4}:map_contains{x=1,y=2}, true)
+    eq(F{x=3,y=4,z=5}:map_contains{x=1,y=2}, true)
+    eq(F{x=3}:map_contains{x=1,y=2}, false)
+    eq(F{x=3,z=5}:map_contains{x=1,y=2}, false)
+
     eq(F{x=1,y=2}:is_proper_submap_of{x=3,y=4}, false)
     eq(F{x=1,y=2}:is_proper_submap_of{x=3,y=4,z=5}, true)
     eq(F{x=1,y=2}:is_proper_submap_of{x=3}, false)
     eq(F{x=1,y=2}:is_proper_submap_of{x=3,z=5}, false)
+
+    eq(F{x=3,y=4}:map_strictly_contains{x=1,y=2}, false)
+    eq(F{x=3,y=4,z=5}:map_strictly_contains{x=1,y=2}, true)
+    eq(F{x=3}:map_strictly_contains{x=1,y=2}, false)
+    eq(F{x=3,z=5}:map_strictly_contains{x=1,y=2}, false)
 
 end
 

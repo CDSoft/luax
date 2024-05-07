@@ -783,8 +783,8 @@ t1:is_submap_of(t2)
 > returns true if all keys in t1 are in t2.
 
 ``` lua
-F.map_contains(t1, t2, [comp_eq])
-t1:map_contains(t2, [comp_eq])
+F.map_contains(t1, t2)
+t1:map_contains(t2)
 ```
 
 > returns true if all keys in t2 are in t1.
@@ -798,8 +798,8 @@ t1:is_proper_submap_of(t2)
 > different.
 
 ``` lua
-F.map_strictly_contains(t1, t2, [comp_eq])
-t1:map_strictly_contains(t2, [comp_eq])
+F.map_strictly_contains(t1, t2)
+t1:map_strictly_contains(t2)
 ```
 
 > returns true if all keys in t2 are in t1.
