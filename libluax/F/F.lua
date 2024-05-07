@@ -53,6 +53,43 @@ t:__mapk(func) -- works and is equivalent to F.mapk(func, t)
 
 @@@]]
 
+local getmetatable, setmetatable = getmetatable, setmetatable
+local ipairs, pairs, next = ipairs, pairs, next
+local load = load
+local pcall = pcall
+local rawequal = rawequal
+local select = select
+local tostring = tostring
+local type = type
+
+local t_concat = table.concat
+local t_insert, t_remove = table.insert, table.remove
+local t_sort = table.sort
+local t_unpack = table.unpack
+
+local s_byte, s_char = string.byte, string.char
+local s_find, s_match, s_gmatch, s_gsub = string.find, string.match, string.gmatch, string.gsub
+local s_format = string.format
+local s_lower, s_upper = string.lower, string.upper
+local s_rep = string.rep
+local s_sub = string.sub
+
+local s_bytes, s_chars
+local s_cap
+local s_take, s_drop
+local s_head, s_tail
+local s_init, s_last
+local s_split
+
+local abs = math.abs
+local fmod = math.fmod
+local math_type = math.type
+local max = math.max
+
+local mathx = require "mathx"
+local copysign = mathx.copysign
+local isnormal = mathx.isnormal
+
 local F = {}
 
 local mt = {
@@ -65,11 +102,34 @@ local mt = {
     }),
 }
 
-local function setmt(t) return setmetatable(t, mt) end
+local F_clone
+local F_concat, F_merge
+local F_pairs
+local F_keys, F_values, F_items
+local F_head, F_tail
+local F_init, F_last
+local F_take, F_drop
+local F_take_while, F_drop_while, F_drop_while_end
+local Nil
+local F_comp, F_op_eq, F_op_lt
+local F_quot_rem, F_div_mod
+local F_is_prefix_of, F_is_suffix_of, F_is_infix_of
+local F_const
+local F_length
+local F_null
+local F_map, F_from_set
+local F_foreach
+local F_filterk
+local F_flatten
+local F_zip
+local F_fold
+local F_minimum
+local F_permutations
 
 local function register0(name)
     return function(f)
         F[name] = f
+        return f
     end
 end
 
@@ -77,6 +137,7 @@ local function register1(name)
     return function(f)
         F[name] = f
         mt.__index[name] = f
+        return f
     end
 end
 
@@ -84,6 +145,7 @@ local function register2(name)
     return function(f)
         F[name] = f
         mt.__index[name] = function(t, x1, ...) return f(x1, t, ...) end
+        return f
     end
 end
 
@@ -91,14 +153,13 @@ local function register3(name)
     return function(f)
         F[name] = f
         mt.__index[name] = function(t, x1, x2, ...) return f(x1, x2, t, ...) end
+        return f
     end
 end
 
 --[[------------------------------------------------------------------------@@@
 ## Standard types, and related functions
 @@@]]
-
-local mathx = require "mathx"
 
 local type_rank = {
     ["nil"]         = 0,
@@ -116,7 +177,7 @@ local function universal_eq(a, b)
     if ta ~= tb then return false end
     if ta == "nil" then return true end
     if ta == "table" then
-        local ks = F.merge{a, b}:keys()
+        local ks = F_keys(F_merge{a, b})
         for i = 1, #ks do
             local k = ks[i]
             if not universal_eq(a[k], b[k]) then return false end
@@ -131,7 +192,7 @@ local function universal_ne(a, b)
     if ta ~= tb then return true end
     if ta == "nil" then return false end
     if ta == "table" then
-        local ks = F.merge{a, b}:keys()
+        local ks = F_keys(F_merge{a, b})
         for i = 1, #ks do
             local k = ks[i]
             if universal_ne(a[k], b[k]) then return true end
@@ -147,7 +208,7 @@ local function universal_lt(a, b)
     if ta == "nil" then return false end
     if ta == "number" or ta == "string" or ta == "boolean" then return a < b end
     if ta == "table" then
-        local ks = F.merge{a, b}:keys()
+        local ks = F_keys(F_merge{a, b})
         for i = 1, #ks do
             local k = ks[i]
             local ak = a[k]
@@ -165,7 +226,7 @@ local function universal_le(a, b)
     if ta == "nil" then return true end
     if ta == "number" or ta == "string" or ta == "boolean" then return a <= b end
     if ta == "table" then
-        local ks = F.merge{a, b}:keys()
+        local ks = F_keys(F_merge{a, b})
         for i = 1, #ks do
             local k = ks[i]
             local ak = a[k]
@@ -183,7 +244,7 @@ local function universal_gt(a, b)
     if ta == "nil" then return false end
     if ta == "number" or ta == "string" or ta == "boolean" then return a > b end
     if ta == "table" then
-        local ks = F.merge{a, b}:keys()
+        local ks = F_keys(F_merge{a, b})
         for i = 1, #ks do
             local k = ks[i]
             local ak = a[k]
@@ -201,7 +262,7 @@ local function universal_ge(a, b)
     if ta == "nil" then return true end
     if ta == "number" or ta == "string" or ta == "boolean" then return a >= b end
     if ta == "table" then
-        local ks = F.merge{a, b}:keys()
+        local ks = F_keys(F_merge{a, b})
         for i = 1, #ks do
             local k = ks[i]
             local ak = a[k]
@@ -271,6 +332,9 @@ F.op.lt = function(a, b) return a < b end
 F.op.le = function(a, b) return a <= b end
 F.op.gt = function(a, b) return a > b end
 F.op.ge = function(a, b) return a >= b end
+
+F_op_eq = F.op.eq
+F_op_lt = F.op.lt
 
 --[[@@@
 ```lua
@@ -366,7 +430,9 @@ F.case(x) {
 
 function F.case(val)
     return function(cases)
-        return F.default(cases[F.Nil], cases[val])
+        local x = cases[val]
+        if x ~= nil then return x end
+        return cases[Nil]
     end
 end
 
@@ -421,11 +487,12 @@ F.comp(a, b)
 > Comparison (-1, 0, 1)
 @@@]]
 
-function F.comp(a, b)
+F_comp = function(a, b)
     if a < b then return -1 end
     if a > b then return 1 end
     return 0
 end
+F.comp = F_comp
 
 --[[@@@
 ```lua
@@ -502,7 +569,7 @@ F.signum(a)
 ```
 > sign of a (-1, 0 or +1)
 @@@]]
-function F.signum(a) return F.comp(a, 0) end
+function F.signum(a) return F_comp(a, 0) end
 
 --[[@@@
 ```lua
@@ -511,7 +578,7 @@ F.quot(a, b)
 > integer division truncated toward zero
 @@@]]
 function F.quot(a, b)
-    local q, _ = F.quot_rem(a, b)
+    local q, _ = F_quot_rem(a, b)
     return q
 end
 
@@ -522,7 +589,7 @@ F.rem(a, b)
 > integer remainder satisfying quot(a, b)*b + rem(a, b) == a, 0 <= rem(a, b) < abs(b)
 @@@]]
 function F.rem(a, b)
-    local _, r = F.quot_rem(a, b)
+    local _, r = F_quot_rem(a, b)
     return r
 end
 
@@ -532,11 +599,12 @@ F.quot_rem(a, b)
 ```
 > simultaneous quot and rem
 @@@]]
-function F.quot_rem(a, b)
-    local r = math.fmod(a, b)
+F_quot_rem = function(a, b)
+    local r = fmod(a, b)
     local q = (a - r) // b
     return q, r
 end
+F.quot_rem = F_quot_rem
 
 --[[@@@
 ```lua
@@ -545,7 +613,7 @@ F.div(a, b)
 > integer division truncated toward negative infinity
 @@@]]
 function F.div(a, b)
-    local q, _ = F.div_mod(a, b)
+    local q, _ = F_div_mod(a, b)
     return q
 end
 
@@ -556,7 +624,7 @@ F.mod(a, b)
 > integer modulus satisfying div(a, b)*b + mod(a, b) == a, 0 <= mod(a, b) < abs(b)
 @@@]]
 function F.mod(a, b)
-    local _, r = F.div_mod(a, b)
+    local _, r = F_div_mod(a, b)
     return r
 end
 
@@ -566,11 +634,12 @@ F.div_mod(a, b)
 ```
 > simultaneous div and mod
 @@@]]
-function F.div_mod(a, b)
+F_div_mod = function(a, b)
     local q = a // b
     local r = a - b*q
     return q, r
 end
+F.div_mod = F_div_mod
 
 --[[@@@
 ```lua
@@ -702,7 +771,7 @@ F.is_denormalized(x)
 @@@]]
 
 function F.is_denormalized(x)
-    return not mathx.isnormal(x)
+    return not isnormal(x)
 end
 
 --[[@@@
@@ -713,7 +782,7 @@ F.is_negative_zero(x)
 @@@]]
 
 function F.is_negative_zero(x)
-    return mathx.copysign(1, x) < 0
+    return copysign(1, x) < 0
 end
 
 --[[@@@
@@ -742,16 +811,17 @@ F.lcm(a, b)
 ```
 > Greatest Common Divisor and Least Common Multiple of a and b.
 @@@]]
-function F.gcd(a, b)
-    a, b = math.abs(a), math.abs(b)
+local function gcd(a, b)
+    a, b = abs(a), abs(b)
     while b > 0 do
         a, b = b, a%b
     end
     return a
 end
-function F.lcm(a, b)
-    return math.abs(a // F.gcd(a,b) * b)
+local function lcm(a, b)
+    return abs(a // gcd(a,b) * b)
 end
+F.gcd, F.lcm = gcd, lcm
 
 --[[------------------------------------------------------------------------@@@
 ### Miscellaneous functions
@@ -771,12 +841,13 @@ F.const(...)
 ```
 > Constant function. const(...)(y) always returns ...
 @@@]]
-function F.const(...)
+F_const = function(...)
     local val = {...}
     return function(...) ---@diagnostic disable-line:unused-vararg
-        return table.unpack(val)
+        return t_unpack(val)
     end
 end
+F.const = F_const
 
 --[[@@@
 ```lua
@@ -857,9 +928,9 @@ function F.partial(f, ...)
             return f(x1, x2, x3, ...)
         end
     else
-        local xs = F{...}
+        local xs = {...}
         return function(...)
-            return f((xs..{...}):unpack())
+            return f(t_unpack(F_concat{xs, {...}}))
         end
     end
 end
@@ -900,7 +971,7 @@ local function err(msg, level, tb)
     local info = debug.getinfo(level)
     local file = info.short_src
     local line = info.currentline
-    msg = table.concat{arg[0], ": ", file, ":", line, ": ", msg}
+    msg = t_concat{arg[0], ": ", file, ":", line, ": ", msg}
     io.stderr:write(tb and debug.traceback(msg, level) or msg, "\n")
     os.exit(1)
 end
@@ -946,10 +1017,10 @@ function F.memo1(f)
         },
         __call = function(_, k)
             local v = mem[k]
-            if v then return table.unpack(v) end
+            if v then return t_unpack(v) end
             v = {f(k)}
             mem[k] = v
-            return table.unpack(v)
+            return t_unpack(v)
         end,
     })
 end
@@ -979,7 +1050,7 @@ function F.memo(f)
                 cur = cur[k]
             end
             cur[_value] = cur[_value] or {f(...)}
-            return table.unpack(cur[_value])
+            return t_unpack(cur[_value])
         end,
     })
 end
@@ -1013,15 +1084,18 @@ local default_show_options = {
 
 register1 "show" (function(x, opt)
 
-    opt = F.merge{default_show_options, opt}
+    opt = F_merge{default_show_options, opt}
+    local opt_indent = opt.indent
+    local opt_int = opt.int
+    local opt_flt = opt.flt
 
     local tokens = {}
     local function emit(token) tokens[#tokens+1] = token end
-    local function drop() table.remove(tokens) end
+    local function drop() t_remove(tokens) end
 
     local stack = {}
     local function push(val) stack[#stack + 1] = val end
-    local function pop() table.remove(stack) end
+    local function pop() t_remove(stack) end
     local function in_stack(val)
         for i = 1, #stack do
             if rawequal(stack[i], val) then return true end
@@ -1038,7 +1112,7 @@ register1 "show" (function(x, opt)
                 push(val)
                 local need_nl = false
                 emit "{"
-                if opt.indent then tabs = tabs + opt.indent end
+                if opt_indent then tabs = tabs + opt_indent end
                 local n = 0
                 for i = 1, #val do
                     fmt(val[i])
@@ -1046,47 +1120,47 @@ register1 "show" (function(x, opt)
                     n = n + 1
                 end
                 local first_field = true
-                for k, v in F.pairs(val) do
-                    if not (type(k) == "number" and math.type(k) == "integer" and 1 <= k and k <= #val) then
-                        if first_field and opt.indent and n > 1 then drop() emit "," end
+                for k, v in F_pairs(val) do
+                    if not (type(k) == "number" and math_type(k) == "integer" and 1 <= k and k <= #val) then
+                        if first_field and opt_indent and n > 1 then drop() emit "," end
                         first_field = false
-                        need_nl = opt.indent ~= nil
-                        if opt.indent then emit "\n" emit((" "):rep(tabs)) end
-                        if type(k) == "string" and k:match "^[%a_][%w_]*$" then
+                        need_nl = opt_indent ~= nil
+                        if opt_indent then emit "\n" emit(s_rep(" ", tabs)) end
+                        if type(k) == "string" and s_match(k, "^[%a_][%w_]*$") then
                             emit(k)
                         else
                             emit "[" fmt(k) emit "]"
                         end
-                        if opt.indent then emit " = " else emit "=" end
+                        if opt_indent then emit " = " else emit "=" end
                         fmt(v)
-                        if opt.indent then emit "," else emit ", " end
+                        if opt_indent then emit "," else emit ", " end
                         n = n + 1
                     end
                 end
                 if n > 0 and not need_nl then drop() end
                 if need_nl then emit "\n" end
-                if opt.indent then tabs = tabs - opt.indent end
-                if opt.indent and need_nl then emit((" "):rep(tabs)) end
+                if opt_indent then tabs = tabs - opt_indent end
+                if opt_indent and need_nl then emit(s_rep(" ", tabs)) end
                 emit "}"
                 pop()
             end
         elseif type(val) == "number" then
-            if math.type(val) == "integer" then
-                emit(opt.int:format(val))
-            elseif math.type(val) == "float" then
-                emit(opt.flt:format(val))
+            if math_type(val) == "integer" then
+                emit(s_format(opt_int, val))
+            elseif math_type(val) == "float" then
+                emit(s_format(opt_flt, val))
             else
-                emit(("%s"):format(val))
+                emit(s_format("%s", val))
             end
         elseif type(val) == "string" then
-            emit(("%q"):format(val))
+            emit(s_format("%q", val))
         else
-            emit(("%s"):format(val))
+            emit(s_format("%s", val))
         end
     end
 
     fmt(x)
-    return table.concat(tokens)
+    return t_concat(tokens)
 
 end)
 
@@ -1131,10 +1205,10 @@ t:clone()
 > `F.clone(t)` clones the first level of `t`.
 @@@]]
 
-register1 "clone" (function(t)
+F_clone = register1 "clone" (function(t)
     local t2 = {}
     for k, v in pairs(t) do t2[k] = v end
-    return setmt(t2)
+    return setmetatable(t2, mt)
 end)
 
 --[[@@@
@@ -1152,7 +1226,7 @@ register1 "deep_clone" (function(t)
         for k, v in pairs(t1) do t2[k] = go(v) end
         return setmetatable(t2, getmetatable(t1))
     end
-    return setmt(go(t))
+    return setmetatable(go(t), mt)
 end)
 
 --[[@@@
@@ -1167,7 +1241,7 @@ register0 "rep" (function(n, x)
     for _ = 1, n do
         xs[#xs+1] = x
     end
-    return setmt(xs)
+    return setmetatable(xs, mt)
 end)
 
 --[[@@@
@@ -1195,7 +1269,7 @@ register0 "range" (function(a, b, step)
             a = a + step
         end
     end
-    return setmt(r)
+    return setmetatable(r, mt)
 end)
 
 --[[@@@
@@ -1207,7 +1281,7 @@ xs1 .. xs2
 > concatenates lists
 @@@]]
 
-register1 "concat"(function(xss)
+F_concat = register1 "concat"(function(xss)
     local ys = {}
     for i = 1, #xss do
         local xs = xss[i]
@@ -1215,11 +1289,11 @@ register1 "concat"(function(xss)
             ys[#ys+1] = xs[j]
         end
     end
-    return setmt(ys)
+    return setmetatable(ys, mt)
 end)
 
 function mt.__concat(xs1, xs2)
-    return F.concat{xs1, xs2}
+    return F_concat{xs1, xs2}
 end
 
 --[[@@@
@@ -1238,7 +1312,7 @@ local function default_leaf(x)
     return xmt and xmt ~= mt
 end
 
-register1 "flatten" (function(xs, leaf)
+F_flatten = register1 "flatten" (function(xs, leaf)
     leaf = leaf or default_leaf
     local zs = {}
     local function f(ys)
@@ -1252,7 +1326,7 @@ register1 "flatten" (function(xs, leaf)
         end
     end
     f(xs)
-    return setmt(zs)
+    return setmetatable(zs, mt)
 end)
 
 --[=[@@@
@@ -1265,10 +1339,10 @@ ss:str([separator, [last_separator]])
 
 register1 "str" (function(ss, sep, last_sep)
     if last_sep then
-        if #ss <= 1 then return table.concat(ss) end
-        return table.concat({table.concat(ss, sep, 1, #ss-1), ss[#ss]}, last_sep)
+        if #ss <= 1 then return t_concat(ss) end
+        return t_concat({t_concat(ss, sep, 1, #ss-1), ss[#ss]}, last_sep)
     else
-        return table.concat(ss, sep)
+        return t_concat(ss, sep)
     end
 end)
 
@@ -1280,13 +1354,13 @@ ks:from_set(f)
 > Build a map from a set of keys and a function which for each key computes its value.
 @@@]]
 
-register2 "from_set" (function(f, ks)
+F_from_set = register2 "from_set" (function(f, ks)
     local t = {}
     for i = 1, #ks do
         local k = ks[i]
         t[k] = f(k)
     end
-    return F(t)
+    return setmetatable(t, mt)
 end)
 
 --[[@@@
@@ -1300,10 +1374,10 @@ kvs:from_list()
 register1 "from_list" (function(kvs)
     local t = {}
     for i = 1, #kvs do
-        local k, v = table.unpack(kvs[i])
+        local k, v = t_unpack(kvs[i])
         t[k] = v
     end
-    return F(t)
+    return setmetatable(t, mt)
 end)
 
 --[[------------------------------------------------------------------------@@@
@@ -1323,13 +1397,13 @@ xs:ipairs([comp_lt])
 
 register1 "ipairs" (ipairs)
 
-register1 "pairs" (function(t, comp_lt)
-    local kvs = F.items(t, comp_lt)
+F_pairs = register1 "pairs" (function(t, comp_lt)
+    local kvs = F_items(t, comp_lt)
     local i = 0
     return function()
         if i < #kvs then
             i = i+1
-            return table.unpack(kvs[i])
+            return t_unpack(kvs[i])
         end
     end
 end)
@@ -1346,28 +1420,28 @@ t:items([comp_lt])
 > returns the list of keys, values or pairs of keys/values (same order than F.pairs).
 @@@]]
 
-register1 "keys" (function(t, comp_lt)
+F_keys = register1 "keys" (function(t, comp_lt)
     comp_lt = comp_lt or universal_lt
     local ks = {}
     for k, _ in pairs(t) do ks[#ks+1] = k end
-    table.sort(ks, comp_lt)
-    return F(ks)
+    t_sort(ks, comp_lt)
+    return setmetatable(ks, mt)
 end)
 
-register1 "values" (function(t, comp_lt)
-    local ks = F.keys(t, comp_lt)
+F_values = register1 "values" (function(t, comp_lt)
+    local ks = F_keys(t, comp_lt)
     local vs = {}
     for i = 1, #ks do vs[i] = t[ks[i]] end
-    return F(vs)
+    return setmetatable(vs, mt)
 end)
 
-register1 "items" (function(t, comp_lt)
-    local ks = F.keys(t, comp_lt)
+F_items = register1 "items" (function(t, comp_lt)
+    local ks = F_keys(t, comp_lt)
     local kvs = {}
     for i = 1, #ks do
         local k = ks[i]
-        kvs[i] = F{k, t[k]} end
-    return F(kvs)
+        kvs[i] = setmetatable({k, t[k]}, mt) end
+    return setmetatable(kvs, mt)
 end)
 
 --[[------------------------------------------------------------------------@@@
@@ -1384,8 +1458,8 @@ xs:last()
 > returns the first element (head) or the last element (last) of a list.
 @@@]]
 
-register1 "head" (function(xs) return xs[1] end)
-register1 "last" (function(xs) return xs[#xs] end)
+F_head = register1 "head" (function(xs) return xs[1] end)
+F_last = register1 "last" (function(xs) return xs[#xs] end)
 
 --[[@@@
 ```lua
@@ -1397,18 +1471,18 @@ xs:init()
 > returns the list after the head (tail) or before the last element (init).
 @@@]]
 
-register1 "tail" (function(xs)
+F_tail = register1 "tail" (function(xs)
     if #xs == 0 then return nil end
     local tail = {}
     for i = 2, #xs do tail[#tail+1] = xs[i] end
-    return setmt(tail)
+    return setmetatable(tail, mt)
 end)
 
-register1 "init" (function(xs)
+F_init = register1 "init" (function(xs)
     if #xs == 0 then return nil end
     local init = {}
     for i = 1, #xs-1 do init[#init+1] = xs[i] end
-    return setmt(init)
+    return setmetatable(init, mt)
 end)
 
 --[[@@@
@@ -1419,7 +1493,7 @@ xs:uncons()
 > returns the head and the tail of a list.
 @@@]]
 
-register1 "uncons" (function(xs) return F.head(xs), F.tail(xs) end)
+register1 "uncons" (function(xs) return F_head(xs), F_tail(xs) end)
 
 --[[@@@
 ```lua
@@ -1439,12 +1513,12 @@ xs:take(n)
 > Returns the prefix of xs of length n.
 @@@]]
 
-register2 "take" (function(n, xs)
+F_take = register2 "take" (function(n, xs)
     local ys = {}
     for i = 1, n do
         ys[#ys+1] = xs[i]
     end
-    return setmt(ys)
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@
@@ -1455,12 +1529,12 @@ xs:drop(n)
 > Returns the suffix of xs after the first n elements.
 @@@]]
 
-register2 "drop" (function(n, xs)
+F_drop = register2 "drop" (function(n, xs)
     local ys = {}
     for i = n+1, #xs do
         ys[#ys+1] = xs[i]
     end
-    return setmt(ys)
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@
@@ -1472,7 +1546,7 @@ xs:split_at(n)
 @@@]]
 
 register2 "split_at" (function(n, xs)
-    return F.take(n, xs), F.drop(n, xs)
+    return F_take(n, xs), F_drop(n, xs)
 end)
 
 --[[@@@
@@ -1483,14 +1557,14 @@ xs:take_while(p)
 > Returns the longest prefix (possibly empty) of xs of elements that satisfy p.
 @@@]]
 
-register2 "take_while" (function(p, xs)
+F_take_while = register2 "take_while" (function(p, xs)
     local ys = {}
     local i = 1
     while i <= #xs and p(xs[i]) do
         ys[#ys+1] = xs[i]
         i = i+1
     end
-    return setmt(ys)
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@
@@ -1501,7 +1575,7 @@ xs:drop_while(p)
 > Returns the suffix remaining after `take_while(p, xs)`{.lua}.
 @@@]]
 
-register2 "drop_while" (function(p, xs)
+F_drop_while = register2 "drop_while" (function(p, xs)
     local zs = {}
     local i = 1
     while i <= #xs and p(xs[i]) do
@@ -1511,7 +1585,7 @@ register2 "drop_while" (function(p, xs)
         zs[#zs+1] = xs[i]
         i = i+1
     end
-    return setmt(zs)
+    return setmetatable(zs, mt)
 end)
 
 --[[@@@
@@ -1522,7 +1596,7 @@ xs:drop_while_end(p)
 > Drops the largest suffix of a list in which the given predicate holds for all elements.
 @@@]]
 
-register2 "drop_while_end" (function(p, xs)
+F_drop_while_end = register2 "drop_while_end" (function(p, xs)
     local zs = {}
     local i = #xs
     while i > 0 and p(xs[i]) do
@@ -1531,7 +1605,7 @@ register2 "drop_while_end" (function(p, xs)
     for j = 1, i do
         zs[#zs+1] = xs[j]
     end
-    return setmt(zs)
+    return setmetatable(zs, mt)
 end)
 
 --[[@@@
@@ -1554,7 +1628,7 @@ register2 "span" (function(p, xs)
         zs[#zs+1] = xs[i]
         i = i+1
     end
-    return setmt(ys), setmt(zs)
+    return setmetatable(ys, mt), setmetatable(zs, mt)
 end)
 
 --[[@@@
@@ -1577,7 +1651,7 @@ register2 "break_" (function(p, xs)
         zs[#zs+1] = xs[i]
         i = i+1
     end
-    return setmt(ys), setmt(zs)
+    return setmetatable(ys, mt), setmetatable(zs, mt)
 end)
 
 --[[@@@
@@ -1596,7 +1670,7 @@ register2 "strip_prefix" (function(prefix, xs)
     for i = #prefix+1, #xs do
         ys[#ys+1] = xs[i]
     end
-    return setmt(ys)
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@
@@ -1615,7 +1689,7 @@ register2 "strip_suffix" (function(suffix, xs)
     for i = 1, #xs-#suffix do
         ys[i] = xs[i]
     end
-    return setmt(ys)
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@
@@ -1627,9 +1701,9 @@ xs:group([comp_eq])
 @@@]]
 
 register1 "group" (function(xs, comp_eq)
-    comp_eq = comp_eq or F.op.eq
+    comp_eq = comp_eq or F_op_eq
     local yss = {}
-    if #xs == 0 then return setmt(yss) end
+    if #xs == 0 then return setmetatable(yss, mt) end
     local y = xs[1]
     local ys = {y}
     for i = 2, #xs do
@@ -1637,13 +1711,13 @@ register1 "group" (function(xs, comp_eq)
         if comp_eq(x, y) then
             ys[#ys+1] = x
         else
-            yss[#yss+1] = setmt(ys)
+            yss[#yss+1] = setmetatable(ys, mt)
             y = x
             ys = {y}
         end
     end
-    yss[#yss+1] = setmt(ys)
-    return setmt(yss)
+    yss[#yss+1] = setmetatable(ys, mt)
+    return setmetatable(yss, mt)
 end)
 
 --[[@@@
@@ -1661,9 +1735,9 @@ register1 "inits" (function(xs)
         for j = 1, i do
             ys[#ys+1] = xs[j]
         end
-        yss[#yss+1] = setmt(ys)
+        yss[#yss+1] = setmetatable(ys, mt)
     end
-    return setmt(yss)
+    return setmetatable(yss, mt)
 end)
 
 --[[@@@
@@ -1681,9 +1755,9 @@ register1 "tails" (function(xs)
         for j = i, #xs do
             ys[#ys+1] = xs[j]
         end
-        yss[#yss+1] = setmt(ys)
+        yss[#yss+1] = setmetatable(ys, mt)
     end
-    return setmt(yss)
+    return setmetatable(yss, mt)
 end)
 
 --[[------------------------------------------------------------------------@@@
@@ -1698,7 +1772,7 @@ prefix:is_prefix_of(xs)
 > Returns `true` iff `xs` starts with `prefix`
 @@@]]
 
-register1 "is_prefix_of" (function(prefix, xs)
+F_is_prefix_of = register1 "is_prefix_of" (function(prefix, xs)
     for i = 1, #prefix do
         if xs[i] ~= prefix[i] then return false end
     end
@@ -1713,7 +1787,7 @@ suffix:is_suffix_of(xs)
 > Returns `true` iff `xs` ends with `suffix`
 @@@]]
 
-register1 "is_suffix_of" (function(suffix, xs)
+F_is_suffix_of = register1 "is_suffix_of" (function(suffix, xs)
     for i = 1, #suffix do
         if xs[#xs-#suffix+i] ~= suffix[i] then return false end
     end
@@ -1728,7 +1802,7 @@ infix:is_infix_of(xs)
 > Returns `true` iff `xs` caontains `infix`
 @@@]]
 
-register1 "is_infix_of" (function(infix, xs)
+F_is_infix_of = register1 "is_infix_of" (function(infix, xs)
     for i = 1, #xs-#infix+1 do
         local found = true
         for j = 1, #infix do
@@ -1747,7 +1821,7 @@ xs:has_prefix(prefix)
 > Returns `true` iff `xs` starts with `prefix`
 @@@]]
 
-register1 "has_prefix" (function(xs, prefix) return F.is_prefix_of(prefix, xs) end)
+register1 "has_prefix" (function(xs, prefix) return F_is_prefix_of(prefix, xs) end)
 
 --[[@@@
 ```lua
@@ -1757,7 +1831,7 @@ xs:has_suffix(suffix)
 > Returns `true` iff `xs` ends with `suffix`
 @@@]]
 
-register1 "has_suffix" (function(xs, suffix) return F.is_suffix_of(suffix, xs) end)
+register1 "has_suffix" (function(xs, suffix) return F_is_suffix_of(suffix, xs) end)
 
 --[[@@@
 ```lua
@@ -1767,7 +1841,7 @@ xs:has_infix(infix)
 > Returns `true` iff `xs` caontains `infix`
 @@@]]
 
-register1 "has_infix" (function(xs, infix) return F.is_infix_of(infix, xs) end)
+register1 "has_infix" (function(xs, infix) return F_is_infix_of(infix, xs) end)
 
 --[[@@@
 ```lua
@@ -1778,7 +1852,7 @@ seq:is_subsequence_of(xs)
 @@@]]
 
 register1 "is_subsequence_of" (function(seq, xs, comp_eq)
-    comp_eq = comp_eq or F.op.eq
+    comp_eq = comp_eq or F_op_eq
     local i = 1
     local j = 1
     while j <= #xs do
@@ -1799,7 +1873,7 @@ t1:is_submap_of(t2)
 > returns true if all keys in t1 are in t2.
 @@@]]
 
-register1 "is_submap_of" (function(t1, t2)
+local F_is_submap_of = register1 "is_submap_of" (function(t1, t2)
     for k, _ in pairs(t1) do
         if t2[k] == nil then return false end
     end
@@ -1815,7 +1889,7 @@ t1:map_contains(t2, [comp_eq])
 @@@]]
 
 register1 "map_contains" (function(t1, t2, comp_eq)
-    return F.is_submap_of(t2, t1, comp_eq)
+    return F_is_submap_of(t2, t1, comp_eq)
 end)
 
 --[[@@@
@@ -1826,7 +1900,7 @@ t1:is_proper_submap_of(t2)
 > returns true if all keys in t1 are in t2 and t1 keys and t2 keys are different.
 @@@]]
 
-register1 "is_proper_submap_of" (function(t1, t2)
+local F_is_proper_submap_of = register1 "is_proper_submap_of" (function(t1, t2)
     for k, _ in pairs(t1) do
         if t2[k] == nil then return false end
     end
@@ -1845,7 +1919,7 @@ t1:map_strictly_contains(t2, [comp_eq])
 @@@]]
 
 register1 "map_strictly_contains" (function(t1, t2, comp_eq)
-    return F.is_proper_submap_of(t2, t1, comp_eq)
+    return F_is_proper_submap_of(t2, t1, comp_eq)
 end)
 
 --[[------------------------------------------------------------------------@@@
@@ -1861,7 +1935,7 @@ xs:elem(x, [comp_eq])
 @@@]]
 
 register2 "elem" (function(x, xs, comp_eq)
-    comp_eq = comp_eq or F.op.eq
+    comp_eq = comp_eq or F_op_eq
     for i = 1, #xs do
         if comp_eq(xs[i], x) then return true end
     end
@@ -1877,7 +1951,7 @@ xs:not_elem(x, [comp_eq])
 @@@]]
 
 register2 "not_elem" (function(x, xs, comp_eq)
-    comp_eq = comp_eq or F.op.eq
+    comp_eq = comp_eq or F_op_eq
     for i = 1, #xs do
         if comp_eq(xs[i], x) then return false end
     end
@@ -1893,7 +1967,7 @@ xys:lookup(x, [comp_eq])
 @@@]]
 
 register2 "lookup" (function(x, xys, comp_eq)
-    comp_eq = comp_eq or F.op.eq
+    comp_eq = comp_eq or F_op_eq
     for i = 1, #xys do
         if comp_eq(xys[i][1], x) then return xys[i][2] end
     end
@@ -1930,7 +2004,7 @@ register2 "filter" (function(p, xs)
         local x = xs[i]
         if p(x) then ys[#ys+1] = x end
     end
-    return setmt(ys)
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@
@@ -1947,7 +2021,7 @@ register2 "filteri" (function(p, xs)
         local x = xs[i]
         if p(i, x) then ys[#ys+1] = x end
     end
-    return setmt(ys)
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@
@@ -1963,7 +2037,7 @@ register2 "filtert" (function(p, t)
     for k, v in pairs(t) do
         if p(v) then t2[k] = v end
     end
-    return setmt(t2)
+    return setmetatable(t2, mt)
 end)
 
 --[[@@@
@@ -1974,12 +2048,12 @@ t:filterk(p)
 > Returns the table of those values that satisfy the predicate p(k, v).
 @@@]]
 
-register2 "filterk" (function(p, t)
+F_filterk = register2 "filterk" (function(p, t)
     local t2 = {}
     for k, v in pairs(t) do
         if p(k, v) then t2[k] = v end
     end
-    return setmt(t2)
+    return setmetatable(t2, mt)
 end)
 
 --[[@@@
@@ -1991,9 +2065,9 @@ t:restrict_keys(ks)
 @@@]]
 
 register1 "restrict_keys" (function(t, ks)
-    local kset = F.from_set(F.const(true), ks)
+    local kset = F_from_set(F_const(true), ks)
     local function p(k, _) return kset[k] end
-    return F.filterk(p, t)
+    return F_filterk(p, t)
 end)
 
 --[[@@@
@@ -2005,9 +2079,9 @@ t:without_keys(ks)
 @@@]]
 
 register1 "without_keys" (function(t, ks)
-    local kset = F.from_set(F.const(true), ks)
+    local kset = F_from_set(F_const(true), ks)
     local function p(k, _) return not kset[k] end
-    return F.filterk(p, t)
+    return F_filterk(p, t)
 end)
 
 --[[@@@
@@ -2025,7 +2099,7 @@ register2 "partition" (function(p, xs)
         local x = xs[i]
         if p(x) then ys[#ys+1] = x else zs[#zs+1] = x end
     end
-    return setmt(ys), setmt(zs)
+    return setmetatable(ys, mt), setmetatable(zs, mt)
 end)
 
 --[[@@@
@@ -2041,7 +2115,7 @@ register2 "table_partition" (function(p, t)
     for k, v in pairs(t) do
         if p(v) then t1[k] = v else t2[k] = v end
     end
-    return setmt(t1), setmt(t2)
+    return setmetatable(t1, mt), setmetatable(t2, mt)
 end)
 
 --[[@@@
@@ -2057,7 +2131,7 @@ register2 "table_partition_with_key" (function(p, t)
     for k, v in pairs(t) do
         if p(k, v) then t1[k] = v else t2[k] = v end
     end
-    return setmt(t1), setmt(t2)
+    return setmetatable(t1, mt), setmetatable(t2, mt)
 end)
 
 --[[@@@
@@ -2088,7 +2162,7 @@ register2 "elem_indices" (function(x, xs)
     for i = 1, #xs do
         if x == xs[i] then indices[#indices+1] = i end
     end
-    return setmt(indices)
+    return setmetatable(indices, mt)
 end)
 
 --[[@@@
@@ -2119,7 +2193,7 @@ register2 "find_indices" (function(p, xs)
     for i = 1, #xs do
         if p(xs[i]) then indices[#indices+1] = i end
     end
-    return setmt(indices)
+    return setmetatable(indices, mt)
 end)
 
 --[[------------------------------------------------------------------------@@@
@@ -2136,7 +2210,7 @@ t:null("t")
 > checks wether a list or a table is empty.
 @@@]]
 
-register1 "null" (function(t)
+F_null = register1 "null" (function(t)
     return next(t) == nil
 end)
 
@@ -2149,7 +2223,7 @@ xs:length()
 > Length of a list.
 @@@]]
 
-register1 "length" (function(xs)
+F_length = register1 "length" (function(xs)
     return #xs
 end)
 
@@ -2181,10 +2255,10 @@ xs:map(f)
 > maps `f` to the elements of `xs` and returns `{f(xs[1]), f(xs[2]), ...}`
 @@@]]
 
-register2 "map" (function(f, xs)
+F_map = register2 "map" (function(f, xs)
     local ys = {}
     for i = 1, #xs do ys[i] = f(xs[i]) end
-    return setmt(ys)
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@
@@ -2198,7 +2272,7 @@ xs:mapi(f)
 register2 "mapi" (function(f, xs)
     local ys = {}
     for i = 1, #xs do ys[i] = f(i, xs[i]) end
-    return setmt(ys)
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@
@@ -2212,7 +2286,7 @@ t:mapt(f)
 register2 "mapt" (function(f, t)
     local t2 = {}
     for k, v in pairs(t) do t2[k] = f(v) end
-    return setmt(t2)
+    return setmetatable(t2, mt)
 end)
 
 --[[@@@
@@ -2226,7 +2300,7 @@ t:mapk(f)
 register2 "mapk" (function(f, t)
     local t2 = {}
     for k, v in pairs(t) do t2[k] = f(k, v) end
-    return setmt(t2)
+    return setmetatable(t2, mt)
 end)
 
 --[[@@@
@@ -2240,7 +2314,7 @@ xs:reverse()
 register1 "reverse" (function(xs)
     local ys = {}
     for i = #xs, 1, -1 do ys[#ys+1] = xs[i] end
-    return setmt(ys)
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@
@@ -2253,14 +2327,14 @@ xss:transpose()
 
 register1 "transpose" (function(xss)
     local N = #xss
-    local M = math.max(table.unpack(F.map(F.length, xss)))
+    local M = max(t_unpack(F_map(F_length, xss)))
     local yss = {}
     for j = 1, M do
         local ys = {}
         for i = 1, N do ys[#ys+1] = xss[i][j] end
-        yss[j] = setmt(ys)
+        yss[j] = setmetatable(ys, mt)
     end
-    return setmt(yss)
+    return setmetatable(yss, mt)
 end)
 
 --[[@@@
@@ -2305,7 +2379,7 @@ xs:foreach(f)
 > calls `f` with the elements of `xs` (`f(xi)` for `xi` in `xs`)
 @@@]]
 
-register1 "foreach" (function(xs, f)
+F_foreach = register1 "foreach" (function(xs, f)
     for i = 1, #xs do f(xs[i]) end
 end)
 
@@ -2330,7 +2404,7 @@ t:foreacht(f)
 @@@]]
 
 register1 "foreacht" (function(t, f)
-    for _, v in F.pairs(t) do f(v) end
+    for _, v in F_pairs(t) do f(v) end
 end)
 
 --[[@@@
@@ -2342,7 +2416,7 @@ t:foreachk(f)
 @@@]]
 
 register1 "foreachk" (function(t, f)
-    for k, v in F.pairs(t) do f(k, v) end
+    for k, v in F_pairs(t) do f(k, v) end
 end)
 
 --[[------------------------------------------------------------------------@@@
@@ -2357,7 +2431,7 @@ xs:fold(f, x)
 > Left-associative fold of a list (`f(...f(f(x, xs[1]), xs[2]), ...)`).
 @@@]]
 
-register3 "fold" (function(fzx, z, xs)
+F_fold = register3 "fold" (function(fzx, z, xs)
     for i = 1, #xs do
         z = fzx(z, xs[i])
     end
@@ -2405,7 +2479,7 @@ t:foldt(f, x)
 @@@]]
 
 register3 "foldt" (function(fzx, z, t)
-    return F.values(t):fold(fzx, z)
+    return F_fold(fzx, z, F_values(t))
 end)
 
 --[[@@@
@@ -2417,8 +2491,8 @@ t:foldk(f, x)
 @@@]]
 
 register3 "foldk" (function(fzx, z, t)
-    for _, kv in F.items(t):ipairs() do
-        local k, v = table.unpack(kv)
+    for _, kv in ipairs(F_items(t)) do
+        local k, v = t_unpack(kv)
         z = fzx(z, k, v)
     end
     return z
@@ -2514,12 +2588,12 @@ xs:maximum([comp_lt])
 
 register1 "maximum" (function(xs, comp_lt)
     if #xs == 0 then return nil end
-    comp_lt = comp_lt or F.op.lt
-    local max = xs[1]
+    comp_lt = comp_lt or F_op_lt
+    local xmax = xs[1]
     for i = 2, #xs do
-        if not comp_lt(xs[i], max) then max = xs[i] end
+        if not comp_lt(xs[i], xmax) then xmax = xs[i] end
     end
-    return max
+    return xmax
 end)
 
 --[[@@@
@@ -2530,9 +2604,9 @@ xs:minimum([comp_lt])
 > The least element of a non-empty structure, according to the optional comparison function.
 @@@]]
 
-register1 "minimum" (function(xs, comp_lt)
+F_minimum = register1 "minimum" (function(xs, comp_lt)
     if #xs == 0 then return nil end
-    comp_lt = comp_lt or F.op.lt
+    comp_lt = comp_lt or F_op_lt
     local min = xs[1]
     for i = 2, #xs do
         if comp_lt(xs[i], min) then min = xs[i] end
@@ -2554,7 +2628,7 @@ register3 "scan" (function(fzx, z, xs)
         z = fzx(z, xs[i])
         zs[#zs+1] = z
     end
-    return setmt(zs)
+    return setmetatable(zs, mt)
 end)
 
 --[[@@@
@@ -2572,7 +2646,7 @@ register2 "scan1" (function(fzx, xs)
         z = fzx(z, xs[i])
         zs[#zs+1] = z
     end
-    return setmt(zs)
+    return setmetatable(zs, mt)
 end)
 
 --[[@@@
@@ -2584,7 +2658,7 @@ xs:concat_map(f)
 @@@]]
 
 register2 "concat_map" (function(fx, xs)
-    return F.concat(F.map(fx, xs))
+    return F_concat(F_map(fx, xs))
 end)
 
 --[[------------------------------------------------------------------------@@@
@@ -2599,18 +2673,18 @@ xss:zip([f])
 > `zip` takes a list of lists and returns a list of corresponding tuples.
 @@@]]
 
-register1 "zip" (function(xss, f)
+F_zip = register1 "zip" (function(xss, f)
     local yss = {}
-    local ns = F.map(F.length, xss):minimum()
+    local ns = F_minimum(F_map(F_length, xss))
     for i = 1, ns do
-        local ys = F.map(function(xs) return xs[i] end, xss)
+        local ys = F_map(function(xs) return xs[i] end, xss)
         if f then
-            yss[i] = f(table.unpack(ys))
+            yss[i] = f(t_unpack(ys))
         else
             yss[i] = ys
         end
     end
-    return setmt(yss)
+    return setmetatable(yss, mt)
 end)
 
 --[[@@@
@@ -2622,7 +2696,7 @@ xss:unzip()
 @@@]]
 
 register1 "unzip" (function(xss)
-    return table.unpack(F.zip(xss))
+    return t_unpack(F_zip(xss))
 end)
 
 --[[@@@
@@ -2633,7 +2707,7 @@ xss:zip_with(f)
 > `zip_with` generalises `zip` by zipping with the function given as the first argument, instead of a tupling function.
 @@@]]
 
-register2 "zip_with" (function(f, xss) return F.zip(xss, f) end)
+register2 "zip_with" (function(f, xss) return F_zip(xss, f) end)
 
 --[[------------------------------------------------------------------------@@@
 ## Set operations
@@ -2648,7 +2722,7 @@ xs:nub([comp_eq])
 @@@]]
 
 register1 "nub" (function(xs, comp_eq)
-    comp_eq = comp_eq or F.op.eq
+    comp_eq = comp_eq or F_op_eq
     local ys = {}
     for i = 1, #xs do
         local x = xs[i]
@@ -2658,7 +2732,7 @@ register1 "nub" (function(xs, comp_eq)
         end
         if not found then ys[#ys+1] = x end
     end
-    return F(ys)
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@
@@ -2670,7 +2744,7 @@ xs:delete(x, [comp_eq])
 @@@]]
 
 register2 "delete" (function(x, xs, comp_eq)
-    comp_eq = comp_eq or F.op.eq
+    comp_eq = comp_eq or F_op_eq
     local ys = {}
     local i = 1
     while i <= #xs do
@@ -2683,7 +2757,7 @@ register2 "delete" (function(x, xs, comp_eq)
         ys[#ys+1] = xs[i]
         i = i+1
     end
-    return F(ys)
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@
@@ -2695,22 +2769,22 @@ xs:difference(ys, [comp_eq])
 @@@]]
 
 register1 "difference" (function(xs, ys, comp_eq)
-    comp_eq = comp_eq or F.op.eq
+    comp_eq = comp_eq or F_op_eq
     local zs = {}
-    ys = {table.unpack(ys)}
+    ys = {t_unpack(ys)}
     for i = 1, #xs do
         local x = xs[i]
         local found = false
         for j = 1, #ys do
             if comp_eq(ys[j], x) then
                 found = true
-                table.remove(ys, j)
+                t_remove(ys, j)
                 break
             end
         end
         if not found then zs[#zs+1] = x end
     end
-    return F(zs)
+    return setmetatable(zs, mt)
 end)
 
 --[[@@@
@@ -2722,8 +2796,8 @@ xs:union(ys, [comp_eq])
 @@@]]
 
 register1 "union" (function(xs, ys, comp_eq)
-    comp_eq = comp_eq or F.op.eq
-    local zs = {table.unpack(xs)}
+    comp_eq = comp_eq or F_op_eq
+    local zs = {t_unpack(xs)}
     for i = 1, #ys do
         local y = ys[i]
         local found = false
@@ -2732,7 +2806,7 @@ register1 "union" (function(xs, ys, comp_eq)
         end
         if not found then zs[#zs+1] = y end
     end
-    return F(zs)
+    return setmetatable(zs, mt)
 end)
 
 --[[@@@
@@ -2744,7 +2818,7 @@ xs:intersection(ys, [comp_eq])
 @@@]]
 
 register1 "intersection" (function(xs, ys, comp_eq)
-    comp_eq = comp_eq or F.op.eq
+    comp_eq = comp_eq or F_op_eq
     local zs = {}
     for i = 1, #xs do
         local x = xs[i]
@@ -2754,7 +2828,7 @@ register1 "intersection" (function(xs, ys, comp_eq)
         end
         if found then zs[#zs+1] = x end
     end
-    return F(zs)
+    return setmetatable(zs, mt)
 end)
 
 --[[------------------------------------------------------------------------@@@
@@ -2771,12 +2845,12 @@ ts:table_union()
 > Right-biased union of tables.
 @@@]]
 
-register1 "merge" (function(ts)
+F_merge = register1 "merge" (function(ts)
     local u = {}
     for i = 1, #ts do
         for k, v in pairs(ts[i]) do u[k] = v end
     end
-    return F(u)
+    return setmetatable(u, mt)
 end)
 
 register1 "table_union" (F.merge)
@@ -2803,7 +2877,7 @@ register2 "merge_with" (function(f, ts)
             end
         end
     end
-    return F(u)
+    return setmetatable(u, mt)
 end)
 
 register2 "table_union_with" (F.merge_with)
@@ -2830,7 +2904,7 @@ register2 "merge_with_key" (function(f, ts)
             end
         end
     end
-    return F(u)
+    return setmetatable(u, mt)
 end)
 
 register2 "table_union_with_key" (F.merge_with_key)
@@ -2846,7 +2920,7 @@ t1:table_difference(t2)
 register1 "table_difference" (function(t1, t2)
     local t = {}
     for k, v in pairs(t1) do if t2[k] == nil then t[k] = v end end
-    return F(t)
+    return setmetatable(t, mt)
 end)
 
 --[[@@@
@@ -2867,7 +2941,7 @@ register2 "table_difference_with" (function(f, t1, t2)
             t[k] = f(v1, v2)
         end
     end
-    return F(t)
+    return setmetatable(t, mt)
 end)
 
 --[[@@@
@@ -2888,7 +2962,7 @@ register2 "table_difference_with_key" (function(f, t1, t2)
             t[k] = f(k, v1, v2)
         end
     end
-    return F(t)
+    return setmetatable(t, mt)
 end)
 
 --[[@@@
@@ -2902,7 +2976,7 @@ t1:table_intersection(t2)
 register1 "table_intersection" (function(t1, t2)
     local t = {}
     for k, v in pairs(t1) do if t2[k] ~= nil then t[k] = v end end
-    return F(t)
+    return setmetatable(t, mt)
 end)
 
 --[[@@@
@@ -2921,7 +2995,7 @@ register2 "table_intersection_with" (function(f, t1, t2)
             t[k] = f(v1, v2)
         end
     end
-    return F(t)
+    return setmetatable(t, mt)
 end)
 
 --[[@@@
@@ -2940,7 +3014,7 @@ register2 "table_intersection_with_key" (function(f, t1, t2)
             t[k] = f(k, v1, v2)
         end
     end
-    return F(t)
+    return setmetatable(t, mt)
 end)
 
 --[[@@@
@@ -2970,7 +3044,7 @@ register1 "table_compose" (function(t1, t2)
         local v1 = t1[v2]
         t[k2] = v1
     end
-    return F(t)
+    return setmetatable(t, mt)
 end)
 
 --[[@@@
@@ -2979,7 +3053,7 @@ F.Nil
 ```
 > `F.Nil` is a singleton used to represent `nil` (see `F.patch`)
 @@@]]
-local Nil = setmetatable({}, {
+Nil = setmetatable({}, {
     __name = "Nil",
     __call = function(_) return nil end,
     __tostring = function(_) return "Nil" end,
@@ -3015,7 +3089,7 @@ local function patch(t1, t2)
             t[k] = v2
         end
     end
-    return setmt(t)
+    return setmetatable(t, mt)
 end
 
 register1 "patch" (patch)
@@ -3035,8 +3109,8 @@ xs:sort([comp_lt])
 register1 "sort" (function(xs, comp_lt)
     local ys = {}
     for i = 1, #xs do ys[i] = xs[i] end
-    table.sort(ys, comp_lt)
-    return F(ys)
+    t_sort(ys, comp_lt)
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@
@@ -3048,13 +3122,13 @@ xs:sort_on(f, [comp_lt])
 @@@]]
 
 register2 "sort_on" (function(f, xs, comp_lt)
-    comp_lt = comp_lt or F.op.lt
+    comp_lt = comp_lt or F_op_lt
     local ys = {}
     for i = 1, #xs do ys[i] = {f(xs[i]), xs[i]} end
-    table.sort(ys, function(a, b) return comp_lt(a[1], b[1]) end)
+    t_sort(ys, function(a, b) return comp_lt(a[1], b[1]) end)
     local zs = {}
     for i = 1, #ys do zs[i] = ys[i][2] end
-    return F(zs)
+    return setmetatable(zs, mt)
 end)
 
 --[[@@@
@@ -3066,7 +3140,7 @@ xs:insert(x, [comp_lt])
 @@@]]
 
 register2 "insert" (function(x, xs, comp_lt)
-    comp_lt = comp_lt or F.op.lt
+    comp_lt = comp_lt or F_op_lt
     local ys = {}
     local i = 1
     while i <= #xs and not comp_lt(x, xs[i]) do
@@ -3078,7 +3152,7 @@ register2 "insert" (function(x, xs, comp_lt)
         ys[#ys+1] = xs[i]
         i = i+1
     end
-    return F(ys)
+    return setmetatable(ys, mt)
 end)
 
 --[[------------------------------------------------------------------------@@@
@@ -3093,15 +3167,14 @@ xs:subsequences()
 > Returns the list of all subsequences of the argument.
 @@@]]
 
-register1 "subsequences" (function(xs)
-    local function subsequences(ys)
-        if F.null(ys) then return F{{}} end
-        local inits = subsequences(F.init(ys))
-        local last = F.last(ys)
-        return inits .. F.map(function(seq) return F.concat{seq, {last}} end, inits)
-    end
-    return subsequences(xs)
-end)
+local function F_subsequences(xs)
+    if F_null(xs) then return setmetatable({{}}, mt) end
+    local inits = F_subsequences(F_init(xs))
+    local last = F_last(xs)
+    return inits .. F_map(function(seq) return F_concat{seq, {last}} end, inits)
+end
+
+register1 "subsequences" (F_subsequences)
 
 --[[@@@
 ```lua
@@ -3111,12 +3184,12 @@ xs:permutations()
 > Returns the list of all permutations of the argument.
 @@@]]
 
-register1 "permutations" (function(xs)
+F_permutations = register1 "permutations" (function(xs)
     local perms = {}
     local n = #xs
-    xs = F.clone(xs)
+    xs = F_clone(xs)
     local function permute(k)
-        if k > n then perms[#perms+1] = F.clone(xs)
+        if k > n then perms[#perms+1] = F_clone(xs)
         else
             for i = k, n do
                 xs[k], xs[i] = xs[i], xs[k]
@@ -3126,7 +3199,7 @@ register1 "permutations" (function(xs)
         end
     end
     permute(1)
-    return setmt(perms)
+    return setmetatable(perms, mt)
 end)
 
 --[[------------------------------------------------------------------------@@@
@@ -3141,9 +3214,10 @@ s:chars(i, j)
 > Returns the list of characters of a string between indices i and j, or the whole string if i and j are not provided.
 @@@]]
 
-function string.chars(s, i, j)
-    return s:bytes(i, j):map(string.char)
+s_chars = function(s, i, j)
+    return F_map(s_char, s_bytes(s, i, j))
 end
+string.chars = s_chars
 
 --[[@@@
 ```lua
@@ -3153,11 +3227,10 @@ s:bytes(i, j)
 > Returns the list of byte codes of a string between indices i and j, or the whole string if i and j are not provided.
 @@@]]
 
-function string.bytes(s, i, j)
-    i = i or 1
-    j = j or -1
-    return F{s:byte(i, j)}
+s_bytes = function(s, i, j)
+    return setmetatable({s_byte(s, i or 1, j or -1)}, mt)
 end
+string.bytes = s_bytes
 
 --[[@@@
 ```lua
@@ -3167,10 +3240,11 @@ s:head()
 > Extract the first element of a string.
 @@@]]
 
-function string.head(s)
+s_head = function(s)
     if #s == 0 then return nil end
-    return s:sub(1, 1)
+    return s_sub(s, 1, 1)
 end
+string.head = s_head
 
 --[[@@@
 ```lua
@@ -3180,10 +3254,11 @@ s:last()
 > Extract the last element of a string.
 @@@]]
 
-function string.last(s)
+s_last = function(s)
     if #s == 0 then return nil end
-    return s:sub(#s)
+    return s_sub(s, -1)
 end
+string.last = s_last
 
 --[[@@@
 ```lua
@@ -3193,10 +3268,11 @@ s:tail()
 > Extract the elements after the head of a string
 @@@]]
 
-function string.tail(s)
+s_tail = function(s)
     if #s == 0 then return nil end
-    return s:sub(2)
+    return s_sub(s, 2)
 end
+string.tail = s_tail
 
 --[[@@@
 ```lua
@@ -3206,10 +3282,11 @@ s:init()
 > Return all the elements of a string except the last one.
 @@@]]
 
-function string.init(s)
+s_init = function(s)
     if #s == 0 then return nil end
-    return s:sub(1, #s-1)
+    return s_sub(s, 1, -2)
 end
+string.init = s_init
 
 --[[@@@
 ```lua
@@ -3220,7 +3297,7 @@ s:uncons()
 @@@]]
 
 function string.uncons(s)
-    return s:head(), s:tail()
+    return s_head(s), s_tail(s)
 end
 
 --[[@@@
@@ -3257,13 +3334,13 @@ c:intersperse(s)
 
 function string.intersperse(c, s)
     if #s < 2 then return s end
-    local chars = {}
+    local cs = {}
     for i = 1, #s-1 do
-        chars[#chars+1] = s:sub(i, i)
-        chars[#chars+1] = c
+        cs[#cs+1] = s_sub(s, i, i)
+        cs[#cs+1] = c
     end
-    chars[#chars+1] = s:sub(#s)
-    return table.concat(chars)
+    cs[#cs+1] = s_sub(s, -1)
+    return t_concat(cs)
 end
 
 --[[@@@
@@ -3275,7 +3352,7 @@ s:intercalate(ss)
 @@@]]
 
 function string.intercalate(s, ss)
-    return table.concat(ss, s)
+    return t_concat(ss, s)
 end
 
 --[[@@@
@@ -3286,12 +3363,13 @@ s:subsequences()
 > Returns the list of all subsequences of the argument.
 @@@]]
 
-function string.subsequences(s)
-    if s:null() then return {""} end
-    local inits = s:init():subsequences()
-    local last = s:last()
-    return inits .. F.map(function(seq) return seq..last end, inits)
+local function s_subsequences(s)
+    if s=="" then return {""} end
+    local inits = s_subsequences(s_init(s))
+    local last = s_last(s)
+    return inits .. F_map(function(seq) return seq..last end, inits)
 end
+string.subsequences = s_subsequences
 
 --[[@@@
 ```lua
@@ -3302,7 +3380,7 @@ s:permutations()
 @@@]]
 
 function string.permutations(s)
-    return s:chars():permutations():map(table.concat)
+    return F_map(t_concat, F_permutations(s_chars(s)))
 end
 
 --[[@@@
@@ -3313,10 +3391,11 @@ s:take(n)
 > Returns the prefix of s of length n.
 @@@]]
 
-function string.take(s, n)
+s_take = function(s, n)
     if n <= 0 then return "" end
-    return s:sub(1, n)
+    return s_sub(s, 1, n)
 end
+string.take = s_take
 
 --[[@@@
 ```lua
@@ -3326,10 +3405,11 @@ s:drop(n)
 > Returns the suffix of s after the first n elements.
 @@@]]
 
-function string.drop(s, n)
+s_drop = function(s, n)
     if n <= 0 then return s end
-    return s:sub(n+1)
+    return s_sub(s, n+1)
 end
+string.drop = s_drop
 
 --[[@@@
 ```lua
@@ -3340,7 +3420,7 @@ s:split_at(n)
 @@@]]
 
 function string.split_at(s, n)
-    return s:take(n), s:drop(n)
+    return s_take(s, n), s_drop(s, n)
 end
 
 --[[@@@
@@ -3352,7 +3432,7 @@ s:take_while(p)
 @@@]]
 
 function string.take_while(s, p)
-    return s:chars():take_while(p):str()
+    return t_concat(F_take_while(p, s_chars(s)))
 end
 
 --[[@@@
@@ -3364,7 +3444,7 @@ s:drop_while(p)
 @@@]]
 
 function string.drop_while(s, p)
-    return s:chars():drop_while(p):str()
+    return t_concat(F_drop_while(p, s_chars(s)))
 end
 
 --[[@@@
@@ -3376,7 +3456,7 @@ s:drop_while_end(p)
 @@@]]
 
 function string.drop_while_end(s, p)
-    return s:chars():drop_while_end(p):str()
+    return t_concat(F_drop_while_end(p, s_chars(s)))
 end
 
 --[[@@@
@@ -3389,7 +3469,7 @@ s:strip_prefix(prefix)
 
 function string.strip_prefix(s, prefix)
     local n = #prefix
-    if s:sub(1, n) == prefix then return s:sub(n+1) end
+    if s_sub(s, 1, n) == prefix then return s_sub(s, n+1) end
     return nil
 end
 
@@ -3403,7 +3483,7 @@ s:strip_suffix(suffix)
 
 function string.strip_suffix(s, suffix)
     local n = #suffix
-    if s:sub(#s-n+1) == suffix then return s:sub(1, #s-n) end
+    if s_sub(s, #s-n+1) == suffix then return s_sub(s, 1, #s-n) end
     return nil
 end
 
@@ -3418,9 +3498,9 @@ s:inits()
 function string.inits(s)
     local ss = {}
     for i = 0, #s do
-        ss[#ss+1] = s:sub(1, i)
+        ss[#ss+1] = s_sub(s, 1, i)
     end
-    return F(ss)
+    return setmetatable(ss, mt)
 end
 
 --[[@@@
@@ -3434,9 +3514,9 @@ s:tails()
 function string.tails(s)
     local ss = {}
     for i = 1, #s+1 do
-        ss[#ss+1] = s:sub(i)
+        ss[#ss+1] = s_sub(s, i)
     end
-    return F(ss)
+    return setmetatable(ss, mt)
 end
 
 --[[@@@
@@ -3448,7 +3528,7 @@ prefix:is_prefix_of(s)
 @@@]]
 
 function string.is_prefix_of(prefix, s)
-    return s:sub(1, #prefix) == prefix
+    return s_sub(s, 1, #prefix) == prefix
 end
 
 --[[@@@
@@ -3460,7 +3540,7 @@ s:has_prefix(prefix)
 @@@]]
 
 function string.has_prefix(s, prefix)
-    return s:sub(1, #prefix) == prefix
+    return s_sub(s, 1, #prefix) == prefix
 end
 
 --[[@@@
@@ -3472,7 +3552,7 @@ suffix:is_suffix_of(s)
 @@@]]
 
 function string.is_suffix_of(suffix, s)
-    return s:sub(#s-#suffix+1) == suffix
+    return s_sub(s, #s-#suffix+1) == suffix
 end
 
 --[[@@@
@@ -3484,7 +3564,7 @@ s:has_suffix(suffix)
 @@@]]
 
 function string.has_suffix(s, suffix)
-    return s:sub(#s-#suffix+1) == suffix
+    return s_sub(s, #s-#suffix+1) == suffix
 end
 
 --[[@@@
@@ -3496,7 +3576,7 @@ infix:is_infix_of(s)
 @@@]]
 
 function string.is_infix_of(infix, s)
-    return s:find(infix) ~= nil
+    return s_find(s, infix) ~= nil
 end
 
 --[[@@@
@@ -3508,7 +3588,7 @@ s:has_infix(infix)
 @@@]]
 
 function string.has_infix(s, infix)
-    return s:find(infix) ~= nil
+    return s_find(s, infix) ~= nil
 end
 
 --[[@@@
@@ -3521,8 +3601,8 @@ s:matches(pattern, [init])
 @@@]]
 
 function string.matches(s, pattern, init)
-    local iterator = s:gmatch(pattern, init)
-    local ms = F{}
+    local iterator = s_gmatch(s, pattern, init)
+    local ms = setmetatable({}, mt)
     while true do
         local xs = {iterator()}
         if #xs == 0 then return ms end
@@ -3538,25 +3618,26 @@ s:split(sep, maxsplit, plain)
 > Splits a string `s` around the separator `sep`. `maxsplit` is the maximal number of separators. If `plain` is true then the separator is a plain string instead of a Lua string pattern.
 @@@]]
 
-function string.split(s, sep, maxsplit, plain)
+s_split = function(s, sep, maxsplit, plain)
     assert(sep and sep ~= "")
     maxsplit = maxsplit or (1/0)
     local items = {}
     if #s > 0 then
         local init = 1
         for _ = 1, maxsplit do
-            local m, n = s:find(sep, init, plain)
+            local m, n = s_find(s, sep, init, plain)
             if m and m <= n then
-                table.insert(items, s:sub(init, m-1))
+                t_insert(items, s_sub(s, init, m-1))
                 init = n + 1
             else
                 break
             end
         end
-        table.insert(items, s:sub(init))
+        t_insert(items, s_sub(s, init))
     end
-    return F(items)
+    return setmetatable(items, mt)
 end
+string.split = s_split
 
 --[[@@@
 ```lua
@@ -3567,9 +3648,9 @@ s:lines()
 @@@]]
 
 function string.lines(s)
-    local lines = s:split('\r?\n\r?')
-    if lines[#lines] == "" and s:match('\r?\n\r?$') then table.remove(lines) end
-    return F(lines)
+    local lines = s_split(s, '\r?\n\r?')
+    if lines[#lines] == "" and s_match(s, '\r?\n\r?$') then t_remove(lines) end
+    return setmetatable(lines, mt)
 end
 
 --[[@@@
@@ -3581,10 +3662,10 @@ s:words()
 @@@]]
 
 function string.words(s)
-    local words = s:split('%s+')
-    if words[1] == "" and s:match('^%s+') then table.remove(words, 1) end
-    if words[#words] == "" and s:match('%s+$') then table.remove(words) end
-    return F(words)
+    local words = s_split(s, '%s+')
+    if words[1] == "" and s_match(s, '^%s+') then t_remove(words, 1) end
+    if words[#words] == "" and s_match(s, '%s+$') then t_remove(words) end
+    return setmetatable(words, mt)
 end
 
 --[[@@@
@@ -3601,7 +3682,7 @@ register1 "unlines" (function(xs)
         s[#s+1] = xs[i]
         s[#s+1] = "\n"
     end
-    return table.concat(s)
+    return t_concat(s)
 end)
 
 --[[@@@
@@ -3613,7 +3694,7 @@ xs:unwords()
 @@@]]
 
 register1 "unwords" (function(xs)
-    return table.concat(xs, " ")
+    return t_concat(xs, " ")
 end)
 
 --[[@@@
@@ -3625,7 +3706,7 @@ s:ltrim()
 @@@]]
 
 function string.ltrim(s)
-    return (s:match("^%s*(.*)"))
+    return (s_match(s, "^%s*(.*)"))
 end
 
 --[[@@@
@@ -3637,7 +3718,7 @@ s:rtrim()
 @@@]]
 
 function string.rtrim(s)
-    return (s:match("(.-)%s*$"))
+    return (s_match(s, "(.-)%s*$"))
 end
 
 --[[@@@
@@ -3649,7 +3730,7 @@ s:trim()
 @@@]]
 
 function string.trim(s)
-    return (s:match("^%s*(.-)%s*$"))
+    return (s_match(s, "^%s*(.-)%s*$"))
 end
 
 --[[@@@
@@ -3661,7 +3742,7 @@ s:ljust(w)
 @@@]]
 
 function string.ljust(s, w)
-    return s .. (" "):rep(w-#s)
+    return s .. s_rep(" ", w-#s)
 end
 
 --[[@@@
@@ -3673,7 +3754,7 @@ s:rjust(w)
 @@@]]
 
 function string.rjust(s, w)
-    return (" "):rep(w-#s) .. s
+    return s_rep(" ", w-#s) .. s
 end
 
 --[[@@@
@@ -3687,7 +3768,7 @@ s:center(w)
 function string.center(s, w)
     local l = (w-#s)//2
     local r = (w-#s)-l
-    return (" "):rep(l) .. s .. (" "):rep(r)
+    return s_rep(" ", l) .. s .. s_rep(" ", r)
 end
 
 --[[@@@
@@ -3698,24 +3779,25 @@ s:cap()
 > Capitalizes a string. The first character is upper case, other are lower case.
 @@@]]
 
-function string.cap(s)
-    return s:head():upper()..s:tail():lower()
+s_cap = function(s)
+    return s_upper(s_sub(s, 1, 1)) .. s_lower(s_sub(s, 2))
 end
+string.cap = s_cap
 
 --[[------------------------------------------------------------------------@@@
 ## Identifier formatting
 @@@]]
 
 local function split_identifier(...)
-    local words = F{}
+    local words = {}
     local function add_word(name)
         -- an upper case letter starts a new word
-        name = tostring(name):gsub("([^%u])(%u)", "%1_%2")
+        name = s_gsub(tostring(name), "([^%u])(%u)", "%1_%2")
         -- split words
-        for w in name:gmatch"%w+" do words[#words+1] = w end
+        for w in s_gmatch(name, "%w+") do words[#words+1] = w end
     end
-    F.flatten{...}:foreach(add_word)
-    return words
+    F_foreach(F_flatten{...}, add_word)
+    return setmetatable(words, mt)
 end
 
 --[[@@@
@@ -3746,27 +3828,27 @@ s:dotted_upper_snake_case()             -- e.g.: hello.world
 @@@]]
 
 function string.lower_snake_case(...)
-    return split_identifier(...):map(string.lower):str"_"
+    return t_concat(F_map(s_lower, split_identifier(...)), "_")
 end
 
 function string.upper_snake_case(...)
-    return split_identifier(...):map(string.upper):str"_"
+    return t_concat(F_map(s_upper, split_identifier(...)), "_")
 end
 
 function string.lower_camel_case(...)
-    return split_identifier(...):map(string.cap):str():gsub("^%w", string.lower)
+    return s_gsub(t_concat(F_map(s_cap, split_identifier(...))), "^%w", s_lower)
 end
 
 function string.upper_camel_case(...)
-    return split_identifier(...):map(string.cap):str()
+    return t_concat(F_map(s_cap, split_identifier(...)))
 end
 
 function string.dotted_lower_snake_case(...)
-    return split_identifier(...):map(string.lower):str"."
+    return t_concat(F_map(s_lower, split_identifier(...)), ".")
 end
 
 function string.dotted_upper_snake_case(...)
-    return split_identifier(...):map(string.upper):str"."
+    return t_concat(F_map(s_upper, split_identifier(...)), ".")
 end
 
 register1 "lower_snake_case" (string.lower_snake_case)
@@ -3813,15 +3895,15 @@ local interpolator_mt = {}
 function interpolator_mt.__mod(self, pattern)
     assert(type(pattern)=="string" and #pattern>=3)
     return setmetatable({
-        pattern = pattern:gsub("^(.+)(.)(.)$", "%1(%%b%2%3)"),
-        env = self.env
+        pattern = s_gsub(pattern, "^(.+)(.)(.)$", "%1(%%b%2%3)"),
+        env = self.env,
     }, interpolator_mt)
 end
 
 function interpolator_mt.__call(self, s)
     if type(s) == "string" then
-        return (s:gsub(self.pattern, function(x)
-            local y = ((assert(load("return "..x:sub(2,-2), nil, "t", self.env)))())
+        return (s_gsub(s, self.pattern, function(x)
+            local y = ((assert(load("return "..s_sub(x, 2,-2), nil, "t", self.env)))())
             if type(y) == "table" or type(y) == "userdata" then
                 y = tostring(y)
             end
@@ -3893,7 +3975,7 @@ end)
 
 return setmetatable(F, {
     __call = function(_, t)
-        if type(t) == "table" then return setmt(t) end
+        if type(t) == "table" then return setmetatable(t, mt) end
         return t
     end,
 })
