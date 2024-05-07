@@ -256,6 +256,7 @@ F.recip(a)
 F.pi
 F.exp(x)
 F.log(x), F.log(x, base)
+F.log10(x), F.log2(x)
 F.sqrt(x)
 F.sin(x)
 F.cos(x)

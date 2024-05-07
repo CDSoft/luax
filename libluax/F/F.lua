@@ -585,6 +585,7 @@ function F.recip(a) return 1 / a end
 F.pi
 F.exp(x)
 F.log(x), F.log(x, base)
+F.log10(x), F.log2(x)
 F.sqrt(x)
 F.sin(x)
 F.cos(x)
@@ -604,8 +605,8 @@ F.atanh(x)
 F.pi = math.pi
 F.exp = math.exp
 F.log = math.log
-F.log10 = function(x) return math.log(x, 10) end
-F.log2 = function(x) return math.log(x, 2) end
+F.log10 = mathx.log10
+F.log2 = mathx.log2
 F.sqrt = math.sqrt
 F.sin = math.sin
 F.cos = math.cos
@@ -896,8 +897,9 @@ F.error_without_stack_trace(message, level)
 @@@]]
 local function err(msg, level, tb)
     level = (level or 1) + 2
-    local file = debug.getinfo(level, "S").short_src
-    local line = debug.getinfo(level, "l").currentline
+    local info = debug.getinfo(level)
+    local file = info.short_src
+    local line = info.currentline
     msg = table.concat{arg[0], ": ", file, ":", line, ": ", msg}
     io.stderr:write(tb and debug.traceback(msg, level) or msg, "\n")
     os.exit(1)
@@ -1193,7 +1195,6 @@ register0 "range" (function(a, b, step)
             a = a + step
         end
     end
-
     return setmt(r)
 end)
 
@@ -3525,8 +3526,7 @@ function string.matches(s, pattern, init)
     while true do
         local xs = {iterator()}
         if #xs == 0 then return ms end
-        if #xs == 1 then xs = xs[1] end
-        ms[#ms+1] = xs
+        ms[#ms+1] = #xs==1 and xs[1] or xs
     end
 end
 
@@ -3547,7 +3547,7 @@ function string.split(s, sep, maxsplit, plain)
         for _ = 1, maxsplit do
             local m, n = s:find(sep, init, plain)
             if m and m <= n then
-                table.insert(items, s:sub(init, m - 1))
+                table.insert(items, s:sub(init, m-1))
                 init = n + 1
             else
                 break

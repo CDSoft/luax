@@ -31,6 +31,9 @@ require "lz4"
 local format = string.format
 local byte = string.byte
 local char = string.char
+local sub = string.sub
+
+local unpack = table.unpack
 
 local function parse_args(args)
     local parser = require "argparse"()
@@ -144,14 +147,8 @@ end
 
 local function chunks_of(n, xs)
     local chunks = F{}
-    local i = 1
-    while i <= #xs do
-        local chunk = F{}
-        for j = 1, n do
-            chunk[j] = xs[i]
-            i = i+1
-        end
-        chunks[#chunks+1] = chunk
+    for i = 1, #xs, n do
+        chunks[#chunks+1] = F{unpack(xs, i, i+n-1)}
     end
     return chunks
 end
@@ -159,8 +156,8 @@ end
 local function make_key(input, opt)
     local function chunks_of_chars(n, s)
         local chunks = F{}
-        while #s > 0 do
-            chunks[#chunks+1], s = s:split_at(n)
+        for i = 1, #s, n do
+            chunks[#chunks+1] = sub(s, i, i+n-1)
         end
         return chunks
     end

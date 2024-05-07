@@ -39,7 +39,7 @@ debug.locals(level)
   If `level` is a function, `locals` returns the names of the function parameters.
 @@@]]
 
-local function locals(level)
+function debug.locals(level)
     local vars = F{}
     if type(level) == "function" then
         local i = 1
@@ -65,5 +65,3 @@ local function locals(level)
     end
     return vars
 end
-
-debug.locals = locals
