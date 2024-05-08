@@ -236,6 +236,38 @@ local function universal_ge(a, b)
     return universal_comp(a, b) >= 0
 end
 
+local function key_eq(a, b)
+    return a == b
+end
+
+local function key_ne(a, b)
+    return a ~= b
+end
+
+local function key_lt(a, b)
+    local ta, tb = type(a), type(b)
+    if ta ~= tb then return type_rank[ta] < type_rank[tb] end
+    return a < b
+end
+
+local function key_le(a, b)
+    local ta, tb = type(a), type(b)
+    if ta ~= tb then return type_rank[ta] <= type_rank[tb] end
+    return a <= b
+end
+
+local function key_gt(a, b)
+    local ta, tb = type(a), type(b)
+    if ta ~= tb then return type_rank[ta] > type_rank[tb] end
+    return a > b
+end
+
+local function key_ge(a, b)
+    local ta, tb = type(a), type(b)
+    if ta ~= tb then return type_rank[ta] >= type_rank[tb] end
+    return a >= b
+end
+
 --[[------------------------------------------------------------------------@@@
 ### Operators
 @@@]]
@@ -307,7 +339,8 @@ F.op.ule(a, b)              -- a <= b  (†)
 F.op.ugt(a, b)              -- a > b   (†)
 F.op.uge(a, b)              -- a >= b  (†)
 ```
-> Universal comparison operators ((†) comparisons on elements of possibly different Lua types)
+> Universal comparison operators
+  ((†) recursive comparisons on elements of possibly different Lua types)
 @@@]]
 
 F.op.ueq = universal_eq
@@ -316,6 +349,28 @@ F.op.ult = universal_lt
 F.op.ule = universal_le
 F.op.ugt = universal_gt
 F.op.uge = universal_ge
+
+--[[@@@
+```lua
+F.op.keq(a, b)              -- a == b  (†)
+F.op.kne(a, b)              -- a ~= b  (†)
+F.op.klt(a, b)              -- a < b   (†)
+F.op.kle(a, b)              -- a <= b  (†)
+F.op.kgt(a, b)              -- a > b   (†)
+F.op.kge(a, b)              -- a >= b  (†)
+```
+> Universal comparison operators
+  ((†) non recursive comparisons on elements of possibly different Lua types).
+  The `kxx` functions are faster but less generic than `uxx`.
+  They are more suitable for sorting keys (e.g. F.keys).
+@@@]]
+
+F.op.keq = key_eq
+F.op.kne = key_ne
+F.op.klt = key_lt
+F.op.kle = key_le
+F.op.kgt = key_gt
+F.op.kge = key_ge
 
 --[[@@@
 ```lua
@@ -1032,6 +1087,7 @@ local default_show_options = {
     int = "%s",
     flt = "%s",
     indent = nil,
+    lt = F.op.klt,
 }
 
 register1 "show" (function(x, opt)
@@ -1040,6 +1096,7 @@ register1 "show" (function(x, opt)
     local opt_indent = opt.indent
     local opt_int = opt.int
     local opt_flt = opt.flt
+    local opt_lt = opt.lt
 
     local tokens = {}
     local function emit(token) tokens[#tokens+1] = token end
@@ -1072,7 +1129,7 @@ register1 "show" (function(x, opt)
                     n = n + 1
                 end
                 local first_field = true
-                for k, v in F_pairs(val) do
+                for k, v in F_pairs(val, opt_lt) do
                     if not (type(k) == "number" and math_type(k) == "integer" and 1 <= k and k <= #val) then
                         if first_field and opt_indent and n > 1 then drop() emit "," end
                         first_field = false
@@ -1344,7 +1401,7 @@ F.ipairs(xs, [comp_lt])
 xs:ipairs([comp_lt])
 ```
 > behave like the Lua `pairs` and `ipairs` iterators.
-> `F.pairs` sorts keys using the function `comp_lt` or the universal `<=` operator (`F.op.ult`).
+> `F.pairs` sorts keys using the function `comp_lt` or the default `<=` operator for keys (`F.op.klt`).
 @@@]]
 
 register1 "ipairs" (ipairs)
@@ -1374,7 +1431,7 @@ t:items([comp_lt])
 @@@]]
 
 F_keys = register1 "keys" (function(t, comp_lt)
-    comp_lt = comp_lt or universal_lt
+    comp_lt = comp_lt or key_lt
     local ks = {}
     for k, _ in pairs(t) do ks[#ks+1] = k end
     t_sort(ks, comp_lt)

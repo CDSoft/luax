@@ -69,8 +69,22 @@ F.op.ugt(a, b)              -- a > b   (†)
 F.op.uge(a, b)              -- a >= b  (†)
 ```
 
-> Universal comparison operators ((†) comparisons on elements of
-> possibly different Lua types)
+> Universal comparison operators ((†) recursive comparisons on elements
+> of possibly different Lua types)
+
+``` lua
+F.op.keq(a, b)              -- a == b  (†)
+F.op.kne(a, b)              -- a ~= b  (†)
+F.op.klt(a, b)              -- a < b   (†)
+F.op.kle(a, b)              -- a <= b  (†)
+F.op.kgt(a, b)              -- a > b   (†)
+F.op.kge(a, b)              -- a >= b  (†)
+```
+
+> Universal comparison operators ((†) non recursive comparisons on
+> elements of possibly different Lua types). The `kxx` functions are
+> faster but less generic than `uxx`. They are more suitable for sorting
+> keys (e.g. F.keys).
 
 ``` lua
 F.op.add(a, b)              -- a + b
@@ -573,8 +587,8 @@ xs:ipairs([comp_lt])
 ```
 
 > behave like the Lua `pairs` and `ipairs` iterators. `F.pairs` sorts
-> keys using the function `comp_lt` or the universal `<=` operator
-> (`F.op.ult`).
+> keys using the function `comp_lt` or the default `<=` operator for
+> keys (`F.op.klt`).
 
 ``` lua
 F.keys(t, [comp_lt])
