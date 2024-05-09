@@ -20,6 +20,6 @@ http://cdelord.fr/luax
 
 --@LIB
 
-local welcome = require "welcome"
+local help = require "luax_help"
 
-welcome()
+help.print()

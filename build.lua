@@ -165,6 +165,7 @@ var "lib" "$builddir/lib"
 var "doc" "$builddir/doc"
 var "tmp" "$builddir/tmp"
 var "test" "$builddir/test"
+var "dist" "$builddir/dist"
 
 local compile = {}
 local test = {}
@@ -638,7 +639,7 @@ section "LuaX configuration"
 ---------------------------------------------------------------------
 
 comment [[
-The configuration file (luax_config.h and luax_config.lua)
+The LuaX configuration files (luax_config.h and luax_config.lua)
 are created in `$tmp`
 ]]
 
@@ -654,6 +655,7 @@ end
 local luax_config_params = ypp_vars {
     AUTHORS = AUTHORS,
     URL = URL,
+    ZIG_VERSION = zig_version,
 }
 
 rule "ypp" {
@@ -682,8 +684,9 @@ rule "bundle" {
     },
     implicit_in = {
         "$lua",
+        "$lz4",
         "luax/luax_bundle.lua",
-        "luax/bundle.lua",
+        "luax/luax_bundle_lib.lua",
         "$luax_config_lua",
     },
 }
@@ -744,16 +747,15 @@ local luax_app_bundle = build "$tmp/lua_app_bundle.c" {
 section "Binaries and shared libraries"
 ---------------------------------------------------------------------
 
-local binaries = {}
-local libraries = {}
-local cross_binaries = {}
+local binaries = F{}
+local libraries = F{}
 
 local liblua = {}
 local libluax = {}
 local main_luax = {}
 local main_libluax = {}
-local binary = {}
-local shared_library = {}
+local binary = F{}
+local shared_library = F{}
 
 -- imath is also provided by qmath, both versions shall be compatible
 rule "diff" {
@@ -824,7 +826,7 @@ targets:foreach(function(target)
                     },
                 }
             end)
-    binary[target.name] = build("$tmp"/target.name/"bin"/appname..target.exe) { ld[target.name],
+    binary[target.name] = build("$dist"/target.name/"bin"/appname..target.exe) { ld[target.name],
         main_luax[target.name],
         main_libluax[target.name],
         liblua[target.name],
@@ -833,7 +835,7 @@ targets:foreach(function(target)
     }
 
     shared_library[target.name] = target.libc~="musl" and not san and
-        build("$tmp"/target.name/"lib/libluax"..target.so) { so[target.name],
+        build("$dist"/target.name/"lib/libluax"..target.so) { so[target.name],
             main_libluax[target.name],
             case(target.os) {
                 linux   = {},
@@ -864,114 +866,57 @@ end
 
 if cross_compilation then
 
-    var "luaxc" "$bin/luaxc"
+    targets : foreach(function(target)
 
-    local luaxc_config_params = ypp_vars {
-        ZIG_VERSION = zig_version,
-        URL = URL,
-        YEARS = YEARS,
-        AUTHORS = AUTHORS,
-        BYTECODE = bytecode,
-    }
+        local luaxlib = "$tmp/luax-lib"/target.name
 
-    rule "ypp-luaxc" {
-        description = "YPP $out",
-        command = { "$luax tools/ypp.lua", luaxc_config_params, "$in -o $out" },
-        implicit_in = {
-            "$luax",
-            "tools/ypp.lua",
-        },
-    }
+        local files = {
 
-    local luaxc_archive = "$tmp/luaxc"
-    local files = {
+            -- Lua headers
+            ls "lua/*.h" : map(function(header)
+                return build(luaxlib/"lua"/header:basename()) { "cp", header }
+            end),
 
-        -- script used by luaxc to create the application bundle
-        F{
-            "luax/luax_bundle.lua",
-            "luax/bundle.lua",
-        } : map(function(src)
-            return build(luaxc_archive/src:basename()) { "cp", src }
-        end),
+            -- precompiled luax libraries
+            (function()
+                local libs = F{
+                    "$tmp"/target.name/"lib/liblua.a",
+                    "$tmp"/target.name/"lib/libluax.a",
+                    "$tmp"/target.name/"obj/luax/libluax.o",
+                    "$tmp"/target.name/"obj/luax/luax.o",
+                }
+                if target.os == "linux" then
+                    return build(luaxlib/"luax.o") { partial_ld[target.name], libs }
+                else
+                    return libs : map(function(arch)
+                        return build(luaxlib/arch:basename()) { "cp", arch }
+                    end)
+                end
+            end)(),
 
-        -- Lua headers
-        ls "lua/*.h" : map(function(header)
-            return build(luaxc_archive/"lua"/header:basename()) { "cp", header }
-        end),
-
-        -- target independant scripts and libraries
-        F{
-            "$bin/luax.lua",
-            "$bin/luax-pandoc.lua",
-        } : map(function(bin)
-            return build(luaxc_archive/"noarch"/"bin"/bin:basename()) { "cp", bin }
-        end),
-        F{
-            "$lib/luax.lib",
-            "$lib/luax.lua",
-        } : map(function(lib)
-            return build(luaxc_archive/"noarch"/"lib"/lib:basename()) { "cp", lib }
-        end),
-
-        -- luax binaries and shared libraries
-        targets : map(function(target)
-            return {
-                F{
-                    binary[target.name],
-                } : map(function(bin)
-                    return build(luaxc_archive/target.name/"bin"/bin:basename()) { "cp", bin }
-                end),
-                F{
-                    shared_library[target.name] or nil,
-                } : map(function(lib)
-                    return build(luaxc_archive/target.name/"lib"/lib:basename()) { "cp", lib }
-                end),
-            }
-        end),
-
-        -- precompiled luax libraries
-        targets : map(function(target)
-            local libs = F{
-                "$tmp"/target.name/"lib/liblua.a",
-                "$tmp"/target.name/"lib/libluax.a",
-                "$tmp"/target.name/"obj/luax/libluax.o",
-                "$tmp"/target.name/"obj/luax/luax.o",
-            }
-            if target.os == "linux" then
-                return build(luaxc_archive/target.name/"luax.o") { partial_ld[target.name], libs }
-            else
-                return libs : map(function(arch)
-                    return build(luaxc_archive/target.name/arch:basename()) { "cp", arch }
-                end)
-            end
-        end),
-
-    }
-
-    local compression_level = case(mode) {
-        debug   = 0,
-        [F.Nil] = 9,
-    }
-
-    build "$tmp/luaxc.tar.xz" { files,
-        description = "TAR $out",
-        command = {
-            ("XZ_OPT='-%d'"):format(compression_level),
-            "tar cJf $out $in",
-            [[--transform "s#$tmp/luaxc##"]],
-        },
-    }
-
-    build "$tmp/luaxc.sh" { "ypp-luaxc", "tools/luaxc.sh.in" }
-
-    acc(cross_binaries) {
-        build "$luaxc" { "$tmp/luaxc.sh", "$tmp/luaxc.tar.xz",
-            description = "CAT $out",
-            command = "cat $in > $out && chmod +x $out",
         }
-    }
+
+        acc(libraries) {
+            build("$lib/luax-"..target.name..".lib") { files,
+                description = "CBOR-AR $out",
+                command = {
+                    "$luax tools/cbor-ar.lua",
+                    luaxlib,
+                    "-o $out",
+                },
+                implicit_in = {
+                    "$luax",
+                    "$lz4",
+                    "$luax tools/cbor-ar.lua",
+                    files,
+                }
+            },
+        }
+
+    end)
 
 end
+
 
 --===================================================================
 section "LuaX Lua implementation"
@@ -1021,9 +966,11 @@ rule "luax-bundle" {
     },
     implicit_in = {
         "$lua",
+        "$lz4",
         "luax/luax.lua",
         "$lib/luax.lua",
         "$luax_config_lua",
+        libraries,
     },
 }
 
@@ -1033,7 +980,7 @@ acc(binaries) {
     build "$bin/luax.lua" {
         "luax-bundle", luax_sources,
         args = "-t lua",
-    }
+    },
 }
 
 --===================================================================
@@ -1044,7 +991,7 @@ acc(binaries) {
     build "$bin/luax-pandoc.lua" {
         "luax-bundle", luax_sources,
         args = "-t pandoc",
-    }
+    },
 }
 
 --===================================================================
@@ -1092,7 +1039,7 @@ acc(test) {
             description = "TEST $out",
             command = {
                 sanitizer_options,
-                "$luaxc -q -b -k test-1-key -o $test/test-luaxc $in",
+                "$luax compile -q", "-t", sys.name, "-b -k test-1-key -o $test/test-luaxc $in",
                 "&&",
                 "PATH=$bin:$tmp:$$PATH",
                 "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
@@ -1107,7 +1054,7 @@ acc(test) {
             },
             implicit_in = {
                 "$luax",
-                "$luaxc",
+                libraries,
                 imported_test_sources,
             },
         },
@@ -1365,12 +1312,36 @@ acc(doc) {
 end
 
 --===================================================================
+section "Update dist for all targets"
+---------------------------------------------------------------------
+
+local function no_arch(name)
+    local ext = name:ext()
+    return ext==".lua" or ext==".lib"
+end
+
+local dist = targets : map(function(target)
+    return {
+        binary[target.name],
+        shared_library[target.name] or {},
+        binaries:filter(no_arch)
+        : map(function(file)
+            return build("$dist"/target.name/"bin"/file:basename()) { "cp", file }
+        end),
+        libraries:filter(no_arch)
+        : map(function(file)
+            return build("$dist"/target.name/"lib"/file:basename()) { "cp", file }
+        end),
+    }
+end)
+
+--===================================================================
 section "Shorcuts"
 ---------------------------------------------------------------------
 
-acc(compile) {binaries, libraries, cross_binaries}
+acc(compile) {binaries, libraries, dist}
 
-install "bin" {binaries, cross_binaries}
+install "bin" {binaries}
 install "lib" {libraries}
 
 clean "$builddir"

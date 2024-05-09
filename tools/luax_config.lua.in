@@ -1,14 +1,69 @@
+--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
 --@@[[
 VERSION = sh "git describe --tags" : trim()
 DATE    = sh "git show -s --format=%cd --date=format:'%Y-%m-%d'" : trim()
 YEAR    = sh "git show -s --format=%cd --date=format:'%Y'" : trim()
 assert(AUTHORS, "AUTHORS: not defined")
 assert(URL, "URL: not defined")
+assert(ZIG_VERSION, "ZIG_VERSION: not defined")
 --]]@LIB
+
+local F = require "F"
+local fs = require "fs"
+local sys = require "sys"
+local sh = require "sh"
+
 local version = "@(VERSION)"
+
+local zig_version = "@(ZIG_VERSION)"
+local zig_path = F.case(sys.os) {
+    windows = function() return os.getenv"LOCALAPPDATA" end,
+    [F.Nil] = function() return os.getenv"HOME"/".local/var/cache" end,
+}()/"luax/zig"/zig_version
+local zig = zig_path/"zig"..sys.exe
+
+local function zig_install()
+    local archive = "zig-"..sys.os.."-"..sys.arch.."-"..zig_version..".tar.xz"
+    local url = "https://ziglang.org/download"/zig_version/archive
+    fs.mkdirs(zig_path)
+    fs.with_tmpdir(function(tmp)
+        assert(sh.run { "curl", "-fsSL", url, "-o", tmp/archive })
+        assert(sh.run { "tar", "xJf", tmp/archive, "-C", zig_path, "--strip-components", 1 })
+    end)
+end
+
 return {
     version = version,
     date = "@(DATE)",
     copyright = "LuaX "..version.."  Copyright (C) 2021-@(YEAR) @(URL)",
     authors = "@(AUTHORS)",
+    zig = {
+        version = zig_version,
+        path = zig_path,
+        zig = zig,
+        install = zig_install,
+    },
+    lua_init = F{
+        "LUA_INIT_" .. _VERSION:words()[2]:gsub("%.", "_"),
+        "LUA_INIT",
+    },
 }

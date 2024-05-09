@@ -28,15 +28,19 @@ local eq = test.eq
 local F = require "F"
 local fs = require "fs"
 local sys = require "sys"
+local sh = require "sh"
 
 local function unique(sep, s)
     return s:split(sep):nub():str(sep)
 end
 
+local function shell_env(scripts)
+    return sh.read { os.getenv"LUAX", "env", scripts }
+end
+
 return function()
     local test_num = tonumber(os.getenv "TEST_NUM")
     if F.elem(test_num, {1}) then
-        local shell_env = require "luax_shell_env"
         local libext = F.case(sys.os) { linux="so",  macos="dylib", windows="dll" }
 
         local cwd = fs.getcwd()
@@ -46,13 +50,7 @@ return function()
 
         local i = F.I{CWD=cwd, sys=sys, libext=libext, os=os, unique=unique, path_sep=path_sep, lua_sep=lua_sep}
 
-        eq(shell_env(os.getenv"LUAX"), i[[
-export PATH="$(CWD)/.build/bin:$(unique(path_sep, os.getenv'PATH'))";
-export LUA_PATH="$(CWD)/.build/lib/?.lua;$(unique(lua_sep, os.getenv'LUA_PATH'))";
-export LUA_CPATH="$(CWD)/.build/lib/?.$(libext);$(unique(lua_sep, os.getenv'LUA_CPATH'))";
-]])
-
-        eq(shell_env(os.getenv"LUAX", {}), i[[
+        eq(shell_env(), i[[
 export PATH="$(CWD)/.build/bin:$(unique(path_sep, os.getenv'PATH'))";
 export LUA_PATH="$(CWD)/.build/lib/?.lua;$(unique(lua_sep, os.getenv'LUA_PATH'))";
 export LUA_CPATH="$(CWD)/.build/lib/?.$(libext);$(unique(lua_sep, os.getenv'LUA_CPATH'))";
@@ -70,7 +68,7 @@ export LUA_CPATH="$(CWD)/.build/lib/?.$(libext);$(unique(lua_sep, os.getenv'LUA_
                     STRUCT = { X=100, Y=200, Z={a=1000, b=2000} },
                 }
             ]])
-            eq(shell_env(os.getenv"LUAX", {script}),
+            eq(shell_env{script},
 [===[
 export ARRAY_1='d';
 export ARRAY_2='e';

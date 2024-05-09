@@ -12,11 +12,11 @@ Lua scripts.
 - MacOS (x86_64, aarch64)
 - Windows (x86_64)
 
-`luax` can « compile[^1] » scripts from and to any of these platforms.
-
-`luaxc` compiles[^2] scripts into a single executable containing the
-LuaX runtime and the Lua scripts. The target platform can be explicitly
-specified to cross-compile scripts for a supported platform.
+`luax` can compile scripts from and to any of these platforms. It can
+produce scripts that can run everywhere Lua or LuaX is installed as well
+as standalone executables containing the LuaX runtime and the Lua
+scripts. The target platform can be explicitly specified to
+cross-compile[^1] scripts for a supported platform.
 
 ## Getting in touch
 
@@ -189,9 +189,9 @@ scripts:
     usage: luax [cmd] [options]
 
     Commands:
-      "help" (or "-h")      Show this help
+      "help"    (or "-h")   Show this help
       "version" (or "-v")   Show this help
-      "run" (or none)       Run scripts
+      "run"     (or none)   Run scripts
       "compile" (or "c")    Compile scripts
       "env"                 Set LuaX environment variables
 
@@ -292,6 +292,13 @@ $ luax compile -t list
 lua
 luax
 pandoc
+linux-x86_64
+linux-x86_64-musl
+linux-aarch64
+linux-aarch64-musl
+macos-x86_64
+macos-aarch64
+windows-x86_64
 ```
 
 ## Built-in modules
@@ -405,12 +412,6 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
   of the CBOR
   ([License](https://code.zash.se/lua-cbor/file/tip/COPYING))
 
-[^1]: `luax` is actually not a « compiler ».
-
-    It just bundles Lua scripts into a single script that can be run
-    everywhere LuaX is installed.
-
-[^2]: `luaxc` uses `zig` to link the LuaX runtime with the Lua scripts.
-    The Lua scripts are actually compiled to Lua bytecode. Contrary to
-    `luax`, `luaxc` produces executables that do not require LuaX to be
-    installed.
+[^1]: `luax` uses `zig` to link the LuaX runtime with the Lua scripts.
+    The Lua scripts are actually compiled to Lua bytecode. `luax`
+    produces executables that do not require LuaX to be installed.

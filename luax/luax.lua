@@ -25,7 +25,7 @@ local F = require "F"
 local function command(name, drop)
     return function()
         for _ = 1, drop or 1 do table.remove(arg, 1) end
-        require("luax_"..name)
+        require("luax_cmd_"..name)
     end
 end
 

@@ -16,23 +16,17 @@ useful packages. `luax` can also produce executable scripts from Lua scripts.
 - MacOS (x86_64, aarch64)
 - Windows (x86_64)
 
-`luax` can « compile[^compilation] » scripts from and to any of these platforms.
+`luax` can compile scripts from and to any of these platforms. It can produce
+scripts that can run everywhere Lua or LuaX is installed as well as
+standalone executables containing the LuaX runtime and the Lua scripts. The
+target platform can be explicitly specified to
+cross-compile[^cross-compilation] scripts for a supported platform.
 
-[^compilation]: `luax` is actually not a « compiler ».
-
-    It just bundles Lua scripts into a single script that can be run everywhere
-    LuaX is installed.
-
-`luaxc` compiles[^cross-compilation] scripts into a single executable containing
-the LuaX runtime and the Lua scripts. The target platform can be explicitly
-specified to cross-compile scripts for a supported platform.
-
-[^cross-compilation]: `luaxc` uses `zig` to link the LuaX runtime with the Lua
+[^cross-compilation]: `luax` uses `zig` to link the LuaX runtime with the Lua
     scripts. @[[BYTECODE
         and "The Lua scripts are actually compiled to Lua bytecode."
         or  "The Lua scripts are actually not compiled to Lua bytecode unless explicitely required."
-    ]] Contrary to `luax`, `luaxc` produces executables that do not require LuaX
-    to be installed.
+    ]] `luax` produces executables that do not require LuaX to be installed.
 
 ## Getting in touch
 

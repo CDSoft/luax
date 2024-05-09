@@ -186,7 +186,7 @@ function M.bundle(opt)
         local content = assert(fs.read(script))
         local ext = fs.ext(script)
         if ext == ".lib" then
-            local lib_scripts = assert(cbor.decode(content))
+            local lib_scripts = assert(cbor.decode(assert(content:unlz4())))
             for i = 1, #lib_scripts do
                 scripts[#scripts+1] = lib_scripts[i]
             end
@@ -224,7 +224,7 @@ function M.bundle(opt)
 
     if opt.target == "lib" then
         return F{
-            [opt.output] = cbor.encode(scripts, {pairs=F.pairs}),
+            [opt.output] = cbor.encode(scripts, {pairs=F.pairs}) : lz4(),
         }
     end
 

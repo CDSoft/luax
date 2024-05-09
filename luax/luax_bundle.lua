@@ -21,7 +21,7 @@ http://cdelord.fr/luax
 
 -- bundle a set of scripts into a single Lua script that can be added to the runtime
 
-local bundle = require "bundle"
+local bundle = require "luax_bundle_lib"
 
 local F = require "F"
 local fs = require "fs"

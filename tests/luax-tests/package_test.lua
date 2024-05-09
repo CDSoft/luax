@@ -32,12 +32,7 @@ local test_num = tonumber(os.getenv"TEST_NUM")
 return function()
 
     local modpath =
-    F.elem(test_num, {1}) and os.getenv"LUAXC" and {
-        -- luax/luax_shell_env.lua is in the luax interpreter running the LuaX sources of the test
-        -- but not in the test executable produced by luaxc
-        luax_shell_env  = "luax/luax_shell_env.lua"
-    }
-    or F.elem(test_num, {2, 3, 4, 5, 6}) and {
+    F.elem(test_num, {2, 3, 4, 5, 6}) and {
         F_test          = "tests/luax-tests/F_test.lua",
         G_test          = "tests/luax-tests/G_test.lua",
         arg_test        = "tests/luax-tests/arg_test.lua",

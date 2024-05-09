@@ -73,7 +73,7 @@ local function user_env(args)
 end
 
 if not arg or #arg==0 then
-    print(luax_env(arg[0]))
+    io.stdout:write(luax_env(arg[0]))
 else
-    print(user_env(arg))
+    io.stdout:write(user_env(arg))
 end

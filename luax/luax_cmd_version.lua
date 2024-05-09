@@ -20,9 +20,6 @@ http://cdelord.fr/luax
 
 --@LIB
 
-local F = require "F"
+local welcome = require "luax_welcome"
 
-return F{
-    "LUA_INIT_" .. _VERSION:words()[2]:gsub("%.", "_"),
-    "LUA_INIT",
-}
+welcome()
