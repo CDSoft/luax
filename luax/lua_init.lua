@@ -18,23 +18,11 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
---@MAIN
+--@LIB
 
 local F = require "F"
 
-local function command(name, drop)
-    return function()
-        for _ = 1, drop or 1 do table.remove(arg, 1) end
-        require("luax_"..name)
-    end
-end
-
-return F.case(arg[1]) {
-    help    = command "help",
-    version = command "version",
-    [F.Nil] = command("run", 0),
-    run     = command "run",
-    compile = command "compile",
-    c       = command "compile",
-    env     = command "env",
-}()
+return F{
+    "LUA_INIT_" .. _VERSION:words()[2]:gsub("%.", "_"),
+    "LUA_INIT",
+}

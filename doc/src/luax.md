@@ -247,20 +247,20 @@ or in `$PATH`.
 
 ``` bash
 # Compilation (standalone executable script for LuaX)
-$ luax -o executable main.lua lib1.lua lib2.lua
+$ luax compile -o executable main.lua lib1.lua lib2.lua
 $ ./executable      # equivalent to luax main.lua
 
 # Compilation for Lua
-$ luax -o executable -t lua main.lua lib1.lua lib2.lua
+$ luax compile -o executable -t lua main.lua lib1.lua lib2.lua
 $ ./executable      # equivalent to lua main.lua
 
 # Compilation for Pandoc Lua
-$ luax -o executable -t pandoc main.lua lib1.lua lib2.lua
+$ luax compile -o executable -t pandoc main.lua lib1.lua lib2.lua
 $ ./executable      # equivalent to pandoc lua main.lua
 
 # Available targets
-$ luax -t list
-@sh(LUAX, '-t list')
+$ luax compile -t list
+@sh(LUAX, 'compile -t list')
     : lines()
     : map(F.compose{F.head, string.words})
 ```

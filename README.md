@@ -186,56 +186,53 @@ installed and can be copied anywhere you want.
 `luax` is very similar to `lua` and adds more options to compile
 scripts:
 
-    usage: luax [options] [script [args]]
+    usage: luax [cmd] [options]
 
-    General options:
-      -h                show this help
-      -v                show version information
-      --                stop handling options
+    Commands:
+      "help" (or "-h")      Show this help
+      "version" (or "-v")   Show this help
+      "run" (or none)       Run scripts
+      "compile" (or "c")    Compile scripts
+      "env"                 Set LuaX environment variables
 
-    Lua options:
-      -e stat           execute string 'stat'
-      -i                enter interactive mode after executing
-                        'script'
-      -l name           require library 'name' into global 'name'
-      -l g=name         require library 'name' into global 'g'
-      -l _=name         require library 'name' (no global variable)
-      -                 stop handling options and execute stdin
-                        (incompatible with -i)
+    "run" options:
+      -e stat         execute string 'stat'
+      -i              enter interactive mode after executing 'script'
+      -l name         require library 'name' into global 'name'
+      -l g=name       require library 'name' into global 'g'
+      -l _=name       require library 'name' (no global variable)
+      -v              show version information
+      --              stop handling options
+      -               stop handling options and execute stdin
+      script [args]   script to execute
 
-    Compilation options:
-      -t target         name of the targetted platform
-      -t list           list available targets
-      -o file           name the executable file to create
-      -b                compile to Lua bytecode
-      -s                emit bytecode without debug information
-      -k key            script encryption key
-      -q                quiet compilation (error messages only)
-
-    Scripts for compilation:
-      file.lua          name of a Lua package to add to the binary.
-      file.xxx          file embeded as a module
-                        returning the content of the file.
-
-    Lua and Compilation options can not be mixed.
+    "compile" options:
+      -t target       name of the targetted platform
+      -t list         list available targets
+      -o file         name the executable file to create
+      -b              compile to Lua bytecode
+      -s              emit bytecode without debug information
+      -k key          script encryption key
+      -q              quiet compilation (error messages only)
+      scripts         scripts to compile
 
     Environment variables:
 
       LUA_INIT_5_4, LUA_INIT
-                        code executed before handling command line
-                        options and scripts (not in compilation
-                        mode). When LUA_INIT_5_4 is defined,
-                        LUA_INIT is ignored.
+                    code executed before handling command line
+                    options and scripts (not in compilation
+                    mode). When LUA_INIT_5_4 is defined,
+                    LUA_INIT is ignored.
 
-      PATH              PATH shall contain the bin directory where
-                        LuaX is installed
+      PATH          PATH shall contain the bin directory where
+                    LuaX is installed
 
-      LUA_PATH          LUA_PATH shall point to the lib directory
-                        where the Lua implementation of LuaX
-                        lbraries are installed
+      LUA_PATH      LUA_PATH shall point to the lib directory
+                    where the Lua implementation of LuaX
+                    lbraries are installed
 
-      LUA_CPATH         LUA_CPATH shall point to the lib directory
-                        where LuaX shared libraries are installed
+      LUA_CPATH     LUA_CPATH shall point to the lib directory
+                    where LuaX shared libraries are installed
 
     PATH, LUA_PATH and LUA_CPATH can be set in .bashrc or .zshrc
     with « luax env ».
@@ -279,19 +276,19 @@ installation directory of `luax` or in `$PATH`.
 
 ``` bash
 # Compilation (standalone executable script for LuaX)
-$ luax -o executable main.lua lib1.lua lib2.lua
+$ luax compile -o executable main.lua lib1.lua lib2.lua
 $ ./executable      # equivalent to luax main.lua
 
 # Compilation for Lua
-$ luax -o executable -t lua main.lua lib1.lua lib2.lua
+$ luax compile -o executable -t lua main.lua lib1.lua lib2.lua
 $ ./executable      # equivalent to lua main.lua
 
 # Compilation for Pandoc Lua
-$ luax -o executable -t pandoc main.lua lib1.lua lib2.lua
+$ luax compile -o executable -t pandoc main.lua lib1.lua lib2.lua
 $ ./executable      # equivalent to pandoc lua main.lua
 
 # Available targets
-$ luax -t list
+$ luax compile -t list
 lua
 luax
 pandoc

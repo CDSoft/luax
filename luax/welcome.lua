@@ -18,23 +18,31 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
---@MAIN
+--@LIB
 
+local sys = require "sys"
 local F = require "F"
+local term = require "term"
 
-local function command(name, drop)
-    return function()
-        for _ = 1, drop or 1 do table.remove(arg, 1) end
-        require("luax_"..name)
+local I = (F.I % "%%{}")(_G){sys=sys}
+
+local welcome = I[===[
+ _               __  __  |  https://cdelord.fr/luax
+| |   _   _  __ _\ \/ /  |
+| |  | | | |/ _` |\  /   |  Version %{_LUAX_VERSION} (%{_LUAX_DATE})
+| |__| |_| | (_| |/  \   |  Powered by %{_VERSION}
+|_____\__,_|\__,_/_/\_\  |%{PANDOC_VERSION and "  and Pandoc "..tostring(PANDOC_VERSION) or ""}
+                         |  %{sys.os:cap()} %{sys.arch} %{sys.libc}
+]===]
+
+local welcome_already_printed = false
+
+local function print_welcome()
+    if welcome_already_printed then return end
+    if term.isatty() then
+        print(welcome)
     end
+    welcome_already_printed = true
 end
 
-return F.case(arg[1]) {
-    help    = command "help",
-    version = command "version",
-    [F.Nil] = command("run", 0),
-    run     = command "run",
-    compile = command "compile",
-    c       = command "compile",
-    env     = command "env",
-}()
+return print_welcome

@@ -683,6 +683,7 @@ rule "bundle" {
     implicit_in = {
         "$lua",
         "luax/luax_bundle.lua",
+        "luax/bundle.lua",
         "$luax_config_lua",
     },
 }
@@ -888,6 +889,7 @@ if cross_compilation then
         -- script used by luaxc to create the application bundle
         F{
             "luax/luax_bundle.lua",
+            "luax/bundle.lua",
         } : map(function(src)
             return build(luaxc_archive/src:basename()) { "cp", src }
         end),
@@ -1015,11 +1017,11 @@ rule "luax-bundle" {
         "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
         "LUAX_LIB=$lib",
-        "$lua luax/luax.lua -q $args -o $out $in",
+        "$lua luax/luax.lua compile -q $args -o $out $in",
     },
     implicit_in = {
         "$lua",
-        "luax/luax_bundle.lua",
+        "luax/luax.lua",
         "$lib/luax.lua",
         "$luax_config_lua",
     },
@@ -1067,7 +1069,7 @@ acc(test) {
         description = "TEST $out",
         command = {
             sanitizer_options,
-            "$luax -q -b -k test-1-key -o $test/test-luax $in",
+            "$luax compile -q -b -k test-1-key -o $test/test-luax $in",
             "&&",
             "PATH=$bin:$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
@@ -1090,7 +1092,7 @@ acc(test) {
             description = "TEST $out",
             command = {
                 sanitizer_options,
-                "$luaxc -q -b -k test-2-key -o $test/test-luaxc $in",
+                "$luaxc -q -b -k test-1-key -o $test/test-luaxc $in",
                 "&&",
                 "PATH=$bin:$tmp:$$PATH",
                 "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
@@ -1222,7 +1224,7 @@ acc(test) {
         command = {
             sanitizer_options,
             "eval \"$$($luax env)\";",
-            "$luax -q -b -k test-ext-1-key -t lua -o $test/ext-lua $in",
+            "$luax compile -q -b -k test-ext-1-key -t lua -o $test/ext-lua $in",
             "&&",
             "PATH=$bin:$tmp:$$PATH",
             "TARGET=lua",
@@ -1244,7 +1246,7 @@ acc(test) {
         command = {
             sanitizer_options,
             "eval \"$$($luax env)\";",
-            "$luax -q -b -k test-ext-3-key -t luax -o $test/ext-luax $in",
+            "$luax compile -q -b -k test-ext-3-key -t luax -o $test/ext-luax $in",
             "&&",
             "PATH=$bin:$tmp:$$PATH",
             "TARGET=luax",
@@ -1265,7 +1267,7 @@ acc(test) {
         command = {
             sanitizer_options,
             "eval \"$$($luax env)\";",
-            "$luax -q -b -k test-ext-4-key -t pandoc -o $test/ext-pandoc $in",
+            "$luax compile -q -b -k test-ext-4-key -t pandoc -o $test/ext-pandoc $in",
             "&&",
             "PATH=$bin:$tmp:$$PATH",
             "TARGET=pandoc",
