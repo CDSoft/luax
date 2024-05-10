@@ -1,18 +1,72 @@
 #!/usr/bin/env -S lua --
-_LUAX_VERSION = '5.3'
-_LUAX_DATE    = '2024-05-08'
+_LUAX_VERSION = '6.0'
+_LUAX_DATE    = '2024-05-10'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$bang:'..path)) end
-libs["luax_config"] = lib(".build/tmp/luax_config.lua", [[--@LIB
-local version = "5.3"
+libs["luax_config"] = lib(".build/tmp/luax_config.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--@LIB
+
+local F = require "F"
+local fs = require "fs"
+local sys = require "sys"
+local sh = require "sh"
+
+local version = "6.0"
+
+local zig_version = "0.12.0"
+local zig_path = F.case(sys.os) {
+    windows = function() return os.getenv"LOCALAPPDATA" end,
+    [F.Nil] = function() return os.getenv"HOME"/".local/var/cache" end,
+}()/"luax/zig"/zig_version
+local zig = zig_path/"zig"..sys.exe
+
+local function zig_install()
+    local archive = "zig-"..sys.os.."-"..sys.arch.."-"..zig_version..".tar.xz"
+    local url = "https://ziglang.org/download"/zig_version/archive
+    fs.mkdirs(zig_path)
+    fs.with_tmpdir(function(tmp)
+        assert(sh.run { "curl", "-fsSL", url, "-o", tmp/archive })
+        assert(sh.run { "tar", "xJf", tmp/archive, "-C", zig_path, "--strip-components", 1 })
+    end)
+end
+
 return {
     version = version,
-    date = "2024-05-08",
+    date = "2024-05-10",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
+    zig = {
+        version = zig_version,
+        path = zig_path,
+        zig = zig,
+        install = zig_install,
+    },
+    lua_init = F{
+        "LUA_INIT_" .. _VERSION:words()[2]:gsub("%.", "_"),
+        "LUA_INIT",
+    },
 }
-]])
+]=])
 libs["F"] = lib("libluax/F/F.lua", [==[--[[
 This file is part of luax.
 
@@ -11776,7 +11830,7 @@ end
 
 return target
 ]])
-libs["version"] = lib(".build/version", [=[return [[0.17.2]]]=])
+libs["version"] = lib(".build/version", [=[return [[0.18]]]=])
 require "F"
 require "crypt"
 require "fs"
