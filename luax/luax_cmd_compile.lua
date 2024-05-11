@@ -23,6 +23,7 @@ http://cdelord.fr/luax
 local fs = require "fs"
 local F = require "F"
 local sh = require "sh"
+local sys = require "sys"
 local cbor = require "cbor"
 
 local bundle = require "luax_bundle_lib"
@@ -54,6 +55,7 @@ local function print_targets()
             path and path:gsub("^"..os.getenv"HOME", "~") or exe,
             path and "" or " [NOT FOUND]"))
     end)
+    print("native")
     targets:foreach(function(target)
         local path = arg0:dirname():dirname():realpath()/"lib"/"luax-"..target.name..".lib"
         print(("%-20s%s%s"):format(
@@ -148,7 +150,7 @@ local function run_compiler()
     end
 
     local function print_size(current_output)
-        local size, unit = fs.stat(current_output).size, "bytes"
+        local size, unit = assert(fs.stat(current_output)).size, "bytes"
         if size > 64*1024 then size, unit = size//1024, "Kb" end
         log("Total", "%7d %s", size, unit)
     end
@@ -267,7 +269,9 @@ local function run_compiler()
         return
     end
 
-    local target_definition = targets:filter(function(t) return t.name==target end):head()
+    local target_definition = targets:filter(function(t)
+        return t.name==target or (t.name==sys.name and target=="native")
+    end):head()
     if target_definition then
         fs.with_tmpdir(function(tmp)
             compile_zig(tmp, output, target_definition)

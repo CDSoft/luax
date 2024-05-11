@@ -120,28 +120,32 @@ $ ninja test                  # run tests on the host
 
 ## Cross-compilation
 
-When compiled with Zig, ninja will compile `luax` and `luaxc`.
+`luax` can compile scripts and link them to precompiled libraries for
+all supported targets.
 
-`luaxc` is a Bash script containing precompiled libraries for all
-supported targets. This script can bundle Lua scripts and link them with
-the LuaX runtime of the specified target.
-
-E.g.: to produce an executable containing the LuaX runtime for
-`linux-x86_64` and `hello.lua`:
+E.g.: to produce an executable containing the LuaX runtime for the
+current host and `hello.lua`:
 
 ``` sh
-$ luaxc -t linux-x86_64-musl -o hello hello.lua
+$ luax compile -t native -o hello hello.lua
+```
+
+E.g.: to produce an executable containing the LuaX runtime for
+`linux-x86_64-musl` and `hello.lua`:
+
+``` sh
+$ luax compile -t linux-x86_64-musl -o hello hello.lua
 ```
 
 E.g.: to produce an executable with the compiled Lua bytecode with no
 debug information:
 
 ``` sh
-$ luaxc -s -t linux-x86_64-musl -o hello hello.lua
+$ luax compile -s -t linux-x86_64-musl -o hello hello.lua
 ```
 
-`luaxc` can compile Lua scripts to Lua bytecode. If scripts are large
-they will start quickly but will run as fast as the original Lua
+`luax compile` can compile Lua scripts to Lua bytecode. If scripts are
+large they will start quickly but will run as fast as the original Lua
 scripts.
 
 ## Precompiled LuaX binaries
@@ -292,6 +296,7 @@ $ luax compile -t list
 lua
 luax
 pandoc
+native
 linux-x86_64
 linux-x86_64-musl
 linux-aarch64

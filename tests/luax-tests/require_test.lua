@@ -43,7 +43,7 @@ stack traceback:
     end
 
     if os.getenv "LUAXC" then
-        expected_traceback = expected_traceback : gsub("%$test%-luax:", "$test-luaxc:")
+        expected_traceback = expected_traceback : gsub("%$test%-luax:", "$test-luaxc-"..os.getenv"TEST_CASE"..":")
     end
 
     startswith(traceback, expected_traceback)

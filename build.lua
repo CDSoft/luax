@@ -1008,6 +1008,10 @@ local libc = case(sys.os) {
     windows = "gnu",
 }
 
+local native_targets = targets
+    : filter(function(t) return t.os==sys.os and t.arch==sys.arch end)
+    : map(function(t) return t.name end)
+
 acc(test) {
 
 ---------------------------------------------------------------------
@@ -1035,29 +1039,33 @@ acc(test) {
     },
 
     cross_compilation and {
-        build "$test/test-1-luaxc_executable.ok" { test_sources,
-            description = "TEST $out",
-            command = {
-                sanitizer_options,
-                "$luax compile -q", "-t", sys.name, "-b -k test-1-key -o $test/test-luaxc $in",
-                "&&",
-                "PATH=$bin:$tmp:$$PATH",
-                "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
-                "LUA_CPATH='foo/?.so'",
-                "TEST_NUM=1",
-                "LUAX=$luax",
-                "LUAXC=$luaxc",
-                "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
-                "$test/test-luaxc Lua is great",
-                "&&",
-                "touch $out",
-            },
-            implicit_in = {
-                "$luax",
-                libraries,
-                imported_test_sources,
-            },
-        },
+        ({"native"} .. native_targets) : mapi(function(i, target_name)
+            local test_libc = ("-musl"):is_suffix_of(target_name) and "musl" or libc
+            local test_name = target_name=="native" and sys.name or target_name
+            return build("$test/test-1-"..i.."-luaxc_executable.ok") { test_sources,
+                description = "TEST $out",
+                command = {
+                    sanitizer_options,
+                    "$luax compile -q", "-t", target_name, "-b -k test-1-key", "-o", "$test/test-luaxc-"..i, "$in",
+                    "&&",
+                    "PATH=$bin:$tmp:$$PATH",
+                    "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
+                    "LUA_CPATH='foo/?.so'",
+                    "TEST_NUM=1", "TEST_CASE="..i,
+                    "LUAX=$luax",
+                    "LUAXC=$luaxc",
+                    "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..test_libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..test_name,
+                    "$test/test-luaxc-"..i, "Lua is great",
+                    "&&",
+                    "touch $out",
+                },
+                implicit_in = {
+                    "$luax",
+                    libraries,
+                    imported_test_sources,
+                },
+            }
+        end),
     } or {},
 
 }
