@@ -195,13 +195,13 @@ end
 case(compiler) {
 
     zig = function()
-        local cache = case(sys.os) {
-            linux   = os.getenv"HOME"/".local/var/cache/luax",
-            macos   = os.getenv"HOME"/".local/var/cache/luax",
-            windows = os.getenv"LOCALAPPDATA"/"luax",
+        var "zig" {
+            case(sys.os) {
+                linux   = os.getenv"HOME"/".local/opt",
+                macos   = os.getenv"HOME"/".local/opt",
+                windows = os.getenv"LOCALAPPDATA",
+            } / "zig" / zig_version / "zig"
         }
-        var "zig"       (cache / "zig" / zig_version / "zig")
-        var "zig_cache" (cache / "zig" / zig_version / "cache")
 
         build "$zig" { "tools/install_zig.sh",
             description = {"GET zig", zig_version},
@@ -211,20 +211,11 @@ case(compiler) {
 
         compiler_deps = { "$zig" }
         local function zig_rules(target)
-            local cache_dir = F{
-                target.name,
-                mode,
-                optional(san) "sanitizers",
-            }:flatten():str"-"
-            local zig_cache = {
-                "ZIG_GLOBAL_CACHE_DIR=${zig_cache}"/cache_dir.."-global",
-                "ZIG_LOCAL_CACHE_DIR=${zig_cache}"/cache_dir.."-local",
-            }
             local target_opt = zig_target(target)
 
-            var("cc-"..target.name) { zig_cache, "$zig cc", target_opt }
-            var("ar-"..target.name) { zig_cache, "$zig ar" }
-            var("ld-"..target.name) { zig_cache, "$zig cc", target_opt }
+            var("cc-"..target.name) { "$zig cc", target_opt }
+            var("ar-"..target.name) { "$zig ar" }
+            var("ld-"..target.name) { "$zig cc", target_opt }
         end
         targets:foreach(zig_rules)
     end,
