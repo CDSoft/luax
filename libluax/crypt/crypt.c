@@ -612,6 +612,15 @@ static void base64_encode(const char *map, const unsigned char *plain, size_t n_
             buf[j++] = map[(plain[i+1] & 0x0f) << 2];
             buf[j++] = '=';
             break;
+        case 0:
+        default:
+            /* i + 2 >= n_in
+             * 3 cases:
+             *      i+2 == n_in     => n_in-i == 2  => case 2
+             *      i+2 == n_in+1   => n_in-i == 1  => case 1
+             *      i+2 == n_in+2   => n_in-i == 0  => nothing more to add
+             */
+            break;
     }
     luaL_addsize(B, j);
 }
