@@ -826,7 +826,7 @@ targets:foreach(function(target)
                     },
                 }
             end)
-    binary[target.name] = build("$dist"/target.name/"bin"/appname..target.exe) { ld[target.name],
+    binary[target.name] = build("$tmp"/target.name/"bin"/appname..target.exe) { ld[target.name],
         main_luax[target.name],
         main_libluax[target.name],
         liblua[target.name],
@@ -835,7 +835,7 @@ targets:foreach(function(target)
     }
 
     shared_library[target.name] = target.libc~="musl" and not san and
-        build("$dist"/target.name/"lib/libluax"..target.so) { so[target.name],
+        build("$tmp"/target.name/"lib/libluax"..target.so) { so[target.name],
             main_libluax[target.name],
             case(target.os) {
                 linux   = {},
@@ -849,7 +849,7 @@ end)
 
 rule "cp" {
     description = "CP $out",
-    command = "cp -f $in $out",
+    command = "cp -d --preserve=mode -f $in $out",
 }
 
 var "luax" ("$bin"/binary[sys.name]:basename())
@@ -1321,17 +1321,14 @@ local function no_arch(name)
 end
 
 local dist = targets : map(function(target)
+    local cp_to = F.curry(function(dest, file)
+        return build("$dist"/target.name/dest/file:basename()) { "cp", file }
+    end)
+    local bin = {binary[target.name]}
+    local lib = shared_library[target.name] and {shared_library[target.name]} or {}
     return {
-        binary[target.name],
-        shared_library[target.name] or {},
-        binaries:filter(no_arch)
-        : map(function(file)
-            return build("$dist"/target.name/"bin"/file:basename()) { "cp", file }
-        end),
-        libraries:filter(no_arch)
-        : map(function(file)
-            return build("$dist"/target.name/"lib"/file:basename()) { "cp", file }
-        end),
+        (bin .. binaries:filter(no_arch)) : map(cp_to"bin"),
+        (lib .. libraries:filter(no_arch)) : map(cp_to"lib"),
     }
 end)
 
