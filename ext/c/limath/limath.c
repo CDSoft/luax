@@ -2,7 +2,7 @@
 * limath.c
 * big-integer library for Lua based on imath
 * Luiz Henrique de Figueiredo <lhf@tecgraf.puc-rio.br>
-* 03 Jun 2019 08:43:09
+* 31 Mar 2024 19:07:43
 * This code is hereby placed in the public domain and also under the MIT license
 */
 
@@ -15,13 +15,13 @@
 #include "mycompat.h"
 
 #define MYNAME		"imath"
-#define MYVERSION	MYNAME " library for " LUA_VERSION " / Jul 2019"
+#define MYVERSION	MYNAME " library for " LUA_VERSION " / Mar 2024"
 #define MYTYPE		MYNAME " biginteger"
 
 static int report(lua_State *L, mp_result rc, int n)
 {
  if (rc!=MP_OK)
-  return luaL_error(L,"(imath) %s",mp_error_string(rc));
+  return luaL_error(L,"(%s) %s",MYNAME,mp_error_string(rc));
  else
   return n;
 }
@@ -92,14 +92,11 @@ static int Ltext(lua_State *L)			/** text(t) */
 
 static int Ltostring(lua_State *L)		/** tostring(x,[base]) */
 {
- int l;
- char *s;
  mp_int a=Pget(L,1);
  mp_size b=Pgetbase(L,2);
  mp_result rc=mp_int_string_len(a,b);
- if (rc<0) return report(L,rc,0);
- l=rc;
- s=malloc(l);
+ int l=rc;
+ char *s=malloc(l);
  if (s==NULL) return 0;
  rc=mp_int_to_string(a,b,s,l);
  if (rc==MP_OK) lua_pushstring(L,s);
@@ -109,13 +106,10 @@ static int Ltostring(lua_State *L)		/** tostring(x,[base]) */
 
 static int Ltotext(lua_State *L)		/** totext(x) */
 {
- int l;
- char *s;
  mp_int a=Pget(L,1);
  mp_result rc=mp_int_unsigned_len(a);
- if (rc<0) return report(L,rc,0);
- l=rc;
- s=malloc(l);
+ int l=rc;
+ char *s=malloc(l);
  if (s==NULL) return 0;
  rc=mp_int_to_unsigned(a,(unsigned char*)s,l);
  if (rc==MP_OK) lua_pushlstring(L,s,l);
