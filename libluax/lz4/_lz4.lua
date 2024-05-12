@@ -36,7 +36,7 @@ function lz4.lz4(s)
             or n <=  256*1024 and "-B5"
             or n <= 1024*1024 and "-B6"
             or                    "-B7",
-            "-BD -3 --frame-crc -f -", tmp)(s))
+            "-BD -9 --frame-crc -f -", tmp)(s))
         return fs.read_bin(tmp)
     end)
 end

@@ -76,7 +76,7 @@ static const char *lz4_compress(const char *src, const size_t src_len, luaL_Buff
             .dictID = 0U,
             .blockChecksumFlag = LZ4F_noBlockChecksum,
         },
-        .compressionLevel = LZ4HC_CLEVEL_MIN,
+        .compressionLevel = LZ4HC_CLEVEL_DEFAULT,
         .autoFlush = 0U,
         .favorDecSpeed = 0U,
     };
