@@ -621,7 +621,7 @@ var "lz4" "$tmp/lz4"
 build "$lz4" { ld.host,
     ls "ext/c/lz4/**.c"
     : map(function(src)
-        return build("$tmp/obj/lz4"/src:splitext()..".o") { "cc-host", src }
+        return build("$tmp/obj/lz4"/src:splitext()..".o") { cc.host, src }
     end),
 }
 
