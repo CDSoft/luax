@@ -1242,6 +1242,7 @@ if has_pandoc then
 local markdown_sources = ls "doc/src/*.md"
 
 rule "lsvg" {
+    description = "LSVG $out",
     command = "$luax tools/lsvg.lua $in -o $out --MF $depfile -- $args",
     depfile = "$builddir/tmp/lsvg/$out.d",
     implicit_in = {
