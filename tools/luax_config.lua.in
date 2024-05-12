@@ -37,8 +37,8 @@ local version = "@(VERSION)"
 local zig_version = "@(ZIG_VERSION)"
 local zig_path = F.case(sys.os) {
     windows = function() return os.getenv"LOCALAPPDATA" end,
-    [F.Nil] = function() return os.getenv"HOME"/".local/var/cache" end,
-}()/"luax/zig"/zig_version
+    [F.Nil] = function() return os.getenv"HOME"/".local/opt" end,
+}()/"zig"/zig_version
 local zig = zig_path/"zig"..sys.exe
 
 local function zig_install()
