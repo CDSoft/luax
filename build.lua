@@ -864,7 +864,12 @@ if cross_compilation then
         local files = {
 
             -- Lua headers
-            ls "lua/*.h" : map(function(header)
+            F {
+                "lua/lua.h",
+                "lua/luaconf.h",
+                "lua/lauxlib.h",
+            }
+            : map(function(header)
                 return build(luaxlib/"lua"/header:basename()) { "cp", header }
             end),
 
@@ -879,8 +884,8 @@ if cross_compilation then
                 if target.os == "linux" then
                     return build(luaxlib/"luax.o") { partial_ld[target.name], libs }
                 else
-                    return libs : map(function(arch)
-                        return build(luaxlib/arch:basename()) { "cp", arch }
+                    return libs : map(function(lib)
+                        return build(luaxlib/lib:basename()) { "cp", lib }
                     end)
                 end
             end)(),
