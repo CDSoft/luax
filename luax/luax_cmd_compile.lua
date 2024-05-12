@@ -31,6 +31,12 @@ local help = require "luax_help"
 local welcome = require "luax_welcome"
 local targets = require "targets"
 
+local lua_interpreters = F{
+    ["luax"]   = { interpreter="luax",   scripts={} },
+    ["lua"]    = { interpreter="lua",    scripts={"luax.lib"} },
+    ["pandoc"] = { interpreter="pandoc", scripts={"luax.lib"} },
+}
+
 local arg0 = arg[0]
 
 local function findpath(name)
@@ -39,26 +45,26 @@ local function findpath(name)
     return full_path and fs.realpath(full_path) or name
 end
 
-local lua_interpreters = F{
-    ["luax"]   = { interpreter="luax",   scripts={} },
-    ["lua"]    = { interpreter="lua",    scripts={"luax.lib"} },
-    ["pandoc"] = { interpreter="pandoc", scripts={"luax.lib"} },
-}
+local function findscript(script_name)
+    return (  os.getenv "LUAX_LIB"
+           or (findpath(arg0):dirname():dirname() / "lib")
+           ) / script_name
+end
 
 local function print_targets()
     lua_interpreters:items():foreach(function(name_def)
         local name, _ = F.unpack(name_def)
         local exe = name
         local path = fs.findpath(exe)
-        print(("%-20s%s%s"):format(
+        print(("%-22s%s%s"):format(
             name,
             path and path:gsub("^"..os.getenv"HOME", "~") or exe,
             path and "" or " [NOT FOUND]"))
     end)
     print("native")
     targets:foreach(function(target)
-        local path = arg0:dirname():dirname():realpath()/"lib"/"luax-"..target.name..".lib"
-        print(("%-20s%s%s"):format(
+        local path = findscript("luax-"..target.name..".lib")
+        print(("%-22s%s%s"):format(
             target.name,
             path:gsub("^"..os.getenv"HOME", "~"),
             fs.is_file(path) and "" or " [NOT FOUND]"))
@@ -153,12 +159,6 @@ local function run_compiler()
         local size, unit = assert(fs.stat(current_output)).size, "bytes"
         if size > 64*1024 then size, unit = size//1024, "Kb" end
         log("Total", "%7d %s", size, unit)
-    end
-
-    local function findscript(script_name)
-        return (  os.getenv "LUAX_LIB"
-               or (findpath(arg0):dirname():dirname() / "lib")
-               ) / script_name
     end
 
     -- Prepare scripts for a Lua / Pandoc Lua target
