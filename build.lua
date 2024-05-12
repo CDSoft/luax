@@ -857,59 +857,43 @@ end
 
 if cross_compilation then
 
-    targets : foreach(function(target)
+    rule "cbor-ar" {
+        description = "CBOR-AR $out",
+        command = "$luax tools/cbor-ar.lua $in -o $out",
+        implicit_in = {
+            "$luax",
+            "$lz4",
+            "tools/cbor-ar.lua",
+        },
+    }
 
-        local luaxlib = "$tmp/luax-lib"/target.name
+    acc(libraries) {
+        targets : map(function(target)
+            return build("$lib/luax-"..target.name..".lib") { "cbor-ar",
 
-        local files = {
-
-            -- Lua headers
-            F {
+                -- Lua headers
                 "lua/lua.h",
                 "lua/luaconf.h",
                 "lua/lauxlib.h",
+
+                -- precompiled luax libraries
+                (function()
+                    local libs = F{
+                        "$tmp"/target.name/"lib/liblua.a",
+                        "$tmp"/target.name/"lib/libluax.a",
+                        "$tmp"/target.name/"obj/luax/libluax.o",
+                        "$tmp"/target.name/"obj/luax/luax.o",
+                    }
+                    if target.os == "linux" then
+                        return build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs }
+                    else
+                        return libs
+                    end
+                end)(),
+
             }
-            : map(function(header)
-                return build(luaxlib/"lua"/header:basename()) { "cp", header }
-            end),
-
-            -- precompiled luax libraries
-            (function()
-                local libs = F{
-                    "$tmp"/target.name/"lib/liblua.a",
-                    "$tmp"/target.name/"lib/libluax.a",
-                    "$tmp"/target.name/"obj/luax/libluax.o",
-                    "$tmp"/target.name/"obj/luax/luax.o",
-                }
-                if target.os == "linux" then
-                    return build(luaxlib/"luax.o") { partial_ld[target.name], libs }
-                else
-                    return libs : map(function(lib)
-                        return build(luaxlib/lib:basename()) { "cp", lib }
-                    end)
-                end
-            end)(),
-
-        }
-
-        acc(libraries) {
-            build("$lib/luax-"..target.name..".lib") { files,
-                description = "CBOR-AR $out",
-                command = {
-                    "$luax tools/cbor-ar.lua",
-                    luaxlib,
-                    "-o $out",
-                },
-                implicit_in = {
-                    "$luax",
-                    "$lz4",
-                    "$luax tools/cbor-ar.lua",
-                    files,
-                }
-            },
-        }
-
-    end)
+        end)
+    }
 
 end
 

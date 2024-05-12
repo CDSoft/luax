@@ -19,30 +19,20 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
--- Archive a directory to a CBOR file
+-- Archive files to a CBOR/LZ4 file
 
 local F = require "F"
 local cbor = require "cbor"
 local fs = require "fs"
 
-local function parse_args(args)
-    local parser = require "argparse"()
-        : name "cbor-ar"
-    parser : argument "directory"
-        : description "Directory to archive"
-        : args "1"
-        : target "directory"
-    parser : option "-o"
-        : description "Output file"
-        : argname "output"
-        : target "output"
-    return parser:parse(args)
-end
+local args = (function()
+    local parser = require "argparse"() : name "cbor-ar"
+    parser : argument "inputs" : description "Files to archive" : args "*" : target "inputs"
+    parser : option "-o" : description "Output file" : argname "output" : target "output"
+    return parser:parse(arg)
+end)()
 
-local args = parse_args(arg)
-
-local files = fs.ls(args.directory/"**")
-: filter(fs.is_file)
+local files = F(args.inputs)
 : map(function(name)
     local content = assert(fs.read_bin(name))
     return {name:basename(), content}
