@@ -250,7 +250,7 @@ local function run_compiler()
             F.case(target_definition.os) {
                 linux   = "-flto=thin",
                 macos   = {},
-                windows = {"-flto=thin", "-lws2_32 -ladvapi32"},
+                windows = {"-flto=thin", "-lws2_32 -ladvapi32 -lshlwapi"},
             },
             F.case(target_definition.libc) {
                 gnu  = "-rdynamic",
