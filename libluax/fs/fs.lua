@@ -249,54 +249,6 @@ end
 
 --[[@@@
 ```lua
-fs.ls(path)
-```
-returns a list of file names.
-`path` can be a directory name or a simple file pattern.
-Patterns can contain jokers (`*` to match any character and `**` to search files recursively).
-
-Examples:
-
-- `fs.ls "src"`: list all files/directories in `src`
-- `fs.ls "src/*.c"`: list all C files in `src`
-- `fs.ls "src/**.c"`: list all C files in `src` and its subdirectories
-@@@]]
-
-function fs.ls(dir)
-    dir = dir or "."
-    local base = dir:basename()
-    local path = dir:dirname()
-    local recursive = base:match"%*%*"
-    local pattern = base:match"%*" and base : gsub("([.+-])", "%%%0")
-                                            : gsub("%*%*", "*")
-                                            : gsub("%*", ".*")
-
-    local useless_path_prefix = "^%."..fs.sep
-    local function clean_path(fullpath)
-        return fullpath:gsub(useless_path_prefix, "")
-    end
-
-    if recursive then
-        return fs.walk(path)
-            : filter(function(name) return name:basename():match("^"..pattern.."$") end)
-            : map(clean_path)
-            : sort()
-    end
-    if pattern then
-        return fs.dir(path)
-            : filter(function(name) return name:match("^"..pattern.."$") end)
-            : map(F.partial(fs.join, path))
-            : map(clean_path)
-            : sort()
-    end
-    return fs.dir(dir)
-        : map(F.partial(fs.join, dir))
-        : map(clean_path)
-        : sort()
-end
-
---[[@@@
-```lua
 fs.with_tmpfile(f)
 ```
 calls `f(tmp)` where `tmp` is the name of a temporary file.

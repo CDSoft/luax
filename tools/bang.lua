@@ -1,6 +1,6 @@
 #!/usr/bin/env -S lua --
-_LUAX_VERSION = '6.0'
-_LUAX_DATE    = '2024-05-10'
+_LUAX_VERSION = '6.0.7'
+_LUAX_DATE    = '2024-05-13'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$bang:'..path)) end
@@ -31,13 +31,13 @@ local fs = require "fs"
 local sys = require "sys"
 local sh = require "sh"
 
-local version = "6.0"
+local version = "6.0.7"
 
 local zig_version = "0.12.0"
 local zig_path = F.case(sys.os) {
     windows = function() return os.getenv"LOCALAPPDATA" end,
-    [F.Nil] = function() return os.getenv"HOME"/".local/var/cache" end,
-}()/"luax/zig"/zig_version
+    [F.Nil] = function() return os.getenv"HOME"/".local/opt" end,
+}()/"zig"/zig_version
 local zig = zig_path/"zig"..sys.exe
 
 local function zig_install()
@@ -52,7 +52,7 @@ end
 
 return {
     version = version,
-    date = "2024-05-10",
+    date = "2024-05-13",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
     zig = {
@@ -4995,54 +4995,6 @@ end
 
 --[[@@@
 ```lua
-fs.ls(path)
-```
-returns a list of file names.
-`path` can be a directory name or a simple file pattern.
-Patterns can contain jokers (`*` to match any character and `**` to search files recursively).
-
-Examples:
-
-- `fs.ls "src"`: list all files/directories in `src`
-- `fs.ls "src/*.c"`: list all C files in `src`
-- `fs.ls "src/**.c"`: list all C files in `src` and its subdirectories
-@@@]]
-
-function fs.ls(dir)
-    dir = dir or "."
-    local base = dir:basename()
-    local path = dir:dirname()
-    local recursive = base:match"%*%*"
-    local pattern = base:match"%*" and base : gsub("([.+-])", "%%%0")
-                                            : gsub("%*%*", "*")
-                                            : gsub("%*", ".*")
-
-    local useless_path_prefix = "^%."..fs.sep
-    local function clean_path(fullpath)
-        return fullpath:gsub(useless_path_prefix, "")
-    end
-
-    if recursive then
-        return fs.walk(path)
-            : filter(function(name) return name:basename():match("^"..pattern.."$") end)
-            : map(clean_path)
-            : sort()
-    end
-    if pattern then
-        return fs.dir(path)
-            : filter(function(name) return name:match("^"..pattern.."$") end)
-            : map(F.partial(fs.join, path))
-            : map(clean_path)
-            : sort()
-    end
-    return fs.dir(dir)
-        : map(F.partial(fs.join, dir))
-        : map(clean_path)
-        : sort()
-end
-
---[[@@@
-```lua
 fs.with_tmpfile(f)
 ```
 calls `f(tmp)` where `tmp` is the name of a temporary file.
@@ -5482,6 +5434,72 @@ if pandoc and pandoc.system then
 else
     function fs.mkdirs(path)
         return sh.run("mkdir", "-p", path)
+    end
+end
+
+if sys.os == "windows" then
+    function fs.ls(dir)
+        dir = dir or "."
+        local base = dir:basename()
+        local path = dir:dirname()
+        local recursive = base:match"%*%*"
+        local pattern = base:match"%*" and base:gsub("%*+", "*")
+
+        local useless_path_prefix = "^%."..fs.sep
+        local function clean_path(fullpath)
+            return fullpath:gsub(useless_path_prefix, "")
+        end
+
+        if recursive then
+            return sh("dir /b /s", path/pattern)
+                : lines()
+                : map(clean_path)
+                : sort()
+        end
+        if pattern then
+            local res= sh("dir /b", path/pattern)
+                : lines()
+                : map(clean_path)
+                : sort()
+            return res
+        end
+        return sh("dir /b", dir)
+            : lines()
+            : map(clean_path)
+            : sort()
+    end
+else
+    function fs.ls(dir)
+        dir = dir or "."
+        local base = dir:basename()
+        local path = dir:dirname()
+        local recursive = base:match"%*%*"
+        local pattern = base:match"%*" and base:gsub("%*+", "*")
+
+        local useless_path_prefix = "^%."..fs.sep
+        local function clean_path(fullpath)
+            return fullpath:gsub(useless_path_prefix, "")
+        end
+
+        if recursive then
+            return sh("find", path, ("-name %q"):format(pattern))
+                : lines()
+                : filter(F.partial(F.op.ne, path))
+                : map(clean_path)
+                : sort()
+        end
+        if pattern then
+            local res= sh("ls -d", path/pattern)
+                : lines()
+                : map(clean_path)
+                : sort()
+            return res
+        end
+        return sh("ls", dir)
+            : lines()
+            : map(F.partial(fs.join, dir))
+            : map(clean_path)
+            : sort()
     end
 end
 
@@ -6125,7 +6143,7 @@ function lz4.lz4(s)
             or n <=  256*1024 and "-B5"
             or n <= 1024*1024 and "-B6"
             or                    "-B7",
-            "-BD -3 --frame-crc -f -", tmp)(s))
+            "-BD -9 --frame-crc -f -", tmp)(s))
         return fs.read_bin(tmp)
     end)
 end
@@ -11830,7 +11848,7 @@ end
 
 return target
 ]])
-libs["version"] = lib(".build/version", [=[return [[0.18]]]=])
+libs["version"] = lib(".build/version", [=[return [[0.18.1]]]=])
 require "F"
 require "crypt"
 require "fs"

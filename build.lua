@@ -475,7 +475,7 @@ targets:foreach(function(target)
         case(target.os) {
             linux   = {},
             macos   = {},
-            windows = "-lws2_32 -ladvapi32",
+            windows = "-lws2_32 -ladvapi32 -lshlwapi",
         },
     }
     local target_so_flags = {

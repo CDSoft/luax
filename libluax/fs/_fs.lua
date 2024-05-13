@@ -243,4 +243,70 @@ else
     end
 end
 
+if sys.os == "windows" then
+    function fs.ls(dir)
+        dir = dir or "."
+        local base = dir:basename()
+        local path = dir:dirname()
+        local recursive = base:match"%*%*"
+        local pattern = base:match"%*" and base:gsub("%*+", "*")
+
+        local useless_path_prefix = "^%."..fs.sep
+        local function clean_path(fullpath)
+            return fullpath:gsub(useless_path_prefix, "")
+        end
+
+        if recursive then
+            return sh("dir /b /s", path/pattern)
+                : lines()
+                : map(clean_path)
+                : sort()
+        end
+        if pattern then
+            local res= sh("dir /b", path/pattern)
+                : lines()
+                : map(clean_path)
+                : sort()
+            return res
+        end
+        return sh("dir /b", dir)
+            : lines()
+            : map(clean_path)
+            : sort()
+    end
+else
+    function fs.ls(dir)
+        dir = dir or "."
+        local base = dir:basename()
+        local path = dir:dirname()
+        local recursive = base:match"%*%*"
+        local pattern = base:match"%*" and base:gsub("%*+", "*")
+
+        local useless_path_prefix = "^%."..fs.sep
+        local function clean_path(fullpath)
+            return fullpath:gsub(useless_path_prefix, "")
+        end
+
+        if recursive then
+            return sh("find", path, ("-name %q"):format(pattern))
+                : lines()
+                : filter(F.partial(F.op.ne, path))
+                : map(clean_path)
+                : sort()
+        end
+        if pattern then
+            local res= sh("ls -d", path/pattern)
+                : lines()
+                : map(clean_path)
+                : sort()
+            return res
+        end
+        return sh("ls", dir)
+            : lines()
+            : map(F.partial(fs.join, dir))
+            : map(clean_path)
+            : sort()
+    end
+end
+
 return fs

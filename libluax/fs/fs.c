@@ -36,9 +36,11 @@ local fs = require "fs"
 #include "tools.h"
 
 #ifdef _WIN32
-#include <windows.h>
+#include <shlwapi.h>
 #include <stdint.h>
+#include <windows.h>
 #else
+#include <fnmatch.h>
 #include <glob.h>
 #endif
 
@@ -131,6 +133,171 @@ static int fs_dir(lua_State *L)
     {
         return luax_push_result_or_errno(L, 0, path);
     }
+}
+
+#pragma GCC diagnostic ignored "-Wcomment"
+#pragma clang diagnostic ignored "-Wcomment"
+/*[[@@@
+```lua
+fs.ls(path)
+```
+returns a list of file names.
+`path` can be a directory name or a simple file pattern.
+Patterns can contain jokers (`*` to match any character and `**` to search files recursively).
+
+Examples:
+
+- `fs.ls "src"`: list all files/directories in `src`
+- `fs.ls "src/*.c"`: list all C files in `src`
+- `fs.ls "src/**.c"`: list all C files in `src` and its subdirectories
+@@@*/
+
+#ifdef _WIN32
+
+static inline int fnmatch(const char *pattern, const char *name, int flags __attribute__((unused)))
+{
+    return PathMatchSpecA(name, pattern) ? 0 : 1;
+}
+
+#endif
+
+static void ls(lua_State *L, const char *dir, const char *base, bool dotted, bool recursive, int *size)
+{
+    const bool cwd = dir[0] == '.' && dir[1] == '\0';
+    DIR *d = opendir(dir);
+    if (d) {
+        struct dirent *file;
+        while ((file = readdir(d)) != NULL) {
+            if (strcmp(file->d_name, ".") == 0) continue;
+            if (strcmp(file->d_name, "..") == 0) continue;
+            if (file->d_name[0] == '.' && !dotted) continue;
+            if (fnmatch(base, file->d_name, 0) == 0) {
+                if (cwd) {
+                    lua_pushstring(L, file->d_name);
+                } else {
+                    luaL_Buffer B;
+                    luaL_buffinit(L, &B);
+                    luaL_addstring(&B, dir);
+                    luaL_addstring(&B, LUA_DIRSEP);
+                    luaL_addstring(&B, file->d_name);
+                    luaL_pushresult(&B);
+                }
+                (*size)++;
+                lua_rawseti(L, -2, *size);
+            }
+            if (recursive) {
+                bool is_dir;
+#ifdef _WIN32
+                struct stat buf;
+                if (stat(file->d_name, &buf) == 0) {
+                    is_dir = S_ISDIR(buf.st_mode);
+                } else {
+                    is_dir = false;
+                }
+#else
+                switch (file->d_type) {
+                    case DT_DIR:
+                        is_dir = true;
+                        break;
+                    case DT_LNK:
+                    {
+                        struct stat buf;
+                        if (stat(file->d_name, &buf) == 0) {
+                            is_dir = S_ISDIR(buf.st_mode);
+                        } else {
+                            is_dir = false;
+                        }
+                        break;
+                    }
+                    default:
+                        is_dir = false;
+                        break;
+                }
+#endif
+                if (is_dir) {
+                    if (cwd) {
+                        ls(L, file->d_name, base, dotted, recursive, size);
+                    } else {
+                        char subdir[FS_PATHSIZE];
+                        strncpy(subdir, dir, FS_PATHSIZE-1);
+                        strncat(subdir, LUA_DIRSEP, FS_PATHSIZE-1);
+                        strncat(subdir, file->d_name, FS_PATHSIZE-1);
+                        ls(L, subdir, base, dotted, recursive, size);
+                    }
+                }
+            }
+        }
+        closedir(d);
+    }
+}
+
+static int fs_ls(lua_State *L)
+{
+    const char *path;
+    if (lua_isstring(L, 1)) {
+        path = luaL_checkstring(L, 1);
+    } else if (lua_isnoneornil(L, 1)) {
+        path = "."LUA_DIRSEP"*";
+    } else {
+        return luax_pusherror(L, "bad argument #1 to ls (none, nil or string expected)");
+    }
+
+    bool dotted;
+    if (lua_isboolean(L, 2)) {
+        dotted = lua_toboolean(L, 2);
+    } else if (lua_isnoneornil(L, 2)) {
+        dotted = false;
+    } else {
+        return luax_pusherror(L, "bad argument #2 to ls (none, nil or boolean expected)");
+    }
+
+    char path1[FS_PATHSIZE];
+    char path2[FS_PATHSIZE];
+    strncpy(path1, path, FS_PATHSIZE-1);
+    strncpy(path2, path, FS_PATHSIZE-1);
+
+    char dir[FS_PATHSIZE];
+    char base[FS_PATHSIZE];
+    strncpy(dir, dirname(path1), FS_PATHSIZE-1);
+    strncpy(base, basename(path2), FS_PATHSIZE-1);
+
+    if (strncmp(base, ".", FS_PATHSIZE-1) == 0) {
+        strncpy(base, "*", FS_PATHSIZE-1);
+    }
+
+    const int base_len = (int)strnlen(base, FS_PATHSIZE-1);
+
+    bool recursive = false;
+    for (int i = 0; i < base_len-1; i++) {
+        if (base[i] == '*' && base[i+1] == '*') {
+            recursive = true;
+        }
+    }
+
+    bool pattern = false;
+    for (int i = 0; i < base_len; i++) {
+        if (base[i] == '*' || base[i] == '?') {
+            pattern = true;
+        }
+    }
+
+    if (!pattern) {
+        /* no pattern in base => list all files in dir/base */
+        strncat(dir, LUA_DIRSEP, FS_PATHSIZE-1);
+        strncat(dir, base, FS_PATHSIZE-1);
+        strncpy(base, "*", FS_PATHSIZE-1);
+    }
+
+    lua_newtable(L);                        /* stack: list */
+    int size = 0;
+    ls(L, dir, base, dotted, recursive, &size);
+    lua_getglobal(L, "table");              /* stack: list "table" */
+    lua_getfield(L, -1, "sort");            /* stack: list "table" table.sort */
+    lua_remove(L, -2);                      /* stack: list table.sort */
+    lua_pushvalue(L, -2);                   /* stack: list table.sort list */
+    lua_call(L, 1, 0);                      /* stack: list */
+    set_F_metatable(L);
+    return 1;
 }
 
 /*@@@
@@ -717,6 +884,7 @@ static const luaL_Reg fslib[] =
     {"getcwd",      fs_getcwd},
     {"chdir",       fs_chdir},
     {"dir",         fs_dir},
+    {"ls",          fs_ls},
     {"glob",        fs_glob},
     {"remove",      fs_remove},
     {"rename",      fs_rename},

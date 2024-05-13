@@ -29,6 +29,20 @@ returns the list of files and directories in `path` (the default path is
 the current directory).
 
 ``` lua
+fs.ls(path)
+```
+
+returns a list of file names. `path` can be a directory name or a simple
+file pattern. Patterns can contain jokers (`*` to match any character
+and `**` to search files recursively).
+
+Examples:
+
+- `fs.ls "src"`: list all files/directories in `src`
+- `fs.ls "src/*.c"`: list all C files in `src`
+- `fs.ls "src/**.c"`: list all C files in `src` and its subdirectories
+
+``` lua
 fs.glob(pattern)
 ```
 
@@ -258,20 +272,6 @@ Options:
   object returned by `fs.stat`) and returns a boolean (to continue or
   not walking recursively through the subdirectories) and the value to
   add to the list.
-
-``` lua
-fs.ls(path)
-```
-
-returns a list of file names. `path` can be a directory name or a simple
-file pattern. Patterns can contain jokers (`*` to match any character
-and `**` to search files recursively).
-
-Examples:
-
-- `fs.ls "src"`: list all files/directories in `src`
-- `fs.ls "src/*.c"`: list all C files in `src`
-- `fs.ls "src/**.c"`: list all C files in `src` and its subdirectories
 
 ``` lua
 fs.with_tmpfile(f)
