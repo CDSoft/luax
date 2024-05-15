@@ -1,6 +1,6 @@
 #!/usr/bin/env -S lua --
-_LUAX_VERSION = '6.0.7'
-_LUAX_DATE    = '2024-05-13'
+_LUAX_VERSION = '6.0.9'
+_LUAX_DATE    = '2024-05-15'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$lsvg:'..path)) end
@@ -31,7 +31,7 @@ local fs = require "fs"
 local sys = require "sys"
 local sh = require "sh"
 
-local version = "6.0.7"
+local version = "6.0.9"
 
 local zig_version = "0.12.0"
 local zig_path = F.case(sys.os) {
@@ -52,7 +52,7 @@ end
 
 return {
     version = version,
-    date = "2024-05-13",
+    date = "2024-05-15",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
     zig = {
@@ -4859,21 +4859,6 @@ end
 
 --[[@@@
 ```lua
-fs.mkdirs(path)
-```
-creates a new directory `path` and its parent directories.
-@@@]]
-
-if not fs.mkdirs then
-    function fs.mkdirs(path)
-        if path == "" or fs.stat(path) then return end
-        fs.mkdirs(fs.dirname(path))
-        fs.mkdir(path)
-    end
-end
-
---[[@@@
-```lua
 fs.mv(old_name, new_name)
 ```
 alias for `fs.rename(old_name, new_name)`.
@@ -5432,8 +5417,14 @@ if pandoc and pandoc.system then
         return pandoc.system.make_directory(path, true)
     end
 else
-    function fs.mkdirs(path)
-        return sh.run("mkdir", "-p", path)
+    if sys.os == "windows" then
+        function fs.mkdirs(path)
+            return sh.run("mkdir", path)
+        end
+    else
+        function fs.mkdirs(path)
+            return sh.run("mkdir", "-p", path)
+        end
     end
 end
 
@@ -5450,20 +5441,15 @@ if sys.os == "windows" then
             return fullpath:gsub(useless_path_prefix, "")
         end
 
+        local files
         if recursive then
-            return sh("dir /b /s", path/pattern)
-                : lines()
-                : map(clean_path)
-                : sort()
+            files = sh("dir /b /s", path/pattern)
+        elseif pattern then
+            files = sh("dir /b", path/pattern)
+        else
+            files = sh("dir /b", dir)
         end
-        if pattern then
-            local res= sh("dir /b", path/pattern)
-                : lines()
-                : map(clean_path)
-                : sort()
-            return res
-        end
-        return sh("dir /b", dir)
+        return files
             : lines()
             : map(clean_path)
             : sort()
@@ -5481,23 +5467,20 @@ else
             return fullpath:gsub(useless_path_prefix, "")
         end
 
+        local files
         if recursive then
-            return sh("find", path, ("-name %q"):format(pattern))
+            files = sh("find", path, ("-name %q"):format(pattern))
                 : lines()
                 : filter(F.partial(F.op.ne, path))
-                : map(clean_path)
-                : sort()
-        end
-        if pattern then
-            local res= sh("ls -d", path/pattern)
+        elseif pattern then
+            files = sh("ls -d", path/pattern)
                 : lines()
-                : map(clean_path)
-                : sort()
-            return res
+        else
+            files = sh("ls", dir)
+                : lines()
+                : map(F.partial(fs.join, dir))
         end
-        return sh("ls", dir)
-            : lines()
-            : map(F.partial(fs.join, dir))
+        return files
             : map(clean_path)
             : sort()
     end

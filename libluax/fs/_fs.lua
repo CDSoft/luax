@@ -262,20 +262,15 @@ if sys.os == "windows" then
             return fullpath:gsub(useless_path_prefix, "")
         end
 
+        local files
         if recursive then
-            return sh("dir /b /s", path/pattern)
-                : lines()
-                : map(clean_path)
-                : sort()
+            files = sh("dir /b /s", path/pattern)
+        elseif pattern then
+            files = sh("dir /b", path/pattern)
+        else
+            files = sh("dir /b", dir)
         end
-        if pattern then
-            local res= sh("dir /b", path/pattern)
-                : lines()
-                : map(clean_path)
-                : sort()
-            return res
-        end
-        return sh("dir /b", dir)
+        return files
             : lines()
             : map(clean_path)
             : sort()
@@ -293,23 +288,20 @@ else
             return fullpath:gsub(useless_path_prefix, "")
         end
 
+        local files
         if recursive then
-            return sh("find", path, ("-name %q"):format(pattern))
+            files = sh("find", path, ("-name %q"):format(pattern))
                 : lines()
                 : filter(F.partial(F.op.ne, path))
-                : map(clean_path)
-                : sort()
-        end
-        if pattern then
-            local res= sh("ls -d", path/pattern)
+        elseif pattern then
+            files = sh("ls -d", path/pattern)
                 : lines()
-                : map(clean_path)
-                : sort()
-            return res
+        else
+            files = sh("ls", dir)
+                : lines()
+                : map(F.partial(fs.join, dir))
         end
-        return sh("ls", dir)
-            : lines()
-            : map(F.partial(fs.join, dir))
+        return files
             : map(clean_path)
             : sort()
     end
