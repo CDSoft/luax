@@ -48,6 +48,7 @@ local fs = require "fs"
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -136,8 +137,7 @@ static int fs_dir(lua_State *L)
 }
 
 #pragma GCC diagnostic ignored "-Wcomment"
-#pragma clang diagnostic ignored "-Wcomment"
-/*[[@@@
+/*@@@
 ```lua
 fs.ls(path)
 ```

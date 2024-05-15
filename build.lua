@@ -340,6 +340,7 @@ local luax_cflags = F{
     "-Wall",
     "-Wextra",
     "-pedantic",
+
     "-Wstrict-prototypes",
     "-Wmissing-field-initializers",
     "-Wmissing-prototypes",
@@ -428,7 +429,7 @@ cc.host = rule "cc-host" {
 
 ld.host = rule "ld-host" {
     description = "LD $out",
-    command = { "$ld-"..sys.name, host_ldflags, "$in -o $out" },
+    command = { "$ld-"..sys.name, "$in -o $out", host_ldflags },
     implicit_in = compiler_deps,
 }
 
@@ -510,7 +511,7 @@ targets:foreach(function(target)
     ld[target.name] = rule("ld-"..target.name) {
         description = "LD $out",
         command = {
-            "$ld-"..target.name, target_opt, lto, ldflags, target_ld_flags, "$in -o $out",
+            "$ld-"..target.name, target_opt, lto, "$in -o $out", ldflags, target_ld_flags,
         },
         implicit_in = compiler_deps,
     }
