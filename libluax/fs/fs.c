@@ -466,6 +466,39 @@ static int fs_mkdir(lua_State *L)
 
 /*@@@
 ```lua
+fs.mkdirs(path)
+```
+creates a new directory `path` and its parent directories.
+@@@*/
+
+static bool mkdirs(const char *path)
+{
+    struct stat buf;
+    if (stat(path, &buf)==0) {
+        return true;
+    }
+
+    char path_dir[FS_PATHSIZE];
+    strncpy(path_dir, path, FS_PATHSIZE-1);
+    const char *dir = dirname(path_dir);
+
+    if (!mkdirs(dir)) { return false; }
+
+#ifdef _WIN32
+    return mkdir(path) == 0;
+#else
+    return mkdir(path, 0755) == 0;
+#endif
+}
+
+static int fs_mkdirs(lua_State *L)
+{
+    const char *path = luaL_checkstring(L, 1);
+    return luax_push_result_or_errno(L, mkdirs(path), path);
+}
+
+/*@@@
+```lua
 fs.stat(name)
 ```
 reads attributes of the file `name`. Attributes are:
@@ -889,6 +922,7 @@ static const luaL_Reg fslib[] =
     {"remove",      fs_remove},
     {"rename",      fs_rename},
     {"mkdir",       fs_mkdir},
+    {"mkdirs",      fs_mkdirs},
     {"stat",        fs_stat},
     {"inode",       fs_inode},
     {"chmod",       fs_chmod},

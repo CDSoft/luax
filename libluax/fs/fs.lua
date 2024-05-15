@@ -113,21 +113,6 @@ end
 
 --[[@@@
 ```lua
-fs.mkdirs(path)
-```
-creates a new directory `path` and its parent directories.
-@@@]]
-
-if not fs.mkdirs then
-    function fs.mkdirs(path)
-        if path == "" or fs.stat(path) then return end
-        fs.mkdirs(fs.dirname(path))
-        fs.mkdir(path)
-    end
-end
-
---[[@@@
-```lua
 fs.mv(old_name, new_name)
 ```
 alias for `fs.rename(old_name, new_name)`.

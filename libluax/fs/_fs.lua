@@ -238,8 +238,14 @@ if pandoc and pandoc.system then
         return pandoc.system.make_directory(path, true)
     end
 else
-    function fs.mkdirs(path)
-        return sh.run("mkdir", "-p", path)
+    if sys.os == "windows" then
+        function fs.mkdirs(path)
+            return sh.run("mkdir", path)
+        end
+    else
+        function fs.mkdirs(path)
+            return sh.run("mkdir", "-p", path)
+        end
     end
 end
 

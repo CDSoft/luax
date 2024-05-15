@@ -76,6 +76,12 @@ fs.mkdir(path)
 creates a new directory `path`.
 
 ``` lua
+fs.mkdirs(path)
+```
+
+creates a new directory `path` and its parent directories.
+
+``` lua
 fs.stat(name)
 ```
 
@@ -229,12 +235,6 @@ fs.findpath(name)
 ```
 
 returns the full path of `name` if `name` is found in `$PATH` or `nil`.
-
-``` lua
-fs.mkdirs(path)
-```
-
-creates a new directory `path` and its parent directories.
 
 ``` lua
 fs.mv(old_name, new_name)
