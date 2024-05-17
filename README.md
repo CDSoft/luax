@@ -293,8 +293,8 @@ $ ./executable      # equivalent to pandoc lua main.lua
 
 # Available targets
 $ luax compile -t list
-lua
 luax
+lua
 pandoc
 native
 linux-x86_64

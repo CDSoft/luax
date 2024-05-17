@@ -138,7 +138,7 @@ local function obfuscate_lua(code, opt, product_name)
         local r = seed
         local xs = {}
         for i = 1, #code do
-            local b = byte(code, i, i+1)
+            local b = byte(code, i)
             r = r*a + c
             xs[i] = char(b ~ ((r>>33) & 0xff))
         end
