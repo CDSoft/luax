@@ -277,9 +277,14 @@ static int fs_ls(lua_State *L)
 
     if (!pattern) {
         /* no pattern in base => list all files in dir/base */
-        strncat(dir, LUA_DIRSEP, sizeof(tmp)-1);
-        strncat(dir, base, sizeof(tmp)-1);
-        strncpy(base, "*", base_len+1);
+        if (strncmp(dir, ".", sizeof(dir)) == 0) {
+            strncpy(dir, base, sizeof(dir));
+            strncpy(base, "*", base_len+1);
+        } else {
+            strncat(dir, LUA_DIRSEP, sizeof(tmp)-1);
+            strncat(dir, base, sizeof(tmp)-1);
+            strncpy(base, "*", base_len+1);
+        }
     }
 
     lua_newtable(L);                        /* stack: list */

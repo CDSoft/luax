@@ -131,6 +131,8 @@ local function fs_test(tmp)
         eq(fs.ls("bar**"),      {"bar","bar.txt","bar/bar.txt"})
         eq(fs.ls("**.txt"),     {"bar.txt","bar/bar.txt","bar/baz/baz.txt","foo-bar/x-y+z.txt","foo/foo.txt","foo2.txt"})
         eq(fs.ls("**-y+z.txt"), {"foo-bar/x-y+z.txt"})
+        eq(fs.ls("bar"),        {"bar/bar.txt","bar/baz"})
+        eq(fs.ls("foo"),        {"foo/foo.txt"})
     end
 
     do
