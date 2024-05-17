@@ -244,13 +244,15 @@ static int fs_ls(lua_State *L)
         return luax_pusherror(L, "bad argument #2 to ls (none, nil or boolean expected)");
     }
 
-    char dir_tmp[PATH_MAX];
-    strncpy(dir_tmp, path, sizeof(dir_tmp));
-    char *dir = dirname(dir_tmp);
+    char tmp[PATH_MAX];
 
-    char base_tmp[PATH_MAX];
-    strncpy(base_tmp, path, sizeof(base_tmp));
-    char *base = basename(base_tmp);
+    char dir[PATH_MAX];
+    strncpy(tmp, path, sizeof(tmp));
+    strncpy(dir, dirname(tmp), sizeof(dir));
+
+    char base[PATH_MAX];
+    strncpy(tmp, path, sizeof(tmp));
+    strncpy(base, basename(tmp), sizeof(base));
     const size_t base_len = strlen(base);
 
     if (strncmp(base, ".", base_len+1) == 0) {
@@ -275,8 +277,8 @@ static int fs_ls(lua_State *L)
 
     if (!pattern) {
         /* no pattern in base => list all files in dir/base */
-        strncat(dir, LUA_DIRSEP, sizeof(dir_tmp)-1);
-        strncat(dir, base, sizeof(dir_tmp)-1);
+        strncat(dir, LUA_DIRSEP, sizeof(tmp)-1);
+        strncat(dir, base, sizeof(tmp)-1);
         strncpy(base, "*", base_len+1);
     }
 
