@@ -1203,7 +1203,7 @@ acc(test) {
         command = {
             sanitizer_options,
             "eval \"$$($luax env)\";",
-            "$luax compile -q -b -k test-ext-4-key -t pandoc -o $test/ext-pandoc $in",
+            "$luax compile -q -t pandoc -o $test/ext-pandoc $in", -- no bytecode to remain compatible with pandoc
             "&&",
             "PATH=$bin:$tmp:$$PATH",
             "TARGET=pandoc",
