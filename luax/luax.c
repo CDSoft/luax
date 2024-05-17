@@ -24,12 +24,12 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-static void createargtable(lua_State *L, const char **argv, int argc, int shift)
+static void createargtable(lua_State *L, const char **argv, int argc)
 {
-    const int narg = argc - 1 - shift;  /* number of positive indices */
+    const int narg = argc - 1;
     lua_createtable(L, narg, 1);
-    for (int i = 0; i < argc-shift; i++) {
-        lua_pushstring(L, argv[i+shift]);
+    for (int i = 0; i < argc; i++) {
+        lua_pushstring(L, argv[i]);
         lua_rawseti(L, -2, i);
     }
     lua_setglobal(L, "arg");
@@ -41,7 +41,7 @@ int main(int argc, const char *argv[])
     luaL_openlibs(L);
     luaopen_libluax(L);
 
-    createargtable(L, argv, argc, 0);
+    createargtable(L, argv, argc);
 
     extern int run_app(lua_State  *);
     const int status = run_app(L);
