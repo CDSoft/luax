@@ -194,7 +194,7 @@ scripts:
 
     Commands:
       "help"    (or "-h")   Show this help
-      "version" (or "-v")   Show this help
+      "version" (or "-v")   Show LuaX version
       "run"     (or none)   Run scripts
       "compile" (or "c")    Compile scripts
       "env"                 Set LuaX environment variables

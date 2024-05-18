@@ -158,7 +158,7 @@ LuaX preloads the following modules with the `-e` option or before entering the 
 
 @@@]]
 
-    F"F complex crypt fs imath lz4 mathx ps qmath sh sys lz4"
+    F"F complex crypt fs imath lz4 mathx ps qmath sh sys"
         : words()
         : foreach(function(name) _ENV[name] = require(name) end)
 
