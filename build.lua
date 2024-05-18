@@ -120,15 +120,15 @@ F.foreach(arg, function(a)
     end
 
     case(a) {
-        fast    = set_mode,
-        small   = set_mode,
-        debug   = set_mode,
-        zig     = set_compiler,
-        gcc     = set_compiler,
-        clang   = set_compiler,
-        san     = function() san = true end,
-        strip   = function() bytecode = "-s" end,
-        [F.Nil] = function()
+        fast  = set_mode,
+        small = set_mode,
+        debug = set_mode,
+        zig   = set_compiler,
+        gcc   = set_compiler,
+        clang = set_compiler,
+        san   = function() san = true end,
+        strip = function() bytecode = "-s" end,
+        [Nil] = function()
             F.error_without_stack_trace(a..": unknown parameter\n\n"..usage, 1)
         end,
     } ()
@@ -782,7 +782,7 @@ targets:foreach(function(target)
                 implicit_in = {
                     case(src:basename():splitext()) {
                         version = "$luax_config_h",
-                        [F.Nil] = {},
+                        [Nil]   = {},
                     },
                 },
             }

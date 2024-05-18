@@ -1,6 +1,6 @@
 #!/usr/bin/env -S lua --
-_LUAX_VERSION = '6.0.9'
-_LUAX_DATE    = '2024-05-15'
+_LUAX_VERSION = '6.0.12'
+_LUAX_DATE    = '2024-05-17'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$bang:'..path)) end
@@ -31,7 +31,7 @@ local fs = require "fs"
 local sys = require "sys"
 local sh = require "sh"
 
-local version = "6.0.9"
+local version = "6.0.12"
 
 local zig_version = "0.12.0"
 local zig_path = F.case(sys.os) {
@@ -52,7 +52,7 @@ end
 
 return {
     version = version,
-    date = "2024-05-15",
+    date = "2024-05-17",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
     zig = {
@@ -10773,6 +10773,38 @@ return setmetatable({}, {
     },
 })
 ]])
+libs["flatten"] = lib("src/flatten.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LIB
+
+local F = require "F"
+
+local Nil = require "Nil"
+
+local function is_not_Nil(x)
+    return x ~= Nil
+end
+
+return function(xs)
+    return F.flatten(xs):filter(is_not_Nil)
+end
+]])
 libs["ident"] = lib("src/ident.lua", [[-- This file is part of bang.
 --
 -- bang is free software: you can redistribute it and/or modify
@@ -10875,6 +10907,7 @@ local where = require "where"
 
 local log = require "log"
 local ident = require "ident"
+local flatten = require "flatten"
 
 local ninja_required_version_for_bang = F"1.11.1"
 
@@ -10918,7 +10951,7 @@ local trim_word = F.compose {
 }
 
 local function stringify(value)
-    return F.flatten{value}
+    return flatten{value}
     : map(trim_word)
     : unwords()
 end
@@ -11104,7 +11137,7 @@ function build(outputs)
         end
 
         -- variables defined at the rule level and inherited by this statement
-        local rule_name = F{inputs}:flatten():head():words():head()
+        local rule_name = flatten{inputs}:head():words():head()
         if not rules[rule_name] then
             log.error(rule_name..": unknown rule")
         end
@@ -11242,7 +11275,7 @@ local function generator_rule(args)
 
     local deps = F.values(package.modpath) ---@diagnostic disable-line: undefined-field
     if not deps:null() then
-        generator_flag.implicit_in = F.flatten { generator_flag.implicit_in or {}, deps } : nub()
+        generator_flag.implicit_in = flatten{ generator_flag.implicit_in or {}, deps } : nub()
     end
 
     build(args.output) (F.merge{
@@ -11266,8 +11299,7 @@ return function(args)
     generator_rule(args)
     generate_default()
     predicates_to_check_at_exit:foreach(F.call)
-    local ninja = tokens
-        : flatten()
+    local ninja = flatten(tokens)
         : str()
         : lines()
         : map(string.rtrim) ---@diagnostic disable-line: undefined-field
@@ -11317,7 +11349,7 @@ return function()
 
 end
 ]])
-libs["acc"] = lib("lib/acc.lua", [[-- This file is part of bang.
+libs["Nil"] = lib("lib/Nil.lua", [[-- This file is part of bang.
 --
 -- bang is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -11339,9 +11371,33 @@ libs["acc"] = lib("lib/acc.lua", [[-- This file is part of bang.
 
 local F = require "F"
 
+return F.Nil
+]])
+libs["acc"] = lib("lib/acc.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LOAD
+
+local flatten = require "flatten"
+
 local function acc(list)
     return function(xs)
-        F.flatten{xs} : foreach(function(x)
+        flatten{xs} : foreach(function(x)
             list[#list+1] = x
         end)
     end
@@ -11489,6 +11545,8 @@ libs["file"] = lib("lib/file.lua", [[-- This file is part of bang.
 local fs = require "fs"
 local F = require "F"
 
+local flatten = require "flatten"
+
 local file_mt = {__index = {}}
 
 function file_mt.__call(self, ...)
@@ -11503,7 +11561,7 @@ function file_mt.__index:write(...)
 end
 
 function file_mt.__index:close()
-    local new_content = self.chunks:flatten():str()
+    local new_content = flatten(self.chunks):str()
     local old_content = fs.read(self.name)
     if old_content == new_content then
         return -- keep the old file untouched
@@ -11831,13 +11889,14 @@ end
 
 return target
 ]])
-libs["version"] = lib(".build/version", [=[return [[0.18.1]]]=])
+libs["version"] = lib(".build/version", [=[return [[0.19]]]=])
 require "F"
 require "crypt"
 require "fs"
 require "lz4"
 require "package_hook"
 require "debug_hook"
+_ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"
 _ENV["clean"] = require "clean"
