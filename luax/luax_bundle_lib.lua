@@ -73,8 +73,8 @@ function M.comment_shebang(script)
 end
 
 local function find_main(scripts)
-    local explicit_main = {}
-    local implicit_main = {}
+    local explicit_main = F{}
+    local implicit_main = F{}
     for i = 1, #scripts do
         local script = scripts[i]
         if script.is_main then
@@ -85,11 +85,11 @@ local function find_main(scripts)
     end
     local main_script = nil
     if #explicit_main > 1 then
-        error("Too many main scripts: "..F.str(explicit_main, ", "))
+        error("Too many main scripts: "..explicit_main:map(F.partial(F.nth, "path")):str", ")
     elseif #explicit_main == 1 then
         main_script = explicit_main[1]
     elseif #implicit_main > 1 then
-        error("Too many main scripts: "..F.str(implicit_main, ", "))
+        error("Too many main scripts: "..implicit_main:map(F.partial(F.nth, "path")):str", ")
     elseif #implicit_main == 1 then
         main_script = implicit_main[1]
     end
