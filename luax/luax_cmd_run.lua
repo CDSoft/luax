@@ -24,7 +24,7 @@ local fs = require "fs"
 local sys = require "sys"
 local F = require "F"
 
-local bundle = require "luax_bundle_lib"
+local bundle = require "luax_bundle"
 local welcome = require "luax_welcome"
 local help = require "luax_help"
 local LUA_INIT = require "luax_config".lua_init

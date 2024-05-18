@@ -133,7 +133,7 @@ static int fs_dir(lua_State *L)
     }
     else
     {
-        return luax_push_result_or_errno(L, 0, path);
+        return luax_push_errno(L, path);
     }
 }
 
@@ -351,7 +351,7 @@ static int fs_glob(lua_State *L)
     }
     else
     {
-        return luax_push_result_or_errno(L, 0, pattern);
+        return luax_push_errno(L, pattern);
     }
 }
 
@@ -405,14 +405,14 @@ static int fs_copy(lua_State *L)
     const char *fromname = luaL_checkstring(L, 1);
     const char *toname = luaL_checkstring(L, 2);
     FILE *from = fopen(fromname, "rb");
-    if (!from) return luax_push_result_or_errno(L, 0, fromname);
+    if (!from) return luax_push_errno(L, fromname);
     FILE *to = fopen(toname, "wb");
     if (!to)
     {
         const int _en = errno;
         fclose(from);
         errno = _en;
-        return luax_push_result_or_errno(L, 0, toname);
+        return luax_push_errno(L, toname);
     }
     size_t n;
     char buffer[BUFSIZE];
@@ -425,7 +425,7 @@ static int fs_copy(lua_State *L)
             fclose(to);
             remove(toname);
             errno = _en;
-            return luax_push_result_or_errno(L, 0, toname);
+            return luax_push_errno(L, toname);
         }
     }
     if (ferror(from))
@@ -435,12 +435,12 @@ static int fs_copy(lua_State *L)
         fclose(to);
         remove(toname);
         errno = _en;
-        return luax_push_result_or_errno(L, 0, toname);
+        return luax_push_errno(L, toname);
     }
     fclose(from);
     fclose(to);
     struct stat st;
-    if (stat(fromname, &st) != 0) return luax_push_result_or_errno(L, 0, fromname);
+    if (stat(fromname, &st) != 0) return luax_push_errno(L, fromname);
     const bool time_ok = utime(toname, &(struct utimbuf){.actime=st.st_atime, .modtime=st.st_mtime}) == 0;
     const bool chmod_ok = chmod(toname, st.st_mode) == 0;
     return luax_push_result_or_errno(L, time_ok && chmod_ok, toname);
@@ -562,7 +562,7 @@ static int fs_stat(lua_State *L)
     }
     else
     {
-        return luax_push_result_or_errno(L, 0, path);
+        return luax_push_errno(L, path);
     }
 }
 
@@ -644,7 +644,7 @@ static int fs_inode(lua_State *L)
     }
     else
     {
-        return luax_push_result_or_errno(L, 0, path);
+        return luax_push_errno(L, path);
     }
 }
 
@@ -679,7 +679,7 @@ static int fs_chmod(lua_State *L)
     {
         const char *ref = luaL_checkstring(L, 2);
         struct stat st;
-        if (stat(ref, &st) != 0) return luax_push_result_or_errno(L, 0, ref);
+        if (stat(ref, &st) != 0) return luax_push_errno(L, ref);
         mode = st.st_mode;
     }
     else
@@ -725,7 +725,7 @@ static int fs_touch(lua_State *L)
     {
         const char *ref = luaL_checkstring(L, 2);
         struct stat st;
-        if (stat(ref, &st) != 0) return luax_push_result_or_errno(L, 0, ref);
+        if (stat(ref, &st) != 0) return luax_push_errno(L, ref);
         t.actime = st.st_atime;
         t.modtime = st.st_mtime;
     }
@@ -736,7 +736,7 @@ static int fs_touch(lua_State *L)
     if (access(path, F_OK) != 0)
     {
         const int fd = open(path, O_CREAT, S_IRUSR | S_IWUSR);
-        if (fd < 0) return luax_push_result_or_errno(L, 0, path);
+        if (fd < 0) return luax_push_errno(L, path);
         if (fd >= 0) close(fd);
     }
     return luax_push_result_or_errno(L, utime(path, &t) == 0, path);
@@ -847,7 +847,7 @@ static int fs_realpath(lua_State *L)
 #else
     const char *name = realpath(path, real);
     if (name == NULL) {
-        return luax_push_result_or_errno(L, false, path);
+        return luax_push_errno(L, path);
     }
 #endif
     lua_pushstring(L, real);

@@ -57,13 +57,9 @@ else
     end
 end
 
-function fs.remove(name)
-    return os.remove(name)
-end
+fs.remove = os.remove
 
-function fs.rename(old_name, new_name)
-    return os.rename(old_name, new_name)
-end
+fs.rename = os.rename
 
 function fs.copy(source_name, target_name)
     local from, err_from = io.open(source_name, "rb")
@@ -71,7 +67,7 @@ function fs.copy(source_name, target_name)
     local to, err_to = io.open(target_name, "wb")
     if not to then from:close(); return to, err_to end
     while true do
-        local block = from:read(64*1024)
+        local block = from:read(8*1024)
         if not block then break end
         local ok, err = to:write(block)
         if not ok then
@@ -237,15 +233,13 @@ if pandoc and pandoc.system then
     function fs.mkdirs(path)
         return pandoc.system.make_directory(path, true)
     end
+elseif sys.os == "windows" then
+    function fs.mkdirs(path)
+        return sh.run("mkdir", path)
+    end
 else
-    if sys.os == "windows" then
-        function fs.mkdirs(path)
-            return sh.run("mkdir", path)
-        end
-    else
-        function fs.mkdirs(path)
-            return sh.run("mkdir", "-p", path)
-        end
+    function fs.mkdirs(path)
+        return sh.run("mkdir", "-p", path)
     end
 end
 

@@ -26,17 +26,22 @@
 
 int luax_push_result_or_errno(lua_State *L, int res, const char *filename)
 {
-    const int en = errno;  /* calls to Lua API may change this value */
-
     if (!res) {
-        lua_pushnil(L);
-        lua_pushfstring(L, "%s: %s", filename, strerror(en));
-        lua_pushinteger(L, en);
-        return 3;
+        return luax_push_errno(L, filename);
     }
 
     lua_pushboolean(L, 1);
     return 1;
+}
+
+int luax_push_errno(lua_State *L, const char *filename)
+{
+    const int en = errno;  /* calls to Lua API may change this value */
+
+    lua_pushnil(L);
+    lua_pushfstring(L, "%s: %s", filename, strerror(en));
+    lua_pushinteger(L, en);
+    return 3;
 }
 
 int luax_pusherror(lua_State *L, const char *msg, ...)

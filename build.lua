@@ -643,8 +643,9 @@ var "luax_config_h"   "$tmp/luax_config.h"
 var "luax_config_lua" "$tmp/luax_config.lua"
 
 local function ypp_vars(t)
-    return F.items(t)
-        : map(function(kv) return ("-e '%s=%q'"):format(kv:unpack()) end)
+    return F(t)
+        : mapk(function(k, v) return ("-e '%s=%q'"):format(k, v) end)
+        : values()
         : unwords()
 end
 
@@ -654,7 +655,7 @@ local luax_config_params = ypp_vars {
     ZIG_VERSION = zig_version,
 }
 
-rule "ypp" {
+rule "ypp-config" {
     description = "YPP $out",
     command = { "$lua tools/ypp.lua", luax_config_params, "$in -o $out" },
     implicit_in = {
@@ -664,8 +665,8 @@ rule "ypp" {
     },
 }
 
-build "$luax_config_h"   { "ypp", "tools/luax_config.h.in" }
-build "$luax_config_lua" { "ypp", "tools/luax_config.lua.in" }
+build "$luax_config_h"   { "ypp-config", "libluax/luax_config.h.in" }
+build "$luax_config_lua" { "ypp-config", "libluax/luax_config.lua.in" }
 
 --===================================================================
 section "Lua runtime"
@@ -676,13 +677,13 @@ rule "bundle" {
     command = {
         "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
-        "$lua luax/luax_bundle.lua $args $in -o $out",
+        "$lua tools/bundle.lua $args $in -o $out",
     },
     implicit_in = {
         "$lua",
         "$lz4",
+        "tools/bundle.lua",
         "luax/luax_bundle.lua",
-        "luax/luax_bundle_lib.lua",
         "$luax_config_lua",
     },
 }

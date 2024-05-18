@@ -22,4 +22,5 @@
 #include "lua.h"
 
 int luax_push_result_or_errno(lua_State *L, int res, const char *filename);
+int luax_push_errno(lua_State *L, const char *filename);
 int luax_pusherror(lua_State *L, const char *msg, ...);

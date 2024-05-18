@@ -26,7 +26,7 @@ local sh = require "sh"
 local sys = require "sys"
 local cbor = require "cbor"
 
-local bundle = require "luax_bundle_lib"
+local bundle = require "luax_bundle"
 local help = require "luax_help"
 local welcome = require "luax_welcome"
 local targets = require "targets"
