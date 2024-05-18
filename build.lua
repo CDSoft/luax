@@ -289,6 +289,7 @@ local sanitizer_options = optional(san) {
 local host_cflags = {
     "-std=gnu2x",
     "-O3",
+    "-pipe",
     "-fPIC",
     include_path:map(F.prefix"-I"),
     case(sys.os) {
@@ -311,6 +312,7 @@ local host_cflags = {
 }
 
 local host_ldflags = {
+    "-pipe",
     "-rdynamic",
     "-s",
     "-lm",
@@ -330,6 +332,7 @@ local cflags = {
         small = "-Os",
         debug = "-g",
     },
+    "-pipe",
     "-fPIC",
     include_path:map(F.prefix"-I"),
 }
@@ -395,6 +398,7 @@ compile_flags {
 }
 
 local ldflags = {
+    "-pipe",
     case(mode) {
         fast  = "-s",
         small = "-s",
