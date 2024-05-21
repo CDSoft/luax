@@ -39,26 +39,33 @@ warn()
 info "Step 0: install dependencies"
 ######################################################################
 
+ZIG_VERSION=0.12.0
+ZIG=~/.local/opt/zig/$ZIG_VERSION/zig
+
 found()
 {
     hash "$@" 2>/dev/null
 }
 
-if (! found ninja || ! found cc) 2>/dev/null
+if (! found ninja) 2>/dev/null
 then
-    found dnf    && sudo dnf install -y ninja-build gcc
-    found apt    && sudo apt install -f -y ninja-build gcc
-    found brew   && sudo brew install ninja gcc
-    found pacman && sudo pacman -S --noconfirm ninja gcc
+    found dnf    && sudo dnf install -y ninja-build
+    found apt    && sudo apt install -f -y ninja-build
+    found brew   && sudo brew install ninja
+    found pacman && sudo pacman -S --noconfirm ninja
 fi
 
 found ninja || warn "ERROR: ninja is not installed"
-found cc    || warn "ERROR: gcc or clang is not installed"
+
+tools/install_zig.sh $ZIG_VERSION $ZIG
+
+[ -x $ZIG ] || warn "ERROR: zig is not installed"
 
 ######################################################################
 info "Step 1: bootstrap a Lua interpreter and generate build.ninja"
 ######################################################################
 
+[ -x $ZIG ] && export CC="$ZIG cc"
 ninja -f bootstrap.ninja
 
 ######################################################################

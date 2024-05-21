@@ -33,7 +33,7 @@ cross-compile[^1] scripts for a supported platform.
 
 ### Quick compilation
 
-The script `bootstrap.sh` installs `ninja` and `gcc` and compiles LuaX.
+The script `bootstrap.sh` installs `ninja`, `zig` and compiles LuaX.
 Once done, LuaX can be installed with `ninja install`. `git` must
 already be installed, which is likely to be the case if LuaX has been
 cloned with `git`…
