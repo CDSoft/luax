@@ -56,13 +56,28 @@ local function mlstr(s)
     return F.str{"[", eqs, "[", s, "]", eqs, "]"}
 end
 
+local esc = {
+    ["'"]  = "\\'",     -- ' must be escaped as it is embeded in single quoted strings
+    ["\\"] = "\\\\",    -- \ must be escaped to avoid confusion with escaped chars
+}
+F.flatten{
+    F.range(0, 31),     -- non printable control chars
+    F.range(48, 57),    -- 0..9 must be escaped to avoid confusion decimal escape codes
+    F.range(128, 255)   -- non 7-bit ASCII codes are also not printable
+}
+: foreach(function(b) esc[char(b)] = format("\\%d", b) end)
+
+local function escape(s)
+    return format("'%s'", s:gsub(".", esc))
+end
+
 local function qstr(s)
     if s:match "^[%g%s]*$" then
         -- printable string => use multiline Lua strings
         return mlstr(s)
     else
         -- non printable string => escape non printable chars
-        return format("'%s'", s:bytes():map(function(b) return format("\\%d", b) end):str())
+        return escape(s)
     end
 end
 
@@ -117,10 +132,6 @@ local function make_key(input, opt)
     return chunks_of_chars(key_size, input:rc4(opt.key)) : fold1(crypt.rc4)
 end
 
-local function escape(s)
-    return s:gsub(".", function(c) return ("\\%d"):format(byte(c)) end)
-end
-
 local function compact(s)
     return s
         : lines()
@@ -129,8 +140,16 @@ local function compact(s)
         : str";"
 end
 
+local function bytecode(code, opt, name)
+    if opt.bytecode then
+        code = assert(string.dump(assert(load(code, "@$"..name)), opt.strip))
+    end
+    return code
+end
+
 local function obfuscate_lua(code, opt, product_name)
     if opt.key then
+        code = bytecode(code, opt, product_name)
         -- Encrypt code by xoring bytes with pseudo random values
         local key = make_key(code, opt)
         local a, c = 6364136223846793005, 1
@@ -143,19 +162,18 @@ local function obfuscate_lua(code, opt, product_name)
             xs[i] = char(b ~ ((r>>33) & 0xff))
         end
         code = compact(F.I { a=a, c=c, b=escape(table.concat(xs)), seed=seed } [===[
-            local b,a,c,r,x,bt,ch,l,tc='$(b)',$(a),$(c),$(("0x%x"):format(seed)),{},string.byte,string.char,load,table.concat
+            local b,a,c,r,x,bt,ch,l,tc=$(b),$(a),$(c),$(("0x%x"):format(seed)),{},string.byte,string.char,load,table.concat
             for i=1,#b do r=r*a+c x[i]=ch(bt(b,i)~((r>>33)&0xff))end
             return l(tc(x))()
         ]===])
     end
-    if opt.bytecode then
-        code = assert(string.dump(assert(load(code, "@$"..product_name)), opt.strip))
-    end
+    code = bytecode(code, opt, product_name)
     return code
 end
 
 local function obfuscate_luax(code, opt, product_name)
     if opt.key then
+        code = bytecode(code, opt, product_name)
         -- Encrypt code with lz4 and rc4
         local key = make_key(code, opt)
         local unlz4 = ""
@@ -165,12 +183,10 @@ local function obfuscate_luax(code, opt, product_name)
             unlz4 = ":unlz4()"
         end
         code = compact(F.I { b=escape(code:rc4(key)), k=escape(key), unlz4=unlz4 } [===[
-            return load(('$(b)'):unrc4'$(k)'$(unlz4))()
+            return load(($(b)):unrc4$(k)$(unlz4))()
         ]===])
     end
-    if opt.bytecode then
-        code = assert(string.dump(assert(load(code, "@$"..product_name)), opt.strip))
-    end
+    code = bytecode(code, opt, product_name)
     return code
 end
 
@@ -261,8 +277,7 @@ function M.bundle(opt)
             assert(load(script.content, ("@%s"):format(script.path)))
             if opt.bytecode then
                 -- compile the script with file path containing the product name
-                local chunk = assert(load(script.content, ("@$%s:%s"):format(product_name, script.path)))
-                return qstr(string.dump(chunk, opt.strip))
+                return qstr(bytecode(script.content, opt, ("%s:%s"):format(product_name, script.path)))
             else
                 return mlstr(script.content)
             end
@@ -335,8 +350,7 @@ function M.bundle(opt)
             local code
             if opt.bytecode then
                 -- compile the script with file path containing the product name
-                local chunk = assert(load(script.content, ("@$%s:%s"):format(product_name, script.path)))
-                code = string.dump(chunk, opt.strip)
+                code = bytecode(script.content, opt, ("%s:%s"):format(product_name, script.path))
             else
                 code = script.content
             end
