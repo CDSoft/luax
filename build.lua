@@ -715,6 +715,15 @@ rt { luax="libluax/debug/debug_hook.lua",       lua="libluax/debug/debug_hook.lu
 
 rt { luax={ls "ext/**.lua"},                    lua={ls "ext/lua/**.lua"}                                   }
 
+-- Ensures all Lua scripts are in the runtime
+local used_scripts = F.flatten{luax_runtime, lua_runtime}
+local expected_scripts = F.flatten{ls "libluax/**.lua", ls "ext/**.lua"}
+local unused_scripts = expected_scripts : difference(used_scripts)
+if not unused_scripts:null()
+then
+    error("Some Lua scripts are not in the runtime:\n"..unused_scripts:sort():map(F.prefix"    "):unlines())
+end
+
 local luax_runtime_bundle = build "$tmp/lua_runtime_bundle.c" {
     "bundle", "$luax_config_lua", luax_runtime,
     args = {
