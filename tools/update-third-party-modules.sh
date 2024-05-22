@@ -24,7 +24,7 @@ TMP="$1"
 
 update_all()
 {
-    #update_lua          5.4.6
+    #update_lua          5.4.7
     update_lua-git      v5.4
     update_lcomplex     100
     update_limath       105

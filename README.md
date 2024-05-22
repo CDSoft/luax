@@ -351,7 +351,7 @@ than the LuaX executable and can be used by a regular Lua interpreter
 E.g.:
 
     $ lua -l libluax
-    Lua 5.4.6  Copyright (C) 1994-2023 Lua.org, PUC-Rio
+    Lua 5.4.7  Copyright (C) 1994-2024 Lua.org, PUC-Rio
     > F = require "F"
     > F.range(100):sum()
     5050
