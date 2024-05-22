@@ -41,6 +41,30 @@ update_all()
     update_dkjson       2.7
 }
 
+found()
+{
+    hash "$@" 2>/dev/null
+}
+
+download()
+{
+    local URL="$1"
+    local OUTPUT="$2"
+    echo "Downloading $URL"
+    if found curl
+    then
+        curl -L "$URL" -o "$OUTPUT" --progress-bar --fail
+        return
+    fi
+    if found wget
+    then
+        wget "$URL" -O "$OUTPUT"
+        return
+    fi
+    echo "ERROR: curl or wget not found"
+    exit 1
+}
+
 update_lua()
 {
     local LUA_VERSION="$1"
@@ -48,7 +72,7 @@ update_lua()
     local LUA_URL="https://www.lua.org/ftp/$LUA_ARCHIVE"
 
     mkdir -p "$TMP"
-    wget "$LUA_URL" -O "$TMP/$LUA_ARCHIVE"
+    download "$LUA_URL" "$TMP/$LUA_ARCHIVE"
 
     rm -rf lua
     mkdir -p lua
@@ -62,7 +86,7 @@ update_lua-git()
     local LUA_URL="https://codeload.github.com/lua/lua/zip/refs/heads/$LUA_VERSION"
 
     mkdir -p "$TMP"
-    wget "$LUA_URL" -O "$TMP/$LUA_ARCHIVE"
+    download "$LUA_URL" "$TMP/$LUA_ARCHIVE"
 
     rm -rf lua "$TMP/lua"
     mkdir -p lua
@@ -78,7 +102,7 @@ update_lcomplex()
     local LCOMPLEX_URL="https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$LCOMPLEX_ARCHIVE"
 
     mkdir -p "$TMP"
-    wget "$LCOMPLEX_URL" -O "$TMP/$LCOMPLEX_ARCHIVE"
+    download "$LCOMPLEX_URL" "$TMP/$LCOMPLEX_ARCHIVE"
 
     rm -rf ext/c/lcomplex
     tar -xzf "$TMP/$LCOMPLEX_ARCHIVE" -C ext/c --exclude=Makefile --exclude=test.lua
@@ -92,7 +116,7 @@ update_limath()
     local LIMATH_URL="https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$LIMATH_ARCHIVE"
 
     mkdir -p "$TMP"
-    wget "$LIMATH_URL" -O "$TMP/$LIMATH_ARCHIVE"
+    download "$LIMATH_URL" "$TMP/$LIMATH_ARCHIVE"
 
     rm -rf ext/c/limath
     tar -xzf "$TMP/$LIMATH_ARCHIVE" -C ext/c --exclude=Makefile --exclude=test.lua
@@ -107,7 +131,7 @@ update_lqmath()
     local LQMATH_URL="https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$LQMATH_ARCHIVE"
 
     mkdir -p "$TMP"
-    wget "$LQMATH_URL" -O "$TMP/$LQMATH_ARCHIVE"
+    download "$LQMATH_URL" "$TMP/$LQMATH_ARCHIVE"
 
     rm -rf ext/c/lqmath
     tar -xzf "$TMP/$LQMATH_ARCHIVE" -C ext/c --exclude=Makefile --exclude=test.lua
@@ -121,7 +145,7 @@ update_lmathx()
     local LMATHX_URL="https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/5.3/$LMATHX_ARCHIVE"
 
     mkdir -p "$TMP"
-    wget "$LMATHX_URL" -O "$TMP/$LMATHX_ARCHIVE"
+    download "$LMATHX_URL" "$TMP/$LMATHX_ARCHIVE"
 
     rm -rf ext/c/mathx
     tar -xzf "$TMP/$LMATHX_ARCHIVE" -C ext/c --exclude=Makefile --exclude=test.lua
@@ -134,7 +158,7 @@ update_luasocket()
     local LUASOCKET_URL="https://github.com/lunarmodules/luasocket/archive/refs/tags/v$LUASOCKET_VERSION.zip"
 
     mkdir -p "$TMP"
-    wget "$LUASOCKET_URL" -O "$TMP/$LUASOCKET_ARCHIVE"
+    download "$LUASOCKET_URL" "$TMP/$LUASOCKET_ARCHIVE"
 
     rm -rf ext/c/luasocket
     mkdir ext/c/luasocket
@@ -154,7 +178,7 @@ update_lpeg()
     local LPEG_URL="http://www.inf.puc-rio.br/~roberto/lpeg/$LPEG_ARCHIVE"
 
     mkdir -p "$TMP"
-    wget "$LPEG_URL" -O "$TMP/$LPEG_ARCHIVE"
+    download "$LPEG_URL" "$TMP/$LPEG_ARCHIVE"
 
     rm -rf ext/c/lpeg
     tar xzf "$TMP/$LPEG_ARCHIVE" -C ext/c --exclude=HISTORY --exclude=*.gif --exclude=*.html --exclude=makefile --exclude=test.lua
@@ -169,7 +193,7 @@ update_argparse()
     local ARGPARSE_URL="https://github.com/luarocks/argparse/archive/refs/heads/$ARGPARSE_VERSION.zip"
 
     mkdir -p "$TMP"
-    wget "$ARGPARSE_URL" -O "$TMP/$ARGPARSE_ARCHIVE"
+    download "$ARGPARSE_URL" "$TMP/$ARGPARSE_ARCHIVE"
 
     rm -f ext/lua/argparse/argparse.lua
     unzip -j -o "$TMP/$ARGPARSE_ARCHIVE" '*/argparse.lua' -d ext/lua/argparse
@@ -182,7 +206,7 @@ update_serpent()
     local SERPENT_URL="https://github.com/pkulchenko/serpent/archive/refs/heads/$SERPENT_VERSION.zip"
 
     mkdir -p "$TMP"
-    wget "$SERPENT_URL" -O "$TMP/$SERPENT_ARCHIVE"
+    download "$SERPENT_URL" "$TMP/$SERPENT_ARCHIVE"
 
     rm -f ext/lua/serpent/serpent.lua
     unzip -j "$TMP/$SERPENT_ARCHIVE" '*/serpent.lua' -d ext/lua/serpent
@@ -199,7 +223,7 @@ update_lz4()
     local LZ4_URL="https://github.com/lz4/lz4/archive/refs/heads/$LZ4_VERSION.zip"
 
     mkdir -p "$TMP"
-    wget "$LZ4_URL" -O "$TMP/$LZ4_ARCHIVE"
+    download "$LZ4_URL" "$TMP/$LZ4_ARCHIVE"
 
     rm -rf ext/c/lz4
     mkdir -p ext/c/lz4/lib ext/c/lz4/programs
@@ -213,7 +237,7 @@ update_cbor()
     local CBOR_URL="https://code.zash.se/lua-cbor/archive/tip.tar.gz"
 
     mkdir -p "$TMP"
-    wget "$CBOR_URL" -O "$TMP/$CBOR_ARCHIVE"
+    download "$CBOR_URL" "$TMP/$CBOR_ARCHIVE"
 
     rm -rf ext/lua/cbor
     mkdir -p ext/lua/cbor
@@ -279,7 +303,7 @@ update_linenoise()
     local LINENOISE_URL="https://github.com/$LINENOISE_REPO/archive/refs/heads/$LINENOISE_VERSION.zip"
 
     mkdir -p "$TMP"
-    wget "$LINENOISE_URL" -O "$TMP/$LINENOISE_ARCHIVE"
+    download "$LINENOISE_URL" "$TMP/$LINENOISE_ARCHIVE"
 
     rm -rf ext/c/linenoise
     mkdir -p ext/c/linenoise
@@ -298,7 +322,7 @@ update_json()
     local JSON_URL="https://github.com/$JSON_REPO/archive/refs/heads/$JSON_VERSION.zip"
 
     mkdir -p "$TMP"
-    wget "$JSON_URL" -O "$TMP/$JSON_ARCHIVE"
+    download "$JSON_URL" "$TMP/$JSON_ARCHIVE"
 
     rm -rf ext/lua/json
     mkdir -p ext/lua/json
@@ -312,7 +336,7 @@ update_dkjson()
     local JSON_URL="http://dkolf.de/dkjson-lua/$JSON_SCRIPT"
 
     mkdir -p "$TMP"
-    wget "$JSON_URL" -O "$TMP/$JSON_SCRIPT"
+    download "$JSON_URL" "$TMP/$JSON_SCRIPT"
 
     rm -rf ext/lua/json
     mkdir -p ext/lua/json

@@ -23,6 +23,30 @@ set -e
 ZIG_VERSION="$1"
 ZIG="$2"
 
+found()
+{
+    hash "$@" 2>/dev/null
+}
+
+download()
+{
+    local URL="$1"
+    local OUTPUT="$2"
+    echo "Downloading $URL"
+    if found curl
+    then
+        curl -L "$URL" -o "$OUTPUT" --progress-bar --fail
+        return
+    fi
+    if found wget
+    then
+        wget "$URL" -O "$OUTPUT"
+        return
+    fi
+    echo "ERROR: curl or wget not found"
+    exit 1
+}
+
 if ! [ -x "$ZIG" ]
 then
 
@@ -49,7 +73,7 @@ then
     esac
 
     mkdir -p "$(dirname "$ZIG")"
-    wget "$ZIG_URL" -O "$(dirname "$ZIG")/$ZIG_ARCHIVE"
+    download "$ZIG_URL" "$(dirname "$ZIG")/$ZIG_ARCHIVE"
 
     tar xJf "$(dirname "$ZIG")/$ZIG_ARCHIVE" -C "$(dirname "$ZIG")" --strip-components 1
     rm "$(dirname "$ZIG")/$ZIG_ARCHIVE"
