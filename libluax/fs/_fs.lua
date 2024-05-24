@@ -301,4 +301,27 @@ else
     end
 end
 
+function fs.is_file(name)
+    local st = fs.stat(name)
+    return st ~= nil and st.type == "file"
+end
+
+function fs.is_dir(name)
+    local st = fs.stat(name)
+    return st ~= nil and st.type == "directory"
+end
+
+fs.rm = fs.remove
+fs.mv = fs.rename
+
+fs.tmpfile = os.tmpname
+
+function fs.tmpdir()
+    local tmp = os.tmpname()
+    fs.rm(tmp)
+    fs.mkdir(tmp)
+    return tmp
+end
+
+
 return fs

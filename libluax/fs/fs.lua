@@ -73,30 +73,6 @@ end
 
 --[[@@@
 ```lua
-fs.is_file(name)
-```
-returns `true` if `name` is a file.
-@@@]]
-
-function fs.is_file(name)
-    local stat = fs.stat(name)
-    return stat ~= nil and stat.type == "file"
-end
-
---[[@@@
-```lua
-fs.is_dir(name)
-```
-returns `true` if `name` is a directory.
-@@@]]
-
-function fs.is_dir(name)
-    local stat = fs.stat(name)
-    return stat ~= nil and stat.type == "directory"
-end
-
---[[@@@
-```lua
 fs.findpath(name)
 ```
 returns the full path of `name` if `name` is found in `$PATH` or `nil`.
@@ -110,24 +86,6 @@ function fs.findpath(name)
     if path then return fs.join(path, name) end
     return nil, name..": not found in $PATH"
 end
-
---[[@@@
-```lua
-fs.mv(old_name, new_name)
-```
-alias for `fs.rename(old_name, new_name)`.
-@@@]]
-
-fs.mv = fs.rename
-
---[[@@@
-```lua
-fs.rm(name)
-```
-alias for `fs.remove(name)`.
-@@@]]
-
-fs.rm = fs.remove
 
 --[[@@@
 ```lua
@@ -245,16 +203,9 @@ if pandoc and pandoc.system then
             return f(fs.join(tmpdir, "tmpfile"))
         end)
     end
-elseif sys.os == "windows" then
-    function fs.with_tmpfile(f)
-        local tmp = os.getenv "TMP" / os.tmpname():basename()
-        local ret = {f(tmp)}
-        fs.rm(tmp)
-        return table.unpack(ret)
-    end
 else
     function fs.with_tmpfile(f)
-        local tmp = os.tmpname()
+        local tmp = fs.tmpfile()
         local ret = {f(tmp)}
         fs.rm(tmp)
         return table.unpack(ret)
@@ -272,20 +223,9 @@ if pandoc and pandoc.system then
     function fs.with_tmpdir(f)
         return pandoc.system.with_temporary_directory("luax", f)
     end
-elseif sys.os == "windows" then
-    function fs.with_tmpdir(f)
-        local tmp = os.getenv "TMP" / os.tmpname():basename()
-        fs.rm(tmp)
-        fs.mkdir(tmp)
-        local ret = {f(tmp)}
-        fs.rmdir(tmp)
-        return table.unpack(ret)
-    end
 else
     function fs.with_tmpdir(f)
-        local tmp = os.tmpname()
-        fs.rm(tmp)
-        fs.mkdir(tmp)
+        local tmp = fs.tmpdir()
         local ret = {f(tmp)}
         fs.rmdir(tmp)
         return table.unpack(ret)
@@ -309,17 +249,6 @@ elseif fs.chdir then
         fs.chdir(old)
         return table.unpack(ret)
     end
-end
-
---[[@@@
-```lua
-fs.with_env(env, f)
-```
-changes the environnement to `env` and calls `f()`.
-@@@]]
-
-if pandoc and pandoc.system then
-    fs.with_env = pandoc.system.with_environment
 end
 
 --[[@@@

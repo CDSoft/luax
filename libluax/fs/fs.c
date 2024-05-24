@@ -360,6 +360,7 @@ static int fs_glob(lua_State *L)
 /*@@@
 ```lua
 fs.remove(name)
+fs.rm(name)
 ```
 deletes the file `name`.
 @@@*/
@@ -381,6 +382,7 @@ static int fs_remove(lua_State *L)
 /*@@@
 ```lua
 fs.rename(old_name, new_name)
+fs.mv(old_name, new_name)
 ```
 renames the file `old_name` to `new_name`.
 @@@*/
@@ -908,6 +910,108 @@ static int fs_absname(lua_State *L)
     return 1;
 }
 
+/*@@@
+```lua
+fs.is_file(name)
+```
+returns `true` if `name` is a file.
+@@@*/
+
+static int fs_is_file(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+    struct stat buf;
+    lua_pushboolean(L, stat(name, &buf) == 0 && S_ISREG(buf.st_mode));
+    return 1;
+}
+
+/*@@@
+```lua
+fs.is_dir(name)
+```
+returns `true` if `name` is a directory.
+@@@*/
+
+static int fs_is_dir(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+    struct stat buf;
+    lua_pushboolean(L, stat(name, &buf) == 0 && S_ISDIR(buf.st_mode));
+    return 1;
+}
+
+/*@@@
+```lua
+fs.tmpfile()
+```
+return the name of a temporary file.
+@@@*/
+
+static int fs_tmpfile(lua_State *L)
+{
+#ifdef _WIN32
+    char tmp[MAX_PATH];
+    char file[MAX_PATH];
+    const UINT ret = GetTempPath(MAX_PATH, tmp);
+    if (ret > MAX_PATH || ret == 0) {
+        return luax_pusherror(L, "Can not read the temporary path");
+    }
+    if (GetTempFileName(tmp, TEXT("lx-"), 0, file) == 0) {
+        return luax_pusherror(L, "Can not create a temporary file");
+    }
+    lua_pushstring(L, file);
+    return 1;
+#else
+    char template[] = "/tmp/luax-XXXXXX";
+    const int fd = mkstemp(template);
+    if (fd == -1) {
+        return luax_push_errno(L, template);
+    }
+    close(fd);
+    lua_pushstring(L, template);
+    return 1;
+#endif
+}
+
+/*@@@
+```lua
+fs.tmpdir()
+```
+return the name of a temporary directory.
+@@@*/
+
+static int fs_tmpdir(lua_State *L)
+{
+#ifdef _WIN32
+    char tmp[MAX_PATH];
+    char dir[MAX_PATH];
+    const UINT ret = GetTempPath(MAX_PATH, tmp);
+    if (ret > MAX_PATH || ret == 0) {
+        return luax_pusherror(L, "Can not read the temporary path");
+    }
+    if (GetTempFileName(tmp, TEXT("lx-"), 0, dir) == 0) {
+        return luax_pusherror(L, "Can not create a temporary directory");
+    }
+    if (DeleteFile(dir) == 0) {
+        return luax_pusherror(L, "Can not create a temporary directory");
+    }
+    if (CreateDirectory(dir, NULL) == 0) {
+        return luax_pusherror(L, "Can not create a temporary directory");
+    }
+
+    lua_pushstring(L, dir);
+    return 1;
+#else
+    char template[] = "/tmp/luax-XXXXXX";
+    char *tmp = mkdtemp(template);
+    if (tmp == NULL) {
+        return luax_push_errno(L, template);
+    }
+    lua_pushstring(L, tmp);
+    return 1;
+#endif
+}
+
 static const luaL_Reg fslib[] =
 {
     {"basename",    fs_basename},
@@ -923,7 +1027,9 @@ static const luaL_Reg fslib[] =
     {"ls",          fs_ls},
     {"glob",        fs_glob},
     {"remove",      fs_remove},
+    {"rm",          fs_remove},
     {"rename",      fs_rename},
+    {"mv",          fs_rename},
     {"mkdir",       fs_mkdir},
     {"mkdirs",      fs_mkdirs},
     {"stat",        fs_stat},
@@ -931,6 +1037,10 @@ static const luaL_Reg fslib[] =
     {"chmod",       fs_chmod},
     {"touch",       fs_touch},
     {"copy",        fs_copy},
+    {"is_file",     fs_is_file},
+    {"is_dir",      fs_is_dir},
+    {"tmpfile",     fs_tmpfile},
+    {"tmpdir",      fs_tmpdir},
     {NULL, NULL}
 };
 

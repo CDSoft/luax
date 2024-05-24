@@ -52,12 +52,14 @@ returns the list of path names matching a pattern.
 
 ``` lua
 fs.remove(name)
+fs.rm(name)
 ```
 
 deletes the file `name`.
 
 ``` lua
 fs.rename(old_name, new_name)
+fs.mv(old_name, new_name)
 ```
 
 renames the file `old_name` to `new_name`.
@@ -182,6 +184,30 @@ fs.absname(path)
 return the absolute path name of path.
 
 ``` lua
+fs.is_file(name)
+```
+
+returns `true` if `name` is a file.
+
+``` lua
+fs.is_dir(name)
+```
+
+returns `true` if `name` is a directory.
+
+``` lua
+fs.tmpfile()
+```
+
+return the name of a temporary file.
+
+``` lua
+fs.tmpdir()
+```
+
+return the name of a temporary directory.
+
+``` lua
 fs.sep
 ```
 
@@ -219,34 +245,10 @@ fs.splitpath(path)
 return a list of path components.
 
 ``` lua
-fs.is_file(name)
-```
-
-returns `true` if `name` is a file.
-
-``` lua
-fs.is_dir(name)
-```
-
-returns `true` if `name` is a directory.
-
-``` lua
 fs.findpath(name)
 ```
 
 returns the full path of `name` if `name` is found in `$PATH` or `nil`.
-
-``` lua
-fs.mv(old_name, new_name)
-```
-
-alias for `fs.rename(old_name, new_name)`.
-
-``` lua
-fs.rm(name)
-```
-
-alias for `fs.remove(name)`.
 
 ``` lua
 fs.rmdir(path, [params])
@@ -290,12 +292,6 @@ fs.with_dir(path, f)
 ```
 
 changes the current working directory to `path` and calls `f()`.
-
-``` lua
-fs.with_env(env, f)
-```
-
-changes the environnement to `env` and calls `f()`.
 
 ``` lua
 fs.read(filename)
