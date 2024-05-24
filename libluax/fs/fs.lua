@@ -28,7 +28,6 @@ http://cdelord.fr/luax
 local fs = require "_fs"
 
 local F = require "F"
-local sys = require "sys"
 
 --[[@@@
 ```lua

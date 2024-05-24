@@ -43,6 +43,10 @@ end
 
 if pandoc and pandoc.system then
     fs.getcwd = pandoc.system.get_working_directory
+elseif sys.os == "windows" then
+    function fs.getcwd()
+        return sh.read "cd" : trim() ---@diagnostic disable-line:undefined-field
+    end
 else
     function fs.getcwd()
         return sh.read "pwd" : trim() ---@diagnostic disable-line:undefined-field
@@ -51,6 +55,10 @@ end
 
 if pandoc and pandoc.system then
     fs.dir = F.compose{F, pandoc.system.list_directory}
+elseif sys.os == "windows" then
+    function fs.dir(path)
+        return sh.read("dir /b", path) : lines() : sort() ---@diagnostic disable-line:undefined-field
+    end
 else
     function fs.dir(path)
         return sh.read("ls", path) : lines() : sort() ---@diagnostic disable-line:undefined-field
