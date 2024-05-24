@@ -199,7 +199,7 @@ function M.bundle(opt)
     local scripts = F{}
 
     F.foreach(opt.scripts, function(script)
-        local content = assert(fs.read(script))
+        local content = assert(fs.read_bin(script))
         local ext = fs.ext(script)
         if ext == ".lib" then
             local lib_scripts = assert(cbor.decode(assert(content:unlz4())))

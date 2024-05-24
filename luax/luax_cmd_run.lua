@@ -388,7 +388,7 @@ local function run_interpreter()
                 os.exit(1)
             end
             local real_script = findscript(script)
-            chunk, msg = load(bundle.comment_shebang(assert(fs.read(real_script))), "@"..real_script)
+            chunk, msg = load(bundle.comment_shebang(assert(fs.read_bin(real_script))), "@"..real_script)
         end
         if not chunk then
             io.stderr:write(("%s: %s\n"):format(script, msg))
