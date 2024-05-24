@@ -655,13 +655,21 @@ local luax_config_params = ypp_vars {
     ZIG_VERSION = zig_version,
 }
 
+local function gitdir()
+    local dir = ".git"
+    if fs.is_file(dir) then
+        return fs.read(dir) : lines() : map(string.words) : from_list() : nth "gitdir:"
+    end
+    return dir
+end
+
 rule "ypp-config" {
     description = "YPP $out",
     command = { "$lua tools/ypp.lua", luax_config_params, "$in -o $out" },
     implicit_in = {
         "$lua",
         "tools/ypp.lua",
-        ".git/refs/tags",
+        gitdir()/"refs/tags",
     },
 }
 

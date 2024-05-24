@@ -47,7 +47,7 @@ found()
     hash "$@" 2>/dev/null
 }
 
-if (! found ninja) 2>/dev/null
+if ! found ninja
 then
     found dnf    && sudo dnf install -y ninja-build
     found apt    && sudo apt install -f -y ninja-build
