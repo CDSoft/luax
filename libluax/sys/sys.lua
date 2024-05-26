@@ -30,25 +30,33 @@ local F = require "F"
 
 local targets = require "targets"
 
-local function uname() return io.popen("uname -m", "r") : read "a" : trim() end
+local kernel, machine
 
--- the libraries extension in package.cpath is specific to the OS
-sys.so = package.cpath:match "%.[^%.]-$"
-sys.os = assert(targets : find(function(t) return t.so == sys.so end), "Unknown OS").os
+if package.config:sub(1, 1) == "/" then
+    -- Search for a Linux-like target
+    kernel, machine = io.popen("uname -s -m", "r") : read "a" : trim() : words() : unpack()
+else
+    -- Search for a Windows target
+    kernel, machine = os.getenv "OS", os.getenv "PROCESSOR_ARCHITECTURE"
+end
 
-sys.arch = pandoc and pandoc.system.arch or
-    (function()
-        local machine = F.case(sys.os) {
-            linux   = uname,
-            macos   = uname,
-            windows = function() return os.getenv "PROCESSOR_ARCHITECTURE" end,
-        }()
-        return assert(targets : find(function(t) return t.os==sys.os and t.uname_machine==machine end), "Unknown architecture").arch
-    end)()
+local target = targets:find(function(t) return t.kernel==kernel and t.machine==machine end)
 
-local host = assert(targets : find(function(t) return t.os==sys.os and t.arch==sys.arch end), "Unknown platform")
+if not target then
+    io.stderr:write("ERROR: Unknown architecture\n",
+        "Please report the bug with this information:\n",
+        "    config  = "..package.config:lines():head().."\n",
+        "    kernel  = "..tostring(kernel).."\n",
+        "    machine = "..tostring(machine).."\n",
+        ">> https://github.com/CDSoft/luax/issues <<\n"
+    )
+    os.exit(1)
+end
 
-sys.exe  = host.exe
-sys.name = host.name
+sys.name = target.name
+sys.os = target.os
+sys.arch = target.arch
+sys.exe = target.exe
+sys.so = target.so
 
 return sys
