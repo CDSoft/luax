@@ -1,6 +1,6 @@
 #!/usr/bin/env -S lua --
-_LUAX_VERSION = '6.0.12'
-_LUAX_DATE    = '2024-05-17'
+_LUAX_VERSION = '6.0.18'
+_LUAX_DATE    = '2024-05-26'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$bang:'..path)) end
@@ -31,13 +31,15 @@ local fs = require "fs"
 local sys = require "sys"
 local sh = require "sh"
 
-local version = "6.0.12"
+local version = "6.0.18"
 
 local zig_version = "0.12.0"
-local zig_path = F.case(sys.os) {
-    windows = function() return os.getenv"LOCALAPPDATA" end,
-    [F.Nil] = function() return os.getenv"HOME"/".local/opt" end,
-}()/"zig"/zig_version
+
+local home, zig_path = F.unpack(F.case(sys.os) {
+    windows = { "LOCALAPPDATA", "zig" / zig_version },
+    [F.Nil] = { "HOME", ".local/opt" / "zig" / zig_version },
+})
+zig_path = os.getenv(home) / zig_path
 local zig = zig_path/"zig"..sys.exe
 
 local function zig_install()
@@ -52,7 +54,7 @@ end
 
 return {
     version = version,
-    date = "2024-05-17",
+    date = "2024-05-26",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
     zig = {
@@ -4774,7 +4776,6 @@ http://cdelord.fr/luax
 local fs = require "_fs"
 
 local F = require "F"
-local sys = require "sys"
 
 --[[@@@
 ```lua
@@ -4819,30 +4820,6 @@ end
 
 --[[@@@
 ```lua
-fs.is_file(name)
-```
-returns `true` if `name` is a file.
-@@@]]
-
-function fs.is_file(name)
-    local stat = fs.stat(name)
-    return stat ~= nil and stat.type == "file"
-end
-
---[[@@@
-```lua
-fs.is_dir(name)
-```
-returns `true` if `name` is a directory.
-@@@]]
-
-function fs.is_dir(name)
-    local stat = fs.stat(name)
-    return stat ~= nil and stat.type == "directory"
-end
-
---[[@@@
-```lua
 fs.findpath(name)
 ```
 returns the full path of `name` if `name` is found in `$PATH` or `nil`.
@@ -4856,24 +4833,6 @@ function fs.findpath(name)
     if path then return fs.join(path, name) end
     return nil, name..": not found in $PATH"
 end
-
---[[@@@
-```lua
-fs.mv(old_name, new_name)
-```
-alias for `fs.rename(old_name, new_name)`.
-@@@]]
-
-fs.mv = fs.rename
-
---[[@@@
-```lua
-fs.rm(name)
-```
-alias for `fs.remove(name)`.
-@@@]]
-
-fs.rm = fs.remove
 
 --[[@@@
 ```lua
@@ -4991,16 +4950,9 @@ if pandoc and pandoc.system then
             return f(fs.join(tmpdir, "tmpfile"))
         end)
     end
-elseif sys.os == "windows" then
-    function fs.with_tmpfile(f)
-        local tmp = os.getenv "TMP" / os.tmpname():basename()
-        local ret = {f(tmp)}
-        fs.rm(tmp)
-        return table.unpack(ret)
-    end
 else
     function fs.with_tmpfile(f)
-        local tmp = os.tmpname()
+        local tmp = fs.tmpfile()
         local ret = {f(tmp)}
         fs.rm(tmp)
         return table.unpack(ret)
@@ -5018,20 +4970,9 @@ if pandoc and pandoc.system then
     function fs.with_tmpdir(f)
         return pandoc.system.with_temporary_directory("luax", f)
     end
-elseif sys.os == "windows" then
-    function fs.with_tmpdir(f)
-        local tmp = os.getenv "TMP" / os.tmpname():basename()
-        fs.rm(tmp)
-        fs.mkdir(tmp)
-        local ret = {f(tmp)}
-        fs.rmdir(tmp)
-        return table.unpack(ret)
-    end
 else
     function fs.with_tmpdir(f)
-        local tmp = os.tmpname()
-        fs.rm(tmp)
-        fs.mkdir(tmp)
+        local tmp = fs.tmpdir()
         local ret = {f(tmp)}
         fs.rmdir(tmp)
         return table.unpack(ret)
@@ -5055,17 +4996,6 @@ elseif fs.chdir then
         fs.chdir(old)
         return table.unpack(ret)
     end
-end
-
---[[@@@
-```lua
-fs.with_env(env, f)
-```
-changes the environnement to `env` and calls `f()`.
-@@@]]
-
-if pandoc and pandoc.system then
-    fs.with_env = pandoc.system.with_environment
 end
 
 --[[@@@
@@ -5222,6 +5152,10 @@ end
 
 if pandoc and pandoc.system then
     fs.getcwd = pandoc.system.get_working_directory
+elseif sys.os == "windows" then
+    function fs.getcwd()
+        return sh.read "cd" : trim() ---@diagnostic disable-line:undefined-field
+    end
 else
     function fs.getcwd()
         return sh.read "pwd" : trim() ---@diagnostic disable-line:undefined-field
@@ -5230,19 +5164,19 @@ end
 
 if pandoc and pandoc.system then
     fs.dir = F.compose{F, pandoc.system.list_directory}
+elseif sys.os == "windows" then
+    function fs.dir(path)
+        return sh.read("dir /b", path) : lines() : sort() ---@diagnostic disable-line:undefined-field
+    end
 else
     function fs.dir(path)
         return sh.read("ls", path) : lines() : sort() ---@diagnostic disable-line:undefined-field
     end
 end
 
-function fs.remove(name)
-    return os.remove(name)
-end
+fs.remove = os.remove
 
-function fs.rename(old_name, new_name)
-    return os.rename(old_name, new_name)
-end
+fs.rename = os.rename
 
 function fs.copy(source_name, target_name)
     local from, err_from = io.open(source_name, "rb")
@@ -5250,7 +5184,7 @@ function fs.copy(source_name, target_name)
     local to, err_to = io.open(target_name, "wb")
     if not to then from:close(); return to, err_to end
     while true do
-        local block = from:read(64*1024)
+        local block = from:read(8*1024)
         if not block then break end
         local ok, err = to:write(block)
         if not ok then
@@ -5416,15 +5350,13 @@ if pandoc and pandoc.system then
     function fs.mkdirs(path)
         return pandoc.system.make_directory(path, true)
     end
+elseif sys.os == "windows" then
+    function fs.mkdirs(path)
+        return sh.run("mkdir", path)
+    end
 else
-    if sys.os == "windows" then
-        function fs.mkdirs(path)
-            return sh.run("mkdir", path)
-        end
-    else
-        function fs.mkdirs(path)
-            return sh.run("mkdir", "-p", path)
-        end
+    function fs.mkdirs(path)
+        return sh.run("mkdir", "-p", path)
     end
 end
 
@@ -5485,6 +5417,29 @@ else
             : sort()
     end
 end
+
+function fs.is_file(name)
+    local st = fs.stat(name)
+    return st ~= nil and st.type == "file"
+end
+
+function fs.is_dir(name)
+    local st = fs.stat(name)
+    return st ~= nil and st.type == "directory"
+end
+
+fs.rm = fs.remove
+fs.mv = fs.rename
+
+fs.tmpfile = os.tmpname
+
+function fs.tmpdir()
+    local tmp = os.tmpname()
+    fs.rm(tmp)
+    fs.mkdir(tmp)
+    return tmp
+end
+
 
 return fs
 ]=])
