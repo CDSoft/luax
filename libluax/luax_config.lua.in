@@ -35,10 +35,12 @@ local sh = require "sh"
 local version = "@(VERSION)"
 
 local zig_version = "@(ZIG_VERSION)"
-local zig_path = F.case(sys.os) {
-    windows = function() return os.getenv"LOCALAPPDATA" end,
-    [F.Nil] = function() return os.getenv"HOME"/".local/opt" end,
-}()/"zig"/zig_version
+
+local home, zig_path = F.unpack(F.case(sys.os) {
+    windows = { "LOCALAPPDATA", "zig" / zig_version },
+    [F.Nil] = { "HOME", ".local/opt" / "zig" / zig_version },
+})
+zig_path = os.getenv(home) / zig_path
 local zig = zig_path/"zig"..sys.exe
 
 local function zig_install()

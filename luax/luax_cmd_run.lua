@@ -408,9 +408,11 @@ local function run_interpreter()
     -- interactive REPL
 
     if interactive then
-        local history = sys.os == "windows"
-            and os.getenv "APPDATA" / "luax_history"
-            or os.getenv "HOME" / ".luax_history"
+        local home = F.case(sys.os) {
+            windows = "APPDATA",
+            [Nil]   = "HOME",
+        }
+        local history = os.getenv(home) / ".luax_history"
         local linenoise = require "linenoise"
         linenoise.load(history)
         local function hist(input)

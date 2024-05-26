@@ -187,21 +187,17 @@ local function zig_target(t)
 end
 
 local function optional(cond)
-    return function(t)
-        return cond and t or {}
-    end
+    return cond and F.id or F.const{}
 end
 
 case(compiler) {
 
     zig = function()
-        var "zig" {
-            case(sys.os) {
-                linux   = os.getenv"HOME"/".local/opt",
-                macos   = os.getenv"HOME"/".local/opt",
-                windows = os.getenv"LOCALAPPDATA",
-            } / "zig" / zig_version / "zig"
-        }
+        local HOME, zig_path = F.unpack(case(sys.os) {
+            windows = { "LOCALAPPDATA", "zig" / zig_version / "zig" },
+            [Nil]   = { "HOME", ".local/opt/zig" / zig_version / "zig" },
+        })
+        var "zig" { os.getenv(HOME) / zig_path }
 
         build "$zig" { "tools/install_zig.sh",
             description = {"GET zig", zig_version},

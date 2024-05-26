@@ -52,13 +52,14 @@ local function findscript(script_name)
 end
 
 local function print_targets()
+    local home = os.getenv "HOME"
     lua_interpreters:foreach(function(interpreter)
         local name = interpreter.name
         local exe = name
         local path = fs.findpath(exe)
         print(("%-22s%s%s"):format(
             name,
-            path and path:gsub("^"..os.getenv"HOME", "~") or exe,
+            path and path:gsub("^"..home, "~") or exe,
             path and "" or " [NOT FOUND]"))
     end)
     print("native")
@@ -66,7 +67,7 @@ local function print_targets()
         local path = findscript("luax-"..target.name..".lib")
         print(("%-22s%s%s"):format(
             target.name,
-            path:gsub("^"..os.getenv"HOME", "~"),
+            path:gsub("^"..home, "~"),
             fs.is_file(path) and "" or " [NOT FOUND]"))
     end)
 end
