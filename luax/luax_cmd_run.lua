@@ -410,7 +410,7 @@ local function run_interpreter()
     if interactive then
         local home = F.case(sys.os) {
             windows = "APPDATA",
-            [Nil]   = "HOME",
+            [F.Nil] = "HOME",
         }
         local history = os.getenv(home) / ".luax_history"
         local linenoise = require "linenoise"
