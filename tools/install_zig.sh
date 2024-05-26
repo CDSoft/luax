@@ -47,37 +47,32 @@ download()
     exit 1
 }
 
-if ! [ -x "$ZIG" ]
-then
+ARCH="$(uname -m)"
+case "$ARCH" in
+    (i386)  ARCH=x86 ;;
+    (i486)  ARCH=x86 ;;
+    (i586)  ARCH=x86 ;;
+    (i686)  ARCH=x86 ;;
+    (arm64) ARCH=aarch64 ;;
+esac
 
-    ARCH="$(uname -m)"
-    case "$ARCH" in
-        (i386)  ARCH=x86 ;;
-        (i486)  ARCH=x86 ;;
-        (i586)  ARCH=x86 ;;
-        (i686)  ARCH=x86 ;;
-        (arm64) ARCH=aarch64 ;;
-    esac
+case "$(uname -s)" in
+    (Linux)  OS=linux ;;
+    (Darwin) OS=macos ;;
+    (MINGW*) OS=windows ;;
+    (*)      OS=unknown ;;
+esac
 
-    case "$(uname -s)" in
-        (Linux)  OS=linux ;;
-        (Darwin) OS=macos ;;
-        (MINGW*) OS=windows ;;
-        (*)      OS=unknown ;;
-    esac
+ZIG_ARCHIVE="zig-$OS-$ARCH-$ZIG_VERSION.tar.xz"
+case $ZIG_VERSION in
+    *-dev*)     ZIG_URL="https://ziglang.org/builds/$ZIG_ARCHIVE" ;;
+    *)          ZIG_URL="https://ziglang.org/download/$ZIG_VERSION/$ZIG_ARCHIVE" ;;
+esac
 
-    ZIG_ARCHIVE="zig-$OS-$ARCH-$ZIG_VERSION.tar.xz"
-    case $ZIG_VERSION in
-        *-dev*)     ZIG_URL="https://ziglang.org/builds/$ZIG_ARCHIVE" ;;
-        *)          ZIG_URL="https://ziglang.org/download/$ZIG_VERSION/$ZIG_ARCHIVE" ;;
-    esac
+mkdir -p "$(dirname "$ZIG")"
+download "$ZIG_URL" "$(dirname "$ZIG")/$ZIG_ARCHIVE"
 
-    mkdir -p "$(dirname "$ZIG")"
-    download "$ZIG_URL" "$(dirname "$ZIG")/$ZIG_ARCHIVE"
-
-    tar xJf "$(dirname "$ZIG")/$ZIG_ARCHIVE" -C "$(dirname "$ZIG")" --strip-components 1
-    rm "$(dirname "$ZIG")/$ZIG_ARCHIVE"
-
-fi
+tar xJf "$(dirname "$ZIG")/$ZIG_ARCHIVE" -C "$(dirname "$ZIG")" --strip-components 1
+rm "$(dirname "$ZIG")/$ZIG_ARCHIVE"
 
 touch "$ZIG"

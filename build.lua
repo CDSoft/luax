@@ -199,9 +199,9 @@ case(compiler) {
         })
         var "zig" { os.getenv(HOME) / zig_path }
 
-        build "$zig" { "tools/install_zig.sh",
+        build "$zig" {
             description = {"GET zig", zig_version},
-            command = {"$in", zig_version, "$out"},
+            command = {"tools/install_zig.sh", zig_version, "$out"},
             pool = "console",
         }
 

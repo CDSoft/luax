@@ -57,7 +57,7 @@ fi
 
 found ninja || warn "ERROR: ninja is not installed"
 
-tools/install_zig.sh $ZIG_VERSION $ZIG
+[ -x $ZIG ] || tools/install_zig.sh $ZIG_VERSION $ZIG
 
 [ -x $ZIG ] || warn "ERROR: zig is not installed"
 
