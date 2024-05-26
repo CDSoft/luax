@@ -56,13 +56,15 @@ and run bang to regenerate build.ninja.
 
 generator {
     implicit_in = {
+        "libluax/sys/sys.lua",
         "libluax/sys/targets.lua",
     },
 }
 
 -- list of targets used for cross compilation (with Zig only)
-local sys = require "sys"
 local targets = dofile "libluax/sys/targets.lua"
+_ENV._SYS_TARGETS = targets -- global used by sys to override the target list of the running luax interpreter
+local sys = dofile "libluax/sys/sys.lua"
 
 local usage = I{
     title = function(s) return F.unlines {s, (s:gsub(".", "="))}:rtrim() end,

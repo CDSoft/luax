@@ -26,21 +26,28 @@ local sys = {
     libc = "lua",
 }
 
-local F = require "F"
-
-local targets = require "targets"
+-- The global _SYS_TARGETS can be defined by build.lua to use a specific target list
+-- instead of the (possibly outdated) list provided by the interpreter running bang
+-- when building LuaX itself
+local targets = _SYS_TARGETS or require "targets"
 
 local kernel, machine
 
 if package.config:sub(1, 1) == "/" then
     -- Search for a Linux-like target
-    kernel, machine = io.popen("uname -s -m", "r") : read "a" : trim() : words() : unpack()
+    kernel, machine = io.popen("uname -s -m", "r") : read "a" : match "(%S+)%s+(%S+)"
 else
     -- Search for a Windows target
     kernel, machine = os.getenv "OS", os.getenv "PROCESSOR_ARCHITECTURE"
 end
 
-local target = targets:find(function(t) return t.kernel==kernel and t.machine==machine end)
+local target
+for i = 1, #targets do
+    if targets[i].kernel==kernel and targets[i].machine==machine then
+        target = targets[i]
+        break
+    end
+end
 
 if not target then
     io.stderr:write("ERROR: Unknown architecture\n",
