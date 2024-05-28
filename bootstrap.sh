@@ -30,9 +30,10 @@ info()
     echo -e "\n\e[44m$*\e[0m\n"
 }
 
-warn()
+error()
 {
     echo -e "\n\e[41m$*\e[0m\n"
+    exit 1
 }
 
 ######################################################################
@@ -55,11 +56,11 @@ then
     found pacman && sudo pacman -S --noconfirm ninja
 fi
 
-found ninja || warn "ERROR: ninja is not installed"
+found ninja || error "ERROR: ninja is not installed"
 
 [ -x $ZIG ] || tools/install_zig.sh $ZIG_VERSION $ZIG
 
-[ -x $ZIG ] || warn "ERROR: zig is not installed"
+[ -x $ZIG ] || error "ERROR: zig is not installed"
 
 ######################################################################
 info "Step 1: bootstrap a Lua interpreter and generate build.ninja"
