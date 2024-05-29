@@ -27,12 +27,12 @@ set -eu
 
 info()
 {
-    echo -e "\n\e[44m$*\e[0m\n"
+    echo "# $*"
 }
 
 error()
 {
-    echo -e "\n\e[41m$*\e[0m\n"
+    echo "Error: $*"
     exit 1
 }
 
@@ -50,17 +50,20 @@ found()
 
 if ! found ninja
 then
-    found dnf    && sudo dnf install -y ninja-build
-    found apt    && sudo apt install -f -y ninja-build
-    found brew   && sudo brew install ninja
-    found pacman && sudo pacman -S --noconfirm ninja
+    echo "Install ninja"
+    case "$(uname -s)" in
+        (Linux)     if found dnf; then sudo dnf install -y ninja-build
+                    elif found apt; then sudo apt install -f -y ninja-build
+                    elif found pacman; then sudo pacman -S --noconfirm ninja
+                    fi
+                    ;;
+        (Darwin)    sudo brew install ninja ;;
+    esac
+    found ninja || error "ninja is not installed"
 fi
 
-found ninja || error "ERROR: ninja is not installed"
-
 [ -x $ZIG ] || tools/install_zig.sh $ZIG_VERSION $ZIG
-
-[ -x $ZIG ] || error "ERROR: zig is not installed"
+[ -x $ZIG ] || error "zig can not be installed"
 
 ######################################################################
 info "Step 1: bootstrap a Lua interpreter and generate build.ninja"
