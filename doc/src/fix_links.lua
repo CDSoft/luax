@@ -21,35 +21,21 @@ http://cdelord.fr/luax
 local path = pandoc.path
 local output_path = path.directory(PANDOC_STATE.output_file)
 
-local function file_exists(name)
-    local f = io.open(name, 'r')
-    if f ~= nil then
-        io.close(f)
-        return true
-    else
-        return false
-    end
-end
-
-if FORMAT == "gfm" then
+if FORMAT == "gfm" and PANDOC_STATE.output_file == "README.md" then
 
     function Link(el)
         if el.target:match"%.md$" then
             local new_target = path.join{output_path, "doc", el.target}
-            if file_exists(new_target) then
-                el.target = path.make_relative(new_target, output_path)
-                return el
-            end
+            el.target = path.make_relative(new_target, output_path)
+            return el
         end
     end
 
     function Image(el)
         if el.src:match"%.svg$" then
             local new_src = path.join{output_path, "doc", el.src}
-            if file_exists(new_src) then
-                el.src = path.make_relative(new_src, output_path)
-                return el
-            end
+            el.src = path.make_relative(new_src, output_path)
+            return el
         end
     end
 
@@ -66,4 +52,5 @@ if FORMAT == "html5" then
         el.src = path.join{"doc", el.src}
         return el
     end
+
 end
