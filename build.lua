@@ -144,7 +144,8 @@ compiler = F.default("zig", compiler)
 -- Only zig can cross-compile LuaX for all targets
 local cross_compilation = compiler=="zig"
 if not cross_compilation then
-    targets = F{sys}
+    targets = F{F.find(function(t) return t.os==sys.os and t.arch==sys.arch end, targets)}
+    assert(#targets == 1)
 end
 
 if san and compiler~="clang" then
