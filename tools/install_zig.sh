@@ -69,10 +69,13 @@ case $ZIG_VERSION in
     *)          ZIG_URL="https://ziglang.org/download/$ZIG_VERSION/$ZIG_ARCHIVE" ;;
 esac
 
-mkdir -p "$(dirname "$ZIG")"
-download "$ZIG_URL" "$(dirname "$ZIG")/$ZIG_ARCHIVE"
+if ! [ -x $ZIG ]
+then
+    mkdir -p "$(dirname "$ZIG")"
+    download "$ZIG_URL" "$(dirname "$ZIG")/$ZIG_ARCHIVE"
 
-tar xJf "$(dirname "$ZIG")/$ZIG_ARCHIVE" -C "$(dirname "$ZIG")" --strip-components 1
-rm "$(dirname "$ZIG")/$ZIG_ARCHIVE"
+    tar xJf "$(dirname "$ZIG")/$ZIG_ARCHIVE" -C "$(dirname "$ZIG")" --strip-components 1
+    rm "$(dirname "$ZIG")/$ZIG_ARCHIVE"
+fi
 
 touch "$ZIG"
