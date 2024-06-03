@@ -27,7 +27,6 @@
 #include <windows.h>
 #else
 #include <sys/ioctl.h>
-#include <termios.h>
 #include <unistd.h>
 #endif
 
@@ -36,37 +35,64 @@
 
 #include "term.h"
 
+static bool get_file_descriptor(lua_State *L, int default_fd, int *fd)
+{
+    switch (lua_type(L, 1))
+    {
+        case LUA_TNIL:
+        case LUA_TNONE:     *fd = default_fd; break;
+        case LUA_TNUMBER:   *fd = (int)luaL_checkinteger(L, 1); break;
+        case LUA_TUSERDATA: *fd = fileno(*(FILE**)luaL_checkudata(L, 1, LUA_FILEHANDLE)); break;
+        default: return false;
+    }
+    return true;
+}
+
+#ifdef _WIN32
+static bool get_file_handle(lua_State *L, int default_fd, DWORD *fh)
+{
+    int fd;
+    if (!get_file_descriptor(L, default_fd, &fd)) {
+        return false;
+    }
+    switch (fd) {
+        case STDIN_FILENO:  *fh = STD_INPUT_HANDLE; break;
+        case STDOUT_FILENO: *fh = STD_OUTPUT_HANDLE; break;
+        case STDERR_FILENO: *fh = STD_ERROR_HANDLE; break;
+        default: return false;
+    }
+    return true;
+}
+#endif
+
 /*@@@
 ```lua
 term.isatty([fileno])
 ```
 returns `true` if `fileno` is a tty.
+The default file descriptor is `stdin` (`0`).
 @@@*/
 
 static int term_isatty(lua_State *L)
 {
-    int n;
-    switch (lua_type(L, 1))
-    {
-        case LUA_TNIL:
-        case LUA_TNONE:     n = 0; break;
-        case LUA_TNUMBER:   n = (int)luaL_checkinteger(L, 1); break;
-        case LUA_TUSERDATA: n = fileno(*(FILE**)luaL_checkudata(L, 1, LUA_FILEHANDLE)); break;
-        default: return luax_pusherror(L, "invalud argument to isatty");
+    int fd;
+    if (!get_file_descriptor(L, STDIN_FILENO, &fd)) {
+        return luax_pusherror(L, "isatty: bad file descriptor");
     }
 #ifdef _WIN32
-    lua_pushboolean(L, _isatty(n));
+    lua_pushboolean(L, _isatty(fd));
 #else
-    lua_pushboolean(L, isatty(n));
+    lua_pushboolean(L, isatty(fd));
 #endif
     return 1;
 }
 
 /*@@@
 ```lua
-term.size()
+term.size([fileno])
 ```
-returns a table with the number of rows (field `rows`) and lines (field `lines`).
+returns a table with the number of rows (field `rows`) and lines (field `lines`) of the terminal attached to `fileno`.
+The default file descriptor is `stdout` (`0`).
 @@@*/
 
 static inline void set_integer(lua_State *L, const char *name, lua_Integer val)
@@ -78,13 +104,25 @@ static inline void set_integer(lua_State *L, const char *name, lua_Integer val)
 static int term_size(lua_State *L)
 {
 #ifdef _WIN32
+    DWORD fh;
+    if (!get_file_handle(L, STDOUT_FILENO, &fh)) {
+        return luax_pusherror(L, "size: bad file descriptor");
+    }
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    if (!GetConsoleScreenBufferInfo(GetStdHandle(fh), &csbi)) {
+        return luax_pusherror(L, "size: bad file descriptor");
+    }
     const int cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;
     const int rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 #else
+    int fd;
+    if (!get_file_descriptor(L, STDOUT_FILENO, &fd)) {
+        return luax_pusherror(L, "size: bad file descriptor");
+    }
     struct winsize win;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &win);
+    if (ioctl(fd, TIOCGWINSZ, &win) == -1) {
+        return luax_pusherror(L, "size: bad file descriptor");
+    }
     const int cols = win.ws_col;
     const int rows = win.ws_row;
 #endif

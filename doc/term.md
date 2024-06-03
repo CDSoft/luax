@@ -144,11 +144,13 @@ prints `p` and waits for a user input
 term.isatty([fileno])
 ```
 
-returns `true` if `fileno` is a tty.
+returns `true` if `fileno` is a tty. The default file descriptor is
+`stdin` (`0`).
 
 ``` lua
-term.size()
+term.size([fileno])
 ```
 
 returns a table with the number of rows (field `rows`) and lines (field
-`lines`).
+`lines`) of the terminal attached to `fileno`. The default file
+descriptor is `stdout` (`0`).

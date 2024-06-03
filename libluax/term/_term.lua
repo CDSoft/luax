@@ -24,20 +24,28 @@ local term = {}
 
 local sh = require "sh"
 
-local _isatty = nil
-
-function term.isatty()
-    if _isatty == nil then
-        _isatty = (sh.run("tty", "--silent", "2>/dev/null"))
-    end
-    return _isatty
+local function file_descriptor(fd, def)
+    if fd == nil then return def end
+    if fd == io.stdin then return 0 end
+    if fd == io.stdout then return 1 end
+    if fd == io.stderr then return 2 end
+    return fd
 end
 
-function term.size()
-    local rows, cols = sh.read("stty", "size")
-        : words() ---@diagnostic disable-line: undefined-field
+local _isatty = {}
+
+function term.isatty(fd)
+    fd = file_descriptor(fd, 0)
+    _isatty[fd] = _isatty[fd] or sh.run("test -t", fd)~=nil
+    return _isatty[fd]
+end
+
+function term.size(fd)
+    fd = file_descriptor(fd, 1)
+    local size = fd==0 and sh.read("stty", "size") or sh.read("tput lines; tput cols")
+    return size and size
+        : words()
         : map(tonumber):unpack()
-    return {rows=rows, cols=cols}
 end
 
 return term
