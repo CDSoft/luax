@@ -85,6 +85,7 @@ bang -- fast        Code optimized for speed (default)
 bang -- small       Code optimized for size
 bang -- debug       Compiled with debug informations and no optimization
 bang -- san         Compiled with ASan and UBSan (implies clang)
+bang -- lax         Disable strict compilation options
 bang -- strip       Remove debug information from precompiled bytecode
 
 $(title "Compiler")
@@ -108,6 +109,7 @@ end
 local mode = nil -- fast, small, debug
 local compiler = nil -- zig, gcc, clang
 local san = nil
+local strict = true -- strict compilation options and checks
 
 local bytecode = "-b"
 
@@ -129,6 +131,7 @@ F.foreach(arg, function(a)
         gcc   = set_compiler,
         clang = set_compiler,
         san   = function() san = true end,
+        lax   = function() strict = false end,
         strip = function() bytecode = "-s" end,
         [Nil] = function()
             F.error_without_stack_trace(a..": unknown parameter\n\n"..usage, 1)
@@ -241,10 +244,12 @@ local include_path = F{
     "libluax",
 }
 
-local lto_opt = case(compiler) {
-    zig   = "-flto=thin",
-    gcc   = "-flto",
-    clang = "-flto=thin",
+local lto_opt = optional(strict) {
+    case(compiler) {
+        zig   = "-flto=thin",
+        gcc   = "-flto",
+        clang = "-flto=thin",
+    }
 }
 
 local sanitizer_cflags = optional(san) {
@@ -296,9 +301,11 @@ local host_cflags = {
         macos = "-DLUA_USE_MACOSX",
         windows = {},
     },
-    "-Werror",
-    "-Wall",
-    "-Wextra",
+    optional(strict) {
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+    },
     case(compiler) {
         zig = {
             "-Wno-constant-logical-operand",
@@ -338,21 +345,23 @@ local cflags = {
 
 local luax_cflags = F{
     cflags,
-    "-Werror",
-    "-Wall",
-    "-Wextra",
-    "-pedantic",
+    optional(strict) {
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+        "-pedantic",
 
-    "-Wstrict-prototypes",
-    "-Wmissing-field-initializers",
-    "-Wmissing-prototypes",
-    "-Wmissing-declarations",
-    "-Werror=switch-enum",
-    "-Werror=implicit-fallthrough",
-    "-Werror=missing-prototypes",
+        "-Wstrict-prototypes",
+        "-Wmissing-field-initializers",
+        "-Wmissing-prototypes",
+        "-Wmissing-declarations",
+        "-Werror=switch-enum",
+        "-Werror=implicit-fallthrough",
+        "-Werror=missing-prototypes",
+    },
     case(compiler) {
         zig = {
-            "-Weverything",
+            optional(strict) "-Weverything",
             "-Wno-padded",
             "-Wno-reserved-identifier",
             "-Wno-disabled-macro-expansion",
@@ -364,7 +373,7 @@ local luax_cflags = F{
         },
         gcc = {},
         clang = {
-            "-Weverything",
+            optional(strict) "-Weverything",
             "-Wno-padded",
             "-Wno-reserved-identifier",
             "-Wno-disabled-macro-expansion",
