@@ -69,7 +69,7 @@ case $ZIG_VERSION in
     *)          ZIG_URL="https://ziglang.org/download/$ZIG_VERSION/$ZIG_ARCHIVE" ;;
 esac
 
-if ! [ -x $ZIG ]
+if ! [ -x "$ZIG" ]
 then
     mkdir -p "$(dirname "$ZIG")"
     download "$ZIG_URL" "$(dirname "$ZIG")/$ZIG_ARCHIVE"
