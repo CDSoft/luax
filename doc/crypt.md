@@ -18,7 +18,7 @@ generator. It can be used as a repeatable generator (e.g. for repeatable
 tests).
 
 LuaX has a global generator (with a global seed) and can instantiate
-independant generators with their own seeds.
+independent generators with their own seeds.
 
 ### Random number generator instance
 

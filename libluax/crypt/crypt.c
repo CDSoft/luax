@@ -56,7 +56,7 @@ This generator is not a cryptographically secure pseudorandom number generator.
 It can be used as a repeatable generator (e.g. for repeatable tests).
 
 LuaX has a global generator (with a global seed)
-and can instantiate independant generators with their own seeds.
+and can instantiate independent generators with their own seeds.
 @@@*/
 
 #define PRNG_MT "prng"
