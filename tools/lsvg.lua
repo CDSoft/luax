@@ -1,6 +1,6 @@
 #!/usr/bin/env -S lua --
-_LUAX_VERSION = '6.0.18'
-_LUAX_DATE    = '2024-05-26'
+_LUAX_VERSION = '6.1'
+_LUAX_DATE    = '2024-06-08'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$lsvg:'..path)) end
@@ -31,9 +31,9 @@ local fs = require "fs"
 local sys = require "sys"
 local sh = require "sh"
 
-local version = "6.0.18"
+local version = "6.1"
 
-local zig_version = "0.12.0"
+local zig_version = "0.13.0"
 
 local home, zig_path = F.unpack(F.case(sys.os) {
     windows = { "LOCALAPPDATA", "zig" / zig_version },
@@ -54,7 +54,7 @@ end
 
 return {
     version = version,
-    date = "2024-05-26",
+    date = "2024-06-08",
     copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
     authors = "Christophe Delord",
     zig = {
@@ -6000,6 +6000,81 @@ linenoise.clear = term.clear
 
 return linenoise
 ]=])
+libs["lar"] = lib("libluax/lar/lar.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--@LIB
+
+local F = require "F"
+local lz4 = require "lz4"
+local cbor = require "cbor"
+local crypt = require "crypt"
+
+--[[------------------------------------------------------------------------@@@
+## Lua Archive
+@@@]]
+
+--[[@@@
+```lua
+local lar = require "lar"
+```
+
+`lar` is a simple archive format for Lua values (e.g. Lua tables).
+It contains a Lua value:
+
+- serialized with `cbor`
+- compressed with `lz4`
+- encrypted with `rc4` (e.g. to avoid unintended modifications)
+@@@]]
+local lar = {}
+
+--[[@@@
+```lua
+lar.lar(lua_value, [key])
+```
+Returns a string with `lua_value` serialized, compressed and encrypted.
+@@@]]
+
+function lar.lar(lua_value, key)
+    local serialized = assert(cbor.encode(lua_value, {pairs=F.pairs}))
+    local compressed = assert(lz4.lz4(serialized))
+    local encrypted  = crypt.rc4(compressed, key or "")
+    return encrypted
+end
+
+--[[@@@
+```lua
+lar.unlar(archive, [key])
+```
+Returns the Lua value contained in serialized, compressed and encrypted string.
+@@@]]
+
+function lar.unlar(encrypted, key)
+    local decrypted    = crypt.unrc4(encrypted, key or "")
+    local decompressed = assert(lz4.unlz4(decrypted))
+    local lua_value    = assert(cbor.decode(decompressed))
+    return lua_value
+end
+
+return lar
+]=])
 libs["lz4"] = lib("libluax/lz4/lz4.lua", [=[--[[
 This file is part of luax.
 
@@ -6619,30 +6694,45 @@ local sys = {
     libc = "lua",
 }
 
-local F = require "F"
+-- The global _SYS_TARGETS can be defined by build.lua to use a specific target list
+-- instead of the (possibly outdated) list provided by the interpreter running bang
+-- when building LuaX itself
+local targets = _SYS_TARGETS or require "targets"
 
-local targets = require "targets"
+local kernel, machine
 
-local function uname() return io.popen("uname -m", "r") : read "a" : trim() end
+if package.config:sub(1, 1) == "/" then
+    -- Search for a Linux-like target
+    kernel, machine = io.popen("uname -s -m", "r") : read "a" : match "(%S+)%s+(%S+)"
+else
+    -- Search for a Windows target
+    kernel, machine = os.getenv "OS", os.getenv "PROCESSOR_ARCHITECTURE"
+end
 
--- the libraries extension in package.cpath is specific to the OS
-sys.so = package.cpath:match "%.[^%.]-$"
-sys.os = assert(targets : find(function(t) return t.so == sys.so end), "Unknown OS").os
+local target
+for i = 1, #targets do
+    if targets[i].kernel==kernel and targets[i].machine==machine then
+        target = targets[i]
+        break
+    end
+end
 
-sys.arch = pandoc and pandoc.system.arch or
-    (function()
-        local machine = F.case(sys.os) {
-            linux   = uname,
-            macos   = uname,
-            windows = function() return os.getenv "PROCESSOR_ARCHITECTURE" end,
-        }()
-        return assert(targets : find(function(t) return t.os==sys.os and t.uname_machine==machine end), "Unknown architecture").arch
-    end)()
+if not target then
+    io.stderr:write("ERROR: Unknown architecture\n",
+        "Please report the bug with this information:\n",
+        "    config  = "..package.config:lines():head().."\n",
+        "    kernel  = "..tostring(kernel).."\n",
+        "    machine = "..tostring(machine).."\n",
+        ">> https://github.com/CDSoft/luax/issues <<\n"
+    )
+    os.exit(1)
+end
 
-local host = assert(targets : find(function(t) return t.os==sys.os and t.arch==sys.arch end), "Unknown platform")
-
-sys.exe  = host.exe
-sys.name = host.name
+sys.name = target.name
+sys.os = target.os
+sys.arch = target.arch
+sys.exe = target.exe
+sys.so = target.so
 
 return sys
 ]=])
@@ -6671,13 +6761,13 @@ http://cdelord.fr/luax
 local F = require "F"
 
 return F{
-    {name="linux-x86_64",       uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="gnu",   exe="",     so=".so"   },
-    {name="linux-x86_64-musl",  uname_machine="x86_64",  os="linux",   arch="x86_64",  libc="musl",  exe="",     so=".so"   },
-    {name="linux-aarch64",      uname_machine="aarch64", os="linux",   arch="aarch64", libc="gnu",   exe="",     so=".so"   },
-    {name="linux-aarch64-musl", uname_machine="aarch64", os="linux",   arch="aarch64", libc="musl",  exe="",     so=".so"   },
-    {name="macos-x86_64",       uname_machine="x86_64",  os="macos",   arch="x86_64",  libc="none",  exe="",     so=".dylib"},
-    {name="macos-aarch64",      uname_machine="arm64",   os="macos",   arch="aarch64", libc="none",  exe="",     so=".dylib"},
-    {name="windows-x86_64",     uname_machine="AMD64",   os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll"  },
+    {name="linux-x86_64",       machine="x86_64",  kernel="Linux",      os="linux",   arch="x86_64",  libc="gnu",   exe="",     so=".so"   },
+    {name="linux-x86_64-musl",  machine="x86_64",  kernel="Linux",      os="linux",   arch="x86_64",  libc="musl",  exe="",     so=".so"   },
+    {name="linux-aarch64",      machine="aarch64", kernel="Linux",      os="linux",   arch="aarch64", libc="gnu",   exe="",     so=".so"   },
+    {name="linux-aarch64-musl", machine="aarch64", kernel="Linux",      os="linux",   arch="aarch64", libc="musl",  exe="",     so=".so"   },
+    {name="macos-x86_64",       machine="x86_64",  kernel="Darwin",     os="macos",   arch="x86_64",  libc="none",  exe="",     so=".dylib"},
+    {name="macos-aarch64",      machine="arm64",   kernel="Darwin",     os="macos",   arch="aarch64", libc="none",  exe="",     so=".dylib"},
+    {name="windows-x86_64",     machine="AMD64",   kernel="Windows_NT", os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll"  },
 }
 ]=])
 libs["term"] = lib("libluax/term/term.lua", [=[--[[
@@ -6946,20 +7036,28 @@ local term = {}
 
 local sh = require "sh"
 
-local _isatty = nil
-
-function term.isatty()
-    if _isatty == nil then
-        _isatty = (sh.run("tty", "--silent", "2>/dev/null"))
-    end
-    return _isatty
+local function file_descriptor(fd, def)
+    if fd == nil then return def end
+    if fd == io.stdin then return 0 end
+    if fd == io.stdout then return 1 end
+    if fd == io.stderr then return 2 end
+    return fd
 end
 
-function term.size()
-    local rows, cols = sh.read("stty", "size")
-        : words() ---@diagnostic disable-line: undefined-field
+local _isatty = {}
+
+function term.isatty(fd)
+    fd = file_descriptor(fd, 0)
+    _isatty[fd] = _isatty[fd] or sh.run("test -t", fd)~=nil
+    return _isatty[fd]
+end
+
+function term.size(fd)
+    fd = file_descriptor(fd, 1)
+    local size = fd==0 and sh.read("stty", "size") or sh.read("tput lines; tput cols")
+    return size and size
+        : words()
         : map(tonumber):unpack()
-    return {rows=rows, cols=cols}
 end
 
 return term
