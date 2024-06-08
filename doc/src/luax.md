@@ -93,6 +93,8 @@ Option              Description
 `bang -- small`     Optimized for size
 `bang -- debug`     Debug symbols kept, not optimized
 `bang -- san`       Compiled with ASan and UBSan (implies clang)
+`bang -- lax`       Disable strict compilation options
+`bang -- strip`     Remove debug information from precompiled bytecode
 `bang -- zig`       Compile LuaX with Zig
 `bang -- gcc`       Compile LuaX with gcc
 `bang -- clang`     Compile LuaX with clang

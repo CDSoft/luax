@@ -82,15 +82,17 @@ If the bootstrap stage fails, you can try to:
 
 ### Compilation options
 
-| Option          | Description                                  |
-|:----------------|:---------------------------------------------|
-| `bang -- fast`  | Optimized for speed                          |
-| `bang -- small` | Optimized for size                           |
-| `bang -- debug` | Debug symbols kept, not optimized            |
-| `bang -- san`   | Compiled with ASan and UBSan (implies clang) |
-| `bang -- zig`   | Compile LuaX with Zig                        |
-| `bang -- gcc`   | Compile LuaX with gcc                        |
-| `bang -- clang` | Compile LuaX with clang                      |
+| Option          | Description                                        |
+|:----------------|:---------------------------------------------------|
+| `bang -- fast`  | Optimized for speed                                |
+| `bang -- small` | Optimized for size                                 |
+| `bang -- debug` | Debug symbols kept, not optimized                  |
+| `bang -- san`   | Compiled with ASan and UBSan (implies clang)       |
+| `bang -- lax`   | Disable strict compilation options                 |
+| `bang -- strip` | Remove debug information from precompiled bytecode |
+| `bang -- zig`   | Compile LuaX with Zig                              |
+| `bang -- gcc`   | Compile LuaX with gcc                              |
+| `bang -- clang` | Compile LuaX with clang                            |
 
 `bang` must be run before `ninja` to change the compilation options.
 
