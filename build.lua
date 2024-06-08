@@ -717,6 +717,7 @@ rt { luax="libluax/fs/fs.lua",                  lua={"libluax/fs/fs.lua", "liblu
 rt {                                            lua="libluax/imath/imath.lua"                               }
 rt { luax="libluax/import/import.lua",          lua="libluax/import/import.lua"                             }
 rt {                                            lua="libluax/linenoise/linenoise.lua"                       }
+rt { luax="libluax/lar/lar.lua",                lua="libluax/lar/lar.lua"                                   }
 rt { luax="libluax/lz4/lz4.lua",                lua={"libluax/lz4/lz4.lua", "libluax/lz4/_lz4.lua"}         }
 rt {                                            lua="libluax/mathx/mathx.lua"                               }
 rt {                                            lua="libluax/ps/ps.lua"                                     }
@@ -887,19 +888,19 @@ end
 
 if cross_compilation then
 
-    rule "cbor-ar" {
+    rule "ar" {
         description = "CBOR-AR $out",
-        command = "$luax tools/cbor-ar.lua $in -o $out",
+        command = "$luax tools/ar.lua $in -o $out",
         implicit_in = {
             "$luax",
             "$lz4",
-            "tools/cbor-ar.lua",
+            "tools/ar.lua",
         },
     }
 
     acc(libraries) {
         targets : map(function(target)
-            return build("$lib/luax-"..target.name..".lib") { "cbor-ar",
+            return build("$lib/luax-"..target.name..".lar") { "ar",
 
                 -- Lua headers
                 "lua/lua.h",
@@ -933,11 +934,11 @@ section "LuaX Lua implementation"
 ---------------------------------------------------------------------
 
 --===================================================================
-section "$lib/luax.lib"
+section "$lib/luax.lar"
 ---------------------------------------------------------------------
 
 acc(libraries) {
-    build "$lib/luax.lib" {
+    build "$lib/luax.lar" {
         "bundle", "$luax_config_lua", lua_runtime,
         args = {
             "-e lib",
@@ -1336,7 +1337,7 @@ section "Update dist for all targets"
 
 local function no_arch(name)
     local ext = name:ext()
-    return ext==".lua" or ext==".lib"
+    return ext==".lua" or ext==".lar"
 end
 
 local dist = targets : map(function(target)

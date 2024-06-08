@@ -26,7 +26,7 @@ local M = {}
 local F = require "F"
 local fs = require "fs"
 local crypt = require "crypt"
-require "lz4"
+local lar = require "lar"
 
 local format = string.format
 local byte = string.byte
@@ -192,8 +192,6 @@ end
 
 function M.bundle(opt)
 
-    local cbor = require "cbor"
-
     opt.bytecode = opt.bytecode or opt.strip -- strip implies bytecode
 
     local scripts = F{}
@@ -201,8 +199,8 @@ function M.bundle(opt)
     F.foreach(opt.scripts, function(script)
         local content = assert(fs.read_bin(script))
         local ext = fs.ext(script)
-        if ext == ".lib" then
-            local lib_scripts = assert(cbor.decode(assert(content:unlz4())))
+        if ext == ".lar" then
+            local lib_scripts = lar.unlar(content)
             for i = 1, #lib_scripts do
                 scripts[#scripts+1] = lib_scripts[i]
             end
@@ -240,7 +238,7 @@ function M.bundle(opt)
 
     if opt.target == "lib" then
         return F{
-            [opt.output] = cbor.encode(scripts, {pairs=F.pairs}) : lz4(),
+            [opt.output] = lar.lar(scripts),
         }
     end
 

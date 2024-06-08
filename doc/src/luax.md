@@ -291,6 +291,7 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 - [argparse](argparse.md): Feature-rich command line parser for Lua
 - [serpent](serpent.md): Lua serializer and pretty printer
 - [cbor](cbor.md): pure Lua implementation of the CBOR
+- [lar](lar.md): Simple archive format for Lua values
 - [linenoise](linenoise.md): A small, portable GNU readline replacement with UTF-8 support
 - [json](json.md): JSON Module for Lua
 

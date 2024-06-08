@@ -22,11 +22,11 @@ http://cdelord.fr/luax
 -- Archive files to a CBOR/LZ4 file
 
 local F = require "F"
-local cbor = require "cbor"
 local fs = require "fs"
+local lar = require "lar"
 
 local args = (function()
-    local parser = require "argparse"() : name "cbor-ar"
+    local parser = require "argparse"() : name "ar.lua"
     parser : argument "inputs" : description "Files to archive" : args "*" : target "inputs"
     parser : option "-o" : description "Output file" : argname "output" : target "output"
     return parser:parse(arg)
@@ -39,8 +39,6 @@ local files = F(args.inputs)
 end)
 : from_list()
 
-local archive = cbor.encode(files, {pairs=F.pairs}) : lz4()
-
 if args.output then
-    fs.write_bin(args.output, archive)
+    fs.write_bin(args.output, lar.lar(files))
 end

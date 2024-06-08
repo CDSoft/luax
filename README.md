@@ -337,6 +337,7 @@ and [lapp](http://cdelord.fr/lapp).
 - [argparse](doc/argparse.md): Feature-rich command line parser for Lua
 - [serpent](doc/serpent.md): Lua serializer and pretty printer
 - [cbor](doc/cbor.md): pure Lua implementation of the CBOR
+- [lar](doc/lar.md): Simple archive format for Lua values
 - [linenoise](doc/linenoise.md): A small, portable GNU readline
   replacement with UTF-8 support
 - [json](doc/json.md): JSON Module for Lua

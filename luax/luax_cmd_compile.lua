@@ -24,17 +24,17 @@ local fs = require "fs"
 local F = require "F"
 local sh = require "sh"
 local sys = require "sys"
-local cbor = require "cbor"
 
 local bundle = require "luax_bundle"
+local lar = require "lar"
 local help = require "luax_help"
 local welcome = require "luax_welcome"
 local targets = require "targets"
 
 local lua_interpreters = F{
     { name="luax",   scripts={} },
-    { name="lua",    scripts={"luax.lib"} },
-    { name="pandoc", scripts={"luax.lib"} },
+    { name="lua",    scripts={"luax.lar"} },
+    { name="pandoc", scripts={"luax.lar"} },
 }
 
 local arg0 = arg[0]
@@ -64,7 +64,7 @@ local function print_targets()
     end)
     print("native")
     targets:foreach(function(target)
-        local path = findscript("luax-"..target.name..".lib")
+        local path = findscript("luax-"..target.name..".lar")
         print(("%-22s%s%s"):format(
             target.name,
             path:gsub("^"..home, "~"),
@@ -198,11 +198,11 @@ local function compile_zig(tmp, current_output, target_definition)
     end
 
     -- Extract precompiled LuaX libraries
-    local lib = findscript("luax-"..target_definition.name..".lib")
+    local lib = findscript("luax-"..target_definition.name..".lar")
     if not fs.is_file(lib) then
         help.err("%s: LuaX library not found, please check LuaX installation", lib)
     end
-    local libs = F(assert(cbor.decode(assert(assert(fs.read_bin(lib)):unlz4()))))
+    local libs = F(lar.unlar(fs.read_bin(lib)))
     libs:foreachk(function(filename, content)
         fs.write_bin(tmp/filename, content)
     end)
