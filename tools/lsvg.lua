@@ -1,5 +1,5 @@
 #!/usr/bin/env -S lua --
-_LUAX_VERSION = '6.1'
+_LUAX_VERSION = '6.1.1'
 _LUAX_DATE    = '2024-06-08'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
@@ -31,7 +31,7 @@ local fs = require "fs"
 local sys = require "sys"
 local sh = require "sh"
 
-local version = "6.1"
+local version = "6.1.1"
 
 local zig_version = "0.13.0"
 
@@ -6041,7 +6041,9 @@ It contains a Lua value:
 
 - serialized with `cbor`
 - compressed with `lz4`
-- encrypted with `rc4` (e.g. to avoid unintended modifications)
+- encrypted with `rc4`
+
+The Lua value is only encrypted if a key is provided.
 @@@]]
 local lar = {}
 
@@ -6055,7 +6057,7 @@ Returns a string with `lua_value` serialized, compressed and encrypted.
 function lar.lar(lua_value, key)
     local serialized = assert(cbor.encode(lua_value, {pairs=F.pairs}))
     local compressed = assert(lz4.lz4(serialized))
-    local encrypted  = crypt.rc4(compressed, key or "")
+    local encrypted  = key and crypt.rc4(compressed, key) or compressed
     return encrypted
 end
 
@@ -6063,11 +6065,11 @@ end
 ```lua
 lar.unlar(archive, [key])
 ```
-Returns the Lua value contained in serialized, compressed and encrypted string.
+Returns the Lua value contained in a serialized, compressed and encrypted string.
 @@@]]
 
 function lar.unlar(encrypted, key)
-    local decrypted    = crypt.unrc4(encrypted, key or "")
+    local decrypted    = key and crypt.unrc4(encrypted, key) or encrypted
     local decompressed = assert(lz4.unlz4(decrypted))
     local lua_value    = assert(cbor.decode(decompressed))
     return lua_value
