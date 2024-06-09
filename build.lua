@@ -160,6 +160,9 @@ comment(("Compilation mode: %s"):format(mode))
 comment(("Compiler        : %s"):format(compiler))
 comment(("Sanitizers      : %s"):format(san and "ASan and UbSan" or "none"))
 
+local function is_dynamic(target) return target.libc~="musl" and not san end
+local function has_partial_ld(target) return target.os=="linux" end
+
 --===================================================================
 section "Build environment"
 ---------------------------------------------------------------------
@@ -318,7 +321,7 @@ local host_cflags = {
 
 local host_ldflags = {
     "-pipe",
-    "-rdynamic",
+    optional(is_dynamic(sys)) "-rdynamic",
     "-s",
     "-lm",
     case(compiler) {
@@ -479,11 +482,7 @@ targets:foreach(function(target)
         }
     end
     local target_ld_flags = {
-        case(target.libc) {
-            gnu  = "-rdynamic",
-            musl = {},
-            none = "-rdynamic",
-        },
+        optional(is_dynamic(target)) "-rdynamic",
         case(target.os) {
             linux   = {},
             macos   = {},
@@ -526,14 +525,14 @@ targets:foreach(function(target)
         },
         implicit_in = compiler_deps,
     }
-    so[target.name] = rule("so-"..target.name) {
+    so[target.name] = is_dynamic(target) and rule("so-"..target.name) {
         description = "SO $out",
         command = {
             "$cc-"..target.name, target_opt, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out",
         },
         implicit_in = compiler_deps,
     }
-    partial_ld[target.name] = rule("partial-ld-"..target.name) {
+    partial_ld[target.name] = has_partial_ld(target) and rule("partial-ld-"..target.name) {
         description = "LD $out",
         command = {
             "$ld-"..target.name, target_opt, "-r", "$in -o $out",
@@ -856,7 +855,7 @@ targets:foreach(function(target)
         build("$tmp"/target.name/"obj"/luax_app_bundle:splitext()..".o") { cc[target.name], luax_app_bundle },
     }
 
-    shared_library[target.name] = target.libc~="musl" and not san and
+    shared_library[target.name] = is_dynamic(target) and
         build("$tmp"/target.name/"lib/libluax"..target.so) { so[target.name],
             main_libluax[target.name],
             case(target.os) {
@@ -889,7 +888,7 @@ end
 if cross_compilation then
 
     rule "ar" {
-        description = "CBOR-AR $out",
+        description = "AR $out",
         command = "$luax tools/ar.lua $in -o $out",
         implicit_in = {
             "$luax",
@@ -915,7 +914,7 @@ if cross_compilation then
                         "$tmp"/target.name/"obj/luax/libluax.o",
                         "$tmp"/target.name/"obj/luax/luax.o",
                     }
-                    if target.os == "linux" then
+                    if has_partial_ld(target) then
                         return build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs }
                     else
                         return libs
