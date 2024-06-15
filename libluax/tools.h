@@ -24,3 +24,15 @@
 int luax_push_result_or_errno(lua_State *L, int res, const char *filename);
 int luax_push_errno(lua_State *L, const char *filename);
 int luax_pusherror(lua_State *L, const char *msg, ...);
+
+typedef struct {
+    size_t capacity;
+    size_t len;
+    bool overflow;
+    char *s;
+} t_str;
+
+void str_init(t_str *str, char *mem, size_t capacity);
+void str_reset(t_str *str);
+void str_add(t_str *str, const char *s, size_t len);
+bool str_ok(t_str *str);

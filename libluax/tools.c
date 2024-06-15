@@ -56,3 +56,36 @@ int luax_pusherror(lua_State *L, const char *msg, ...)
 
     return 2;
 }
+
+void str_init(t_str *str, char *mem, size_t capacity)
+{
+    str->capacity = capacity;
+    str->len = 0;
+    str->overflow = false;
+    str->s = mem;
+    str->s[0] = '\0';
+}
+
+void str_reset(t_str *str)
+{
+    str->len = 0;
+    str->overflow = false;
+    str->s[0] = '\0';
+}
+
+void str_add(t_str *str, const char *s, size_t len)
+{
+    const size_t new_len = str->len + len;
+    if (new_len >= str->capacity) {
+        str->overflow = true;
+        return;
+    }
+    memcpy(&str->s[str->len], s, len);
+    str->s[new_len] = '\0';
+    str->len = new_len;
+}
+
+bool str_ok(t_str *str)
+{
+    return !str->overflow;
+}

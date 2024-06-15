@@ -212,16 +212,38 @@ static void ls(lua_State *L, const char *dir, const char *base, bool dotted, boo
                         ls(L, file->d_name, base, dotted, recursive, size);
                     } else {
                         char subdir[PATH_MAX];
-                        strncpy(subdir, dir, sizeof(subdir));
-                        strncat(subdir, LUA_DIRSEP, sizeof(subdir)-1);
-                        strncat(subdir, file->d_name, sizeof(subdir)-1);
-                        ls(L, subdir, base, dotted, recursive, size);
+                        t_str s;
+                        str_init(&s, subdir, sizeof(subdir));
+                        str_add(&s, dir, strnlen(dir, PATH_MAX));
+                        str_add(&s, LUA_DIRSEP, sizeof(LUA_DIRSEP)-1);
+                        str_add(&s, file->d_name, strnlen(file->d_name, sizeof(file->d_name)));
+                        if (str_ok(&s)) {
+                            ls(L, subdir, base, dotted, recursive, size);
+                        }
                     }
                 }
             }
         }
         closedir(d);
     }
+}
+
+static inline void get_dirname(const char *path, t_str *str_dir)
+{
+    char tmp[PATH_MAX];
+    strncpy(tmp, path, PATH_MAX);
+    const char *name = dirname(tmp);
+    const size_t len = strnlen(name, sizeof(tmp));
+    str_add(str_dir, name, len);
+}
+
+static inline void get_basename(const char *path, t_str *str_dir)
+{
+    char tmp[PATH_MAX];
+    strncpy(tmp, path, PATH_MAX);
+    const char *name = basename(tmp);
+    const size_t len = strnlen(name, sizeof(tmp));
+    str_add(str_dir, name, len);
 }
 
 static int fs_ls(lua_State *L)
@@ -244,23 +266,28 @@ static int fs_ls(lua_State *L)
         return luax_pusherror(L, "bad argument #2 to ls (none, nil or boolean expected)");
     }
 
-    char tmp[PATH_MAX];
+    bool ok = true;
 
     char dir[PATH_MAX];
-    strncpy(tmp, path, sizeof(tmp));
-    strncpy(dir, dirname(tmp), sizeof(dir));
+    t_str str_dir;
+    str_init(&str_dir, dir, sizeof(dir));
+    get_dirname(path, &str_dir);
 
     char base[PATH_MAX];
-    strncpy(tmp, path, sizeof(tmp));
-    strncpy(base, basename(tmp), sizeof(base));
-    const size_t base_len = strlen(base);
+    t_str str_base;
+    str_init(&str_base, base, sizeof(base));
+    get_basename(path, &str_base);
 
-    if (strncmp(base, ".", base_len+1) == 0) {
-        strncpy(base, "*", base_len+1);
+    ok = ok && str_ok(&str_dir);
+    ok = ok && str_ok(&str_base);
+
+    if (strncmp(base, ".", str_base.len+1) == 0) {
+        str_reset(&str_base);
+        str_add(&str_base, "*", 1);
     }
 
     bool recursive = false;
-    for (int i = 0; i < (int)base_len-1; i++) {
+    for (int i = 0; i < (int)str_base.len-1; i++) {
         if (base[i] == '*' && base[i+1] == '*') {
             recursive = true;
             break;
@@ -268,7 +295,7 @@ static int fs_ls(lua_State *L)
     }
 
     bool pattern = false;
-    for (int i = 0; i < (int)base_len; i++) {
+    for (int i = 0; i < (int)str_base.len; i++) {
         if (base[i] == '*' || base[i] == '?') {
             pattern = true;
             break;
@@ -278,23 +305,29 @@ static int fs_ls(lua_State *L)
     if (!pattern) {
         /* no pattern in base => list all files in dir/base */
         if (strncmp(dir, ".", sizeof(dir)) == 0) {
-            strncpy(dir, base, sizeof(dir));
-            strncpy(base, "*", base_len+1);
+            str_reset(&str_dir);
+            str_add(&str_dir, base, str_base.len);
+            str_reset(&str_base);
+            str_add(&str_base, "*", 1);
         } else {
-            strncat(dir, LUA_DIRSEP, sizeof(tmp)-1);
-            strncat(dir, base, sizeof(tmp)-1);
-            strncpy(base, "*", base_len+1);
+            str_add(&str_dir, LUA_DIRSEP, sizeof(LUA_DIRSEP)-1);
+            str_add(&str_dir, base, str_base.len);
+            str_reset(&str_base);
+            str_add(&str_base, "*", 1);
         }
+        ok = ok && str_ok(&str_dir);
     }
 
     lua_newtable(L);                        /* stack: list */
-    int size = 0;
-    ls(L, dir, base, dotted, recursive, &size);
-    lua_getglobal(L, "table");              /* stack: list "table" */
-    lua_getfield(L, -1, "sort");            /* stack: list "table" table.sort */
-    lua_remove(L, -2);                      /* stack: list table.sort */
-    lua_pushvalue(L, -2);                   /* stack: list table.sort list */
-    lua_call(L, 1, 0);                      /* stack: list */
+    if (ok) {
+        int size = 0;
+        ls(L, dir, base, dotted, recursive, &size);
+        lua_getglobal(L, "table");          /* stack: list "table" */
+        lua_getfield(L, -1, "sort");        /* stack: list "table" table.sort */
+        lua_remove(L, -2);                  /* stack: list table.sort */
+        lua_pushvalue(L, -2);               /* stack: list table.sort list */
+        lua_call(L, 1, 0);                  /* stack: list */
+    }
     set_F_metatable(L);
     return 1;
 }
@@ -901,7 +934,6 @@ return the absolute path name of path.
 
 static int fs_absname(lua_State *L)
 {
-    char path[PATH_MAX];
     const char *name = luaL_checkstring(L, 1);
     if (  name[0] == '/' || name[0] == '\\'
        || (name[0] && name[1] == ':')
@@ -911,13 +943,17 @@ static int fs_absname(lua_State *L)
         lua_pushstring(L, name);
         return 1;
     }
-    if (getcwd(path, sizeof(path)) == NULL)
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    char *path = luaL_prepbuffsize(&B, PATH_MAX);
+    if (getcwd(path, PATH_MAX) == NULL)
     {
         return luax_pusherror(L, "getcwd failure");
     }
-    strncat(path, LUA_DIRSEP, sizeof(path)-strlen(path)-1);
-    strncat(path, name, sizeof(path)-strlen(path)-1);
-    lua_pushstring(L, path);
+    luaL_addsize(&B, strnlen(path, PATH_MAX));
+    luaL_addstring(&B, LUA_DIRSEP);
+    luaL_addstring(&B, name);
+    luaL_pushresult(&B);
     return 1;
 }
 
