@@ -781,25 +781,26 @@ fs.splitext(path)
 return the name without the extension and the extension.
 @@@*/
 
+static size_t find_ext(const char *path, size_t len)
+{
+    for (size_t i = len-1; i > 0; i--) {
+        if (path[i] == '.' && path[i-1] != '/' && path[i-1] != '\\') {
+            return i;
+        }
+        if (path[i] == '/' || path[i] == '\\') {
+            break;
+        }
+    }
+    return len;
+}
+
 static int fs_splitext(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 1);
     const size_t len = (size_t)lua_rawlen(L, 1);
-    for (size_t i = len-1; i > 0; i--)
-    {
-        if (path[i] == '.' && path[i-1] != '/' && path[i-1] != '\\')
-        {
-            lua_pushlstring(L, path, i);
-            lua_pushlstring(L, &path[i], len-i);
-            return 2;
-        }
-        if (path[i] == '/' || path[i] == '\\')
-        {
-            break;
-        }
-    }
-    lua_pushlstring(L, path, len);
-    lua_pushlstring(L, "", 0);
+    const size_t i = find_ext(path, len);
+    lua_pushlstring(L, path, i);
+    lua_pushlstring(L, &path[i], len-i);
     return 2;
 }
 
@@ -814,19 +815,8 @@ static int fs_ext(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 1);
     const size_t len = (size_t)lua_rawlen(L, 1);
-    for (size_t i = len-1; i > 0; i--)
-    {
-        if (path[i] == '.' && path[i-1] != '/' && path[i-1] != '\\')
-        {
-            lua_pushlstring(L, &path[i], len-i);
-            return 1;
-        }
-        if (path[i] == '/' || path[i] == '\\')
-        {
-            break;
-        }
-    }
-    lua_pushlstring(L, "", 0);
+    const size_t i = find_ext(path, len);
+    lua_pushlstring(L, &path[i], len-i);
     return 1;
 }
 
@@ -842,25 +832,10 @@ static int fs_chext(lua_State *L)
     const char *path = luaL_checkstring(L, 1);
     const size_t len = (size_t)lua_rawlen(L, 1);
     const char *new_ext = luaL_checkstring(L, 2);
-    for (size_t i = len-1; i > 0; i--)
-    {
-        if (path[i] == '.' && path[i-1] != '/' && path[i-1] != '\\')
-        {
-            luaL_Buffer B;
-            luaL_buffinit(L, &B);
-            luaL_addlstring(&B, path, i);
-            luaL_addstring(&B, new_ext);
-            luaL_pushresult(&B);
-            return 1;
-        }
-        if (path[i] == '/' || path[i] == '\\')
-        {
-            break;
-        }
-    }
+    const size_t i = find_ext(path, len);
     luaL_Buffer B;
     luaL_buffinit(L, &B);
-    luaL_addstring(&B, path);
+    luaL_addlstring(&B, path, i);
     luaL_addstring(&B, new_ext);
     luaL_pushresult(&B);
     return 1;
