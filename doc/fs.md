@@ -166,6 +166,12 @@ fs.ext(path)
 return the extension of a filename.
 
 ``` lua
+fs.chext(path, ext)
+```
+
+replace the extension of `path` with `ext`.
+
+``` lua
 fs.realpath(path)
 ```
 
@@ -329,6 +335,7 @@ path:basename()         == fs.basename(path)
 path:dirname()          == fs.dirname(path)
 path:splitext()         == fs.splitext(path)
 path:ext()              == fs.ext(path)
+path:chext()            == fs.chext(path)
 path:realpath()         == fs.realpath(path)
 path:readlink()         == fs.readlink(path)
 path:absname()          == fs.absname(path)

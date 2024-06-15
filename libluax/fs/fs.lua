@@ -328,6 +328,7 @@ path:basename()         == fs.basename(path)
 path:dirname()          == fs.dirname(path)
 path:splitext()         == fs.splitext(path)
 path:ext()              == fs.ext(path)
+path:chext()            == fs.chext(path)
 path:realpath()         == fs.realpath(path)
 path:readlink()         == fs.readlink(path)
 path:absname()          == fs.absname(path)
@@ -346,6 +347,7 @@ string.basename         = fs.basename
 string.dirname          = fs.dirname
 string.splitext         = fs.splitext
 string.ext              = fs.ext
+string.chext            = fs.chext
 string.splitpath        = fs.splitpath
 string.realpath         = fs.realpath
 string.readlink         = fs.readlink

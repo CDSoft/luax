@@ -220,6 +220,10 @@ function fs.ext(path)
     return ext
 end
 
+function fs.chext(path, new_ext)
+    return fs.splitext(path) .. new_ext
+end
+
 if pandoc and pandoc.path then
     fs.realpath = pandoc.path.normalize
 else
