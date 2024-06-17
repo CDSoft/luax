@@ -38,7 +38,7 @@ update_all()
     update_cbor
     update_linenoise    utf8-support # switch to "master" when the UTF-8 support is merged
     #update_json         master
-    update_dkjson       2.7
+    update_dkjson       2.8
 }
 
 found()
@@ -356,6 +356,7 @@ index 7a86724..076f679 100644
          for i = 1, n do
            local k = order[i]
 EOF
+    rm -f ext/lua/json/json.lua.orig
 }
 
 update_all
