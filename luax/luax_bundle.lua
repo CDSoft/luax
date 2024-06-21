@@ -190,6 +190,35 @@ local function obfuscate_luax(code, opt, product_name)
     return code
 end
 
+local known_modules = {}
+
+local function ensure_unique_module(opt, script)
+    local name = script.lib_name
+    if opt.entry ~= "lib" and not script.dont_check_runtime_unicity then
+        local runtime_modules = require "luax_runtime_modules"
+        if runtime_modules[name] then
+            error(name..": duplicate module (already defined in the LuaX runtime)")
+        end
+    end
+    if known_modules[name] then
+        error(name..": duplicate module")
+    end
+    known_modules[name] = true
+end
+
+local function library_names(opt, libs)
+    if opt.entry == "lib" then
+        return F.flatten {
+            "--@".."LIB=luax_runtime_modules",
+            "return {",
+            libs : map(function(lib)
+                return ("  [%q] = true,"):format(lib.lib_name)
+            end),
+            "}",
+        } : unlines()
+    end
+end
+
 function M.bundle(opt)
 
     opt.bytecode = opt.bytecode or opt.strip -- strip implies bytecode
@@ -202,6 +231,8 @@ function M.bundle(opt)
         if ext == ".lar" then
             local lib_scripts = lar.unlar(content)
             for i = 1, #lib_scripts do
+                -- runtime script => ensure_unique_module shall not check it is not part of the runtime!
+                lib_scripts[i].dont_check_runtime_unicity = true
                 scripts[#scripts+1] = lib_scripts[i]
             end
         elseif ext == ".lua" then
@@ -284,6 +315,7 @@ function M.bundle(opt)
         for i = 1, #libs do
             local script = libs[i]
             local name = script.lib_name
+            ensure_unique_module(opt, script)
             if opt.strip then
                 preloads[#preloads+1] = ("libs[%q] = lib(%s)"):format(name, compile(script))
             else
@@ -362,6 +394,7 @@ function M.bundle(opt)
         for i = 1, #libs do
             local script = libs[i]
             local name = script.lib_name
+            ensure_unique_module(opt, script)
             local func_name = name : gsub("[^%w]", "_")
             local code = compile(script) : bytes()
             mods[#mods+1] = {
@@ -432,6 +465,7 @@ function M.bundle(opt)
 
         return F{
             [opt.output] = out:flatten():unlines(),
+            [opt.output:dirname()/"luax_runtime_modules.lua"] = library_names(opt, libs),
         }
     end
 
