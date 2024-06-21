@@ -40,9 +40,9 @@ local lua_interpreters = F{
 local arg0 = arg[0]
 
 local function findpath(name)
-    if fs.is_file(name) then return name end
-    local full_path = fs.findpath(name)
-    return full_path and fs.realpath(full_path) or name
+    if name:is_file() then return name:realpath() end
+    local full_path = name:findpath()
+    return full_path and full_path:realpath() or name
 end
 
 local function findscript(script_name)
@@ -56,19 +56,21 @@ local function print_targets()
     lua_interpreters:foreach(function(interpreter)
         local name = interpreter.name
         local exe = name
-        local path = fs.findpath(exe)
+        local path = exe:findpath()
         print(("%-22s%s%s"):format(
             name,
             path and path:gsub("^"..home, "~") or exe,
             path and "" or " [NOT FOUND]"))
     end)
     print("native")
+    local path = findscript "luax.lar"
+    local archive = fs.read_bin(path)
+    local assets = archive and lar.unlar(archive) or {}
     targets:foreach(function(target)
-        local path = findscript("luax-"..target.name..".lar")
         print(("%-22s%s%s"):format(
             target.name,
             path:gsub("^"..home, "~"),
-            fs.is_file(path) and "" or " [NOT FOUND]"))
+            assets[target.name] and "" or " [NOT FOUND]"))
     end)
 end
 
@@ -146,7 +148,7 @@ for i = 1, #scripts do
 end
 
 local function print_size(current_output)
-    local size, unit = assert(fs.stat(current_output)).size, "bytes"
+    local size, unit = assert(current_output:stat()).size, "bytes"
     if size > 64*1024 then size, unit = size//1024, "Kb" end
     log("Total", "%d %s", size, unit)
 end
@@ -189,24 +191,23 @@ local function compile_zig(tmp, current_output, target_definition)
 
     -- Install Zig (to cross compile and link C sources)
     local zig_config = require "luax_config".zig
-    if not fs.is_file(zig_config.zig) then
+    if not zig_config.zig:is_file() then
         log("Zig", "download and install Zig to %s", zig_config.path)
         zig_config.install()
-        if not fs.is_file(zig_config.zig) then
+        if not zig_config.zig:is_file() then
             help.err("Unable to install Zig to %s", zig_config.path)
         end
     end
 
     -- Extract precompiled LuaX libraries
-    local lib = findscript("luax-"..target_definition.name..".lar")
-    if not fs.is_file(lib) then
-        help.err("%s: LuaX library not found, please check LuaX installation", lib)
-    end
-    local libs = F(lar.unlar(fs.read_bin(lib)))
-    libs:foreachk(function(filename, content)
-        fs.write_bin(tmp/filename, content)
-    end)
-    local libnames = F.keys(libs)
+    local path = findscript "luax.lar" or help.err("%s: LuaX library not found, please check LuaX installation", "luax.lar")
+    local archive = fs.read_bin(path)
+    assets = archive and lar.unlar(archive) or {}
+    local headers = F(assets.headers or help.err("%s: Lua headers not found please check LuaX installation", path))
+    local libs = F(assets[target_definition.name] or help.err("%s: Target not found in %s, please check LuaX installation", target_definition.name, path))
+    headers:foreachk(function(filename, content) fs.write_bin(tmp/filename, content) end)
+    libs:foreachk(function(filename, content) fs.write_bin(tmp/filename, content) end)
+    local libnames = libs:keys()
         : filter(function(f) return f:ext():match"^%.[ao]$" end)
         : map(function(f) return tmp/f end)
 

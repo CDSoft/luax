@@ -35,7 +35,12 @@ end)()
 local files = F(args.inputs)
 : map(function(name)
     local content = assert(fs.read_bin(name))
-    return {name:basename(), content}
+    if name:ext() == ".lar" then
+        -- extract the input lar file and store it as a field of the final lar file
+        return {name:basename():splitext(), assert(lar.unlar(content))}
+    else
+        return {name:basename(), content}
+    end
 end)
 : from_list()
 

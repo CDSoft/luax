@@ -890,28 +890,45 @@ if shared_library[sys.name] then
     }
 end
 
-if cross_compilation then
+--===================================================================
+section "LuaX archives"
+---------------------------------------------------------------------
 
-    rule "ar" {
-        description = "AR $out",
-        command = "$luax tools/ar.lua $in -o $out",
-        implicit_in = {
-            "$luax",
-            "$lz4",
-            "tools/ar.lua",
+rule "ar" {
+    description = "AR $out",
+    command = "$luax tools/ar.lua $in -o $out",
+    implicit_in = {
+        "$luax",
+        "$lz4",
+        "tools/ar.lua",
+    },
+}
+
+acc(libraries) {
+    build "$lib/luax.lar" { "ar",
+
+        -- Lua runtime
+        build "$tmp/luax.lar" {
+            "bundle", "$luax_config_lua", lua_runtime,
+            args = {
+                "-e lib",
+                "-t lib",
+                "-n luax",
+            },
         },
-    }
 
-    acc(libraries) {
-        targets : map(function(target)
-            return build("$lib/luax-"..target.name..".lar") { "ar",
+        -- Lua headers used to compile LuaX scripts
+        build "$tmp/headers.lar" { "ar",
+            "lua/lua.h",
+            "lua/luaconf.h",
+            "lua/lauxlib.h",
+        },
 
-                -- Lua headers
-                "lua/lua.h",
-                "lua/luaconf.h",
-                "lua/lauxlib.h",
+        -- Binary runtimes (available with cross-compilation only)
+        (cross_compilation and targets or F{}): map(function(target)
+            return build("$tmp/"..target.name..".lar") { "ar",
 
-                -- precompiled luax libraries
+                -- precompiled LuaX libraries
                 (function()
                     local libs = F{
                         "$tmp"/target.name/"lib/liblua.a",
@@ -927,30 +944,14 @@ if cross_compilation then
                 end)(),
 
             }
-        end)
+        end),
+
     }
-
-end
-
+}
 
 --===================================================================
 section "LuaX Lua implementation"
 ---------------------------------------------------------------------
-
---===================================================================
-section "$lib/luax.lar"
----------------------------------------------------------------------
-
-acc(libraries) {
-    build "$lib/luax.lar" {
-        "bundle", "$luax_config_lua", lua_runtime,
-        args = {
-            "-e lib",
-            "-t lib",
-            "-n luax",
-        },
-    }
-}
 
 --===================================================================
 section "$lib/luax.lua"

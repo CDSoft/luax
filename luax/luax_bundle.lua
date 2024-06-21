@@ -229,7 +229,7 @@ function M.bundle(opt)
         local content = assert(fs.read_bin(script))
         local ext = fs.ext(script)
         if ext == ".lar" then
-            local lib_scripts = lar.unlar(content)
+            local lib_scripts = lar.unlar(content).luax
             for i = 1, #lib_scripts do
                 -- runtime script => ensure_unique_module shall not check it is not part of the runtime!
                 lib_scripts[i].dont_check_runtime_unicity = true
