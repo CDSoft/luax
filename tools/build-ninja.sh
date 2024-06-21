@@ -22,7 +22,7 @@
 
 #set -x
 
-ZIG_VERSION=0.12.0
+ZIG_VERSION=0.13.0
 ZIG=~/.local/opt/zig/$ZIG_VERSION/zig
 
 NINJA_URL=https://github.com/ninja-build/ninja

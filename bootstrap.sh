@@ -40,7 +40,7 @@ error()
 info "Step 0: install dependencies"
 ######################################################################
 
-ZIG_VERSION=0.12.0
+ZIG_VERSION=0.13.0
 ZIG=~/.local/opt/zig/$ZIG_VERSION/zig
 
 found()
