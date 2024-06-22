@@ -192,10 +192,21 @@ end
 
 local known_modules = {}
 
+local runtime_modules = setmetatable({}, {
+    __index = function(self, k)
+        local assets = require "luax_assets"
+        local luax = assets.luax or {}
+        for i = 1, #luax do
+            local script = luax[i]
+            self[script.lib_name] = true
+        end
+        return rawget(self, k)
+    end,
+})
+
 local function ensure_unique_module(opt, script)
     local name = script.lib_name
     if opt.entry ~= "lib" and not script.dont_check_runtime_unicity then
-        local runtime_modules = require "luax_runtime_modules"
         if runtime_modules[name] then
             error(name..": duplicate module (already defined in the LuaX runtime)")
         end
@@ -206,36 +217,26 @@ local function ensure_unique_module(opt, script)
     known_modules[name] = true
 end
 
-local function library_names(opt, libs)
-    if opt.entry == "lib" then
-        return F.flatten {
-            "--@".."LIB=luax_runtime_modules",
-            "return {",
-            libs : map(function(lib)
-                return ("  [%q] = true,"):format(lib.lib_name)
-            end),
-            "}",
-        } : unlines()
-    end
-end
-
 function M.bundle(opt)
 
     opt.bytecode = opt.bytecode or opt.strip -- strip implies bytecode
 
     local scripts = F{}
 
+    if opt.add_luax_runtime then
+        local assets = require "luax_assets"
+        local runtime = assets.luax
+        for i = 1, #runtime do
+            -- runtime script => ensure_unique_module shall not check it is not part of the runtime!
+            runtime[i].dont_check_runtime_unicity = true
+            scripts[#scripts+1] = runtime[i]
+        end
+    end
+
     F.foreach(opt.scripts, function(script)
         local content = assert(fs.read_bin(script))
         local ext = fs.ext(script)
-        if ext == ".lar" then
-            local lib_scripts = lar.unlar(content).luax
-            for i = 1, #lib_scripts do
-                -- runtime script => ensure_unique_module shall not check it is not part of the runtime!
-                lib_scripts[i].dont_check_runtime_unicity = true
-                scripts[#scripts+1] = lib_scripts[i]
-            end
-        elseif ext == ".lua" then
+        if ext == ".lua" then
             scripts[#scripts+1] = {
                 path      = script,
                 content   = M.comment_shebang(content),
@@ -465,7 +466,6 @@ function M.bundle(opt)
 
         return F{
             [opt.output] = out:flatten():unlines(),
-            [opt.output:dirname()/"luax_runtime_modules.lua"] = library_names(opt, libs),
         }
     end
 

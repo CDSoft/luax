@@ -691,6 +691,7 @@ rule "bundle" {
     command = {
         "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
+        "LUAX_LIB=$lib",
         "$lua tools/bundle.lua $args $in -o $out",
     },
     implicit_in = {
@@ -739,24 +740,19 @@ then
     error("Some Lua scripts are not in the runtime:\n"..unused_scripts:sort():map(F.prefix"    "):unlines())
 end
 
-local luax_runtime_modules = "$tmp/luax_runtime_modules.lua"
-
 local luax_runtime_bundle = build "$tmp/lua_runtime_bundle.c" {
-    "bundle", "$luax_config_lua", luax_runtime,
+    "bundle", luax_runtime,
     args = {
         "-e lib",
         "-t c",
         bytecode,
         "-n luax",
     },
-    implicit_out = {
-        luax_runtime_modules,
-    },
 }
 
 local luax_app = {
+    "$luax_config_lua",
     ls "luax/**.lua",
-    luax_runtime_modules,
 }
 
 local luax_app_bundle = build "$tmp/lua_app_bundle.c" {
@@ -909,7 +905,7 @@ acc(libraries) {
 
         -- Lua runtime
         build "$tmp/luax.lar" {
-            "bundle", "$luax_config_lua", lua_runtime,
+            "bundle", lua_runtime,
             args = {
                 "-e lib",
                 "-t lib",
@@ -990,11 +986,9 @@ rule "luax-bundle" {
     },
 }
 
-local luax_sources = ls "luax/**.lua"
-
 acc(binaries) {
     build "$bin/luax.lua" {
-        "luax-bundle", luax_sources,
+        "luax-bundle", luax_app,
         args = "-t lua",
     },
 }
@@ -1005,7 +999,7 @@ section "$bin/luax-pandoc.lua"
 
 acc(binaries) {
     build "$bin/luax-pandoc.lua" {
-        "luax-bundle", luax_sources,
+        "luax-bundle", luax_app,
         args = "-t pandoc",
     },
 }
@@ -1311,6 +1305,7 @@ local gfm = pipe {
         depfile = "$out.d",
         implicit_in = {
             "$luax",
+            "$lib/luax.lar",
             "tools/ypp.lua",
         },
     },
