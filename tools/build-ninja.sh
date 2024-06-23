@@ -81,7 +81,6 @@ case "$NINJA_VERSION" in
             "$NINJA_REPO"/src/lexer.cc
             "$NINJA_REPO"/src/ninja.cc
         )
-
         WIN32_SOURCES=(
             "$NINJA_REPO"/src/subprocess-win32.cc
             "$NINJA_REPO"/src/includes_normalize-win32.cc
@@ -89,7 +88,6 @@ case "$NINJA_VERSION" in
             "$NINJA_REPO"/src/msvc_helper_main-win32.cc
             "$NINJA_REPO"/src/minidump-win32.cc
         )
-
         POSIX_SOURCES=(
             "$NINJA_REPO"/src/subprocess-posix.cc
         )
@@ -124,7 +122,6 @@ case "$NINJA_VERSION" in
             "$NINJA_REPO"/src/lexer.cc
             "$NINJA_REPO"/src/ninja.cc
         )
-
         WIN32_SOURCES=(
             "$NINJA_REPO"/src/subprocess-win32.cc
             "$NINJA_REPO"/src/includes_normalize-win32.cc
@@ -132,7 +129,6 @@ case "$NINJA_VERSION" in
             "$NINJA_REPO"/src/msvc_helper_main-win32.cc
             "$NINJA_REPO"/src/minidump-win32.cc
         )
-
         POSIX_SOURCES=(
             "$NINJA_REPO"/src/subprocess-posix.cc
         )
@@ -147,6 +143,7 @@ CFLAGS=(
     -Wno-deprecated
     -Wno-missing-field-initializers
     -Wno-unused-parameter
+    -Wno-inconsistent-missing-override
     -fno-rtti
     -fno-exceptions
     -std=c++11
@@ -160,10 +157,20 @@ CFLAGS=(
 WIN32_CFLAGS=(
     #-D_WIN32_WINNT=0x0601
     -D__USE_MINGW_ANSI_STDIO=1
+    -DUSE_PPOLL
 )
 
 POSIX_CFLAGS=(
     -fvisibility=hidden
+    -pipe
+    -Wno-dll-attribute-on-redeclaration
+)
+
+LINUX_CFLAGS=(
+    -DUSE_PPOLL
+)
+
+MACOS_CFLAGS=(
 )
 
 found()
@@ -210,10 +217,7 @@ install_zig()
     [ -x "$ZIG" ] && return
 
     local ZIG_ARCHIVE="zig-$OS-$ARCH-$ZIG_VERSION.tar.xz"
-    case $ZIG_VERSION in
-        *-dev*) ZIG_URL="https://ziglang.org/builds/$ZIG_ARCHIVE" ;;
-        *)      ZIG_URL="https://ziglang.org/download/$ZIG_VERSION/$ZIG_ARCHIVE" ;;
-    esac
+    local ZIG_URL="https://ziglang.org/download/$ZIG_VERSION/$ZIG_ARCHIVE"
 
     mkdir -p "$(dirname "$ZIG")"
     download "$ZIG_URL" "$(dirname "$ZIG")/$ZIG_ARCHIVE"
@@ -241,7 +245,10 @@ compile()
                     TARGET_SOURCES+=( "${WIN32_SOURCES[@]}" )
                     OUTPUT="$OUTPUT.exe"
                     ;;
-        (*)         TARGET_CFLAGS+=( "${POSIX_CFLAGS[@]}" )
+        (*linux*)   TARGET_CFLAGS+=( "${POSIX_CFLAGS[@]}" "${LINUX_CFLAGS[@]}" )
+                    TARGET_SOURCES+=( "${POSIX_SOURCES[@]}" )
+                    ;;
+        (*macos*)   TARGET_CFLAGS+=( "${POSIX_CFLAGS[@]}" "${MACOS_CFLAGS[@]}" )
                     TARGET_SOURCES+=( "${POSIX_SOURCES[@]}" )
                     ;;
     esac
