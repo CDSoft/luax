@@ -127,8 +127,10 @@ local function make_key(input, opt)
         end
         return chunks
     end
-    local key_size = F.floor(16 + (#input-16)*(256-16)/(4096-16))
-    key_size = F.max(16, F.min(256, key_size))
+    local kmin, kmax = 8, 256
+    local mmin, mmax = 256, 64*1024
+    local key_size = F.floor(kmin + (#input-mmin)*(kmax-kmin)/(mmax-mmin))
+    key_size = F.max(kmin, F.min(kmax, key_size))
     return chunks_of_chars(key_size, input:rc4(opt.key)) : fold1(crypt.rc4)
 end
 
