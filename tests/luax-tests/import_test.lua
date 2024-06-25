@@ -44,4 +44,7 @@ return function()
     eq(import "tests/luax-tests/to_be_imported-1.lua", {global_variable=42})
     eq(import.files, {"tests/luax-tests/to_be_imported-1.lua", "tests/luax-tests/to_be_imported-2.lua"})
 
+    eq(package.modpath["tests/luax-tests/to_be_imported-1.lua"], "tests/luax-tests/to_be_imported-1.lua")
+    eq(package.modpath["tests/luax-tests/to_be_imported-2.lua"], "tests/luax-tests/to_be_imported-2.lua")
+
 end

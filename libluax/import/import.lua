@@ -36,25 +36,39 @@ local conf = import "myconf.lua"
 Evaluates `"myconf.lua"` in a new table and returns this table.
 All files are tracked in `import.files`.
 
+`package.modpath` also contains the names of the files loaded by `import`.
+
+The imported files are stored in a cache.
+Subsequent calls to `import` can read files from the cache instead of actually reloading them.
+The cache can be disabled with an optional parameter:
+
+```lua
+local conf = import("myconf.lua", {cache=false})
+```
+Reloads the file instead of using the cache.
+
 @@@]]
 
 local F = require "F"
 
-local import = {}
-local mt = {}
+local cache = {}
 
-import.files = F{}
-
-local file_set = {}
-
-function mt.__call(self, fname)
-    local mod = setmetatable({}, {__index = _ENV})
-    assert(loadfile(fname, "t", mod))()
-    if not file_set[fname] then
-        self.files[#self.files+1] = fname
-        file_set[fname] = true
-    end
-    return mod
-end
-
-return setmetatable(import, mt)
+return setmetatable({
+    files = F{},
+}, {
+    __call = function(self, fname, opt)
+        local use_cache = not opt or opt.cache==nil or opt.cache
+        if use_cache then
+            local mod = cache[fname]
+            if mod then return mod end
+        end
+        local mod = setmetatable({}, {__index = _ENV})
+        assert(loadfile(fname, "t", mod))()
+        if F.not_elem(fname, self.files) then
+            self.files[#self.files+1] = fname
+            package.modpath[fname] = fname
+        end
+        if use_cache then cache[fname] = mod end
+        return mod
+    end,
+})

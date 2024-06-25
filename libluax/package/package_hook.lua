@@ -21,6 +21,7 @@ http://cdelord.fr/luax
 --@LOAD=_
 
 local F = require "F"
+local sys = require "sys"
 
 -- inspired by https://stackoverflow.com/questions/60283272/how-to-get-the-exact-path-to-the-script-that-was-loaded-in-lua
 
@@ -39,6 +40,8 @@ The standard Lua package `package` is added some information about packages load
 package.modpath      -- { module_name = module_path }
 ```
 > table containing the names of the loaded packages and their actual paths.
+>
+> `package.modpath` also contains the names of the packages loaded by `import`.
 @@@]]
 
 package.modpath = F{}
@@ -53,6 +56,7 @@ local function wrap_searcher(searcher)
     end
 end
 
-for i = 2, #package.searchers do
+local first_external_searcher = sys.libc=="lua" and 3 or 2
+for i = first_external_searcher, #package.searchers do
     package.searchers[i] = wrap_searcher(package.searchers[i])
 end

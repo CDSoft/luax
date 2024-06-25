@@ -64,6 +64,10 @@ return function()
     }
     or {}
 
+    -- modules imported by the `import` function
+    modpath["tests/luax-tests/to_be_imported-1.lua"] = "tests/luax-tests/to_be_imported-1.lua"
+    modpath["tests/luax-tests/to_be_imported-2.lua"] = "tests/luax-tests/to_be_imported-2.lua"
+
     eq(package.modpath, F.merge{modpath, {}})
     require "test_lib/foo"
     eq(package.modpath, F.merge{modpath, {["test_lib/foo"]="tests/luax-tests/test_lib/foo.lua"}})
