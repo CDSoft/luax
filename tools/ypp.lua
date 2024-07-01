@@ -1,74 +1,9 @@
 #!/usr/bin/env -S lua --
-_LUAX_VERSION = '6.1.1'
-_LUAX_DATE    = '2024-06-08'
+_LUAX_VERSION = '6.3.1'
+_LUAX_DATE    = '2024-07-01'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$ypp:'..path)) end
-libs["luax_config"] = lib(".build/tmp/luax_config.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-http://cdelord.fr/luax
---]]
-
---@LIB
-
-local F = require "F"
-local fs = require "fs"
-local sys = require "sys"
-local sh = require "sh"
-
-local version = "6.1.1"
-
-local zig_version = "0.13.0"
-
-local home, zig_path = F.unpack(F.case(sys.os) {
-    windows = { "LOCALAPPDATA", "zig" / zig_version },
-    [F.Nil] = { "HOME", ".local/opt" / "zig" / zig_version },
-})
-zig_path = os.getenv(home) / zig_path
-local zig = zig_path/"zig"..sys.exe
-
-local function zig_install()
-    local archive = "zig-"..sys.os.."-"..sys.arch.."-"..zig_version..".tar.xz"
-    local url = "https://ziglang.org/download"/zig_version/archive
-    fs.mkdirs(zig_path)
-    fs.with_tmpdir(function(tmp)
-        assert(sh.run { "curl", "-fsSL", url, "-o", tmp/archive })
-        assert(sh.run { "tar", "xJf", tmp/archive, "-C", zig_path, "--strip-components", 1 })
-    end)
-end
-
-return {
-    version = version,
-    date = "2024-06-08",
-    copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
-    authors = "Christophe Delord",
-    zig = {
-        version = zig_version,
-        path = zig_path,
-        zig = zig,
-        install = zig_install,
-    },
-    lua_init = F{
-        "LUA_INIT_" .. _VERSION:words()[2]:gsub("%.", "_"),
-        "LUA_INIT",
-    },
-}
-]=])
 libs["F"] = lib("libluax/F/F.lua", [==[--[[
 This file is part of luax.
 
@@ -5076,6 +5011,7 @@ path:basename()         == fs.basename(path)
 path:dirname()          == fs.dirname(path)
 path:splitext()         == fs.splitext(path)
 path:ext()              == fs.ext(path)
+path:chext()            == fs.chext(path)
 path:realpath()         == fs.realpath(path)
 path:readlink()         == fs.readlink(path)
 path:absname()          == fs.absname(path)
@@ -5094,6 +5030,7 @@ string.basename         = fs.basename
 string.dirname          = fs.dirname
 string.splitext         = fs.splitext
 string.ext              = fs.ext
+string.chext            = fs.chext
 string.splitpath        = fs.splitpath
 string.realpath         = fs.realpath
 string.readlink         = fs.readlink
@@ -5327,6 +5264,10 @@ end
 function fs.ext(path)
     local _, ext = fs.splitext(path)
     return ext
+end
+
+function fs.chext(path, new_ext)
+    return fs.splitext(path) .. new_ext
 end
 
 if pandoc and pandoc.path then
@@ -5932,28 +5873,42 @@ local conf = import "myconf.lua"
 Evaluates `"myconf.lua"` in a new table and returns this table.
 All files are tracked in `import.files`.
 
+`package.modpath` also contains the names of the files loaded by `import`.
+
+The imported files are stored in a cache.
+Subsequent calls to `import` can read files from the cache instead of actually reloading them.
+The cache can be disabled with an optional parameter:
+
+```lua
+local conf = import("myconf.lua", {cache=false})
+```
+Reloads the file instead of using the cache.
+
 @@@]]
 
 local F = require "F"
 
-local import = {}
-local mt = {}
+local cache = {}
 
-import.files = F{}
-
-local file_set = {}
-
-function mt.__call(self, fname)
-    local mod = setmetatable({}, {__index = _ENV})
-    assert(loadfile(fname, "t", mod))()
-    if not file_set[fname] then
-        self.files[#self.files+1] = fname
-        file_set[fname] = true
-    end
-    return mod
-end
-
-return setmetatable(import, mt)
+return setmetatable({
+    files = F{},
+}, {
+    __call = function(self, fname, opt)
+        local use_cache = not opt or opt.cache==nil or opt.cache
+        if use_cache then
+            local mod = cache[fname]
+            if mod then return mod end
+        end
+        local mod = setmetatable({}, {__index = _ENV})
+        assert(loadfile(fname, "t", mod))()
+        if F.not_elem(fname, self.files) then
+            self.files[#self.files+1] = fname
+            package.modpath[fname] = fname
+        end
+        if use_cache then cache[fname] = mod end
+        return mod
+    end,
+})
 ]=])
 libs["linenoise"] = lib("libluax/linenoise/linenoise.lua", [=[--[[
 This file is part of luax.
@@ -7087,6 +7042,7 @@ http://cdelord.fr/luax
 --@LOAD=_
 
 local F = require "F"
+local sys = require "sys"
 
 -- inspired by https://stackoverflow.com/questions/60283272/how-to-get-the-exact-path-to-the-script-that-was-loaded-in-lua
 
@@ -7105,6 +7061,8 @@ The standard Lua package `package` is added some information about packages load
 package.modpath      -- { module_name = module_path }
 ```
 > table containing the names of the loaded packages and their actual paths.
+>
+> `package.modpath` also contains the names of the packages loaded by `import`.
 @@@]]
 
 package.modpath = F{}
@@ -7119,7 +7077,8 @@ local function wrap_searcher(searcher)
     end
 end
 
-for i = 2, #package.searchers do
+local first_external_searcher = sys.libc=="lua" and 3 or 2
+for i = first_external_searcher, #package.searchers do
     package.searchers[i] = wrap_searcher(package.searchers[i])
 end
 ]==])
@@ -9893,11 +9852,11 @@ local global_module_name = 'json'
 
 David Kolf's JSON module for Lua 5.1 - 5.4
 
-Version 2.7
+Version 2.8
 
 
 For the documentation see the corresponding readme.txt or visit
-<http://dkolf.de/src/dkjson-lua.fsl/>.
+<http://dkolf.de/dkjson-lua/>.
 
 You can contact the author by sending an e-mail to 'david' at the
 domain 'dkolf.de'.
@@ -9928,8 +9887,8 @@ SOFTWARE.
 --]==]
 
 -- global dependencies:
-local pairs, type, tostring, tonumber, getmetatable, setmetatable, rawset =
-      pairs, type, tostring, tonumber, getmetatable, setmetatable, rawset
+local pairs, type, tostring, tonumber, getmetatable, setmetatable =
+      pairs, type, tostring, tonumber, getmetatable, setmetatable
 local error, require, pcall, select = error, require, pcall, select
 local floor, huge = math.floor, math.huge
 local strrep, gsub, strsub, strbyte, strchar, strfind, strlen, strformat =
@@ -9938,7 +9897,7 @@ local strrep, gsub, strsub, strbyte, strchar, strfind, strlen, strformat =
 local strmatch = string.match
 local concat = table.concat
 
-local json = { version = "dkjson 2.7" }
+local json = { version = "dkjson 2.8" }
 
 local jsonlpeg = {}
 
@@ -10111,6 +10070,10 @@ local function addpair (key, value, prev, indent, level, buffer, buflen, tables,
   if indent then
     buflen = addnewline2 (level, buffer, buflen)
   end
+  -- When Lua is compiled with LUA_NOCVTN2S this will fail when
+  -- numbers are mixed into the keys of the table. JSON keys are always
+  -- strings, so this would be an implicit conversion too and the failure
+  -- is intentional.
   buffer[buflen+1] = quotestring (key)
   buffer[buflen+2] = ":"
   return encode2 (value, indent, level, buffer, buflen + 2, tables, globalorder, state)
@@ -10279,7 +10242,7 @@ local function loc (str, where)
       break
     end
   end
-  return "line " .. line .. ", column " .. (where - linepos)
+  return strformat ("line %d, column %d", line, where - linepos)
 end
 
 local function unterminated (str, what, where)
@@ -10398,7 +10361,6 @@ end
 local scanvalue -- forward declaration
 
 local function scantable (what, closechar, str, startpos, nullval, objectmeta, arraymeta)
-  local len = strlen (str)
   local tbl, n = {}, 0
   local pos = startpos + 1
   if what == 'object' then
