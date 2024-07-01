@@ -36,7 +36,10 @@ cross-compile[^cross-compilation] scripts for a supported platform.
 ## Requirements
 
 - [Ninja](https://ninja-build.org): to compile LuaX using the LuaX Ninja file
-- C compiler (`cc`, `gcc`, `clang`, ...): to generate the Ninja file
+- a decent modern and programmer friendly OS...
+
+The bootstrap script will try to install `ninja` on some known Linux
+distributions (Debian, Fedora and Arch Linux) or on MacOS.
 
 ## Compilation
 
@@ -53,37 +56,7 @@ $ ./bootstrap.sh
 $ ninja install
 ```
 
-If this fails, please try a manual compilation.
 Contributions on non supported platforms are welcome.
-
-### Manual compilation
-
-`luax` is written in C and Lua.
-The build system uses Ninja and Zig (automatically downloaded by the Ninja file).
-
-Just download `luax` (<https://github.com/CDSoft/luax>),
-generate `build.ninja` and run `ninja`:
-
-```sh
-$ git clone https://github.com/CDSoft/luax
-$ cd luax
-$ ninja -f bootstrap.ninja  # compile Lua and generate build.ninja
-$ ninja             # compile LuaX
-$ ninja test        # run tests
-$ ninja doc         # generate LuaX documentation
-```
-
-**Note**: `ninja` will download a Zig compiler.
-
-If the bootstrap stage fails, you can try to:
-
-1. use another C compiler:
-    - `CC=gcc ninja -f bootstrap.ninja` to compile Lua with `gcc` instead of `cc`
-    - `CC=clang ninja -f bootstrap.ninja` to compile Lua with `clang` instead of `cc`
-    - ...
-2. or install Lua and generate `build.ninja` manually:
-    - `apt install lua`, `dnf install lua`, ...
-    - `lua tools/bang.lua` to generate `build.lua` with the Lua interpreter provided by your OS
 
 ### Compilation options
 
@@ -108,6 +81,8 @@ The default compilation options are `fast` and `zig`.
 
 Zig is downloaded by the ninja file.
 gcc and clang must be already installed.
+
+These options can also be given to the bootstrap script. E.g.: `./bootstrap.sh small strip`.
 
 ### Compilation in debug mode
 

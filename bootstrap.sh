@@ -25,6 +25,11 @@
 
 set -eu
 
+B=.build/boot
+LUA=$B/lua
+
+mkdir -p $B
+
 info()
 {
     echo "# $*"
@@ -36,22 +41,25 @@ error()
     exit 1
 }
 
-######################################################################
-info "Step 0: install dependencies"
-######################################################################
-
-ZIG_VERSION=0.13.0
-ZIG=~/.local/opt/zig/$ZIG_VERSION/zig
-
 found()
 {
     hash "$@" 2>/dev/null
 }
 
+######################################################################
+info "Step 1: OS detection"
+######################################################################
+
+OS="$(uname -s)"
+
+######################################################################
+info "Step 2: Ninja"
+######################################################################
+
 if ! found ninja
 then
     echo "Install ninja"
-    case "$(uname -s)" in
+    case "$OS" in
         (Linux)     if found dnf; then sudo dnf install -y ninja-build
                     elif found apt; then sudo apt install -f -y ninja-build
                     elif found pacman; then sudo pacman -S --noconfirm ninja
@@ -62,27 +70,44 @@ then
     found ninja || error "ninja is not installed"
 fi
 
+######################################################################
+info "Step 3: Zig"
+######################################################################
+
+ZIG_VERSION=0.13.0
+ZIG=~/.local/opt/zig/$ZIG_VERSION/zig
+
 [ -x $ZIG ] || tools/install_zig.sh $ZIG_VERSION $ZIG
 [ -x $ZIG ] || error "zig can not be installed"
 
 ######################################################################
-info "Step 1: bootstrap a Lua interpreter and generate build.ninja"
+info "Step 4: Lua"
 ######################################################################
 
-[ -x $ZIG ] && export CC="$ZIG cc"
-ninja -f bootstrap.ninja
+case "$OS" in
+    (Linux)     CFLAGS=(-DLUA_USE_LINUX) ;;
+    (Darwin)    CFLAGS=(-DLUA_USE_MACOSX) ;;
+    (*)         CFLAGS=() ;;
+esac
+
+LUA_SOURCES=( lua/*.c )
+
+$ZIG cc -pipe -s -Oz "${CFLAGS[@]}" "${LUA_SOURCES[@]}" -o $LUA
 
 ######################################################################
-info "Step 2: compile LuaX"
+info "Step 5: build.ninja"
+######################################################################
+
+$LUA tools/bang.lua -q build.lua -o build.ninja -- "$@"
+
+######################################################################
+info "Step 6: LuaX"
 ######################################################################
 
 ninja compile
 
-######################################################################
-info "Step 3: done"
-######################################################################
-
 cat <<EOF
+
 LuaX build succeeded.
 Just run « ninja install » to actually install LuaX.
 EOF
