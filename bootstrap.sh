@@ -109,5 +109,5 @@ ninja compile
 cat <<EOF
 
 LuaX build succeeded.
-Just run « ninja install » to actually install LuaX.
+Just run "ninja install" to actually install LuaX.
 EOF

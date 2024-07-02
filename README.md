@@ -214,10 +214,10 @@ scripts:
                     where LuaX shared libraries are installed
 
     PATH, LUA_PATH and LUA_CPATH can be set in .bashrc or .zshrc
-    with « luax env ».
+    with "luax env".
     E.g.: eval $(luax env)
 
-    « luax env » can also generate shell variables from a script.
+    "luax env" can also generate shell variables from a script.
     E.g.: eval $(luax env script.lua)
 
 When compiling scripts (options `-t` and `-o`), the scripts shall

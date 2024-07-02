@@ -44,7 +44,7 @@ luax runs on several platforms with no dependency:
 - MacOS (x86_64, aarch64)
 - Windows (x86_64)
 
-luax can « compile » scripts executable on all supported platforms
+luax can "compile" scripts executable on all supported platforms
 (LuaX must be installed on the target environment).
 ]])
 
