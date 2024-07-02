@@ -1,6 +1,6 @@
 #!/usr/bin/env -S lua --
-_LUAX_VERSION = '6.3.1'
-_LUAX_DATE    = '2024-07-01'
+_LUAX_VERSION = '6.3.2'
+_LUAX_DATE    = '2024-07-02'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$bang:'..path)) end
@@ -11408,8 +11408,8 @@ function mt.__index:gen()
         local targets = directories_to_clean : map(function(dir)
             return build("clean-"..ident(dir)) {
                 ["$no_default"] = true,
-                description = {"CLEAN ", dir},
-                command = {"rm -rf ", dir..(dir==builddir and "/*" or "")},
+                description = {"CLEAN", dir},
+                command = {"rm -rf", dir..(dir==builddir and "/*" or "")},
             }
         end)
 
@@ -11429,8 +11429,8 @@ function mt.__index:gen()
         local targets = directories_to_clean_more : map(function(dir)
             return build("mrproper-"..ident(dir)) {
                 ["$no_default"] = true,
-                description = {"CLEAN ", dir},
-                command = {"rm -rf ", dir..(dir==builddir and "/*" or "")},
+                description = {"CLEAN", dir},
+                command = {"rm -rf", dir..(dir==builddir and "/*" or "")},
             }
         end)
 
@@ -11528,6 +11528,8 @@ libs["flatten"] = lib("src/flatten.lua", [[-- This file is part of bang.
 --@LIB
 
 local F = require "F"
+local F_flatten = F.flatten
+local filter = F.filter
 
 local Nil = require "Nil"
 
@@ -11536,7 +11538,7 @@ local function is_not_Nil(x)
 end
 
 return function(xs)
-    return F.flatten(xs):filter(is_not_Nil)
+    return filter(is_not_Nil, F_flatten(xs))
 end
 ]])
 libs["help"] = lib("src/help.lua", [[-- This file is part of bang.
@@ -11664,8 +11666,10 @@ libs["ident"] = lib("src/ident.lua", [[-- This file is part of bang.
 
 --@LIB
 
+local gsub = string.gsub
+
 return function(s)
-    return s : gsub("[^a-zA-Z0-9_%.%-]+", "_")
+    return gsub(s, "[^a-zA-Z0-9_%.%-]+", "_")
 end
 ]])
 libs["install"] = lib("src/install.lua", [[-- This file is part of bang.
@@ -11816,6 +11820,126 @@ local fs = require "fs"
 
 return fs.ls
 ]])
+libs["luax"] = lib("src/luax.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LIB
+
+local F = require "F"
+local targets = require "targets"
+
+local default_options = {
+    name = "luax",
+    luax = "luax",
+    target = "luax",
+    flags = {},
+}
+
+local rules = setmetatable({}, {
+    __index = function(self, compiler)
+        local new_rule = rule(compiler.name) {
+            description = compiler.description or {compiler.name, "$out"},
+            command = { compiler.luax, "compile", "-t", compiler.target, "$in -o $out", compiler.flags },
+        }
+        self[compiler] = new_rule
+        return new_rule
+    end
+})
+
+local function run(self, output)
+    return function(inputs)
+        if type(inputs) == "string" then
+            inputs = {inputs}
+        end
+        return build(output) { rules[self], inputs }
+    end
+end
+
+local compiler_mt
+
+local compilers = F{}
+
+local function new(compiler, name)
+    if compilers[name] then
+        error(name..": compiler redefinition")
+    end
+    local self = F.merge { compiler, {name=name} }
+    compilers[name] = self
+    return setmetatable(self, compiler_mt)
+end
+
+local function check_opt(name)
+    assert(default_options[name], name..": Unknown compiler option")
+end
+
+compiler_mt = {
+    __call = run,
+
+    __index = {
+        new = new,
+
+        set = function(self, name)
+            check_opt(name)
+            return function(value) self[name] = value; return self end
+        end,
+        add = function(self, name)
+            check_opt(name)
+            return function(value) self[name] = {self[name], value}; return self end
+        end,
+    },
+}
+
+local luax = new(default_options, "luax") : set "target" "luax"
+local lua = luax:new "luax-lua" : set "target" "lua"
+local pandoc = luax:new "luax-pandoc" : set "target" "pandoc"
+local native = luax:new "luax-native" : set "target" "native"
+
+local M = {
+    luax = luax,
+    lua = lua,
+    pandoc = pandoc,
+    native = native,
+}
+targets : foreach(function(target)
+    M[target.name] = native:new("luax-"..target.name) : set "target" (target.name)
+end)
+
+return setmetatable(M, {
+    __call = function(_, ...) return luax(...) end,
+    __index = {
+        new = function(_, ...) return luax:new(...) end,
+        set = function(_, ...) return luax:set(...) end,
+        add = function(_, ...) return luax:add(...) end,
+        set_global = function(name)
+            check_opt(name)
+            return function(value)
+                F.foreacht(M, function(compiler) compiler:set(name)(value) end)
+            end
+        end,
+        add_global = function(name)
+            check_opt(name)
+            return function(value)
+                F.foreacht(M, function(compiler) compiler:add(name)(value) end)
+            end
+        end,
+    }
+})
+]])
 libs["ninja"] = lib("src/ninja.lua", [[-- This file is part of bang.
 --
 -- bang is free software: you can redistribute it and/or modify
@@ -11844,6 +11968,24 @@ local log = require "log"
 local ident = require "ident"
 local flatten = require "flatten"
 
+local pairs = pairs
+local tostring = tostring
+local type = type
+
+local words = string.words
+
+local clone = F.clone
+local difference = F.difference
+local filterk = F.filterk
+local foreach = F.foreach
+local foreachk = F.foreachk
+local keys = F.keys
+local map = F.map
+local restrict_keys = F.restrict_keys
+local unwords = F.unwords
+local values = F.values
+local without_keys = F.without_keys
+
 local ninja_required_version_for_bang = F"1.11.1"
 
 local tokens = F{
@@ -11852,16 +11994,23 @@ local tokens = F{
 }
 
 local nbnl = 1
+local nb_tokens = #tokens
 
 function emit(x)
-    tokens[#tokens+1] = x
+    nb_tokens = nb_tokens + 1
+    tokens[nb_tokens] = x
     nbnl = 0
+end
+
+local function comment_line(line)
+    if #line == 0 then return "#" end
+    return "# "..line
 end
 
 function comment(txt)
     emit(txt
         : lines()
-        : map(F.prefix "# ")
+        : map(comment_line)
         : unlines())
 end
 
@@ -11872,23 +12021,18 @@ function nl()
     nbnl = nbnl + 1
 end
 
-function section(...)
+local token_separator = F"#":rep(70).."\n"
+
+function section(txt)
     nl()
-    emit { F"#":rep(70), "\n" }
-    comment(...)
-    emit { F"#":rep(70), "\n" }
+    emit(token_separator)
+    comment(txt)
+    emit(token_separator)
     nl()
 end
 
-local trim_word = F.compose {
-    string.trim,
-    tostring,
-}
-
 local function stringify(value)
-    return flatten{value}
-    : map(trim_word)
-    : unwords()
+    return unwords(map(tostring, flatten{value}))
 end
 
 local nbvars = 0
@@ -11917,7 +12061,7 @@ function var(name)
             log.error("var "..name..": multiple definition")
         end
         value = stringify(value)
-        emit { name, " = ", value, "\n" }
+        emit(name.." = "..value.."\n")
         vars[name] = value
         nbvars = nbvars + 1
         return "$"..name
@@ -11964,6 +12108,10 @@ local build_special_bang_variables = F{
     "validations",
 }
 
+local is_build_special_bang_variable = build_special_bang_variables
+    : map(function(name) return {name, true} end)
+    : from_list()
+
 local rules = {
 --  "rule_name" = {
 --      inherited_variables = {implicit_in=..., implicit_out=...}
@@ -11992,12 +12140,12 @@ function rule(name)
 
         nl()
 
-        emit { "rule ", name, "\n" }
+        emit("rule "..name.."\n")
 
         -- list of variables belonging to the rule definition
         rule_variables : foreach(function(varname)
             local value = opt[varname]
-            if value ~= nil then emit { "  ", varname, " = ", stringify(value), "\n" } end
+            if value ~= nil then emit("  "..varname.." = "..stringify(value).."\n") end
         end)
 
         -- list of variables belonging to the associated build statements
@@ -12021,10 +12169,11 @@ end
 
 local function unique_rule_name(name)
     local rule_name = name
+    local prefix = name.."-"
     local i = 0
     while rules[rule_name] do
         i = i + 1
-        rule_name = F{name, i}:str"-"
+        rule_name = prefix..i
     end
     return rule_name
 end
@@ -12043,30 +12192,31 @@ local nbbuilds = 0
 local function build_decorator(build)
     local self = {}
     local mt = {
-        __call = function(_, ...) return build(...) end,
+        __call = build,
         __index = {},
     }
     mt.__index.C = require "C"
+    mt.__index.luax = require "luax"
     local builders = require "builders"
     F.foreachk(builders, function(name, builder) mt.__index[name] = builder end)
     mt.__index.new = function(...) return builders:new(...) end
     return setmetatable(self, mt)
 end
 
-build = build_decorator(function(outputs)
+build = build_decorator(function(_, outputs)
     outputs = stringify(outputs)
     return function(inputs)
         -- variables defined in the current build statement
-        local build_opt = F.filterk(function(k, _) return type(k) == "string" and not k:has_prefix"$" end, inputs)
+        local build_opt = filterk(function(k, _) return type(k) == "string" and not k:has_prefix"$" end, inputs)
         local no_default = inputs["$no_default"]
 
         if build_opt.command then
             -- the build statement contains its own rule
             -- => create a new rule for this build statement only
             local rule_name = unique_rule_name(ident(outputs))
-            local rule_opt = F.restrict_keys(build_opt, rule_variables)
+            local rule_opt = restrict_keys(build_opt, rule_variables)
             rule(rule_name)(rule_opt)
-            build_opt = F.without_keys(build_opt, rule_variables)
+            build_opt = without_keys(build_opt, rule_variables)
 
             -- add the rule name to the actuel build statement
             inputs = {rule_name, inputs}
@@ -12080,31 +12230,32 @@ build = build_decorator(function(outputs)
         local rule_opt = rules[rule_name].inherited_variables
 
         -- merge both variable sets
-        local opt = F.clone(rule_opt)
-        build_opt:foreachk(function(varname, value)
+        local opt = clone(rule_opt)
+        foreachk(build_opt, function(varname, value)
             opt[varname] = opt[varname]~=nil and {opt[varname], value} or value
         end)
 
-        emit { "build ",
-            outputs,
-            defined(opt.implicit_out) and {" | ", stringify(opt.implicit_out)} or {},
-            ": ",
-            stringify(inputs),
-            defined(opt.implicit_in) and {" | ", stringify(opt.implicit_in)} or {},
-            defined(opt.order_only_deps) and {" || ", stringify(opt.order_only_deps)} or {},
-            defined(opt.validations) and {" |@ ", stringify(opt.validations)} or {},
-            "\n",
-        }
+        emit("build "
+            ..outputs
+            ..(defined(opt.implicit_out) and " | "..stringify(opt.implicit_out) or "")
+            ..": "
+            ..stringify(inputs)
+            ..(defined(opt.implicit_in) and " | "..stringify(opt.implicit_in) or "")
+            ..(defined(opt.order_only_deps) and " || "..stringify(opt.order_only_deps) or "")
+            ..(defined(opt.validations) and " |@ "..stringify(opt.validations) or "")
+            .."\n"
+        )
 
-        F.without_keys(opt, build_special_bang_variables)
-        : foreachk(function(varname, value)
-            emit { "  ", varname, " = ", stringify(value), "\n" }
+        foreachk(opt, function(varname, value)
+            if not is_build_special_bang_variable[varname] then
+                emit("  "..varname.." = "..stringify(value).."\n")
+            end
         end)
 
         nbbuilds = nbbuilds + 1
 
-        local output_list = outputs:words()
-        output_list : foreach(function(output)
+        local output_list = words(outputs)
+        foreach(output_list, function(output)
             if builds[output] then
                 log.error("build "..output..": multiple definition")
             end
@@ -12129,12 +12280,12 @@ function pool(name)
             log.error("pool "..name..": multiple definition")
         end
         pools[name] = true
-        emit { "pool ", name, "\n" }
-        pool_variables : foreach(function(varname)
+        emit("pool "..name.."\n")
+        foreach(pool_variables, function(varname)
             local value = opt[varname]
-            if value ~= nil then emit { "  ", varname, " = ", stringify(value), "\n" } end
+            if value ~= nil then emit("  "..varname.." = "..stringify(value).."\n") end
         end)
-        local unknown_variables = F.keys(opt) : difference(pool_variables)
+        local unknown_variables = difference(keys(opt), pool_variables)
         if #unknown_variables > 0 then
             log.error("pool "..name..": unknown variables: "..unknown_variables:str", ")
         end
@@ -12145,7 +12296,7 @@ end
 function default(targets)
     custom_default_statement = true
     nl()
-    emit { "default ", stringify(targets), "\n" }
+    emit("default "..stringify(targets).."\n")
     nl()
 end
 
@@ -12194,7 +12345,7 @@ local function generator_rule(args)
     section(("Regenerate %s when %s changes"):format(args.output, args.input))
 
     local bang_cmd= args.gen_cmd or
-        F.filterk(function(k)
+        filterk(function(k)
             return math.type(k) == "integer" and k <= 0
         end, args.cli_args) : values() : unwords()
 
@@ -12208,7 +12359,7 @@ local function generator_rule(args)
         generator = true,
     }
 
-    local deps = F.values(package.modpath)
+    local deps = values(package.modpath)
     if not deps:null() then
         generator_flag.implicit_in = flatten{ generator_flag.implicit_in or {}, deps } : nub()
     end
@@ -12218,6 +12369,13 @@ local function generator_rule(args)
         { bang, args.input },
         generator_flag,
     })
+end
+
+local function size(x)
+    local s = #x
+    if s > 1024*1024 then return s//(1024*1024), " MB" end
+    if s > 1024 then return s//1024, " kB" end
+    return s, " bytes"
 end
 
 return function(args)
@@ -12233,17 +12391,11 @@ return function(args)
     help:gen() -- help shall be generated after clean and install
     generator_rule(args)
     generate_default()
-    local ninja = flatten(tokens)
-        : str()
-        : lines()
-        : map(string.rtrim)
-        : drop_while_end(string.null)
-        : unlines()
+    local ninja = flatten(tokens) : str()
     log.info(nbvars, " variables")
     log.info(nbrules, " rules")
     log.info(nbbuilds, " build statements")
-    log.info(#ninja:lines(), " lines")
-    log.info(#ninja, " bytes")
+    log.info(size(ninja))
     return ninja
 end
 ]])
@@ -12445,7 +12597,7 @@ return function()
 
 end
 ]])
-libs["version"] = lib(".build/version", [=[return [[1.0.2-1-g91db769]]]=])
+libs["version"] = lib(".build/version", [=[return [[1.1.1]]]=])
 require "F"
 require "crypt"
 require "fs"

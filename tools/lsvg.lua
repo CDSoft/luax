@@ -1,6 +1,6 @@
 #!/usr/bin/env -S lua --
-_LUAX_VERSION = '6.3.1'
-_LUAX_DATE    = '2024-07-01'
+_LUAX_VERSION = '6.3.2'
+_LUAX_DATE    = '2024-07-02'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$lsvg:'..path)) end
@@ -11046,15 +11046,22 @@ function node_mt.__index:save(filename)
             local tmpname = fs.join(tmp, fs.basename(base)..".svg")
             local ok, err = fs.write(tmpname, tostring(self))
             if not ok then return nil, err end
+            local magick = assert(fs.findpath "magick" or fs.findpath "convert", "ImageMagick not found")
+            local unshare = fs.findpath "unshare"
             return sh.run {
-                "convert",
+                unshare and {
+                    "NO_AT_BRIDGE=1",   -- see https://bbs.archlinux.org/viewtopic.php?id=176663
+                    unshare, "--user",  -- see https://gitlab.com/inkscape/inkscape/-/issues/4716
+                } or {},
+                magick,
                 dpi and {
                     "-units", "PixelsPerInch", "-density", dpi,
                 } or {},
+                tmpname,
                 transparent and {
                     "-transparent", transparent,
                 } or {},
-                tmpname, filename
+                filename,
             }
         end)
     else
@@ -11402,7 +11409,7 @@ end
 
 return setmetatable(svg, svg_mt)
 ]=])
-libs["version"] = lib(".build/version", [=[return [[2.5.2]]]=])
+libs["version"] = lib(".build/version", [=[return [[2.5.3]]]=])
 require "F"
 require "crypt"
 require "fs"

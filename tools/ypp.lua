@@ -1,6 +1,6 @@
 #!/usr/bin/env -S lua --
-_LUAX_VERSION = '6.3.1'
-_LUAX_DATE    = '2024-07-01'
+_LUAX_VERSION = '6.3.2'
+_LUAX_DATE    = '2024-07-02'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$ypp:'..path)) end
