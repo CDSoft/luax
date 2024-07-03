@@ -32,9 +32,9 @@ return function()
     local test_num = tonumber(os.getenv "TEST_NUM")
 
     if test_num == 1 then
-        if os.getenv "LUAXC" then
+        if os.getenv "IS_COMPILED" == "true" then
             eq(arg, {
-                [0] = ".build/test/test-luaxc-"..os.getenv "TEST_CASE",
+                [0] = ".build/test/test-compiled-"..os.getenv "TEST_CASE",
                 "Lua", "is", "great"
             })
             assert(sys.libc == os.getenv"LIBC")
