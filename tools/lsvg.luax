@@ -1,0 +1,766 @@
+#!/usr/bin/env -S luax --
+local libs = {}
+table.insert(package.searchers, 2, function(name) return libs[name] end)
+local function lib(path, src) return assert(load(src, '@$lsvg:'..path)) end
+libs["svg"] = lib("src/svg.lua", [=[--[[
+This file is part of lsvg.
+
+lsvg is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+lsvg is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with lsvg.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about lsvg you can visit
+http://cdelord.fr/lsvg
+--]]
+
+local F = require "F"
+local sh = require "sh"
+local fs = require "fs"
+
+local pi = math.pi
+local sin = math.sin
+local cos = math.cos
+local atan = math.atan
+local abs = math.abs
+
+---------------------------------------------------------------------
+-- Points and vectors
+---------------------------------------------------------------------
+
+-- Point (and Vector which is an alias for Point) is a 2-number list
+-- representing a 2D point that can be used to define the position of
+-- SVG nodes.
+--
+-- Point(x, y) returns a point defined by its coordinates
+-- P:unpack() returns x, y
+-- P+V translates P by V
+-- P-V translates P by -V
+-- k*P or P*k scales P with a factor k
+-- P/k scales P with a factor 1/k
+-- -V negates V
+-- P:rot(C, theta) rotates P around C by the angle theta
+-- V:norm() is the norm of the vector
+-- V:direction() is the angle of the vector (atan2(y, x))
+-- V:unit() is a unit vector with the same direction than V
+
+local P_mt = {__index={}}
+
+local function is_point(M)
+    return type(M) == "table" and getmetatable(M) == P_mt
+end
+
+local function Point(x, y) return setmetatable({x, y}, P_mt) end
+
+local function Vector(...) return Point(...) end
+
+function P_mt.__index:unpack() return F.unpack(self) end
+
+function P_mt.__index:x() return self[1] end
+
+function P_mt.__index:y() return self[2] end
+
+function P_mt.__index:xy() return {x=self[1], y=self[2]} end
+function P_mt.__index:xy1() return {x1=self[1], y1=self[2]} end
+function P_mt.__index:xy2() return {x2=self[1], y2=self[2]} end
+function P_mt.__index:cxy() return {cx=self[1], cy=self[2]} end
+
+function P_mt.__index:norm() return (self[1]^2 + self[2]^2)^0.5 end
+function P_mt.__index:direction() return atan(self[2], self[1]) end
+
+function P_mt.__index:unit() return self/self:norm() end
+
+function P_mt.__add(M1, M2)
+    if not is_point(M1) or not is_point(M2) then
+        error("Can not add "..F.show(a).." and "..F.show(b))
+    end
+    return Point(F.zip_with(F.op.add, {M1, M2}):unpack())
+end
+
+function P_mt.__sub(M1, M2)
+    if not is_point(M1) or not is_point(M2) then
+        error("Can not substract "..F.show(a).." and "..F.show(b))
+    end
+    return Point(F.zip_with(F.op.sub, {M1, M2}):unpack())
+end
+
+function P_mt.__mul(M, k)
+    if is_point(M) and type(k) == "number" then
+        M, k = M, k
+    elseif is_point(k) and type(M) == "number" then
+        M, k = k, M
+    else
+        error("Can not multiply "..F.show(M).." by "..F.show(k))
+    end
+    return Point(F.map(F.curry(F.op.mul)(k), M):unpack())
+end
+
+function P_mt.__div(M, k)
+    if not is_point(M) or not type(k) == "number" then
+        error("Can not multiply "..F.show(a).." by "..F.show(b))
+    end
+    return Point(F.map(F.curry(F.flip(F.op.div))(k), M):unpack())
+end
+
+function P_mt.__unm(M)
+    return M * (-1)
+end
+
+local Origin = Point(0, 0)
+
+function P_mt.__index.rot(M, C, theta)
+    if theta == nil then C, theta = Origin, C end
+    local x, y = (M-C):unpack()
+    local xr = x*cos(theta) - y*sin(theta)
+    local yr = x*sin(theta) + y*cos(theta)
+    return Point(xr, yr) + C
+end
+
+---------------------------------------------------------------------
+-- Generic SVG node
+---------------------------------------------------------------------
+
+-- SVG tree representation in Lua
+-- ------------------------------
+-- An SVG node (as well as an entire SVG image) is a table containing
+-- attributes and child nodes.
+-- The `__call` metamethod can add new attributes or children,
+-- or replace the existing ones.
+-- The structure of the node tree defined in Lua is exactly the
+-- structure of the final SVG file.
+
+local node_mt = {__index = {}}
+local raw_mt = {__index = {}}
+local arrow_mt = {__index = {}}
+local axis_mt = {__index = {}}
+
+local function Node(name)
+    local self = {
+        cons = Node,
+        name = name,
+        attrs = F{},
+        contents = F{},
+    }
+    return setmetatable(self, node_mt)
+end
+
+function node_mt:__call(x)
+    if type(x) == "string" then
+        self.contents[#self.contents+1] = x
+    elseif type(x) == "table" and getmetatable(x) == node_mt then
+        self.contents[#self.contents+1] = x
+    elseif type(x) == "table" and getmetatable(x) == raw_mt then
+        self.contents[#self.contents+1] = x
+    elseif type(x) == "table" and getmetatable(x) == arrow_mt then
+        self.contents[#self.contents+1] = x
+    elseif type(x) == "table" and getmetatable(x) == axis_mt then
+        self.contents[#self.contents+1] = x
+    elseif type(x) == "table" then
+        F.foreachk(x, function(k, v)
+            if type(k) == "string" then
+                self.attrs[k] = v
+            elseif type(k) == "number" and math.type(k) == "integer" then
+                self.contents[#self.contents+1] = v
+            end
+        end)
+    else
+        error("Invalid node item: "..F.show(x))
+    end
+    return self
+end
+
+-- SVG generation
+-- --------------
+-- The Lua tree is converted to a string representing the final SVG document.
+-- To reduce the size of the SVG image, the precision of floating point numbers
+-- is limited to 2 digits.
+-- The generation is implemented by the `__tostring` metamethod.
+
+-- add quotes around a string
+local function quote(s)
+    return ("%q"):format(s)
+end
+
+-- format a number with a 2-digit precision
+local function fmt_num_raw(x)
+    if type(x) == "string" then return x end
+    return ('%.2f'):format(x):gsub("0+$", ""):gsub("%.$", "")
+end
+
+-- format a number with quotes
+local function fmt_num(x)
+    return quote(fmt_num_raw(x))
+end
+
+-- format a list of points ("x,y x,y ...")
+local function fmt_points(ps)
+    if type(ps) == "string" then
+        ps = ps:words():map(function(p) return p:split ",":map(tonumber) end)
+    end
+    return quote(F.map(function(p) return F.map(fmt_num_raw, p):str "," end, ps):unwords())
+end
+
+-- default format
+local function fmt_default(x)
+    return ('"%s"'):format(x)
+end
+
+-- formatting function according to the field name
+local fmt = {
+    font_size = fmt_num,
+    height = fmt_num, width = fmt_num,
+    x = fmt_num, y = fmt_num,
+    x1 = fmt_num, y1 = fmt_num,
+    x2 = fmt_num, y2 = fmt_num,
+    cx = fmt_num, cy = fmt_num, r = fmt_num, rx = fmt_num, ry = fmt_num,
+    stroke_width = fmt_num,
+    points = fmt_points,
+}
+
+-- rewrite some attributes before generating SVG attributes
+-- To simplify the description of positions with Point, some attributes
+-- are rewritten when generating the SVG file.
+--
+--    xy={x, y} -> x=x, y=y
+--    xy1={x, y} -> x1=x, y1=y
+--    xy2={x, y} -> x2=x, y2=y
+--    cxy={x, y} -> cx=x, cy=y
+--
+--    points={{x1, y1}, {x2, y2}, ...} -> points="x1,y1 x2,y2"
+
+local function rewrite(attrs)
+    attrs = F.clone(attrs)
+    if attrs.xy  then attrs.x,  attrs.y  = F.unpack(attrs.xy);  attrs.xy  = nil end
+    if attrs.xy1 then attrs.x1, attrs.y1 = F.unpack(attrs.xy1); attrs.xy1 = nil end
+    if attrs.xy2 then attrs.x2, attrs.y2 = F.unpack(attrs.xy2); attrs.xy2 = nil end
+    if attrs.cxy then attrs.cx, attrs.cy = F.unpack(attrs.cxy); attrs.cxy = nil end
+    return attrs
+end
+
+function node_mt.__index:propagate(t)
+    local t2 = t:patch {
+        arrowhead = self.attrs.arrowhead,
+        anchor = self.attrs.anchor,
+        origin = self.attrs.origin,
+        primary = self.attrs.primary,
+        secondary = self.attrs.secondary,
+    }
+    self.contents:foreach(function(item)
+        local mt = getmetatable(item)
+        if mt.__index.propagate then item:propagate(t2) end
+    end)
+end
+
+local attributes_to_remove = F"arrowhead anchor double grad fmt dpi transparent":words():from_set(F.const(true))
+local function is_svg_attribute(kv) return not attributes_to_remove[kv[1]] end
+
+-- __tostring produces an SVG description of a node and its children.
+function node_mt:__tostring()
+    self:propagate(F{})
+    local nl = self.contents:filter(function(t) return type(t) == "table" end):null() and {} or "\n"
+    local attrs = rewrite(self.attrs)
+    return F.flatten {
+        "<", self.name,
+        attrs:items():filter(is_svg_attribute):map(function(kv)
+            local k, v = F.unpack(kv)
+            local f = fmt[k] or fmt_default
+            return { " ", k:gsub("_", "-"), "=", f(v) }
+        end),
+        #self.contents == 0
+            and { "/>" }
+            or { ">", nl, self.contents:map(tostring), "</", self.name, ">" },
+        "\n",
+    } : str()
+end
+
+-- save writes the image to a file.
+-- The image format is infered from its name:
+-- - file.svg : saved as an SVG text file
+-- - file.png, file.jpg or file.pdf : saved as a PNG, JPEG or PDF file
+--   (SVG converted to PNG, JPEG or PDF with ImageMagick)
+function node_mt.__index:save(filename)
+    local base, ext = fs.splitext(filename)
+    ext = ext:lower()
+    if ext == ".svg" then
+        return fs.write(filename, tostring(self))
+    elseif F.elem(ext, {".png", ".jpg", ".jpeg", ".pdf"}) then
+        local dpi = self.attrs.dpi
+        local transparent = self.attrs.transparent
+        return fs.with_tmpdir(function(tmp)
+            local tmpname = fs.join(tmp, fs.basename(base)..".svg")
+            local ok, err = fs.write(tmpname, tostring(self))
+            if not ok then return nil, err end
+            local magick = assert(fs.findpath "magick" or fs.findpath "convert", "ImageMagick not found")
+            local unshare = fs.findpath "unshare"
+            return sh.run {
+                unshare and {
+                    "NO_AT_BRIDGE=1",   -- see https://bbs.archlinux.org/viewtopic.php?id=176663
+                    unshare, "--user",  -- see https://gitlab.com/inkscape/inkscape/-/issues/4716
+                } or {},
+                magick,
+                dpi and {
+                    "-units", "PixelsPerInch", "-density", dpi,
+                } or {},
+                tmpname,
+                transparent and {
+                    "-transparent", transparent,
+                } or {},
+                filename,
+            }
+        end)
+    else
+        error(filename..": image format not supported")
+    end
+end
+
+---------------------------------------------------------------------
+-- Raw SVG inclusion
+---------------------------------------------------------------------
+
+local function Raw(code)
+    local self = {
+        name = "Raw",
+        code = code,
+    }
+    return setmetatable(self, raw_mt)
+end
+
+local function gen_raw(raw)
+    return raw.code
+end
+
+-- __tostring produces an SVG description of an arrow
+function raw_mt:__tostring()
+    return tostring(gen_raw(self))
+end
+
+---------------------------------------------------------------------
+-- Arrow SVG node
+---------------------------------------------------------------------
+
+-- An Arrow node is a meta node that builds an arrow with one or two
+-- arrowheads and an optional text.
+local function Arrow(t)
+    local self = {
+        cons = function(_) return Arrow{} end,
+        name = "Arrow",
+        points = F{},
+        attrs = F{},
+        contents = F{},
+    }
+    return setmetatable(self, arrow_mt)(t)
+end
+
+function arrow_mt:__call(x)
+    if is_point(x) then
+        self.points[#self.points+1] = x
+    elseif type(x) == "string" then
+        self.contents[#self.contents+1] = x
+    elseif type(x) == "table" and getmetatable(x) == node_mt then
+        self.contents[#self.contents+1] = x
+    elseif type(x) == "table" then
+        F.foreachk(x, function(k, v)
+            if type(k) == "string" then
+                self.attrs[k] = v
+            elseif type(k) == "number" and math.type(k) == "integer" then
+                if is_point(v) then
+                    self.points[#self.points+1] = v
+                else
+                    self.contents[#self.contents+1] = v
+                end
+            end
+        end)
+    else
+        error("Invalid arrow item: "..F.show(x))
+    end
+    return self
+end
+
+function arrow_mt.__index:propagate(t)
+    self.attrs.arrowhead = self.attrs.arrowhead or t.arrowhead
+    self.attrs.anchor = self.attrs.anchor or t.anchor
+end
+
+local function gen_arrow(arrow)
+    assert(#arrow.points == 2, "An arrow requires 2 points")
+    local attrs = arrow.attrs or {}
+    local contents = arrow.contents or {}
+    local g = G(contents)
+    local A, B = arrow.points:unpack()
+    local length = (B-A):norm()
+    local arrowhead = attrs.arrowhead or length/4
+    local delta = attrs.delta or math.rad(15)
+    local A_ = A - arrowhead/length*(A-B)
+    local B_ = B - arrowhead/length*(B-A)
+    g:Line(attrs)(A:xy1())(B:xy2())
+    g:Line(attrs)(B:xy1())(B_:rot(B, delta):xy2())
+    g:Line(attrs)(B:xy1())(B_:rot(B, -delta):xy2())
+    if attrs.double then
+        g:Line(attrs)(A:xy1())(A_:rot(A, delta):xy2())
+        g:Line(attrs)(A:xy1())(A_:rot(A, -delta):xy2())
+    end
+    F.foreach(contents, function(item)
+        local anchor = item.attrs.anchor or 0.5
+        local M = (1-anchor)*A + anchor*B
+        g { item { xy=M } }
+    end)
+    return g
+end
+
+-- __tostring produces an SVG description of an arrow
+function arrow_mt:__tostring()
+    return tostring(gen_arrow(self))
+end
+
+---------------------------------------------------------------------
+-- Axis SVG node
+---------------------------------------------------------------------
+
+-- An Axis node is a meta node that builds an axis with an arrow
+-- and optional texts.
+local function Axis(t)
+    local self = {
+        cons = function(_) return Axis{} end,
+        name = "Axis",
+        points = F{},
+        attrs = F{},
+        contents = F{},
+    }
+    return setmetatable(self, axis_mt)(t)
+end
+
+function axis_mt:__call(x)
+    if is_point(x) then
+        self.points[#self.points+1] = x
+    elseif type(x) == "string" then
+        self.contents[#self.contents+1] = x
+    elseif type(x) == "table" and getmetatable(x) == node_mt then
+        self.contents[#self.contents+1] = x
+    elseif type(x) == "table" then
+        F.foreachk(x, function(k, v)
+            if type(k) == "string" then
+                self.attrs[k] = v
+            elseif type(k) == "number" and math.type(k) == "integer" then
+                if is_point(v) then
+                    self.points[#self.points+1] = v
+                else
+                    self.contents[#self.contents+1] = v
+                end
+            end
+        end)
+    else
+        error("Invalid axis item: "..F.show(x))
+    end
+    return self
+end
+
+function axis_mt.__index:propagate(t)
+    self.attrs.arrowhead = self.attrs.arrowhead or t.arrowhead
+    self.attrs.anchor = self.attrs.anchor or t.anchor
+    self.attrs.origin = self.attrs.origin or t.origin
+    self.attrs.primary = self.attrs.primary or t.primary
+    self.attrs.secondary = self.attrs.secondary or t.secondary
+end
+
+local function gen_axis(axis)
+    assert(#axis.points == 2, "An axis requires 2 points")
+    local attrs = axis.attrs or {}
+    local contents = axis.contents or {}
+    local g = G(contents)
+    local A, B = axis.points:unpack()
+    local length = (B-A):norm()
+    local arrowhead = attrs.arrowhead or length/4
+    local delta = attrs.delta or math.rad(15)
+    local B_ = B - arrowhead/length*(B-A)
+    g:Line(attrs)(A:xy1())(B:xy2())
+    if attrs.arrowhead then
+        g:Line(attrs)(B:xy1())(B_:rot(B, delta):xy2())
+        g:Line(attrs)(B:xy1())(B_:rot(B, -delta):xy2())
+    end
+    local function graduations(x0, x1, dx, height_ratio, grad, text_attrs)
+        if not dx then return end
+        local h = grad.height or length/((x1-x0)/dx)/5
+        h = h * height_ratio
+        for x = x0, x1, dx do
+            local M = A + (x-x0)/(x1-x0)*(B-A)
+            if abs(x-x1) > dx/2 or not attrs.arrowhead then
+                local M0 = M + (B-A)/length*h
+                local M1 = M0:rot(M, pi/2)
+                local M2 = M0:rot(M, -pi/2)
+                g:Line(attrs)(M1:xy1())(M2:xy2())
+            end
+            if text_attrs then
+                local format =
+                    type(text_attrs.fmt) == "string"
+                        and function(...) return text_attrs.fmt:format(...) end
+                    or text_attrs.fmt
+                    or F.id
+                g:Text(text_attrs)(tostring(format(x)))(M:xy())
+            end
+        end
+    end
+    if attrs.grad then
+        local x0, x1, dx1, dx2 = table.unpack(attrs.grad)
+        graduations(x0, x1, dx1, 1, attrs.grad, attrs.grad.text)
+        graduations(x0, x1, dx2, 0.5, attrs.grad, nil)
+    end
+    F.foreach(contents, function(item)
+        local anchor = item.attrs.anchor or 0.5
+        local M = (1-anchor)*A + anchor*B
+        g { item { xy=M } }
+    end)
+    return g
+end
+
+-- __tostring produces an SVG description of an axis
+function axis_mt:__tostring()
+    return tostring(gen_axis(self))
+end
+
+---------------------------------------------------------------------
+-- Equations
+---------------------------------------------------------------------
+
+-- Basic equation formatter (superscript and subscript support only)
+local function eqn(s)
+    local pos = { ['_']="sub", ['^']="super" }
+    local function f(op, x)
+        return ('<tspan baseline-shift="%s" font-size="0.75em">%s</tspan>'):format(pos[op], x)
+    end
+    return s
+    : gsub("([_^])(%b{})", function(c, x) return f(c, eqn(x:sub(2, -2))) end)
+    : gsub("([_^])(.)",    function(c, x) return f(c, eqn(x:sub(1, -1))) end)
+end
+
+---------------------------------------------------------------------
+-- Frames
+---------------------------------------------------------------------
+
+-- Frame returns a function that changes the frame of items in a SVG node.
+-- xmin, xmax, ymin, ymax describe the coordinates of the items in the SVG node.
+-- Xmin, Xmax, Ymin, Ymax describe the coordinates of the items in the final SVG image.
+-- Note: the y-axis is upward in the first frame. The Y-axis is downward in the SVG image.
+-- Frame recomputes the coordinates of items, not their intrinsic characteristics.
+-- I.e. fields like x, y, x1, y1, x2, y2, cx, cy, r, rx, ry, width, height, points
+-- are recomputed. Other fields (e.g. stroke_width, font_size) are keep to avoid
+-- changing the aspect of the image.
+local function Frame(t)
+    local xmin, ymin, xmax, ymax = t.xmin, t.ymin, t.xmax, t.ymax
+    local Xmin, Ymin, Xmax, Ymax = t.Xmin, t.Ymin, t.Xmax, t.Ymax
+
+    local function tx(x) return (x-xmin)*(Xmax-Xmin)/(xmax-xmin) + Xmin end
+    local function ty(y) return (y-ymax)*(Ymax-Ymin)/(ymin-ymax) + Ymin end
+    local function trx(x) return abs(tx(x) - tx(0)) end
+    local function try(y) return abs(ty(y) - ty(0)) end
+    local id = F.id
+
+    local function txy(xy)
+        local x, y = F.unpack(xy)
+        return {tx(x), ty(y)}
+    end
+
+    local function txys(ps)
+        if type(ps) == "string" then
+            ps = ps:words():map(function(p) return p:split ",":map(tonumber) end)
+        end
+        return F.map(txy, ps)
+    end
+
+    local m = {
+        x = tx, x1 = tx, x2 = tx,
+        y = ty, y1 = ty, y2 = ty,
+        width = trx, height = try,
+        cx = tx, cy = ty, r = trx, rx = trx, ry = try,
+        points = txys,
+        xy = txy, xy1 = txy, xy2 = txy,
+        cxy = txy,
+        arrowhead = trx,
+    }
+
+    local function transform(node)
+        if type(node) ~= 'table' then return node end
+        if node.name == "linearGradient" then return node end
+        if node.name == "radialGradient" then return node end
+        local new = node.cons(node.name)
+        new.attrs = node.attrs:mapk(function(k, v)
+            return (m[k] or id)(v)
+        end)
+        new.contents = node.contents:map(transform)
+        if node.points then
+            new.points = node.points:map(function(p)
+                return Point(F.unpack(txy(p)))
+            end)
+        end
+        return new
+    end
+
+    return transform
+end
+
+---------------------------------------------------------------------
+-- SVG document
+---------------------------------------------------------------------
+
+local function SVG()
+    return Node "svg" {
+        version="1.1",
+        xmlns="http://www.w3.org/2000/svg",
+    }
+end
+
+---------------------------------------------------------------------
+-- SVG module
+---------------------------------------------------------------------
+
+local svg = {
+    Point = Point,
+    Vector = Vector,
+    Frame = Frame,
+    eqn = eqn,
+}
+local svg_mt = {}
+
+local primitive_nodes = F"g text rect circle ellipse line polygon polyline path"
+local custom_nodes = F{ raw=Raw, arrow=Arrow, axis=Axis, }
+
+primitive_nodes:words():foreach(function(name)
+    svg[name:cap()] = function(t) return Node(name)(t) end
+    node_mt.__index[name:cap()] = function(self, t)
+        local node = Node(name)(t)
+        self(node)
+        return node
+    end
+end)
+
+custom_nodes:foreachk(function(name, func)
+    svg[name:cap()] = function(...) return func(...) end
+    node_mt.__index[name:cap()] = function(self, ...)
+        local node = func(...)
+        self(node)
+        return node
+    end
+end)
+
+function svg.open()
+    _ENV.svg = svg
+    F.foreachk(svg, function(k, v) _ENV[k] = v end)
+    return svg
+end
+
+function svg_mt:__call()
+    return SVG()
+end
+
+return setmetatable(svg, svg_mt)
+]=])
+libs["version"] = lib(".build/version", [=[return [[2.5.3-1-gfb0b08d]]]=])
+return lib("src/lsvg.lua", [=[--/usr/bin/env luax
+
+--[[
+This file is part of lsvg.
+
+lsvg is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+lsvg is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with lsvg.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about lsvg you can visit
+http://cdelord.fr/lsvg
+--]]
+
+local F = require "F"
+local fs = require "fs"
+
+local version = require "version"
+
+local function parse_args()
+    local parser = require "argparse"()
+        : name "lsvg"
+        : description(F.unlines {
+            "SVG generator scriptable in LuaX",
+            "",
+            "Arguments after \"--\" are given to the input scripts",
+        } : rtrim())
+        : epilog "For more information, see https://github.com/CDSoft/lsvg"
+
+    parser : flag "-v"
+        : description(('Print version ("%s")'):format(version))
+        : action(function() print(version); os.exit() end)
+
+    parser : option "-o"
+        : description "Output file name (SVG, PNG, JPEG or PDF)"
+        : argname "output"
+        : target "output"
+
+    parser : option "--MF"
+        : description "Set the dependency file name (implies `--MD`)"
+        : target "depfile"
+        : argname "name"
+
+    parser : flag "--MD"
+        : description "Generate a dependency file"
+        : target "gendep"
+
+    parser : argument "input"
+        : description "Lua script using the svg module to build an SVG image"
+        : args "+"
+
+    local lsvg_arg, script_arg = F.break_(F.partial(F.op.eq, "--"), arg)
+    local args = parser:parse(lsvg_arg)
+    _G.arg = script_arg:drop(1)
+
+    return args
+end
+
+local args = parse_args()
+
+local svg = require "svg".open()
+
+-- The Lua script shall use the global variable `img` to describe the SVG image
+_ENV.img = svg()
+
+F.foreach(args.input, function(name)
+    _G.arg[0] = name
+    assert(loadfile(name))()
+end)
+
+if args.output then
+    if not _ENV.img:save(args.output) then
+        io.stderr:write(arg[0], ": can not save ", args.output, "\n")
+        os.exit(1)
+    end
+
+    if args.gendep or args.depfile then
+        local depfile = args.depfile or fs.splitext(args.output)..".d"
+        local function mklist(...)
+            return F.flatten{...}:from_set(F.const(true)):keys()
+                :map(function(p) return p:gsub("^%."..fs.sep, "") end)
+                :sort()
+                :unwords()
+        end
+        local scripts = F.values(package.modpath)
+        local deps = mklist(args.output).." : "..mklist(args.input, scripts)
+        fs.mkdirs(depfile:dirname())
+        fs.write(depfile, deps.."\n")
+    end
+
+end
+
+]=])()
+

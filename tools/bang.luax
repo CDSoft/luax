@@ -1,0 +1,1943 @@
+#!/usr/bin/env -S luax --
+local libs = {}
+table.insert(package.searchers, 2, function(name) return libs[name] end)
+local function lib(path, src) return assert(load(src, '@$bang:'..path)) end
+libs["C"] = lib("src/C.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LIB
+
+local F = require "F"
+local sys = require "sys"
+
+local tmp = require "tmp"
+
+local default_options = {
+    builddir = "$builddir/tmp",
+    cc = "cc", cflags = {"-c", "-MD -MF $depfile"}, cargs = "$in -o $out",
+    depfile = "$out.d",
+    cvalid = {},
+    ar = "ar", aflags = "-crs", aargs = "$out $in",
+    so = "cc", soflags = "-shared", soargs = "-o $out $in",
+    ld = "cc", ldflags = {}, ldargs = "-o $out $in",
+    c_exts = { ".c" },
+    o_ext = ".o",
+    a_ext = ".a",
+    so_ext = sys.so,
+    exe_ext = sys.exe,
+}
+
+local rules = setmetatable({}, {
+    __index = function(self, compiler)
+        local cc = F{compiler.name, "cc"}:flatten():str"-"
+        local ar = F{compiler.name, "ar"}:flatten():str"-"
+        local so = F{compiler.name, "so"}:flatten():str"-"
+        local ld = F{compiler.name, "ld"}:flatten():str"-"
+        local new_rules = {
+            cc = rule(cc) {
+                description = {compiler.name, "$out"},
+                command = { compiler.cc, compiler.cflags, compiler.cargs },
+                depfile = compiler.depfile,
+            },
+            ar = rule(ar) {
+                description = {compiler.name, "$out"},
+                command = { compiler.ar, compiler.aflags, compiler.aargs },
+            },
+            so = rule(so) {
+                description = {compiler.name, "$out"},
+                command = { compiler.so, compiler.soflags, compiler.soargs },
+            },
+            ld = rule(ld) {
+                description = {compiler.name, "$out"},
+                command = { compiler.ld, compiler.ldflags, compiler.ldargs },
+            },
+        }
+        rawset(self, compiler, new_rules)
+        return new_rules
+    end
+})
+
+local function compile(self, output)
+    local cc = rules[self].cc
+    return function(inputs)
+        local validations = F.flatten{self.cvalid}:map(function(valid)
+            local valid_output = output.."-"..(valid.name or valid)..".check"
+            if valid.name then
+                return valid(valid_output) { inputs }
+            else
+                return build(valid_output) { valid, inputs }
+            end
+        end)
+        return build(output) { cc, inputs,
+            validations = validations,
+        }
+    end
+end
+
+local function static_lib(self, output)
+    local ar = rules[self].ar
+    return function(inputs)
+        return build(output) { ar,
+            F.flatten(inputs):map(function(input)
+                if F.elem(input:ext(), self.c_exts) then
+                    return self:compile(tmp(self.builddir, output, input)..self.o_ext) { input }
+                else
+                    return input
+                end
+            end)
+        }
+    end
+end
+
+local function dynamic_lib(self, output)
+    local so = rules[self].so
+    return function(inputs)
+        return build(output) { so,
+            F.flatten(inputs):map(function(input)
+                if F.elem(input:ext(), self.c_exts) then
+                    return self:compile(tmp(self.builddir, output, input)..self.o_ext) { input }
+                else
+                    return input
+                end
+            end)
+        }
+    end
+end
+
+local function executable(self, output)
+    local ld = rules[self].ld
+    return function(inputs)
+        return build(output) { ld,
+            F.flatten(inputs):map(function(input)
+                if F.elem(input:ext(), self.c_exts) then
+                    return self:compile(tmp(self.builddir, output, input)..self.o_ext) { input }
+                else
+                    return input
+                end
+            end)
+        }
+    end
+end
+
+local compiler_mt
+
+local compilers = {}
+
+local function new(compiler, name)
+    if compilers[name] then
+        error(name..": compiler redefinition")
+    end
+    local self = F.merge { compiler, {name=name} }
+    compilers[name] = self
+    return setmetatable(self, compiler_mt)
+end
+
+local function check_opt(name)
+    assert(default_options[name], name..": Unknown compiler option")
+end
+
+compiler_mt = {
+    __call = executable,
+
+    __index = {
+        new = new,
+
+        compile = compile,
+        static_lib = static_lib,
+        dynamic_lib = dynamic_lib,
+        executable = executable,
+
+        set = function(self, name)
+            check_opt(name)
+            return function(value) self[name] = value; return self end
+        end,
+        add = function(self, name)
+            check_opt(name)
+            return function(value) self[name] = {self[name], value}; return self end
+        end,
+    },
+}
+
+return new(default_options, "C")
+]])
+libs["Nil"] = lib("src/Nil.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LOAD
+
+local F = require "F"
+
+return F.Nil
+]])
+libs["acc"] = lib("src/acc.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LOAD
+
+local flatten = require "flatten"
+
+local function acc(list)
+    return function(xs)
+        flatten{xs} : foreach(function(x)
+            list[#list+1] = x
+        end)
+    end
+end
+
+return acc
+]])
+libs["atexit"] = lib("src/atexit.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LIB
+
+local F = require "F"
+
+local registered_functions = F{}
+
+return setmetatable({}, {
+    __call = function(_, f)
+        if type(f) ~= "function" then error(tostring(f).." is not a function", 2) end
+        registered_functions[#registered_functions+1] = f
+    end,
+    __index = {
+        run = function()
+            while not registered_functions:null() do
+                local funcs = registered_functions
+                registered_functions = F{}
+                funcs:foreach(F.call)
+            end
+        end,
+    },
+})
+]])
+libs["builders"] = lib("src/builders.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LIB
+
+local F = require "F"
+local fs = require "fs"
+local sys = require "sys"
+
+local default_options = {
+    cmd = "cat",
+    flags = {},
+    args = "$in > $out",
+}
+
+local builder_keys = F.keys(default_options) .. { "name" }
+
+local function split_hybrid_table(t)
+    local function is_numeric_key(k)
+        return math.type(k) == "integer"
+    end
+    return F.table_partition_with_key(is_numeric_key, t)
+end
+
+local rules = setmetatable({}, {
+    __index = function(self, builder)
+        local new_rule = rule(builder.name) (F.merge{
+            {
+                description = builder.description or {builder.name, "$out"},
+                command = { builder.cmd, builder.flags, builder.args },
+            },
+            F.without_keys(builder, builder_keys),
+        })
+        self[builder] = new_rule
+        return new_rule
+    end
+})
+
+local function gen_rule(self)
+    return rules[self]
+end
+
+local function run(self, output)
+    return function(inputs)
+        if type(inputs) == "string" then
+            inputs = {inputs}
+        end
+        local input_list, input_vars = split_hybrid_table(inputs)
+        return build(output) (F.merge{
+            { rules[self], input_list },
+            input_vars,
+        })
+    end
+end
+
+local builder_mt
+
+local builder_definitions = {}
+
+local function new(builder, name)
+    if builder_definitions[name] then
+        error(name..": document builder redefinition")
+    end
+    local self = F.merge { builder, {name=name} }
+    builder_definitions[name] = self
+    return setmetatable(self, builder_mt)
+end
+
+builder_mt = {
+    __call = run,
+
+    __index = {
+        new = new,
+
+        rule = gen_rule,
+        build = run,
+
+        set = function(self, name)
+            return function(value) self[name] = value; return self end
+        end,
+        add = function(self, name)
+            return function(value) self[name] = self[name]==nil and value or {self[name], value}; return self end
+        end,
+    },
+}
+
+local cat = new(default_options, "cat")
+local cp = new(default_options, "cp")
+    : set "cmd" "cp"
+    : set "flags" "-d --preserve=mode"
+    : set "args" "$in $out"
+
+local ypp = new(default_options, "ypp")
+    : set "cmd" "ypp"
+    : set "args" "$in -o $out"
+    : set "flags" "--MF $depfile"
+    : set "depfile" "$out.d"
+
+local pandoc = new(default_options, "pandoc")
+    : set "cmd" "pandoc"
+    : set "args" "$in -o $out"
+    : set "flags" {
+        "--fail-if-warnings",
+    }
+
+local panda = pandoc:new "panda"
+    : set "cmd" "panda"
+    : add "flags" {
+        "-Vpanda_target=$out",
+        "-Vpanda_dep_file=$depfile",
+    }
+    : set "depfile" "$out.d"
+
+if sys.os == "windows" then
+    cat : set "cmd" "type"
+    cp : set "cmd" "copy"
+       : set "flags" "/B /Y"
+       : set "args" "$in $out"
+end
+
+local dot = new(default_options, "dot")
+    : set "cmd" "dot"
+    : set "args" "-o $out $in"
+
+local PLANTUML = os.getenv "PLANTUML" or fs.findpath "plantuml.jar"
+
+local plantuml = new(default_options, "plantuml")
+    : set "cmd" { "java -jar", PLANTUML }
+    : set "flags" { "-pipe", "charset UTF-8" }
+    : set "args" "< $in > $out"
+
+local DITAA = os.getenv "DITAA" or fs.findpath "ditaa.jar"
+
+local ditaa = new(default_options, "ditaa")
+    : set "cmd" { "java -jar", DITAA }
+    : set "flags" { "-o", "-e UTF-8" }
+    : set "args" "$in $out"
+
+local asymptote = new(default_options, "asymptote")
+    : set "cmd" "asy"
+    : set "args" "-o $out $in"
+
+local mermaid = new(default_options, "mermaid")
+    : set "cmd" "mmdc"
+    : set "flags" "--pdfFit"
+    : set "args" "-i $in -o $out"
+
+local blockdiag = new(default_options, "blockdiag")
+    : set "cmd" "blockdiag"
+    : set "flags" "-a"
+    : set "args" "-o $out $in"
+
+local gnuplot = new(default_options, "gnuplot")
+    : set "cmd" "gnuplot"
+    : set "args" { "-e 'set output \"$out\"'", "-c $in" }
+
+local lsvg = new(default_options, "lsvg")
+    : set "cmd" "lsvg"
+    : set "flags" { "--MF $depfile" }
+    : set "depfile" "$out.d"
+    : set "args" "$in -o $out"
+
+local octave = new(default_options, "octave")
+    : set "cmd" "octave"
+    : set "flags" {
+        "--no-gui",
+        "--eval 'figure(\"visible\",\"off\");'",
+    }
+    : set "args" {
+        "--eval 'run(\"$in\");'";
+        "--eval 'print $out;'",
+    }
+
+return setmetatable({
+    cat = cat,
+    cp = cp,
+    ypp = ypp,
+    ypp_pandoc = ypp:new "ypp_pandoc" : set "cmd" "ypp-pandoc.lua",
+    panda = panda,
+    panda_gfm = panda:new "panda_gfm" : add "flags" "-t gfm",
+    pandoc = pandoc,
+    pandoc_gfm = pandoc:new "pandoc_gfm" : add "flags" "-t gfm",
+    graphviz = {
+        dot = {
+            svg = dot:new "dot.svg" : add "flags" "-Tsvg",
+            png = dot:new "dot.png" : add "flags" "-Tpng",
+            pdf = dot:new "dot.pdf" : add "flags" "-Tpdf",
+        },
+        neato = {
+            svg = dot:new "neato.svg" : set "cmd" "neato" : add "flags" "-Tsvg",
+            png = dot:new "neato.png" : set "cmd" "neato" : add "flags" "-Tpng",
+            pdf = dot:new "neato.pdf" : set "cmd" "neato" : add "flags" "-Tpdf",
+        },
+        twopi = {
+            svg = dot:new "twopi.svg" : set "cmd" "twopi" : add "flags" "-Tsvg",
+            png = dot:new "twopi.png" : set "cmd" "twopi" : add "flags" "-Tpng",
+            pdf = dot:new "twopi.pdf" : set "cmd" "twopi" : add "flags" "-Tpdf",
+        },
+        circo = {
+            svg = dot:new "circo.svg" : set "cmd" "circo" : add "flags" "-Tsvg",
+            png = dot:new "circo.png" : set "cmd" "circo" : add "flags" "-Tpng",
+            pdf = dot:new "circo.pdf" : set "cmd" "circo" : add "flags" "-Tpdf",
+        },
+        fdp = {
+            svg = dot:new "fdp.svg" : set "cmd" "fdp" : add "flags" "-Tsvg",
+            png = dot:new "fdp.png" : set "cmd" "fdp" : add "flags" "-Tpng",
+            pdf = dot:new "fdp.pdf" : set "cmd" "fdp" : add "flags" "-Tpdf",
+        },
+        sfdp = {
+            svg = dot:new "sfdp.svg" : set "cmd" "sfdp" : add "flags" "-Tsvg",
+            png = dot:new "sfdp.png" : set "cmd" "sfdp" : add "flags" "-Tpng",
+            pdf = dot:new "sfdp.pdf" : set "cmd" "sfdp" : add "flags" "-Tpdf",
+        },
+        patchwork = {
+            svg = dot:new "patchwork.svg" : set "cmd" "patchwork" : add "flags" "-Tsvg",
+            png = dot:new "patchwork.png" : set "cmd" "patchwork" : add "flags" "-Tpng",
+            pdf = dot:new "patchwork.pdf" : set "cmd" "patchwork" : add "flags" "-Tpdf",
+        },
+        osage = {
+            svg = dot:new "osage.svg" : set "cmd" "osage" : add "flags" "-Tsvg",
+            png = dot:new "osage.png" : set "cmd" "osage" : add "flags" "-Tpng",
+            pdf = dot:new "osage.pdf" : set "cmd" "osage" : add "flags" "-Tpdf",
+        },
+    },
+    plantum = {
+        svg = plantuml:new "plantuml.svg" : add "flags" "-tsvg",
+        png = plantuml:new "plantuml.png" : add "flags" "-tpng",
+        pdf = plantuml:new "plantuml.pdf" : add "flags" "-tpdf",
+    },
+    ditaa = {
+        svg = ditaa:new "ditaa.svg" : add "flags" "--svg",
+        png = ditaa:new "ditaa.png",
+        pdf = ditaa:new "ditaa.pdf",
+    },
+    asymptote = {
+        svg = asymptote:new "asymptote.svg" : add "flags" "-f svg",
+        png = asymptote:new "asymptote.png" : add "flags" "-f png",
+        pdf = asymptote:new "asymptote.pdf" : add "flags" "-f pdf",
+    },
+    mermaid = {
+        svg = mermaid:new "mermaid.svg" : add "flags" "-e svg",
+        png = mermaid:new "mermaid.png" : add "flags" "-e png",
+        pdf = mermaid:new "mermaid.pdf" : add "flags" "-e pdf",
+    },
+    blockdiag = {
+        svg = blockdiag:new "blockdiag.svg" : add "flags" "-Tsvg",
+        png = blockdiag:new "blockdiag.png" : add "flags" "-Tpng",
+        pdf = blockdiag:new "blockdiag.pdf" : add "flags" "-Tpdf",
+        activity = {
+            svg = blockdiag:new "actdiag.svg" : set "cmd" "actdiag"  : add "flags" "-Tsvg",
+            png = blockdiag:new "actdiag.png" : set "cmd" "actdiag"  : add "flags" "-Tpng",
+            pdf = blockdiag:new "actdiag.pdf" : set "cmd" "actdiag"  : add "flags" "-Tpdf",
+        },
+        network = {
+            svg = blockdiag:new "nwdiag.svg" : set "cmd" "nwdiag"  : add "flags" "-Tsvg",
+            png = blockdiag:new "nwdiag.png" : set "cmd" "nwdiag"  : add "flags" "-Tpng",
+            pdf = blockdiag:new "nwdiag.pdf" : set "cmd" "nwdiag"  : add "flags" "-Tpdf",
+        },
+        packet = {
+            svg = blockdiag:new "packetdiag.svg" : set "cmd" "packetdiag"  : add "flags" "-Tsvg",
+            png = blockdiag:new "packetdiag.png" : set "cmd" "packetdiag"  : add "flags" "-Tpng",
+            pdf = blockdiag:new "packetdiag.pdf" : set "cmd" "packetdiag"  : add "flags" "-Tpdf",
+        },
+        rack = {
+            svg = blockdiag:new "rackdiag.svg" : set "cmd" "rackdiag"  : add "flags" "-Tsvg",
+            png = blockdiag:new "rackdiag.png" : set "cmd" "rackdiag"  : add "flags" "-Tpng",
+            pdf = blockdiag:new "rackdiag.pdf" : set "cmd" "rackdiag"  : add "flags" "-Tpdf",
+        },
+        sequence = {
+            svg = blockdiag:new "seqdiag.svg" : set "cmd" "seqdiag"  : add "flags" "-Tsvg",
+            png = blockdiag:new "seqdiag.png" : set "cmd" "seqdiag"  : add "flags" "-Tpng",
+            pdf = blockdiag:new "seqdiag.pdf" : set "cmd" "seqdiag"  : add "flags" "-Tpdf",
+        },
+    },
+    gnuplot = {
+        svg = gnuplot:new "gnuplot.svg" : add "flags" { "-e 'set terminal svg'" },
+        png = gnuplot:new "gnuplot.png" : add "flags" { "-e 'set terminal png'" },
+        pdf = gnuplot:new "gnuplot.pdf" : add "flags" { "-e 'set terminal pdf'" },
+    },
+    lsvg = {
+        svg = lsvg:new "lsvg.svg",
+        png = lsvg:new "lsvg.png",
+        pdf = lsvg:new "lsvg.pdf",
+    },
+    octave = {
+        svg = octave:new "octave.svg",
+        png = octave:new "octave.png",
+        pdf = octave:new "octave.pdf",
+    },
+}, {
+    __index = {
+        new = function(_, name) return cat:new(name) end,
+    }
+})
+]])
+libs["case"] = lib("src/case.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LOAD
+
+local F = require "F"
+
+return F.case
+]])
+libs["clean"] = lib("src/clean.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LOAD
+
+local F = require "F"
+local help = require "help"
+local ident = require "ident"
+
+local clean = {}
+local mt = {__index={}}
+
+local directories_to_clean = F{}
+local directories_to_clean_more = F{}
+
+local builddir = "$builddir"
+
+function mt.__call(_, dir)
+    directories_to_clean[#directories_to_clean+1] = dir
+end
+
+function clean.mrproper(dir)
+    directories_to_clean_more[#directories_to_clean_more+1] = dir
+end
+
+function mt.__index:default_target_needed()
+    return #directories_to_clean > 0 or #directories_to_clean_more > 0
+end
+
+function mt.__index:gen()
+
+    if #directories_to_clean > 0 then
+
+        section("Clean")
+
+        help "clean" "clean generated files"
+
+        local targets = directories_to_clean : map(function(dir)
+            return build("clean-"..ident(dir)) {
+                ["$no_default"] = true,
+                description = {"CLEAN", dir},
+                command = {"rm -rf", dir..(dir==builddir and "/*" or "")},
+            }
+        end)
+
+        phony "clean" {
+            ["$no_default"] = true,
+            targets,
+        }
+
+    end
+
+    if #directories_to_clean_more > 0 then
+
+        section("Clean (mrproper)")
+
+        help "mrproper" "clean generated files and more"
+
+        local targets = directories_to_clean_more : map(function(dir)
+            return build("mrproper-"..ident(dir)) {
+                ["$no_default"] = true,
+                description = {"CLEAN", dir},
+                command = {"rm -rf", dir..(dir==builddir and "/*" or "")},
+            }
+        end)
+
+        phony "mrproper" {
+            ["$no_default"] = true,
+            #directories_to_clean > 0 and "clean" or {},
+            targets,
+        }
+
+    end
+
+end
+
+return setmetatable(clean, mt)
+]])
+libs["file"] = lib("src/file.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LOAD
+
+local fs = require "fs"
+local F = require "F"
+
+local flatten = require "flatten"
+
+local file_mt = {__index = {}}
+
+function file_mt.__call(self, ...)
+    self.chunks[#self.chunks+1] = {...}
+end
+
+function file_mt.__index:close()
+    local new_content = flatten(self.chunks):str()
+    local old_content = fs.read(self.name)
+    if old_content == new_content then
+        return -- keep the old file untouched
+    end
+    fs.mkdirs(self.name:dirname())
+    fs.write(self.name, new_content)
+end
+
+local open_files = F{}
+
+local function file(name)
+    if open_files[name] then
+        error(name..": multiple file creation")
+    end
+    local f = setmetatable({name=name, chunks=F{}}, file_mt)
+    open_files[name] = f
+    return f
+end
+
+return setmetatable({}, {
+    __call = function(_, name) return file(name) end,
+    __index = {
+        flush = function()
+            open_files:foreacht(function(f) f:close() end)
+        end,
+    },
+})
+]])
+libs["flatten"] = lib("src/flatten.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LIB
+
+local F = require "F"
+local F_flatten = F.flatten
+local filter = F.filter
+
+local Nil = require "Nil"
+
+local function is_not_Nil(x)
+    return x ~= Nil
+end
+
+return function(xs)
+    return filter(is_not_Nil, F_flatten(xs))
+end
+]])
+libs["help"] = lib("src/help.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LOAD
+
+local F = require "F"
+
+local product_name = ""
+local description = F{}
+local epilog = F{}
+local targets = F{}
+
+local help = {}
+local mt = {__index={}}
+
+local function i(s)
+    return s : gsub("%$name", product_name)
+end
+
+function help.name(txt)
+    product_name = txt
+end
+
+function help.description(txt)
+    description[#description+1] = i(txt:rtrim())
+end
+
+function help.epilog(txt)
+    epilog[#epilog+1] = i(txt:rtrim())
+end
+
+function help.target(name)
+    return function(txt)
+        targets[#targets+1] = F{name=name, txt=i(txt)}
+    end
+end
+
+function mt.__call(_, ...)
+    return help.target(...)
+end
+
+local function help_defined()
+    return not description:null() or not epilog:null() or not targets:null()
+end
+
+function mt.__index:default_target_needed()
+    return help_defined()
+end
+
+function mt.__index:gen()
+    if not help_defined() then return end
+
+    if not targets:null() then
+        table.insert(targets, 1, {name="help", txt="show this help message"})
+    end
+
+    local w = targets:map(function(t) return #t.name end):maximum()
+    local function justify(s)
+        return s..(" "):rep(w-#s)
+    end
+
+    section "Help"
+
+    build "help" {
+        ["$no_default"] = true,
+        description = "help",
+        command = F{
+            description:null() and {} or description:unlines(),
+            "",
+            targets:null() and {} or {
+                "Targets:",
+                targets : map(function(target)
+                    return F"  %s   %s":format(justify(target.name), target.txt)
+                end)
+            },
+            "",
+            epilog:null() and {} or epilog:unlines(),
+        } : flatten()
+          : unlines()
+          : trim()
+          : gsub("\n\n+", "\n\n")   -- remove duplicate blank lines
+          : lines()
+          : map(function(line) return ("echo %q"):format(line) end)
+          : str "; $\n            "
+    }
+
+end
+
+return setmetatable(help, mt)
+]])
+libs["ident"] = lib("src/ident.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LIB
+
+local gsub = string.gsub
+
+return function(s)
+    return gsub(s, "[^a-zA-Z0-9_%.%-]+", "_")
+end
+]])
+libs["install"] = lib("src/install.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LOAD
+
+local F = require "F"
+
+local ident = require "ident"
+
+local prefix = "~/.local"
+local targets = F{}
+
+local install = {}
+local mt = {__index={}}
+
+function install.prefix(dir)
+    prefix = dir
+end
+
+function mt.__call(_, name)
+    return function(sources)
+        targets[#targets+1] = F{name=name, sources=sources}
+    end
+end
+
+function mt.__index:default_target_needed()
+    return not targets:null()
+end
+
+function mt.__index:gen()
+    if targets:null() then
+        return
+    end
+
+    section "Installation"
+
+    help "install" ("install $name in PREFIX or "..prefix)
+
+    var "prefix" (prefix)
+
+    local rule_names = targets
+    : sort(function(a, b) return a.name < b.name end)
+    : group(function(a, b) return a.name == b.name end)
+    : map(function(target_group)
+        local target_name = target_group[1].name
+        local rule_name = "install-"..ident(target_name)
+        return build(rule_name) { target_group:map(function(target) return target.sources end),
+            ["$no_default"] = true,
+            description = "INSTALL $in to "..target_name,
+            command = { "install -v -D -t", "$${PREFIX:-$prefix}"/target_name, "$in" },
+        }
+    end)
+
+    phony "install" {
+        ["$no_default"] = true,
+        rule_names,
+    }
+
+end
+
+return setmetatable(install, mt)
+]])
+libs["log"] = lib("src/log.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+local F = require "F"
+
+local where = require "where"
+
+local log = {}
+
+local quiet = false
+
+function log.config(args)
+    quiet = args.quiet
+end
+
+function log.error(...)
+    io.stderr:write(F.flatten{where(), "ERROR: ", {...}, "\n"}:unpack())
+    os.exit(1)
+end
+
+function log.warning(...)
+    io.stderr:write(F.flatten{where(), "WARNING: ", {...}, "\n"}:unpack())
+end
+
+function log.info(...)
+    if not quiet then
+        io.stdout:write(F.flatten{{...}, "\n"}:unpack())
+    end
+end
+
+return log
+]])
+libs["ls"] = lib("src/ls.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LOAD
+
+local fs = require "fs"
+
+return fs.ls
+]])
+libs["luax"] = lib("src/luax.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LIB
+
+local F = require "F"
+local targets = require "targets"
+
+local default_options = {
+    name = "luax",
+    luax = "luax",
+    target = "luax",
+    flags = {},
+}
+
+local rules = setmetatable({}, {
+    __index = function(self, compiler)
+        local new_rule = rule(compiler.name) {
+            description = compiler.description or {compiler.name, "$out"},
+            command = { compiler.luax, "compile", "-t", compiler.target, "$in -o $out", compiler.flags },
+        }
+        self[compiler] = new_rule
+        return new_rule
+    end
+})
+
+local function run(self, output)
+    return function(inputs)
+        if type(inputs) == "string" then
+            inputs = {inputs}
+        end
+        return build(output) { rules[self], inputs }
+    end
+end
+
+local compiler_mt
+
+local compilers = F{}
+
+local function new(compiler, name)
+    if compilers[name] then
+        error(name..": compiler redefinition")
+    end
+    local self = F.merge { compiler, {name=name} }
+    compilers[name] = self
+    return setmetatable(self, compiler_mt)
+end
+
+local function check_opt(name)
+    assert(default_options[name], name..": Unknown compiler option")
+end
+
+compiler_mt = {
+    __call = run,
+
+    __index = {
+        new = new,
+
+        set = function(self, name)
+            check_opt(name)
+            return function(value) self[name] = value; return self end
+        end,
+        add = function(self, name)
+            check_opt(name)
+            return function(value) self[name] = {self[name], value}; return self end
+        end,
+    },
+}
+
+local luax = new(default_options, "luax") : set "target" "luax"
+local lua = luax:new "luax-lua" : set "target" "lua"
+local pandoc = luax:new "luax-pandoc" : set "target" "pandoc"
+local native = luax:new "luax-native" : set "target" "native"
+
+local M = {
+    luax = luax,
+    lua = lua,
+    pandoc = pandoc,
+    native = native,
+}
+targets : foreach(function(target)
+    M[target.name] = native:new("luax-"..target.name) : set "target" (target.name)
+end)
+
+return setmetatable(M, {
+    __call = function(_, ...) return luax(...) end,
+    __index = {
+        new = function(_, ...) return luax:new(...) end,
+        set = function(_, ...) return luax:set(...) end,
+        add = function(_, ...) return luax:add(...) end,
+        set_global = function(name)
+            check_opt(name)
+            return function(value)
+                F.foreacht(M, function(compiler) compiler:set(name)(value) end)
+            end
+        end,
+        add_global = function(name)
+            check_opt(name)
+            return function(value)
+                F.foreacht(M, function(compiler) compiler:add(name)(value) end)
+            end
+        end,
+    }
+})
+]])
+libs["ninja"] = lib("src/ninja.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LIB
+
+local F = require "F"
+local fs = require "fs"
+local atexit = require "atexit"
+
+local log = require "log"
+local ident = require "ident"
+local flatten = require "flatten"
+
+local pairs = pairs
+local tostring = tostring
+local type = type
+
+local words = string.words
+
+local clone = F.clone
+local difference = F.difference
+local filterk = F.filterk
+local foreach = F.foreach
+local foreachk = F.foreachk
+local keys = F.keys
+local map = F.map
+local restrict_keys = F.restrict_keys
+local unwords = F.unwords
+local values = F.values
+local without_keys = F.without_keys
+
+local ninja_required_version_for_bang = F"1.11.1"
+
+local tokens = F{
+    "# Ninja file generated by bang (https://cdelord.fr/bang)\n",
+    "\n",
+}
+
+local nbnl = 1
+local nb_tokens = #tokens
+
+function emit(x)
+    nb_tokens = nb_tokens + 1
+    tokens[nb_tokens] = x
+    nbnl = 0
+end
+
+local function comment_line(line)
+    if #line == 0 then return "#" end
+    return "# "..line
+end
+
+function comment(txt)
+    emit(txt
+        : lines()
+        : map(comment_line)
+        : unlines())
+end
+
+function nl()
+    if nbnl < 1 then
+        emit "\n"
+    end
+    nbnl = nbnl + 1
+end
+
+local token_separator = F"#":rep(70).."\n"
+
+function section(txt)
+    nl()
+    emit(token_separator)
+    comment(txt)
+    emit(token_separator)
+    nl()
+end
+
+local function stringify(value)
+    return unwords(map(tostring, flatten{value}))
+end
+
+local nbvars = 0
+
+local vars = {}
+local function expand(s)
+    if type(s) == "string" then
+        for _ in pairs(vars) do
+            local s1 = s:gsub("%$(%w+)", vars)
+            if s1 == s then break end
+            s = s1
+        end
+        return s
+    end
+    if type(s) == "table" then
+        return F.map(expand, s)
+    end
+    log.error("vars.expand expects a string or a list of strings")
+end
+
+_G.vars = setmetatable(vars, { __index = {expand = expand} })
+
+function var(name)
+    return function(value)
+        if vars[name] then
+            log.error("var "..name..": multiple definition")
+        end
+        value = stringify(value)
+        emit(name.." = "..value.."\n")
+        vars[name] = value
+        nbvars = nbvars + 1
+        return "$"..name
+    end
+end
+
+local ninja_required_version_token = { ninja_required_version_for_bang }
+
+nl()
+emit { "ninja_required_version = ", ninja_required_version_token, "\n" }
+nl()
+
+function ninja_required_version(required_version)
+    local current = ninja_required_version_token[1] : split "%." : map(tonumber)
+    local new = required_version : split "%." : map(tonumber)
+    for i = 1, #new do
+        current[i] = current[i] or 0
+        if new[i] > current[i] then ninja_required_version_token[1] = required_version; return end
+        if new[i] < current[i] then return end
+    end
+end
+
+local rule_variables = F{
+    "description",
+    "command",
+    "in",
+    "in_newline",
+    "out",
+    "depfile",
+    "deps",
+    "dyndep",
+    "pool",
+    "msvc_deps_prefix",
+    "generator",
+    "restat",
+    "rspfile",
+    "rspfile_content",
+}
+
+local build_special_bang_variables = F{
+    "implicit_in",
+    "implicit_out",
+    "order_only_deps",
+    "validations",
+}
+
+local is_build_special_bang_variable = build_special_bang_variables
+    : map(function(name) return {name, true} end)
+    : from_list()
+
+local rules = {
+--  "rule_name" = {
+--      inherited_variables = {implicit_in=..., implicit_out=...}
+--  }
+}
+
+local function new_rule(name)
+    rules[name] = { inherited_variables = {} }
+end
+
+new_rule "phony"
+
+local nbrules = 0
+
+function rule(name)
+    return function(opt)
+        if rules[name] then
+            log.error("rule "..name..": multiple definition")
+        end
+        if opt.command == nil then
+            log.error("rule "..name..": expected 'command' attribute")
+        end
+
+        new_rule(name)
+        nbrules = nbrules + 1
+
+        nl()
+
+        emit("rule "..name.."\n")
+
+        -- list of variables belonging to the rule definition
+        rule_variables : foreach(function(varname)
+            local value = opt[varname]
+            if value ~= nil then emit("  "..varname.." = "..stringify(value).."\n") end
+        end)
+
+        -- list of variables belonging to the associated build statements
+        build_special_bang_variables : foreach(function(varname)
+            rules[name].inherited_variables[varname] = opt[varname]
+        end)
+
+        -- other variables are unknown
+        local unknown_variables = F.keys(opt)
+            : difference(rule_variables)
+            : difference(build_special_bang_variables)
+        if #unknown_variables > 0 then
+            log.error("rule "..name..": unknown variables: "..unknown_variables:str", ")
+        end
+
+        nl()
+
+        return name
+    end
+end
+
+local function unique_rule_name(name)
+    local rule_name = name
+    local prefix = name.."-"
+    local i = 0
+    while rules[rule_name] do
+        i = i + 1
+        rule_name = prefix..i
+    end
+    return rule_name
+end
+
+local function defined(x)
+    return x and #x>0
+end
+
+local builds = {}
+
+local default_build_statements = {}
+local custom_default_statement = false
+
+local nbbuilds = 0
+
+local function build_decorator(build)
+    local self = {}
+    local mt = {
+        __call = build,
+        __index = {},
+    }
+    mt.__index.C = require "C"
+    mt.__index.luax = require "luax"
+    local builders = require "builders"
+    F.foreachk(builders, function(name, builder) mt.__index[name] = builder end)
+    mt.__index.new = function(...) return builders:new(...) end
+    return setmetatable(self, mt)
+end
+
+build = build_decorator(function(_, outputs)
+    outputs = stringify(outputs)
+    return function(inputs)
+        -- variables defined in the current build statement
+        local build_opt = filterk(function(k, _) return type(k) == "string" and not k:has_prefix"$" end, inputs)
+        local no_default = inputs["$no_default"]
+
+        if build_opt.command then
+            -- the build statement contains its own rule
+            -- => create a new rule for this build statement only
+            local rule_name = unique_rule_name(ident(outputs))
+            local rule_opt = restrict_keys(build_opt, rule_variables)
+            rule(rule_name)(rule_opt)
+            build_opt = without_keys(build_opt, rule_variables)
+
+            -- add the rule name to the actuel build statement
+            inputs = {rule_name, inputs}
+        end
+
+        -- variables defined at the rule level and inherited by this statement
+        local rule_name = flatten{inputs}:head():words():head()
+        if not rules[rule_name] then
+            log.error(rule_name..": unknown rule")
+        end
+        local rule_opt = rules[rule_name].inherited_variables
+
+        -- merge both variable sets
+        local opt = clone(rule_opt)
+        foreachk(build_opt, function(varname, value)
+            opt[varname] = opt[varname]~=nil and {opt[varname], value} or value
+        end)
+
+        emit("build "
+            ..outputs
+            ..(defined(opt.implicit_out) and " | "..stringify(opt.implicit_out) or "")
+            ..": "
+            ..stringify(inputs)
+            ..(defined(opt.implicit_in) and " | "..stringify(opt.implicit_in) or "")
+            ..(defined(opt.order_only_deps) and " || "..stringify(opt.order_only_deps) or "")
+            ..(defined(opt.validations) and " |@ "..stringify(opt.validations) or "")
+            .."\n"
+        )
+
+        foreachk(opt, function(varname, value)
+            if not is_build_special_bang_variable[varname] then
+                emit("  "..varname.." = "..stringify(value).."\n")
+            end
+        end)
+
+        nbbuilds = nbbuilds + 1
+
+        local output_list = words(outputs)
+        foreach(output_list, function(output)
+            if builds[output] then
+                log.error("build "..output..": multiple definition")
+            end
+            builds[output] = true
+        end)
+        if not no_default then
+            default_build_statements[#default_build_statements+1] = output_list
+        end
+        return #output_list ~= 1 and output_list or output_list[1]
+    end
+end)
+
+local pool_variables = F{
+    "depth",
+}
+
+local pools = {}
+
+function pool(name)
+    return function(opt)
+        if pools[name] then
+            log.error("pool "..name..": multiple definition")
+        end
+        pools[name] = true
+        emit("pool "..name.."\n")
+        foreach(pool_variables, function(varname)
+            local value = opt[varname]
+            if value ~= nil then emit("  "..varname.." = "..stringify(value).."\n") end
+        end)
+        local unknown_variables = difference(keys(opt), pool_variables)
+        if #unknown_variables > 0 then
+            log.error("pool "..name..": unknown variables: "..unknown_variables:str", ")
+        end
+        return name
+    end
+end
+
+function default(targets)
+    custom_default_statement = true
+    nl()
+    emit("default "..stringify(targets).."\n")
+    nl()
+end
+
+local function generate_default()
+    if custom_default_statement then return end
+    if require"clean".default_target_needed()
+    or require"help".default_target_needed()
+    or require"install".default_target_needed()
+    then
+        section "Default targets"
+        default(default_build_statements)
+    end
+end
+
+function phony(outputs)
+    return function(inputs)
+        return build(outputs) {"phony", inputs,
+            ["$no_default"] = inputs["$no_default"],
+        }
+    end
+end
+
+local generator_flag = {}
+local generator_called = false
+
+function generator(flag)
+    if generator_called then
+        log.error("generator: multiple call")
+    end
+    generator_called = true
+
+    if flag == nil or flag == true then
+        flag = {}
+    end
+
+    if type(flag) ~= "boolean" and type(flag) ~= "table" then
+        log.error("generator: boolean or table expected")
+    end
+
+    generator_flag = flag
+end
+
+local function generator_rule(args)
+    if not generator_flag then return end
+
+    section(("Regenerate %s when %s changes"):format(args.output, args.input))
+
+    local bang_cmd= args.gen_cmd or
+        filterk(function(k)
+            return math.type(k) == "integer" and k <= 0
+        end, args.cli_args) : values() : unwords()
+
+    local bang = rule(unique_rule_name "bang") {
+        command = {
+            bang_cmd,
+            args.quiet and "-q" or {},
+            "$in -o $out",
+            #_G.arg > 0 and {"--", _G.arg} or {},
+        },
+        generator = true,
+    }
+
+    local deps = values(package.modpath)
+    if not deps:null() then
+        generator_flag.implicit_in = flatten{ generator_flag.implicit_in or {}, deps } : nub()
+    end
+
+    build(args.output) (F.merge{
+        { ["$no_default"] = true },
+        { bang, args.input },
+        generator_flag,
+    })
+end
+
+local function size(x)
+    local s = #x
+    if s > 1024*1024 then return s//(1024*1024), " MB" end
+    if s > 1024 then return s//1024, " kB" end
+    return s, " bytes"
+end
+
+return function(args)
+    log.info("load ", args.input)
+    if not fs.is_file(args.input) then
+        log.error(args.input, ": file not found")
+    end
+    _G.bang = F.clone(args)
+    assert(loadfile(args.input, "t"))()
+    atexit.run()
+    install:gen()
+    clean:gen()
+    help:gen() -- help shall be generated after clean and install
+    generator_rule(args)
+    generate_default()
+    local ninja = flatten(tokens) : str()
+    log.info(nbvars, " variables")
+    log.info(nbrules, " rules")
+    log.info(nbbuilds, " build statements")
+    log.info(size(ninja))
+    return ninja
+end
+]])
+libs["pipe"] = lib("src/pipe.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LOAD
+
+local F = require "F"
+
+local tmp = require "tmp"
+
+local function split_hybrid_table(t)
+    local function is_numeric_key(k)
+        return math.type(k) == "integer"
+    end
+    return F.table_partition_with_key(is_numeric_key, t)
+end
+
+local function pipe(rules)
+    assert(#rules > 0, "pipe requires at least one rule")
+    local builddir = rules.builddir or "$builddir/tmp"
+    return F.curry(function(output, inputs)
+        if type(inputs) == "string" then
+            inputs = {inputs}
+        end
+        local input_list, input_vars = split_hybrid_table(inputs)
+        local implicit_in = input_vars.implicit_in
+        local implicit_out = input_vars.implicit_out
+        input_vars.implicit_in = nil
+        input_vars.implicit_out = nil
+        local rule_names = F.map(function(r)
+            return type(r)=="table" and r:rule() or r
+        end, rules)
+        local tmpfiles = F.range(1, #rules-1):map(function(i)
+            return tmp(builddir, output, output:basename():splitext().."-"..tostring(i))..rule_names[i]:ext()
+        end)
+        for i = 1, #rules do
+            build(tmpfiles[i] or output) (F.merge{
+                { rule_names[i], {tmpfiles[i-1] or input_list} },
+                input_vars,
+                {
+                    implicit_in  = i==1      and implicit_in  or nil,
+                    implicit_out = i==#rules and implicit_out or nil,
+                },
+            })
+        end
+        return output
+    end)
+end
+
+return pipe
+]])
+libs["target"] = lib("src/target.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LOAD
+
+local F = require "F"
+local targets = require "targets"
+    : map(function(t) return {t.name, t} end)
+    : from_list()
+
+local function target(target_spec)
+    if type(target_spec) == "string" then target_spec = {target_spec} end
+    if type(target_spec) == "table" then
+        local names, other_args = F.partition(function(name) return targets[name] end, target_spec)
+        if #names == 1 then return targets[names:head()], other_args end
+        if #names > 1 then F.error_without_stack_trace("multiple target definition", 1) end
+        return nil, F(target_spec)
+    end
+    F.error_without_stack_trace("target() expects a string or a list of strings", 1)
+end
+
+return target
+]])
+libs["tmp"] = lib("src/tmp.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LIB
+
+local F = require "F"
+local fs = require "fs"
+
+local tmp = {}
+
+local unique_index = setmetatable({_=0}, {
+    __index = function(self, k)
+        local idx = ("%x"):format(self._)
+        self._ = self._ + 1
+        self[k] = idx
+        return idx
+    end,
+})
+
+function tmp.index(root, ...)
+    local ps = {...}
+    return root / unique_index[fs.join(F.init(ps))] / F.last(ps):splitext()
+end
+
+function tmp.hash(root, ...)
+    local ps = {...}
+    return root / fs.join(F.init(ps)):hash() / F.last(ps):splitext()
+end
+
+function tmp.short(root, ...)
+    local root_components = fs.splitpath(root)
+    local path = fs.join(F.init{...})
+        : splitpath()
+        : reverse()
+        : nub()
+        : reverse()
+        : filter(function(p) return F.not_elem(p, root_components) end)
+        path[#path] = path[#path]..".tmp"
+    local file = F.last{...} : splitext()
+    return fs.join(F.flatten { root, path, file })
+end
+
+return setmetatable(tmp, {__call = function(self, ...) return self.short(...) end})
+]])
+libs["where"] = lib("src/where.lua", [[-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+--@LIB
+
+return function()
+    -- get the current location in the first user script in the call stack
+
+    local i = 2
+    while true do
+        local info = debug.getinfo(i)
+        if not info then return "" end
+        local file = info.source : match "^@(.*)"
+        if file and not file:has_prefix "$" then
+            return ("[%s:%d] "):format(file, info.currentline)
+        end
+        i = i + 1
+    end
+
+end
+]])
+libs["version"] = lib(".build/version", [=[return [[1.1.1]]]=])
+_ENV["Nil"] = require "Nil"
+_ENV["acc"] = require "acc"
+_ENV["case"] = require "case"
+_ENV["clean"] = require "clean"
+_ENV["file"] = require "file"
+_ENV["help"] = require "help"
+_ENV["install"] = require "install"
+_ENV["ls"] = require "ls"
+_ENV["pipe"] = require "pipe"
+_ENV["target"] = require "target"
+return lib("src/bang.lua", [[--/usr/bin/env luax
+
+-- This file is part of bang.
+--
+-- bang is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- bang is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with bang.  If not, see <https://www.gnu.org/licenses/>.
+--
+-- For further information about bang you can visit
+-- https://cdelord.fr/bang
+
+local F = require "F"
+local fs = require "fs"
+
+local ninja = require "ninja"
+local log = require "log"
+local version = require "version"
+
+local function parse_args()
+    local parser = require "argparse"()
+        : name "bang"
+        : description(F.unlines {
+            "Ninja file generator",
+            "",
+            "Arguments after \"--\" are given to the input script",
+        } : rtrim())
+        : epilog "For more information, see https://github.com/CDSoft/bang"
+
+    parser : flag "-v"
+        : description(('Print Bang version ("%s")'):format(version))
+        : action(function() print(version); os.exit() end)
+
+    parser : flag "-q"
+        : description "Quiet mode (no output on stdout)"
+        : target "quiet"
+
+    parser : option "-g"
+        : description "Set a custom command for the generator rule"
+        : argname "cmd"
+        : target "gen_cmd"
+
+    parser : option "-o"
+        : description "Output file (default: build.ninja)"
+        : argname "output"
+        : target "output"
+
+    parser : argument "input"
+        : description "Lua script (default: build.lua)"
+        : args "0-1"
+
+    local bang_arg, script_arg = F.break_(F.partial(F.op.eq, "--"), arg)
+    local args = F.merge{
+        { cli_args = arg },
+        { input="build.lua", output="build.ninja" },
+        parser:parse(bang_arg),
+    }
+
+    _G.arg = script_arg : drop(1)
+    _G.arg[0] = args.input
+
+    return args
+end
+
+local args = parse_args()
+log.config(args)
+package.path = package.path..";"..args.input:dirname().."/?.lua"
+local ninja_file = ninja(args)
+log.info("write ", args.output)
+require "file" : flush()
+fs.write(args.output, ninja_file)
+]])()
+

@@ -98,7 +98,10 @@ $ZIG cc -pipe -s -Oz "${CFLAGS[@]}" "${LUA_SOURCES[@]}" -o $LUA
 info "Step 5: build.ninja"
 ######################################################################
 
-$LUA tools/bang.lua -q build.lua -o build.ninja -- "$@"
+$LUA tools/luax.lua tools/bang.luax \
+    -g "$LUA tools/luax.lua tools/bang.luax" \
+    -q \
+    build.lua -o build.ninja -- "$@"
 
 ######################################################################
 info "Step 6: LuaX"

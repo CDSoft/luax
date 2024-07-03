@@ -671,10 +671,11 @@ end
 
 rule "ypp-config" {
     description = "YPP $out",
-    command = { "$lua tools/ypp.lua", luax_config_params, "$in -o $out" },
+    command = { "$lua tools/luax.lua tools/ypp.luax", luax_config_params, "$in -o $out" },
     implicit_in = {
         "$lua",
-        "tools/ypp.lua",
+        "tools/luax.lua",
+        "tools/ypp.luax",
         gitdir()/"refs/tags",
     },
 }
@@ -1262,11 +1263,11 @@ local markdown_sources = ls "doc/src/*.md"
 
 rule "lsvg" {
     description = "LSVG $out",
-    command = "$luax tools/lsvg.lua $in -o $out --MF $depfile -- $args",
+    command = "$luax tools/lsvg.luax $in -o $out --MF $depfile -- $args",
     depfile = "$builddir/tmp/lsvg/$out.d",
     implicit_in = {
         "$luax",
-        "tools/lsvg.lua",
+        "tools/lsvg.luax",
     },
 }
 
@@ -1298,7 +1299,7 @@ local gfm = pipe {
     rule "ypp.md" {
         description = "YPP $in",
         command = {
-            "$luax tools/ypp.lua",
+            "$luax tools/ypp.luax",
             ypp_config_params,
             "--MD --MT $out --MF $depfile $in -o $out",
         },
@@ -1306,7 +1307,7 @@ local gfm = pipe {
         implicit_in = {
             "$luax",
             "$lib/luax.lar",
-            "tools/ypp.lua",
+            "tools/ypp.luax",
         },
     },
     rule "pandoc" {

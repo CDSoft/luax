@@ -3,7 +3,7 @@ _LUAX_VERSION = '6.3.2'
 _LUAX_DATE    = '2024-07-02'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
-local function lib(path, src) return assert(load(src, '@$ypp:'..path)) end
+local function lib(path, src) return assert(load(src, '@$luax:'..path)) end
 libs["F"] = lib("libluax/F/F.lua", [==[--[[
 This file is part of luax.
 
@@ -10750,1581 +10750,1676 @@ return { _NAME = n, _COPYRIGHT = c, _DESCRIPTION = d, _VERSION = v, serialize = 
   block = function(a, opts) return s(a, merge({indent = '  ', sortkeys = true, comment = true}, opts)) end }
 --@LIB
 ]=])
-libs["atexit"] = lib("src/atexit.lua", [=[--[[
-This file is part of ypp.
+libs["luax_config"] = lib(".build/tmp/luax_config.lua", [=[--[[
+This file is part of luax.
 
-ypp is free software: you can redistribute it and/or modify
+luax is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-ypp is distributed in the hope that it will be useful,
+luax is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
-For further information about ypp you can visit
-http://cdelord.fr/ypp
---]]
-
---@LOAD
-
---[[@@@
-* `atexit(func)`: execute `func` when the whole output is computed, before actually writing the output.
-@@@]]
-
-local _functions = {}
-
-return setmetatable({}, {
-    __call = function(_, func)
-        table.insert(_functions, func)
-    end,
-    __index = {
-        run = function(_)
-            while #_functions > 0 do
-                table.remove(_functions, #_functions)()
-            end
-        end,
-    },
-})
-]=])
-libs["comment"] = lib("src/comment.lua", [====[--[[
-This file is part of ypp.
-
-ypp is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ypp is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with ypp.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about ypp you can visit
-http://cdelord.fr/ypp
---]]
-
---@LOAD
-
---[[@@@
-* `comment(...)`: returns an empty string (useful for commenting some text)
-
-E.g.:
-
-?(false)
-```
-@comment [===[
-This paragraph is a comment
-and is not part of the output document.
-]===]
-```
-?(true)
-@@@]]
-
-local F = require "F"
-
-return F.const ""
-]====])
-libs["convert"] = lib("src/convert.lua", [====[--[[
-This file is part of ypp.
-
-ypp is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ypp is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with ypp.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about ypp you can visit
-http://cdelord.fr/ypp
---]]
-
---@LOAD
-
-local flex = require "flex"
-
---[[@@@
-* `convert(s, [opts])`:
-  convert the string `s` from the format `opts.from` to the format `opts.to` and shifts the header levels by `opts.shift`.
-
-This function requires a Pandoc Lua interpreter. The conversion is made by [Pandoc] itself.
-
-The `opts` parameter is optional.
-By default Pandoc converts documents from and to Markdown and the header level is not modified.
-
-?(false)
-The `convert` macro can also be called as a curried function (arguments can be swapped). E.g.:
-
-    @convert {from="csv"} (script.python [===[
-    # python script that produces a CSV document
-    ]===])
-
-Notice that `convert` can be implicitely called by `include` or `script` by giving the appropriate options. E.g.:
-
-    @script.python {from="csv"} [===[
-    # python script that produces a CSV document
-    ]===]
-
-?(true)
-@@@]]
-
-local convert = flex.str(function(content, opts)
-    assert(pandoc, "The convert macro requires a Pandoc Lua interpreter")
-    opts = opts or {}
-    local doc = pandoc.read(tostring(content), opts.from)
-    local div = pandoc.Div(doc.blocks)
-    if opts.shift then
-        div = pandoc.walk_block(div, {
-            Header = function(h)
-                h = h:clone()
-                h.level = h.level + opts.shift
-                return h
-            end,
-        })
-    end
-    return pandoc.write(pandoc.Pandoc(div.content), opts.to)
-end)
-
-local convert_if_required = function(content, opts)
-    opts = opts or {}
-    content = tostring(content)
-    if opts.from or opts.to or opts.shift then
-        content = tostring(convert(content)(opts))
-    end
-    return content
-end
-
-return setmetatable({}, {
-    __call = function(_, ...) return convert(...) end,
-    __index = {
-        if_required = convert_if_required
-    },
-})
-]====])
-libs["doc"] = lib("src/doc.lua", [=[--[[
-This file is part of ypp.
-
-ypp is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ypp is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with ypp.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about ypp you can visit
-http://cdelord.fr/ypp
---]]
-
---@LOAD
-
-local F = require "F"
-local flex = require "flex"
-local convert = require "convert"
-
---[[@@@
-* `doc(filename, [opts])`: extract documentation fragments from the file `filename` (all fragments are concatenated).
-
-    - `opts.pattern` is the Lua pattern used to identify the documentation fragments. The default pattern is `@("@".."@@(.-)@@".."@")`.
-    - `opts.from` is the format of the documentation fragments (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
-    - `opts.to` is the destination format of the documentation (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
-    - `opts.shift` is the offset applied to the header levels. The default offset is `0`.
-
-?(false)
-The `doc` macro can also be called as a curried function (arguments can be swapped). E.g.:
-
-    @doc "file.c" {pattern="///(.-)///"}
-
-?(true)
-@@@]]
-
-local default_pattern = ("@"):rep(3).."(.-)"..("@"):rep(3)
-
-return flex.str(function(filename, opts)
-    opts = opts or {}
-    local pattern = opts.pattern or default_pattern
-    local content = ypp.with_inputfile(filename, function(full_filepath)
-        local s = ypp.read_file(full_filepath)
-        local output = F{}
-        s:gsub(pattern, function(doc)
-            output[#output+1] = ypp(doc)
-        end)
-        return output:unlines()
-    end)
-    content = convert.if_required(content, opts)
-    return content
-end)
-]=])
-libs["file"] = lib("src/file.lua", [=[--[[
-This file is part of ypp.
-
-ypp is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ypp is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with ypp.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about ypp you can visit
-http://cdelord.fr/ypp
---]]
-
---@LOAD
-
---[[@@@
-* `f = file(name)`: return a file object that can be used to create files incrementally.
-  Files are only saved once ypp succeed
-* `f(s)`: add `s` to the file
-* `f:ypp(s)`: preprocess and add `s` to the file
-@@@]]
-
-local F = require "F"
-
-local file = {}
-local file_mt = {__index={}}
-local file_object_mt = {__index={}}
-
-local outputs = F{}
-file_mt.__index.outputs = outputs
-
-local files = F{}
-file_mt.__index.files = files
-
-function file_mt:__call(name)
-    outputs[#outputs+1] = name
-    local f = setmetatable(F{name=name}, file_object_mt)
-    files[#files+1] = f
-    return f
-end
-
-function file_object_mt:__call(...)
-    self[#self+1] = F.flatten{...}
-end
-
-function file_object_mt.__index:ypp(...)
-    self[#self+1] = F.flatten{...}:map(ypp)
-end
-
-function file_object_mt.__index:flush()
-    fs.mkdirs(self.name:dirname())
-    fs.write(self.name, F.flatten(self):str())
-end
-
-return setmetatable(file, file_mt)
-]=])
-libs["flex"] = lib("src/flex.lua", [=[--[[
-This file is part of ypp.
-
-ypp is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ypp is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with ypp.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about ypp you can visit
-http://cdelord.fr/ypp
+For further information about luax you can visit
+http://cdelord.fr/luax
 --]]
 
 --@LIB
 
 local F = require "F"
+local fs = require "fs"
+local sys = require "sys"
+local sh = require "sh"
 
--- A flex function is a curried function with a variable number of parameters.
--- It is implemented with a callable table.
--- The actual value is computed when evaluated as a string.
--- It takes several arguments:
---      - exactly one string (the argument)
---      - zero or many option tables (they are all merged until tostring is called)
+local version = "6.3.2"
 
--- e.g.:
---      function f(s, opt)
---          ...
---      end
---
---      g = flex(f)
---
---      g "foo" {x=1}       => calls f("foo", {x=1})
---      g {y=2} "foo" {x=1} => calls f("foo", {x=1, y=2})
---
---      h = g{z=3} -- kind of "partial application"
---
---      h "foo"             => calls f("foo", {z=3})
---      h "foo" {x=1}       => calls f("foo", {x=1, z=3})
+local zig_version = "0.13.0"
 
-local flex_str_mt = {}
+local home, zig_path = F.unpack(F.case(sys.os) {
+    windows = { "LOCALAPPDATA", "zig" / zig_version },
+    [F.Nil] = { "HOME", ".local/opt" / "zig" / zig_version },
+})
+zig_path = os.getenv(home) / zig_path
+local zig = zig_path/"zig"..sys.exe
 
-function flex_str_mt:__call(x)
-    local xmt = getmetatable(x)
-    if type(x) ~= "table" or (xmt and xmt.__tostring) then
-        -- called with a string or a table with a __tostring metamethod
-        -- ==> store the string
-        assert(self.s == F.Nil, "Multiple argument")
-        return setmetatable({s=tostring(x), opt=self.opt, f=self.f}, flex_str_mt)
-    else
-        -- called with an option table
-        -- ==> add the new options to the current ones
-        return setmetatable({s=self.s, opt=self.opt:patch(x), f=self.f}, flex_str_mt)
-    end
-end
-
-function flex_str_mt:__tostring()
-    -- string value requested
-    -- convert to string and call f on this string
-    assert(self.s ~= F.Nil, "Missing argument")
-    return tostring(self.f(tostring(self.s), self.opt))
-end
-
-function flex_str_mt:__index(k)
-    -- string method requested but the object is not a string yet
-    -- ==> make a string proxy
-    if string[k] then
-        return function(s, ...)
-            return string[k](tostring(s), ...)
-        end
-    end
-end
-
-local function flex_str(f)
-    return setmetatable({s=F.Nil, opt=F{}, f=f}, flex_str_mt)
-end
-
--- flex_array is similar to flex_str but cumulates any number of parameters in an array
-
-local flex_array_mt = {}
-
-function flex_array_mt:__call(x)
-    local xmt = getmetatable(x)
-    if type(x) ~= "table" or (xmt and xmt.__tostring) then
-        -- called with a string or a table with a __tostring metamethod
-        -- ==> store the string
-        return setmetatable({xs=self.xs..{x}, opt=self.opt, f=self.f}, flex_array_mt)
-    else
-        -- called with an option table
-        -- ==> add the new options to the current ones
-        return setmetatable({xs=self.xs, opt=self.opt:patch(x), f=self.f}, flex_array_mt)
-    end
-end
-
-function flex_array_mt:__tostring()
-    -- string value requested
-    -- convert the result of f to a string
-    return tostring(f(self.xs, self.opt))
-end
-
-local function flex_array(f)
-    return setmetatable({xs=F{}, opt=F{}, f=f}, flex_array_mt)
+local function zig_install()
+    local archive = "zig-"..sys.os.."-"..sys.arch.."-"..zig_version..".tar.xz"
+    local url = "https://ziglang.org/download"/zig_version/archive
+    fs.mkdirs(zig_path)
+    fs.with_tmpdir(function(tmp)
+        assert(sh.run { "curl", "-fsSL", url, "-o", tmp/archive })
+        assert(sh.run { "tar", "xJf", tmp/archive, "-C", zig_path, "--strip-components", 1 })
+    end)
 end
 
 return {
-    str = flex_str,
-    array = flex_array,
-}
-]=])
-libs["image"] = lib("src/image.lua", [====[--[[
-This file is part of ypp.
-
-ypp is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ypp is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with ypp.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about ypp you can visit
-http://cdelord.fr/ypp
---]]
-
---@LOAD
-
---[[@@@
-* `image(render, ext)(source)`: use the command `render` to produce an image from the source `source` with the format `ext` (`"svg"`, `"png"` or `"pdf"`).
-  `image` returns the name of the image (e.g. to point to the image once deployed) and the actual file path (e.g. to embed the image in the final document).
-
-The `render` parameter is a string that defines the command to execute to generate the image.
-It contains some parameters:
-
-- `%i` is replaced by the name of the input document (temporary file containing `source`).
-- `%o` is replaced by the name of the output image file (generated from a hash of `source`).
-
-Images are generated in a directory given by:
-
-- the environment variable `YPP_IMG` if it is defined
-- the directory name of the output file if the `-o` option is given
-- the `img` directory in the current directory
-
-If `source` starts with a `@` (e.g. `@q'"@filename"'`) then the actual image source is read from the file `filename`.
-
-The image link in the output document may have to be different than the
-actual path in the file system. This happens when the documents are not
-generated in the same path than the source document. Brackets can be used to
-specify the part of the path that belongs to the generated image but not to the
-link in the output document in `YPP_IMG`.
-E.g. if `YPP_IMG=[prefix]path` then images will be generated in `prefix/path`
-and the link used in the output document will be `path`.
-
-The file format (extension) must be in `render`, after the `%o` tag (e.g.: `%o.png`).
-
-If the program requires a specific input file extension, it can be specified in `render`,
-after the `%i` tag (e.g.: `%i.xyz`).
-
-Some render commands are predefined.
-For each render `X` (which produces images in the default format)
-there are 3 other render commands `X.svg`, `X.png` and `X.pdf` which explicitely specify the image format.
-They can be used similaryly to `image`: `X(source)`.
-
-An optional table can be given before `source` to set some options:
-
-* `X {name="output_name"} (source)` renders `source` and save the image to a file named `output_name`.
-  This can help distributing documents with user friendly image names.
-
-* `X {pp=func} (source)` renders `func(source)` instead of `source`.
-  E.g.: if `func` is `ypp` then `source` is preprocessed by `ypp` before being rendered.
-
-@@[===[
-    local engine = {
-        circo = "Graphviz",
-        dot = "Graphviz",
-        fdp = "Graphviz",
-        neato = "Graphviz",
-        osage = "Graphviz",
-        patchwork = "Graphviz",
-        sfdp = "Graphviz",
-        twopi = "Graphviz",
-        actdiag = "Blockdiag",
-        blockdiag = "Blockdiag",
-        nwdiag = "Blockdiag",
-        packetdiag = "Blockdiag",
-        rackdiag = "Blockdiag",
-        seqdiag = "Blockdiag",
-        mmdc = "Mermaid",
-        asy = "Asymptote",
-        plantuml = "PlantUML",
-        ditaa = "ditaa",
-        gnuplot = "gnuplot",
-        lsvg = "lsvg",
-        octave = "octave",
-    }
-    local function cmp(x, y)
-        assert(engine[x], x.." engine unknown")
-        assert(engine[y], y.." engine unknown")
-        if engine[x] == engine[y] then return x < y end
-        return engine[x] < engine[y]
-    end
-    return F{
-        "Image engine | ypp function | Example",
-        "-------------|--------------|--------",
-    }
-    ..
-    F.keys(image):sort(cmp):map(function(x)
-        return ("[%s] | `%s` | `image.%s(source)`"):format(engine[x], x, x)
-    end)
-]===]
-
-Example:
-
-?(false)
-``` markdown
-![ypp image generation example](@image.dot [===[
-digraph {
-    rankdir=LR;
-    input -> ypp -> output
-    ypp -> image
-}
-]===])
-```
-?(true)
-
-is rendered as
-
-![ypp image generation example](@image.dot {name="image"} [===[
-digraph {
-    rankdir=LR;
-    input -> ypp -> output
-    ypp -> image
-}
-]===])
-
-@@@]]
-
-local F = require "F"
-local fs = require "fs"
-local sh = require "sh"
-
-local output_path   -- actual directory where images are saved
-local link_path     -- directory added to image filenames
-
-local function parse_output_path(path)
-    local prefix, link = path : match "^%[(.-)%](.*)"
-    if prefix then
-        output_path = fs.join(prefix, link)
-        link_path = link
-    else
-        output_path = path
-        link_path = path
-    end
-end
-
-local function get_input_ext(s)
-    return s:match("%%i(%.%w+)") or ""
-end
-
-local function get_ext(s, t)
-    return s:match("%%o(%.%w+)") or t:match("%%o(%.%w+)") or ""
-end
-
-local function make_diagram_cmd(src, out, render)
-    return render:gsub("%%i", src):gsub("%%o", out)
-end
-
-local function render_diagram(cmd)
-    -- stdout shall be discarded otherwise ypp can not be used in a pipe
-    assert(sh.read(cmd), "Diagram error")
-end
-
-local output_file -- filename given by the -o option
-
-local function default_image_output()
-    if not output_path then
-        local env = os.getenv "YPP_IMG"
-        parse_output_path(
-            (env and env ~= "" and env)
-            or (output_file and fs.join(fs.dirname(output_file), "img"))
-            or "img")
-    end
-end
-
-local function diagram(exe, render, default_ext)
-    local template
-    if type(render) == "table" then
-        render, template = F.unpack(render)
-    else
-        template = "%s"
-    end
-    render = render
-        : gsub("%%exe", exe or "%0")
-        : gsub("%%ext", default_ext or "%0")
-        : gsub("%%o", default_ext and ("%%o."..default_ext) or "%0")
-    template = template
-        : gsub("%%ext", default_ext or "%0")
-        : gsub("%%o", default_ext and ("%%o."..default_ext) or "%0")
-    render = F.I{ext=default_ext}(render)
-    local render_image = function(contents, opts)
-        local filename = contents:match("^@([^\n\r]+)$")
-        if filename then
-            contents = tostring(include.raw(filename))
-        end
-        contents = (opts.pp or F.id)(contents)
-        local input_ext = get_input_ext(render)
-        local ext = get_ext(render, template)
-        local hash = crypt.hash(render..contents)
-        default_image_output()
-        fs.mkdirs(output_path)
-        local out = fs.join(output_path, opts.name or hash)
-        local link = fs.join(link_path, fs.basename(out))
-        local meta = out..ext..".meta"
-        local meta_content = F.unlines {
-            "hash: "..hash,
-            "render: "..render,
-            "out: "..out,
-            "link: "..link,
-            "",
-            (template : gsub("%%s", contents)),
-        }
-        local old_meta = fs.read(meta) or ""
-        if not fs.is_file(out..ext) or meta_content ~= old_meta then
-            fs.with_tmpdir(function(tmpdir)
-                fs.mkdirs(fs.dirname(out))
-                local name = fs.join(tmpdir, "diagram")
-                local name_ext = name..input_ext
-                local templated_contents = template
-                    : gsub("%%o", out)
-                    : gsub("%%s", contents)
-                assert(fs.write(name_ext, templated_contents), "Can not create "..name_ext)
-                assert(fs.write(meta, meta_content), "Can not create "..meta)
-                local render_cmd = make_diagram_cmd(name, out, render)
-                render_diagram(render_cmd)
-            end)
-        end
-        return link..ext, out..ext
-    end
-    return function(param)
-        if type(param) == "table" then
-            local opts = param
-            return function(contents)
-                return render_image(contents, opts)
-            end
-        else
-            local contents = param
-            return render_image(contents, {})
-        end
-    end
-end
-
-local default_ext = "svg"
-
-local PLANTUML = _G["PLANTUML"] or os.getenv "PLANTUML" or fs.join(fs.dirname(arg[0]), "plantuml.jar")
-local DITAA = _G["DITAA"] or os.getenv "DITAA" or fs.join(fs.dirname(arg[0]), "ditaa.jar")
-
-local graphviz = "%exe -T%ext -o %o %i"
-local plantuml = "java -jar "..PLANTUML.." -pipe -charset UTF-8 -t%ext < %i > %o"
-local asymptote = "%exe -f %ext -o %o %i"
-local mermaid = "%exe --pdfFit -i %i -o %o"
-local blockdiag = "%exe -a -T%ext -o %o %i"
-local ditaa = "java -jar "..DITAA.." $(ext=='svg' and '--svg' or '') -o -e UTF-8 %i %o"
-local gnuplot = "%exe -e 'set terminal %ext' -e 'set output \"%o\"' -c %i"
-local lsvg = "%exe %i.lua -o %o"
-local octave = { "octave --no-gui %i", 'figure("visible", "off")\n\n%s\nprint %o;' }
-
-local function define(t)
-    local self = {}
-    local mt = {}
-    for k, v in pairs(t) do
-        if k:match "^__" then
-            mt[k] = v
-        else
-            self[k] = v
-        end
-    end
-    return setmetatable(self, mt)
-end
-
-local function instantiate(exe, render)
-    return define {
-        __call = function(_, ...) return diagram(exe, render, default_ext)(...) end,
-        svg = diagram(exe, render, "svg"),
-        png = diagram(exe, render, "png"),
-        pdf = diagram(exe, render, "pdf"),
-    }
-end
-
-return define {
-    dot         = instantiate("dot", graphviz),
-    neato       = instantiate("neato", graphviz),
-    twopi       = instantiate("twopi", graphviz),
-    circo       = instantiate("circo", graphviz),
-    fdp         = instantiate("fdp", graphviz),
-    sfdp        = instantiate("sfdp", graphviz),
-    patchwork   = instantiate("patchwork", graphviz),
-    osage       = instantiate("osage", graphviz),
-    plantuml    = instantiate("plantuml", plantuml),
-    asy         = instantiate("asy", asymptote),
-    mmdc        = instantiate("mmdc", mermaid),
-    actdiag     = instantiate("actdiag", blockdiag),
-    blockdiag   = instantiate("blockdiag", blockdiag),
-    nwdiag      = instantiate("nwdiag", blockdiag),
-    packetdiag  = instantiate("packetdiag", blockdiag),
-    rackdiag    = instantiate("rackdiag", blockdiag),
-    seqdiag     = instantiate("seqdiag", blockdiag),
-    ditaa       = instantiate("ditaa", ditaa),
-    gnuplot     = instantiate("gnuplot", gnuplot),
-    lsvg        = instantiate("lsvg", lsvg),
-    octave      = instantiate("octave", octave),
-    __call = function(_, render, ext) return diagram(nil, render, ext) end,
-    __index = {
-        format = function(fmt) default_ext = fmt end,
-        output = function(path) output_file = path end,
+    version = version,
+    date = "2024-07-02",
+    copyright = "LuaX "..version.."  Copyright (C) 2021-2024 cdelord.fr/luax",
+    authors = "Christophe Delord",
+    zig = {
+        version = zig_version,
+        path = zig_path,
+        zig = zig,
+        install = zig_install,
+    },
+    lua_init = F{
+        "LUA_INIT_" .. _VERSION:words()[2]:gsub("%.", "_"),
+        "LUA_INIT",
     },
 }
-]====])
-libs["include"] = lib("src/include.lua", [=[--[[
-This file is part of ypp.
-
-ypp is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ypp is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with ypp.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about ypp you can visit
-http://cdelord.fr/ypp
---]]
-
---@LOAD
-
-local F = require "F"
-
-local flex = require "flex"
-local convert = require "convert"
-
---[[@@@
-* `include(filename, [opts])`: include the file `filename`.
-
-    - `opts.pattern` is the Lua pattern used to identify the part of the file to include. If the pattern is not given, the whole file is included.
-    - `opts.from` is the format of the input file (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
-    - `opts.to` is the destination format (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
-    - `opts.shift` is the offset applied to the header levels. The default offset is `0`.
-
-* `include.raw(filename, [opts])`: like `include` but the content of the file is not preprocessed with `ypp`.
-
-?(false)
-The `include` macro can also be called as a curried function (arguments can be swapped). E.g.:
-
-    @include "file.csv" {from="csv"}
-    @include {from="csv"} "file.csv"
-
-?(true)
-@@@]]
-
-local function include(filename, opts, prepro)
-    opts = opts or {}
-    local content = ypp.with_inputfile(filename, function(full_filepath)
-        local s = ypp.read_file(full_filepath)
-        if opts.pattern then
-            s = s:match(opts.pattern)
-        end
-        return prepro(s)
-    end)
-    content = convert.if_required(content, opts)
-    return content
-end
-
-local flex_include     = flex.str(function(filename, opts) return include(filename, opts, ypp) end)
-local flex_include_raw = flex.str(function(filename, opts) return include(filename, opts, F.id) end)
-
-return setmetatable({
-    raw = flex_include_raw,
-}, {
-    __call = function(_, ...) return flex_include(...) end,
-})
 ]=])
-libs["parser"] = lib("src/parser.lua", [===[--[[
-This file is part of ypp.
+libs["luax_assets"] = lib("luax/luax_assets.lua", [=[--/usr/bin/env luax
+--[[
+This file is part of luax.
 
-ypp is free software: you can redistribute it and/or modify
+luax is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-ypp is distributed in the hope that it will be useful,
+luax is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
-For further information about ypp you can visit
-http://cdelord.fr/ypp
+For further information about luax you can visit
+http://cdelord.fr/luax
 --]]
 
 --@LIB
 
-local function format_value(x)
-    local mt = getmetatable(x)
-    if mt and mt.__tostring then return tostring(x) end
-    if type(x) == "table" then return F.map(tostring, x):unlines() end
-    return tostring(x)
+local fs = require "fs"
+local lar = require "lar"
+
+local F = require "F"
+
+local function findpath(name)
+    if name:is_file() then return name:realpath() end
+    local full_path = name:findpath()
+    return full_path and full_path:realpath() or name
 end
 
-local function traceback(tag, expr)
-    if tag=="@" and expr:match("^[%w_.]*$") then return function() end end
-    return function(message)
-        local trace = F.flatten {
-            arg[0]:basename()..": "..message,
-            F(debug.traceback())
-                : lines()
-                : take_while(function(line)
-                    return not line:find("[C]: in function 'xpcall'", 1, true)
-                    and not line:find("src/parser%.lua:%d+: in local 'msgh'")
-                end)
-                : filter(function(line)
-                    return not line:find("src/parser%.lua:%d+:")
-                end),
-        }
-        io.stderr:write(trace:unlines())
-        io.stderr:flush()
-        os.exit(1)
+local function find_archive()
+
+    local libdir = os.getenv "LUAX_LIB"
+    if libdir then
+        local archive = libdir/"luax.lar"
+        if archive:is_file() then return archive end
     end
+
+    local N = F.keys(arg) : minimum()
+
+    for i = N, 0 do
+
+        local exe = arg[i]
+        local path = findpath(exe)
+        if path then
+            local archive = path:dirname():dirname()/"lib"/"luax.lar"
+            if archive:is_file() then return archive end
+        end
+
+    end
+
 end
 
-local function eval(s, tag, expr, state)
-    if state.on then
-        local msgh = traceback(tag, expr)
-        local ok_compile, chunk, compile_error = xpcall(load, msgh, (tag=="@" and "return " or "")..expr, expr, "t")
-        if not ok_compile then return s end -- load execution error
-        if not chunk then -- compilation error
-            msgh(compile_error)
-            return s
-        end
-        local ok_eval, val = xpcall(chunk, msgh)
-        if not ok_eval then return s end
-        if val == nil and tag=="@" and expr:match("^[%w_]+$") then return s end
-        if tag == "@@" then
-            if val ~= nil then
-                return format_value(val)
-            else
-                return ""
-            end
-        end
-        return format_value(val)
-    else
-        return s
-    end
+local archive = find_archive()
+if not archive then return {} end
+local content = assert(fs.read_bin(archive))
+local assets = assert(lar.unlar(content))
+assets.path = archive
+return assets
+]=])
+libs["luax_bundle"] = lib("luax/luax_bundle.lua", [====[--/usr/bin/env luax
+--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+-- bundle a set of scripts into a single Lua script that can be added to the runtime
+
+local M = {}
+
+local F = require "F"
+local fs = require "fs"
+local crypt = require "crypt"
+local lar = require "lar"
+
+local format = string.format
+local byte = string.byte
+local char = string.char
+local sub = string.sub
+
+local unpack = table.unpack
+
+local function last_line(s)
+    return s
+    : lines()
+    : drop_while_end(F.compose{string.null, string.trim})
+    : last() or ""
 end
 
--- a parser is a function that takes a string, a position and returns the start and stop of the next expression and the expression
-
-local function parse_parentheses(s, i0)
-    -- (...)
-    local i1, expr, i2 = s:match("^%s*()(%b())()", i0)
-    if expr then
-        return i1, i2, expr:sub(2, -2)
-    end
+local function to_bool(x)
+    if x then return true end
 end
 
-local function parse_brackets(s, i0)
-    -- {...}
-    local i1, expr, i2 = s:match("^%s*()(%b{})()", i0)
-    if expr then
-        return i1, i2, expr:sub(2, -2)
-    end
+local function to_string(x)
+    if x then return x end
 end
 
-local function parse_long_string(s, i0)
-    -- [==[ ... ]==]
-    local i1, sep, i2 = s:match("^%s*()%[(=-)%[()", i0)
-    if sep then
-        local i3, i4 = s:match("()%]"..sep.."%]()", i2)
-        if i3 then
-            return i1, i4, s:sub(i2, i3-1)
-        end
-    end
+local function mlstr(s)
+    local n = (s:matches"](=*)]":map(F.op.len):maximum() or -1) + 1
+    local eqs = ("="):rep(n)
+    return F.str{"[", eqs, "[", s, "]", eqs, "]"}
 end
 
-local function parse_quoted_string(s, i0, c)
-    -- "..."
-    local i1 = s:match('^%s*()'..c, i0)
-    if i1 then
-        local i = i1+1
-        while i <= #s do
-            if s:sub(i, i) == c then
-                return i1, i+1, s:sub(i1+1, i-1)
-            end
-            if s:sub(i, i) == '\\' then
-                i = i+1
-            end
-            i = i+1
-        end
-    end
-end
-
-local parse_sexpr
-
-local function parse_expr(s, i0)
-    -- E -> ident SE
-    local i1, ident, i2 = s:match("^%s*()([%w_]+)()", i0)
-    if ident then
-        local i3 = parse_sexpr(s, i2)
-        if i3 then return i1, i3, s:sub(i1, i3-1) end
-    end
-end
-
-parse_sexpr = function(s, i0)
-    -- SE -> [.:] E
-    do
-        local i1 = s:match("^%s*[.:]()", i0)
-        if i1 then
-            local _, i2, _ = parse_expr(s, i1)
-            if i2 then return i2 end
-        end
-    end
-    -- SE -> (...) SE
-    do
-        local _, i1, _ = parse_parentheses(s, i0)
-        if i1 then
-            local i2 = parse_sexpr(s, i1)
-            if i2 then return i2 end
-        end
-    end
-    -- SE -> {...} SE
-    do
-        local _, i1, _ = parse_brackets(s, i0)
-        if i1 then
-            local i2 = parse_sexpr(s, i1)
-            if i2 then return i2 end
-        end
-    end
-    -- SE -> "..." SE
-    do
-        local _, i1, _ = parse_quoted_string(s, i0, '"')
-        if i1 then
-            local i2 = parse_sexpr(s, i1)
-            if i2 then return i2 end
-        end
-    end
-    -- SE -> '...' SE
-    do
-        local _, i1, _ = parse_quoted_string(s, i0, "'")
-        if i1 then
-            local i2 = parse_sexpr(s, i1)
-            if i2 then return i2 end
-        end
-    end
-    -- SE -> [[...]] SE
-    do
-        local _, i1, _ = parse_long_string(s, i0)
-        if i1 then
-            local i2 = parse_sexpr(s, i1)
-            if i2 then return i2 end
-        end
-    end
-    -- SE -> nil
-    do
-        return i0
-    end
-end
-
-local function parse_lhs(s, i0)
-    -- LHS -> identifier ('.' identifier)*
-    local i1, i2 = s:match("^%s*()[%w_]+()", i0)
-    if i1 then
-        local i = i2
-        while true do
-            local i3, i4 = s:match("^%s*()%.%s*[%w_]+()", i)
-            if i3 then
-                i = i4
-            else
-                return i1, i
-            end
-        end
-    end
-end
-
-local atoms = {
-    "^%s*()%-?%d+%.%d+e%-?%d+()",
-    "^%s*()%-?%d+%.e%-?%d+()",
-    "^%s*()%-?%.%d+e%-?%d+()",
-    "^%s*()%-?%d+e%-?%d+()",
-    "^%s*()%-?%d+%.%d+()",
-    "^%s*()%-?%d+%.()",
-    "^%s*()%-?%.%d+()",
-    "^%s*()%-?%d+()",
-    "^%s*()true()",
-    "^%s*()false()",
+local esc = {
+    ["'"]  = "\\'",     -- ' must be escaped as it is embeded in single quoted strings
+    ["\\"] = "\\\\",    -- \ must be escaped to avoid confusion with escaped chars
 }
+F.flatten{
+    F.range(0, 31),     -- non printable control chars
+    F.range(48, 57),    -- 0..9 must be escaped to avoid confusion decimal escape codes
+    F.range(128, 255)   -- non 7-bit ASCII codes are also not printable
+}
+: foreach(function(b) esc[char(b)] = format("\\%d", b) end)
 
-local function parse_rhs(s, i0)
-    -- RHS -> number | bool
-    for _, atom in ipairs(atoms) do
-        local i1, i2 = s:match(atom, i0)
-        if i1 then return i1, i2 end
-    end
-    -- RHS = (...)
-    do
-        local i1, i2, _ = parse_parentheses(s, i0)
-        if i1 then
-            return i1, i2
-        end
-    end
-    -- RHS = {...}
-    do
-        local i1, i2, _ = parse_brackets(s, i0)
-        if i1 then
-            return i1, i2
-        end
-    end
-    -- RHS = "..."
-    do
-        local i1, i2, _ = parse_quoted_string(s, i0, '"')
-        if i1 then
-            return i1, i2
-        end
-    end
-    -- RHS = '...'
-    do
-        local i1, i2, _ = parse_quoted_string(s, i0, "'")
-        if i1 then
-            return i1, i2
-        end
-    end
-    -- RHS = [=[ ... ]=]
-    do
-        local i1, i2, _ = parse_long_string(s, i0)
-        if i1 then
-            return i1, i2
-        end
-    end
-    -- RHS -> expr
-    do
-        local i1, i2, _ = parse_expr(s, i0)
-        if i1 then
-            return i1, i2
-        end
+local function escape(s)
+    return format("'%s'", s:gsub(".", esc))
+end
+
+local function qstr(s)
+    if s:match "^[%g%s]*$" then
+        -- printable string => use multiline Lua strings
+        return mlstr(s)
+    else
+        -- non printable string => escape non printable chars
+        return escape(s)
     end
 end
 
-local function parse(s, i0, state)
+function M.comment_shebang(script)
+    return script
+        : gsub("^#!.-\n(\x1b)", "%1")   -- remove the whole shebang of compiled scripts
+        : gsub("^#!", "--")             -- comment the shebang before loading the script
+end
 
-    -- find the start of the next expression
-    local i1, tag, i2 = s:match("()([@?/]+)()", i0)
-    if not i1 then return #s+1, #s+1, "" end
-
-    -- S -> "@/"
-    if tag == "@/" then
-        return i1, i2, state.on and "" or tag
+local function find_main(scripts)
+    local explicit_main = F{}
+    local implicit_main = F{}
+    for i = 1, #scripts do
+        local script = scripts[i]
+        if script.is_main then
+            explicit_main[#explicit_main+1] = script
+        elseif not script.is_lib and not script.is_load and not script.maybe_lib then
+            implicit_main[#implicit_main+1] = script
+        end
     end
+    local main_script = nil
+    if #explicit_main > 1 then
+        error("Too many main scripts: "..explicit_main:map(F.partial(F.nth, "path")):str", ")
+    elseif #explicit_main == 1 then
+        main_script = explicit_main[1]
+    elseif #implicit_main > 1 then
+        error("Too many main scripts: "..implicit_main:map(F.partial(F.nth, "path")):str", ")
+    elseif #implicit_main == 1 then
+        main_script = implicit_main[1]
+    end
+    return main_script, scripts:filter(function(script) return script ~= main_script end)
+end
 
-    -- S -> "?%b()"
-    if tag == "?" then
-        local _, i3, cond = parse_parentheses(s, i2)
-        if cond then
-            state.on = assert(load("return "..cond, cond, "t"))()
-            return i1, i3, ""
+local function chunks_of(n, xs)
+    local chunks = F{}
+    for i = 1, #xs, n do
+        chunks[#chunks+1] = F{unpack(xs, i, i+n-1)}
+    end
+    return chunks
+end
+
+local function make_key(input, opt)
+    local function chunks_of_chars(n, s)
+        local chunks = F{}
+        for i = 1, #s, n do
+            chunks[#chunks+1] = sub(s, i, i+n-1)
+        end
+        return chunks
+    end
+    local kmin, kmax = 8, 256
+    local mmin, mmax = 256, 64*1024
+    local key_size = F.floor(kmin + (#input-mmin)*(kmax-kmin)/(mmax-mmin))
+    key_size = F.max(kmin, F.min(kmax, key_size))
+    return chunks_of_chars(key_size, input:rc4(opt.key)) : fold1(crypt.rc4)
+end
+
+local function compact(s)
+    return s
+        : lines()
+        : map(string.trim)
+        : filter(function(l) return #l>0 end)
+        : str";"
+end
+
+local function bytecode(code, opt, name)
+    if opt.bytecode then
+        code = assert(string.dump(assert(load(code, "@$"..name)), opt.strip))
+    end
+    return code
+end
+
+local function obfuscate_lua(code, opt, product_name)
+    if opt.key then
+        code = bytecode(code, opt, product_name)
+        -- Encrypt code by xoring bytes with pseudo random values
+        local key = make_key(code, opt)
+        local a, c = 6364136223846793005, 1
+        local seed = tonumber(key:hash(), 16)
+        local r = seed
+        local xs = {}
+        for i = 1, #code do
+            local b = byte(code, i)
+            r = r*a + c
+            xs[i] = char(b ~ ((r>>33) & 0xff))
+        end
+        code = compact(F.I { a=a, c=c, b=escape(table.concat(xs)), seed=seed } [===[
+            local b,a,c,r,x,bt,ch,l,tc=$(b),$(a),$(c),$(("0x%x"):format(seed)),{},string.byte,string.char,load,table.concat
+            for i=1,#b do r=r*a+c x[i]=ch(bt(b,i)~((r>>33)&0xff))end
+            return l(tc(x))()
+        ]===])
+    end
+    code = bytecode(code, opt, product_name)
+    return code
+end
+
+local function obfuscate_luax(code, opt, product_name)
+    if opt.key then
+        code = bytecode(code, opt, product_name)
+        -- Encrypt code with lz4 and rc4
+        local key = make_key(code, opt)
+        local unlz4 = ""
+        local compressed_code = code:lz4()
+        if #compressed_code + 8 < #code then
+            code = compressed_code
+            unlz4 = ":unlz4()"
+        end
+        code = compact(F.I { b=escape(code:rc4(key)), k=escape(key), unlz4=unlz4 } [===[
+            return load(($(b)):unrc4$(k)$(unlz4))()
+        ]===])
+    end
+    code = bytecode(code, opt, product_name)
+    return code
+end
+
+local known_modules = {}
+
+local runtime_modules = setmetatable({}, {
+    __index = function(self, k)
+        local assets = require "luax_assets"
+        local luax = assets.luax or {}
+        for i = 1, #luax do
+            local script = luax[i]
+            self[script.lib_name] = true
+        end
+        return rawget(self, k)
+    end,
+})
+
+local function ensure_unique_module(opt, script)
+    local name = script.lib_name
+    if opt.entry ~= "lib" and not script.dont_check_runtime_unicity then
+        if runtime_modules[name] then
+            error(name..": duplicate module (already defined in the LuaX runtime)")
+        end
+    end
+    if known_modules[name] then
+        error(name..": duplicate module")
+    end
+    known_modules[name] = true
+end
+
+function M.bundle(opt)
+
+    opt.bytecode = opt.bytecode or opt.strip -- strip implies bytecode
+
+    local scripts = F{}
+
+    if opt.add_luax_runtime then
+        local assets = require "luax_assets"
+        local runtime = assets.luax
+        for i = 1, #runtime do
+            -- runtime script => ensure_unique_module shall not check it is not part of the runtime!
+            runtime[i].dont_check_runtime_unicity = true
+            scripts[#scripts+1] = runtime[i]
         end
     end
 
-    -- S -> "@@ LHS = RHS
-    if tag == "@@" then
-        local i3, i4 = parse_lhs(s, i2)
-        if i3 then
-            local i5 = s:match("^%s*=()", i4)
-            if i5 then
-                local i6, i7 = parse_rhs(s, i5)
-                if i6 then
-                    return i1, i7, eval(s:sub(i1, i7-1), tag, s:sub(i3, i7-1), state)
+    F.foreach(opt.scripts, function(script)
+        local content = assert(fs.read_bin(script))
+        local ext = fs.ext(script)
+        if ext == ".lua" then
+            scripts[#scripts+1] = {
+                path      = script,
+                content   = M.comment_shebang(content),
+                is_main   = to_bool(content:match("@".."MAIN")),
+                is_lib    = to_bool(content:match("@".."LIB")),
+                lib_name  = to_string(content:match("@".."LIB=([%w%._%-]+)")) or script:basename():splitext(),
+                is_load   = to_bool(content:match("@".."LOAD")),
+                load_name = to_string(content:match("@".."LOAD=([%w%._%-]+)")),
+                maybe_lib = to_bool(last_line(content):match "^%s*return"),
+            }
+        else
+            -- file embeded as a Lua module returning the content of the file
+            if content:match"^[%g%s]*$" and #content:lines() <= 1 then content = content:trim() end
+            local safe_content = qstr(content)
+            scripts[#scripts+1] = {
+                path      = script,
+                content   = "return "..safe_content,
+                is_main   = nil,
+                is_lib    = true,
+                lib_name  = script:basename(),
+                is_load   = nil,
+                load_name = nil,
+                maybe_lib = nil,
+            }
+        end
+    end)
+
+    if not opt.output then
+        return F{}
+    end
+
+    if opt.target == "lib" then
+        return F{
+            [opt.output] = lar.lar(scripts),
+        }
+    end
+
+    if opt.target == "lua" or opt.target == "pandoc" or opt.target == "luax" then
+        local product_name = opt.product_name or opt.output:basename():splitext()
+        local preloads = {}
+        local loads = {}
+        local run_main = {}
+        local config = require "luax_config"
+        local interpreter = {
+            lua    = "lua",
+            pandoc = "pandoc lua",
+            luax   = "luax",
+        }
+        local shebang = "#!/usr/bin/env -S "..interpreter[opt.target].." --"
+        local out = F{
+            interpreter[opt.target] ~= "luax" and {
+                "_LUAX_VERSION = '"..config.version.."'",
+                "_LUAX_DATE    = '"..config.date.."'",
+            } or {},
+            "local libs = {}",
+            "table.insert(package.searchers, 2, function(name) return libs[name] end)",
+            opt.strip and {
+                "local function lib(src) return assert(load(src)) end",
+            } or {
+                ("local function lib(path, src) return assert(load(src, '@$%s:'..path)) end"):format(product_name)
+            },
+            preloads,
+            loads,
+            run_main,
+        }
+        local function compile(script)
+            -- check script compilation (with the actual file path in error messages)
+            assert(load(script.content, ("@%s"):format(script.path)))
+            if opt.bytecode then
+                -- compile the script with file path containing the product name
+                return qstr(bytecode(script.content, opt, ("%s:%s"):format(product_name, script.path)))
+            else
+                return mlstr(script.content)
+            end
+        end
+        local main_script, libs = find_main(scripts)
+        for i = 1, #libs do
+            local script = libs[i]
+            local name = script.lib_name
+            ensure_unique_module(opt, script)
+            if opt.strip then
+                preloads[#preloads+1] = ("libs[%q] = lib(%s)"):format(name, compile(script))
+            else
+                preloads[#preloads+1] = ("libs[%q] = lib(%q, %s)"):format(name, script.path, compile(script))
+            end
+        end
+        for i = 1, #libs do
+            local script = libs[i]
+            if script.is_load then
+                local lib_name  = script.lib_name
+                local load_name = script.load_name or lib_name
+                if load_name == "_" then
+                    loads[#loads+1] = ("require %q"):format(lib_name)
+                else
+                    loads[#loads+1] = ("_ENV[%q] = require %q"):format(load_name, lib_name)
                 end
             end
         end
+        if main_script then
+            local script = main_script
+            if opt.strip then
+                run_main[#run_main+1] = ("return lib(%s)()"):format(compile(script))
+            else
+                run_main[#run_main+1] = ("return lib(%q, %s)()"):format(script.path, compile(script))
+            end
+        end
+        local obfuscate = F.case(opt.target) {
+            luax = obfuscate_luax,
+            [F.Nil] = obfuscate_lua,
+        }
+        out = obfuscate(out:flatten():unlines(), F(opt):patch{strip=true}, product_name)
+        return F{
+            [opt.output] = F{shebang, out}:flatten():unlines(),
+        }
     end
 
-    -- S -> "@@?..."
-    if tag == "@" or tag == "@@" then
-        -- S -> "@@?(...)"
-        do
-            local _, i3, expr = parse_parentheses(s, i2)
-            if expr then
-                return i1, i3, eval(s:sub(i1, i3-1), tag, expr, state)
+    if opt.target == "c" then
+        local product_name = opt.product_name or opt.output:basename():splitext()
+        local mods = F{}        -- luaopen_xxx functions
+        local preloads = F{}    -- _PRELOAD population
+        local loads = F{}       -- modules preloaded to global variables
+        local traceback = F{}
+        local run_main = F{}    -- main script
+        local out = F{
+            '#include "lua.h"',
+            '#include "lauxlib.h"',
+            '#include "stdlib.h"',
+            "int run_"..opt.entry.."(lua_State *L);",
+            mods,
+            traceback,
+            "int run_"..opt.entry.."(lua_State *L) {",
+            "  luaL_getsubtable(L, LUA_REGISTRYINDEX, \"_PRELOAD\");",
+            preloads,
+            "  lua_pop(L, 1);",
+            loads,
+            run_main,
+            "}",
+        }
+        local function compile(script)
+            -- check script compilation (with the actual file path in error messages)
+            assert(load(script.content, ("@%s"):format(script.path)))
+            local code
+            if opt.bytecode then
+                -- compile the script with file path containing the product name
+                code = bytecode(script.content, opt, ("%s:%s"):format(product_name, script.path))
+            else
+                code = script.content
+            end
+            code = obfuscate_luax(code, opt, product_name)
+            return code
+        end
+        local function stripped(prefix, name)
+            return prefix .. (opt.strip and "" or ":"..name)
+        end
+        local main_script, libs = find_main(scripts)
+        for i = 1, #libs do
+            local script = libs[i]
+            local name = script.lib_name
+            ensure_unique_module(opt, script)
+            local func_name = name : gsub("[^%w]", "_")
+            local code = compile(script) : bytes()
+            mods[#mods+1] = {
+                "static int luaopen_"..func_name.."(lua_State *L) {",
+                "  static const unsigned char code[] = {",
+                chunks_of(16, code) : map(function(g) return "    "..g:str",".."," end),
+                "  };",
+                "  const int arg = lua_gettop(L);",
+                "  if (luaL_loadbuffer(L, (const char*)code, sizeof(code), \"@$"..stripped(product_name, script.path).."\") != LUA_OK) {",
+                "    fprintf(stderr, \"%s\\n\", lua_tostring(L, -1));",
+                "    exit(EXIT_FAILURE);",
+                "  }",
+                "  lua_insert(L, 1);",
+                "  lua_call(L, arg, 1);",
+                "  return 1;",
+                "}",
+            }
+            preloads[#preloads+1] = {
+                "  lua_pushcfunction(L, luaopen_"..func_name.."); lua_setfield(L, -2, \""..name.."\");",
+            }
+        end
+        for i = 1, #libs do
+            local script = libs[i]
+            if script.is_load then
+                local lib_name  = script.lib_name
+                local load_name = script.load_name or lib_name
+                loads[#loads+1] = {
+                    script.load_name == "_"
+                        and "  lua_getglobal(L, \"require\"); lua_pushstring(L, \""..lib_name.."\"); lua_call(L, 1, 0);"
+                        or  "  lua_getglobal(L, \"require\"); lua_pushstring(L, \""..lib_name.."\"); lua_call(L, 1, 1); lua_setglobal(L, \""..load_name.."\");"
+                }
             end
         end
-        -- S -> "@@?[==[...]==]"
-        do
-            local _, i3, expr = parse_long_string(s, i2)
-            if expr then
-                return i1, i3, eval(s:sub(i1, i3-1), tag, expr, state)
-            end
-        end
-        -- S -> "@@?"expr
-        do
-            local _, i3, expr = parse_expr(s, i2)
-            if expr then
-                return i1, i3, eval(s:sub(i1, i3-1), tag, expr, state)
-            end
-        end
-
-    end
-
-    -- S -> {}
-    return i2, i2, ""
-
-end
-
-return function(s)
-    local ts = {}
-    local state = {on=true}
-    local i = 1
-    while i <= #s do
-        local i1, i2, out = parse(s, i, state)
-        if i1 then
-            if i1 > i then
-                ts[#ts+1] = s:sub(i, i1-1)
-            end
-            ts[#ts+1] = out
-            i = i2
+        if main_script then
+            local script = main_script
+            local code = compile(script) : bytes()
+            traceback[1] = {
+                "static int traceback(lua_State *L)",
+                "{",
+                "  const char *msg = lua_tostring(L, 1);",
+                "  luaL_traceback(L, L, msg, 1);",
+                "  const char *tb = lua_tostring(L, -1);",
+                "  fprintf(stderr, \"%s\\n\", tb!=NULL ? tb : msg);",
+                "  lua_pop(L, 1);",
+                "  return 0;",
+                "}",
+            }
+            run_main[#run_main+1] = {
+                "  static const unsigned char code[] = {",
+                chunks_of(16, code) : map(function(g) return "    "..g:str",".."," end),
+                "  };",
+                "  if (luaL_loadbuffer(L, (const char*)code, sizeof(code), \"@$"..stripped(product_name, script.path).."\") != LUA_OK) {",
+                "    fprintf(stderr, \"%s\\n\", lua_tostring(L, -1));",
+                "    exit(EXIT_FAILURE);",
+                "  }",
+                "  const int base = lua_gettop(L);",
+                "  lua_pushcfunction(L, traceback);",
+                "  lua_insert(L, base);",
+                "  const int status = lua_pcall(L, 0, 0, base);",
+                "  lua_remove(L, base);",
+                "  return status;",
+            }
         else
-            ts[#ts+1] = s:sub(i, #s)
-            i = #s+1
+            run_main[#run_main+1] = {
+                "  return LUA_OK;",
+            }
         end
+
+        return F{
+            [opt.output] = out:flatten():unlines(),
+        }
     end
-    return table.concat(ts)
+
+    error(tostring(opt.target)..": unknown target")
 end
-]===])
-libs["q"] = lib("src/q.lua", [=[--[[
-This file is part of ypp.
 
-ypp is free software: you can redistribute it and/or modify
+return M
+]====])
+libs["luax_cmd_compile"] = lib("luax/luax_cmd_compile.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-ypp is distributed in the hope that it will be useful,
+luax is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
-For further information about ypp you can visit
-http://cdelord.fr/ypp
+For further information about luax you can visit
+http://cdelord.fr/luax
 --]]
 
---@LOAD
-
---[[@@@
-* `q(source)`: return `source` unpreprocessed.
-  `q` is used to avoid macro execution in a portion of text.
-@@@]]
-
-local F = require "F"
-
-return F.id
-]=])
-libs["script"] = lib("src/script.lua", [=[--[[
-This file is part of ypp.
-
-ypp is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ypp is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with ypp.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about ypp you can visit
-http://cdelord.fr/ypp
---]]
-
---@LOAD
-
---[[@@@
-* `script(cmd)(source)`: execute `cmd` to interpret `source`.
-  `source` is first saved to a temporary file which name is added to the command `cmd`.
-  If `cmd` contains `%s` then `%s` is replaces by the temporary script name.
-  Otherwise the script name is appended to the command.
-  An explicit file extension can be given after `%s` for languages that require
-  specific file extensions (e.g. `%s.fs` for F#).
-
-`script` also predefines shortcuts for some popular languages:
-
-@@( local descr = {
-        bat = "`command` (DOS/Windows)",
-        cmd = "`cmd` (DOS/Windows)",
-        sh = "sh",
-        bash = "bash",
-        zsh = "zsh",
-    }
-    return F.keys(script):map(function(lang)
-        return ("- `script.%s(source)`: run a script with %s"):format(lang, descr[lang] or lang:cap())
-    end)
-)
-
-Example:
-
-?(false)
-```
-$\sum_{i=0}^100 = @script.python "print(sum(range(101)))"$
-```
-?(true)
-is rendered as
-```
-$\sum_{i=0}^100 = @script.python "print(sum(range(101)))"$
-```
-@@@]]
+--@LIB
 
 local fs = require "fs"
+local F = require "F"
 local sh = require "sh"
-local flex = require "flex"
-local convert = require "convert"
+local sys = require "sys"
 
-local function make_script_cmd(cmd, arg, ext)
-    arg = arg..ext
-    local n1, n2
-    cmd, n1 = cmd:gsub("%%s"..(ext~="" and "%"..ext or ""), arg)
-    cmd, n2 = cmd:gsub("%%s", arg)
-    if n1+n2 == 0 then cmd = cmd .. " " .. arg end
-    return cmd
-end
+local bundle = require "luax_bundle"
+local help = require "luax_help"
+local welcome = require "luax_welcome"
+local targets = require "targets"
 
-local function script_ext(cmd)
-    local ext = cmd:match("%%s(%.%w+)") -- extension given by the command line
-    return ext or ""
-end
+local lua_interpreters = F{
+    { name="luax",   add_luax_runtime=false },
+    { name="lua",    add_luax_runtime=true  },
+    { name="pandoc", add_luax_runtime=true  },
+}
 
-local function run(cmd)
-    return flex.str(function(content, opts)
-        content = tostring(content)
-        return fs.with_tmpdir(function (tmpdir)
-            local name = fs.join(tmpdir, "script")
-            local ext = script_ext(cmd)
-            fs.write(name..ext, content)
-            local output = sh.read(make_script_cmd(cmd, name, ext))
-            if output then
-                output = output:gsub("%s*$", "")
-                output = convert.if_required(output, opts)
-                return output
-            else
-                error("script error")
-            end
-        end)
+local function print_targets()
+    local home = os.getenv "HOME"
+    lua_interpreters:foreach(function(interpreter)
+        local name = interpreter.name
+        local exe = name
+        local path = exe:findpath()
+        print(("%-22s%s%s"):format(
+            name,
+            path and path:gsub("^"..home, "~") or exe,
+            path and "" or " [NOT FOUND]"))
+    end)
+    print("native")
+    local assets = require "luax_assets"
+    targets:foreach(function(target)
+        print(("%-22s%s%s"):format(
+            target.name,
+            assets.path and assets.path:gsub("^"..home, "~") or "luax.lar",
+            assets[target.name] and "" or " [NOT FOUND]"))
     end)
 end
 
-return setmetatable({
-    python = run "python %s.py",
-    lua = run "lua %s.lua",
-    bash = run "bash %s.sh",
-    zsh = run "zsh %s.sh",
-    sh = run "sh %s.sh",
-    cmd = run "cmd %s.cmd",
-    bat = run "command %s.bat",
-}, {
-    __call = function(_, cmd) return run(cmd) end,
-})
-]=])
-libs["when"] = lib("src/when.lua", [====[--[[
-This file is part of ypp.
+local function wrong_arg(a)
+    help.err("unrecognized option '%s'", a)
+end
 
-ypp is free software: you can redistribute it and/or modify
+-- Read options
+
+local inputs = F{}
+local output = nil
+local target = nil
+local quiet = false
+local bytecode = nil
+local strip = nil
+local key = nil
+
+do
+    local i = 1
+    -- Scan options
+    while i <= #arg do
+        local a = arg[i]
+        if a == '-o' then
+            i = i+1
+            if output then wrong_arg(a) end
+            output = arg[i]
+        elseif a == '-t' then
+            i = i+1
+            if target then wrong_arg(a) end
+            target = arg[i]
+            if target == "list" then print_targets() os.exit() end
+        elseif a == '-b' then
+            bytecode = true
+        elseif a == '-s' then
+            bytecode = true
+            strip = true
+        elseif a == '-k' then
+            i = i+1
+            if key then wrong_arg(a) end
+            key = arg[i]
+        elseif a == '-q' then
+            quiet = true
+        elseif a:match "^%-" then
+            wrong_arg(a)
+        else
+            -- this is not an option but a file to compile
+            inputs[#inputs+1] = a
+        end
+        i = i+1
+    end
+
+    if not output then
+        help.err "No output specified"
+    end
+
+end
+
+if not quiet then welcome() end
+
+local scripts = inputs
+
+if #scripts == 0 then help.err "No input script specified" end
+if output == nil then help.err "No output specified (option -o)" end
+
+local function log(k, fmt, ...)
+    if quiet then return end
+    print(("%-7s: %s"):format(k, fmt:format(...)))
+end
+
+-- List scripts
+local head = "scripts"
+for i = 1, #scripts do
+    log(head, "%s", scripts[i])
+    head = ""
+end
+
+local function print_size(current_output)
+    local size, unit = assert(current_output:stat()).size, "bytes"
+    if size > 64*1024 then size, unit = size//1024, "Kb" end
+    log("Total", "%d %s", size, unit)
+end
+
+-- Prepare scripts for a Lua / Pandoc Lua target
+local function compile_lua(current_output, interpreter)
+    if not quiet then print() end
+    log("target", "%s", interpreter.name)
+    log("output", "%s", current_output)
+
+    local files = bundle.bundle {
+        scripts = scripts,
+        add_luax_runtime = interpreter.add_luax_runtime,
+        output = current_output,
+        target = interpreter.name,
+        bytecode = bytecode,
+        strip = strip,
+        key = key,
+    }
+    local exe = files[current_output]
+
+    local f = io.open(current_output, "wb")
+    if f == nil then help.err("Can not create "..current_output)
+    else
+        f:write(exe)
+        f:close()
+    end
+
+    fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
+
+    print_size(current_output)
+end
+
+-- Compile LuaX scripts with LuaX and Zig
+local function compile_zig(tmp, current_output, target_definition)
+    if not quiet then print() end
+    log("target", "%s", target_definition.name)
+    log("output", "%s", current_output)
+
+    -- Install Zig (to cross compile and link C sources)
+    local zig_config = require "luax_config".zig
+    if not zig_config.zig:is_file() then
+        log("Zig", "download and install Zig to %s", zig_config.path)
+        zig_config.install()
+        if not zig_config.zig:is_file() then
+            help.err("Unable to install Zig to %s", zig_config.path)
+        end
+    end
+
+    -- Extract precompiled LuaX libraries
+    local assets = require "luax_assets"
+    local headers = F(assets.headers)
+    local libs = F(assets[target_definition.name])
+    headers:foreachk(function(filename, content) fs.write_bin(tmp/filename, content) end)
+    libs:foreachk(function(filename, content) fs.write_bin(tmp/filename, content) end)
+    local libnames = libs:keys()
+        : filter(function(f) return f:ext():match"^%.[ao]$" end)
+        : map(function(f) return tmp/f end)
+
+    -- Compile the input LuaX scripts
+    local app_bundle_c = "app_bundle.c"
+    local app_bundle = assert(bundle.bundle {
+        scripts = scripts,
+        output = tmp/app_bundle_c,
+        target = "c",
+        entry = "app",
+        product_name = current_output:basename():splitext(),
+        bytecode = bytecode,
+        strip = strip,
+        key = key,
+    })
+    app_bundle : foreachk(fs.write_bin)
+
+    local function zig_target(t)
+        return {"-target", F{t.arch, t.os, t.libc}:str"-"}
+    end
+
+    -- Compile and link the generated source with Zig
+    local zig_opt = {
+        zig_target(target_definition),
+        "-std=gnu2x",
+        "-O3",
+        "-I"..tmp,
+        "-fPIC",
+        "-s",
+        "-lm",
+        F.case(target_definition.os) {
+            linux   = "-flto=thin",
+            macos   = {},
+            windows = {"-flto=thin", "-lws2_32 -ladvapi32 -lshlwapi"},
+        },
+        F.case(target_definition.libc) {
+            gnu  = "-rdynamic",
+            musl = {},
+            none = "-rdynamic",
+        },
+    }
+    assert(sh.run { zig_config.zig, "cc", zig_opt, libnames, tmp/app_bundle_c, "-o", current_output })
+
+    print_size(current_output)
+end
+
+local interpreter = lua_interpreters:find(function(t)
+    return t.name == (target or "luax")
+end)
+
+if interpreter then
+
+    compile_lua(output, interpreter)
+
+else
+
+    local target_definition = targets:find(function(t)
+        return t.name == (target=="native" and sys.name or target)
+    end)
+
+    if target_definition then
+
+        fs.with_tmpdir(function(tmp)
+            compile_zig(tmp, output, target_definition)
+        end)
+
+    else
+
+        help.err(target..": unknown target")
+
+    end
+
+end
+]=])
+libs["luax_cmd_env"] = lib("luax/luax_cmd_env.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-ypp is distributed in the hope that it will be useful,
+luax is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
-For further information about ypp you can visit
-http://cdelord.fr/ypp
+For further information about luax you can visit
+http://cdelord.fr/luax
 --]]
 
---@LOAD
+--@LIB
 
---[[@@@
-* `when(cond)(text)`: emit `text` only if `cond` is true.
+local F = require "F"
+local fs = require "fs"
+local sys = require "sys"
 
+local function luax_env(arg0)
+
+    local exe = assert(fs.is_file(arg0) and arg0 or fs.findpath(arg0))
+
+    local bin = exe:dirname():realpath()
+    local prefix = bin:dirname()
+    local lib_lua = prefix / "lib" / "?.lua"
+    local lib_so = prefix / "lib" / "?"..sys.so
+
+    local function update(var_name, separator, new_path)
+        return F{
+            "export ", var_name, "=\"",
+            F.flatten {
+                new_path,
+                (os.getenv(var_name) or "") : split(separator),
+            } : nub() : str(separator),
+            "\";",
+        } : str()
+    end
+
+    local lua_path_sep = package.config:words()[2]
+
+    return F.unlines {
+        update("PATH",      fs.path_sep,  bin),
+        update("LUA_PATH",  lua_path_sep, lib_lua),
+        update("LUA_CPATH", lua_path_sep, lib_so),
+    }
+end
+
+local function user_env(args)
+    local import = require "import"
+    local script = {}
+    local function dump(t, p)
+        if type(t) == "table" then
+            F.foreachk(t, function(k, v)
+                dump(v, (p and p.."_" or "")..k)
+            end)
+        else
+            local s = tostring(t)
+                  : gsub("\n", "\\n")
+                  : gsub("\'", "\\'")
+            script[#script+1] = F{"export ", p:upper(), "='", s, "';"}:str()
+        end
+    end
+    F.foreach(args, F.compose{dump, import})
+    return F.unlines(script)
+end
+
+if not arg or #arg==0 then
+    io.stdout:write(luax_env(arg[0]))
+else
+    io.stdout:write(user_env(arg))
+end
+]=])
+libs["luax_cmd_help"] = lib("luax/luax_cmd_help.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--@LIB
+
+local help = require "luax_help"
+
+help.print()
+]=])
+libs["luax_cmd_run"] = lib("luax/luax_cmd_run.lua", [==[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--@LIB
+
+local fs = require "fs"
+local sys = require "sys"
+local F = require "F"
+
+local bundle = require "luax_bundle"
+local welcome = require "luax_welcome"
+local help = require "luax_help"
+local LUA_INIT = require "luax_config".lua_init
+
+local arg0 = arg[0]
+
+local function wrong_arg(a)
+    help.err("unrecognized option '%s'", a)
+end
+
+local function traceback(message)
+    local trace = F.flatten {
+        "luax: "..message,
+        debug.traceback():lines(),
+    }
+    local pos = 1
+    trace:foreachi(function(i, line)
+        if line:trim() == "[C]: in function 'xpcall'" then
+            pos = i-1
+        end
+    end)
+    io.stderr:write(trace:take(pos):unlines())
+end
+
+-- Read options
+
+local interactive = #arg == 0
+local run_stdin = false
+local args = F{}
+
+local luax_loaded = false
+
+local actions = setmetatable({
+        actions = F{}
+    }, {
+    __index = {
+        add = function(self, action) self.actions[#self.actions+1] = action end,
+        run = function(self) self.actions:foreach(F.call) end,
+    },
+})
+
+--[=[-----------------------------------------------------------------------@@@
+# LuaX interactive usage
+
+The LuaX REPL can be run in various environments:
+
+- the full featured LuaX interpreter based on the LuaX runtime
+- the reduced version running on a plain Lua interpreter
+
+## Full featured LuaX interpreter
+
+### Self-contained interpreter
+
+``` sh
+$ luax
+```
+
+### Shared library usable with a standard Lua interpreter
+
+``` sh
+$ lua -l luax
+```
+
+## Reduced version for plain Lua interpreters
+
+### LuaX with a plain Lua interpreter
+
+``` sh
+luax.lua
+```
+
+### LuaX with the Pandoc Lua interpreter
+
+``` sh
+luax-pandoc.lua
+```
+
+The integration with Pandoc is interesting
+to debug Pandoc Lua filters and inspect Pandoc AST.
 E.g.:
 
-?(false)
+``` sh
+$ rlwrap luax-pandoc.lua
+
+ _               __  __  |  https://cdelord.fr/luax
+| |   _   _  __ _\ \/ /  |
+| |  | | | |/ _` |\  /   |  Version X.Y
+| |__| |_| | (_| |/  \   |  Powered by Lua X.Y
+|_____\__,_|\__,_/_/\_\  |  and Pandoc X.Y
+                         |  <OS> <ARCH>
+
+>> pandoc.read "*Pandoc* is **great**!"
+Pandoc (Meta {unMeta = fromList []}) [Para [Emph [Str "Pandoc"],Space,Str "is",Space,Strong [Str "great"],Str "!"]]
 ```
-@when(lang=="en")
-[===[
-The current language is English.
-]===]
-```
-?(true)
+
+Note that [rlwrap](https://github.com/hanslub42/rlwrap)
+can be used to give nice edition facilities to the Pandoc Lua interpreter.
+
+@@@]=]
+
+--[[@@@
+
+## Additional modules
+
+The `luax` repl provides a few functions for the interactive mode.
+
+In interactive mode, these functions are available as global functions and modules.
 @@@]]
+
+local function populate_repl()
+
+    -- luax functions loaded at the top level in interactive mode only
+
+    if luax_loaded then return end
+    luax_loaded = true
+
+--[[@@@
+LuaX preloads the following modules with the `-e` option or before entering the REPL:
+
+- F
+- complex
+- crypt
+- fs
+- imath
+- lz4
+- mathx
+- ps
+- qmath
+- sh
+- sys
+
+@@@]]
+
+    F"F complex crypt fs imath lz4 mathx ps qmath sh sys"
+        : words()
+        : foreach(function(name) _ENV[name] = require(name) end)
+
+    local show_opt = F{}
+
+--[[@@@
+```lua
+show(x)
+```
+returns a string representing `x` with nice formatting for tables and numbers.
+@@@]]
+
+    function show(x, opt)
+        if type(x) == "string" then return x end
+        return F.show(x, show_opt:patch(opt))
+    end
+
+--[[@@@
+```lua
+precision(len, frac)
+```
+changes the format of floats. `len` is the
+total number of characters and `frac` the number of decimals after the floating
+point (`frac` can be `nil`). `len` can also be a string (custom format string)
+or `nil` (to reset the float format). `b` can be `10` (decimal numbers), `16`
+(hexadecimal numbers), `8` (octal numbers), a custom format string or `nil` (to
+reset the integer format).
+@@@]]
+
+    function precision(len, frac)
+        show_opt.flt =
+            type(len) == "string"                               and len
+            or type(len) == "number" and type(frac) == "number" and ("%%%s.%sf"):format(len, frac)
+            or type(len) == "number" and frac == nil            and ("%%%sf"):format(len, frac)
+            or "%s"
+    end
+
+--[[@@@
+```lua
+base(b)
+```
+changes the format of integers. `b` can be `10` (decimal
+numbers), `16` (hexadecimal numbers), `8` (octal numbers), a custom format
+string or `nil` (to reset the integer format).
+@@@]]
+
+    function base(b)
+        show_opt.int =
+            type(b) == "string" and b
+            or b == 10          and "%s"
+            or b == 16          and "0x%x"
+            or b == 8           and "0o%o"
+            or "%s"
+    end
+
+--[[@@@
+```lua
+indent(i)
+```
+indents tables (`i` spaces). If `i` is `nil`, tables are not indented.
+@@@]]
+
+    function indent(i)
+        show_opt.indent = i
+    end
+
+--[[@@@
+```lua
+prints(x)
+```
+prints `show(x)`
+@@@]]
+
+    function prints(x)
+        print(show(x))
+    end
+
+end
+
+local function run_lua_init()
+    LUA_INIT
+        : filter(function(var) return os.getenv(var) ~= nil end)
+        : take(1)
+        : foreach(function(var)
+            local code = assert(os.getenv(var))
+            local filename = code:match "^@(.*)"
+            local chunk, chunk_err
+            if filename then
+                chunk, chunk_err = loadfile(filename)
+            else
+                chunk, chunk_err = load(code, "="..var)
+            end
+            if not chunk then
+                print(chunk_err)
+                os.exit(1)
+            end
+            if chunk and not xpcall(chunk, traceback) then
+                os.exit(1)
+            end
+        end)
+end
+
+actions:add(run_lua_init)
+
+local function pack_res(ok, ...)
+    return { ok = ok, n = select("#", ...), ... }
+end
+
+local function show_res(res, show)
+    show = show or F.show
+    return F.range(1, res.n):map(function(i) return show(res[i]) end)
+end
+
+do
+    local i = 1
+    -- Scan options
+    while i <= #arg do
+        local a = arg[i]
+        if a == '-e' then
+            i = i+1
+            local stat = arg[i]
+            if stat == nil then wrong_arg(a) end
+            actions:add(function()
+                populate_repl()
+                assert(stat)
+                local chunk, msg = load(stat, "=(command line)")
+                if not chunk then
+                    io.stderr:write(("%s: %s\n"):format(arg0, msg))
+                    os.exit(1)
+                end
+                assert(chunk)
+                local res = pack_res(xpcall(chunk, traceback))
+                if res.ok then
+                    if res.n > 0 then
+                        print(show_res(res, show):unpack())
+                    end
+                else
+                    os.exit(1)
+                end
+            end)
+        elseif a == '-i' then
+            interactive = true
+        elseif a == '-l' then
+            i = i+1
+            local lib = arg[i]
+            if lib == nil then wrong_arg(a) end
+            actions:add(function()
+                assert(lib)
+                local modname, filename = lib:match "(.-)=(.+)"
+                if not modname then
+                    modname, filename = lib, lib
+                end
+                local mod = require(filename)
+                if modname ~= "_" then
+                    _G[modname] = mod
+                end
+            end)
+        elseif a == '-v' then
+            welcome()
+            os.exit()
+        elseif a == '-h' then
+            help.print()
+            os.exit(0)
+        elseif a == '--' then
+            i = i+1
+            break
+        elseif a == '-' then
+            run_stdin = true
+            -- this is not an option but a file (stdin) to execute
+            args[#args+1] = arg[i]
+            break
+        elseif a:match "^%-" then
+            wrong_arg(a)
+        else
+            -- this is not an option but a file to execute
+            break
+        end
+        i = i+1
+    end
+
+    local arg_shift = i
+
+    -- scan files/arguments to execute
+    while i <= #arg do
+        args[#args+1] = arg[i]
+        i = i+1
+    end
+
+    if interactive and run_stdin then
+        help.err "Interactive mode and stdin execution are incompatible"
+    end
+
+    -- shift arg such that arg[0] is the name of the script to execute
+    local n = #arg
+    for j = 0, n do
+        arg[j-arg_shift] = arg[j]
+    end
+    for j = n-arg_shift+1, n do
+        arg[j] = nil
+    end
+    if arg[0] == "-" then arg[0] = "stdin" end
+
+end
+
+local function run_interpreter()
+
+    -- scripts
+
+    if #args >= 1 then
+        local script = args[1]
+        local show, chunk, msg
+        if script == "-" then
+            chunk, msg = load(bundle.comment_shebang(io.stdin:read "*a"))
+        else
+            local function findscript(name)
+                local candidates = F.nub({".", fs.dirname(arg[-1])} .. os.getenv"PATH":split(fs.path_sep))
+                for _, path in ipairs(candidates) do
+                    local candidate = path/name
+                    if fs.is_file(candidate) then
+                        if path=="." then return name end
+                        return candidate
+                    end
+                end
+                candidates : foreach(function(path)
+                    io.stderr:write(("    no file '%s' in '%s'\n"):format(name, path))
+                end)
+                os.exit(1)
+            end
+            local real_script = findscript(script)
+            chunk, msg = load(bundle.comment_shebang(assert(fs.read_bin(real_script))), "@"..real_script)
+        end
+        if not chunk then
+            io.stderr:write(("%s: %s\n"):format(script, msg))
+            os.exit(1)
+        end
+        assert(chunk)
+        local res = pack_res(xpcall(chunk, traceback))
+        if res.ok then
+            if res.n > 0 then
+                print(show_res(res, show):unpack())
+            end
+        else
+            os.exit(1)
+        end
+    end
+
+    -- interactive REPL
+
+    if interactive then
+        local home = F.case(sys.os) {
+            windows = "APPDATA",
+            [F.Nil] = "HOME",
+        }
+        local history = os.getenv(home) / ".luax_history"
+        local linenoise = require "linenoise"
+        linenoise.load(history)
+        local function hist(input)
+            linenoise.add(input)
+            linenoise.save(history)
+        end
+        local function try(input)
+            local chunk, msg = load(input, "=stdin")
+            if not chunk then
+                if msg and type(msg) == "string" and msg:match "<eof>$" then return "cont" end
+                return nil, msg
+            end
+            local res = pack_res(xpcall(chunk, traceback))
+            if res.ok and res.n > 0 then
+                print(show_res(res, show):unpack())
+            end
+            return "done"
+        end
+        welcome()
+        populate_repl()
+        while true do
+            local inputs = {}
+            local prompt = ">> "
+            while true do
+                local line = linenoise.read(prompt)
+                if not line then os.exit() end
+                hist(line)
+                table.insert(inputs, line)
+                local input = table.concat(inputs, "\n")
+                local try_expr, err_expr = try("return "..input)
+                if try_expr == "done" then break end
+                local try_stat, err_stat = try(input)
+                if try_stat == "done" then break end
+                if try_expr ~= "cont" and try_stat ~= "cont" then
+                    print(try_stat == nil and err_stat or err_expr)
+                    break
+                end
+                prompt = ".. "
+            end
+        end
+    end
+
+end
+
+actions:add(run_interpreter)
+
+actions:run()
+]==])
+libs["luax_cmd_version"] = lib("luax/luax_cmd_version.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--@LIB
+
+local welcome = require "luax_welcome"
+
+welcome()
+]=])
+libs["luax_help"] = lib("luax/luax_help.lua", [====[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--@LIB
 
 local F = require "F"
 
-return function(cond)
-    return cond and ypp or F.const ""
+local luax_config = require "luax_config"
+local welcome = require "luax_welcome"
+
+local arg0 = arg[0]
+
+local I = (F.I % "%%{}") (luax_config) {
+    arg0 = arg0,
+    init = require "luax_config".lua_init,
+}
+
+local usage = I[===[
+usage: %{arg0:basename()} [cmd] [options]
+
+Commands:
+  "help"    (or "-h")   Show this help
+  "version" (or "-v")   Show LuaX version
+  "run"     (or none)   Run scripts
+  "compile" (or "c")    Compile scripts
+  "env"                 Set LuaX environment variables
+
+"run" options:
+  -e stat         execute string 'stat'
+  -i              enter interactive mode after executing 'script'
+  -l name         require library 'name' into global 'name'
+  -l g=name       require library 'name' into global 'g'
+  -l _=name       require library 'name' (no global variable)
+  -v              show version information
+  --              stop handling options
+  -               stop handling options and execute stdin
+  script [args]   script to execute
+
+"compile" options:
+  -t target       name of the targetted platform
+  -t list         list available targets
+  -o file         name the executable file to create
+  -b              compile to Lua bytecode
+  -s              emit bytecode without debug information
+  -k key          script encryption key
+  -q              quiet compilation (error messages only)
+  scripts         scripts to compile
+
+Environment variables:
+
+  %{init[1]}, %{init[2]}
+                code executed before handling command line
+                options and scripts (not in compilation
+                mode). When %{init[1]} is defined,
+                %{init[2]} is ignored.
+
+  PATH          PATH shall contain the bin directory where
+                LuaX is installed
+
+  LUA_PATH      LUA_PATH shall point to the lib directory
+                where the Lua implementation of LuaX
+                lbraries are installed
+
+  LUA_CPATH     LUA_CPATH shall point to the lib directory
+                where LuaX shared libraries are installed
+
+PATH, LUA_PATH and LUA_CPATH can be set in .bashrc or .zshrc
+with "luax env".
+E.g.: eval $(luax env)
+
+"luax env" can also generate shell variables from a script.
+E.g.: eval $(luax env script.lua)
+
+Copyright:
+  %{copyright}
+  %{authors}
+]===]
+
+local function print_usage(fmt, ...)
+    welcome()
+    if fmt then
+        print(("error: %s"):format(fmt:format(...)))
+        print("")
+    end
+    print(usage:trim())
 end
+
+return {
+    usage = usage,
+    print = print_usage,
+    err = function(fmt, ...) print_usage(fmt, ...) os.exit(1) end,
+}
 ]====])
-libs["_YPP_VERSION"] = lib(".build/src/_YPP_VERSION.lua", [=[return [[0.11.3]] --@LOAD
-]=])
+libs["luax_welcome"] = lib("luax/luax_welcome.lua", [====[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+http://cdelord.fr/luax
+--]]
+
+--@LIB
+
+local sys = require "sys"
+local F = require "F"
+local term = require "term"
+
+local I = (F.I % "%%{}")(_G){sys=sys}
+
+local welcome = I[===[
+ _               __  __  |  https://cdelord.fr/luax
+| |   _   _  __ _\ \/ /  |
+| |  | | | |/ _` |\  /   |  Version %{_LUAX_VERSION} (%{_LUAX_DATE})
+| |__| |_| | (_| |/  \   |  Powered by %{_VERSION}
+|_____\__,_|\__,_/_/\_\  |%{PANDOC_VERSION and "  and Pandoc "..tostring(PANDOC_VERSION) or ""}
+                         |  %{sys.os:cap()} %{sys.arch} %{sys.libc}
+]===]
+
+local welcome_already_printed = false
+
+local function print_welcome()
+    if welcome_already_printed then return end
+    if term.isatty() then
+        print(welcome)
+    end
+    welcome_already_printed = true
+end
+
+return print_welcome
+]====])
 require "F"
 require "crypt"
 require "fs"
 require "lz4"
 require "package_hook"
 require "debug_hook"
-_ENV["atexit"] = require "atexit"
-_ENV["comment"] = require "comment"
-_ENV["convert"] = require "convert"
-_ENV["doc"] = require "doc"
-_ENV["file"] = require "file"
-_ENV["image"] = require "image"
-_ENV["include"] = require "include"
-_ENV["q"] = require "q"
-_ENV["script"] = require "script"
-_ENV["when"] = require "when"
-_ENV["_YPP_VERSION"] = require "_YPP_VERSION"
-return lib("src/ypp.lua", [=[--[[
-This file is part of ypp.
+return lib("luax/luax.lua", [=[--[[
+This file is part of luax.
 
-ypp is free software: you can redistribute it and/or modify
+luax is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-ypp is distributed in the hope that it will be useful,
+luax is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
-For further information about ypp you can visit
-http://cdelord.fr/ypp
+For further information about luax you can visit
+http://cdelord.fr/luax
 --]]
 
 --@MAIN
 
---[[@@@
-* `ypp(s)`: apply the `ypp` preprocessor to a string.
-* `ypp.input_file()`: return the name of the current input file.
-* `ypp.input_path()`: return the path of the current input file.
-* `ypp.input_file(n)`: return the name of the nth input file in the current *include* stack.
-* `ypp.input_path(n)`: return the path of the nth input file in the current *include* stack.
-@@@]]
-
 local F = require "F"
-local fs = require "fs"
 
--- preload some LuaX modules
-_G.F = F
-_G.crypt = require "crypt"
-_G.fs = fs
-_G.sh = require "sh"
-_G.sys = require "sys"
-
-local ypp_mt = {__index={}}
-local ypp = {}
-local known_input_files = F{}
-local output_contents = F{}
-local input_files = F{fs.join(fs.getcwd(), "-")} -- stack of input files (current branch from the root to the deepest included document)
-local output_file = "-"
-
-local function die(msg, ...)
-    io.stderr:write("ypp: ", msg:format(...), "\n")
-    os.exit(1)
-end
-
-local function load_script(filename)
-    local modname = filename:gsub("%.lua$", "")
-    _G[modname] = require(modname)
-end
-
-local function eval_expr(expr)
-    assert(load(expr, expr, "t"))()
-end
-
-local function add_path(paths)
-    if not paths then return end
-    local dir_sep, template_sep, template, _ = F(package.config):lines():unpack()
-    package.path = F.concat {
-        paths:split(template_sep):map(function(path) return path..dir_sep..template..".lua" end),
-        { package.path }
-    } : str(template_sep)
-end
-
-local function process(content)
-    output_contents[#output_contents+1] = ypp(content)
-end
-
-local function read_file(filename)
-    local content
-    if filename == "-" then
-        content = io.stdin:read "a"
-    else
-        content = assert(fs.read(filename))
-        known_input_files[#known_input_files+1] = filename:gsub("^"..fs.getcwd()..fs.sep, "")
+local function command(name, drop)
+    return function()
+        for _ = 1, drop or 1 do table.remove(arg, 1) end
+        require("luax_cmd_"..name)
     end
-    return content
 end
 
-ypp.read_file = read_file
-
-local function find_file(filename)
-    local current_input_file = input_files:last()
-    local input_path = fs.dirname(current_input_file)
-    local full_filepath = F{
-        fs.join(input_path, filename),
-        filename,
-    } : filter(fs.is_file) : head()
-    assert(full_filepath, filename..": file not found")
-    return full_filepath
-end
-
-ypp.find_file = find_file
-
-local function with_inputfile(filename, func)
-    if filename == "-" then return func(filename) end
-    local full_filepath = find_file(filename)
-    input_files[#input_files+1] = full_filepath
-    local res = {func(full_filepath)}
-    input_files[#input_files] = nil
-    return F.unpack(res)
-end
-
-ypp.with_inputfile = with_inputfile
-
-local function process_file(filename)
-    return with_inputfile(filename, function(full_filepath)
-        return process(read_file(full_filepath))
-    end)
-end
-
-function ypp.input_file(level)
-    return input_files[#input_files-(level or 0)]
-end
-
-function ypp.input_path(level)
-    return fs.dirname(input_files[#input_files-(level or 0)])
-end
-
-function ypp.output_file()
-    return output_file
-end
-
-function ypp_mt.__call(_, content)
-    if type(content) == "table" then return F.map(ypp, content) end
-    local parser = require "parser"
-    return parser(content)
-end
-
-local function write_outputs(args)
-    local content = output_contents:str()
-    if not args.output or args.output == "-" then
-        io.stdout:write(content)
-    else
-        fs.mkdirs(fs.dirname(args.output))
-        fs.write(args.output, content)
-    end
-    local file = require "file"
-    file.files:foreach(function(f) f:flush() end)
-end
-
-local function write_dep_file(args)
-    if not (args.gendep or args.depfile or #args.targets>0) then return end
-    local name = args.depfile or (args.output and fs.splitext(args.output)..".d")
-    if not name then die("The dependency file name is unknown, use --MF or -o") end
-    local function mklist(...)
-        return F{...}:flatten():from_set(F.const(true)):keys()
-            :filter(function(p) return p ~= "-" end)
-            :map(function(p) return p:gsub("^%."..fs.sep, "") end)
-            :sort()
-            :unwords()
-    end
-    local scripts = {
-        F.values(package.modpath),
-        require "import".files,
-    }
-    local file = require "file"
-    local deps = mklist(args.targets, args.output or {}, file.outputs).." : "..mklist(known_input_files, scripts)
-    fs.mkdirs(fs.dirname(name))
-    fs.write(name, deps.."\n")
-end
-
-local function parse_args()
-    local parser = require "argparse"()
-        : name "ypp"
-        : description(("ypp %s\nYet a PreProcessor"):format(_YPP_VERSION))
-        : epilog "For more information, see https://github.com/CDSoft/ypp"
-
-    parser : flag "-v"
-        : description "Show yyp version"
-        : action(function(_, _, _, _) print(_YPP_VERSION); os.exit() end)
-
-    parser : option "-l"
-        : description "Execute a Lua script"
-        : argname "script"
-        : count "*"
-        : action(function(_, _, name, _) load_script(name) end)
-
-    parser : option "-e"
-        : description "Execute a Lua expression"
-        : argname "expression"
-        : count "*"
-        : action(function(_, _, expr, _) eval_expr(expr) end)
-
-    parser : option "-p"
-        : description "Add a path to package.path"
-        : argname "path"
-        : count "*"
-        : action(function(_, _, path, _) add_path(path) end)
-
-    local output = nil
-    parser : option "-o"
-        : description "Redirect the output to 'file'"
-        : target "output"
-        : argname "file"
-        : action(function(_, _, path, _)
-            output = path
-            output_file = path
-            require"image".output(output)
-        end)
-
-    parser : option "-t"
-        : description "Set the default format of generated images"
-        : target "image_format"
-        : choices { "svg", "pdf", "png" }
-        : action(function(_, _, fmt, _) require"image".format(fmt) end)
-
-    parser : option "--MT"
-        : description "Add `name` to the target list (implies `--MD`)"
-        : target "targets"
-        : argname "target"
-        : count "*"
-
-    parser : option "--MF"
-        : description "Set the dependency file name (implies `--MD`)"
-        : target "depfile"
-        : argname "name"
-
-    parser : flag "--MD"
-        : description "Generate a dependency file"
-        : target "gendep"
-
-    parser : argument "input"
-        : description "Input file"
-        : args "*"
-        : action(function(_, _, names, _)
-            if #names == 0 then names = {"-"} end
-            F.foreach(names, process_file)
-        end)
-
-    return F.patch(parser:parse(), {output=output})
-end
-
-_ENV.ypp = setmetatable(ypp, ypp_mt)
-local args = parse_args()
-require "atexit".run()
-write_dep_file(args)
-write_outputs(args)
+return F.case(arg[1]) {
+    help    = command "help",
+    version = command "version",
+    [F.Nil] = command("run", 0),
+    run     = command "run",
+    compile = command "compile",
+    c       = command "compile",
+    env     = command "env",
+}()
 ]=])()
 
