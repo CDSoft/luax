@@ -31,7 +31,7 @@ if ! [ -d "$BANG_DIR" ]; then echo "bang not found in $BANG_DIR"; exit 1; fi
 if ! [ -d "$LSVG_DIR" ]; then echo "lsvg not found in $LSVG_DIR"; exit 1; fi
 if ! [ -d "$YPP_DIR" ]; then echo "ypp not found in $YPP_DIR"; exit 1; fi
 
-cd "$ROOT" && ./bootstrap.sh && cp .build/bin/luax.lua "$ROOT/tools/"
+cd "$ROOT" && ./bootstrap.sh
 
 eval "$("$ROOT"/.build/bin/luax env)"
 

@@ -108,9 +108,3 @@ info "Step 6: LuaX"
 ######################################################################
 
 ninja compile
-
-cat <<EOF
-
-LuaX build succeeded.
-Just run "ninja install" to actually install LuaX.
-EOF
