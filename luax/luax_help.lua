@@ -29,7 +29,6 @@ local arg0 = arg[0]
 
 local I = (F.I % "%%{}") (luax_config) {
     arg0 = arg0,
-    init = require "luax_config".lua_init,
 }
 
 local usage = I[===[
@@ -65,11 +64,11 @@ Commands:
 
 Environment variables:
 
-  %{init[1]}, %{init[2]}
+  %{lua_init[1]}, %{lua_init[2]}
                 code executed before handling command line
                 options and scripts (not in compilation
-                mode). When %{init[1]} is defined,
-                %{init[2]} is ignored.
+                mode). When %{lua_init[1]} is defined,
+                %{lua_init[2]} is ignored.
 
   PATH          PATH shall contain the bin directory where
                 LuaX is installed
