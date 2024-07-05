@@ -147,7 +147,7 @@ compiler = F.default("zig", compiler)
 -- Only zig can cross-compile LuaX for all targets
 local cross_compilation = compiler=="zig"
 if not cross_compilation then
-    targets = F{F.find(function(t) return t.os==sys.os and t.arch==sys.arch end, targets)}
+    targets = F{targets:find(function(t) return t.os==sys.os and t.arch==sys.arch end)}
     assert(#targets == 1)
 end
 
@@ -564,7 +564,7 @@ build "update_modules" {
 section "LuaX sources"
 ---------------------------------------------------------------------
 
-local linux_only = F{
+local linux_only = {
     "ext/c/luasocket/serial.c",
     "ext/c/luasocket/unixdgram.c",
     "ext/c/luasocket/unixstream.c",
@@ -573,10 +573,10 @@ local linux_only = F{
     "ext/c/linenoise/linenoise.c",
     "ext/c/linenoise/utf8.c",
 }
-local windows_only = F{
+local windows_only = {
     "ext/c/luasocket/wsocket.c",
 }
-local ignored_sources = F{
+local ignored_sources = {
     "ext/c/lqmath/src/imath.c",
 }
 
@@ -604,9 +604,7 @@ var "lua" "$tmp/lua"
 
 var "lua_path" (
     F{
-        ".",
         "$tmp",
-        "libluax",
         ls "libluax/*" : filter(fs.is_dir),
         "ext/lua/argparse",
         "ext/lua/cbor",
@@ -777,8 +775,8 @@ local liblua = {}
 local libluax = {}
 local main_luax = {}
 local main_libluax = {}
-local binary = F{}
-local shared_library = F{}
+local binary = {}
+local shared_library = {}
 
 -- imath is also provided by qmath, both versions shall be compatible
 rule "diff" {
@@ -866,7 +864,7 @@ targets:foreach(function(target)
                 windows = liblua[target.name],
             },
             libluax[target.name],
-    }
+        }
 
 end)
 
@@ -905,7 +903,7 @@ acc(libraries) {
     build "$lib/luax.lar" { "ar",
 
         -- Lua runtime
-        build "$tmp/luax.lar" {
+        build "$tmp/lib/luax.lar" {
             "bundle", lua_runtime,
             args = {
                 "-e lib",
@@ -915,7 +913,7 @@ acc(libraries) {
         },
 
         -- Lua headers used to compile LuaX scripts
-        build "$tmp/headers.lar" { "ar",
+        build "$tmp/lib/headers.lar" { "ar",
             "lua/lua.h",
             "lua/luaconf.h",
             "lua/lauxlib.h",
@@ -923,7 +921,7 @@ acc(libraries) {
 
         -- Binary runtimes (available with cross-compilation only)
         (cross_compilation and targets or F{}): map(function(target)
-            return build("$tmp/"..target.name..".lar") { "ar",
+            return build("$tmp/lib"/target.name..".lar") { "ar",
 
                 -- precompiled LuaX libraries
                 (function()
