@@ -20,13 +20,15 @@ http://cdelord.fr/luax
 
 --@LIB
 
-local sys = require "sys"
-local F = require "F"
-local term = require "term"
+local function print_welcome()
 
-local I = (F.I % "%%{}")(_G){sys=sys}
+    local sys = require "sys"
+    local F = require "F"
+    local term = require "term"
 
-local welcome = I[===[
+    local I = (F.I % "%%{}")(_G){sys=sys}
+
+    local welcome = I[===[
  _               __  __  |  https://cdelord.fr/luax
 | |   _   _  __ _\ \/ /  |
 | |  | | | |/ _` |\  /   |  Version %{_LUAX_VERSION} (%{_LUAX_DATE})
@@ -35,9 +37,8 @@ local welcome = I[===[
                          |  %{sys.os:cap()} %{sys.arch} %{sys.libc}
 ]===]
 
-local welcome_already_printed = false
+    local welcome_already_printed = false
 
-local function print_welcome()
     if welcome_already_printed then return end
     if term.isatty() then
         print(welcome)

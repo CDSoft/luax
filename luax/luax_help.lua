@@ -22,16 +22,11 @@ http://cdelord.fr/luax
 
 local F = require "F"
 
-local luax_config = require "luax_config"
-local welcome = require "luax_welcome"
-
 local arg0 = arg[0]
 
-local I = (F.I % "%%{}") (luax_config) {
-    arg0 = arg0,
-}
-
-local usage = I[===[
+local function usage()
+    local I = (F.I % "%%{}") (F.patch(require "luax_config", {arg0=arg0}))
+    return (I[===[
 usage: %{arg0:basename()} [cmd] [options]
 
 Commands:
@@ -90,19 +85,20 @@ E.g.: eval $(luax env script.lua)
 Copyright:
   %{copyright}
   %{authors}
-]===]
+]===]):trim()
+end
 
 local function print_usage(fmt, ...)
+    local welcome = require "luax_welcome"
     welcome()
     if fmt then
         print(("error: %s"):format(fmt:format(...)))
         print("")
     end
-    print(usage:trim())
+    print(usage())
 end
 
 return {
-    usage = usage,
     print = print_usage,
     err = function(fmt, ...) print_usage(fmt, ...) os.exit(1) end,
 }

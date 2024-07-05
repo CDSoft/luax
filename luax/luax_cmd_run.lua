@@ -27,7 +27,6 @@ local F = require "F"
 local bundle = require "luax_bundle"
 local welcome = require "luax_welcome"
 local help = require "luax_help"
-local LUA_INIT = require "luax_config".lua_init
 
 local arg0 = arg[0]
 
@@ -239,7 +238,7 @@ prints `show(x)`
 end
 
 local function run_lua_init()
-    LUA_INIT
+    require "luax_config".lua_init
         : filter(function(var) return os.getenv(var) ~= nil end)
         : take(1)
         : foreach(function(var)
