@@ -238,7 +238,7 @@ prints `show(x)`
 end
 
 local function run_lua_init()
-    require "luax_config".lua_init
+    F(require "luax_config".lua_init)
         : filter(function(var) return os.getenv(var) ~= nil end)
         : take(1)
         : foreach(function(var)

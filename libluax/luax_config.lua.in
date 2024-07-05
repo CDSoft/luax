@@ -25,47 +25,17 @@ YEAR    = sh "git show -s --format=%cd --date=format:'%Y'" : trim()
 assert(AUTHORS, "AUTHORS: not defined")
 assert(URL, "URL: not defined")
 assert(ZIG_VERSION, "ZIG_VERSION: not defined")
+LUA_VERSION = _VERSION:words()[2]:gsub("%.", "_")
 --]]@LIB
 
-local F = require "F"
-local fs = require "fs"
-local sys = require "sys"
-local sh = require "sh"
-
-local version = "@(VERSION)"
-
-local zig_version = "@(ZIG_VERSION)"
-
-local home, zig_path = F.unpack(F.case(sys.os) {
-    windows = { "LOCALAPPDATA", "zig" / zig_version },
-    [F.Nil] = { "HOME", ".local/opt" / "zig" / zig_version },
-})
-zig_path = os.getenv(home) / zig_path
-local zig = zig_path/"zig"..sys.exe
-
-local function zig_install()
-    local archive = "zig-"..sys.os.."-"..sys.arch.."-"..zig_version..".tar.xz"
-    local url = "https://ziglang.org/download"/zig_version/archive
-    fs.mkdirs(zig_path)
-    fs.with_tmpdir(function(tmp)
-        assert(sh.run { "curl", "-fsSL", url, "-o", tmp/archive })
-        assert(sh.run { "tar", "xJf", tmp/archive, "-C", zig_path, "--strip-components", 1 })
-    end)
-end
-
 return {
-    version = version,
+    version = "@(VERSION)",
     date = "@(DATE)",
-    copyright = "LuaX "..version.."  Copyright (C) 2021-@(YEAR) @(URL)",
+    copyright = "LuaX @(VERSION)  Copyright (C) 2021-@(YEAR) @(URL)",
     authors = "@(AUTHORS)",
-    zig = {
-        version = zig_version,
-        path = zig_path,
-        zig = zig,
-        install = zig_install,
-    },
-    lua_init = F{
-        "LUA_INIT_" .. _VERSION:words()[2]:gsub("%.", "_"),
+    zig_version = "@(ZIG_VERSION)",
+    lua_init = {
+        "LUA_INIT_@(LUA_VERSION)",
         "LUA_INIT",
     },
 }

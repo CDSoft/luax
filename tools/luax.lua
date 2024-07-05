@@ -44,8 +44,7 @@ package.path = table.concat({
 }, ";")
 
 package.preload.luax_config = function()
-    local F = require "F"
-    return { lua_init = F{} }
+    return { lua_init = {} }
 end
 
 -- Install LuaX hooks

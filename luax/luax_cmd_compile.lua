@@ -171,13 +171,26 @@ local function compile_zig(tmp, current_output, target_definition)
     log("target", "%s", target_definition.name)
     log("output", "%s", current_output)
 
+    -- Zig configuration
+    local zig_version = require "luax_config".zig_version
+
+    local home, zig_path = F.unpack(F.case(sys.os) {
+        windows = { "LOCALAPPDATA", "zig" / zig_version },
+        [F.Nil] = { "HOME", ".local/opt" / "zig" / zig_version },
+    })
+    zig_path = os.getenv(home) / zig_path
+    local zig = zig_path/"zig"..sys.exe
+
     -- Install Zig (to cross compile and link C sources)
-    local zig_config = require "luax_config".zig
-    if not zig_config.zig:is_file() then
-        log("Zig", "download and install Zig to %s", zig_config.path)
-        zig_config.install()
-        if not zig_config.zig:is_file() then
-            help.err("Unable to install Zig to %s", zig_config.path)
+    if not zig:is_file() then
+        log("Zig", "download and install Zig to %s", zig_path)
+        local archive = "zig-"..sys.os.."-"..sys.arch.."-"..zig_version..".tar.xz"
+        local url = "https://ziglang.org/download"/zig_version/archive
+        fs.mkdirs(zig_path)
+        assert(sh.run { "curl", "-fsSL", url, "-o", tmp/archive })
+        assert(sh.run { "tar", "xJf", tmp/archive, "-C", zig_path, "--strip-components", 1 })
+        if not zig:is_file() then
+            help.err("Unable to install Zig to %s", zig_path)
         end
     end
 
@@ -229,7 +242,7 @@ local function compile_zig(tmp, current_output, target_definition)
             none = "-rdynamic",
         },
     }
-    assert(sh.run { zig_config.zig, "cc", zig_opt, libnames, tmp/app_bundle_c, "-o", current_output })
+    assert(sh.run { zig, "cc", zig_opt, libnames, tmp/app_bundle_c, "-o", current_output })
 
     print_size(current_output)
 end
