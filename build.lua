@@ -617,7 +617,7 @@ var "lua_path" (
 
 build "$lua" { ld.host,
     (sources.lua_c_files .. sources.lua_main_c_files) : map(function(src)
-        return build("$tmp/obj/lua"/src:splitext()..".o") { cc.host, src }
+        return build("$tmp/obj/lua"/src:chext".o") { cc.host, src }
     end),
 }
 
@@ -630,7 +630,7 @@ var "lz4" "$tmp/lz4"
 build "$lz4" { ld.host,
     ls "ext/c/lz4/**.c"
     : map(function(src)
-        return build("$tmp/obj/lz4"/src:splitext()..".o") { cc.host, src }
+        return build("$tmp/obj/lz4"/src:chext".o") { cc.host, src }
     end),
 }
 
@@ -794,7 +794,7 @@ targets:foreach(function(target)
         F.flatten {
             sources.lua_c_files,
         } : map(function(src)
-            return build("$tmp"/target.name/"obj"/src:splitext()..".o") { cc_ext[target.name], src }
+            return build("$tmp"/target.name/"obj"/src:chext".o") { cc_ext[target.name], src }
         end),
     }
 
@@ -803,7 +803,7 @@ targets:foreach(function(target)
             sources.luax_c_files,
             luax_runtime_bundle,
         } : map(function(src)
-            return build("$tmp"/target.name/"obj"/src:splitext()..".o") { cc[target.name], src,
+            return build("$tmp"/target.name/"obj"/src:chext".o") { cc[target.name], src,
                 implicit_in = {
                     case(src:basename():splitext()) {
                         version = "$luax_config_h",
@@ -820,7 +820,7 @@ targets:foreach(function(target)
                 windows = sources.windows_third_party_c_files,
             },
         } : map(function(src)
-            return build("$tmp"/target.name/"obj"/src:splitext()..".o") { cc_ext[target.name], src,
+            return build("$tmp"/target.name/"obj"/src:chext".o") { cc_ext[target.name], src,
                 additional_flags = case(src:basename():splitext()) {
                     usocket = "-Wno-#warnings",
                 },
@@ -834,14 +834,14 @@ targets:foreach(function(target)
 
     main_luax[target.name] = F.flatten { sources.luax_main_c_files }
         : map(function(src)
-            return build("$tmp"/target.name/"obj"/src:splitext()..".o") { cc[target.name], src,
+            return build("$tmp"/target.name/"obj"/src:chext".o") { cc[target.name], src,
                 implicit_in = "$luax_config_h",
             }
         end)
 
     main_libluax[target.name] = F.flatten { sources.libluax_main_c_files }
         : map(function(src)
-                return build("$tmp"/target.name/"obj"/src:splitext()..".o") { cc[target.name], src,
+                return build("$tmp"/target.name/"obj"/src:chext".o") { cc[target.name], src,
                     build_as_dll = case(target.os) {
                         windows = "-DLUA_BUILD_AS_DLL -DLUA_LIB",
                     },
@@ -852,7 +852,7 @@ targets:foreach(function(target)
         main_libluax[target.name],
         liblua[target.name],
         libluax[target.name],
-        build("$tmp"/target.name/"obj"/luax_app_bundle:splitext()..".o") { cc[target.name], luax_app_bundle },
+        build("$tmp"/target.name/"obj"/luax_app_bundle:chext".o") { cc[target.name], luax_app_bundle },
     }
 
     shared_library[target.name] = is_dynamic(target) and
