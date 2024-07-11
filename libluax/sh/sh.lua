@@ -78,6 +78,9 @@ Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
 function sh.write(...)
     local cmd = F.flatten{...}:unwords()
     return function(data)
+        if type(data) ~= "string" then
+            return nil, "bad argument #1 to 'write' (string expected, got "..type(data)..")"
+        end
         local p, popen_err = io.popen(cmd, "w")
         if not p then return p, popen_err end
         p:write(data)
@@ -99,6 +102,9 @@ Otherwise it returns the error identified by `pandoc.pipe`.
     function sh.pipe(...)
         local cmd = F.flatten{...}
         return function(data)
+            if type(data) ~= "string" then
+                return nil, "bad argument #1 to 'write' (string expected, got "..type(data)..")"
+            end
             local ok, out = pcall(pandoc.pipe, cmd:head(), cmd:tail(), data)
             if not ok then return nil, out end
             return out
