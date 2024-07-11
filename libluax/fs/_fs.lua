@@ -126,7 +126,7 @@ function fs.stat(name)
     if not st then return nil, "cannot stat "..name end
     local size, mtime, atime, ctime, type, mode = st:trim():split ";":unpack()
     mode = tonumber(mode, 16)
-    if type == "regular file" then type = "file" end
+    if type == "regular file" or type == "regular empty file" then type = "file" end
     return F{
         name = name,
         size = tonumber(size),
