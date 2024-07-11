@@ -198,8 +198,8 @@ calls `f(tmp)` where `tmp` is the name of a temporary file.
 
 if pandoc and pandoc.system then
     function fs.with_tmpfile(f)
-        return pandoc.system.with_temporary_directory("luax-XXXXXX", function(tmpdir)
-            return f(fs.join(tmpdir, "tmpfile"))
+        return pandoc.system.with_temporary_directory("luax", function(tmpdir)
+            return f(tmpdir/"tmpfile")
         end)
     end
 else
