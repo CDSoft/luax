@@ -3996,6 +3996,9 @@ end)
 -- module
 -------------------------------------------------------------------------------
 
+local reg = debug.getregistry()
+reg.luax_F_mt = mt
+
 return setmetatable(F, {
     __call = function(_, t)
         if type(t) == "table" then return setmetatable(t, mt) end

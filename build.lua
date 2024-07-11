@@ -303,6 +303,7 @@ local host_cflags = {
         macos = "-DLUA_USE_MACOSX",
         windows = {},
     },
+    optional(san) "-DLUA_USE_APICHECK",
     optional(strict) {
         "-Werror",
         "-Wall",
@@ -472,6 +473,7 @@ targets:foreach(function(target)
             macos   = "-DLUA_USE_MACOSX",
             windows = {},
         },
+        optional(san) "-DLUA_USE_APICHECK",
     }
     if target.name == sys.name then
         compile_flags {

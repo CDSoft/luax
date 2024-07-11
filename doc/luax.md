@@ -52,17 +52,17 @@ Contributions on non supported platforms are welcome.
 
 ### Compilation options
 
-| Option          | Description                                        |
-|:----------------|:---------------------------------------------------|
-| `bang -- fast`  | Optimized for speed                                |
-| `bang -- small` | Optimized for size                                 |
-| `bang -- debug` | Debug symbols kept, not optimized                  |
-| `bang -- san`   | Compiled with ASan and UBSan (implies clang)       |
-| `bang -- lax`   | Disable strict compilation options                 |
+| Option | Description |
+|:---|:---|
+| `bang -- fast` | Optimize for speed |
+| `bang -- small` | Optimize for size |
+| `bang -- debug` | Debug symbols kept, not optimized |
+| `bang -- san` | Compile with ASan and UBSan (implies clang) and enable `LUA_USE_APICHECK` |
+| `bang -- lax` | Disable strict compilation options |
 | `bang -- strip` | Remove debug information from precompiled bytecode |
-| `bang -- zig`   | Compile LuaX with Zig                              |
-| `bang -- gcc`   | Compile LuaX with gcc                              |
-| `bang -- clang` | Compile LuaX with clang                            |
+| `bang -- zig` | Compile LuaX with Zig |
+| `bang -- gcc` | Compile LuaX with gcc |
+| `bang -- clang` | Compile LuaX with clang |
 
 `bang` must be run before `ninja` to change the compilation options.
 

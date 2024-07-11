@@ -30,5 +30,5 @@ void set_version(lua_State *L)
     lua_setfield(L, -2, "_LUAX_VERSION");   /* _G._LUAX_VERSION = LUAX_VERSION */
     lua_pushstring(L, LUAX_DATE);           /* push LUAX_DATE */
     lua_setfield(L, -2, "_LUAX_DATE");      /* _G._LUAX_DATE = LUAX_DATE */
-    lua_remove(L, -2);                      /* remove _G */
+    lua_remove(L, -1);                      /* remove _G */
 }

@@ -24,7 +24,5 @@
 
 void set_F_metatable(lua_State *L)
 {
-    luaL_requiref(L, "F", NULL, 0);         /* push the F package */
-    lua_rotate(L, lua_gettop(L), 2);        /* swap the F package and the list to pass to F */
-    lua_call(L, 1, 1);                      /* call F(list) and leave list on the stack */
+    luaL_setmetatable(L, "luax_F_mt");
 }
