@@ -26,7 +26,6 @@ local M = {}
 local F = require "F"
 local fs = require "fs"
 local crypt = require "crypt"
-local lar = require "lar"
 
 local format = string.format
 local byte = string.byte
@@ -271,6 +270,7 @@ function M.bundle(opt)
     end
 
     if opt.target == "lib" then
+        local lar = require "lar"
         return F{
             [opt.output] = lar.lar(scripts),
         }
