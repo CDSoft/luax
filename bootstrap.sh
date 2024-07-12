@@ -47,64 +47,72 @@ found()
 }
 
 ######################################################################
-info "Step 1: OS detection"
+# OS detection
 ######################################################################
 
 OS="$(uname -s)"
 
 ######################################################################
-info "Step 2: Ninja"
+# Ninja
 ######################################################################
 
 if ! found ninja
 then
     echo "Install ninja"
     case "$OS" in
-        (Linux)     if found dnf; then sudo dnf install -y ninja-build
-                    elif found apt; then sudo apt install -f -y ninja-build
-                    elif found pacman; then sudo pacman -S --noconfirm ninja
-                    fi
-                    ;;
-        (Darwin)    sudo brew install ninja ;;
+        (Linux)
+            if   found dnf;    then sudo dnf install -y ninja-build
+            elif found apt;    then sudo apt install -f -y ninja-build
+            elif found pacman; then sudo pacman -S --noconfirm ninja
+            fi
+            ;;
+        (Darwin)
+            sudo brew install ninja
+            ;;
     esac
     found ninja || error "ninja is not installed"
 fi
 
 ######################################################################
-info "Step 3: Zig"
+# Zig
 ######################################################################
 
 ZIG_VERSION=0.13.0
 ZIG=~/.local/opt/zig/$ZIG_VERSION/zig
 
-[ -x $ZIG ] || tools/install_zig.sh $ZIG_VERSION $ZIG
-[ -x $ZIG ] || error "zig can not be installed"
+if ! [ -x $ZIG ]
+then
+    tools/install_zig.sh $ZIG_VERSION $ZIG
+    [ -x $ZIG ] || error "zig can not be installed"
+fi
 
 ######################################################################
-info "Step 4: Lua"
+# Lua
 ######################################################################
 
-case "$OS" in
-    (Linux)     CFLAGS=(-DLUA_USE_LINUX) ;;
-    (Darwin)    CFLAGS=(-DLUA_USE_MACOSX) ;;
-    (*)         CFLAGS=() ;;
-esac
-
-LUA_SOURCES=( lua/*.c )
-
-$ZIG cc -pipe -s -Oz "${CFLAGS[@]}" "${LUA_SOURCES[@]}" -o $LUA
+if ! [ -x $LUA ]
+then
+    case "$OS" in
+        (Linux)     CFLAGS=(-DLUA_USE_LINUX) ;;
+        (Darwin)    CFLAGS=(-DLUA_USE_MACOSX) ;;
+        (*)         CFLAGS=() ;;
+    esac
+    LUA_SOURCES=( lua/*.c )
+    $ZIG cc -pipe -s -Oz "${CFLAGS[@]}" "${LUA_SOURCES[@]}" -o $LUA
+fi
 
 ######################################################################
-info "Step 5: build.ninja"
+# build.ninja
 ######################################################################
 
 $LUA tools/luax.lua tools/bang.luax \
     -g "$LUA tools/luax.lua tools/bang.luax" \
     -q \
-    build.lua -o build.ninja -- "$@"
+    build.lua -o build.ninja \
+    -- "$@"
 
 ######################################################################
-info "Step 6: LuaX"
+# LuaX
 ######################################################################
 
 ninja compile
