@@ -37,7 +37,12 @@ local lua_interpreters = F{
 }
 
 local function print_targets()
-    local home = os.getenv "HOME"
+    print(("%-22s%-25s"):format("Target", "Interpeter / LuaX archive"))
+    print(("%-22s%-25s"):format(("-"):rep(21), ("-"):rep(25)))
+    local home = os.getenv(F.case(sys.os) {
+        windows = "LOCALAPPDATA",
+        [F.Nil] = "HOME",
+    })
     lua_interpreters:foreach(function(interpreter)
         local name = interpreter.name
         local exe = name
@@ -47,13 +52,12 @@ local function print_targets()
             path and path:gsub("^"..home, "~") or exe,
             path and "" or " [NOT FOUND]"))
     end)
-    print("native")
     local assets = require "luax_assets"
+    local luax_lar = assets.path and assets.path:gsub("^"..home, "~") or "luax.lar"
+    local luax_lar_found = assets.path and "" or " [NOT FOUND]"
+    print(("%-22s%s%s"):format("native", luax_lar, luax_lar_found))
     targets:foreach(function(target)
-        print(("%-22s%s%s"):format(
-            target.name,
-            assets.path and assets.path:gsub("^"..home, "~") or "luax.lar",
-            assets[target.name] and "" or " [NOT FOUND]"))
+        print(("%-22s%s%s"):format( target.name, luax_lar, luax_lar_found))
     end)
 end
 

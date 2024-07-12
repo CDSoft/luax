@@ -268,17 +268,19 @@ $ ./executable      # equivalent to pandoc lua main.lua
 
 # Available targets
 $ luax compile -t list
-luax
-lua
-pandoc
-native
-linux-x86_64
-linux-x86_64-musl
-linux-aarch64
-linux-aarch64-musl
-macos-x86_64
-macos-aarch64
-windows-x86_64
+Target                Interpeter / LuaX archive
+--------------------- -------------------------
+luax                  /path/to/luax
+lua                   /path/to/lua
+pandoc                /path/to/pandoc
+native                /path/to/luax.lar
+linux-x86_64          /path/to/luax.lar
+linux-x86_64-musl     /path/to/luax.lar
+linux-aarch64         /path/to/luax.lar
+linux-aarch64-musl    /path/to/luax.lar
+macos-x86_64          /path/to/luax.lar
+macos-aarch64         /path/to/luax.lar
+windows-x86_64        /path/to/luax.lar
 ```
 
 ## Built-in modules

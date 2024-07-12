@@ -237,7 +237,12 @@ $ ./executable      # equivalent to pandoc lua main.lua
 $ luax compile -t list
 @sh(LUAX, 'compile -t list')
     : lines()
-    : map(F.compose{F.head, string.words})
+    : mapi(function(i, line)
+        if i <= 2 then return line end
+        return line:gsub("^(%S+%s+)(%S+)$", function(target, path)
+            return target.."/path/to/"..path:basename()
+        end)
+    end)
 ```
 
 ## Built-in modules
