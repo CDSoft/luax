@@ -843,12 +843,12 @@ targets:foreach(function(target)
 
     main_libluax[target.name] = F.flatten { sources.libluax_main_c_files }
         : map(function(src)
-                return build("$tmp"/target.name/"obj"/src:chext".o") { cc[target.name], src,
-                    build_as_dll = case(target.os) {
-                        windows = "-DLUA_BUILD_AS_DLL -DLUA_LIB",
-                    },
-                }
-            end)
+            return build("$tmp"/target.name/"obj"/src:chext".o") { cc[target.name], src,
+                build_as_dll = case(target.os) {
+                    windows = "-DLUA_BUILD_AS_DLL -DLUA_LIB",
+                },
+            }
+        end)
     binary[target.name] = build("$tmp"/target.name/"bin"/appname..target.exe) { ld[target.name],
         main_luax[target.name],
         main_libluax[target.name],
@@ -928,10 +928,10 @@ acc(libraries) {
                 -- precompiled LuaX libraries
                 (function()
                     local libs = F{
-                        "$tmp"/target.name/"lib/liblua.a",
-                        "$tmp"/target.name/"lib/libluax.a",
-                        "$tmp"/target.name/"obj/luax/libluax.o",
-                        "$tmp"/target.name/"obj/luax/luax.o",
+                        liblua[target.name],
+                        libluax[target.name],
+                        main_libluax[target.name],
+                        main_luax[target.name],
                     }
                     if has_partial_ld(target) then
                         return build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs }
