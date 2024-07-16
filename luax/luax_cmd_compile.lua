@@ -190,9 +190,19 @@ local function compile_zig(tmp, current_output, target_definition)
         log("Zig", "download and install Zig to %s", zig_path)
         local archive = "zig-"..sys.os.."-"..sys.arch.."-"..zig_version..".tar.xz"
         local url = "https://ziglang.org/download"/zig_version/archive
+        local curl = fs.findpath("curl"..sys.exe)
+        local wget = fs.findpath("wget"..sys.exe)
+        local tar  = fs.findpath("tar"..sys.exe)
+        local xz   = fs.findpath("xz"..sys.exe)
+        assert(curl or wget, "curl or wget required to download Zig")
+        assert(tar and xz, "tar and xz required to install Zig")
+        assert(sh.run(
+            curl and { curl, "-fSL", quiet and "-s" or "-#", url, "-o", tmp/archive }
+            or
+            wget and { wget, quiet and "-q" or "--progress=bar", url, "-O", tmp/archive }
+        ))
         fs.mkdirs(zig_path)
-        assert(sh.run { "curl", "-fsSL", url, "-o", tmp/archive })
-        assert(sh.run { "tar", "xJf", tmp/archive, "-C", zig_path, "--strip-components", 1 })
+        assert(sh.run("tar", "xJf", tmp/archive, "-C", zig_path, "--strip-components", 1))
         if not zig:is_file() then
             help.err("Unable to install Zig to %s", zig_path)
         end
@@ -246,7 +256,7 @@ local function compile_zig(tmp, current_output, target_definition)
             none = "-rdynamic",
         },
     }
-    assert(sh.run { zig, "cc", zig_opt, libnames, tmp/app_bundle_c, "-o", current_output })
+    assert(sh.run(zig, "cc", zig_opt, libnames, tmp/app_bundle_c, "-o", current_output))
 
     print_size(current_output)
 end
