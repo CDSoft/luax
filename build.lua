@@ -914,34 +914,38 @@ acc(libraries) {
             },
         },
 
-        -- Lua headers used to compile LuaX scripts
-        build "$tmp/lib/headers.lar" { "ar",
-            "lua/lua.h",
-            "lua/luaconf.h",
-            "lua/lauxlib.h",
+        optional(cross_compilation) {
+
+            -- Lua headers used to compile LuaX scripts
+            build "$tmp/lib/headers.lar" { "ar",
+                "lua/lua.h",
+                "lua/luaconf.h",
+                "lua/lauxlib.h",
+            },
+
+            -- Binary runtimes
+            targets : map(function(target)
+                return build("$tmp/lib"/target.name..".lar") { "ar",
+
+                    -- precompiled LuaX libraries
+                    (function()
+                        local libs = F{
+                            liblua[target.name],
+                            libluax[target.name],
+                            main_libluax[target.name],
+                            main_luax[target.name],
+                        }
+                        if has_partial_ld(target) then
+                            return build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs }
+                        else
+                            return libs
+                        end
+                    end)(),
+
+                }
+            end),
+
         },
-
-        -- Binary runtimes (available with cross-compilation only)
-        (cross_compilation and targets or F{}): map(function(target)
-            return build("$tmp/lib"/target.name..".lar") { "ar",
-
-                -- precompiled LuaX libraries
-                (function()
-                    local libs = F{
-                        liblua[target.name],
-                        libluax[target.name],
-                        main_libluax[target.name],
-                        main_luax[target.name],
-                    }
-                    if has_partial_ld(target) then
-                        return build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs }
-                    else
-                        return libs
-                    end
-                end)(),
-
-            }
-        end),
 
     }
 }
