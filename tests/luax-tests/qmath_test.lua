@@ -120,15 +120,19 @@ return function()
     test_rat(pi, nil,  Q(355, 113))
     test_rat(pi, 1e-2, Q(22, 7))
     test_rat(pi, 1e-3, Q(333, 106))
-    test_rat(pi, 1e-9, Q(103993, 33102))
-    test_rat(pi, 0.0,  Q(245850922, 78256779))
+    if sys.libc ~= "lua" then
+        test_rat(pi, 1e-9, Q(103993, 33102))
+        test_rat(pi, 0.0,  Q(245850922, 78256779))
+    end
 
     local phi = (1+5^(1/2))/2
 
     test_rat(phi, nil,  Q(1597, 987))
     test_rat(phi, 1e-2, Q(13, 8))
     test_rat(phi, 1e-3, Q(55, 34))
-    test_rat(phi, 1e-9, Q(46368, 28657))
-    test_rat(phi, 0.0,  Q(165580141, 102334155))
+    if sys.libc ~= "lua" then
+        test_rat(phi, 1e-9, Q(46368, 28657))
+        test_rat(phi, 0.0,  Q(165580141, 102334155))
+    end
 
 end

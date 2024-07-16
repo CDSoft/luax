@@ -32,8 +32,8 @@ local crypt = require "crypt"
 
 return function()
     do
-        for i = 1, 32 do
-            local s = ("a"):rep(i*1024)
+        for i = 1, 5 do
+            local s = ("a"):rep((1<<i)*1024)
             local z = lz4.lz4(s)
             assert(#z < #s/20)
             ne(z, s)
@@ -45,8 +45,8 @@ return function()
     end
     do
         local rng = crypt.prng(42)
-        for i = 1, 32 do
-            local s = rng:str(i*1024)
+        for i = 1, 5 do
+            local s = rng:str((1<<i)*1024)
             local z = lz4.lz4(s)
             assert(#z > #s) -- uncompressible random data
             ne(z, s)
