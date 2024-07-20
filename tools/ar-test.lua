@@ -39,9 +39,12 @@ local function fmt(x)
         return F.mapt(fmt, x)
     end
     if type(x) == "string" then
-        x = x:lines():head()
-        if #x > 32 then x = x:take(32).."..." end
-        return ("%q"):format(x)
+        local lines = x:lines()
+        local first_line = lines:head()
+        if #lines>1 or #first_line>64 then
+            first_line = first_line:take(64).."…"
+        end
+        return first_line
     end
     return x
 end
