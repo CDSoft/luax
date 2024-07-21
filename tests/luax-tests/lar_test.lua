@@ -21,10 +21,6 @@ http://cdelord.fr/luax
 local test = require "test"
 local eq = test.eq
 
-local F = require "F"
-
-local test_num = tonumber(os.getenv"TEST_NUM")
-
 return function()
 
     local lar = require "lar"
@@ -64,25 +60,19 @@ return function()
         eq(msg:match": (.*)", "can't encode function")
     end
     do
-        local ok, msg = pcall(lar.lar, function() end, "key")
+        local ok, msg = pcall(lar.lar, function() end, {key="key"})
         eq(ok, false)
         eq(msg:match": (.*)", "can't encode function")
     end
     do
         local ok, msg = pcall(lar.unlar, "")
         eq(ok, false)
-        eq(msg:match": (.*)", "input too short")
+        eq(msg:match": (.*)", "not a LuaX archive")
     end
     do
         local ok, msg = pcall(lar.unlar, function() end)
         eq(ok, false)
-        if F.elem(test_num, {1, 2}) then
-            eq(msg:match": (.*)", "bad argument #1 to 'unlz4' (string expected, got function)")
-        elseif F.elem(test_num, {3, 4, 5}) then
-            eq(tostring(msg):match": (.*)", "bad argument #1 to 'write' (string expected, got function)")
-        end
-        io.stderr:flush()
-        io.stdout:flush()
+        eq(msg:match": (.*)", "bad argument #1 to 'unlar' (string expected, got function)")
     end
 
 end

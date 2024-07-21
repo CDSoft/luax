@@ -270,9 +270,13 @@ function M.bundle(opt)
     end
 
     if opt.target == "lib" then
+        local lar_opt = {
+            compress = opt.compress or "lz4",
+            key = opt.key,
+        }
         local lar = require "lar"
         return F{
-            [opt.output] = lar.lar(scripts),
+            [opt.output] = lar.lar(scripts, lar_opt),
         }
     end
 

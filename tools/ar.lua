@@ -29,15 +29,22 @@ local args = (function()
     local parser = require "argparse"() : name "ar.lua"
     parser : argument "inputs" : description "Files to archive" : args "*" : target "inputs"
     parser : option "-o" : description "Output file" : argname "output" : target "output"
+    parser : option "-z" : description "Compression algorithm" : argname "algo" : target "compress"
+    parser : option "-k" : description "Encryption key" : argname "key" : target "key"
     return parser:parse(arg)
 end)()
+
+local opt = {
+    compress = args.compress or "lz4",
+    key = args.key,
+}
 
 local files = F(args.inputs)
 : map(function(name)
     local content = assert(fs.read_bin(name))
     if name:ext() == ".lar" then
         -- extract the input lar file and store it as a field of the final lar file
-        return {name:basename():splitext(), assert(lar.unlar(content))}
+        return {name:basename():splitext(), assert(lar.unlar(content, opt))}
     else
         return {name:basename(), content}
     end
@@ -45,5 +52,5 @@ end)
 : from_list()
 
 if args.output then
-    fs.write_bin(args.output, lar.lar(files))
+    fs.write_bin(args.output, lar.lar(files, opt))
 end

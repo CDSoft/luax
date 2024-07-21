@@ -29,8 +29,13 @@ local serpent = require "serpent"
 local args = (function()
     local parser = require "argparse"() : name "ar-test.lua"
     parser : argument "archive" : description "Archive to test" : args "1" : target "input"
+    parser : option "-k" : description "Encryption key" : argname "key" : target "key"
     return parser:parse(arg)
 end)()
+
+local opt = {
+    key = args.key,
+}
 
 local content = assert(fs.read_bin(args.input))
 
@@ -48,5 +53,5 @@ local function fmt(x)
     end
     return x
 end
-local t = fmt(assert(lar.unlar(content)))
+local t = fmt(assert(lar.unlar(content, opt)))
 print(serpent.line(t, {comment=false, sortkeys=true, indent="    "}))

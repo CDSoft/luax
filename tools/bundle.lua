@@ -61,6 +61,10 @@ local function parse_args(args)
         : description "Encryption key"
         : argname "key"
         : target "key"
+    parser : option "-z"
+        : description "Compression algorithm"
+        : argname "zip"
+        : target "compress"
     return F{
         scripts = nil,              -- Lua script list
         output = nil,               -- output file
@@ -68,6 +72,8 @@ local function parse_args(args)
         entry = "app",              -- lib, app
         bytecode = nil,             -- compile to Lua bytecode
         strip = nil,                -- strip Lua bytecode
+        key = nil,                  -- encryption key
+        compress = nil,             -- compression algorithm
     } : patch(parser:parse(args))
 end
 

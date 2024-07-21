@@ -893,7 +893,7 @@ section "LuaX archives"
 
 rule "ar" {
     description = "AR $out",
-    command = "$luax tools/ar.lua $in -o $out",
+    command = "$luax tools/ar.lua $in -o $out $flags",
     implicit_in = {
         "$luax",
         "$lz4",
@@ -903,6 +903,7 @@ rule "ar" {
 
 acc(libraries) {
     build "$lib/luax.lar" { "ar",
+        flags = { "-z lz4" },
 
         -- Lua runtime
         build "$tmp/lib/luax.lar" {
@@ -911,6 +912,7 @@ acc(libraries) {
                 "-e lib",
                 "-t lib",
                 "-n luax",
+                "-z none",
             },
         },
 
@@ -918,6 +920,8 @@ acc(libraries) {
 
             -- Lua headers used to compile LuaX scripts
             build "$tmp/lib/headers.lar" { "ar",
+                flags = { "-z none" },
+
                 "lua/lua.h",
                 "lua/luaconf.h",
                 "lua/lauxlib.h",
@@ -926,6 +930,7 @@ acc(libraries) {
             -- Binary runtimes
             targets : map(function(target)
                 return build("$tmp/lib"/target.name..".lar") { "ar",
+                    flags = { "-z none" },
 
                     -- precompiled LuaX libraries
                     (function()

@@ -45,32 +45,66 @@ The Lua value is only encrypted if a key is provided.
 @@@]]
 local lar = {}
 
+local MAGIC = "!<LuaX archive>"
+
+local LZ4 = 1
+
 --[[@@@
 ```lua
-lar.lar(lua_value, [key])
+lar.lar(lua_value, [opt])
 ```
 Returns a string with `lua_value` serialized, compressed and encrypted.
+
+Options:
+
+- `opt.compress`: compression algorithm (`"lz4"` by default):
+
+    - `"none"`: no compression
+    - `"lz4"`: compression with LZ4 (default compression level)
+    - `"lz4-#"`: compression with LZ4 (compression level `#` with `#` between 0 and 12)
+
+- `opt.key`: encryption key (no encryption by default)
 @@@]]
 
-function lar.lar(lua_value, key)
-    local serialized = cbor.encode(lua_value, {pairs=F.pairs})
-    local compressed = assert(lz4.lz4(serialized))
-    local encrypted  = key and crypt.rc4(compressed, key) or compressed
-    return encrypted
+function lar.lar(lua_value, opt)
+    opt = opt or {}
+    local compress, level = (opt.compress or "lz4"):split"%-":unpack()
+    local compress_flag = 0
+
+    local payload = cbor.encode(lua_value, {pairs=F.pairs})
+    if compress == "lz4" then
+        compress_flag = LZ4
+        payload = assert(lz4.lz4(payload, tonumber(level)))
+    end
+    if opt.key then payload = crypt.rc4(payload, opt.key) end
+
+    return string.pack("<zBs4", MAGIC, compress_flag, payload)
 end
 
 --[[@@@
 ```lua
-lar.unlar(archive, [key])
+lar.unlar(archive, [opt])
 ```
 Returns the Lua value contained in a serialized, compressed and encrypted string.
+
+Options:
+
+- `opt.key`: encryption key (no encryption by default)
 @@@]]
 
-function lar.unlar(encrypted, key)
-    local decrypted    = key and crypt.unrc4(encrypted, key) or encrypted
-    local decompressed = assert(lz4.unlz4(decrypted))
-    local lua_value    = cbor.decode(decompressed)
-    return lua_value
+function lar.unlar(archive, opt)
+    opt = opt or {}
+
+    if type(archive)~="string" then
+        error("bad argument #1 to 'unlar' (string expected, got "..type(archive)..")")
+    end
+    local ok, magic, compress_flag, payload = pcall(string.unpack, "<zBs4", archive)
+    assert(ok and magic==MAGIC, "not a LuaX archive")
+
+    if opt.key then payload = crypt.unrc4(payload, opt.key) end
+    if compress_flag == LZ4 then payload = assert(lz4.unlz4(payload)) end
+
+    return cbor.decode(payload)
 end
 
 return lar
