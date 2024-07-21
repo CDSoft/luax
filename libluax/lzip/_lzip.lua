@@ -29,8 +29,8 @@ local sh = require "sh"
 
 function lzip.lzip(s, level)
     return fs.with_tmpdir(function(tmp)
-        local input = tmp/"data.lz"
-        local output = tmp/"data"
+        local input = tmp/"data"
+        local output = tmp/"data.lz"
         assert(fs.write_bin(input, s))
         assert(sh.run(
             "lzip -q",
@@ -43,8 +43,8 @@ end
 
 function lzip.unlzip(s)
     return fs.with_tmpdir(function(tmp)
-        local input = tmp/"data"
-        local output = tmp/"data.lz"
+        local input = tmp/"data.lz"
+        local output = tmp/"data"
         assert(fs.write_bin(input, s))
         assert(sh.run("lzip -q -d", input, "-o", output))
         return assert(fs.read_bin(output))
