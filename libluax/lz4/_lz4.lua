@@ -27,7 +27,7 @@ local lz4 = {}
 local fs = require "fs"
 local sh = require "sh"
 
-function lz4.lz4(s)
+function lz4.lz4(s, level)
     return fs.with_tmpfile(function(tmp)
         local n = #s
         assert(sh.write(
@@ -36,7 +36,8 @@ function lz4.lz4(s)
             or n <=  256*1024 and "-B5"
             or n <= 1024*1024 and "-B6"
             or                    "-B7",
-            "-BD -9 --frame-crc -f -", tmp)(s))
+            "-"..(level or 9),
+            "-BD --frame-crc -f -", tmp)(s))
         return fs.read_bin(tmp)
     end)
 end

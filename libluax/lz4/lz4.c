@@ -61,7 +61,7 @@ The compression preferences are hard coded:
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-static const char *lz4_compress(const char *src, const size_t src_len, luaL_Buffer *B)
+static const char *lz4_compress(const char *src, const size_t src_len, luaL_Buffer *B, int level)
 {
     const LZ4F_preferences_t prefs = {
         .frameInfo = {
@@ -76,7 +76,7 @@ static const char *lz4_compress(const char *src, const size_t src_len, luaL_Buff
             .dictID = 0U,
             .blockChecksumFlag = LZ4F_noBlockChecksum,
         },
-        .compressionLevel = LZ4HC_CLEVEL_DEFAULT,
+        .compressionLevel = level,
         .autoFlush = 0U,
         .favorDecSpeed = 0U,
     };
@@ -139,20 +139,26 @@ static const char *lz4_compress(const char *src, const size_t src_len, luaL_Buff
 
 /*@@@
 ```lua
-lz4.compress(data)
+lz4.compress(data, [level])
 ```
 compresses `data` with LZ4.
 The compressed data is an LZ4 frame that can be stored in a file and
 decompressed by the `lz4` command line utility.
+
+The optional `level` parameter is the compression level (from 0 to 12).
+The default compression level is 9.
 @@@*/
 
 static int compress(lua_State *L)
 {
     const char *srcBuffer = luaL_checkstring(L, 1);
     const size_t srcSize = (size_t)lua_rawlen(L, 1);
+    const int level = lua_type(L, 2) == LUA_TNUMBER
+        ? (int)luaL_checkinteger(L, 2)
+        : LZ4HC_CLEVEL_DEFAULT;
     luaL_Buffer B;
     luaL_buffinit(L, &B);
-    const char *err = lz4_compress(srcBuffer, srcSize, &B);
+    const char *err = lz4_compress(srcBuffer, srcSize, &B, level);
     if (err != NULL) {
         lua_pop(L, 1);
         return luax_pusherror(L, "LZ4 compression error: %s", err);

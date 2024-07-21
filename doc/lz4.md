@@ -21,11 +21,14 @@ The compression preferences are hard coded:
 ## LZ4 frame compression
 
 ``` lua
-lz4.compress(data)
+lz4.compress(data, [level])
 ```
 
 compresses `data` with LZ4. The compressed data is an LZ4 frame that can
 be stored in a file and decompressed by the `lz4` command line utility.
+
+The optional `level` parameter is the compression level (from 0 to 12).
+The default compression level is 9.
 
 ## LZ4 frame decompression
 

@@ -26,6 +26,7 @@ local test = require "test"
 local eq = test.eq
 local ne = test.ne
 
+local fs = require "fs"
 local lz4 = require "lz4"
 
 local crypt = require "crypt"
@@ -55,5 +56,13 @@ return function()
             eq(t, s)
             eq(z:unlz4(), t)
         end
+    end
+    do
+        local s = assert(fs.read_bin("tools/bang.luax"))
+        local level_min     = s:lz4(0)        eq(level_min:unlz4(), s)
+        local level_default = s:lz4()         eq(level_default:unlz4(), s)
+        local level_max     = s:lz4(12)       eq(level_max:unlz4(), s)
+        assert(#level_min > #level_default)
+        assert(#level_default > #level_max)
     end
 end
