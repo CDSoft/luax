@@ -268,6 +268,7 @@ Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl) and
 - [term](term.md): Terminal manipulation module
 - [crypt](crypt.md): cryptography module
 - [lz4](lz4.md): Extremely Fast Compression algorithm
+- [lzip](lzip.md): A compression library for the lzip format
 - [lpeg](lpeg.md): Parsing Expression Grammars For Lua
 - [luasocket](luasocket.md): Network support for the Lua language
 - [argparse](argparse.md): Feature-rich command line parser for Lua
@@ -344,6 +345,8 @@ script `lib/luax.lua` can be reused in pure Lua programs:
   license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))
 * **[LZ4](https://github.com/lz4/lz4)**: Extremely Fast Compression algorithm
   ([License](https://github.com/lz4/lz4/blob/dev/lib/LICENSE))
+* **[lzip](https://www.nongnu.org/lzip/)**: A compression library for the lzip
+  format ([License](http://www.gnu.org/licenses/gpl-2.0.html))
 - **[Argparse](https://github.com/mpeterv/argparse)**: a feature-rich command
   line parser for Lua ([MIT
   license](https://github.com/mpeterv/argparse/blob/master/LICENSE))

@@ -22,6 +22,7 @@ http://cdelord.fr/luax
 
 local F = require "F"
 local lz4 = require "lz4"
+local lzip = require "lzip"
 local cbor = require "cbor"
 local crypt = require "crypt"
 
@@ -38,7 +39,7 @@ local lar = require "lar"
 It contains a Lua value:
 
 - serialized with `cbor`
-- compressed with `lz4`
+- compressed with `lz4` or `lzip`
 - encrypted with `rc4`
 
 The Lua value is only encrypted if a key is provided.
@@ -47,7 +48,8 @@ local lar = {}
 
 local MAGIC = "!<LuaX archive>"
 
-local LZ4 = 1
+local LZ4  = 1
+local LZIP = 2
 
 --[[@@@
 ```lua
@@ -62,6 +64,8 @@ Options:
     - `"none"`: no compression
     - `"lz4"`: compression with LZ4 (default compression level)
     - `"lz4-#"`: compression with LZ4 (compression level `#` with `#` between 0 and 12)
+    - `"lzip"`: compression with lzip (default compression level)
+    - `"lzip-#"`: compression with lzip (compression level `#` with `#` between 0 and 12)
 
 - `opt.key`: encryption key (no encryption by default)
 @@@]]
@@ -75,6 +79,9 @@ function lar.lar(lua_value, opt)
     if compress == "lz4" then
         compress_flag = LZ4
         payload = assert(lz4.lz4(payload, tonumber(level)))
+    elseif compress == "lzip" then
+        compress_flag = LZIP
+        payload = assert(lzip.lzip(payload, tonumber(level)))
     end
     if opt.key then payload = crypt.rc4(payload, opt.key) end
 
@@ -103,6 +110,7 @@ function lar.unlar(archive, opt)
 
     if opt.key then payload = crypt.unrc4(payload, opt.key) end
     if compress_flag == LZ4 then payload = assert(lz4.unlz4(payload)) end
+    if compress_flag == LZIP then payload = assert(lzip.unlzip(payload)) end
 
     return cbor.decode(payload)
 end

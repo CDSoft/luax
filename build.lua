@@ -243,6 +243,8 @@ local include_path = F{
     "$tmp",
     "lua",
     "ext/c/lz4/lib",
+    "ext/c/lzlib/lib",
+    "ext/c/lzlib/lib/inc",
     "libluax",
 }
 
@@ -591,6 +593,8 @@ local sources = {
     luax_c_files = ls "libluax/**.c",
     third_party_c_files = ls "ext/c/**.c"
         : filter(function(name) return not name:match "lz4/programs" end)
+        : filter(function(name) return not name:match "lzlib/lib/inc" end)
+        : filter(function(name) return not name:match "lzlib/programs" end)
         : difference(linux_only)
         : difference(windows_only)
         : difference(ignored_sources),
@@ -633,6 +637,19 @@ build "$lz4" { ld.host,
     ls "ext/c/lz4/**.c"
     : map(function(src)
         return build("$tmp/obj/lz4"/src:chext".o") { cc.host, src }
+    end),
+}
+
+--===================================================================
+section "lzip cli"
+---------------------------------------------------------------------
+
+var "lzip" "$tmp/lzip"
+
+build "$lzip" { ld.host,
+    ( ls "ext/c/lzlib/programs/*.c" .. ls "ext/c/lzlib/lib/*.c" )
+    : map(function(src)
+        return build("$tmp/obj/lzip"/src:chext".o") { cc.host, src }
     end),
 }
 
@@ -698,6 +715,7 @@ rule "bundle" {
     implicit_in = {
         "$lua",
         "$lz4",
+        "$lzip",
         "tools/bundle.lua",
         "luax/luax_bundle.lua",
         "$luax_config_lua",
@@ -720,6 +738,7 @@ rt { luax="libluax/import/import.lua",          lua="libluax/import/import.lua" 
 rt {                                            lua="libluax/linenoise/linenoise.lua"                       }
 rt { luax="libluax/lar/lar.lua",                lua="libluax/lar/lar.lua"                                   }
 rt { luax="libluax/lz4/lz4.lua",                lua={"libluax/lz4/lz4.lua", "libluax/lz4/_lz4.lua"}         }
+rt { luax="libluax/lzip/lzip.lua",              lua={"libluax/lzip/lzip.lua", "libluax/lzip/_lzip.lua"}     }
 rt {                                            lua="libluax/mathx/mathx.lua"                               }
 rt {                                            lua="libluax/ps/ps.lua"                                     }
 rt { luax="libluax/qmath/qmath.lua",            lua={"libluax/qmath/qmath.lua", "libluax/qmath/_qmath.lua"} }
@@ -897,13 +916,18 @@ rule "ar" {
     implicit_in = {
         "$luax",
         "$lz4",
+        "$lzip",
         "tools/ar.lua",
     },
 }
 
 acc(libraries) {
     build "$lib/luax.lar" { "ar",
-        flags = { "-z lz4" },
+        flags = case(mode) {
+            fast  = "-z lzip-9",
+            small = "-z lzip-9",
+            debug = "-z lzip-0",
+        },
 
         -- Lua runtime
         build "$tmp/lib/luax.lar" {
@@ -989,6 +1013,7 @@ rule "luax-bundle" {
     implicit_in = {
         "$lua",
         "$lz4",
+        "$lzip",
         "luax/luax.lua",
         "$lib/luax.lua",
         "$luax_config_lua",
@@ -1139,6 +1164,7 @@ acc(test) {
             "$lua",
             "$lib/luax.lua",
             "$lz4",
+            "$lzip",
             libraries,
             test_sources,
             imported_test_sources,
@@ -1163,6 +1189,7 @@ acc(test) {
             "$lua",
             "$bin/luax.lua",
             "$lz4",
+            "$lzip",
             test_sources,
             imported_test_sources,
         },
@@ -1186,6 +1213,7 @@ acc(test) {
             "$lua",
             "$lib/luax.lua",
             "$lz4",
+            "$lzip",
             libraries,
             test_sources,
             imported_test_sources,

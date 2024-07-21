@@ -35,6 +35,7 @@ update_all()
     update_argparse     master
     update_serpent      master
     update_lz4          release
+    update_lzlib        1.14
     update_cbor
     update_linenoise    utf8-support # switch to "master" when the UTF-8 support is merged
     #update_json         master
@@ -229,6 +230,39 @@ update_lz4()
     mkdir -p ext/c/lz4/lib ext/c/lz4/programs
     unzip -j "$TMP/$LZ4_ARCHIVE" '*/lib/*.[ch]' '*/lib/LICENSE' -d ext/c/lz4/lib
     unzip -j "$TMP/$LZ4_ARCHIVE" '*/programs/*.[ch]' '*/programs/COPYING' -d ext/c/lz4/programs
+}
+
+update_lzlib()
+{
+    local LZLIB_VERSION="$1"
+    local LZLIB_ARCHIVE="lzlib-$LZLIB_VERSION.tar.gz"
+    local LZLIB_URL="http://download.savannah.gnu.org/releases/lzip/lzlib/$LZLIB_ARCHIVE"
+
+    mkdir -p "$TMP"
+    download "$LZLIB_URL" "$TMP/$LZLIB_ARCHIVE"
+
+    rm -rf ext/c/lzlib
+    mkdir -p ext/c/lzlib/lib ext/c/lzlib/lib/inc ext/c/lzlib/programs
+    tar -xzf "$TMP/$LZLIB_ARCHIVE" -C ext/c/lzlib
+
+    mv "ext/c/lzlib/lzlib-$LZLIB_VERSION"/COPYING* ext/c/lzlib/
+    mv "ext/c/lzlib/lzlib-$LZLIB_VERSION"/AUTHORS ext/c/lzlib/
+
+    mv "ext/c/lzlib/lzlib-$LZLIB_VERSION"/lzlib.* ext/c/lzlib/lib/
+    mv "ext/c/lzlib/lzlib-$LZLIB_VERSION"/lzip.h ext/c/lzlib/lib/
+
+    mv "ext/c/lzlib/lzlib-$LZLIB_VERSION"/cbuffer.* ext/c/lzlib/lib/inc
+    mv "ext/c/lzlib/lzlib-$LZLIB_VERSION"/decoder.* ext/c/lzlib/lib/inc
+    mv "ext/c/lzlib/lzlib-$LZLIB_VERSION"/encoder_base.* ext/c/lzlib/lib/inc
+    mv "ext/c/lzlib/lzlib-$LZLIB_VERSION"/encoder.* ext/c/lzlib/lib/inc
+    mv "ext/c/lzlib/lzlib-$LZLIB_VERSION"/fast_encoder.* ext/c/lzlib/lib/inc
+
+    mv "ext/c/lzlib/lzlib-$LZLIB_VERSION"/minilzip.* ext/c/lzlib/programs/
+    mv "ext/c/lzlib/lzlib-$LZLIB_VERSION"/carg_parser.* ext/c/lzlib/programs/
+
+    sed -i "1s/^/#define PROGVERSION \"$LZLIB_VERSION\"\n/" ext/c/lzlib/programs/minilzip.c
+
+    rm -rf "ext/c/lzlib/lzlib-$LZLIB_VERSION"
 }
 
 update_cbor()

@@ -20,33 +20,35 @@ http://cdelord.fr/luax
 
 --@LIB
 
--- Pure Lua implementation of lz4.lua
+-- Pure Lua implementation of lzip.lua
 
-local lz4 = {}
+local lzip = {}
 
 local fs = require "fs"
 local sh = require "sh"
 
-function lz4.lz4(s, level)
-    return fs.with_tmpfile(function(tmp)
-        local n = #s
-        assert(sh.write(
-            "lz4 -q -z",
-               n <=   64*1024 and "-B4"
-            or n <=  256*1024 and "-B5"
-            or n <= 1024*1024 and "-B6"
-            or                    "-B7",
+function lzip.lzip(s, level)
+    return fs.with_tmpdir(function(tmp)
+        local input = tmp/"data.lz"
+        local output = tmp/"data"
+        assert(fs.write_bin(input, s))
+        assert(sh.run(
+            "lzip -q",
             "-"..(level or 9),
-            "-BD --frame-crc -f -", tmp)(s))
-        return assert(fs.read_bin(tmp))
+            input,
+            "-o", output))
+        return assert(fs.read_bin(output))
     end)
 end
 
-function lz4.unlz4(s)
-    return fs.with_tmpfile(function(tmp)
-        assert(sh.write("lz4 -q -d -f -", tmp)(s))
-        return assert(fs.read_bin(tmp))
+function lzip.unlzip(s)
+    return fs.with_tmpdir(function(tmp)
+        local input = tmp/"data"
+        local output = tmp/"data.lz"
+        assert(fs.write_bin(input, s))
+        assert(sh.run("lzip -q -d", input, "-o", output))
+        return assert(fs.read_bin(output))
     end)
 end
 
-return lz4
+return lzip

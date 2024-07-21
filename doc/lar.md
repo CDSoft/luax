@@ -8,7 +8,7 @@ local lar = require "lar"
 contains a Lua value:
 
 - serialized with `cbor`
-- compressed with `lz4`
+- compressed with `lz4` or `lzip`
 - encrypted with `rc4`
 
 The Lua value is only encrypted if a key is provided.
@@ -26,6 +26,9 @@ Options:
   - `"none"`: no compression
   - `"lz4"`: compression with LZ4 (default compression level)
   - `"lz4-#"`: compression with LZ4 (compression level `#` with `#`
+    between 0 and 12)
+  - `"lzip"`: compression with lzip (default compression level)
+  - `"lzip-#"`: compression with lzip (compression level `#` with `#`
     between 0 and 12)
 
 - `opt.key`: encryption key (no encryption by default)

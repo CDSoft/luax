@@ -26,7 +26,7 @@ local lz4 = require "lz4"
 
 LZ4 is an extremely fast compression algorithm by Yann Collet.
 
-The source code in on Github: <https://github.com/lz4/lz4>.
+The source code is on Github: <https://github.com/lz4/lz4>.
 
 More information on <https://www.lz4.org>.
 @@@*/
@@ -45,11 +45,13 @@ More information on <https://www.lz4.org>.
 /***************************************************************************@@@
 ## LZ4 compression preferences
 
-The compression preferences are hard coded:
+Some compression preferences are hard coded:
 
+- block size
 - linked blocks
 - frame checksum enabled
-- default compression level
+
+Only the compression level can be changed.
 
 @@@*/
 
