@@ -1128,6 +1128,7 @@ local default_options = {
     luax = "luax",
     target = "luax",
     flags = {},
+    implicit_in = Nil,
 }
 
 local rules = setmetatable({}, {
@@ -1893,7 +1894,7 @@ return function()
 
 end
 ]])
-libs["version"] = lib(".build/version", [=[return [[1.2.1]]]=])
+libs["version"] = lib(".build/version", [=[return [[1.2.2]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"
