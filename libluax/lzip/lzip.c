@@ -45,6 +45,10 @@ The source code is available at <https://www.nongnu.org/lzip/lzlib.html>.
 ## lzip compression
 @@@*/
 
+#define LZIP_CLEVEL_MIN         0
+#define LZIP_CLEVEL_DEFAULT     6
+#define LZIP_CLEVEL_MAX         9
+
 #define COMPRESS_BLOCK_SIZE     (64*1024)
 
 struct Lzma_options {
@@ -52,23 +56,23 @@ struct Lzma_options {
     int match_len_limit;        /* 5 .. 273 */
 };
 
+static const struct Lzma_options option_mapping[LZIP_CLEVEL_MAX+1] = {
+    {   65535,  16 },       /* -0 (65535,16 chooses fast encoder) */
+    { 1 << 20,   5 },       /* -1 */
+    { 3 << 19,   6 },       /* -2 */
+    { 1 << 21,   8 },       /* -3 */
+    { 3 << 20,  12 },       /* -4 */
+    { 1 << 22,  20 },       /* -5 */
+    { 1 << 23,  36 },       /* -6 */
+    { 1 << 24,  68 },       /* -7 */
+    { 3 << 23, 132 },       /* -8 */
+    { 1 << 25, 273 },       /* -9 */
+};
+
 static const char *lzip_compress(const char *src, const size_t src_len, luaL_Buffer *B, int level)
 {
-    const struct Lzma_options option_mapping[] = {
-        {   65535,  16 },       /* -0 (65535,16 chooses fast encoder) */
-        { 1 << 20,   5 },       /* -1 */
-        { 3 << 19,   6 },       /* -2 */
-        { 1 << 21,   8 },       /* -3 */
-        { 3 << 20,  12 },       /* -4 */
-        { 1 << 22,  20 },       /* -5 */
-        { 1 << 23,  36 },       /* -6 */
-        { 1 << 24,  68 },       /* -7 */
-        { 3 << 23, 132 },       /* -8 */
-        { 1 << 25, 273 },       /* -9 */
-    };
-
-    level = level < 0 ? 0
-          : (size_t)level >= (sizeof(option_mapping)/sizeof(option_mapping[0])) ? sizeof(option_mapping)/sizeof(option_mapping[0])-1
+    level = level < LZIP_CLEVEL_MIN ? LZIP_CLEVEL_MIN
+          : level > LZIP_CLEVEL_MAX ? LZIP_CLEVEL_MAX
           : level;
 
     const int dictionary_size = option_mapping[level].dictionary_size;
@@ -118,7 +122,7 @@ static int compress(lua_State *L)
     const size_t srcSize = (size_t)lua_rawlen(L, 1);
     const int level = lua_type(L, 2) == LUA_TNUMBER
         ? (int)luaL_checkinteger(L, 2)
-        : 6;
+        : LZIP_CLEVEL_DEFAULT;
     luaL_Buffer B;
     luaL_buffinit(L, &B);
     const char *err = lzip_compress(srcBuffer, srcSize, &B, level);
