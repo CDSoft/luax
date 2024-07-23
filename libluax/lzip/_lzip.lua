@@ -34,7 +34,7 @@ function lzip.lzip(s, level)
         assert(fs.write_bin(input, s))
         assert(sh.run(
             "lzip -q",
-            "-"..(level or 9),
+            "-"..(level or 6),
             input,
             "-o", output))
         return assert(fs.read_bin(output))

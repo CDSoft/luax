@@ -60,9 +60,10 @@ return function()
     do
         local s = assert(fs.read_bin("tools/bang.luax"))
         local level_min     = s:lzip(0)        eq(level_min:unlzip(), s)
-        local level_default = s:lzip()         eq(level_default:unlzip(), s)
+        local level_default = s:lzip(6)        eq(level_default:unlzip(), s)
         local level_max     = s:lzip(9)        eq(level_max:unlzip(), s)
         assert(#level_min > #level_default)
-        assert(#level_default >= #level_max)
+        assert(#level_default > #level_max)
+        eq(level_default, s:lzip())
     end
 end
