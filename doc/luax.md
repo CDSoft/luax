@@ -66,13 +66,13 @@ Contributions on non supported platforms are welcome.
 
 `bang` must be run before `ninja` to change the compilation options.
 
-`lua tools/bang.lua` can be used instead of
+`lua tools/bang.luax` can be used instead of
 [bang](https://cdelord.fr/bang) if it is not installed.
 
 The default compilation options are `fast` and `zig`.
 
-Zig is downloaded by the ninja file. gcc and clang must be already
-installed.
+Zig is downloaded by the ninja file or `bootstrap.sh`. gcc and clang
+must be already installed.
 
 These options can also be given to the bootstrap script. E.g.:
 `./bootstrap.sh small strip`.
@@ -126,7 +126,7 @@ scripts.
 ## Precompiled LuaX binaries
 
 In case precompiled binaries are needed (GNU/Linux, MacOS, Windows),
-some can be found at [cdelord.fr/hey](http://cdelord.fr/hey). These
+some can be found at [cdelord.fr/pub](http://cdelord.fr/pub). These
 archives contain LuaX as well as some other softwares more or less
 related to LuaX.
 
@@ -159,6 +159,8 @@ installed and can be copied anywhere you want.
 - `$PREFIX/lib/libluax.dll`: Windows LuaX shared libraries
 - `$PREFIX/lib/luax.lua`: a pure Lua reimplementation of some LuaX
   libraries, usable in any Lua 5.4 interpreter.
+- `$PREFIX/lib/luax.lar`: a compressed archive containing the
+  precompiled LuaX runtimes for all supported platforms
 
 ## Usage
 
@@ -244,7 +246,7 @@ are recommended.
 
 LuaX can also embed files that are not Lua scripts. These files are
 embedded as Lua modules that return the file content as a string. In
-this case, the module name if the file name.
+this case, the module name is the file name.
 
 **Note for Windows users**: since Windows does not support shebangs, a
 script `script` shall be explicitly launched with `luax` (e.g.:
