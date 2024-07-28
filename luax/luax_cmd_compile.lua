@@ -171,6 +171,9 @@ end
 
 -- Compile LuaX scripts with LuaX and Zig
 local function compile_zig(tmp, current_output, target_definition)
+    if current_output:ext():lower() ~= target_definition.exe then
+        current_output = current_output..target_definition.exe
+    end
     if not quiet then print() end
     log("target", "%s", target_definition.name)
     log("output", "%s", current_output)
