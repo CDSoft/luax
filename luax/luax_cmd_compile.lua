@@ -259,7 +259,9 @@ local function compile_zig(tmp, current_output, target_definition)
             none = "-rdynamic",
         },
     }
-    assert(sh.run(zig, "cc", zig_opt, libnames, tmp/app_bundle_c, "-o", current_output))
+    local tmp_output = tmp/current_output:basename()
+    assert(sh.run(zig, "cc", zig_opt, libnames, tmp/app_bundle_c, "-o", tmp_output))
+    assert(fs.copy(tmp_output, current_output))
 
     print_size(current_output)
 end
