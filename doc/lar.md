@@ -29,7 +29,7 @@ Options:
     between 0 and 12)
   - `"lzip"`: compression with lzip (default compression level)
   - `"lzip-#"`: compression with lzip (compression level `#` with `#`
-    between 0 and 12)
+    between 0 and 9)
 
 - `opt.key`: encryption key (no encryption by default)
 

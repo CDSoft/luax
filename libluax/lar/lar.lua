@@ -48,8 +48,23 @@ local lar = {}
 
 local MAGIC = "!<LuaX archive>"
 
+local RAW  = 0
 local LZ4  = 1
 local LZIP = 2
+
+local compression_options = {
+    { algo=nil,    flag=RAW,  compress=F.id,      decompress=F.id        },
+    { algo="lz4",  flag=LZ4,  compress=lz4.lz4,   decompress=lz4.unlz4   },
+    { algo="lzip", flag=LZIP, compress=lzip.lzip, decompress=lzip.unlzip },
+}
+
+local function find_options(x)
+    for i = 1, #compression_options do
+        local opt = compression_options[i]
+        if x==opt.algo or x==opt.flag then return opt end
+    end
+    return compression_options[1]
+end
 
 --[[@@@
 ```lua
@@ -65,27 +80,21 @@ Options:
     - `"lz4"`: compression with LZ4 (default compression level)
     - `"lz4-#"`: compression with LZ4 (compression level `#` with `#` between 0 and 12)
     - `"lzip"`: compression with lzip (default compression level)
-    - `"lzip-#"`: compression with lzip (compression level `#` with `#` between 0 and 12)
+    - `"lzip-#"`: compression with lzip (compression level `#` with `#` between 0 and 9)
 
 - `opt.key`: encryption key (no encryption by default)
 @@@]]
 
-function lar.lar(lua_value, opt)
-    opt = opt or {}
-    local compress, level = (opt.compress or "lz4"):split"%-":unpack()
-    local compress_flag = 0
+function lar.lar(lua_value, lar_opt)
+    lar_opt = lar_opt or {}
+    local algo, level = (lar_opt.compress or "lz4"):split"%-":unpack()
+    local compress_opt = find_options(algo)
 
     local payload = cbor.encode(lua_value, {pairs=F.pairs})
-    if compress == "lz4" then
-        compress_flag = LZ4
-        payload = assert(lz4.lz4(payload, tonumber(level)))
-    elseif compress == "lzip" then
-        compress_flag = LZIP
-        payload = assert(lzip.lzip(payload, tonumber(level)))
-    end
-    if opt.key then payload = crypt.rc4(payload, opt.key) end
+    payload = assert(compress_opt.compress(payload, tonumber(level)))
+    if lar_opt.key then payload = crypt.rc4(payload, lar_opt.key) end
 
-    return string.pack("<zBs4", MAGIC, compress_flag, payload)
+    return string.pack("<zBs4", MAGIC, compress_opt.flag, payload)
 end
 
 --[[@@@
@@ -109,8 +118,8 @@ function lar.unlar(archive, opt)
     assert(ok and magic==MAGIC, "not a LuaX archive")
 
     if opt.key then payload = crypt.unrc4(payload, opt.key) end
-    if compress_flag == LZ4 then payload = assert(lz4.unlz4(payload)) end
-    if compress_flag == LZIP then payload = assert(lzip.unlzip(payload)) end
+    local compress_opt = find_options(compress_flag)
+    payload = assert(compress_opt.decompress(payload))
 
     return cbor.decode(payload)
 end
