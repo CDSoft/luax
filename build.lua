@@ -452,7 +452,10 @@ targets:foreach(function(target)
             macos   = "-DLUA_USE_MACOSX",
             windows = {},
         },
-        optional(san) "-DLUA_USE_APICHECK",
+        optional(san) {
+            "-DLUAI_ASSERT",
+            "-DLUA_USE_APICHECK",
+        },
     }
     if target.name == sys.name then
         compile_flags {
