@@ -33,16 +33,14 @@ package.path = table.concat({
     "libluax/crypt/?.lua",
     "libluax/F/?.lua",
     "libluax/fs/?.lua",
-    "libluax/lar/?.lua",
-    "libluax/lz4/?.lua",
     "libluax/mathx/?.lua",
     "libluax/sh/?.lua",
     "libluax/sys/?.lua",
 
     "ext/lua/argparse/?.lua",
-    "ext/lua/cbor/?.lua",
 }, ";")
 
+-- stubs for modules generated at compile time
 package.preload.luax_config = function()
     return { lua_init = {} }
 end
