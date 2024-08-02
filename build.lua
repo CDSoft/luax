@@ -295,8 +295,7 @@ local sanitizer_options = optional(san) {
 }
 
 local host_cflags = {
-    "-std=gnu2x",
-    "-O3",
+    "-O2",
     "-pipe",
     "-fPIC",
     include_path:map(F.prefix"-I"),
@@ -305,21 +304,6 @@ local host_cflags = {
         macos = "-DLUA_USE_MACOSX",
         windows = {},
     },
-    optional(san) "-DLUA_USE_APICHECK",
-    optional(strict) {
-        "-Werror",
-        "-Wall",
-        "-Wextra",
-    },
-    case(compiler) {
-        zig = {
-            "-Wno-constant-logical-operand",
-        },
-        gcc = {},
-        clang = {
-            "-Wno-constant-logical-operand",
-        },
-    },
 }
 
 local host_ldflags = {
@@ -327,13 +311,6 @@ local host_ldflags = {
     optional(is_dynamic(sys)) "-rdynamic",
     "-s",
     "-lm",
-    case(compiler) {
-        zig = {},
-        gcc = {
-            "-Wstringop-overflow=0",
-        },
-        clang = {},
-    },
 }
 
 local cflags = {
@@ -341,7 +318,7 @@ local cflags = {
     case(mode) {
         fast  = "-O3",
         small = "-Os",
-        debug = "-g",
+        debug = "-g -Og",
     },
     "-pipe",
     "-fPIC",
@@ -921,7 +898,7 @@ acc(libraries) {
         flags = case(mode) {
             fast  = "-z lzip-9",
             small = "-z lzip-9",
-            debug = "-z lzip-0",
+            debug = "-z lz4-0",
         },
 
         -- Lua runtime
