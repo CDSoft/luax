@@ -889,20 +889,15 @@ targets:foreach(function(target)
 
 end)
 
-rule "cp" {
-    description = "CP $out",
-    command = "cp -d --preserve=mode -f $in $out",
-}
-
 var "luax" ("$bin"/binary[sys.name]:basename())
 
 acc(binaries) {
-    build "$luax" { "cp", binary[sys.name] }
+    build.cp "$luax" { binary[sys.name] }
 }
 
 if shared_library[sys.name] then
     acc(libraries) {
-        build("$lib"/shared_library[sys.name]:basename()) { "cp", shared_library[sys.name] }
+        build.cp("$lib"/shared_library[sys.name]:basename()) { shared_library[sys.name] }
     }
 end
 
@@ -1380,7 +1375,7 @@ end
 
 local dist = targets : map(function(target)
     local cp_to = F.curry(function(dest, file)
-        return build("$dist"/target.name/dest/file:basename()) { "cp", file }
+        return build.cp("$dist"/target.name/dest/file:basename()) { file }
     end)
     local bin = {binary[target.name]}
     local lib = shared_library[target.name] and {shared_library[target.name]} or {}
