@@ -146,6 +146,8 @@ end)
 mode = F.default("fast", mode)
 if san then compiler = "clang" end
 
+if mode ~= "fast" then use_lto = false end
+
 compiler = F.default("zig", compiler)
 
 -- Only zig can cross-compile LuaX for all targets
@@ -160,9 +162,13 @@ if san and compiler~="clang" then
 end
 
 section("Compilation options")
-comment(("Compilation mode: %s"):format(mode))
-comment(("Compiler        : %s"):format(compiler))
-comment(("Sanitizers      : %s"):format(san and "ASan and UBSan" or "none"))
+comment(("Compilation mode  : %s"):format(F{mode, use_lto and "+ LTO" or {}}:flatten():unwords()))
+comment(("Compiler          : %s"):format(compiler))
+comment(("Sanitizers        : %s"):format(san and "ASan and UBSan" or "none"))
+comment(("Compilation checks: %s"):format(strict and "strict" or "lax"))
+comment(("Lua code          : %s"):format(case(bytecode) { ["-b"] = "bytecode",
+                                                           ["-s"] = "stripped bytecode",
+                                                           [Nil]  = "source code" }))
 
 local function is_dynamic(target) return target.libc~="musl" and not san end
 local function has_partial_ld(target) return target.os=="linux" or target.os=="macos" end
