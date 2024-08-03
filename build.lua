@@ -162,7 +162,7 @@ end
 section("Compilation options")
 comment(("Compilation mode: %s"):format(mode))
 comment(("Compiler        : %s"):format(compiler))
-comment(("Sanitizers      : %s"):format(san and "ASan and UbSan" or "none"))
+comment(("Sanitizers      : %s"):format(san and "ASan and UBSan" or "none"))
 
 local function is_dynamic(target) return target.libc~="musl" and not san end
 local function has_partial_ld(target) return target.os=="linux" or target.os=="macos" end
