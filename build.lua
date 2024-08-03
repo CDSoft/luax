@@ -87,6 +87,7 @@ bang -- debug       Compiled with debug informations and no optimization
 bang -- san         Compiled with ASan and UBSan (implies clang)
 bang -- lax         Disable strict compilation options
 bang -- strip       Remove debug information from precompiled bytecode
+bang -- nolto       Disable LTO optimizations
 
 $(title "Compiler")
 
@@ -110,6 +111,7 @@ local mode = nil -- fast, small, debug
 local compiler = nil -- zig, gcc, clang
 local san = nil
 local strict = true -- strict compilation options and checks
+local use_lto = true
 
 local bytecode = "-b"
 
@@ -133,6 +135,8 @@ F.foreach(arg, function(a)
         san   = function() san = true end,
         lax   = function() strict = false end,
         strip = function() bytecode = "-s" end,
+        lto   = function() use_lto = true end,
+        nolto = function() use_lto = false end,
         [Nil] = function()
             F.error_without_stack_trace(a..": unknown parameter\n\n"..usage, 1)
         end,
@@ -248,7 +252,7 @@ local include_path = F{
     "libluax",
 }
 
-local lto_opt = optional(strict) {
+local lto_opt = optional(strict and use_lto) {
     case(compiler) {
         zig   = "-flto=thin",
         gcc   = "-flto",

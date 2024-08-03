@@ -68,6 +68,7 @@ Option              Description
 `bang -- san`       Compile with ASan and UBSan (implies clang) and enable `LUA_USE_APICHECK`
 `bang -- lax`       Disable strict compilation options
 `bang -- strip`     Remove debug information from precompiled bytecode
+`bang -- nolto`     Disable LTO optimizations
 `bang -- zig`       Compile LuaX with Zig
 `bang -- gcc`       Compile LuaX with gcc
 `bang -- clang`     Compile LuaX with clang
