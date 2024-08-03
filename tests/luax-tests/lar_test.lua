@@ -57,22 +57,22 @@ return function()
     do
         local ok, msg = pcall(lar.lar, function() end)
         eq(ok, false)
-        eq(msg:match": (.*)", "can't encode function")
+        eq(msg:match": (.*)" or msg, "can't encode function")
     end
     do
         local ok, msg = pcall(lar.lar, function() end, {key="key"})
         eq(ok, false)
-        eq(msg:match": (.*)", "can't encode function")
+        eq(msg:match": (.*)" or msg, "can't encode function")
     end
     do
         local ok, msg = pcall(lar.unlar, "")
         eq(ok, false)
-        eq(msg:match": (.*)", "not a LuaX archive")
+        eq(msg:match": (.*)" or msg, "not a LuaX archive")
     end
     do
         local ok, msg = pcall(lar.unlar, function() end)
         eq(ok, false)
-        eq(msg:match": (.*)", "bad argument #1 to 'unlar' (string expected, got function)")
+        eq(msg:match": (.*)" or msg, "bad argument #1 to 'unlar' (string expected, got function)")
     end
 
 end
