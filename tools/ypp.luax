@@ -43,7 +43,7 @@ return setmetatable({}, {
     },
 })
 ]=])
-libs["comment"] = lib("src/comment.lua", [====[--[[
+libs["comment"] = lib("src/comment.lua", [======[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -70,21 +70,21 @@ http://cdelord.fr/ypp
 
 E.g.:
 
-?(false)
+@q[=====[
 ```
 @comment [===[
 This paragraph is a comment
 and is not part of the output document.
 ]===]
 ```
-?(true)
+]=====]
 @@@]]
 
 local F = require "F"
 
 return F.const ""
-]====])
-libs["convert"] = lib("src/convert.lua", [====[--[[
+]======])
+libs["convert"] = lib("src/convert.lua", [======[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -117,7 +117,7 @@ This function requires a Pandoc Lua interpreter. The conversion is made by [Pand
 The `opts` parameter is optional.
 By default Pandoc converts documents from and to Markdown and the header level is not modified.
 
-?(false)
+@q[=====[
 The `convert` macro can also be called as a curried function (arguments can be swapped). E.g.:
 
     @convert {from="csv"} (script.python [===[
@@ -130,7 +130,7 @@ Notice that `convert` can be implicitely called by `include` or `script` by givi
     # python script that produces a CSV document
     ]===]
 
-?(true)
+]=====]
 @@@]]
 
 local convert = flex.str(function(content, opts)
@@ -165,8 +165,8 @@ return setmetatable({}, {
         if_required = convert_if_required
     },
 })
-]====])
-libs["doc"] = lib("src/doc.lua", [=[--[[
+]======])
+libs["doc"] = lib("src/doc.lua", [======[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -200,19 +200,22 @@ local convert = require "convert"
     - `opts.to` is the destination format of the documentation (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
     - `opts.shift` is the offset applied to the header levels. The default offset is `0`.
 
-?(false)
+@q[=====[
 The `doc` macro can also be called as a curried function (arguments can be swapped). E.g.:
 
     @doc "file.c" {pattern="///(.-)///"}
 
-?(true)
+]=====]
 @@@]]
 
-local default_pattern = ("@"):rep(3).."(.-)"..("@"):rep(3)
+local function default_pattern()
+    local tag = ("@"):rep(3)
+    return tag.."(.-)"..tag
+end
 
 return flex.str(function(filename, opts)
     opts = opts or {}
-    local pattern = opts.pattern or default_pattern
+    local pattern = opts.pattern or default_pattern()
     local content = ypp.with_inputfile(filename, function(full_filepath)
         local s = ypp.read_file(full_filepath)
         local output = F{}
@@ -224,7 +227,7 @@ return flex.str(function(filename, opts)
     content = convert.if_required(content, opts)
     return content
 end)
-]=])
+]======])
 libs["file"] = lib("src/file.lua", [=[--[[
 This file is part of ypp.
 
@@ -403,7 +406,7 @@ return {
     array = flex_array,
 }
 ]=])
-libs["image"] = lib("src/image.lua", [====[--[[
+libs["image"] = lib("src/image.lua", [======[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -511,7 +514,7 @@ An optional table can be given before `source` to set some options:
 
 Example:
 
-?(false)
+@q[=====[
 ``` markdown
 ![ypp image generation example](@image.dot [===[
 digraph {
@@ -521,7 +524,7 @@ digraph {
 }
 ]===])
 ```
-?(true)
+]=====]
 
 is rendered as
 
@@ -714,8 +717,8 @@ return define {
         output = function(path) output_file = path end,
     },
 }
-]====])
-libs["include"] = lib("src/include.lua", [=[--[[
+]======])
+libs["include"] = lib("src/include.lua", [======[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -753,13 +756,13 @@ local convert = require "convert"
 
 * `include.raw(filename, [opts])`: like `include` but the content of the file is not preprocessed with `ypp`.
 
-?(false)
+@q[=====[
 The `include` macro can also be called as a curried function (arguments can be swapped). E.g.:
 
     @include "file.csv" {from="csv"}
     @include {from="csv"} "file.csv"
 
-?(true)
+]=====]
 @@@]]
 
 local function include(filename, opts, prepro)
@@ -782,7 +785,7 @@ return setmetatable({
 }, {
     __call = function(_, ...) return flex_include(...) end,
 })
-]=])
+]======])
 libs["parser"] = lib("src/parser.lua", [===[--[[
 This file is part of ypp.
 
@@ -834,30 +837,26 @@ local function traceback(tag, expr, conf)
 end
 
 local function eval(s, tag, expr, state)
-    if state.on then
-        local msgh = traceback(tag, expr, state.conf)
-        local expr_tag = state.conf.expr -- must be read before eval since they may be modified by the macro function
-        local stat_tag = state.conf.stat
-        local ok_compile, chunk, compile_error = xpcall(load, msgh, (tag==expr_tag and "return " or "")..expr, expr, "t")
-        if not ok_compile then return s end -- load execution error
-        if not chunk then -- compilation error
-            msgh(compile_error)
-            return s
-        end
-        local ok_eval, val = xpcall(chunk, msgh)
-        if not ok_eval then return s end
-        if val == nil and tag==expr_tag and expr:match("^[%w_]+$") then return s end
-        if tag == stat_tag then
-            if val ~= nil then
-                return format_value(val)
-            else
-                return ""
-            end
-        end
-        return format_value(val)
-    else
+    local msgh = traceback(tag, expr, state.conf)
+    local expr_tag = state.conf.expr -- must be read before eval since they may be modified by the macro function
+    local stat_tag = state.conf.stat
+    local ok_compile, chunk, compile_error = xpcall(load, msgh, (tag==expr_tag and "return " or "")..expr, expr, "t")
+    if not ok_compile then return s end -- load execution error
+    if not chunk then -- compilation error
+        msgh(compile_error)
         return s
     end
+    local ok_eval, val = xpcall(chunk, msgh)
+    if not ok_eval then return s end
+    if val == nil and tag==expr_tag and expr:match("^[%w_]+$") then return s end
+    if tag == stat_tag then
+        if val ~= nil then
+            return format_value(val)
+        else
+            return ""
+        end
+    end
+    return format_value(val)
 end
 
 -- a parser is a function that takes a string, a position and returns the start and stop of the next expression and the expression
@@ -1054,25 +1053,12 @@ end
 local function parse(s, i0, state)
 
     local expr_tag = state.conf.expr
+    local esc_expr_tag = state.conf.esc_expr
     local stat_tag = state.conf.stat
 
     -- find the start of the next expression
-    local i1, tag, i2 = s:match("()(["..expr_tag.."?/]+)()", i0)
+    local i1, tag, i2 = s:match("()("..esc_expr_tag.."+)()", i0)
     if not i1 then return #s+1, #s+1, "" end
-
-    -- S -> "@/"
-    if tag == expr_tag.."/" then
-        return i1, i2, state.on and "" or tag
-    end
-
-    -- S -> "?%b()"
-    if tag == "?" then
-        local _, i3, cond = parse_parentheses(s, i2)
-        if cond then
-            state.on = assert(load("return "..cond, cond, "t"))()
-            return i1, i3, ""
-        end
-    end
 
     -- S -> "@@ LHS = RHS
     if tag == stat_tag then
@@ -1121,7 +1107,7 @@ end
 
 return function(s, conf)
     local ts = {}
-    local state = {on=true, conf=conf}
+    local state = {conf=conf}
     local i = 1
     while i <= #s do
         local i1, i2, out = parse(s, i, state)
@@ -1170,7 +1156,7 @@ local F = require "F"
 
 return F.id
 ]=])
-libs["script"] = lib("src/script.lua", [=[--[[
+libs["script"] = lib("src/script.lua", [======[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -1216,11 +1202,11 @@ http://cdelord.fr/ypp
 
 Example:
 
-?(false)
+@q[=====[
 ```
 $\sum_{i=0}^100 = @script.python "print(sum(range(101)))"$
 ```
-?(true)
+]=====]
 is rendered as
 ```
 $\sum_{i=0}^100 = @script.python "print(sum(range(101)))"$
@@ -1276,8 +1262,8 @@ return setmetatable({
 }, {
     __call = function(_, cmd) return run(cmd) end,
 })
-]=])
-libs["when"] = lib("src/when.lua", [====[--[[
+]======])
+libs["when"] = lib("src/when.lua", [======[--[[
 This file is part of ypp.
 
 ypp is free software: you can redistribute it and/or modify
@@ -1304,14 +1290,14 @@ http://cdelord.fr/ypp
 
 E.g.:
 
-?(false)
+@q[=====[
 ```
 @when(lang=="en")
 [===[
 The current language is English.
 ]===]
 ```
-?(true)
+]=====]
 @@@]]
 
 local F = require "F"
@@ -1319,8 +1305,8 @@ local F = require "F"
 return function(cond)
     return cond and ypp or F.const ""
 end
-]====])
-libs["_YPP_VERSION"] = lib(".build/src/_YPP_VERSION.lua", [=[return [[0.13]] --@LOAD
+]======])
+libs["_YPP_VERSION"] = lib(".build/src/_YPP_VERSION.lua", [=[return [[1.0]] --@LOAD
 ]=])
 _ENV["atexit"] = require "atexit"
 _ENV["comment"] = require "comment"
@@ -1361,6 +1347,9 @@ http://cdelord.fr/ypp
 * `ypp.input_path()`: return the path of the current input file.
 * `ypp.input_file(n)`: return the name of the nth input file in the current *include* stack.
 * `ypp.input_path(n)`: return the path of the nth input file in the current *include* stack.
+* `ypp.output_file`: name of the output file.
+* `ypp.find_file(filename)`: return the full path name of `filename` that can be in the current input file directory or in the current directory.
+* `ypp.read_file(filename)`: return the content of the file `filename` and adds this file to the dependency file.
 * `ypp.macro(c)`: use the character `c` to start Lua expressions instead of `"@"` (and `cc` instead of `"@@"`).
 @@@]]
 
@@ -1375,25 +1364,28 @@ _G.sh = require "sh"
 _G.sys = require "sys"
 
 local default_local_configuration = {
-    expr = "@",
-    stat = "@@",
+    expr = "@",     esc_expr = "@",
+    stat = "@@",    esc_stat = "@@",
 }
 
-local ypp_mt = {__index={}}
-local ypp = {
-    gconf = {},                     -- global configuration
-    lconf = setmetatable({}, {      -- stack of local configurations
-        __index = {
-            top = function(self) return self[#self] end,
-        },
-        __call = function(self, f, ...)
-            self[#self+1] = F.clone(default_local_configuration)
-            local val = f(...)
-            self[#self] = nil
-            return val
-        end,
-    }),
+local lconf = setmetatable({}, {      -- stack of local configurations
+    __index = {
+        top = function(self) return self[#self] end,
+    },
+    __call = function(self, f, ...)
+        self[#self+1] = F.clone(default_local_configuration)
+        local val = f(...)
+        self[#self] = nil
+        return val
+    end,
+})
+
+local ypp_mt = {
+    __index={
+        lconf = lconf,
+    },
 }
+local ypp = {}
 local known_input_files = F{}
 local output_contents = F{}
 local input_files = F{fs.join(fs.getcwd(), "-")} -- stack of input files (current branch from the root to the deepest included document)
@@ -1423,7 +1415,7 @@ local function add_path(paths)
 end
 
 local function process(content)
-    output_contents[#output_contents+1] = ypp.lconf(ypp, content)
+    output_contents[#output_contents+1] = lconf(ypp, content)
 end
 
 local function read_file(filename)
@@ -1445,7 +1437,7 @@ local function find_file(filename)
     local full_filepath = F{
         fs.join(input_path, filename),
         filename,
-    } : filter(fs.is_file) : head()
+    } : find(fs.is_file)
     assert(full_filepath, filename..": file not found")
     return full_filepath
 end
@@ -1481,13 +1473,39 @@ function ypp.output_file()
     return output_file
 end
 
-local function set_macro_char(funcname, char)
-    if type(char) ~= "string" or not char:match "^[^?/]$" then
-        die(funcname.." expects a single character, except from ? and /")
+local escaped_macro_char = {
+    ["^"] = "%^",
+    ["$"] = "%$",
+    ["%"] = "%%",
+    ["."] = "%.",
+    ["*"] = "%*",
+    ["+"] = "%+",
+    ["-"] = "%-",
+    ["?"] = "%?",
+}
+
+local forbidden_macro_char = {
+    ["("] = true, [")"] = true,
+    ["["] = true, ["]"] = true,
+    ["{"] = true, ["}"] = true,
+}
+
+local function update_macro_char(funcname, conf, char)
+    if type(char) ~= "string" or #char ~= 1 then
+        die("%s expects a single character", funcname)
     end
-    local lconf = ypp.lconf:top()
-    lconf.expr = char
-    lconf.stat = char..char
+    if forbidden_macro_char[char] then
+        die("%q: invalid macro character", char)
+    end
+    conf.expr = char
+    conf.stat = char..char
+    local esc_char = escaped_macro_char[char] or char
+    conf.esc_expr = esc_char
+    conf.esc_stat = esc_char..esc_char
+end
+
+local function set_macro_char(funcname, char)
+    update_macro_char(funcname, lconf:top(), char)
 end
 
 function ypp.macro(char)
@@ -1498,7 +1516,7 @@ end
 function ypp_mt.__call(_, content)
     if type(content) == "table" then return F.map(ypp, content) end
     local parser = require "parser"
-    return parser(content, ypp.lconf:top())
+    return parser(content, lconf:top())
 end
 
 local function write_outputs(args)
@@ -1595,15 +1613,11 @@ local function parse_args()
         : target "gendep"
 
     parser : option "-m"
-        : description "Set the default macro character (default: '@')"
+        : description("Set the default macro character (default: '"..default_local_configuration.expr.."')")
         : target "macro_char"
         : argname "char"
         : action(function(_, _, c, _)
-            if type(char) ~= "string" or not char:match "^[^?/]$" then
-                die("-m expects a single character, except from ? and /")
-            end
-            default_local_configuration.expr = c
-            default_local_configuration.stat = c..c
+            update_macro_char("-m", default_local_configuration, c)
         end)
 
     parser : argument "input"

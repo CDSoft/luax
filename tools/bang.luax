@@ -1894,7 +1894,7 @@ return function()
 
 end
 ]])
-libs["version"] = lib(".build/version", [=[return [[1.2.3]]]=])
+libs["version"] = lib(".build/version", [=[return [[1.2.4]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"
