@@ -23,21 +23,19 @@ independent generators with their own seeds.
 ### Random number generator instance
 
 ``` lua
-local rng = crypt.prng([seed, [inc]])
+local rng = crypt.prng([seed])
 ```
 
 returns a random number generator starting from the optional seed
 `seed`. This object has four methods: `seed([seed])`, `int([m, [n]])`,
-`float([a, [b]])` and `str(n)`. `inc` is the increment of the internal
-state. Different `inc` values produce different generators.
+`float([a, [b]])` and `str(n)`.
 
 ``` lua
-rng:seed([seed, [inc]])
+rng:seed([seed])
 ```
 
 sets the seed of the PRNG. The default seed is a number based on the
-current time and the process id. `inc` is the increment of the internal
-state. Different `inc` values produce different generators.
+current time and the process id.
 
 ``` lua
 rng:int()
@@ -84,12 +82,11 @@ returns a string with `bytes` random bytes.
 ### Global random number generator
 
 ``` lua
-crypt.seed([seed, [inc]])
+crypt.seed([seed])
 ```
 
 sets the seed of the global PRNG. The default seed is a number based on
-the current time and the process id. `inc` is the increment of the
-internal state. Different `inc` values produce different generators.
+the current time and the process id.
 
 ``` lua
 crypt.int()
