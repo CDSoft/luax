@@ -46,22 +46,21 @@ crypt.RAND_MAX = RAND_MAX
 local prng_a = 6364136223846793005
 local prng_c = 1
 
-function crypt.prng(seed, inc)
+function crypt.prng(seed)
     local self = setmetatable({}, prng_mt)
-    self:seed(seed or random(0), inc)
+    self:seed(seed or random(0))
     return self
 end
 
-function prng_mt.__index:seed(seed, inc)
+function prng_mt.__index:seed(seed)
     self.state = assert(seed, "seed parameter missing")
-    self.inc = (inc or prng_c) | prng_c
-    self.state = prng_a*self.state + self.inc
-    self.state = prng_a*self.state + self.inc
+    self.state = prng_a*self.state + prng_c
+    self.state = prng_a*self.state + prng_c
 end
 
 local function prng_int(self, a, b)
     local oldstate = self.state
-    self.state = prng_a*oldstate + self.inc
+    self.state = prng_a*oldstate + prng_c
     local xorshifted = (((oldstate >> 18) ~ oldstate) >> 27) & 0xFFFFFFFF
     local rot = oldstate >> 59;
     local r = ((xorshifted >> rot) | (xorshifted << ((-rot) & 31))) & 0xFFFFFFFF

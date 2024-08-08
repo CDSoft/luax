@@ -66,7 +66,6 @@ and can instantiate independent generators with their own seeds.
 typedef struct
 {
     uint64_t state;
-    uint64_t inc;
 } t_prng;
 
 #define CRYPT_RAND_MAX 0xFFFFFFFFULL
@@ -79,7 +78,7 @@ static const uint64_t prng_c = 1ULL;
 static inline void prng_advance(t_prng *prng)
 {
     // Advance internal state
-    prng->state = prng->state*prng_a + prng->inc;
+    prng->state = prng->state*prng_a + prng_c;
 }
 
 static inline uint32_t prng_int(t_prng *prng)
@@ -121,10 +120,9 @@ static inline void prng_str(t_prng *prng, size_t size, luaL_Buffer *B)
     luaL_addsize(B, size);
 }
 
-static inline void prng_seed(t_prng *prng, uint64_t state, uint64_t inc)
+static inline void prng_seed(t_prng *prng, uint64_t state)
 {
     prng->state = state;
-    prng->inc = inc | prng_c;
     /* drop the first values */
     prng_advance(prng);
     prng_advance(prng);
@@ -143,11 +141,10 @@ static inline uint64_t prng_default_seed(void)
 
 /*@@@
 ```lua
-local rng = crypt.prng([seed, [inc]])
+local rng = crypt.prng([seed])
 ```
 returns a random number generator starting from the optional seed `seed`.
 This object has four methods: `seed([seed])`, `int([m, [n]])`, `float([a, [b]])` and `str(n)`.
-`inc` is the increment of the internal state. Different `inc` values produce different generators.
 @@@*/
 
 static int crypt_prng(lua_State *L)
@@ -156,21 +153,17 @@ static int crypt_prng(lua_State *L)
     const uint64_t seed = lua_type(L, 1) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 1)
         : prng_default_seed();
-    const uint64_t inc = lua_type(L, 2) == LUA_TNUMBER
-        ? (uint64_t)luaL_checkinteger(L, 2)
-        : prng_c;
     luaL_setmetatable(L, PRNG_MT);
-    prng_seed(prng, seed, inc);
+    prng_seed(prng, seed);
     return 1;
 }
 
 /*@@@
 ```lua
-rng:seed([seed, [inc]])
+rng:seed([seed])
 ```
 sets the seed of the PRNG.
 The default seed is a number based on the current time and the process id.
-`inc` is the increment of the internal state. Different `inc` values produce different generators.
 @@@*/
 
 static int crypt_prng_seed(lua_State *L)
@@ -179,10 +172,7 @@ static int crypt_prng_seed(lua_State *L)
     const uint64_t seed = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
         : prng_default_seed();
-    const uint64_t inc = lua_type(L, 3) == LUA_TNUMBER
-        ? (uint64_t)luaL_checkinteger(L, 3)
-        : prng->inc;
-    prng_seed(prng, seed, inc);
+    prng_seed(prng, seed);
     return 0;
 }
 
@@ -305,11 +295,10 @@ static t_prng prng;
 
 /*@@@
 ```lua
-crypt.seed([seed, [inc]])
+crypt.seed([seed])
 ```
 sets the seed of the global PRNG.
 The default seed is a number based on the current time and the process id.
-`inc` is the increment of the internal state. Different `inc` values produce different generators.
 @@@*/
 
 static int crypt_seed(lua_State *L)
@@ -317,10 +306,7 @@ static int crypt_seed(lua_State *L)
     const uint64_t seed = lua_type(L, 1) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 1)
         : prng_default_seed();
-    const uint64_t inc = lua_type(L, 2) == LUA_TNUMBER
-        ? (uint64_t)luaL_checkinteger(L, 2)
-        : prng.inc;
-    prng_seed(&prng, seed, inc);
+    prng_seed(&prng, seed);
     return 0;
 }
 
@@ -1106,7 +1092,7 @@ LUAMOD_API int luaopen_crypt(lua_State *L)
     lua_pushvalue(L, -2);
     lua_settable(L, -3);
 
-    prng_seed(&prng, prng_default_seed(), prng_c);
+    prng_seed(&prng, prng_default_seed());
 
     /* module initialization */
 

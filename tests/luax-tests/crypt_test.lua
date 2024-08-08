@@ -251,11 +251,11 @@ return function()
     end
     do
         -- compare C and Lua prng implementations
-        local r = crypt.prng(1337, 12)
+        local r = crypt.prng(1337)
         local xs = F.range(16):map(function(_) return r:int() end)
         eq(xs, {
-            1306753901, 4044912387, 1648085481, 2633988900, 4079560644, 3769468295, 3245996943, 1721887037,
-            3063376457, 2280948516, 2012680803, 3957139778, 3740370758, 2086760861, 3024349504, 434537368,
+            1366936323, 2922103962, 3074544265, 4240721341, 2529631336, 316793424, 2144597218, 2478277350,
+            4254537736, 2560294415, 843227611, 3842418420, 690197939, 2249917264, 3773173077, 3200169535
         })
         eq(crypt.hash "Hello World!", "a1c3651c1533317c")
         do
@@ -265,15 +265,6 @@ return function()
             F.range(100):foreach(function(_) ne(r1:int(), r2:int()) end)
             r1 = crypt.prng(666)
             r2:seed(666)
-            F.range(100):foreach(function(_) eq(r1:int(), r2:int()) end)
-        end
-        do
-            -- test setting the seed and inc after initialization
-            local r1 = crypt.prng(666, 42)
-            local r2 = crypt.prng(666)
-            F.range(100):foreach(function(_) ne(r1:int(), r2:int()) end)
-            r1 = crypt.prng(666, 42)
-            r2:seed(666, 42)
             F.range(100):foreach(function(_) eq(r1:int(), r2:int()) end)
         end
     end
