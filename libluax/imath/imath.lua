@@ -98,7 +98,6 @@ local function int_copy(n)
     return setmetatable(c, mt)
 end
 
-
 local function int_tonumber(n)
     local s = n.sign < 0 and "-0" or "0"
     local fmt = ("%%0%dd"):format(RADIX_LEN)

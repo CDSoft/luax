@@ -86,7 +86,7 @@ LUAMOD_API int luaopen_libluax(lua_State *L)
         lua_pop(L, 1);
     }
 
-    extern int run_lib(lua_State  *);
+    extern int run_lib(lua_State *);
     if (run_lib(L) != LUA_OK) {
         error(arg0(L), "can not initialize the LuaX runtime\n");
     }

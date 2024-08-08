@@ -328,7 +328,7 @@ local cflags = {
     case(mode) {
         fast  = "-O3",
         small = "-Os",
-        debug = "-g -Og",
+        debug = { "-g", "-Og" },
     },
     "-pipe",
     "-fPIC",

@@ -43,7 +43,7 @@ int main(int argc, const char *argv[])
 
     createargtable(L, argv, argc);
 
-    extern int run_app(lua_State  *);
+    extern int run_app(lua_State *);
     const int status = run_app(L);
 
     lua_close(L);

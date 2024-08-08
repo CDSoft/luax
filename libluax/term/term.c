@@ -17,7 +17,6 @@
  * http://cdelord.fr/luax
  */
 
-
 #include "tools.h"
 
 #include <stdio.h>
