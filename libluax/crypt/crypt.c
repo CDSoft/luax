@@ -879,21 +879,21 @@ static int crypt_crc64(lua_State *L)
 }
 
 /***************************************************************************@@@
-## RC4 encryption
+## ARC4 encryption
 
-RC4 is a stream cipher (see <https://en.wikipedia.org/wiki/RC4>).
+ARC4 is a stream cipher (see <https://en.wikipedia.org/wiki/ARC4>).
 It is designed to be fast and simple.
 @@@*/
 
-/* https://en.wikipedia.org/wiki/RC4 */
+/* https://en.wikipedia.org/wiki/ARC4 */
 
-#define RC4_DROP        768
+#define ARC4_DROP       768
 
 typedef struct
 {
     uint8_t S[256];
     size_t i, j;
-} t_rc4;
+} t_arc4;
 
 static inline void swap(uint8_t *a, uint8_t *b)
 {
@@ -902,22 +902,22 @@ static inline void swap(uint8_t *a, uint8_t *b)
     *b = tmp;
 }
 
-static inline void rc4_init(t_rc4 *rc4)
+static inline void arc4_init(t_arc4 *arc4)
 {
-    uint8_t *S = rc4->S;
+    uint8_t *S = arc4->S;
     for (size_t i = 0; i < 256; i++)
     {
         S[i] = (uint8_t)i;
     }
-    rc4->i = 0;
-    rc4->j = 0;
+    arc4->i = 0;
+    arc4->j = 0;
 }
 
-static inline void rc4_schedule(t_rc4 *rc4, const char *key, size_t key_size)
+static inline void arc4_schedule(t_arc4 *arc4, const char *key, size_t key_size)
 {
     if (key_size > 0)
     {
-        uint8_t *S = rc4->S;
+        uint8_t *S = arc4->S;
         size_t j = 0;
         for (size_t i = 0; i < 256; i++)
         {
@@ -927,61 +927,61 @@ static inline void rc4_schedule(t_rc4 *rc4, const char *key, size_t key_size)
     }
 }
 
-static inline void rc4_step(t_rc4 *rc4)
+static inline void arc4_step(t_arc4 *arc4)
 {
-    uint8_t *S = rc4->S;
-    rc4->i = (rc4->i + 1) % 256;
-    rc4->j = (rc4->j + S[rc4->i]) % 256;
-    swap(&S[rc4->i], &S[rc4->j]);
+    uint8_t *S = arc4->S;
+    arc4->i = (arc4->i + 1) % 256;
+    arc4->j = (arc4->j + S[arc4->i]) % 256;
+    swap(&S[arc4->i], &S[arc4->j]);
 }
 
-static inline void rc4_drop(t_rc4 *rc4, size_t n)
+static inline void arc4_drop(t_arc4 *arc4, size_t n)
 {
     for (size_t i = 0; i < n; i++)
     {
-        rc4_step(rc4);
+        arc4_step(arc4);
     }
 }
 
-static inline uint8_t rc4_byte(t_rc4 *rc4)
+static inline uint8_t arc4_byte(t_arc4 *arc4)
 {
-    const uint8_t *S = rc4->S;
-    return S[(S[rc4->i] + S[rc4->j]) % 256];
+    const uint8_t *S = arc4->S;
+    return S[(S[arc4->i] + S[arc4->j]) % 256];
 }
 
-static inline void rc4_xor(t_rc4 *rc4, size_t n, const char *input, luaL_Buffer *B)
+static inline void arc4_xor(t_arc4 *arc4, size_t n, const char *input, luaL_Buffer *B)
 {
     char *buf = luaL_prepbuffsize(B, n);
     for (size_t k = 0; k < n; k++)
     {
-        rc4_step(rc4);
-        buf[k] = (char)(input[k] ^ rc4_byte(rc4));
+        arc4_step(arc4);
+        buf[k] = (char)(input[k] ^ arc4_byte(arc4));
     }
     luaL_addsize(B, n);
 }
 
-static void rc4(const char *key, size_t key_size, size_t drop, const char *input, size_t size, luaL_Buffer *B)
+static void arc4(const char *key, size_t key_size, size_t drop, const char *input, size_t size, luaL_Buffer *B)
 {
-    t_rc4 rc4;
-    rc4_init(&rc4);
-    rc4_schedule(&rc4, key, key_size);
-    rc4_drop(&rc4, drop);
-    rc4_xor(&rc4, size, input, B);
+    t_arc4 arc4;
+    arc4_init(&arc4);
+    arc4_schedule(&arc4, key, key_size);
+    arc4_drop(&arc4, drop);
+    arc4_xor(&arc4, size, input, B);
 }
 
 /*@@@
 ```lua
-crypt.rc4(data, key, [drop])
-crypt.unrc4(data, key, [drop])      -- note that unrc4 == rc4
+crypt.arc4(data, key, [drop])
+crypt.unarc4(data, key, [drop])     -- note that unarc4 == arc4
 ```
-encrypts/decrypts `data` using the RC4Drop
+encrypts/decrypts `data` using the ARC4Drop
 algorithm and the encryption key `key` (drops the first `drop` encryption
 steps, the default value of `drop` is 768).
 @@@*/
 
-static int crypt_rc4(lua_State *L)
+static int crypt_arc4(lua_State *L)
 {
-    size_t drop = RC4_DROP;     /* default number of steps dropped before encryption */
+    size_t drop = ARC4_DROP;    /* default number of steps dropped before encryption */
 
     /* arg 1: input data */
     const char *in = luaL_checkstring(L, 1);
@@ -998,7 +998,7 @@ static int crypt_rc4(lua_State *L)
 
     luaL_Buffer B;
     luaL_buffinit(L, &B);
-    rc4(key, key_size, drop, in, n, &B);
+    arc4(key, key_size, drop, in, n, &B);
     luaL_pushresult(&B);
     return 1;
 }
@@ -1067,8 +1067,8 @@ static const luaL_Reg crypt_module[] =
     {"unbase64", crypt_base64_decode},
     {"base64url", crypt_base64url_encode},
     {"unbase64url", crypt_base64url_decode},
-    {"rc4", crypt_rc4},
-    {"unrc4", crypt_rc4},   /* unrc4 == rc4 */
+    {"arc4", crypt_arc4},
+    {"unarc4", crypt_arc4}, /* unarc4 == arc4 */
     {"crc32", crypt_crc32},
     {"crc64", crypt_crc64},
     {"hash", crypt_hash},

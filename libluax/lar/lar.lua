@@ -40,7 +40,7 @@ It contains a Lua value:
 
 - serialized with `cbor`
 - compressed with `lz4` or `lzip`
-- encrypted with `rc4`
+- encrypted with `arc4`
 
 The Lua value is only encrypted if a key is provided.
 @@@]]
@@ -92,7 +92,7 @@ function lar.lar(lua_value, lar_opt)
 
     local payload = cbor.encode(lua_value, {pairs=F.pairs})
     payload = assert(compress_opt.compress(payload, tonumber(level)))
-    if lar_opt.key then payload = crypt.rc4(payload, lar_opt.key) end
+    if lar_opt.key then payload = crypt.arc4(payload, lar_opt.key) end
 
     return string.pack("<zBs4", MAGIC, compress_opt.flag, payload)
 end
@@ -117,7 +117,7 @@ function lar.unlar(archive, opt)
     local ok, magic, compress_flag, payload = pcall(string.unpack, "<zBs4", archive)
     assert(ok and magic==MAGIC, "not a LuaX archive")
 
-    if opt.key then payload = crypt.unrc4(payload, opt.key) end
+    if opt.key then payload = crypt.unarc4(payload, opt.key) end
     local compress_opt = find_options(compress_flag)
     payload = assert(compress_opt.decompress(payload))
 

@@ -130,7 +130,7 @@ local function make_key(input, opt)
     local mmin, mmax = 256, 64*1024
     local key_size = F.floor(kmin + (#input-mmin)*(kmax-kmin)/(mmax-mmin))
     key_size = F.max(kmin, F.min(kmax, key_size))
-    return chunks_of_chars(key_size, input:rc4(opt.key)) : fold1(crypt.rc4)
+    return chunks_of_chars(key_size, input:arc4(opt.key)) : fold1(crypt.arc4)
 end
 
 local function compact(s)
@@ -183,8 +183,8 @@ local function obfuscate_luax(code, opt, product_name)
             code = compressed_code
             uncompress = ":unlzip()"
         end
-        code = compact(F.I { b=escape(code:rc4(key)), k=escape(key), uncompress=uncompress } [===[
-            return load(($(b)):unrc4$(k)$(uncompress))()
+        code = compact(F.I { b=escape(code:arc4(key)), k=escape(key), uncompress=uncompress } [===[
+            return load(($(b)):unarc4$(k)$(uncompress))()
         ]===])
     end
     code = bytecode(code, opt, product_name)

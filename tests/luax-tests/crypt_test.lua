@@ -104,42 +104,42 @@ return function()
     do
         do
             local x = "foobar!"
-            local key = "" -- rc4 shall not crash with an empty key
-            local y = crypt.rc4(x, key)
-            local z = crypt.unrc4(y, key)
+            local key = "" -- arc4 shall not crash with an empty key
+            local y = crypt.arc4(x, key)
+            local z = crypt.unarc4(y, key)
             ne(y, x)
             eq(z, x)
         end
         do
             local x = "foobar!"
-            local key = "rc4key"
-            local y = crypt.rc4(x, key)
-            local z = crypt.unrc4(y, key)
+            local key = "arc4key"
+            local y = crypt.arc4(x, key)
+            local z = crypt.unarc4(y, key)
             ne(y, x)
             eq(z, x)
-            eq(crypt.rc4(x, key), x:rc4(key))
-            eq(crypt.unrc4(y, key), y:unrc4(key))
-            eq(x:rc4(key):unrc4(key), x)
+            eq(crypt.arc4(x, key), x:arc4(key))
+            eq(crypt.unarc4(y, key), y:unarc4(key))
+            eq(x:arc4(key):unarc4(key), x)
             for _ = 1, N do
                 local s = prng:str(256)
                 local k = prng:str(256)
-                eq(s:rc4(k):unrc4(k), s)
+                eq(s:arc4(k):unarc4(k), s)
             end
         end
         for drop = 0, 10 do
             local x = "foobar!"
-            local key = "rc4key"
-            local y = crypt.rc4(x, key, drop)
-            local z = crypt.unrc4(y, key, drop)
+            local key = "arc4key"
+            local y = crypt.arc4(x, key, drop)
+            local z = crypt.unarc4(y, key, drop)
             ne(y, x)
             eq(z, x)
-            eq(crypt.rc4(x, key, drop), x:rc4(key, drop))
-            eq(crypt.unrc4(y, key, drop), y:unrc4(key, drop))
-            eq(x:rc4(key, drop):unrc4(key, drop), x)
+            eq(crypt.arc4(x, key, drop), x:arc4(key, drop))
+            eq(crypt.unarc4(y, key, drop), y:unarc4(key, drop))
+            eq(x:arc4(key, drop):unarc4(key, drop), x)
             for _ = 1, N do
                 local s = prng:str(256)
                 local k = prng:str(256)
-                eq(s:rc4(k, drop):unrc4(k, drop), s)
+                eq(s:arc4(k, drop):unarc4(k, drop), s)
             end
         end
         do
@@ -147,18 +147,18 @@ return function()
                 local s = prng:str(256)
                 local k = prng:str(256)
                 local drop = prng:int() % 4096
-                eq(s:rc4(k, drop):unrc4(k, drop), s)
+                eq(s:arc4(k, drop):unarc4(k, drop), s)
             end
         end
         do
             local s = "foobar!"
-            ne(s:rc4(""), s:rc4("x"))
+            ne(s:arc4(""), s:arc4("x"))
         end
         do
             local s = "foobar!"
-            -- C and Lua implementations shall implement the same rc4 algorithm
-            eq({s:rc4(""):byte(1, -1)}, {135,151,174,56,231,102,98})
-            eq({s:rc4("key"):byte(1, -1)}, {217,183,168,237,133,97,233})
+            -- C and Lua implementations shall implement the same arc4 algorithm
+            eq({s:arc4(""):byte(1, -1)}, {135,151,174,56,231,102,98})
+            eq({s:arc4("key"):byte(1, -1)}, {217,183,168,237,133,97,233})
         end
         do
             eq(crypt.hash "", "7b6a78f0d6c6494a")

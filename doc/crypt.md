@@ -198,17 +198,17 @@ crypt.crc64(data)
 
 computes the CRC64 of `data`.
 
-## RC4 encryption
+## ARC4 encryption
 
-RC4 is a stream cipher (see <https://en.wikipedia.org/wiki/RC4>). It is
-designed to be fast and simple.
+ARC4 is a stream cipher (see <https://en.wikipedia.org/wiki/ARC4>). It
+is designed to be fast and simple.
 
 ``` lua
-crypt.rc4(data, key, [drop])
-crypt.unrc4(data, key, [drop])      -- note that unrc4 == rc4
+crypt.arc4(data, key, [drop])
+crypt.unarc4(data, key, [drop])     -- note that unarc4 == arc4
 ```
 
-encrypts/decrypts `data` using the RC4Drop algorithm and the encryption
+encrypts/decrypts `data` using the ARC4Drop algorithm and the encryption
 key `key` (drops the first `drop` encryption steps, the default value of
 `drop` is 768).
 
@@ -250,7 +250,7 @@ s:base64url()       == crypt.base64url(s)
 s:unbase64url()     == crypt.unbase64url(s)
 s:crc32()           == crypt.crc32(s)
 s:crc64()           == crypt.crc64(s)
-s:rc4(key, drop)    == crypt.rc4(s, key, drop)
-s:unrc4(key, drop)  == crypt.unrc4(s, key, drop)
+s:arc4(key, drop)   == crypt.arc4(s, key, drop)
+s:unarc4(key, drop) == crypt.unarc4(s, key, drop)
 s:hash()            == crypt.hash(s)
 ```

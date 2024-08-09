@@ -91,8 +91,8 @@ s:base64url()       == crypt.base64url(s)
 s:unbase64url()     == crypt.unbase64url(s)
 s:crc32()           == crypt.crc32(s)
 s:crc64()           == crypt.crc64(s)
-s:rc4(key, drop)    == crypt.rc4(s, key, drop)
-s:unrc4(key, drop)  == crypt.unrc4(s, key, drop)
+s:arc4(key, drop)   == crypt.arc4(s, key, drop)
+s:unarc4(key, drop) == crypt.unarc4(s, key, drop)
 s:hash()            == crypt.hash(s)
 ```
 @@@]]
@@ -103,8 +103,8 @@ string.base64       = crypt.base64
 string.unbase64     = crypt.unbase64
 string.base64url    = crypt.base64url
 string.unbase64url  = crypt.unbase64url
-string.rc4          = crypt.rc4
-string.unrc4        = crypt.unrc4
+string.arc4         = crypt.arc4
+string.unarc4       = crypt.unarc4
 string.hash         = crypt.hash
 string.crc32        = crypt.crc32
 string.crc64        = crypt.crc64

@@ -9,7 +9,7 @@ contains a Lua value:
 
 - serialized with `cbor`
 - compressed with `lz4` or `lzip`
-- encrypted with `rc4`
+- encrypted with `arc4`
 
 The Lua value is only encrypted if a key is provided.
 

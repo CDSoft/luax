@@ -269,10 +269,10 @@ function crypt.crc64(s)
     return crc ~ 0xFFFFFFFFFFFFFFFF
 end
 
--- RC4 encryption
+-- ARC4 encryption
 
-function crypt.rc4(input, key, drop)
-    assert(type(key) == "string", "rc4 key shall be a string")
+function crypt.arc4(input, key, drop)
+    assert(type(key) == "string", "arc4 key shall be a string")
     drop = drop or 768
     local S = {}
     for i = 0, 255 do S[i] = i end
@@ -300,7 +300,7 @@ function crypt.rc4(input, key, drop)
     return concat(output)
 end
 
-crypt.unrc4 = crypt.rc4
+crypt.unarc4 = crypt.arc4
 
 function crypt.hash(s)
     local hash = 0xFFFFFFFFFFFFFFC5
