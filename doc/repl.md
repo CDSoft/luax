@@ -69,6 +69,7 @@ entering the REPL:
 - fs
 - imath
 - lz4
+- lzip
 - mathx
 - ps
 - qmath

@@ -19,7 +19,7 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
--- Archive files to a CBOR/LZ4 file
+-- Archive files to a CBOR/LZ4/Lzip file
 
 local F = require "F"
 local fs = require "fs"
@@ -35,7 +35,7 @@ local args = (function()
 end)()
 
 local opt = {
-    compress = args.compress or "lz4",
+    compress = args.compress or "lzip",
     key = args.key,
 }
 

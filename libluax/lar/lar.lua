@@ -74,7 +74,7 @@ Returns a string with `lua_value` serialized, compressed and encrypted.
 
 Options:
 
-- `opt.compress`: compression algorithm (`"lz4"` by default):
+- `opt.compress`: compression algorithm (`"lzip"` by default):
 
     - `"none"`: no compression
     - `"lz4"`: compression with LZ4 (default compression level)
@@ -87,7 +87,7 @@ Options:
 
 function lar.lar(lua_value, lar_opt)
     lar_opt = lar_opt or {}
-    local algo, level = (lar_opt.compress or "lz4"):split"%-":unpack()
+    local algo, level = (lar_opt.compress or "lzip"):split"%-":unpack()
     local compress_opt = find_options(algo)
 
     local payload = cbor.encode(lua_value, {pairs=F.pairs})

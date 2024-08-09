@@ -21,7 +21,7 @@ Returns a string with `lua_value` serialized, compressed and encrypted.
 
 Options:
 
-- `opt.compress`: compression algorithm (`"lz4"` by default):
+- `opt.compress`: compression algorithm (`"lzip"` by default):
 
   - `"none"`: no compression
   - `"lz4"`: compression with LZ4 (default compression level)

@@ -1028,8 +1028,17 @@ acc(binaries) {
 section "Tests"
 ---------------------------------------------------------------------
 
+rule "lz4" {
+    description = "LZ4 $in",
+    command = "$lz4 -qkf $in -c > $out",
+    implicit_in = "$lz4",
+}
+
 local imported_test_sources = ls "tests/luax-tests/to_be_imported-*.lua"
-local test_sources = ls "tests/luax-tests/*.*" : difference(imported_test_sources)
+local test_sources = {
+    ls "tests/luax-tests/*.*" : difference(imported_test_sources),
+    build "$test/resource.txt.lz4" { "lz4", "tests/luax-tests/resource.txt" },
+}
 local test_main = "tests/luax-tests/main.lua"
 
 local libc = case(sys.os) {

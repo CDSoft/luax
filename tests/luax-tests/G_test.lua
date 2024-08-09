@@ -43,6 +43,7 @@ local luax_packages = F.flatten{
     "json",
     "linenoise",
     "lz4",
+    "lzip",
     "mathx",
     "package",
     "ps",

@@ -36,7 +36,7 @@ return function()
         for i = 1, 5 do
             local s = ("a"):rep((1<<i)*1024)
             local z = lzip.lzip(s)
-            assert(#z < #s/20)
+            assert(#z < #s/40)
             ne(z, s)
             eq(z, s:lzip())
             local t = lzip.unlzip(z)
