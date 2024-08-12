@@ -88,6 +88,10 @@ function fs.copy(source_name, target_name)
     to:close()
 end
 
+function fs.symlink(target, linkpath)
+    return sh.run("ln -s", target, linkpath)
+end
+
 if pandoc and pandoc.system then
     fs.mkdir = pandoc.system.make_directory
 else
@@ -119,14 +123,16 @@ fs.oR = S_IROTH
 fs.oW = S_IWOTH
 fs.oX = S_IXOTH
 
-local stat = sys.os=="macos" and "gstat" or "stat"
+local stat_cmd = sys.os=="macos" and "gstat" or "stat"
 
-function fs.stat(name)
-    local st = sh.read("LC_ALL=C", stat, "-L", "-c '%s;%Y;%X;%W;%F;%f'", name, "2>/dev/null")
+local function stat(name, follow)
+    local st = sh.read("LC_ALL=C", stat_cmd, follow, "-c '%s;%Y;%X;%W;%F;%f'", name, "2>/dev/null")
     if not st then return nil, "cannot stat "..name end
     local size, mtime, atime, ctime, type, mode = st:trim():split ";":unpack()
     mode = tonumber(mode, 16)
-    if type == "regular file" or type == "regular empty file" then type = "file" end
+    if type == "regular file" or type == "regular empty file" then type = "file"
+    elseif type == "symbolic link" then type = "link"
+    end
     return F{
         name = name,
         size = tonumber(size),
@@ -150,8 +156,16 @@ function fs.stat(name)
     }
 end
 
+function fs.stat(name)
+    return stat(name, "-L")
+end
+
+function fs.lstat(name)
+    return stat(name, {})
+end
+
 function fs.inode(name)
-    local st = sh.read("LC_ALL=C", stat, "-L", "-c '%d;%i'", name, "2>/dev/null")
+    local st = sh.read("LC_ALL=C", stat_cmd, "-L", "-c '%d;%i'", name, "2>/dev/null")
     if not st then return nil, "cannot stat "..name end
     local dev, ino = st:trim():split ";":unpack()
     return F{
@@ -321,6 +335,11 @@ end
 function fs.is_dir(name)
     local st = fs.stat(name)
     return st ~= nil and st.type == "directory"
+end
+
+function fs.is_link(name)
+    local st = fs.lstat(name)
+    return st ~= nil and st.type == "link"
 end
 
 fs.rm = fs.remove

@@ -56,10 +56,31 @@ local function fs_test(tmp)
         eq(fs.getcwd(), fs.realpath(tmp))
     end
     if sys.os == "linux" then
+        fs.touch(fs.join(tmp, "linkdest"))
+
         sh.run("ln -sf", fs.join(tmp, "linkdest"), fs.join(tmp, "symlink"))
         eq(fs.readlink(fs.join(tmp, "symlink")), fs.join(tmp, "linkdest"))
         eq((tmp/"symlink"):readlink(), tmp/"linkdest")
+        eq(fs.lstat(tmp/"symlink").type, "link")
+        eq(fs.stat(tmp/"symlink").type, "file")
+        eq(fs.is_file(fs.join(tmp, "linkdest")), true)
+        eq(fs.is_link(fs.join(tmp, "linkdest")), false)
+        eq(fs.is_file(fs.join(tmp, "symlink")), true)
+        eq(fs.is_link(fs.join(tmp, "symlink")), true)
         fs.rm(fs.join(tmp, "symlink"))
+
+        fs.symlink(fs.join(tmp, "linkdest"), fs.join(tmp, "symlink"))
+        eq(fs.readlink(fs.join(tmp, "symlink")), fs.join(tmp, "linkdest"))
+        eq((tmp/"symlink"):readlink(), tmp/"linkdest")
+        eq(fs.lstat(tmp/"symlink").type, "link")
+        eq(fs.stat(tmp/"symlink").type, "file")
+        eq(fs.is_file(fs.join(tmp, "linkdest")), true)
+        eq(fs.is_link(fs.join(tmp, "linkdest")), false)
+        eq(fs.is_file(fs.join(tmp, "symlink")), true)
+        eq(fs.is_link(fs.join(tmp, "symlink")), true)
+        fs.rm(fs.join(tmp, "symlink"))
+
+        fs.rm(fs.join(tmp, "linkdest"))
     end
 
     fs.mkdir(in_tmp "foo")

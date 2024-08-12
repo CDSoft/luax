@@ -483,6 +483,24 @@ static int fs_copy(lua_State *L)
 
 /*@@@
 ```lua
+fs.symlink(target, linkpath)
+```
+creates a symbolic link `linkpath` pointing to `target`.
+@@@*/
+
+static int fs_symlink(lua_State *L)
+{
+#ifdef _WIN32
+    return luax_pusherror(L, "symlink not implemented");
+#else
+    const char *target = luaL_checkstring(L, 1);
+    const char *linkpath = luaL_checkstring(L, 2);
+    return luax_push_result_or_errno(L, symlink(target, linkpath), linkpath);
+#endif
+}
+
+/*@@@
+```lua
 fs.mkdir(path)
 ```
 creates a new directory `path`.
@@ -534,11 +552,12 @@ static int fs_mkdirs(lua_State *L)
 /*@@@
 ```lua
 fs.stat(name)
+fs.lstat(name)
 ```
 reads attributes of the file `name`. Attributes are:
 
 - `name`: name
-- `type`: `"file"` or `"directory"`
+- `type`: `"file"`, `"directory"` or `"link"`
 - `size`: size in bytes
 - `mtime`, `atime`, `ctime`: modification, access and creation times.
 - `mode`: file permissions
@@ -546,6 +565,8 @@ reads attributes of the file `name`. Attributes are:
 - `gR`, `gW`, `gX`: group Read/Write/eXecute permissions
 - `oR`, `oW`, `oX`: other Read/Write/eXecute permissions
 - `aR`, `aW`, `aX`: anybody Read/Write/eXecute permissions
+
+`fs.lstat` is like `fs.stat` but gives information on links instead of pointed files.
 @@@*/
 
 static inline void set_string(lua_State *L, const char *name, const char *val)
@@ -566,11 +587,11 @@ static inline void set_boolean(lua_State *L, const char *name, bool val)
     lua_setfield(L, -2, name);
 }
 
-static int fs_stat(lua_State *L)
+static int get_stat(lua_State *L, int (*stat_func)(const char *restrict, struct stat *restrict))
 {
     const char *path = luaL_checkstring(L, 1);
     struct stat buf;
-    if (stat(path, &buf)==0)
+    if (stat_func(path, &buf)==0)
     {
         lua_newtable(L); /* stat */
         set_string(L, "name", path);
@@ -578,7 +599,13 @@ static int fs_stat(lua_State *L)
         set_integer(L, "mtime", buf.st_mtime);
         set_integer(L, "atime", buf.st_atime);
         set_integer(L, "ctime", buf.st_ctime);
-        set_string(L, "type", S_ISDIR(buf.st_mode)?"directory":S_ISREG(buf.st_mode)?"file":"unknown");
+        set_string(L, "type",
+#ifndef _WIN32
+            S_ISLNK(buf.st_mode) ? "link" :
+#endif
+            S_ISDIR(buf.st_mode) ? "directory" :
+            S_ISREG(buf.st_mode) ? "file" :
+            "unknown");
         set_integer(L, "mode", buf.st_mode);
         set_boolean(L, "uR", buf.st_mode & S_IRUSR);
         set_boolean(L, "uW", buf.st_mode & S_IWUSR);
@@ -599,6 +626,20 @@ static int fs_stat(lua_State *L)
     {
         return luax_push_errno(L, path);
     }
+}
+
+static int fs_stat(lua_State *L)
+{
+    return get_stat(L, stat);
+}
+
+static int fs_lstat(lua_State *L)
+{
+#ifdef _WIN32
+    return luax_pusherror(L, "lstat not implemented");
+#else
+    return get_stat(L, lstat);
+#endif
 }
 
 /*@@@
@@ -989,6 +1030,25 @@ static int fs_is_dir(lua_State *L)
 
 /*@@@
 ```lua
+fs.is_link(name)
+```
+returns `true` if `name` is a symbolic link.
+@@@*/
+
+static int fs_is_link(lua_State *L)
+{
+#ifdef _WIN32
+    return luax_pusherror(L, "symbolic links not implemented");
+#else
+    const char *name = luaL_checkstring(L, 1);
+    struct stat buf;
+    lua_pushboolean(L, lstat(name, &buf) == 0 && S_ISLNK(buf.st_mode));
+    return 1;
+#endif
+}
+
+/*@@@
+```lua
 fs.tmpfile()
 ```
 return the name of a temporary file.
@@ -1081,12 +1141,15 @@ static const luaL_Reg fslib[] =
     {"mkdir",       fs_mkdir},
     {"mkdirs",      fs_mkdirs},
     {"stat",        fs_stat},
+    {"lstat",       fs_lstat},
     {"inode",       fs_inode},
     {"chmod",       fs_chmod},
     {"touch",       fs_touch},
     {"copy",        fs_copy},
+    {"symlink",     fs_symlink},
     {"is_file",     fs_is_file},
     {"is_dir",      fs_is_dir},
+    {"is_link",     fs_is_link},
     {"tmpfile",     fs_tmpfile},
     {"tmpdir",      fs_tmpdir},
     {NULL, NULL}

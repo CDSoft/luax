@@ -72,6 +72,12 @@ copies file `source_name` to `target_name`. The attributes and times are
 preserved.
 
 ``` lua
+fs.symlink(target, linkpath)
+```
+
+creates a symbolic link `linkpath` pointing to `target`.
+
+``` lua
 fs.mkdir(path)
 ```
 
@@ -85,12 +91,13 @@ creates a new directory `path` and its parent directories.
 
 ``` lua
 fs.stat(name)
+fs.lstat(name)
 ```
 
 reads attributes of the file `name`. Attributes are:
 
 - `name`: name
-- `type`: `"file"` or `"directory"`
+- `type`: `"file"`, `"directory"` or `"link"`
 - `size`: size in bytes
 - `mtime`, `atime`, `ctime`: modification, access and creation times.
 - `mode`: file permissions
@@ -98,6 +105,9 @@ reads attributes of the file `name`. Attributes are:
 - `gR`, `gW`, `gX`: group Read/Write/eXecute permissions
 - `oR`, `oW`, `oX`: other Read/Write/eXecute permissions
 - `aR`, `aW`, `aX`: anybody Read/Write/eXecute permissions
+
+`fs.lstat` is like `fs.stat` but gives information on links instead of
+pointed files.
 
 ``` lua
 fs.inode(name)
@@ -200,6 +210,12 @@ fs.is_dir(name)
 ```
 
 returns `true` if `name` is a directory.
+
+``` lua
+fs.is_link(name)
+```
+
+returns `true` if `name` is a symbolic link.
 
 ``` lua
 fs.tmpfile()
