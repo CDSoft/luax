@@ -148,6 +148,16 @@ local function bytecode(code, opt, name)
     return code
 end
 
+local function bytes(s)
+    local N = 512*1024
+    if #s <= N then return s:bytes() end
+    local bs = {}
+    for i = 1, #s, N do
+        bs[#bs+1] = {byte(s, i, i+N-1)}
+    end
+    return F.concat(bs)
+end
+
 local function obfuscate_lua(code, opt, product_name)
     if opt.key then
         code = bytecode(code, opt, product_name)
@@ -403,7 +413,7 @@ function M.bundle(opt)
             local name = script.lib_name
             ensure_unique_module(opt, script)
             local func_name = name : gsub("[^%w]", "_")
-            local code = compile(script) : bytes()
+            local code = bytes(compile(script))
             mods[#mods+1] = {
                 "static int luaopen_"..func_name.."(lua_State *L) {",
                 "  static const unsigned char code[] = {",
@@ -437,7 +447,7 @@ function M.bundle(opt)
         end
         if main_script then
             local script = main_script
-            local code = compile(script) : bytes()
+            local code = bytes(compile(script))
             traceback[1] = {
                 "static int traceback(lua_State *L)",
                 "{",
