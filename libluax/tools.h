@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 #include "lua.h"
 
 int luax_push_result_or_errno(lua_State *L, int res, const char *filename);

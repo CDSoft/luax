@@ -128,13 +128,20 @@ fs.oR = S_IROTH
 fs.oW = S_IWOTH
 fs.oX = S_IXOTH
 
-local stat_cmd = sys.os=="macos" and "gstat" or "stat"
-
 local function stat(name, follow)
-    local st = sh.read("LC_ALL=C", stat_cmd, follow, "-c '%s;%Y;%X;%W;%f'", name, "2>/dev/null")
-    if not st then return nil, "cannot stat "..name end
-    local size, mtime, atime, ctime, mode = st:trim():split ";":unpack()
-    mode = tonumber(mode, 16)
+    local size, mtime, atime, ctime, mode
+    if sys.os == "macos" then
+        local st = sh.read("LC_ALL=C", "stat", follow, "-r", name, "2>/dev/null")
+        if not st then return nil, "cannot stat "..name end
+        local _
+        _, _, mode, _, _, _, _, size, atime, mtime, _, ctime, _, _, _ = st:words():unpack()
+        mode = tonumber(mode, 8)
+    else
+        local st = sh.read("LC_ALL=C", "stat", follow, "-c '%s;%Y;%X;%W;%f'", name, "2>/dev/null")
+        if not st then return nil, "cannot stat "..name end
+        size, mtime, atime, ctime, mode = st:trim():split ";":unpack()
+        mode = tonumber(mode, 16)
+    end
     return F{
         name = name,
         size = tonumber(size),
@@ -170,9 +177,16 @@ function fs.lstat(name)
 end
 
 function fs.inode(name)
-    local st = sh.read("LC_ALL=C", stat_cmd, "-L", "-c '%d;%i'", name, "2>/dev/null")
-    if not st then return nil, "cannot stat "..name end
-    local dev, ino = st:trim():split ";":unpack()
+    local dev, ino
+    if sys.os == "macos" then
+        local st = sh.read("LC_ALL=C", "stat", "-L", "-r", name, "2>/dev/null")
+        if not st then return nil, "cannot stat "..name end
+        dev, ino = st:words():unpack()
+    else
+        local st = sh.read("LC_ALL=C", "stat", "-L", "-c '%d;%i'", name, "2>/dev/null")
+        if not st then return nil, "cannot stat "..name end
+        dev, ino = st:trim():split ";":unpack()
+    end
     return F{
         ino = tonumber(ino),
         dev = tonumber(dev),
