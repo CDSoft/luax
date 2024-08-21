@@ -41,7 +41,7 @@ package.modpath      -- { module_name = module_path }
 ```
 > table containing the names of the loaded packages and their actual paths.
 >
-> `package.modpath` also contains the names of the packages loaded by `import`.
+> `package.modpath` contains the names of the packages loaded by `require`, `dofile`, `loadfile` and `import`.
 @@@]]
 
 package.modpath = F{}
@@ -60,3 +60,15 @@ local first_external_searcher = sys.libc=="lua" and 3 or 2
 for i = first_external_searcher, #package.searchers do
     package.searchers[i] = wrap_searcher(package.searchers[i])
 end
+
+local function wrap(func)
+    return function(filename, ...)
+        if filename ~= nil then
+            package.modpath[filename] = filename
+        end
+        return func(filename, ...)
+    end
+end
+
+dofile = wrap(dofile)
+loadfile = wrap(loadfile)

@@ -43,6 +43,13 @@ local default_options = {
     implicit_in = Nil,
 }
 
+local function split_hybrid_table(t)
+    local function is_numeric_key(k)
+        return math.type(k) == "integer"
+    end
+    return F.table_partition_with_key(is_numeric_key, t)
+end
+
 local rules = setmetatable({}, {
     __index = function(self, compiler)
         local cc = F{compiler.name, "cc"}:flatten():str"-"
@@ -80,6 +87,7 @@ local rules = setmetatable({}, {
 local function compile(self, output)
     local cc = rules[self].cc
     return function(inputs)
+        local input_list, input_vars = split_hybrid_table(inputs)
         local validations = F.flatten{self.cvalid}:map(function(valid)
             local valid_output = output.."-"..(valid.name or valid)..".check"
             if valid.name then
@@ -88,19 +96,25 @@ local function compile(self, output)
                 return build(valid_output) { valid, inputs }
             end
         end)
-        return build(output) { cc, inputs,
-            validations = validations,
-        }
+        return build(output) (F.merge{
+            { cc, input_list },
+            input_vars,
+            { validations = validations },
+        })
     end
 end
 
 local function static_lib(self, output)
     local ar = rules[self].ar
     return function(inputs)
+        local input_list, input_vars = split_hybrid_table(inputs)
         return build(output) { ar,
             F.flatten(inputs):map(function(input)
                 if F.elem(input:ext(), self.c_exts) then
-                    return self:compile(tmp(self.builddir, output, input)..self.o_ext) { input }
+                    return self:compile(tmp(self.builddir, output, input)..self.o_ext) (F.merge{
+                        { input },
+                        input_vars,
+                    })
                 else
                     return input
                 end
@@ -112,10 +126,14 @@ end
 local function dynamic_lib(self, output)
     local so = rules[self].so
     return function(inputs)
+        local input_list, input_vars = split_hybrid_table(inputs)
         return build(output) { so,
             F.flatten(inputs):map(function(input)
                 if F.elem(input:ext(), self.c_exts) then
-                    return self:compile(tmp(self.builddir, output, input)..self.o_ext) { input }
+                    return self:compile(tmp(self.builddir, output, input)..self.o_ext) (F.merge{
+                        { input },
+                        input_vars,
+                    })
                 else
                     return input
                 end
@@ -127,10 +145,14 @@ end
 local function executable(self, output)
     local ld = rules[self].ld
     return function(inputs)
+        local input_list, input_vars = split_hybrid_table(inputs)
         return build(output) { ld,
             F.flatten(inputs):map(function(input)
                 if F.elem(input:ext(), self.c_exts) then
-                    return self:compile(tmp(self.builddir, output, input)..self.o_ext) { input }
+                    return self:compile(tmp(self.builddir, output, input)..self.o_ext) (F.merge{
+                        { input },
+                        input_vars,
+                    })
                 else
                     return input
                 end
@@ -174,6 +196,10 @@ compiler_mt = {
         add = function(self, name)
             check_opt(name)
             return function(value) self[name] = {self[name], value}; return self end
+        end,
+        insert = function(self, name)
+            check_opt(name)
+            return function(value) self[name] = {value, self[name]}; return self end
         end,
     },
 }
@@ -373,6 +399,9 @@ builder_mt = {
         end,
         add = function(self, name)
             return function(value) self[name] = self[name]==nil and value or {self[name], value}; return self end
+        end,
+        insert = function(self, name)
+            return function(value) self[name] = self[name]==nil and value or {value, self[name]}; return self end
         end,
     },
 }
@@ -1131,11 +1160,19 @@ local default_options = {
     implicit_in = Nil,
 }
 
+local function split_hybrid_table(t)
+    local function is_numeric_key(k)
+        return math.type(k) == "integer"
+    end
+    return F.table_partition_with_key(is_numeric_key, t)
+end
+
 local rules = setmetatable({}, {
     __index = function(self, compiler)
         local new_rule = rule(compiler.name) {
             description = compiler.description or {compiler.name, "$out"},
             command = { compiler.luax, "compile", "-t", compiler.target, "$in -o $out", compiler.flags },
+            implicit_in = compiler.implicit_in,
         }
         self[compiler] = new_rule
         return new_rule
@@ -1147,7 +1184,11 @@ local function run(self, output)
         if type(inputs) == "string" then
             inputs = {inputs}
         end
-        return build(output) { rules[self], inputs }
+        local input_list, input_vars = split_hybrid_table(inputs)
+        return build(output) (F.merge{
+            { rules[self], input_list },
+            input_vars,
+        })
     end
 end
 
@@ -1182,6 +1223,10 @@ compiler_mt = {
             check_opt(name)
             return function(value) self[name] = {self[name], value}; return self end
         end,
+        insert = function(self, name)
+            check_opt(name)
+            return function(value) self[name] = {self[name], value}; return self end
+        end,
     },
 }
 
@@ -1206,6 +1251,7 @@ return setmetatable(M, {
         new = function(_, ...) return luax:new(...) end,
         set = function(_, ...) return luax:set(...) end,
         add = function(_, ...) return luax:add(...) end,
+        insert = function(_, ...) return luax:insert(...) end,
         set_global = function(name)
             check_opt(name)
             return function(value)
@@ -1216,6 +1262,12 @@ return setmetatable(M, {
             check_opt(name)
             return function(value)
                 F.foreacht(M, function(compiler) compiler:add(name)(value) end)
+            end
+        end,
+        insert_global = function(name)
+            check_opt(name)
+            return function(value)
+                F.foreacht(M, function(compiler) compiler:insert(name)(value) end)
             end
         end,
     }
@@ -1329,7 +1381,7 @@ local vars = {}
 local function expand(s)
     if type(s) == "string" then
         for _ in pairs(vars) do
-            local s1 = s:gsub("%$(%w+)", vars)
+            local s1 = s:gsub("%$([%w_%-]+)", vars)
             if s1 == s then break end
             s = s1
         end
@@ -1582,10 +1634,13 @@ function pool(name)
 end
 
 function default(targets)
-    custom_default_statement = true
-    nl()
-    emit("default "..stringify(targets).."\n")
-    nl()
+    local default_targets = stringify(targets)
+    if default_targets ~= "" then
+        custom_default_statement = true
+        nl()
+        emit("default "..default_targets.."\n")
+        nl()
+    end
 end
 
 local function generate_default()
@@ -1632,7 +1687,7 @@ local function generator_rule(args)
 
     section(("Regenerate %s when %s changes"):format(args.output, args.input))
 
-    local bang_cmd= args.gen_cmd or
+    local bang_cmd = args.gen_cmd or
         filterk(function(k)
             return math.type(k) == "integer" and k <= 0
         end, args.cli_args) : values() : unwords()
@@ -1651,7 +1706,9 @@ local function generator_rule(args)
 
     local deps = values(package.modpath)
     if not deps:null() then
-        generator_flag.implicit_in = flatten{ generator_flag.implicit_in or {}, deps } : nub()
+        generator_flag.implicit_in = flatten{ generator_flag.implicit_in or {}, deps }
+            : nub()
+            : difference { args.input }
     end
 
     acc(command_line_token) {
@@ -1894,7 +1951,7 @@ return function()
 
 end
 ]])
-libs["version"] = lib(".build/version", [=[return [[1.2.4]]]=])
+libs["version"] = lib(".build/version", [=[return [[1.3.4]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"

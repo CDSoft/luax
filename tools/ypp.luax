@@ -1306,7 +1306,7 @@ return function(cond)
     return cond and ypp or F.const ""
 end
 ]======])
-libs["_YPP_VERSION"] = lib(".build/src/_YPP_VERSION.lua", [=[return [[1.0]] --@LOAD
+libs["_YPP_VERSION"] = lib(".build/src/_YPP_VERSION.lua", [=[return [[1.0.3]] --@LOAD
 ]=])
 _ENV["atexit"] = require "atexit"
 _ENV["comment"] = require "comment"
@@ -1536,16 +1536,12 @@ local function write_dep_file(args)
     local name = args.depfile or (args.output and fs.splitext(args.output)..".d")
     if not name then die("The dependency file name is unknown, use --MF or -o") end
     local function mklist(...)
-        return F{...}:flatten():from_set(F.const(true)):keys()
+        return F{...}:flatten():nub()
             :filter(function(p) return p ~= "-" end)
             :map(function(p) return p:gsub("^%."..fs.sep, "") end)
-            :sort()
             :unwords()
     end
-    local scripts = {
-        F.values(package.modpath),
-        require "import".files,
-    }
+    local scripts = F.values(package.modpath)
     local file = require "file"
     local deps = mklist(args.targets, args.output or {}, file.outputs).." : "..mklist(known_input_files, scripts)
     fs.mkdirs(fs.dirname(name))

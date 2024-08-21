@@ -13,10 +13,7 @@ local conf = import "myconf.lua"
 ```
 
 Evaluates `"myconf.lua"` in a new table and returns this table. All
-files are tracked in `import.files`.
-
-`package.modpath` also contains the names of the files loaded by
-`import`.
+files are tracked in `package.modpath`.
 
 The imported files are stored in a cache. Subsequent calls to `import`
 can read files from the cache instead of actually reloading them. The
