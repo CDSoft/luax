@@ -100,6 +100,11 @@ else
     end
 end
 
+local S_IFMT  = 0xF << 12
+local S_IFDIR = 1 << 14
+local S_IFREG = 1 << 15
+local S_IFLNK = (1 << 13) | (1 << 15)
+
 local S_IRUSR = 1 << 8
 local S_IWUSR = 1 << 7
 local S_IXUSR = 1 << 6
@@ -126,21 +131,21 @@ fs.oX = S_IXOTH
 local stat_cmd = sys.os=="macos" and "gstat" or "stat"
 
 local function stat(name, follow)
-    local st = sh.read("LC_ALL=C", stat_cmd, follow, "-c '%s;%Y;%X;%W;%F;%f'", name, "2>/dev/null")
+    local st = sh.read("LC_ALL=C", stat_cmd, follow, "-c '%s;%Y;%X;%W;%f'", name, "2>/dev/null")
     if not st then return nil, "cannot stat "..name end
-    local size, mtime, atime, ctime, type, mode = st:trim():split ";":unpack()
+    local size, mtime, atime, ctime, mode = st:trim():split ";":unpack()
     mode = tonumber(mode, 16)
-    if type == "regular file" or type == "regular empty file" then type = "file"
-    elseif type == "symbolic link" then type = "link"
-    end
     return F{
         name = name,
         size = tonumber(size),
         mtime = tonumber(mtime),
         atime = tonumber(atime),
         ctime = tonumber(ctime),
-        type = type,
         mode = mode,
+        type = (mode & S_IFMT) == S_IFLNK and "link"
+            or (mode & S_IFMT) == S_IFDIR and "directory"
+            or (mode & S_IFMT) == S_IFREG and "file"
+            or "unknown",
         uR = (mode & S_IRUSR) ~= 0,
         uW = (mode & S_IWUSR) ~= 0,
         uX = (mode & S_IXUSR) ~= 0,
