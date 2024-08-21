@@ -187,10 +187,17 @@ static void ls(lua_State *L, const char *dir, const char *base, bool dotted, boo
                 lua_rawseti(L, -2, *size);
             }
             if (recursive) {
+                char full_path[PATH_MAX];
+                t_str full_path_str;
+                str_init(&full_path_str, full_path, sizeof(full_path));
+                str_add(&full_path_str, dir, strnlen(dir, PATH_MAX));
+                str_add(&full_path_str, LUA_DIRSEP, sizeof(LUA_DIRSEP)-1);
+                str_add(&full_path_str, file->d_name, strnlen(file->d_name, sizeof(file->d_name)));
+
                 bool is_dir;
 #ifdef _WIN32
                 struct stat buf;
-                is_dir = stat(file->d_name, &buf) == 0 && S_ISDIR(buf.st_mode);
+                is_dir = str_ok(&full_path_str) && stat(full_path, &buf) == 0 && S_ISDIR(buf.st_mode);
 #else
                 switch (file->d_type) {
                     case DT_DIR:
@@ -211,14 +218,8 @@ static void ls(lua_State *L, const char *dir, const char *base, bool dotted, boo
                     if (cwd) {
                         ls(L, file->d_name, base, dotted, recursive, size);
                     } else {
-                        char subdir[PATH_MAX];
-                        t_str s;
-                        str_init(&s, subdir, sizeof(subdir));
-                        str_add(&s, dir, strnlen(dir, PATH_MAX));
-                        str_add(&s, LUA_DIRSEP, sizeof(LUA_DIRSEP)-1);
-                        str_add(&s, file->d_name, strnlen(file->d_name, sizeof(file->d_name)));
-                        if (str_ok(&s)) {
-                            ls(L, subdir, base, dotted, recursive, size);
+                        if (str_ok(&full_path_str)) {
+                            ls(L, full_path, base, dotted, recursive, size);
                         }
                     }
                 }
