@@ -67,7 +67,7 @@ then
             fi
             ;;
         (Darwin)
-            sudo brew install ninja
+            brew install ninja
             ;;
     esac
     found ninja || error "ninja is not installed"
