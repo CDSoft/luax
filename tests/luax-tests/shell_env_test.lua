@@ -30,8 +30,12 @@ local fs = require "fs"
 local sys = require "sys"
 local sh = require "sh"
 
-local function unique(sep, s)
-    return s:split(sep):nub():str(sep)
+local function unique(sep, s, cwd)
+    return s
+        : split(sep)
+        : difference { cwd }
+        : nub()
+        : str(sep)
 end
 
 local function shell_env(scripts)
@@ -51,9 +55,9 @@ return function()
         local i = F.I{CWD=cwd, sys=sys, libext=libext, os=os, unique=unique, path_sep=path_sep, lua_sep=lua_sep}
 
         eq(shell_env(), i[[
-export PATH="$(CWD)/.build/bin:$(unique(path_sep, os.getenv'PATH'))";
-export LUA_PATH="$(CWD)/.build/lib/?.lua;$(unique(lua_sep, os.getenv'LUA_PATH'))";
-export LUA_CPATH="$(CWD)/.build/lib/?.$(libext);$(unique(lua_sep, os.getenv'LUA_CPATH'))";
+export PATH="$(CWD)/.build/bin:$(unique(path_sep, os.getenv'PATH', CWD/".build/bin"))";
+export LUA_PATH="$(CWD)/.build/lib/?.lua;$(unique(lua_sep, os.getenv'LUA_PATH', CWD/".build/lib/?.lua"))";
+export LUA_CPATH="$(CWD)/.build/lib/?.$(libext);$(unique(lua_sep, os.getenv'LUA_CPATH', CWD/".build/lib/?."..libext))";
 ]])
 
         fs.with_tmpdir(function(tmp)
