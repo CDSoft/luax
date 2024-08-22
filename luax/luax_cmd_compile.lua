@@ -53,12 +53,21 @@ local function print_targets()
             path and "" or " [NOT FOUND]"))
     end)
     local assets = require "luax_assets"
-    local luax_lar = assets.path and assets.path:gsub("^"..home, "~") or "luax.lar"
-    local luax_lar_found = assets.path and "" or " [NOT FOUND]"
-    print(("%-22s%s%s"):format("native", luax_lar, luax_lar_found))
-    targets:foreach(function(target)
-        print(("%-22s%s%s"):format( target.name, luax_lar, luax_lar_found))
-    end)
+    if assets.path and assets.headers then
+        local luax_lar = assets.path:gsub("^"..home, "~")
+        if assets[sys.name] then
+            print(("%-22s%s"):format("native", luax_lar))
+        else
+            print(("%-22s%s%s"):format("native", luax_lar, " [NOT AVAILABLE]"))
+        end
+        targets:foreach(function(target)
+            if assets[target.name] then
+                print(("%-22s%s"):format(target.name, luax_lar))
+            else
+                print(("%-22s%s%s"):format(target.name, luax_lar, " [NOT AVAILABLE]"))
+            end
+        end)
+    end
 end
 
 local function wrong_arg(a)
@@ -213,6 +222,9 @@ local function compile_zig(tmp, current_output, target_definition)
 
     -- Extract precompiled LuaX libraries
     local assets = require "luax_assets"
+    if not assets.headers or not assets[target_definition.name] then
+        help.err("Compilation not available")
+    end
     local headers = F(assets.headers)
     local libs = F(assets[target_definition.name])
     headers:foreachk(function(filename, content) fs.write_bin(tmp/filename, content) end)

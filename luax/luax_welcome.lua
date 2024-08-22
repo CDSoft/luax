@@ -20,6 +20,8 @@ http://cdelord.fr/luax
 
 --@LIB
 
+local welcome_already_printed = false
+
 local function print_welcome()
 
     local sys = require "sys"
@@ -36,8 +38,6 @@ local function print_welcome()
 |_____\__,_|\__,_/_/\_\  |%{PANDOC_VERSION and "  and Pandoc "..tostring(PANDOC_VERSION) or ""}
                          |  %{sys.os:cap()} %{sys.arch} %{sys.libc}
 ]===]
-
-    local welcome_already_printed = false
 
     if welcome_already_printed then return end
     if term.isatty() then

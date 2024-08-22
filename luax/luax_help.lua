@@ -88,17 +88,20 @@ Copyright:
 ]===]):trim()
 end
 
-local function print_usage(fmt, ...)
+local function print_usage()
     local welcome = require "luax_welcome"
     welcome()
-    if fmt then
-        print(("error: %s"):format(fmt:format(...)))
-        print("")
-    end
     print(usage())
+end
+
+local function print_error(fmt, ...)
+    print("")
+    print(("error: %s"):format(fmt:format(...)))
+    print("")
+    os.exit(1)
 end
 
 return {
     print = print_usage,
-    err = function(fmt, ...) print_usage(fmt, ...) os.exit(1) end,
+    err = print_error,
 }
