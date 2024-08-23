@@ -268,5 +268,5 @@ compile x86_64-windows-gnu
 
 if $INSTALL
 then
-    install -v $BUILD/ninja-$OS-$ARCH$EXT ~/.local/bin/ninja$EXT
+    install -v "$BUILD/ninja-$OS-$ARCH$EXT" ~/.local/bin/ninja"$EXT"
 fi
