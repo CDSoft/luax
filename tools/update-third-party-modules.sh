@@ -176,7 +176,7 @@ update_lpeg()
 {
     local LPEG_VERSION="$1"
     local LPEG_ARCHIVE="lpeg-$LPEG_VERSION.tar.gz"
-    local LPEG_URL="http://www.inf.puc-rio.br/~roberto/lpeg/$LPEG_ARCHIVE"
+    local LPEG_URL="https://www.inf.puc-rio.br/~roberto/lpeg/$LPEG_ARCHIVE"
 
     mkdir -p "$TMP"
     download "$LPEG_URL" "$TMP/$LPEG_ARCHIVE"
