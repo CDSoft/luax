@@ -25,6 +25,8 @@
 
 set -eu
 
+cd "$(dirname "$0")"
+
 B=.build/boot
 LUA=$B/lua
 
