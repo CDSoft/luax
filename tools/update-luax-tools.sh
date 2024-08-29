@@ -31,10 +31,10 @@ if ! [ -d "$BANG_DIR" ]; then echo "bang not found in $BANG_DIR"; exit 1; fi
 if ! [ -d "$LSVG_DIR" ]; then echo "lsvg not found in $LSVG_DIR"; exit 1; fi
 if ! [ -d "$YPP_DIR" ];  then echo "ypp not found in $YPP_DIR";   exit 1; fi
 
-cd "$ROOT" && ./bootstrap.sh
+cd "$ROOT" && ninja clean && ./bootstrap.sh
 
 eval "$("$ROOT"/.build/bin/luax env)"
 
-cd "$BANG_DIR" && ninja clean && ninja && cp .build/bin/bang.luax "$ROOT/tools/"
-cd "$LSVG_DIR" && ninja clean && ninja && cp .build/lsvg.luax     "$ROOT/tools/"
-cd "$YPP_DIR"  && ninja clean && ninja && cp .build/ypp.luax      "$ROOT/tools/"
+cd "$BANG_DIR" && ninja clean && ninja && cp .build/bang.luax "$ROOT/tools/"
+cd "$LSVG_DIR" && ninja clean && ninja && cp .build/lsvg.luax "$ROOT/tools/"
+cd "$YPP_DIR"  && ninja clean && ninja && cp .build/ypp.luax  "$ROOT/tools/"

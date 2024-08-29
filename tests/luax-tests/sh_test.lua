@@ -41,10 +41,8 @@ return function()
     do
         local ok, exit, ret = sh.run{"exit", 1}
         eq(ok, nil)
-        if not os.getenv "VALGRIND" then -- affected by valgrind
-            eq(exit, "exit")
-            eq(ret, 1)
-        end
+        eq(exit, "exit")
+        eq(ret, 1)
     end
 
     eq(sh "echo Hello", "Hello\n")

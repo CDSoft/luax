@@ -134,7 +134,9 @@ Notice that `convert` can be implicitely called by `include` or `script` by givi
 @@@]]
 
 local convert = flex.str(function(content, opts)
-    assert(pandoc, "The convert macro requires a Pandoc Lua interpreter")
+    if not pandoc then
+        ypp.error "the convert macro requires a Pandoc Lua interpreter"
+    end
     opts = opts or {}
     local doc = pandoc.read(tostring(content), opts.from)
     local div = pandoc.Div(doc.blocks)
@@ -344,7 +346,7 @@ function flex_str_mt:__call(x)
     if type(x) ~= "table" or (xmt and xmt.__tostring) then
         -- called with a string or a table with a __tostring metamethod
         -- ==> store the string
-        assert(self.s == F.Nil, "Multiple argument")
+        if self.s ~= F.Nil then ypp.error "multiple argument" end
         return setmetatable({s=tostring(x), opt=self.opt, f=self.f}, flex_str_mt)
     else
         -- called with an option table
@@ -356,7 +358,7 @@ end
 function flex_str_mt:__tostring()
     -- string value requested
     -- convert to string and call f on this string
-    assert(self.s ~= F.Nil, "Missing argument")
+    if self.s == F.Nil then ypp.error "missing argument" end
     return tostring(self.f(tostring(self.s), self.opt))
 end
 
@@ -570,7 +572,7 @@ end
 
 local function render_diagram(cmd)
     -- stdout shall be discarded otherwise ypp can not be used in a pipe
-    assert(sh.read(cmd), "Diagram error")
+    if not sh.read(cmd) then ypp.error "diagram error" end
 end
 
 local output_file -- filename given by the -o option
@@ -631,8 +633,8 @@ local function diagram(exe, render, default_ext)
                 local templated_contents = template
                     : gsub("%%o", out)
                     : gsub("%%s", contents)
-                assert(fs.write(name_ext, templated_contents), "Can not create "..name_ext)
-                assert(fs.write(meta, meta_content), "Can not create "..meta)
+                if not fs.write(name_ext, templated_contents) then ypp.error("can not create %s", name_ext) end
+                if not fs.write(meta, meta_content) then ypp.error("can not create %s", meta) end
                 local render_cmd = make_diagram_cmd(name, out, render)
                 render_diagram(render_cmd)
             end)
@@ -808,6 +810,8 @@ http://cdelord.fr/ypp
 
 --@LIB
 
+local F = require "F"
+
 local function format_value(x)
     local mt = getmetatable(x)
     if mt and mt.__tostring then return tostring(x) end
@@ -816,22 +820,15 @@ local function format_value(x)
 end
 
 local function traceback(tag, expr, conf)
-    if tag==conf.expr and expr:match("^[%w_.]*$") then return function() end end
-    return function(message)
-        local trace = F.flatten {
-            arg[0]:basename()..": "..message,
-            F(debug.traceback())
-                : lines()
-                : take_while(function(line)
-                    return not line:find("[C]: in function 'xpcall'", 1, true)
-                    and not line:find("src/parser%.lua:%d+: in local 'msgh'")
-                end)
-                : filter(function(line)
-                    return not line:find("src/parser%.lua:%d+:")
-                end),
-        }
-        io.stderr:write(trace:unlines())
-        io.stderr:flush()
+    if tag==conf.expr and expr:match("^[%w_.]*$") then return F.const() end
+    return function(message, opts)
+        if opts and opts.erroneous_source then
+            -- Compilation error
+            ypp.error_in(opts.erroneous_source, "%s", message)
+        else
+            -- Execution error => print the traceback
+            ypp.error("%s", message)
+        end
         os.exit(1)
     end
 end
@@ -843,7 +840,7 @@ local function eval(s, tag, expr, state)
     local ok_compile, chunk, compile_error = xpcall(load, msgh, (tag==expr_tag and "return " or "")..expr, expr, "t")
     if not ok_compile then return s end -- load execution error
     if not chunk then -- compilation error
-        msgh(compile_error)
+        msgh(compile_error, {erroneous_source=expr})
         return s
     end
     local ok_eval, val = xpcall(chunk, msgh)
@@ -859,7 +856,8 @@ local function eval(s, tag, expr, state)
     return format_value(val)
 end
 
--- a parser is a function that takes a string, a position and returns the start and stop of the next expression and the expression
+-- a parser is a function that takes a string and a position
+-- and returns the start and stop of the next expression and the expression
 
 local function parse_parentheses(s, i0)
     -- (...)
@@ -872,6 +870,14 @@ end
 local function parse_brackets(s, i0)
     -- {...}
     local i1, expr, i2 = s:match("^%s*()(%b{})()", i0)
+    if expr then
+        return i1, i2, expr:sub(2, -2)
+    end
+end
+
+local function parse_square_brackets(s, i0)
+    -- [...]
+    local i1, expr, i2 = s:match("^%s*()(%b[])()", i0)
     if expr then
         return i1, i2, expr:sub(2, -2)
     end
@@ -917,14 +923,6 @@ local function parse_expr(s, i0)
 end
 
 parse_sexpr = function(s, i0)
-    -- SE -> [.:] E
-    do
-        local i1 = s:match("^%s*[.:]()", i0)
-        if i1 then
-            local _, i2, _ = parse_expr(s, i1)
-            if i2 then return i2 end
-        end
-    end
     -- SE -> (...) SE
     do
         local _, i1, _ = parse_parentheses(s, i0)
@@ -965,6 +963,22 @@ parse_sexpr = function(s, i0)
             if i2 then return i2 end
         end
     end
+    -- SE -> [...] SE
+    do
+        local _, i1, _ = parse_square_brackets(s, i0)
+        if i1 then
+            local i2 = parse_sexpr(s, i1)
+            if i2 then return i2 end
+        end
+    end
+    -- SE -> [.:] E
+    do
+        local i1 = s:match("^%s*[.:]()", i0)
+        if i1 then
+            local _, i2, _ = parse_expr(s, i1)
+            if i2 then return i2 end
+        end
+    end
     -- SE -> nil
     do
         return i0
@@ -972,16 +986,21 @@ parse_sexpr = function(s, i0)
 end
 
 local function parse_lhs(s, i0)
-    -- LHS -> identifier ('.' identifier)*
+    -- LHS -> identifier ([...] | '.' identifier)*
     local i1, i2 = s:match("^%s*()[%w_]+()", i0)
     if i1 then
         local i = i2
         while true do
-            local i3, i4 = s:match("^%s*()%.%s*[%w_]+()", i)
+            local i3, i4 = s:match("^%s*()%b[]()", i)
             if i3 then
                 i = i4
             else
-                return i1, i
+                local i5, i6 = s:match("^%s*()%.%s*[%w_]+()", i)
+                if i5 then
+                    i = i6
+                else
+                    return i1, i
+                end
             end
         end
     end
@@ -1306,8 +1325,7 @@ return function(cond)
     return cond and ypp or F.const ""
 end
 ]======])
-libs["_YPP_VERSION"] = lib(".build/src/_YPP_VERSION.lua", [=[return [[1.0.3]] --@LOAD
-]=])
+libs["_YPP_VERSION"] = lib(".build/_YPP_VERSION", [=[return [[1.1.4]]]=])
 _ENV["atexit"] = require "atexit"
 _ENV["comment"] = require "comment"
 _ENV["convert"] = require "convert"
@@ -1318,7 +1336,6 @@ _ENV["include"] = require "include"
 _ENV["q"] = require "q"
 _ENV["script"] = require "script"
 _ENV["when"] = require "when"
-_ENV["_YPP_VERSION"] = require "_YPP_VERSION"
 return lib("src/ypp.lua", [=[--[[
 This file is part of ypp.
 
@@ -1355,6 +1372,7 @@ http://cdelord.fr/ypp
 
 local F = require "F"
 local fs = require "fs"
+local term = require "term"
 
 -- preload some LuaX modules
 _G.F = F
@@ -1362,6 +1380,9 @@ _G.crypt = require "crypt"
 _G.fs = fs
 _G.sh = require "sh"
 _G.sys = require "sys"
+_G.import = require "import"
+
+_G._YPP_VERSION = require "_YPP_VERSION"
 
 local default_local_configuration = {
     expr = "@",     esc_expr = "@",
@@ -1391,8 +1412,59 @@ local output_contents = F{}
 local input_files = F{fs.join(fs.getcwd(), "-")} -- stack of input files (current branch from the root to the deepest included document)
 local output_file = "-"
 
-local function die(msg, ...)
-    io.stderr:write("ypp: ", msg:format(...), "\n")
+local red  = term.isatty(io.stderr) and term.color.red  or F.id
+local cyan = term.isatty(io.stderr) and term.color.cyan or F.id
+
+local function print_frame(source, source_name, line)
+    local context = 5
+    io.stderr:write("\n", cyan(source_name..":"..line..":"), "\n")
+    source = source or ""
+    source : lines() : foreachi(function(i, l)
+        if math.abs(i - line) > context then return end
+        if i == line then
+            io.stderr:write(red(("%4d => %s"):format(i, l)), "\n")
+        else
+            io.stderr:write(("%4d |  %s"):format(i, l), "\n")
+        end
+    end)
+end
+
+local function print_traceback()
+    for level = 1, math.huge do
+        local info = debug.getinfo(level)   if not info then break end
+                                            if info.short_src:head() == "$" then goto next_frame end
+                                            if info.short_src == "[C]"      then goto next_frame end
+        local source = info.source:head()=="@" and fs.read(info.source:tail()) or info.source
+        print_frame(source, info.short_src, info.currentline)
+    ::next_frame::
+    end
+end
+
+local function parse_error(msg, ...)
+    msg = msg : format(...)
+    local filename, err_line, err = msg : match "^(.-):(%d+):%s*(.*)$"
+    return filename, tonumber(err_line), err or msg
+end
+
+local function print_error(filename, err_line, msg)
+    if err_line then
+        io.stderr:write(cyan(filename..":"..err_line..":"), " ", red"error:", " ", msg, "\n")
+    else
+        io.stderr:write(red"error:", " ", msg, "\n")
+    end
+end
+
+function ypp_mt.__index.error(msg, ...)
+    local filename, err_line, err = parse_error(msg, ...)
+    print_error(filename, err_line, err)
+    print_traceback()
+    os.exit(1)
+end
+
+function ypp_mt.__index.error_in(source, msg, ...)
+    local filename, err_line, err = parse_error(msg, ...)
+    print_error(filename, err_line, err)
+    print_frame(source, filename, err_line)
     os.exit(1)
 end
 
@@ -1423,7 +1495,8 @@ local function read_file(filename)
     if filename == "-" then
         content = io.stdin:read "a"
     else
-        content = assert(fs.read(filename))
+        content = fs.read(filename)
+        if not content then ypp.error("%s: can not read file", filename) end
         known_input_files[#known_input_files+1] = filename:gsub("^"..fs.getcwd()..fs.sep, "")
     end
     return content
@@ -1438,7 +1511,7 @@ local function find_file(filename)
         fs.join(input_path, filename),
         filename,
     } : find(fs.is_file)
-    assert(full_filepath, filename..": file not found")
+    if not full_filepath then ypp.error("%s: file not found", filename) end
     return full_filepath
 end
 
@@ -1492,10 +1565,10 @@ local forbidden_macro_char = {
 
 local function update_macro_char(funcname, conf, char)
     if type(char) ~= "string" or #char ~= 1 then
-        die("%s expects a single character", funcname)
+        ypp.error("%s expects a single character", funcname)
     end
     if forbidden_macro_char[char] then
-        die("%q: invalid macro character", char)
+        ypp.error("%q: invalid macro character", char)
     end
     conf.expr = char
     conf.stat = char..char
@@ -1534,7 +1607,7 @@ end
 local function write_dep_file(args)
     if not (args.gendep or args.depfile or #args.targets>0) then return end
     local name = args.depfile or (args.output and fs.splitext(args.output)..".d")
-    if not name then die("The dependency file name is unknown, use --MF or -o") end
+    if not name then ypp.error("the dependency file name is unknown, use --MF or -o") end
     local function mklist(...)
         return F{...}:flatten():nub()
             :filter(function(p) return p ~= "-" end)
@@ -1555,7 +1628,7 @@ local function parse_args()
         : epilog "For more information, see https://github.com/CDSoft/ypp"
 
     parser : flag "-v"
-        : description "Show yyp version"
+        : description "Show ypp version"
         : action(function(_, _, _, _) print(_YPP_VERSION); os.exit() end)
 
     parser : option "-l"
