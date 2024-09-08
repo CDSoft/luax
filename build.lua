@@ -261,7 +261,7 @@ local include_path = F{
 local lto_opt = optional(strict and use_lto) {
     case(compiler) {
         zig   = "-flto=thin",
-        gcc   = "-flto",
+        gcc   = "-flto=auto",
         clang = "-flto=thin",
     }
 }
