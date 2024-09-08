@@ -76,17 +76,33 @@ then
 fi
 
 ######################################################################
-# Zig
+# C compiler
 ######################################################################
 
 ZIG_VERSION=0.13.0
 ZIG=~/.local/opt/zig/$ZIG_VERSION/zig
 
-if ! [ -x $ZIG ]
-then
-    tools/install_zig.sh $ZIG_VERSION $ZIG
-    [ -x $ZIG ] || error "zig can not be installed"
-fi
+COMPILER=""
+
+for arg in "$@"
+do
+    case "$arg" in
+        gcc)    COMPILER=gcc ;;
+        clang)  COMPILER=clang ;;
+    esac
+done
+
+case "$COMPILER" in
+    "") COMPILER="$ZIG cc"
+        if ! [ -x $ZIG ]
+        then
+            tools/install_zig.sh $ZIG_VERSION $ZIG
+            [ -x $ZIG ] || error "zig can not be installed"
+        fi
+        ;;
+    *)  hash "$COMPILER" 2>/dev/null || error "$COMPILER is not installed"
+        ;;
+esac
 
 ######################################################################
 # Lua
@@ -94,13 +110,18 @@ fi
 
 if ! [ -x $LUA ]
 then
+    CFLAGS=(
+        -O2
+        -s
+        -pipe
+        -lm
+    )
     case "$OS" in
-        (Linux)     CFLAGS=(-DLUA_USE_LINUX) ;;
-        (Darwin)    CFLAGS=(-DLUA_USE_MACOSX) ;;
-        (*)         CFLAGS=() ;;
+        (Linux)     CFLAGS+=(-DLUA_USE_LINUX) ;;
+        (Darwin)    CFLAGS+=(-DLUA_USE_MACOSX) ;;
     esac
     LUA_SOURCES=( lua/*.c )
-    $ZIG cc -pipe -s -Oz "${CFLAGS[@]}" "${LUA_SOURCES[@]}" -o $LUA
+    $COMPILER "${CFLAGS[@]}" "${LUA_SOURCES[@]}" -o $LUA
 fi
 
 ######################################################################
