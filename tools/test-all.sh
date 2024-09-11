@@ -50,3 +50,6 @@ check debug clang strip
 
 check debug san
 check debug san strip
+
+# The last check shall restore the default build configuration
+check
