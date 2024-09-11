@@ -54,12 +54,12 @@ download()
     echo "Downloading $URL"
     if found curl
     then
-        curl -L "$URL" -o "$OUTPUT" --progress-bar --fail
+        curl --insecure -L "$URL" -o "$OUTPUT" --progress-bar --fail
         return
     fi
     if found wget
     then
-        wget "$URL" -O "$OUTPUT"
+        wget --no-check-certificate "$URL" -O "$OUTPUT"
         return
     fi
     echo "ERROR: curl or wget not found"

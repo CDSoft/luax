@@ -31,4 +31,4 @@ q = qmath.torat(x, [eps])
 
 approximates a floating point number `x` with a rational value. The
 rational number `q` is an approximation of `x` such that
-$|q - x| < eps$. The default `eps` value is $10^{-6}$.
+$`|q - x| < eps`$. The default `eps` value is $`10^{-6}`$.

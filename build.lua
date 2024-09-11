@@ -939,24 +939,18 @@ acc(libraries) {
 
             -- Binary runtimes
             targets : map(function(target)
+                local libs = {
+                    liblua[target.name],
+                    libluax[target.name],
+                    main_libluax[target.name],
+                    main_luax[target.name],
+                }
                 return build("$tmp/lib"/target.name..".lar") { "ar",
                     flags = { "-z none" },
 
-                    -- precompiled LuaX libraries
-                    (function()
-                        local libs = F{
-                            liblua[target.name],
-                            libluax[target.name],
-                            main_libluax[target.name],
-                            main_luax[target.name],
-                        }
-                        if has_partial_ld(target) then
-                            return build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs }
-                        else
-                            return libs
-                        end
-                    end)(),
-
+                    has_partial_ld(target)
+                        and build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs }
+                        or libs,
                 }
             end),
 
