@@ -17,18 +17,10 @@
  * http://cdelord.fr/luax
  */
 
-#pragma once
-/* LuaX configuration @@[[
-VERSION = sh "git describe --tags" : trim()
-DATE    = sh "git show -s --format=%cd --date=format:'%Y-%m-%d'" : trim()
-YEAR    = sh "git show -s --format=%cd --date=format:'%Y'" : trim()
-assert(AUTHORS, "AUTHORS: not defined")
-assert(URL, "URL: not defined")
-]]*/
+/* LuaX configuration */
 
 #pragma once
 
 #define LUAX_VERSION   "@(VERSION)"
 #define LUAX_DATE      "@(DATE)"
-#define LUAX_COPYRIGHT "LuaX "LUAX_VERSION"  Copyright (C) 2021-@(YEAR) @(URL)"
-#define LUAX_AUTHORS   "@(AUTHORS)"
+#define LUAX_COPYRIGHT "@(COPYRIGHT)"

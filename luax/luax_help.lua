@@ -25,7 +25,10 @@ local F = require "F"
 local arg0 = arg[0]
 
 local function usage()
-    local I = (F.I % "%%{}") (F.patch(require "luax_config", {arg0=arg0}))
+    local I = (F.I % "%%{}") (F.patch(require "luax_config", {
+        arg0 = arg0,
+        lua_init = { "LUA_INIT_".._VERSION:words()[2]:gsub("%.", "_"), "LUA_INIT" },
+    }))
     return (I[===[
 usage: %{arg0:basename()} [cmd] [options]
 
@@ -81,10 +84,6 @@ E.g.: eval $(luax env)
 
 "luax env" can also generate shell variables from a script.
 E.g.: eval $(luax env script.lua)
-
-Copyright:
-  %{copyright}
-  %{authors}
 ]===]):trim()
 end
 

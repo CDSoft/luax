@@ -239,7 +239,7 @@ prints `show(x)`
 end
 
 local function run_lua_init()
-    F(require "luax_config".lua_init)
+    F{ "LUA_INIT_".._VERSION:words()[2]:gsub("%.", "_"), "LUA_INIT" }
         : filter(function(var) return os.getenv(var) ~= nil end)
         : take(1)
         : foreach(function(var)
@@ -317,7 +317,7 @@ do
                 end
             end)
         elseif a == '-v' then
-            welcome()
+            require "luax_cmd_version"
             os.exit()
         elseif a == '-h' then
             help.print()

@@ -1,15 +1,4 @@
-local URL = "cdelord.fr/luax"
-local YEARS = os.date "2021-%Y"
-local AUTHORS = "Christophe Delord"
-local appname = "luax"
-
-local F = require "F"
-local fs = require "fs"
-local sh = require "sh"
-
-local I = F.I{URL=URL, YEARS=YEARS, AUTHORS=AUTHORS}
-
-section(I[[
+section [[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -26,13 +15,27 @@ You should have received a copy of the GNU General Public License
 along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
 For further information about luax you can visit
-http://$(URL)
-]])
+http://cdelord.fr/luax
+]]
+
+local F = require "F"
+local fs = require "fs"
+local sh = require "sh"
+
+local LUAX = {}
+local I = F.I(LUAX)
+
+LUAX.AUTHORS     = "Christophe Delord"
+LUAX.URL         = "cdelord.fr/luax"
+LUAX.VERSION     = sh "git describe --tags" : trim()
+LUAX.DATE        = sh "git show -s --format=%cd --date=format:'%Y-%m-%d'" : trim()
+local YEAR       = LUAX.DATE : split '%-' : head()
+LUAX.COPYRIGHT   = I{YEAR=YEAR}"LuaX $(VERSION)  Copyright (C) 2021-$(YEAR) $(URL), $(AUTHORS)"
+LUAX.ZIG_VERSION = "0.13.0"
 
 help.name "LuaX"
 help.description(I[[
-Lua eXtended
-Copyright (C) $(YEARS) $(AUTHORS) (https://$(URL))
+$(COPYRIGHT)
 
 luax is a Lua interpreter and REPL based on Lua 5.4
 augmented with some useful packages.
@@ -54,8 +57,17 @@ If you need to update the build system, please modify build.lua
 and run bang to regenerate build.ninja.
 ]]
 
+local gitdir = (function()
+    local dir = ".git"
+    if fs.is_file(dir) then
+        return fs.read(dir) : lines() : map(string.words) : from_list() : nth "gitdir:"
+    end
+    return dir
+end)()
+
 generator {
     implicit_in = {
+        gitdir/"refs/tags",
         "libluax/sys/sys.lua",
         "libluax/sys/targets.lua",
     },
@@ -67,7 +79,7 @@ _ENV._SYS_TARGETS = targets -- global used by sys to override the target list of
 local sys = dofile "libluax/sys/sys.lua"
 
 local usage = I{
-    title = function(s) return F.unlines {s, (s:gsub(".", "="))}:rtrim() end,
+    title = function(s) return F.unlines {s, ("="):rep(#s)}:rtrim() end,
     list = function(t) return t:map(F.prefix"    - "):unlines():rtrim() end,
     targets = targets:map(F.partial(F.nth, "name")),
 }[[
@@ -196,8 +208,6 @@ local compile_flags = file "compile_flags.txt"
 section "Compiler"
 ---------------------------------------------------------------------
 
-local zig_version = "0.13.0"
-
 local compiler_deps = {}
 
 local function zig_target(t)
@@ -211,15 +221,16 @@ end
 case(compiler) {
 
     zig = function()
+        var "zig_version" (LUAX.ZIG_VERSION)
         local HOME, zig_path = F.unpack(case(sys.os) {
-            windows = { "LOCALAPPDATA", "zig" / zig_version / "zig" },
-            [Nil]   = { "HOME", ".local/opt/zig" / zig_version / "zig" },
+            windows = { "LOCALAPPDATA", "zig" / "$zig_version" / "zig" },
+            [Nil]   = { "HOME", ".local/opt/zig" / "$zig_version" / "zig" },
         })
         var "zig" { os.getenv(HOME) / zig_path }
 
         build "$zig" {
-            description = {"GET zig", zig_version},
-            command = {"tools/install_zig.sh", zig_version, "$out"},
+            description = {"GET zig", "$zig_version"},
+            command = {"tools/install_zig.sh", "$zig_version", "$out"},
             pool = "console",
         }
 
@@ -663,28 +674,14 @@ local function ypp_vars(t)
         : unwords()
 end
 
-local luax_config_params = ypp_vars {
-    AUTHORS = AUTHORS,
-    URL = URL,
-    ZIG_VERSION = zig_version,
-}
-
-local function gitdir()
-    local dir = ".git"
-    if fs.is_file(dir) then
-        return fs.read(dir) : lines() : map(string.words) : from_list() : nth "gitdir:"
-    end
-    return dir
-end
-
 rule "ypp-config" {
     description = "YPP $out",
-    command = { "$lua tools/luax.lua tools/ypp.luax", luax_config_params, "$in -o $out" },
+    command = { "$lua tools/luax.lua tools/ypp.luax", ypp_vars(LUAX), "$in -o $out" },
     implicit_in = {
         "$lua",
         "tools/luax.lua",
         "tools/ypp.luax",
-        gitdir()/"refs/tags",
+        gitdir/"refs/tags",
     },
 }
 
@@ -859,7 +856,7 @@ targets:foreach(function(target)
                 },
             }
         end)
-    binary[target.name] = build("$tmp"/target.name/"bin"/appname..target.exe) { ld[target.name],
+    binary[target.name] = build("$tmp"/target.name/"bin"/"luax"..target.exe) { ld[target.name],
         main_luax[target.name],
         main_libluax[target.name],
         liblua[target.name],
@@ -1302,7 +1299,7 @@ local images = {
     build "doc/luax-logo.svg"           {"lsvg", "doc/src/luax-logo.lua", args={ 256,  256}},
     build "$builddir/luax-banner.png"   {"lsvg", "doc/src/luax-logo.lua", args={1024,  192, "sky"}},
     build "$builddir/luax-banner.jpg"   {"lsvg", "doc/src/luax-logo.lua", args={1024,  192, "sky"}},
-    build "$builddir/luax-social.png"   {"lsvg", "doc/src/luax-logo.lua", args={1280,  640, F.show(URL)}},
+    build "$builddir/luax-social.png"   {"lsvg", "doc/src/luax-logo.lua", args={1280,  640, F.show(LUAX.URL)}},
     build "$builddir/luax-logo.png"     {"lsvg", "doc/src/luax-logo.lua", args={1024, 1024}},
     build "$builddir/luax-logo.jpg"     {"lsvg", "doc/src/luax-logo.lua", args={1024, 1024}},
 }

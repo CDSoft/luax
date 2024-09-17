@@ -42,11 +42,6 @@ package.path = table.concat({
     "ext/lua/argparse/?.lua",
 }, ";")
 
--- stubs for modules generated at compile time
-package.preload.luax_config = function()
-    return { lua_init = {} }
-end
-
 -- Install LuaX hooks
 dofile "libluax/package/package_hook.lua"
 

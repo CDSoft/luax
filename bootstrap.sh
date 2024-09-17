@@ -79,7 +79,7 @@ fi
 # C compiler
 ######################################################################
 
-ZIG_VERSION=0.13.0
+ZIG_VERSION=$(grep "ZIG_VERSION *=" build.lua | cut -d= -f2 | tr -d " \"")
 ZIG=~/.local/opt/zig/$ZIG_VERSION/zig
 
 COMPILER=""
@@ -94,10 +94,10 @@ done
 
 case "$COMPILER" in
     "") COMPILER="$ZIG cc"
-        if ! [ -x $ZIG ]
+        if ! [ -x "$ZIG" ]
         then
-            tools/install_zig.sh $ZIG_VERSION $ZIG
-            [ -x $ZIG ] || error "zig can not be installed"
+            tools/install_zig.sh "$ZIG_VERSION" "$ZIG"
+            [ -x "$ZIG" ] || error "zig can not be installed"
         fi
         ;;
     *)  hash "$COMPILER" 2>/dev/null || error "$COMPILER is not installed"

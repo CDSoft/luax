@@ -20,6 +20,6 @@ http://cdelord.fr/luax
 
 --@LIB
 
-local welcome = require "luax_welcome"
+local luax_config = require "luax_config"
 
-welcome()
+print(luax_config.copyright)

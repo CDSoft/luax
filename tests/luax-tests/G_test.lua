@@ -88,6 +88,7 @@ return function()
         "_G",
         "_LUAX_VERSION",
         "_LUAX_DATE",
+        "_LUAX_COPYRIGHT",
         "_VERSION",
         "arg",
         "assert",

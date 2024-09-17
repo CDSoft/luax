@@ -304,8 +304,9 @@ function M.bundle(opt)
         local shebang = "#!/usr/bin/env -S "..interpreter[opt.target].." --"
         local out = F{
             interpreter[opt.target] ~= "luax" and {
-                "_LUAX_VERSION = '"..config.version.."'",
-                "_LUAX_DATE    = '"..config.date.."'",
+                "_LUAX_VERSION   = '"..config.version.."'",
+                "_LUAX_DATE      = '"..config.date.."'",
+                "_LUAX_COPYRIGHT = '"..config.copyright.."'",
             } or {},
             "local libs = {}",
             "table.insert(package.searchers, 2, function(name) return libs[name] end)",

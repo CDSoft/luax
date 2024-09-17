@@ -18,24 +18,14 @@ For further information about luax you can visit
 http://cdelord.fr/luax
 --]]
 
---@@[[
-VERSION = sh "git describe --tags" : trim()
-DATE    = sh "git show -s --format=%cd --date=format:'%Y-%m-%d'" : trim()
-YEAR    = sh "git show -s --format=%cd --date=format:'%Y'" : trim()
-assert(AUTHORS, "AUTHORS: not defined")
-assert(URL, "URL: not defined")
-assert(ZIG_VERSION, "ZIG_VERSION: not defined")
-LUA_VERSION = _VERSION:words()[2]:gsub("%.", "_")
---]]@LIB
+-- LuaX configuration
+
+-- @LIB
 
 return {
     version = "@(VERSION)",
     date = "@(DATE)",
-    copyright = "LuaX @(VERSION)  Copyright (C) 2021-@(YEAR) @(URL)",
+    copyright = "@(COPYRIGHT)",
     authors = "@(AUTHORS)",
     zig_version = "@(ZIG_VERSION)",
-    lua_init = {
-        "LUA_INIT_@(LUA_VERSION)",
-        "LUA_INIT",
-    },
 }
