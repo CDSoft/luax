@@ -199,21 +199,28 @@ local function compile_zig(tmp, current_output, target_definition)
     -- Install Zig (to cross compile and link C sources)
     if not zig:is_file() then
         log("Zig", "download and install Zig to %s", zig_path)
-        local archive = "zig-"..sys.os.."-"..sys.arch.."-"..zig_version..".tar.xz"
-        local url = "https://ziglang.org/download"/zig_version/archive
+        local archive = "zig-"..sys.os.."-"..sys.arch.."-"..zig_version..(sys.os=="windows" and ".zip" or ".tar.xz")
+        local url = "https://ziglang.org/download/"..zig_version.."/"..archive
         local curl = fs.findpath("curl"..sys.exe)
         local wget = fs.findpath("wget"..sys.exe)
         local tar  = fs.findpath("tar"..sys.exe)
         local xz   = fs.findpath("xz"..sys.exe)
-        assert(curl or wget, "curl or wget required to download Zig")
-        assert(tar and xz, "tar and xz required to install Zig")
+        if not curl and not wget then help.err("curl or wget required to download Zig") end
+        if not tar then help.err("tar required to install Zig") end
+        if sys.os ~= "windows" then
+            if not xz then help.err("xz required to install Zig") end
+        end
         assert(sh.run(
             curl and { curl, "-fSL", quiet and "-s" or "-#", url, "-o", tmp/archive }
             or
             wget and { wget, quiet and "-q" or "--progress=bar", url, "-O", tmp/archive }
         ))
         fs.mkdirs(zig_path)
-        assert(sh.run("tar", "xJf", tmp/archive, "-C", zig_path, "--strip-components", 1))
+        if sys.os == "windows" then
+            assert(sh.run(tar, "xf", tmp/archive, "-C", zig_path, "--strip-components", 1))
+        else
+            assert(sh.run(tar, "xJf", tmp/archive, "-C", zig_path, "--strip-components", 1))
+        end
         if not zig:is_file() then
             help.err("Unable to install Zig to %s", zig_path)
         end
