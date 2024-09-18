@@ -45,11 +45,10 @@ local function print_targets()
     })
     lua_interpreters:foreach(function(interpreter)
         local name = interpreter.name
-        local exe = name
-        local path = exe:findpath()
+        local path = (name..sys.exe):findpath()
         print(("%-22s%s%s"):format(
             name,
-            path and path:gsub("^"..home, "~") or exe,
+            path and path:gsub("^"..home, "~") or name,
             path and "" or " [NOT FOUND]"))
     end)
     local assets = require "luax_assets"
