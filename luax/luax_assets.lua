@@ -21,12 +21,15 @@ http://cdelord.fr/luax
 
 --@LIB
 
+local F = require "F"
 local fs = require "fs"
 local lar = require "lar"
-
-local F = require "F"
+local sys = require "sys"
 
 local function findpath(name)
+    if sys.os == "windows" and not name:lower():has_suffix(sys.name:lower()) then
+        name = name..sys.exe
+    end
     if name:is_file() then return name:realpath() end
     local full_path = name:findpath()
     return full_path and full_path:realpath() or name
@@ -44,8 +47,7 @@ local function find_archive()
 
     for i = N, 0 do
 
-        local exe = arg[i]
-        local path = findpath(exe)
+        local path = findpath(arg[i])
         if path then
             local archive = path:dirname():dirname()/"lib"/"luax.lar"
             if archive:is_file() then return archive end
