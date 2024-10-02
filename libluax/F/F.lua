@@ -3859,7 +3859,7 @@ function string.upper_snake_case(...)
 end
 
 function string.lower_camel_case(...)
-    return s_gsub(t_concat(F_map(s_cap, split_identifier(...))), "^%w", s_lower)
+    return (s_gsub(t_concat(F_map(s_cap, split_identifier(...))), "^%w", s_lower))
 end
 
 function string.upper_camel_case(...)
