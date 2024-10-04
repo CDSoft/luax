@@ -33,6 +33,10 @@ cross-compile[^cross-compilation] scripts for a supported platform.
 - [cdelord.fr/luax](https://cdelord.fr/luax)
 - [github.com/CDSoft/luax](https://github.com/CDSoft/luax)
 
+If you like LuaX and are willing to support its development,
+please consider donating via [Github](https://github.com/sponsors/CDSoft?o=esc)
+or [Liberapay](https://liberapay.com/LuaX/donate).
+
 ## Requirements
 
 - [Ninja](https://ninja-build.org): to compile LuaX using the LuaX Ninja file
