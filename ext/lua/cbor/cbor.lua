@@ -126,7 +126,7 @@ end
 
 local tagged_mt = {};
 function tagged_mt:__tostring() return ("%d(%s)"):format(self.tag, tostring(self.value)); end
-function tagged_mt:__tocbor() return integer(self.tag, 192) .. encode(self.value); end
+function tagged_mt:__tocbor(opts) return integer(self.tag, 192) .. encode(self.value, opts); end
 
 local function tagged(tag, value)
 	assert(tag >= 0, "bad argument #1 to 'tagged' (positive integer expected)");
