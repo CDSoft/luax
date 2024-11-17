@@ -29,12 +29,13 @@ returns the list of files and directories in `path` (the default path is
 the current directory).
 
 ``` lua
-fs.ls(path)
+fs.ls(path, [dotted])
 ```
 
 returns a list of file names. `path` can be a directory name or a simple
 file pattern. Patterns can contain jokers (`*` to match any character
-and `**` to search files recursively).
+and `**` to search files recursively). If `dotted` is true, hidden files
+are also listed.
 
 Examples:
 

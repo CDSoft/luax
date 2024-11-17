@@ -151,6 +151,6 @@ returns `true` if `fileno` is a tty. The default file descriptor is
 term.size([fileno])
 ```
 
-returns a table with the number of rows (field `rows`) and lines (field
-`lines`) of the terminal attached to `fileno`. The default file
+returns a table with the number of rows (field `rows`) and columns
+(field `cols`) of the terminal attached to `fileno`. The default file
 descriptor is `stdout` (`0`).

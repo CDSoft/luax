@@ -140,11 +140,12 @@ static int fs_dir(lua_State *L)
 #pragma GCC diagnostic ignored "-Wcomment"
 /*@@@
 ```lua
-fs.ls(path)
+fs.ls(path, [dotted])
 ```
 returns a list of file names.
 `path` can be a directory name or a simple file pattern.
 Patterns can contain jokers (`*` to match any character and `**` to search files recursively).
+If `dotted` is true, hidden files are also listed.
 
 Examples:
 
