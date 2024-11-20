@@ -33,11 +33,12 @@ local function luax_env(arg0)
     local lib_lua = prefix / "lib" / "?.lua"
     local lib_so = prefix / "lib" / "?"..sys.so
 
-    local function update(var_name, separator, new_path)
+    local function update(lua_var, var_name, separator, new_path)
         return F{
             "export ", var_name, "=\"",
             F.flatten {
                 new_path,
+                lua_var : split(separator),
                 (os.getenv(var_name) or "") : split(separator),
             } : nub() : str(separator),
             "\";",
@@ -47,9 +48,9 @@ local function luax_env(arg0)
     local lua_path_sep = package.config:words()[2]
 
     return F.unlines {
-        update("PATH",      fs.path_sep,  bin),
-        update("LUA_PATH",  lua_path_sep, lib_lua),
-        update("LUA_CPATH", lua_path_sep, lib_so),
+        update("",            "PATH",      fs.path_sep,  bin),
+        update(package.path,  "LUA_PATH",  lua_path_sep, lib_lua),
+        update(package.cpath, "LUA_CPATH", lua_path_sep, lib_so),
     }
 end
 
