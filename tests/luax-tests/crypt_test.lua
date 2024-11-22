@@ -189,27 +189,23 @@ return function()
         end
         eq(done, true)
         bounded(i, 100, 2000)
+        local random_values = F{}
         for _ = 1, N do
             local x = prng:int()                              eq(type(x), "number") eq(math.type(x), "integer")
-            local y = prng:int()                              eq(type(y), "number") eq(math.type(y), "integer")
             bounded(x, 0, crypt.RAND_MAX)
-            bounded(y, 0, crypt.RAND_MAX)
-            ne(x, y)
+            random_values[x] = true
         end
         for _ = 1, N do
-            local x = prng:float()                             eq(type(x), "number") eq(math.type(x), "float")
-            local y = prng:float()                             eq(type(y), "number") eq(math.type(y), "float")
+            local x = prng:float()                            eq(type(x), "number") eq(math.type(x), "float")
             bounded(x, 0.0, 1.0)
-            bounded(y, 0.0, 1.0)
-            ne(x, y)
+            random_values[x] = true
         end
         for _ = 1, N do
-            local x = prng:str(16)                           eq(type(x), "string")
-            local y = prng:str(16)                           eq(type(y), "string")
+            local x = prng:str(16)                            eq(type(x), "string")
             eq(#x, 16)
-            eq(#y, 16)
-            ne(x, y)
+            random_values[x] = true
         end
+        bounded(#random_values:keys(), 3*N-1, 3*N) -- mostly all generated values must be different
         for _ = 1, N do
             bounded(prng:int(), 0, crypt.RAND_MAX)
             bounded(prng:int(15), 0, 15)
