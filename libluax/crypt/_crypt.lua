@@ -81,10 +81,14 @@ prng_mt.__index.float = prng_float
 
 local function prng_str(self, n)
     local bs = {}
-    for i = 1, n do
-        bs[i] = char(prng_int(self, 0, 255))
+    for i = 1, n, 4 do
+        local r = prng_int(self)
+        bs[i+0] = char((r>>(0*8))&0xff)
+        bs[i+1] = char((r>>(1*8))&0xff)
+        bs[i+2] = char((r>>(2*8))&0xff)
+        bs[i+3] = char((r>>(3*8))&0xff)
     end
-    return concat(bs)
+    return concat(bs, nil, 1, n)
 end
 prng_mt.__index.str = prng_str
 

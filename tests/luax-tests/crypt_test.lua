@@ -293,6 +293,19 @@ return function()
             r2:seed(666)
             F.range(100):foreach(function(_) eq(r1:int(), r2:int()) end)
         end
+        do
+            local s = crypt.prng(1337)
+            eq(s:str(1):hex(), "03")
+            eq(s:str(3):hex(), "9ac42b")
+            eq(s:str(4):hex(), "89d241b7")
+            eq(s:str(5):hex(), "bd45c4fc68")
+            eq(s:str(6):hex(), "50e2e112e2f4")
+            eq(s:str(7):hex(), "e682b793081897")
+            eq(s:str(8):hex(), "0ffe9a98dba14232")
+            for i = 0, 20 do
+                eq(#s:str(i), i)
+            end
+        end
     end
     do
         -- test crypt.choose

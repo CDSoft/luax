@@ -112,10 +112,14 @@ static inline double prng_float_range(t_prng *prng, double a, double b)
 
 static inline void prng_str(t_prng *prng, size_t size, luaL_Buffer *B)
 {
-    char *buf = luaL_prepbuffsize(B, size);
-    for (size_t i = 0; i < size; i++)
+    char *buf = luaL_prepbuffsize(B, size+3);
+    for (size_t i = 0; i < size; i+=4)
     {
-        buf[i] = (char)prng_int(prng);
+        const uint32_t r = prng_int(prng);
+        buf[i+0] = (char)(r>>(0*8));
+        buf[i+1] = (char)(r>>(1*8));
+        buf[i+2] = (char)(r>>(2*8));
+        buf[i+3] = (char)(r>>(3*8));
     }
     luaL_addsize(B, size);
 }
