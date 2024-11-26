@@ -34,8 +34,8 @@ local sqrt = math.sqrt
 local log = math.log
 local max = math.max
 
-local RADIX = 10000000
-local RADIX_LEN = floor(log(RADIX, 10))
+local RADIX <const> = 10000000
+local RADIX_LEN <const> = floor(log(RADIX, 10))
 
 assert(RADIX^2 < 2^53, "RADIX^2 shall be storable on a Lua number")
 
@@ -86,9 +86,9 @@ local function int(n, base)
     return setmetatable(self, mt)
 end
 
-local int_zero = int(0)
-local int_one = int(1)
-local int_two = int(2)
+local int_zero <const> = int(0)
+local int_one <const> = int(1)
+local int_two <const> = int(2)
 
 local function int_copy(n)
     local c = {sign=n.sign}

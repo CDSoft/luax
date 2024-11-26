@@ -25,8 +25,8 @@ local complex = {}
 
 local mathx = require "mathx"
 
-local e = math.exp(1)
-local pi = math.pi
+local e <const> = math.exp(1)
+local pi <const> = math.pi
 local abs = math.abs
 local exp = math.exp
 local log = math.log
@@ -41,7 +41,7 @@ local mt = {__index={}}
 ---@diagnostic disable:unused-vararg
 local function ni(f) return function(...) error(f.." not implemented") end end
 
-local forget = 1e-14
+local forget <const> = 1e-14
 
 local function new(x, y)
     if forget then

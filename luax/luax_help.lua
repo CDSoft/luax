@@ -22,7 +22,7 @@ http://cdelord.fr/luax
 
 local F = require "F"
 
-local arg0 = arg[0]
+local arg0 <const> = arg[0]
 
 local function usage()
     local I = (F.I % "%%{}") (F.patch(require "luax_config", {

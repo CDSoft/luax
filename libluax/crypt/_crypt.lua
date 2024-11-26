@@ -39,12 +39,12 @@ local concat = table.concat
 
 local tonumber = tonumber
 
-local RAND_MAX = 0xFFFFFFFF
+local RAND_MAX <const> = 0xFFFFFFFF
 
 crypt.RAND_MAX = RAND_MAX
 
-local prng_a = 6364136223846793005
-local prng_c = 1
+local prng_a <const> = 6364136223846793005
+local prng_c <const> = 1
 
 function crypt.prng(seed)
     local self = setmetatable({}, prng_mt)
@@ -113,7 +113,7 @@ end
 
 -- see <https://en.wikipedia.org/wiki/Base64>
 
-local b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+local b64chars <const> = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 function crypt.base64(s)
     return ((s:gsub('.', function(x)

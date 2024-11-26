@@ -28,7 +28,7 @@ local bundle = require "luax_bundle"
 local welcome = require "luax_welcome"
 local help = require "luax_help"
 
-local arg0 = arg[0]
+local arg0 <const> = arg[0]
 
 local function wrong_arg(a)
     help.err("unrecognized option '%s'", a)

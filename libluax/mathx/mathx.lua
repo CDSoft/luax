@@ -36,7 +36,7 @@ local modf = math.modf
 local pack = string.pack
 local unpack = string.unpack
 
-local inf = 1/0
+local inf <const> = 1/0
 
 ---@diagnostic disable:unused-vararg
 local function ni(f) return function(...) error(f.." not implemented") end end

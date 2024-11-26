@@ -48,9 +48,9 @@ local lar = {}
 
 local MAGIC = "!<LuaX archive>"
 
-local RAW  = 0
-local LZ4  = 1
-local LZIP = 2
+local RAW  <const> = 0
+local LZ4  <const> = 1
+local LZIP <const> = 2
 
 local compression_options = {
     { algo=nil,    flag=RAW,  compress=F.id,      decompress=F.id        },

@@ -46,8 +46,8 @@ local function rat(num, den)
     return setmetatable({num=num, den=den}, mt)
 end
 
-local rat_zero = rat(0)
-local rat_one = rat(1)
+local rat_zero <const> = rat(0)
+local rat_one <const> = rat(1)
 
 local function rat_tostring(r)
     if r.den:isone() then return tostring(r.num) end

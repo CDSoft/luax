@@ -126,9 +126,9 @@ local function make_key(input, opt)
         end
         return chunks
     end
-    local kmin, kmax = 8, 256
-    local mmin, mmax = 256, 64*1024
-    local key_size = F.floor(kmin + (#input-mmin)*(kmax-kmin)/(mmax-mmin))
+    local kmin <const>, kmax <const> = 8, 256
+    local mmin <const>, mmax <const> = 256, 64*1024
+    local key_size = F.floor(kmin + (#input-mmin)*((kmax-kmin)/(mmax-mmin)))
     key_size = F.max(kmin, F.min(kmax, key_size))
     return chunks_of_chars(key_size, input:arc4(opt.key)) : fold1(crypt.arc4)
 end
@@ -149,7 +149,7 @@ local function bytecode(code, opt, name)
 end
 
 local function bytes(s)
-    local N = 512*1024
+    local N <const> = 512*1024
     if #s <= N then return s:bytes() end
     local bs = {}
     for i = 1, #s, N do
@@ -163,7 +163,7 @@ local function obfuscate_lua(code, opt, product_name)
         code = bytecode(code, opt, product_name)
         -- Encrypt code by xoring bytes with pseudo random values
         local key = make_key(code, opt)
-        local a, c = 6364136223846793005, 1
+        local a <const>, c <const> = 6364136223846793005, 1
         local seed = tonumber(key:hash(), 16)
         local r = seed
         local xs = {}

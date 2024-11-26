@@ -34,8 +34,8 @@ local term = require "term"
 
 local term = require "_term"
 
-local ESC = '\027'
-local CSI = ESC..'['
+local ESC <const> = '\027'
+local CSI <const> = ESC..'['
 
 --[[------------------------------------------------------------------------@@@
 ## Colors

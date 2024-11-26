@@ -100,20 +100,20 @@ else
     end
 end
 
-local S_IFMT  = 0xF << 12
-local S_IFDIR = 1 << 14
-local S_IFREG = 1 << 15
-local S_IFLNK = (1 << 13) | (1 << 15)
+local S_IFMT  <const> = 0xF << 12
+local S_IFDIR <const> = 1 << 14
+local S_IFREG <const> = 1 << 15
+local S_IFLNK <const> = (1 << 13) | (1 << 15)
 
-local S_IRUSR = 1 << 8
-local S_IWUSR = 1 << 7
-local S_IXUSR = 1 << 6
-local S_IRGRP = 1 << 5
-local S_IWGRP = 1 << 4
-local S_IXGRP = 1 << 3
-local S_IROTH = 1 << 2
-local S_IWOTH = 1 << 1
-local S_IXOTH = 1 << 0
+local S_IRUSR <const> = 1 << 8
+local S_IWUSR <const> = 1 << 7
+local S_IXUSR <const> = 1 << 6
+local S_IRGRP <const> = 1 << 5
+local S_IWGRP <const> = 1 << 4
+local S_IXGRP <const> = 1 << 3
+local S_IROTH <const> = 1 << 2
+local S_IWOTH <const> = 1 << 1
+local S_IXOTH <const> = 1 << 0
 
 fs.uR = S_IRUSR
 fs.uW = S_IWUSR
