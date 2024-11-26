@@ -1004,7 +1004,7 @@ static int crypt_arc4(lua_State *L)
 }
 
 /***************************************************************************@@@
-### Fast PRNG-base hash
+### Fast PRNG-based hash
 
 @@@*/
 

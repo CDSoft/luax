@@ -212,7 +212,7 @@ encrypts/decrypts `data` using the ARC4Drop algorithm and the encryption
 key `key` (drops the first `drop` encryption steps, the default value of
 `drop` is 768).
 
-### Fast PRNG-base hash
+### Fast PRNG-based hash
 
 ``` lua
 crypt.hash(data)
