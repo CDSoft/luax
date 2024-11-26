@@ -302,7 +302,7 @@ end
 
 crypt.unarc4 = crypt.arc4
 
-function crypt.hash(s)
+function crypt.hash64(s)
     local hash = 0xFFFFFFFFFFFFFFC5
     hash = hash*prng_a + prng_c
     for i = 1, #s do
@@ -311,6 +311,26 @@ function crypt.hash(s)
     end
     hash = hash*prng_a + prng_c
     return ("<I8"):pack(hash):hex()
+end
+
+crypt.hash = crypt.hash64
+
+function crypt.hash128(s)
+    local h1 = 0xFFFFFFFFFFFFFFC5
+    local h2 = 0xFFFFFFFFFFFFFFC5
+    h1 = h1*prng_a + prng_c
+    h2 = h1*prng_a + prng_c
+    for i = 1, #s, 2 do
+        local c1 = byte(s, i)
+        h1 = h1*prng_a + ((c1 << 1) | prng_c)
+    end
+    for i = 2, #s, 2 do
+        local c2 = byte(s, i)
+        h2 = h2*prng_a + ((c2 << 1) | prng_c)
+    end
+    local hash1 = h1*prng_a + h2
+    local hash2 = h2*prng_a + h1
+    return ("<I8I8"):pack(hash1, hash2):hex()
 end
 
 return crypt

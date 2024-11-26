@@ -215,11 +215,19 @@ key `key` (drops the first `drop` encryption steps, the default value of
 ### Fast PRNG-based hash
 
 ``` lua
-crypt.hash(data)
+crypt.hash64(data)
+crypt.hash(data)        -- alias for crypt.hash64
 ```
 
-returns digest of `data` based on the LuaX PRNG (not suitable for
-cryptographic usage).
+returns a 64-bit digest of `data` based on the LuaX PRNG (not suitable
+for cryptographic usage).
+
+``` lua
+crypt.hash128(data)
+```
+
+returns a 128-bit digest of `data` based on the LuaX PRNG (not suitable
+for cryptographic usage).
 
 ## Random array access
 
@@ -253,4 +261,5 @@ s:crc64()           == crypt.crc64(s)
 s:arc4(key, drop)   == crypt.arc4(s, key, drop)
 s:unarc4(key, drop) == crypt.unarc4(s, key, drop)
 s:hash()            == crypt.hash(s)
+s:hash64()          == crypt.hash64(s)
 ```

@@ -160,7 +160,7 @@ return function()
             eq({s:arc4(""):byte(1, -1)}, {135,151,174,56,231,102,98})
             eq({s:arc4("key"):byte(1, -1)}, {217,183,168,237,133,97,233})
         end
-        do
+        do -- hash
             eq(crypt.hash "", "7b6a78f0d6c6494a")
             eq(crypt.hash "abc", "aad997d90d2fc60c")
             eq(crypt.hash "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "43b171325717ed36")
@@ -172,6 +172,36 @@ return function()
             for _ = 1, N do
                 local s = crypt.str(crypt.int()%1024)
                 eq(s:hash(), crypt.hash(s))
+                eq(s:hash(), crypt.hash64(s))
+            end
+        end
+        do -- hash64
+            eq(crypt.hash64 "", "7b6a78f0d6c6494a")
+            eq(crypt.hash64 "abc", "aad997d90d2fc60c")
+            eq(crypt.hash64 "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "43b171325717ed36")
+            eq(crypt.hash64 "a", "ba1cdf88b948c824")
+            eq(crypt.hash64 "aa", "cdb204b8ec1876e7")
+            eq(crypt.hash64 "ab", "27b12f5147011a98")
+            eq(crypt.hash64 "0123456701234567012345670123456701234567012345670123456701234567", "fbc24b87f8801d96")
+            ne(crypt.hash64 "aa", crypt.hash64 "ab")
+            for _ = 1, N do
+                local s = crypt.str(crypt.int()%1024)
+                eq(s:hash64(), crypt.hash64(s))
+                eq(s:hash64(), crypt.hash(s))
+            end
+        end
+        do -- hash128
+            eq(crypt.hash128 "", "f5d4f0e0ad8d9394416d20d9f4f7c9db")
+            eq(crypt.hash128 "abc", "e46cef6907286b7f14042dab3b9f70a4")
+            eq(crypt.hash128 "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "bdbdabcbf3611b9929badc5c129a7e0b")
+            eq(crypt.hash128 "a", "34875779900f126fdc270d703c05f780")
+            eq(crypt.hash128 "aa", "1bda73081f87755b77539b79fe344e19")
+            eq(crypt.hash128 "ab", "1dda73081f87755bd151c612591df2c9")
+            eq(crypt.hash128 "0123456701234567012345670123456701234567012345670123456701234567", "f5833b95ca24e99441ebd1b9e5e747dc")
+            ne(crypt.hash128 "aa", crypt.hash128 "ab")
+            for _ = 1, N do
+                local s = crypt.str(crypt.int()%1024)
+                eq(s:hash128(), crypt.hash128(s))
             end
         end
     end
