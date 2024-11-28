@@ -238,7 +238,7 @@ function M.bundle(opt)
         local assets = require "luax_assets"
         local runtime = assets.luax
         if not runtime then
-            error("The LuaX runtime ("..(x or "lib/luax.lar")..") is not installed or is corrupted")
+            error("The LuaX runtime (lib/luax.lar) is not installed or is corrupted")
         end
         for i = 1, #runtime do
             -- runtime script => ensure_unique_module shall not check it is not part of the runtime!
