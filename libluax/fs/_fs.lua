@@ -70,22 +70,18 @@ fs.remove = os.remove
 fs.rename = os.rename
 
 function fs.copy(source_name, target_name)
-    local from, err_from = io.open(source_name, "rb")
+    local from<close>, err_from = io.open(source_name, "rb")
     if not from then return from, err_from end
-    local to, err_to = io.open(target_name, "wb")
-    if not to then from:close(); return to, err_to end
+    local to<close>, err_to = io.open(target_name, "wb")
+    if not to then return to, err_to end
     while true do
         local block = from:read(8*1024)
         if not block then break end
         local ok, err = to:write(block)
         if not ok then
-            from:close()
-            to:close()
             return ok, err
         end
     end
-    from:close()
-    to:close()
 end
 
 function fs.symlink(target, linkpath)

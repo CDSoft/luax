@@ -60,7 +60,7 @@ return function()
 
     eq(fs.with_tmpfile(function(tmp)
         local res = {sh.write{"cat", "|", "tr", "a-z", "A-Z", ">", tmp} "Hello"}
-        local content = io.open(tmp):read("a")
-        return {res, content}
+        local f<close> = assert(io.open(tmp))
+        return {res, f:read("a")}
     end), {{true, "exit", 0}, "HELLO"})
 end

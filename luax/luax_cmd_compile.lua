@@ -165,11 +165,8 @@ local function compile_lua(current_output, interpreter)
     }
     local exe = files[current_output]
 
-    local f = io.open(current_output, "wb")
-    if f == nil then help.err("Can not create "..current_output)
-    else
-        f:write(exe)
-        f:close()
+    if not fs.write_bin(current_output, exe) then
+        help.err("Can not create "..current_output)
     end
 
     fs.chmod(current_output, fs.aX|fs.aR|fs.uW)

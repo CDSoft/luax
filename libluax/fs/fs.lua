@@ -258,11 +258,9 @@ returns the content of the text file `filename`.
 @@@]]
 
 function fs.read(name)
-    local f, oerr = io.open(name, "r")
+    local f<close>, oerr = io.open(name, "r")
     if not f then return f, oerr end
-    local content, rerr = f:read("a")
-    f:close()
-    return content, rerr
+    return f:read("a")
 end
 
 --[[@@@
@@ -274,11 +272,9 @@ write `...` to the text file `filename`.
 
 function fs.write(name, ...)
     local content = F{...}:flatten():str()
-    local f, oerr = io.open(name, "w")
+    local f<close>, oerr = io.open(name, "w")
     if not f then return f, oerr end
-    local ok, werr = f:write(content)
-    f:close()
-    return ok, werr
+    return f:write(content)
 end
 
 --[[@@@
@@ -289,11 +285,9 @@ returns the content of the binary file `filename`.
 @@@]]
 
 function fs.read_bin(name)
-    local f, oerr = io.open(name, "rb")
+    local f<close>, oerr = io.open(name, "rb")
     if not f then return f, oerr end
-    local content, rerr = f:read("a")
-    f:close()
-    return content, rerr
+    return f:read("a")
 end
 
 --[[@@@
@@ -305,11 +299,9 @@ write `...` to the binary file `filename`.
 
 function fs.write_bin(name, ...)
     local content = F{...}:flatten():str()
-    local f, oerr = io.open(name, "wb")
+    local f<close>, oerr = io.open(name, "wb")
     if not f then return f, oerr end
-    local ok, werr = f:write(content)
-    f:close()
-    return ok, werr
+    return f:write(content)
 end
 
 --[[------------------------------------------------------------------------@@@
