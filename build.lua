@@ -906,10 +906,8 @@ rule "ar" {
 
 acc(libraries) {
     build "$lib/luax.lar" { "ar",
-        flags = case(mode) {
-            fast  = "-z lzip-9",
-            small = "-z lzip-9",
-            debug = "-z lz4-0",
+        flags = {
+            "-z none", -- no compression => faster load and better compression of the published archives
         },
 
         -- Lua runtime
