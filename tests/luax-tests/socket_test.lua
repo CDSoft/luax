@@ -22,6 +22,10 @@ http://cdelord.fr/luax
 -- luasocket
 ---------------------------------------------------------------------
 
+local test = require "test"
+local eq = test.eq
+
+local F = require "F"
 local sys = require "sys"
 
 return function()
@@ -47,6 +51,19 @@ return function()
         local t = assert(http.request"http://time.cdelord.fr/time.php")
         assert(math.abs(t - os.time() ) < 5*60)
         assert(math.abs(t - socket.gettime() ) < 5*60)
+
+        if os.getenv "USE_SSL" then
+
+            assert(require "ssl")
+            assert(require "ssl.https")
+            assert(require "ssl.context")
+            assert(require "ssl.config")
+            assert(require "ssl.core")
+            assert(require "ssl.x509")
+
+            eq(F.take(2, {http.request"https://cdelord.fr/ssltest.txt"}), {"SSL test passed!\n", 200})
+
+        end
 
     end
 end

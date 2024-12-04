@@ -65,6 +65,7 @@ Contributions on non supported platforms are welcome.
 | `bang -- lax` | Disable strict compilation options |
 | `bang -- strip` | Remove debug information from precompiled bytecode |
 | `bang -- nolto` | Disable LTO optimizations |
+| `bang -- ssl` | Add SSL support via LuaSec and OpenSSL |
 | `bang -- zig` | Compile LuaX with Zig |
 | `bang -- gcc` | Compile LuaX with gcc |
 | `bang -- clang` | Compile LuaX with clang |
@@ -81,6 +82,14 @@ must be already installed.
 
 These options can also be given to the bootstrap script. E.g.:
 `./bootstrap.sh small strip`.
+
+### Optional features
+
+### LuaSec and OpenSSL
+
+LuaSec and OpenSSL can be statically linked to LuaX with the `ssl`
+option. Otherwise you will have to install LuaSec or LuaSocket apart
+from Luax (e.g. with LuaRocks).
 
 ### Compilation in debug mode
 
@@ -317,6 +326,7 @@ and [lapp](http://cdelord.fr/lapp).
 - [lzip](lzip.md): A compression library for the lzip format
 - [lpeg](lpeg.md): Parsing Expression Grammars For Lua
 - [luasocket](luasocket.md): Network support for the Lua language
+- [luasec](luasec.md): add secure connections to luasocket
 - [argparse](argparse.md): Feature-rich command line parser for Lua
 - [serpent](serpent.md): Lua serializer and pretty printer
 - [cbor](cbor.md): pure Lua implementation of the CBOR
@@ -386,6 +396,14 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
 - **[luasocket](https://github.com/diegonehab/luasocket)**: Network
   support for the Lua language ([LuaSocket 3.0
   license](https://github.com/diegonehab/luasocket/blob/master/LICENSE))
+- **[luasec](https://github.com/lunarmodules/luasec)**: integrates with
+  LuaSocket to make it easy to add secure connections to any Lua
+  applications or scripts. ([LuaSec
+  license](https://github.com/lunarmodules/luasec/blob/master/LICENSE))
+- **[OpenSSL](https://www.openssl.org/)**: robust, commercial-grade,
+  full-featured toolkit for general-purpose cryptography and secure
+  communication ([Apache License
+  2.0](https://github.com/openssl/openssl/blob/master/LICENSE.txt))
 - **[serpent](https://github.com/pkulchenko/serpent)**: Lua serializer
   and pretty printer. ([MIT
   license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))

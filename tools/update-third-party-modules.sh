@@ -31,6 +31,7 @@ update_all()
     update_lqmath       107
     update_lmathx
     update_luasocket    3.1.0
+    update_luasec       1.3.2
     update_lpeg         1.1.0
     update_argparse     master
     update_serpent      master
@@ -170,6 +171,64 @@ update_luasocket()
     echo "--@LIB=socket.smtp"    >> ext/c/luasocket/smtp.lua
     echo "--@LIB=socket.tp"      >> ext/c/luasocket/tp.lua
     echo "--@LIB=socket.url"     >> ext/c/luasocket/url.lua
+}
+
+update_luasec()
+{
+    local LUASEC_VERSION="$1"
+    local LUASEC_ARCHIVE="luasec-$LUASEC_VERSION.zip"
+    local LUASEC_URL="https://github.com/lunarmodules/luasec/archive/refs/tags/v$LUASEC_VERSION.zip"
+
+    mkdir -p "$TMP"
+    download "$LUASEC_URL" "$TMP/$LUASEC_ARCHIVE"
+
+    rm -rf ext/opt/luasec
+    unzip -j "$TMP/$LUASEC_ARCHIVE" "luasec-$LUASEC_VERSION/src/*" \
+        -x "*/src/Makefile" "*/src/luasocket/*" "*/src/options.lua" \
+        -d ext/opt/luasec
+
+    sed -i -e 's#<luasocket/\(.*\.h\)>#"../../c/luasocket/\1"#' ext/opt/luasec/ssl.h
+    sed -i -e 's#<luasocket/\(.*\.h\)>#"../../c/luasocket/\1"#' ext/opt/luasec/ssl.c
+
+    sed -i -e 's#<openssl/\(.*\.h\)>#"openssl/\1"#' ext/opt/luasec/ssl.c
+    sed -i -e 's#<openssl/\(.*\.h\)>#"openssl/\1"#' ext/opt/luasec/ssl.h
+    sed -i -e 's#<openssl/\(.*\.h\)>#"openssl/\1"#' ext/opt/luasec/context.c
+    sed -i -e 's#<openssl/\(.*\.h\)>#"openssl/\1"#' ext/opt/luasec/context.h
+    sed -i -e 's#<openssl/\(.*\.h\)>#"openssl/\1"#' ext/opt/luasec/compat.h
+    sed -i -e 's#<openssl/\(.*\.h\)>#"openssl/\1"#' ext/opt/luasec/ec.c
+    sed -i -e 's#<openssl/\(.*\.h\)>#"openssl/\1"#' ext/opt/luasec/ec.h
+    sed -i -e 's#<openssl/\(.*\.h\)>#"openssl/\1"#' ext/opt/luasec/x509.c
+    sed -i -e 's#<openssl/\(.*\.h\)>#"openssl/\1"#' ext/opt/luasec/x509.h
+    sed -i -e 's#<openssl/\(.*\.h\)>#"openssl/\1"#' ext/opt/luasec/options.c
+
+    echo "--@LIB=ssl.https" >> ext/opt/luasec/https.lua
+    echo "--@LIB=ssl"       >> ext/opt/luasec/ssl.lua
+
+    patch -p1 <<EOF
+diff --git a/ext/opt/luasec/ssl.c b/ext/opt/luasec/ssl.c
+index a261d46..c3a9eca 100644
+--- a/ext/opt/luasec/ssl.c
++++ b/ext/opt/luasec/ssl.c
+@@ -39,6 +39,18 @@
+ #endif
+
+
++#if !defined(WIN32) && !defined(SOCKET_SELECT)
++#include <sys/poll.h>
++#define WAITFD_R        POLLIN
++#define WAITFD_W        POLLOUT
++#define WAITFD_C        (POLLIN|POLLOUT)
++#else
++#define WAITFD_R        1
++#define WAITFD_W        2
++#define WAITFD_C        (WAITFD_R|WAITFD_W)
++#endif
++
++
+ /**
+  * Underline socket error.
+  */
+EOF
 }
 
 update_lpeg()

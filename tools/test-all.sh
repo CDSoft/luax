@@ -28,10 +28,13 @@ check()
 }
 
 check fast zig
+check fast zig ssl
 check fast zig strip
 check fast gcc
+check fast gcc ssl
 check fast gcc strip
 check fast clang
+check fast clang ssl
 check fast clang strip
 
 check small zig

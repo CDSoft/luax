@@ -1,0 +1,3 @@
+[submodule "ext/opt/openssl"]
+	path = ext/opt/openssl
+	url = https://github.com/openssl/openssl

@@ -100,6 +100,7 @@ bang -- san         Compiled with ASan and UBSan (implies clang)
 bang -- lax         Disable strict compilation options
 bang -- strip       Remove debug information from precompiled bytecode
 bang -- nolto       Disable LTO optimizations
+bang -- ssl         Add SSL support via LuaSec and OpenSSL
 
 $(title "Compiler")
 
@@ -124,6 +125,7 @@ local compiler = nil -- zig, gcc, clang
 local san = nil
 local strict = true -- strict compilation options and checks
 local use_lto = true
+local ssl = false
 
 local bytecode = "-b"
 
@@ -149,6 +151,8 @@ F.foreach(arg, function(a)
         strip = function() bytecode = "-s" end,
         lto   = function() use_lto = true end,
         nolto = function() use_lto = false end,
+        ssl   = function() ssl = true end,
+        nossl = function() ssl = false end,
         [Nil] = function()
             F.error_without_stack_trace(a..": unknown parameter\n\n"..usage, 1)
         end,
@@ -181,9 +185,18 @@ comment(("Compilation checks: %s"):format(strict and "strict" or "lax"))
 comment(("Lua code          : %s"):format(case(bytecode) { ["-b"] = "bytecode",
                                                            ["-s"] = "stripped bytecode",
                                                            [Nil]  = "source code" }))
+comment(("SSL support       : %s"):format(ssl and "LuaSec + OpenSSL" or "none"))
 
 local function is_dynamic(target) return target.libc~="musl" and not san end
 local function has_partial_ld(target) return target.os=="linux" or target.os=="macos" end
+
+local function optional(cond)
+    return cond and F.id or F.const{}
+end
+
+local function zig_target(t)
+    return {"-target", F{t.arch, t.os, t.libc}:str"-"}
+end
 
 --===================================================================
 section "Build environment"
@@ -204,19 +217,88 @@ local doc = {}
 
 local compile_flags = file "compile_flags.txt"
 
+local openssl_libs = {}
+
+local function add_openssl_rules()
+
+--===================================================================
+section "OpenSSL"
+---------------------------------------------------------------------
+
+if ssl then
+
+var "openssl" "$builddir/openssl"
+var "openssl_src" (fs.realpath "ext/opt/openssl")
+
+local openssl_options = {
+    case(mode) {
+        fast  = "--release",
+        small = "--release",
+        debug = "--debug",
+    },
+    "--static",
+
+    "no-apps",
+    --"no-asm",
+    "no-async",
+    "no-atexit",    -- atexit crashes tests with luax shared libraries
+    "no-docs",
+    "no-dso",
+    "no-tests",
+    "no-threads",
+    "no-shared",
+
+    "-DOPENSSL_NO_APPLE_CRYPTO_RANDOM",
+}
+
+rule "make_openssl" {
+    description = "OPENSSL $target",
+    command = {
+        "set -e;",
+        "mkdir", "-p", "$openssl/$target;",
+        "cd", "$openssl/$target;",
+        optional(cross_compilation) {
+            'export AR="$zig ar";',
+            'export CC="$zig cc $zig_target";',
+            'export CXX="$zig c++ $zig_target";',
+            'export LD="$zig ld $zig_target";',
+            'export RANLIB="$zig ranlib";',
+            'export RC="$zig rc";',
+        },
+        "$openssl_src/Configure", "$openssl_target", openssl_options, ";",
+        "make", "-j",
+    },
+    pool = "console",
+}
+
+targets:foreach(function(target)
+
+    openssl_libs[target.name] = build { "$openssl"/target.name/"libssl.a", "$openssl"/target.name/"libcrypto.a" } { "make_openssl",
+        target = target.name,
+        zig_target = zig_target(target),
+        openssl_target = case(target.name) {
+            ["linux-x86_64"]        = F.const"linux-x86_64",
+            ["linux-x86_64-musl"]   = F.const"linux-x86_64",
+            ["linux-aarch64"]       = F.const"linux-aarch64",
+            ["linux-aarch64-musl"]  = F.const"linux-aarch64",
+            ["macos-x86_64"]        = F.const"darwin64-x86_64",
+            ["macos-aarch64"]       = F.const"darwin64-arm64",
+            ["windows-x86_64"]      = F.const"mingw64",
+            [Nil]                   = function() error(target.name..": unsupported OpenSSL target") end,
+        } ()
+    }
+
+end)
+
+end -- ssl
+
+end -- add_openssl_rules
+
 --===================================================================
 section "Compiler"
 ---------------------------------------------------------------------
 
 local compiler_deps = {}
-
-local function zig_target(t)
-    return {"-target", F{t.arch, t.os, t.libc}:str"-"}
-end
-
-local function optional(cond)
-    return cond and F.id or F.const{}
-end
 
 case(compiler) {
 
@@ -259,7 +341,7 @@ case(compiler) {
 
 }()
 
-local include_path = F{
+local include_path = F.flatten {
     ".",
     "$tmp",
     "lua",
@@ -344,6 +426,9 @@ local cflags = {
     "-pipe",
     "-fPIC",
     include_path:map(F.prefix"-I"),
+    optional(ssl) {
+        "-DLUAX_USE_SSL",
+    },
 }
 
 local luax_cflags = F{
@@ -429,6 +514,8 @@ local ldflags = {
     sanitizer_ldflags,
 }
 
+add_openssl_rules()
+
 local cc = {}
 local cc_ext = {}
 local ar = {}
@@ -479,6 +566,15 @@ targets:foreach(function(target)
             "-DLUA_USE_APICHECK",
         },
     }
+    local openssl_include_path = F.flatten {
+        optional(ssl) {
+            "$openssl"/target.name/"include",
+            "ext/opt/openssl/include",
+        },
+    }
+    local openssl_flags = {
+        F.map(F.prefix"-I", openssl_include_path),
+    }
     if target.name == sys.name then
         compile_flags {
             F{target_flags, lua_flags}
@@ -492,7 +588,14 @@ targets:foreach(function(target)
         case(target.os) {
             linux   = {},
             macos   = {},
-            windows = "-lws2_32 -ladvapi32 -lshlwapi",
+            windows = {
+                "-lws2_32",
+                "-ladvapi32",
+                "-lshlwapi",
+                optional(ssl) {
+                    "-lcrypt32",
+                },
+            },
         },
     }
     local target_so_flags = {
@@ -506,22 +609,28 @@ targets:foreach(function(target)
     cc[target.name] = rule("cc-"..target.name) {
         description = "CC $in",
         command = {
-            "$cc-"..target.name, target_opt, "-c", lto, luax_cflags, lua_flags, target_flags, "-MD -MF $depfile $in -o $out",
+            "$cc-"..target.name, target_opt, "-c", lto, luax_cflags, lua_flags, target_flags, openssl_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
             case(target.os) {
                 linux   = {},
                 macos   = {},
                 windows = "$build_as_dll",
-            }
+            },
         },
-        implicit_in = compiler_deps,
+        implicit_in = {
+            compiler_deps,
+            openssl_libs[target.name],
+        },
         depfile = "$out.d",
     }
     cc_ext[target.name] = rule("cc_ext-"..target.name) {
         description = "CC $in",
         command = {
-            "$cc-"..target.name, target_opt, "-c", lto, ext_cflags, lua_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
+            "$cc-"..target.name, target_opt, "-c", lto, ext_cflags, lua_flags, openssl_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
         },
-        implicit_in = compiler_deps,
+        implicit_in = {
+            compiler_deps,
+            openssl_libs[target.name],
+        },
         depfile = "$out.d",
     }
     ld[target.name] = rule("ld-"..target.name) {
@@ -586,20 +695,26 @@ local ignored_sources = {
     "ext/c/lqmath/src/imath.c",
 }
 
-local sources = {
+local sources = F{
     lua_c_files = ls "lua/*.c"
         : filter(function(name) return F.not_elem(name:basename(), {"lua.c", "luac.c"}) end),
     lua_main_c_files = F{ "lua/lua.c" },
     luax_main_c_files = F{ "luax/luax.c" },
     libluax_main_c_files = F{ "luax/libluax.c" },
-    luax_c_files = ls "libluax/**.c",
-    third_party_c_files = ls "ext/c/**.c"
-        : filter(function(name) return not name:match "lz4/programs" end)
-        : filter(function(name) return not name:match "lzlib/lib/inc" end)
-        : filter(function(name) return not name:match "lzlib/programs" end)
-        : difference(linux_only)
-        : difference(windows_only)
-        : difference(ignored_sources),
+    luax_c_files = ls "libluax/**.c"
+        : difference(ssl and {} or ls "libluax/sec/**.c"),
+    third_party_c_files = F.flatten {
+        ls "ext/c/**.c"
+            : filter(function(name) return not name:match "lz4/programs" end)
+            : filter(function(name) return not name:match "lzlib/lib/inc" end)
+            : filter(function(name) return not name:match "lzlib/programs" end)
+            : difference(linux_only)
+            : difference(windows_only)
+            : difference(ignored_sources),
+        optional(ssl) {
+            ls "ext/opt/luasec/**.c",
+        }
+    },
     linux_third_party_c_files = linux_only,
     windows_third_party_c_files = windows_only,
 }
@@ -717,31 +832,40 @@ local function rt(t)
     acc(lua_runtime)  { t.lua  }
 end
 
-rt { luax="libluax/F/F.lua",                    lua="libluax/F/F.lua"                                       }
-rt {                                            lua="libluax/complex/complex.lua"                           }
-rt { luax="libluax/crypt/crypt.lua",            lua={"libluax/crypt/crypt.lua", "libluax/crypt/_crypt.lua"} }
-rt { luax="libluax/fs/fs.lua",                  lua={"libluax/fs/fs.lua", "libluax/fs/_fs.lua"}             }
-rt {                                            lua="libluax/imath/imath.lua"                               }
-rt { luax="libluax/import/import.lua",          lua="libluax/import/import.lua"                             }
-rt {                                            lua="libluax/linenoise/linenoise.lua"                       }
-rt { luax="libluax/lar/lar.lua",                lua="libluax/lar/lar.lua"                                   }
-rt { luax="libluax/lz4/lz4.lua",                lua={"libluax/lz4/lz4.lua", "libluax/lz4/_lz4.lua"}         }
-rt { luax="libluax/lzip/lzip.lua",              lua={"libluax/lzip/lzip.lua", "libluax/lzip/_lzip.lua"}     }
-rt {                                            lua="libluax/mathx/mathx.lua"                               }
-rt {                                            lua="libluax/ps/ps.lua"                                     }
-rt { luax="libluax/qmath/qmath.lua",            lua={"libluax/qmath/qmath.lua", "libluax/qmath/_qmath.lua"} }
-rt { luax="libluax/sh/sh.lua",                  lua="libluax/sh/sh.lua"                                     }
-rt { luax="libluax/sys/targets.lua",            lua={"libluax/sys/sys.lua", "libluax/sys/targets.lua"}      }
-rt { luax="libluax/term/term.lua",              lua={"libluax/term/term.lua", "libluax/term/_term.lua"}     }
+rt { luax="libluax/F/F.lua",                        lua="libluax/F/F.lua"                                       }
+rt {                                                lua="libluax/complex/complex.lua"                           }
+rt { luax="libluax/crypt/crypt.lua",                lua={"libluax/crypt/crypt.lua", "libluax/crypt/_crypt.lua"} }
+rt { luax="libluax/fs/fs.lua",                      lua={"libluax/fs/fs.lua", "libluax/fs/_fs.lua"}             }
+rt {                                                lua="libluax/imath/imath.lua"                               }
+rt { luax="libluax/import/import.lua",              lua="libluax/import/import.lua"                             }
+rt {                                                lua="libluax/linenoise/linenoise.lua"                       }
+rt { luax="libluax/lar/lar.lua",                    lua="libluax/lar/lar.lua"                                   }
+rt { luax="libluax/lz4/lz4.lua",                    lua={"libluax/lz4/lz4.lua", "libluax/lz4/_lz4.lua"}         }
+rt { luax="libluax/lzip/lzip.lua",                  lua={"libluax/lzip/lzip.lua", "libluax/lzip/_lzip.lua"}     }
+rt {                                                lua="libluax/mathx/mathx.lua"                               }
+rt {                                                lua="libluax/ps/ps.lua"                                     }
+rt { luax="libluax/qmath/qmath.lua",                lua={"libluax/qmath/qmath.lua", "libluax/qmath/_qmath.lua"} }
+rt { luax="libluax/sh/sh.lua",                      lua="libluax/sh/sh.lua"                                     }
+rt { luax="libluax/sys/targets.lua",                lua={"libluax/sys/sys.lua", "libluax/sys/targets.lua"}      }
+rt { luax="libluax/term/term.lua",                  lua={"libluax/term/term.lua", "libluax/term/_term.lua"}     }
 
-rt { luax="libluax/package/package_hook.lua",   lua="libluax/package/package_hook.lua"                      }
-rt { luax="libluax/debug/debug_hook.lua",       lua="libluax/debug/debug_hook.lua"                          }
+rt { luax="libluax/package/package_hook.lua",       lua="libluax/package/package_hook.lua"                      }
+rt { luax="libluax/debug/debug_hook.lua",           lua="libluax/debug/debug_hook.lua"                          }
 
-rt { luax={ls "ext/**.lua"},                    lua={ls "ext/lua/**.lua"}                                   }
+rt { luax={ls "ext/c/**.lua", ls "ext/lua/**.lua"}, lua={ls "ext/lua/**.lua"}                                   }
+
+if ssl then
+rt { luax={ls "ext/opt/luasec/**.lua"},             lua={}                                                      }
+end
 
 -- Ensures all Lua scripts are in the runtime
 local used_scripts = F.flatten{luax_runtime, lua_runtime} : nub()
-local expected_scripts = F.flatten{ls "libluax/**.lua", ls "ext/**.lua"} : nub()
+local expected_scripts = F.flatten{
+    ls "libluax/**.lua",
+    ls "ext/c/**.lua",
+    ls "ext/lua/**.lua",
+    optional(ssh) { ls "ext/opt/luasec/**.lua" },
+} : nub()
 local unused_scripts = expected_scripts : difference(used_scripts)
 if not unused_scripts:null()
 then
@@ -797,6 +921,36 @@ phony "check_limath_version" {
     build "$tmp/check_limath_source_version" { "diff", "ext/c/lqmath/src/imath.c", "ext/c/limath/src/imath.c" },
 }
 
+local function additional_flags(name)
+    return case(name:basename():splitext()) {
+        usocket = "-Wno-#warnings",
+        ec      = "-Wno-deprecated-declarations",
+        context = "-Wno-deprecated-declarations",
+        ssl     = {
+            "-Wno-#warnings",
+            "-Wno-deprecated-declarations",
+        },
+        luasec  = {
+            "-Wno-cast-function-type-strict",
+            case(compiler) {
+                zig   = {},
+                gcc   = {},
+                clang = {"-Wno-pre-c11-compat"},
+            },
+        },
+        [Nil] = {},
+    }
+end
+
+local function implicit_in(name)
+    return case(name:basename():splitext()) {
+        version = "$luax_config_h",
+        limath  = "check_limath_version",
+        imath   = "check_limath_version",
+        [Nil]   = {},
+    }
+end
+
 targets:foreach(function(target)
 
     liblua[target.name] = build("$tmp"/target.name/"lib/liblua.a") { ar[target.name],
@@ -813,12 +967,8 @@ targets:foreach(function(target)
             luax_runtime_bundle,
         } : map(function(src)
             return build("$tmp"/target.name/"obj"/src:chext".o") { cc[target.name], src,
-                implicit_in = {
-                    case(src:basename():splitext()) {
-                        version = "$luax_config_h",
-                        [Nil]   = {},
-                    },
-                },
+                additional_flags = additional_flags(src),
+                implicit_in = implicit_in(src),
             }
         end),
         F.flatten {
@@ -830,13 +980,8 @@ targets:foreach(function(target)
             },
         } : map(function(src)
             return build("$tmp"/target.name/"obj"/src:chext".o") { cc_ext[target.name], src,
-                additional_flags = case(src:basename():splitext()) {
-                    usocket = "-Wno-#warnings",
-                },
-                implicit_in = case(src:basename():splitext()) {
-                    limath = "check_limath_version",
-                    imath  = "check_limath_version",
-                },
+                additional_flags = additional_flags(src),
+                implicit_in = implicit_in(src),
             }
         end),
     }
@@ -861,6 +1006,7 @@ targets:foreach(function(target)
         main_libluax[target.name],
         liblua[target.name],
         libluax[target.name],
+        openssl_libs[target.name],
         build("$tmp"/target.name/"obj"/luax_app_bundle:chext".o") { cc[target.name], luax_app_bundle },
     }
 
@@ -873,6 +1019,7 @@ targets:foreach(function(target)
                 windows = liblua[target.name],
             },
             libluax[target.name],
+            openssl_libs[target.name],
         }
 
 end)
@@ -907,7 +1054,9 @@ rule "ar" {
 acc(libraries) {
     build "$lib/luax.lar" { "ar",
         flags = {
-            "-z none", -- no compression => faster load and better compression of the published archives
+            fast  = "-z lzip-9",
+            small = "-z lzip-9",
+            debug = "-z lz4-0",
         },
 
         -- Lua runtime
@@ -937,6 +1086,7 @@ acc(libraries) {
                 local libs = {
                     liblua[target.name],
                     libluax[target.name],
+                    openssl_libs[target.name],
                     main_libluax[target.name],
                     main_luax[target.name],
                 }
@@ -1055,6 +1205,7 @@ acc(test) {
             "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
             "LUA_CPATH='foo/?.so'",
             "TEST_NUM=1",
+            optional(ssl) { "USE_SSL=1" },
             "LUAX=$luax",
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
             "$test/test-luax Lua is great",
@@ -1081,6 +1232,7 @@ acc(test) {
                     "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
                     "LUA_CPATH='foo/?.so'",
                     "TEST_NUM=1", "TEST_CASE="..i,
+                    optional(ssl) { "USE_SSL=1" },
                     "LUAX=$luax",
                     "IS_COMPILED=true",
                     "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..test_libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..test_name,
@@ -1116,6 +1268,7 @@ acc(test) {
             "PATH=$bin:$tmp:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua'",
             "TEST_NUM=2",
+            optional(ssl) { "USE_SSL=1" },
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
             "$lua -l libluax $in Lua is great",
             "&&",

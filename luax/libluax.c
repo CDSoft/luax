@@ -39,6 +39,9 @@
 #include "ps/ps.h"
 #include "qmath/qmath.h"
 #include "socket/luasocket.h"
+#ifdef LUAX_USE_SSL
+#include "sec/luasec.h"
+#endif
 #include "sys/sys.h"
 #include "term/term.h"
 
@@ -55,6 +58,9 @@ static const luaL_Reg lrun_libs[] = {
     {"ps",          luaopen_ps},
     {"_qmath",      luaopen_qmath},
     {"socket",      luaopen_luasocket},
+#ifdef LUAX_USE_SSL
+    {"ssl",         luaopen_luasec},
+#endif
     {"sys",         luaopen_sys},
     {"_term",       luaopen_term},
     {NULL, NULL},
