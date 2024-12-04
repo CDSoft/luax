@@ -26,6 +26,7 @@ local M = {}
 local F = require "F"
 local fs = require "fs"
 local crypt = require "crypt"
+local lar = require "lar"
 
 local format = string.format
 local byte = string.byte
@@ -206,7 +207,7 @@ local known_modules = {}
 local runtime_modules = setmetatable({}, {
     __index = function(self, k)
         local assets = require "luax_assets"
-        local luax = assets.luax or {}
+        local luax = assets.lua_runtime and lar.unlar(assets.lua_runtime["luax.lar"]) or {}
         for i = 1, #luax do
             local script = luax[i]
             self[script.lib_name] = true
@@ -236,10 +237,9 @@ function M.bundle(opt)
 
     if opt.add_luax_runtime then
         local assets = require "luax_assets"
-        local runtime = assets.luax
-        if not runtime then
-            error("The LuaX runtime (lib/luax.lar) is not installed or is corrupted")
-        end
+        local runtime = assets.lua_runtime and assets.lua_runtime["luax.lar"]
+        if not runtime then asserts.error() end
+        runtime = lar.unlar(runtime)
         for i = 1, #runtime do
             -- runtime script => ensure_unique_module shall not check it is not part of the runtime!
             runtime[i].dont_check_runtime_unicity = true

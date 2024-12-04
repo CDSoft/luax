@@ -24,32 +24,34 @@ cd "$(git rev-parse --show-toplevel)"
 
 check()
 {
+    echo "# $*"
+    ninja clean || true
     ./bootstrap.sh "$@" && ninja all
 }
 
-check fast zig
-check fast zig ssl
-check fast zig strip
 check fast gcc
-check fast gcc ssl
 check fast gcc strip
+check fast gcc ssl
 check fast clang
-check fast clang ssl
 check fast clang strip
+check fast clang ssl
+check fast zig
+check fast zig strip
+check fast zig ssl
 
-check small zig
-check small zig strip
 check small gcc
 check small gcc strip
 check small clang
 check small clang strip
+check small zig
+check small zig strip
 
-check debug zig
-check debug zig strip
 check debug gcc
 check debug gcc strip
 check debug clang
 check debug clang strip
+check debug zig
+check debug zig strip
 
 check debug san
 check debug san strip

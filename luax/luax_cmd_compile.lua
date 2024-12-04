@@ -29,6 +29,8 @@ local bundle = require "luax_bundle"
 local help = require "luax_help"
 local welcome = require "luax_welcome"
 local targets = require "targets"
+local lz4 = require "lz4"
+local lzip = require "lzip"
 
 local lua_interpreters = F{
     { name="luax",   add_luax_runtime=false },
@@ -52,15 +54,16 @@ local function print_targets()
             path and "" or " [NOT FOUND]"))
     end)
     local assets = require "luax_assets"
-    if assets.path and assets.headers then
+    local crosscompilation = assets.headers and assets.targets
+    if assets.path and crosscompilation then
         local luax_lar = assets.path:gsub("^"..home, "~")
-        if assets[sys.name] then
+        if assets.targets[sys.name] then
             print(("%-22s%s"):format("native", luax_lar))
         else
             print(("%-22s%s%s"):format("native", luax_lar, " [NOT AVAILABLE]"))
         end
         targets:foreach(function(target)
-            if assets[target.name] then
+            if assets.targets[target.name] then
                 print(("%-22s%s"):format(target.name, luax_lar))
             else
                 print(("%-22s%s%s"):format(target.name, luax_lar, " [NOT AVAILABLE]"))
@@ -223,18 +226,25 @@ local function compile_zig(tmp, current_output, target_definition)
         end
     end
 
+    local function uncompress(name, content)
+        return F.case(name:ext()) {
+            [".lz"]  = function() return name:splitext(), lzip.unlzip(content) end,
+            [".lz4"] = function() return name:splitext(), lz4.unlz4(content) end,
+            [F.Nil]  = function() error(name..": unknown format") end,
+        }()
+    end
+
     -- Extract precompiled LuaX libraries
     local assets = require "luax_assets"
-    if not assets.headers or not assets[target_definition.name] then
+    local headers = F(assets.headers or {})
+    local libs = F(assets.targets and assets.targets[target_definition.name] or {})
+    if headers:null() or libs:null() then
         help.err("Compilation not available")
     end
-    local headers = F(assets.headers)
-    local libs = F(assets[target_definition.name])
-    headers:foreachk(function(filename, content) fs.write_bin(tmp/filename, content) end)
-    libs:foreachk(function(filename, content) fs.write_bin(tmp/filename, content) end)
-    local libnames = libs:keys()
-        : filter(function(f) return f:ext():match"^%.[ao]$" end)
-        : map(function(f) return tmp/f end)
+    local function tmp_file(filename, content) fs.write_bin(uncompress(tmp/filename:basename(), content)) end
+    headers:foreachk(tmp_file)
+    libs:foreachk(tmp_file)
+    local libnames = libs:keys():map(function(f) return tmp/f:basename():splitext() end)
 
     -- Compile the input LuaX scripts
     local app_bundle_c = "app_bundle.c"

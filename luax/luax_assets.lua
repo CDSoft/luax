@@ -57,9 +57,18 @@ local function find_archive()
 
 end
 
+local mt = {
+    __index = {
+        error = function() error("The LuaX runtime (lib/luax.lar) is not installed or is corrupted") end,
+    }
+}
+
 local archive = find_archive()
-if not archive then return {} end
+if not archive then return setmetatable({}, mt) end
+
 local content = assert(fs.read_bin(archive))
 local assets = assert(lar.unlar(content))
+
 assets.path = archive
-return assets
+
+return setmetatable(assets, mt)

@@ -38,8 +38,12 @@ package.path = table.concat({
     "libluax/sh/?.lua",
     "libluax/sys/?.lua",
     "libluax/term/?.lua",
+    "libluax/lar/?.lua",
+    "libluax/lz4/?.lua",
+    "libluax/lzip/?.lua",
 
     "ext/lua/argparse/?.lua",
+    "ext/lua/cbor/?.lua",
 }, ";")
 
 -- Install LuaX hooks

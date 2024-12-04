@@ -1040,66 +1040,82 @@ end
 section "LuaX archives"
 ---------------------------------------------------------------------
 
-rule "ar" {
-    description = "AR $out",
-    command = "$luax tools/ar.lua $in -o $out $flags",
+rule "compress-lzip" {
+    description = "lzip $in",
+    command = { "$lzip", "-fk$level", "$in -o $out" },
+    implicit_in = "$lzip",
+}
+
+rule "compress-lz4" {
+    description = "lz4 $in",
+    command = { "$lz4", "-fkq$level", "$in $out" },
+    implicit_in = "$lz4",
+}
+
+local function compress(dest)
+    return case(mode) {
+        fast  = function(source) return build(dest/source:basename()..".lz") { "compress-lzip", source, level=9 } end,
+        small = function(source) return build(dest/source:basename()..".lz") { "compress-lzip", source, level=9 } end,
+        debug = function(source) return build(dest/source:basename()..".lz4") { "compress-lz4", source, level=1 } end,
+    }
+end
+
+rule "pack" {
+    description = "pack $out",
+    command = "$luax tools/pack.lua $in -o $out $flags";
     implicit_in = {
         "$luax",
-        "$lz4",
+        "tools/pack.lua",
         "$lzip",
-        "tools/ar.lua",
+        "$lz4",
     },
 }
 
 acc(libraries) {
-    build "$lib/luax.lar" { "ar",
+    build "$lib/luax.lar" { "pack",
         flags = {
-            fast  = "-z lzip-9",
-            small = "-z lzip-9",
-            debug = "-z lz4-0",
+            "-z none",
+            "-s $tmp/lib/",
         },
 
         -- Lua runtime
-        build "$tmp/lib/luax.lar" {
+        build "$tmp/lib/lua_runtime/luax.lar" {
             "bundle", lua_runtime,
             args = {
                 "-e lib",
                 "-t lib",
                 "-n luax",
-                "-z none",
+                "-z lzip-9",
             },
         },
 
         optional(cross_compilation) {
 
-            -- Lua headers used to compile LuaX scripts
-            build "$tmp/lib/headers.lar" { "ar",
-                flags = { "-z none" },
-
-                "lua/lua.h",
-                "lua/luaconf.h",
-                "lua/lauxlib.h",
-            },
+            -- Lua runtime
+            compress "$tmp/lib/headers" "lua/lua.h",
+            compress "$tmp/lib/headers" "lua/luaconf.h",
+            compress "$tmp/lib/headers" "lua/lauxlib.h",
 
             -- Binary runtimes
             targets : map(function(target)
-                local libs = {
+                local libs = F.flatten {
                     liblua[target.name],
                     libluax[target.name],
                     openssl_libs[target.name],
                     main_libluax[target.name],
                     main_luax[target.name],
                 }
-                return build("$tmp/lib"/target.name..".lar") { "ar",
-                    flags = { "-z none" },
-
-                    has_partial_ld(target)
-                        and build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs }
-                        or libs,
-                }
+                if has_partial_ld(target) then
+                    local luax_o = build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs }
+                    return compress("$tmp/lib/targets"/target.name)(luax_o)
+                else
+                    return libs : map(function(lib)
+                        return compress("$tmp/lib/targets"/target.name)(lib)
+                    end)
+                end
             end),
 
-        },
+        }
 
     }
 }
@@ -1214,6 +1230,7 @@ acc(test) {
         },
         implicit_in = {
             "$luax",
+            "$lib/luax.lar",
             imported_test_sources,
         },
     },
@@ -1242,6 +1259,7 @@ acc(test) {
                 },
                 implicit_in = {
                     "$luax",
+                    "$lib/luax.lar",
                     libraries,
                     imported_test_sources,
                 },
@@ -1277,6 +1295,7 @@ acc(test) {
         implicit_in = {
             "$lua",
             "$luax",
+            "$lib/luax.lar",
             libraries,
             test_sources,
             imported_test_sources,
@@ -1300,6 +1319,7 @@ acc(test) {
         implicit_in = {
             "$lua",
             "$lib/luax.lua",
+            "$lib/luax.lar",
             "$lz4",
             "$lzip",
             libraries,
@@ -1325,6 +1345,7 @@ acc(test) {
         implicit_in = {
             "$lua",
             "$bin/luax.lua",
+            "$lib/luax.lar",
             "$lz4",
             "$lzip",
             test_sources,
@@ -1349,6 +1370,7 @@ acc(test) {
         implicit_in = {
             "$lua",
             "$lib/luax.lua",
+            "$lib/luax.lar",
             "$lz4",
             "$lzip",
             libraries,
@@ -1375,6 +1397,7 @@ acc(test) {
         implicit_in = {
             "$lib/luax.lua",
             "$luax",
+            "$lib/luax.lar",
             binaries,
         },
     },
@@ -1397,6 +1420,7 @@ acc(test) {
         implicit_in = {
             "$lib/luax.lua",
             "$luax",
+            "$lib/luax.lar",
         },
     },
 
@@ -1418,6 +1442,7 @@ acc(test) {
         implicit_in = {
             "$lib/luax.lua",
             "$luax",
+            "$lib/luax.lar",
             binaries,
         },
     } or {},
