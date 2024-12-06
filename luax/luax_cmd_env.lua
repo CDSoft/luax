@@ -26,7 +26,12 @@ local sys = require "sys"
 
 local function luax_env(arg0)
 
-    local exe = assert(fs.is_file(arg0) and arg0 or fs.findpath(arg0))
+    local exe = assert(
+        fs.is_file(arg0) and arg0
+        or (sys.exe ~= "" and fs.is_file(arg0..sys.exe) and arg0..sys.exe)
+        or fs.findpath(arg0)
+        or (sys.exe ~= "" and fs.findpath(arg0..sys.exe))
+    )
 
     local bin = exe:dirname():realpath()
     local prefix = bin:dirname()
