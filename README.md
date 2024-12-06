@@ -91,6 +91,15 @@ LuaSec and OpenSSL can be statically linked to LuaX with the `ssl`
 option. Otherwise you will have to install LuaSec or LuaSocket apart
 from Luax (e.g. with LuaRocks).
 
+In this case, the submodules shall also be downloaded:
+
+``` sh
+$ git clone https://github.com/CDSoft/luax --recurse-submodules
+$ cd luax
+$ ./bootstrap.sh ssl
+$ ninja install
+```
+
 ### Compilation in debug mode
 
 LuaX can be compiled in debug mode (less optimization, debug symbols
