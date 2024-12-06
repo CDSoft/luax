@@ -48,9 +48,13 @@ return function()
         assert(require "mbox")
         assert(require "ltn12")
 
-        local t = assert(http.request"http://time.cdelord.fr/time.php")
-        assert(math.abs(t - os.time() ) < 5*60)
-        assert(math.abs(t - socket.gettime() ) < 5*60)
+        do
+            local t, code, attrs = http.request"http://time.cdelord.fr/time.php"
+            eq(code, 200)
+            t = tonumber(t) + tonumber(attrs.age)
+            assert(math.abs(t - os.time() ) < 5)
+            assert(math.abs(t - socket.gettime() ) < 5)
+        end
 
         if os.getenv "USE_SSL" then
 
@@ -62,6 +66,12 @@ return function()
             assert(require "ssl.x509")
 
             eq(F.take(2, {http.request"https://cdelord.fr/ssltest.txt"}), {"SSL test passed!\n", 200})
+
+            local t, code, attrs = http.request"https://cdelord.fr/time.php"
+            eq(code, 200)
+            t = tonumber(t) + tonumber(attrs.age)
+            assert(math.abs(t - os.time() ) < 5)
+            assert(math.abs(t - socket.gettime() ) < 5)
 
         end
 
