@@ -276,7 +276,11 @@ local function compile_zig(tmp, current_output, target_definition)
         F.case(target_definition.os) {
             linux   = "-flto=thin",
             macos   = {},
-            windows = {"-flto=thin", "-lws2_32 -ladvapi32 -lshlwapi"},
+            windows = {
+                "-flto=thin",
+                "-lws2_32 -ladvapi32 -lshlwapi",
+                pcall(require, "ssl") and "-lcrypt32" or {},
+            },
         },
         F.case(target_definition.libc) {
             gnu  = "-rdynamic",
