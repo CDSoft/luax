@@ -68,8 +68,6 @@ end)()
 generator {
     implicit_in = {
         gitdir/"refs/tags",
-        "libluax/sys/sys.lua",
-        "libluax/sys/targets.lua",
     },
 }
 
