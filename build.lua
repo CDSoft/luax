@@ -249,6 +249,8 @@ local openssl_options = {
     "-DOPENSSL_NO_APPLE_CRYPTO_RANDOM",
 }
 
+local nproc = (sh "getconf _NPROCESSORS_ONLN" or "8"):trim()
+
 rule "make_openssl" {
     description = "OPENSSL $target",
     command = {
@@ -264,7 +266,7 @@ rule "make_openssl" {
             'export RC="$zig rc";',
         },
         "$openssl_src/Configure", "$openssl_target", openssl_options, ";",
-        "make", "-j",
+        "make", "-j", nproc,
     },
     pool = "console",
 }
