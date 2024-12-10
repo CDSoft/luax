@@ -109,7 +109,7 @@ local function static_lib(self, output)
     return function(inputs)
         local input_list, input_vars = split_hybrid_table(inputs)
         return build(output) { ar,
-            F.flatten(inputs):map(function(input)
+            F.flatten(input_list):map(function(input)
                 if F.elem(input:ext(), self.c_exts) then
                     return self:compile(tmp(self.builddir, output, input)..self.o_ext) (F.merge{
                         { input },
@@ -128,7 +128,7 @@ local function dynamic_lib(self, output)
     return function(inputs)
         local input_list, input_vars = split_hybrid_table(inputs)
         return build(output) { so,
-            F.flatten(inputs):map(function(input)
+            F.flatten(input_list):map(function(input)
                 if F.elem(input:ext(), self.c_exts) then
                     return self:compile(tmp(self.builddir, output, input)..self.o_ext) (F.merge{
                         { input },
@@ -147,7 +147,7 @@ local function executable(self, output)
     return function(inputs)
         local input_list, input_vars = split_hybrid_table(inputs)
         return build(output) { ld,
-            F.flatten(inputs):map(function(input)
+            F.flatten(input_list):map(function(input)
                 if F.elem(input:ext(), self.c_exts) then
                     return self:compile(tmp(self.builddir, output, input)..self.o_ext) (F.merge{
                         { input },
@@ -878,6 +878,8 @@ end
 function help.epilog(txt)
     epilog[#epilog+1] = i(txt:rtrim())
 end
+
+help.epilogue = help.epilog
 
 function help.target(name)
     return function(txt)
@@ -1913,7 +1915,7 @@ function tmp.short(root, ...)
         : nub()
         : reverse()
         : filter(function(p) return F.not_elem(p, root_components) end)
-        path[#path] = path[#path]..".tmp"
+    path[#path] = path[#path]..".tmp"
     local file = F.last{...} : splitext()
     return fs.join(F.flatten { root, path, file })
 end
@@ -1956,7 +1958,7 @@ return function()
 
 end
 ]])
-libs["version"] = lib(".build/version", [=[return [[1.3.7]]]=])
+libs["version"] = lib(".build/version", [=[return [[1.3.10]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"
