@@ -252,11 +252,11 @@ local openssl_options = {
 local nproc = (sh "getconf _NPROCESSORS_ONLN" or "8"):trim()
 
 rule "make_openssl" {
-    description = "OPENSSL $target",
+    description = "compile OpenSSL for $target",
     command = {
         "set -e;",
-        "mkdir", "-p", "$openssl/$target;",
-        "cd", "$openssl/$target;",
+        "mkdir -p $openssl/$target;",
+        "cd $openssl/$target;",
         optional(cross_compilation) {
             'export AR="$zig ar";',
             'export CC="$zig cc $zig_target";',
@@ -318,8 +318,8 @@ case(compiler) {
         var "zig" { os.getenv(HOME) / zig_path }
 
         build "$zig" {
-            description = {"GET zig", "$zig_version"},
-            command = {"tools/install_zig.sh", "$zig_version", "$out"},
+            description = "install zig $zig_version",
+            command = "tools/install_zig.sh $zig_version $out",
             pool = "console",
         }
 
@@ -531,14 +531,14 @@ local so = {}
 local partial_ld = {}
 
 cc.host = rule "cc-host" {
-    description = "CC $in",
+    description = "cc $in",
     command = { "$cc-"..sys.name, "-c", host_cflags, "-MD -MF $depfile $in -o $out" },
     implicit_in = compiler_deps,
     depfile = "$out.d",
 }
 
 ld.host = rule "ld-host" {
-    description = "LD $out",
+    description = "ld $out",
     command = { "$ld-"..sys.name, "$in -o $out", host_ldflags },
     implicit_in = compiler_deps,
 }
@@ -614,7 +614,7 @@ targets:foreach(function(target)
         clang = {},
     }
     cc[target.name] = rule("cc-"..target.name) {
-        description = "CC $in",
+        description = "cc $in",
         command = {
             "$cc-"..target.name, target_opt, "-c", lto, luax_cflags, lua_flags, target_flags, openssl_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
             case(target.os) {
@@ -630,7 +630,7 @@ targets:foreach(function(target)
         depfile = "$out.d",
     }
     cc_ext[target.name] = rule("cc_ext-"..target.name) {
-        description = "CC $in",
+        description = "cc $in",
         command = {
             "$cc-"..target.name, target_opt, "-c", lto, ext_cflags, lua_flags, openssl_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
         },
@@ -641,21 +641,21 @@ targets:foreach(function(target)
         depfile = "$out.d",
     }
     ld[target.name] = rule("ld-"..target.name) {
-        description = "LD $out",
+        description = "ld $out",
         command = {
             "$ld-"..target.name, target_opt, lto, "$in -o $out", ldflags, target_ld_flags,
         },
         implicit_in = compiler_deps,
     }
     so[target.name] = is_dynamic(target) and rule("so-"..target.name) {
-        description = "SO $out",
+        description = "so $out",
         command = {
             "$cc-"..target.name, target_opt, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out",
         },
         implicit_in = compiler_deps,
     }
     partial_ld[target.name] = has_partial_ld(target) and rule("partial-ld-"..target.name) {
-        description = "LD $out",
+        description = "ld $out",
         command = {
             "$ld-"..target.name, target_opt, "-r", "$in -o $out",
         },
@@ -663,7 +663,7 @@ targets:foreach(function(target)
     }
 
     ar[target.name] = rule("ar-"..target.name) {
-        description = "AR $out",
+        description = "ar $out",
         command = {
             "$ar-"..target.name, "-crs $out $in",
         },
@@ -677,7 +677,7 @@ section "Third-party modules update"
 ---------------------------------------------------------------------
 
 build "update_modules" {
-    description = "UPDATE",
+    description = "update third-party modules",
     command = "tools/update-third-party-modules.sh $builddir/update",
     pool = "console",
 }
@@ -797,7 +797,7 @@ local function ypp_vars(t)
 end
 
 rule "ypp-config" {
-    description = "YPP $out",
+    description = "ypp $out",
     command = { "$lua tools/luax.lua tools/ypp.luax", ypp_vars(LUAX), "$in -o $out" },
     implicit_in = {
         "$lua",
@@ -815,7 +815,7 @@ section "Lua runtime"
 ---------------------------------------------------------------------
 
 rule "bundle" {
-    description = "BUNDLE $out",
+    description = "bundle $out",
     command = {
         "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
@@ -920,7 +920,7 @@ local shared_library = {}
 
 -- imath is also provided by qmath, both versions shall be compatible
 rule "diff" {
-    description = "DIFF $in",
+    description = "diff $in",
     command = "diff $in > $out",
 }
 phony "check_limath_version" {
@@ -1047,13 +1047,13 @@ end
 section "LuaX archives"
 ---------------------------------------------------------------------
 
-rule "compress-lzip" {
+rule "lzip" {
     description = "lzip $in",
     command = "$lzip -$level $in --output=- > $out",
     implicit_in = "$lzip",
 }
 
-rule "compress-lz4" {
+rule "lz4" {
     description = "lz4 $in",
     command = "$lz4 -$level --quiet --stdout $in > $out",
     implicit_in = "$lz4",
@@ -1061,9 +1061,9 @@ rule "compress-lz4" {
 
 local function compress(dest)
     return case(mode) {
-        fast  = function(source) return build(dest/source:basename()..".lz") { "compress-lzip", source, level=9 } end,
-        small = function(source) return build(dest/source:basename()..".lz") { "compress-lzip", source, level=9 } end,
-        debug = function(source) return build(dest/source:basename()..".lz4") { "compress-lz4", source, level=1 } end,
+        fast  = function(source) return build(dest/source:basename()..".lz") { "lzip", source, level=9 } end,
+        small = function(source) return build(dest/source:basename()..".lz") { "lzip", source, level=9 } end,
+        debug = function(source) return build(dest/source:basename()..".lz4") { "lz4", source, level=1 } end,
     }
 end
 
@@ -1151,7 +1151,7 @@ section "$bin/luax.lua"
 ---------------------------------------------------------------------
 
 rule "luax-bundle" {
-    description = "BUNDLE $out",
+    description = "bundle $out",
     command = {
         "PATH=$tmp:$$PATH",
         "LUA_PATH=\"$lua_path\"",
@@ -1191,16 +1191,10 @@ acc(binaries) {
 section "Tests"
 ---------------------------------------------------------------------
 
-rule "lz4" {
-    description = "LZ4 $in",
-    command = "$lz4 --quiet --stdout $in > $out",
-    implicit_in = "$lz4",
-}
-
 local imported_test_sources = ls "tests/luax-tests/to_be_imported-*.lua"
 local test_sources = {
     ls "tests/luax-tests/*.*" : difference(imported_test_sources),
-    build "$test/resource.txt.lz4" { "lz4", "tests/luax-tests/resource.txt" },
+    build "$test/resource.txt.lz4" { "lz4", "tests/luax-tests/resource.txt", level=6 },
 }
 local test_main = "tests/luax-tests/main.lua"
 
@@ -1219,7 +1213,7 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-1-luax_executable.ok" { test_sources,
-        description = "TEST $out",
+        description = "test $out",
         command = {
             sanitizer_options,
             "$luax compile -q -b -k test-1-key -o $test/test-luax $in",
@@ -1247,7 +1241,7 @@ acc(test) {
             local test_libc = ("-musl"):is_suffix_of(target_name) and "musl" or libc
             local test_name = target_name=="native" and sys.name or target_name
             return build("$test/test-1-"..i.."-compiled_executable.ok") { test_sources,
-                description = "TEST $out",
+                description = "test $out",
                 command = {
                     sanitizer_options,
                     "$luax compile -q", "-t", target_name, "-b -k test-1-key", "-o", "$test/test-compiled-"..i, "$in",
@@ -1285,7 +1279,7 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-2-lib.ok" { test_main,
-        description = "TEST $out",
+        description = "test $out",
         command = {
             sanitizer_options,
             "export LUA_CPATH=;",
@@ -1312,7 +1306,7 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-3-lua.ok" { test_main,
-        description = "TEST $out",
+        description = "test $out",
         command = {
             sanitizer_options,
             "PATH=$bin:$tmp:$$PATH",
@@ -1338,7 +1332,7 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-4-lua-luax-lua.ok" { test_main,
-        description = "TEST $out",
+        description = "test $out",
         command = {
             sanitizer_options,
             "PATH=$bin:$tmp:$$PATH",
@@ -1363,7 +1357,7 @@ acc(test) {
 ---------------------------------------------------------------------
 
     has_pandoc and build "$test/test-5-pandoc-luax-lua.ok" { test_main,
-        description = "TEST $out",
+        description = "test $out",
         command = {
             sanitizer_options,
             "PATH=$bin:$tmp:$$PATH",
@@ -1389,7 +1383,7 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-ext-1-lua.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
-        description = "TEST $out",
+        description = "test $out",
         command = {
             sanitizer_options,
             "eval \"$$($luax env)\";",
@@ -1412,7 +1406,7 @@ acc(test) {
 ---------------------------------------------------------------------
 
     build "$test/test-ext-3-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
-        description = "TEST $out",
+        description = "test $out",
         command = {
             sanitizer_options,
             "eval \"$$($luax env)\";",
@@ -1434,7 +1428,7 @@ acc(test) {
 ---------------------------------------------------------------------
 
     has_pandoc and build "$test/test-ext-4-pandoc.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
-        description = "TEST $out",
+        description = "test $out",
         command = {
             sanitizer_options,
             "eval \"$$($luax env)\";",
@@ -1468,7 +1462,7 @@ if has_pandoc then
 local markdown_sources = ls "doc/src/*.md"
 
 rule "lsvg" {
-    description = "LSVG $out",
+    description = "lsvg $out",
     command = "$luax tools/lsvg.luax $in -o $out --MF $depfile -- $args",
     depfile = "$builddir/tmp/lsvg/$out.d",
     implicit_in = {
@@ -1503,7 +1497,7 @@ local ypp_config_params = ypp_vars {
 
 local gfm = pipe {
     rule "ypp.md" {
-        description = "YPP $in",
+        description = "ypp $in",
         command = {
             "$luax tools/ypp.luax",
             ypp_config_params,
@@ -1517,7 +1511,7 @@ local gfm = pipe {
         },
     },
     rule "pandoc" {
-        description = "PANDOC $out",
+        description = "pandoc $out",
         command = { pandoc_gfm, "$in -o $out" },
         implicit_in = {
             "doc/src/fix_links.lua",
