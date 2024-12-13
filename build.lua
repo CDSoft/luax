@@ -1049,13 +1049,13 @@ section "LuaX archives"
 
 rule "compress-lzip" {
     description = "lzip $in",
-    command = { "$lzip", "-fk$level", "$in -o $out" },
+    command = "$lzip -$level $in --output=- > $out",
     implicit_in = "$lzip",
 }
 
 rule "compress-lz4" {
     description = "lz4 $in",
-    command = { "$lz4", "-fkq$level", "$in $out" },
+    command = "$lz4 -$level --quiet --stdout $in > $out",
     implicit_in = "$lz4",
 }
 
@@ -1193,7 +1193,7 @@ section "Tests"
 
 rule "lz4" {
     description = "LZ4 $in",
-    command = "$lz4 -qkf $in -c > $out",
+    command = "$lz4 --quiet --stdout $in > $out",
     implicit_in = "$lz4",
 }
 
