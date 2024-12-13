@@ -268,6 +268,13 @@ rule "make_openssl" {
         "$openssl_src/Configure", "$openssl_target", openssl_options, ";",
         "make", "-j", nproc,
     },
+    implicit_in = {
+        build "$openssl_src/Configure" {
+            description = "download OpenSSL",
+            command = "git submodule sync && git submodule update --init --recursive",
+            pool = "console",
+        },
+    },
     pool = "console",
 }
 
