@@ -287,7 +287,6 @@ function M.bundle(opt)
             compress = opt.compress or "lzip",
             key = opt.key,
         }
-        local lar = require "lar"
         return F{
             [opt.output] = lar.lar(scripts, lar_opt),
         }
