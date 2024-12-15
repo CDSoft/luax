@@ -27,7 +27,7 @@ local lar = require "lar"
 local sys = require "sys"
 
 local function findpath(name)
-    if sys.os == "windows" and not name:lower():has_suffix(sys.name:lower()) then
+    if sys.os == "windows" and not name:lower():has_suffix(sys.exe:lower()) then
         name = name..sys.exe
     end
     if name:is_file() then return name:realpath() end
