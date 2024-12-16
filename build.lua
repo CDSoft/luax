@@ -1063,7 +1063,7 @@ local function compress(dest)
     return case(mode) {
         fast  = function(source) return build(dest/source:basename()..".lz") { "lzip", source, level=9 } end,
         small = function(source) return build(dest/source:basename()..".lz") { "lzip", source, level=9 } end,
-        debug = function(source) return build(dest/source:basename()..".lz4") { "lz4", source, level=1 } end,
+        debug = function(source) return build(dest/source:basename()..".lz4") { "lz4", source, level=0 } end,
     }
 end
 
@@ -1099,9 +1099,11 @@ acc(libraries) {
         optional(cross_compilation) {
 
             -- Lua runtime
-            compress "$tmp/lib/headers" "lua/lua.h",
-            compress "$tmp/lib/headers" "lua/luaconf.h",
-            compress "$tmp/lib/headers" "lua/lauxlib.h",
+            F.map(compress "$tmp/lib/headers", {
+                "lua/lua.h",
+                "lua/luaconf.h",
+                "lua/lauxlib.h",
+            }),
 
             -- Binary runtimes
             targets : map(function(target)
@@ -1113,13 +1115,9 @@ acc(libraries) {
                     main_luax[target.name],
                 }
                 if has_partial_ld(target) then
-                    local luax_o = build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs }
-                    return compress("$tmp/lib/targets"/target.name)(luax_o)
-                else
-                    return libs : map(function(lib)
-                        return compress("$tmp/lib/targets"/target.name)(lib)
-                    end)
+                    libs = { build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs } }
                 end
+                return F.map(compress("$tmp/lib/targets"/target.name), libs)
             end),
 
         }
