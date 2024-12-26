@@ -63,4 +63,6 @@ return function()
         local f<close> = assert(io.open(tmp))
         return {res, f:read("a")}
     end), {{true, "exit", 0}, "HELLO"})
+
+    eq(sh.pipe("tr", "a-z", "A-Z") "Hello", "HELLO")
 end

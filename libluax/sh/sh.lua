@@ -32,6 +32,7 @@ local sh = require "sh"
 local sh = {}
 
 local F = require "F"
+local sys = require "sys"
 
 --[[@@@
 ```lua
@@ -88,16 +89,16 @@ function sh.write(...)
     end
 end
 
-if pandoc then
-
 --[[@@@
 ```lua
 sh.pipe(...)(data)
 ```
-Runs the command `...` with `pandoc.pipe` and feeds `stdin` with `data`.
+Runs the command `...` with `io.popen` or `pandoc.pipe` and feeds `stdin` with `data`.
 When `sh.pipe` succeeds, it returns the content of stdout.
-Otherwise it returns the error identified by `pandoc.pipe`.
+Otherwise it returns the error identified by `op.popen` or `pandoc.pipe`.
 @@@]]
+
+if pandoc then
 
     function sh.pipe(...)
         local cmd = F.flatten{...}
@@ -108,6 +109,24 @@ Otherwise it returns the error identified by `pandoc.pipe`.
             local ok, out = pcall(pandoc.pipe, cmd:head(), cmd:tail(), data)
             if not ok then return nil, out end
             return out
+        end
+    end
+
+else
+
+    local cat = sys.os == "windows" and "type" or "cat"
+
+    function sh.pipe(...)
+        local cmd = F.flatten{...}:unwords()
+        return function(data)
+            local fs = require "fs"
+            if type(data) ~= "string" then
+                return nil, "bad argument #1 to 'write' (string expected, got "..type(data)..")"
+            end
+            return fs.with_tmpfile(function(tmp)
+                fs.write_bin(tmp, data)
+                return sh.read(cat, tmp, " | ", cmd)
+            end)
         end
     end
 
