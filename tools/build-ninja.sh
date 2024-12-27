@@ -22,8 +22,9 @@
 
 #set -x
 
-ZIG_VERSION=$(grep "ZIG_VERSION *=" build.lua | cut -d= -f2 | tr -d " \"")
-ZIG=~/.local/opt/zig/$ZIG_VERSION/zig
+. config # ZIG_VERSION ZIG_PATH
+
+eval "ZIG=$ZIG_PATH/$ZIG_VERSION/zig"
 
 NINJA_URL=https://github.com/ninja-build/ninja
 NINJA_VERSION=v1.12.1
@@ -260,13 +261,14 @@ detect_os
 install_zig
 clone_ninja
 
-compile x86_64-linux-gnu
-compile aarch64-linux-gnu
-compile x86_64-macos-none
-compile aarch64-macos-none
-compile x86_64-windows-gnu
+compile x86_64-linux-gnu &
+compile aarch64-linux-gnu &
+compile x86_64-macos-none &
+compile aarch64-macos-none &
+compile x86_64-windows-gnu &
+wait
 
-if $INSTALL
+if $INSTALL && read -e -r -p "Installation path: " -i "$HOME/.local/bin" PREFIX
 then
-    install -v "$BUILD/ninja-$OS-$ARCH$EXT" ~/.local/bin/ninja"$EXT"
+    install -v "$BUILD/ninja-$OS-$ARCH$EXT" "$PREFIX/ninja$EXT"
 fi

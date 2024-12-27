@@ -1,0 +1,6 @@
+COMMENT="LuaX build configuration"
+WARNING="This file must be a valid Lua and bash script."
+
+ZIG_VERSION="0.13.0"
+ZIG_PATH="~/.local/opt/zig"
+ZIG_PATH_WIN="~\\zig"

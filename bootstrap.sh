@@ -27,6 +27,8 @@ set -eu
 
 cd "$(dirname "$0")"
 
+. config # ZIG_VERSION ZIG_PATH
+
 B=.build/boot
 LUA=$B/lua
 
@@ -79,8 +81,7 @@ fi
 # C compiler
 ######################################################################
 
-ZIG_VERSION=$(grep "ZIG_VERSION *=" build.lua | cut -d= -f2 | tr -d " \"")
-ZIG=~/.local/opt/zig/$ZIG_VERSION/zig
+eval "ZIG=$ZIG_PATH/$ZIG_VERSION/zig"
 
 COMPILER=""
 

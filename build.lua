@@ -21,9 +21,12 @@ http://cdelord.fr/luax
 local F = require "F"
 local fs = require "fs"
 local sh = require "sh"
+local import = require "import"
 
 local LUAX = {}
 local I = F.I(LUAX)
+
+local BUILD_CONFIG = import "config"
 
 LUAX.AUTHORS     = "Christophe Delord"
 LUAX.URL         = "cdelord.fr/luax"
@@ -31,7 +34,6 @@ LUAX.VERSION     = sh "git describe --tags" : trim()
 LUAX.DATE        = sh "git show -s --format=%cd --date=format:'%Y-%m-%d'" : trim()
 local YEAR       = LUAX.DATE : split '%-' : head()
 LUAX.COPYRIGHT   = I{YEAR=YEAR}"LuaX $(VERSION)  Copyright (C) 2021-$(YEAR) $(URL), $(AUTHORS)"
-LUAX.ZIG_VERSION = "0.13.0"
 
 help.name "LuaX"
 help.description(I[[
@@ -310,12 +312,12 @@ local compiler_deps = {}
 case(compiler) {
 
     zig = function()
-        var "zig_version" (LUAX.ZIG_VERSION)
-        local HOME, zig_path = F.unpack(case(sys.os) {
-            windows = { "LOCALAPPDATA", "zig" / "$zig_version" / "zig" },
-            [Nil]   = { "HOME", ".local/opt/zig" / "$zig_version" / "zig" },
-        })
-        var "zig" { os.getenv(HOME) / zig_path }
+        var "zig_version" (BUILD_CONFIG.ZIG_VERSION)
+        local zig_path = case(sys.os) {
+            windows = BUILD_CONFIG.ZIG_PATH_WIN:gsub("^~", os.getenv"LOCALAPPDATA" or "~"),
+            [Nil]   = BUILD_CONFIG.ZIG_PATH:gsub("^~", os.getenv"HOME" or "~"),
+        }
+        var "zig" { zig_path/"$zig_version"/"zig" }
 
         build "$zig" {
             description = "install zig $zig_version",
@@ -810,6 +812,26 @@ rule "ypp-config" {
 build "$luax_config_h"   { "ypp-config", "libluax/luax_config.h.in" }
 build "$luax_config_lua" { "ypp-config", "libluax/luax_config.lua.in" }
 
+comment [[
+The LuaX build configuration file (luax_build_config.lua)
+is created in `$tmp`
+]]
+
+var "luax_build_config_lua" "$tmp/luax_build_config.lua"
+
+rule "ypp-build-config" {
+    description = "ypp $out",
+    command = { "$lua tools/luax.lua tools/ypp.luax", ypp_vars(BUILD_CONFIG), "$in -o $out" },
+    implicit_in = {
+        "$lua",
+        "tools/luax.lua",
+        "tools/ypp.luax",
+        gitdir/"refs/tags",
+    },
+}
+
+build "$luax_build_config_lua" { "ypp-build-config", "luax/luax_build_config.lua.in" }
+
 --===================================================================
 section "Lua runtime"
 ---------------------------------------------------------------------
@@ -829,6 +851,7 @@ rule "bundle" {
         "tools/bundle.lua",
         "luax/luax_bundle.lua",
         "$luax_config_lua",
+        "$luax_build_config_lua",
     },
 }
 
@@ -891,6 +914,7 @@ local luax_runtime_bundle = build "$tmp/lua_runtime_bundle.c" {
 
 local luax_app = {
     "$luax_config_lua",
+    "$luax_build_config_lua",
     ls "luax/**.lua",
 }
 
@@ -1135,7 +1159,7 @@ section "$lib/luax.lua"
 
 acc(libraries) {
     build "$lib/luax.lua" {
-        "bundle", "$luax_config_lua", lua_runtime,
+        "bundle", "$luax_config_lua", "$luax_build_config_lua", lua_runtime,
         args = {
             "-e lib",
             "-t lua",
@@ -1163,6 +1187,7 @@ rule "luax-bundle" {
         "luax/luax.lua",
         "$lib/luax.lua",
         "$luax_config_lua",
+        "$luax_build_config_lua",
         libraries,
     },
 }

@@ -186,14 +186,16 @@ local function compile_zig(tmp, current_output, target_definition)
     log("target", "%s", target_definition.name)
     log("output", "%s", current_output)
 
-    -- Zig configuration
-    local zig_version = require "luax_config".zig_version
+    -- Build configuration
+    local build_config = require "luax_build_config"
 
-    local home, zig_path = F.unpack(F.case(sys.os) {
-        windows = { "LOCALAPPDATA", "zig" / zig_version },
-        [F.Nil] = { "HOME", ".local/opt" / "zig" / zig_version },
-    })
-    zig_path = os.getenv(home) / zig_path
+    -- Zig configuration
+    local zig_version = build_config.zig_version
+    local zig_path = F.case(sys.os) {
+        windows = build_config.zig_path_win:gsub("^~", os.getenv"LOCALAPPDATA" or "~"),
+        [F.Nil] = build_config.zig_path:gsub("^~", os.getenv"HOME" or "~"),
+    }/zig_version
+
     local zig = zig_path/"zig"..sys.exe
 
     -- Install Zig (to cross compile and link C sources)
