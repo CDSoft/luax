@@ -43,6 +43,11 @@ local default_options = {
     implicit_in = Nil,
 }
 
+local function set_ext(name, ext)
+    if vars.expand(name):has_suffix(ext) then return name end
+    return name..ext
+end
+
 local function split_hybrid_table(t)
     local function is_numeric_key(k)
         return math.type(k) == "integer"
@@ -58,23 +63,23 @@ local rules = setmetatable({}, {
         local ld = F{compiler.name, "ld"}:flatten():str"-"
         local new_rules = {
             cc = rule(cc) {
-                description = {compiler.name, "$out"},
+                description = {compiler.cc, "$out"},
                 command = { compiler.cc, compiler.cflags, compiler.cargs },
                 depfile = compiler.depfile,
                 implicit_in = compiler.implicit_in,
             },
             ar = rule(ar) {
-                description = {compiler.name, "$out"},
+                description = {compiler.ar, "$out"},
                 command = { compiler.ar, compiler.aflags, compiler.aargs },
                 implicit_in = compiler.implicit_in,
             },
             so = rule(so) {
-                description = {compiler.name, "$out"},
+                description = {compiler.so, "$out"},
                 command = { compiler.so, compiler.soflags, compiler.soargs },
                 implicit_in = compiler.implicit_in,
             },
             ld = rule(ld) {
-                description = {compiler.name, "$out"},
+                description = {compiler.ld, "$out"},
                 command = { compiler.ld, compiler.ldflags, compiler.ldargs },
                 implicit_in = compiler.implicit_in,
             },
@@ -88,6 +93,7 @@ local function compile(self, output)
     local cc = rules[self].cc
     return function(inputs)
         local input_list, input_vars = split_hybrid_table(inputs)
+        output = set_ext(output, self.o_ext)
         local validations = F.flatten{self.cvalid}:map(function(valid)
             local valid_output = output.."-"..(valid.name or valid)..".check"
             if valid.name then
@@ -108,6 +114,7 @@ local function static_lib(self, output)
     local ar = rules[self].ar
     return function(inputs)
         local input_list, input_vars = split_hybrid_table(inputs)
+        output = set_ext(output, self.a_ext)
         return build(output) { ar,
             F.flatten(input_list):map(function(input)
                 if F.elem(input:ext(), self.c_exts) then
@@ -127,6 +134,7 @@ local function dynamic_lib(self, output)
     local so = rules[self].so
     return function(inputs)
         local input_list, input_vars = split_hybrid_table(inputs)
+        output = set_ext(output, self.so_ext)
         return build(output) { so,
             F.flatten(input_list):map(function(input)
                 if F.elem(input:ext(), self.c_exts) then
@@ -146,6 +154,7 @@ local function executable(self, output)
     local ld = rules[self].ld
     return function(inputs)
         local input_list, input_vars = split_hybrid_table(inputs)
+        output = set_ext(output, self.exe_ext)
         return build(output) { ld,
             F.flatten(input_list):map(function(input)
                 if F.elem(input:ext(), self.c_exts) then
@@ -204,7 +213,33 @@ compiler_mt = {
     },
 }
 
-return new(default_options, "C")
+local cc      = new(default_options, "C")
+local gcc     = cc  : new "gcc"     : set "cc" "gcc"     : set "so" "gcc"     : set "ld" "gcc"
+local clang   = cc  : new "clang"   : set "cc" "clang"   : set "so" "clang"   : set "ld" "clang"
+local cpp     = cc  : new "Cpp"     : set "cc" "c++"     : set "so" "c++"     : set "ld" "c++"     : set "c_exts" { ".cc", ".cpp" }
+local gpp     = cpp : new "gpp"     : set "cc" "g++"     : set "so" "g++"     : set "ld" "g++"
+local clangpp = cpp : new "clangpp" : set "cc" "clang++" : set "so" "clang++" : set "ld" "clang++"
+
+local zigcc   = cc  : new "zigcc"   : set "cc" "zig cc"  : set "ar" "zig ar" : set "so" "zig cc"  : set "ld" "zig cc"
+local zigcpp  = cpp : new "zigcpp"  : set "cc" "zig c++" : set "ar" "zig ar" : set "so" "zig c++" : set "ld" "zig c++"
+require "targets" : foreach(function(target)
+    local zig_target = {"-target", F{target.arch, target.os, target.libc}:str"-"}
+    local function add_target(compiler)
+        return compiler : add "cc" (zig_target) : add "so" (zig_target) : add "ld" (zig_target) : set "so_ext" (target.so) : set "exe_ext" (target.exe)
+    end
+    zigcc[target.name]  = add_target(zigcc  : new("zigcc-"..target.name))
+    zigcpp[target.name] = add_target(zigcpp : new("zigcpp-"..target.name))
+end)
+
+return setmetatable({
+    cc  = cc,  gcc = gcc, clang   = clang,   zigcc  = zigcc,
+    cpp = cpp, gpp = gpp, clangpp = clangpp, zigcpp = zigcpp,
+}, {
+    __call = function(_, ...) return cc(...) end,
+    __index = {
+        new = function(_, name) return cc:new(name) end,
+    },
+})
 ]])
 libs["Nil"] = lib("src/Nil.lua", [[-- This file is part of bang.
 --
@@ -330,9 +365,15 @@ local default_options = {
     cmd = "cat",
     flags = {},
     args = "$in > $out",
+    ext = "",
 }
 
 local builder_keys = F.keys(default_options) .. { "name" }
+
+local function set_ext(name, ext)
+    if vars.expand(name):lower():has_suffix(ext:lower()) then return name end
+    return name..ext
+end
 
 local function split_hybrid_table(t)
     local function is_numeric_key(k)
@@ -365,6 +406,7 @@ local function run(self, output)
             inputs = {inputs}
         end
         local input_list, input_vars = split_hybrid_table(inputs)
+        output = set_ext(output, self.ext)
         return build(output) (F.merge{
             { rules[self], input_list },
             input_vars,
@@ -510,110 +552,110 @@ return setmetatable({
     typst = typst,
     graphviz = {
         dot = {
-            svg = dot:new "dot.svg" : add "flags" "-Tsvg",
-            png = dot:new "dot.png" : add "flags" "-Tpng",
-            pdf = dot:new "dot.pdf" : add "flags" "-Tpdf",
+            svg = dot:new "dot.svg" : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = dot:new "dot.png" : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = dot:new "dot.pdf" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         neato = {
-            svg = dot:new "neato.svg" : set "cmd" "neato" : add "flags" "-Tsvg",
-            png = dot:new "neato.png" : set "cmd" "neato" : add "flags" "-Tpng",
-            pdf = dot:new "neato.pdf" : set "cmd" "neato" : add "flags" "-Tpdf",
+            svg = dot:new "neato.svg" : set "cmd" "neato" : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = dot:new "neato.png" : set "cmd" "neato" : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = dot:new "neato.pdf" : set "cmd" "neato" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         twopi = {
-            svg = dot:new "twopi.svg" : set "cmd" "twopi" : add "flags" "-Tsvg",
-            png = dot:new "twopi.png" : set "cmd" "twopi" : add "flags" "-Tpng",
-            pdf = dot:new "twopi.pdf" : set "cmd" "twopi" : add "flags" "-Tpdf",
+            svg = dot:new "twopi.svg" : set "cmd" "twopi" : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = dot:new "twopi.png" : set "cmd" "twopi" : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = dot:new "twopi.pdf" : set "cmd" "twopi" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         circo = {
-            svg = dot:new "circo.svg" : set "cmd" "circo" : add "flags" "-Tsvg",
-            png = dot:new "circo.png" : set "cmd" "circo" : add "flags" "-Tpng",
-            pdf = dot:new "circo.pdf" : set "cmd" "circo" : add "flags" "-Tpdf",
+            svg = dot:new "circo.svg" : set "cmd" "circo" : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = dot:new "circo.png" : set "cmd" "circo" : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = dot:new "circo.pdf" : set "cmd" "circo" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         fdp = {
-            svg = dot:new "fdp.svg" : set "cmd" "fdp" : add "flags" "-Tsvg",
-            png = dot:new "fdp.png" : set "cmd" "fdp" : add "flags" "-Tpng",
-            pdf = dot:new "fdp.pdf" : set "cmd" "fdp" : add "flags" "-Tpdf",
+            svg = dot:new "fdp.svg" : set "cmd" "fdp" : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = dot:new "fdp.png" : set "cmd" "fdp" : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = dot:new "fdp.pdf" : set "cmd" "fdp" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         sfdp = {
-            svg = dot:new "sfdp.svg" : set "cmd" "sfdp" : add "flags" "-Tsvg",
-            png = dot:new "sfdp.png" : set "cmd" "sfdp" : add "flags" "-Tpng",
-            pdf = dot:new "sfdp.pdf" : set "cmd" "sfdp" : add "flags" "-Tpdf",
+            svg = dot:new "sfdp.svg" : set "cmd" "sfdp" : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = dot:new "sfdp.png" : set "cmd" "sfdp" : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = dot:new "sfdp.pdf" : set "cmd" "sfdp" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         patchwork = {
-            svg = dot:new "patchwork.svg" : set "cmd" "patchwork" : add "flags" "-Tsvg",
-            png = dot:new "patchwork.png" : set "cmd" "patchwork" : add "flags" "-Tpng",
-            pdf = dot:new "patchwork.pdf" : set "cmd" "patchwork" : add "flags" "-Tpdf",
+            svg = dot:new "patchwork.svg" : set "cmd" "patchwork" : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = dot:new "patchwork.png" : set "cmd" "patchwork" : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = dot:new "patchwork.pdf" : set "cmd" "patchwork" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         osage = {
-            svg = dot:new "osage.svg" : set "cmd" "osage" : add "flags" "-Tsvg",
-            png = dot:new "osage.png" : set "cmd" "osage" : add "flags" "-Tpng",
-            pdf = dot:new "osage.pdf" : set "cmd" "osage" : add "flags" "-Tpdf",
+            svg = dot:new "osage.svg" : set "cmd" "osage" : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = dot:new "osage.png" : set "cmd" "osage" : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = dot:new "osage.pdf" : set "cmd" "osage" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
     },
     plantum = {
-        svg = plantuml:new "plantuml.svg" : add "flags" "-tsvg",
-        png = plantuml:new "plantuml.png" : add "flags" "-tpng",
-        pdf = plantuml:new "plantuml.pdf" : add "flags" "-tpdf",
+        svg = plantuml:new "plantuml.svg" : add "flags" "-tsvg" : set "ext" ".svg",
+        png = plantuml:new "plantuml.png" : add "flags" "-tpng" : set "ext" ".png",
+        pdf = plantuml:new "plantuml.pdf" : add "flags" "-tpdf" : set "ext" ".pdf",
     },
     ditaa = {
-        svg = ditaa:new "ditaa.svg" : add "flags" "--svg",
-        png = ditaa:new "ditaa.png",
-        pdf = ditaa:new "ditaa.pdf",
+        svg = ditaa:new "ditaa.svg" : add "flags" "--svg" : set "ext" ".svg",
+        png = ditaa:new "ditaa.png" : set "ext" ".png",
+        pdf = ditaa:new "ditaa.pdf" : set "ext" ".pdf",
     },
     asymptote = {
-        svg = asymptote:new "asymptote.svg" : add "flags" "-f svg",
-        png = asymptote:new "asymptote.png" : add "flags" "-f png",
-        pdf = asymptote:new "asymptote.pdf" : add "flags" "-f pdf",
+        svg = asymptote:new "asymptote.svg" : add "flags" "-f svg" : set "ext" ".svg",
+        png = asymptote:new "asymptote.png" : add "flags" "-f png" : set "ext" ".png",
+        pdf = asymptote:new "asymptote.pdf" : add "flags" "-f pdf" : set "ext" ".pdf",
     },
     mermaid = {
-        svg = mermaid:new "mermaid.svg" : add "flags" "-e svg",
-        png = mermaid:new "mermaid.png" : add "flags" "-e png",
-        pdf = mermaid:new "mermaid.pdf" : add "flags" "-e pdf",
+        svg = mermaid:new "mermaid.svg" : add "flags" "-e svg" : set "ext" ".svg",
+        png = mermaid:new "mermaid.png" : add "flags" "-e png" : set "ext" ".png",
+        pdf = mermaid:new "mermaid.pdf" : add "flags" "-e pdf" : set "ext" ".pdf",
     },
     blockdiag = {
-        svg = blockdiag:new "blockdiag.svg" : add "flags" "-Tsvg",
-        png = blockdiag:new "blockdiag.png" : add "flags" "-Tpng",
-        pdf = blockdiag:new "blockdiag.pdf" : add "flags" "-Tpdf",
+        svg = blockdiag:new "blockdiag.svg" : add "flags" "-Tsvg" : set "ext" ".svg",
+        png = blockdiag:new "blockdiag.png" : add "flags" "-Tpng" : set "ext" ".png",
+        pdf = blockdiag:new "blockdiag.pdf" : add "flags" "-Tpdf" : set "ext" ".pdf",
         activity = {
-            svg = blockdiag:new "actdiag.svg" : set "cmd" "actdiag"  : add "flags" "-Tsvg",
-            png = blockdiag:new "actdiag.png" : set "cmd" "actdiag"  : add "flags" "-Tpng",
-            pdf = blockdiag:new "actdiag.pdf" : set "cmd" "actdiag"  : add "flags" "-Tpdf",
+            svg = blockdiag:new "actdiag.svg" : set "cmd" "actdiag"  : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = blockdiag:new "actdiag.png" : set "cmd" "actdiag"  : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = blockdiag:new "actdiag.pdf" : set "cmd" "actdiag"  : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         network = {
-            svg = blockdiag:new "nwdiag.svg" : set "cmd" "nwdiag"  : add "flags" "-Tsvg",
-            png = blockdiag:new "nwdiag.png" : set "cmd" "nwdiag"  : add "flags" "-Tpng",
-            pdf = blockdiag:new "nwdiag.pdf" : set "cmd" "nwdiag"  : add "flags" "-Tpdf",
+            svg = blockdiag:new "nwdiag.svg" : set "cmd" "nwdiag"  : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = blockdiag:new "nwdiag.png" : set "cmd" "nwdiag"  : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = blockdiag:new "nwdiag.pdf" : set "cmd" "nwdiag"  : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         packet = {
-            svg = blockdiag:new "packetdiag.svg" : set "cmd" "packetdiag"  : add "flags" "-Tsvg",
-            png = blockdiag:new "packetdiag.png" : set "cmd" "packetdiag"  : add "flags" "-Tpng",
-            pdf = blockdiag:new "packetdiag.pdf" : set "cmd" "packetdiag"  : add "flags" "-Tpdf",
+            svg = blockdiag:new "packetdiag.svg" : set "cmd" "packetdiag"  : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = blockdiag:new "packetdiag.png" : set "cmd" "packetdiag"  : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = blockdiag:new "packetdiag.pdf" : set "cmd" "packetdiag"  : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         rack = {
-            svg = blockdiag:new "rackdiag.svg" : set "cmd" "rackdiag"  : add "flags" "-Tsvg",
-            png = blockdiag:new "rackdiag.png" : set "cmd" "rackdiag"  : add "flags" "-Tpng",
-            pdf = blockdiag:new "rackdiag.pdf" : set "cmd" "rackdiag"  : add "flags" "-Tpdf",
+            svg = blockdiag:new "rackdiag.svg" : set "cmd" "rackdiag"  : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = blockdiag:new "rackdiag.png" : set "cmd" "rackdiag"  : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = blockdiag:new "rackdiag.pdf" : set "cmd" "rackdiag"  : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         sequence = {
-            svg = blockdiag:new "seqdiag.svg" : set "cmd" "seqdiag"  : add "flags" "-Tsvg",
-            png = blockdiag:new "seqdiag.png" : set "cmd" "seqdiag"  : add "flags" "-Tpng",
-            pdf = blockdiag:new "seqdiag.pdf" : set "cmd" "seqdiag"  : add "flags" "-Tpdf",
+            svg = blockdiag:new "seqdiag.svg" : set "cmd" "seqdiag"  : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = blockdiag:new "seqdiag.png" : set "cmd" "seqdiag"  : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = blockdiag:new "seqdiag.pdf" : set "cmd" "seqdiag"  : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
     },
     gnuplot = {
-        svg = gnuplot:new "gnuplot.svg" : add "flags" { "-e 'set terminal svg'" },
-        png = gnuplot:new "gnuplot.png" : add "flags" { "-e 'set terminal png'" },
-        pdf = gnuplot:new "gnuplot.pdf" : add "flags" { "-e 'set terminal pdf'" },
+        svg = gnuplot:new "gnuplot.svg" : add "flags" { "-e 'set terminal svg'" } : set "ext" ".svg",
+        png = gnuplot:new "gnuplot.png" : add "flags" { "-e 'set terminal png'" } : set "ext" ".png",
+        pdf = gnuplot:new "gnuplot.pdf" : add "flags" { "-e 'set terminal pdf'" } : set "ext" ".pdf",
     },
     lsvg = {
-        svg = lsvg:new "lsvg.svg",
-        png = lsvg:new "lsvg.png",
-        pdf = lsvg:new "lsvg.pdf",
+        svg = lsvg:new "lsvg.svg" : set "ext" ".svg",
+        png = lsvg:new "lsvg.png" : set "ext" ".png",
+        pdf = lsvg:new "lsvg.pdf" : set "ext" ".pdf",
     },
     octave = {
-        svg = octave:new "octave.svg",
-        png = octave:new "octave.png",
-        pdf = octave:new "octave.pdf",
+        svg = octave:new "octave.svg" : set "ext" ".svg",
+        png = octave:new "octave.png" : set "ext" ".png",
+        pdf = octave:new "octave.pdf" : set "ext" ".pdf",
     },
 }, {
     __index = {
@@ -1157,6 +1199,7 @@ libs["luax"] = lib("src/luax.lua", [[-- This file is part of bang.
 --@LIB
 
 local F = require "F"
+local sys = require "sys"
 local targets = require "targets"
 
 local default_options = {
@@ -1165,7 +1208,13 @@ local default_options = {
     target = "luax",
     flags = {},
     implicit_in = Nil,
+    exe_ext = "",
 }
+
+local function set_ext(name, ext)
+    if vars.expand(name):has_suffix(ext) then return name end
+    return name..ext
+end
 
 local function split_hybrid_table(t)
     local function is_numeric_key(k)
@@ -1192,6 +1241,7 @@ local function run(self, output)
             inputs = {inputs}
         end
         local input_list, input_vars = split_hybrid_table(inputs)
+        output = set_ext(output, self.exe_ext)
         return build(output) (F.merge{
             { rules[self], input_list },
             input_vars,
@@ -1240,7 +1290,7 @@ compiler_mt = {
 local luax = new(default_options, "luax") : set "target" "luax"
 local lua = luax:new "luax-lua" : set "target" "lua"
 local pandoc = luax:new "luax-pandoc" : set "target" "pandoc"
-local native = luax:new "luax-native" : set "target" "native"
+local native = luax:new "luax-native" : set "target" "native" : set "exe_ext" (sys.exe)
 
 local M = {
     luax = luax,
@@ -1249,7 +1299,7 @@ local M = {
     native = native,
 }
 targets : foreach(function(target)
-    M[target.name] = native:new("luax-"..target.name) : set "target" (target.name)
+    M[target.name] = native:new("luax-"..target.name) : set "target" (target.name) : set "exe_ext" (target.exe)
 end)
 
 return setmetatable(M, {
@@ -1542,7 +1592,9 @@ local function build_decorator(build)
         __call = build,
         __index = {},
     }
-    mt.__index.C = require "C"
+    local C = require "C"
+    mt.__index.C = C
+    F.foreachk(C, function(name, compiler) mt.__index[name] = compiler end)
     mt.__index.luax = require "luax"
     local builders = require "builders"
     F.foreachk(builders, function(name, builder) mt.__index[name] = builder end)
@@ -1958,7 +2010,7 @@ return function()
 
 end
 ]])
-libs["version"] = lib(".build/version", [=[return [[1.3.10]]]=])
+libs["version"] = lib(".build/version", [=[return [[2.0.1]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"
