@@ -233,7 +233,7 @@ local function compile_native(tmp, current_output, target_definition)
         target = "c",
         entry = "app",
         product_name = current_output:basename():splitext(),
-        bytecode = bytecode,
+        bytecode = bytecode or "-b", -- defaults to bytecode compilation for native builds
         strip = strip,
         key = key,
     })
