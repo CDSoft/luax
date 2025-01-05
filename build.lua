@@ -177,6 +177,19 @@ if san and compiler~="clang" then
     F.error_without_stack_trace("The sanitizers requires LuaX to be compiled with clang")
 end
 
+BUILD_CONFIG.COMPILER_NAME = compiler
+BUILD_CONFIG.COMPILER_FULL_VERSION = F.case(compiler) {
+    zig = function() return compiler.." version "..BUILD_CONFIG.ZIG_VERSION end,
+    gcc = function() return assert(sh "gcc --version"):lines():head() end,
+    clang = function() return assert(sh "clang --version"):lines():head() end,
+}()
+BUILD_CONFIG.COMPILER_VERSION = F.case(compiler) {
+    zig = function() return BUILD_CONFIG.ZIG_VERSION end,
+    gcc = function() return BUILD_CONFIG.COMPILER_FULL_VERSION:find "[%d.]+" end,
+    clang = function() return BUILD_CONFIG.COMPILER_FULL_VERSION:find "[%d.]+" end,
+}()
+
+
 section("Compilation options")
 comment(("Compilation mode  : %s"):format(F{mode, use_lto and "+ LTO" or {}}:flatten():unwords()))
 comment(("Compiler          : %s"):format(compiler))
@@ -188,7 +201,7 @@ comment(("Lua code          : %s"):format(case(bytecode) { ["-b"] = "bytecode",
 comment(("SSL support       : %s"):format(ssl and "LuaSec + OpenSSL" or "none"))
 
 local function is_dynamic(target) return target.libc~="musl" and not san end
-local function has_partial_ld(target) return target.os=="linux" or target.os=="macos" end
+local function has_partial_ld(target) return cross_compilation and target.os=="linux" or target.os=="macos" end
 
 local function optional(cond)
     return cond and F.id or F.const{}
@@ -1121,31 +1134,27 @@ acc(libraries) {
             },
         },
 
-        optional(cross_compilation) {
+        -- Lua runtime
+        F.map(compress "$tmp/lib/headers", {
+            "lua/lua.h",
+            "lua/luaconf.h",
+            "lua/lauxlib.h",
+        }),
 
-            -- Lua runtime
-            F.map(compress "$tmp/lib/headers", {
-                "lua/lua.h",
-                "lua/luaconf.h",
-                "lua/lauxlib.h",
-            }),
-
-            -- Binary runtimes
-            targets : map(function(target)
-                local libs = F.flatten {
-                    liblua[target.name],
-                    libluax[target.name],
-                    openssl_libs[target.name],
-                    main_libluax[target.name],
-                    main_luax[target.name],
-                }
-                if has_partial_ld(target) then
-                    libs = { build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs } }
-                end
-                return F.map(compress("$tmp/lib/targets"/target.name), libs)
-            end),
-
-        }
+        -- Binary runtimes
+        targets : map(function(target)
+            local libs = F.flatten {
+                liblua[target.name],
+                libluax[target.name],
+                openssl_libs[target.name],
+                main_libluax[target.name],
+                main_luax[target.name],
+            }
+            if has_partial_ld(target) then
+                libs = { build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs } }
+            end
+            return F.map(compress("$tmp/lib/targets"/target.name), libs)
+        end),
 
     }
 }
@@ -1260,7 +1269,7 @@ acc(test) {
         },
     },
 
-    cross_compilation and {
+    not san and {
         ({"native"} .. native_targets) : mapi(function(i, target_name)
             local test_libc = ("-musl"):is_suffix_of(target_name) and "musl" or libc
             local test_name = target_name=="native" and sys.name or target_name

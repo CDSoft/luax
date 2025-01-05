@@ -39,7 +39,7 @@ local lua_interpreters = F{
 }
 
 local function print_targets()
-    print(("%-22s%-25s"):format("Target", "Interpeter / LuaX archive"))
+    print(("%-22s%-25s"):format("Target", "Interpreter / LuaX archive"))
     print(("%-22s%-25s"):format(("-"):rep(21), ("-"):rep(25)))
     local home = os.getenv(F.case(sys.os) {
         windows = "LOCALAPPDATA",
@@ -54,21 +54,22 @@ local function print_targets()
             path and "" or " [NOT FOUND]"))
     end)
     local assets = require "luax_assets"
-    local crosscompilation = assets.headers and assets.targets
-    if assets.path and crosscompilation then
+    if assets.path then
         local luax_lar = assets.path:gsub("^"..home, "~")
         if assets.targets[sys.name] then
             print(("%-22s%s"):format("native", luax_lar))
-        else
-            print(("%-22s%s%s"):format("native", luax_lar, " [NOT AVAILABLE]"))
         end
         targets:foreach(function(target)
             if assets.targets[target.name] then
                 print(("%-22s%s"):format(target.name, luax_lar))
-            else
-                print(("%-22s%s%s"):format(target.name, luax_lar, " [NOT AVAILABLE]"))
             end
         end)
+    end
+    print("")
+    print(("Lua compiler: %s (LuaX %s)"):format(_VERSION, _LUAX_VERSION))
+    if assets.path then
+        local build_config = require "luax_build_config"
+        print(("C compiler  : %s"):format(build_config.compiler.full_version))
     end
 end
 
@@ -177,8 +178,8 @@ local function compile_lua(current_output, interpreter)
     print_size(current_output)
 end
 
--- Compile LuaX scripts with LuaX and Zig
-local function compile_zig(tmp, current_output, target_definition)
+-- Compile LuaX scripts with LuaX and Zig, gcc or clang
+local function compile_native(tmp, current_output, target_definition)
     if current_output:ext():lower() ~= target_definition.exe then
         current_output = current_output..target_definition.exe
     end
@@ -188,45 +189,6 @@ local function compile_zig(tmp, current_output, target_definition)
 
     -- Build configuration
     local build_config = require "luax_build_config"
-
-    -- Zig configuration
-    local zig_version = build_config.zig_version
-    local zig_path = F.case(sys.os) {
-        windows = build_config.zig_path_win:gsub("^~", os.getenv"LOCALAPPDATA" or "~"),
-        [F.Nil] = build_config.zig_path:gsub("^~", os.getenv"HOME" or "~"),
-    }/zig_version
-
-    local zig = zig_path/"zig"..sys.exe
-
-    -- Install Zig (to cross compile and link C sources)
-    if not zig:is_file() then
-        log("Zig", "download and install Zig to %s", zig_path)
-        local archive = "zig-"..sys.os.."-"..sys.arch.."-"..zig_version..(sys.os=="windows" and ".zip" or ".tar.xz")
-        local url = "https://ziglang.org/download/"..zig_version.."/"..archive
-        local curl = fs.findpath("curl"..sys.exe)
-        local wget = fs.findpath("wget"..sys.exe)
-        local tar  = fs.findpath("tar"..sys.exe)
-        local xz   = fs.findpath("xz"..sys.exe)
-        if not curl and not wget then help.err("curl or wget required to download Zig") end
-        if not tar then help.err("tar required to install Zig") end
-        if sys.os ~= "windows" then
-            if not xz then help.err("xz required to install Zig") end
-        end
-        assert(sh.run(
-            curl and { curl, "-fSL", quiet and "-s" or "-#", url, "-o", tmp/archive }
-            or
-            wget and { wget, quiet and "-q" or "--progress=bar", url, "-O", tmp/archive }
-        ))
-        fs.mkdirs(zig_path)
-        if sys.os == "windows" then
-            assert(sh.run(tar, "xf", tmp/archive, "-C", zig_path, "--strip-components", 1))
-        else
-            assert(sh.run(tar, "xJf", tmp/archive, "-C", zig_path, "--strip-components", 1))
-        end
-        if not zig:is_file() then
-            help.err("Unable to install Zig to %s", zig_path)
-        end
-    end
 
     local function uncompress(name, content)
         return F.case(name:ext()) {
@@ -246,7 +208,22 @@ local function compile_zig(tmp, current_output, target_definition)
     local function tmp_file(filename, content) fs.write_bin(uncompress(tmp/filename:basename(), content)) end
     headers:foreachk(tmp_file)
     libs:foreachk(tmp_file)
-    local libnames = libs:keys():map(function(f) return tmp/f:basename():splitext() end)
+    local rank = {
+        ["luax.o"]      = 1,
+        ["libluax.o"]   = 2,
+        ["libluax.a"]   = 3,
+        ["liblua.a"]    = 4,
+        ["libssl.a"]    = 5,
+        ["libcrypto.a"] = 6,
+    }
+    local libnames = libs:keys(function(a, b)
+        local rank_a = assert(rank[a:splitext()], a..": unknown library")
+        local rank_b = assert(rank[b:splitext()], b..": unknown library")
+        return rank_a < rank_b
+    end)
+    : map(function(f)
+        return tmp/f:basename():splitext()
+    end)
 
     -- Compile the input LuaX scripts
     local app_bundle_c = "app_bundle.c"
@@ -262,36 +239,133 @@ local function compile_zig(tmp, current_output, target_definition)
     })
     app_bundle : foreachk(fs.write_bin)
 
-    local function zig_target(t)
-        return {"-target", F{t.arch, t.os, t.libc}:str"-"}
+    local tmp_output = tmp/current_output:basename()
+
+    if build_config.compiler.name == "zig" then
+
+        -- Zig configuration
+        local zig_version = build_config.compiler.version
+        local zig_path = F.case(sys.os) {
+            windows = build_config.zig.path_win:gsub("^~", os.getenv"LOCALAPPDATA" or "~"),
+            [F.Nil] = build_config.zig.path:gsub("^~", os.getenv"HOME" or "~"),
+        }/zig_version
+
+        local zig = zig_path/"zig"..sys.exe
+
+        -- Install Zig (to cross compile and link C sources)
+        if not zig:is_file() then
+            log("Zig", "download and install Zig to %s", zig_path)
+            local archive = "zig-"..sys.os.."-"..sys.arch.."-"..zig_version..(sys.os=="windows" and ".zip" or ".tar.xz")
+            local url = "https://ziglang.org/download/"..zig_version.."/"..archive
+            local curl = fs.findpath("curl"..sys.exe)
+            local wget = fs.findpath("wget"..sys.exe)
+            local tar  = fs.findpath("tar"..sys.exe)
+            local xz   = fs.findpath("xz"..sys.exe)
+            if not curl and not wget then help.err("curl or wget required to download Zig") end
+            if not tar then help.err("tar required to install Zig") end
+            if sys.os ~= "windows" then
+                if not xz then help.err("xz required to install Zig") end
+            end
+            assert(sh.run(
+                curl and { curl, "-fSL", quiet and "-s" or "-#", url, "-o", tmp/archive }
+                or
+                wget and { wget, quiet and "-q" or "--progress=bar", url, "-O", tmp/archive }
+            ))
+            fs.mkdirs(zig_path)
+            if sys.os == "windows" then
+                assert(sh.run(tar, "xf", tmp/archive, "-C", zig_path, "--strip-components", 1))
+            else
+                assert(sh.run(tar, "xJf", tmp/archive, "-C", zig_path, "--strip-components", 1))
+            end
+            if not zig:is_file() then
+                help.err("Unable to install Zig to %s", zig_path)
+            end
+        end
+
+        -- Compile and link the generated source with Zig
+        local zig_opt = {
+            {"-target", F{target_definition.arch, target_definition.os, target_definition.libc}:str"-"},
+            "-std=gnu2x",
+            "-O3",
+            "-I"..tmp,
+            "-fPIC",
+            "-s",
+            "-lm",
+            F.case(target_definition.os) {
+                linux   = "-flto=thin",
+                macos   = {},
+                windows = {
+                    "-flto=thin",
+                    "-lws2_32 -ladvapi32 -lshlwapi",
+                    pcall(require, "ssl") and "-lcrypt32" or {},
+                },
+            },
+            F.case(target_definition.libc) {
+                gnu  = "-rdynamic",
+                musl = {},
+                none = "-rdynamic",
+            },
+            "-Wno-single-bit-bitfield-constant-conversion",
+        }
+        assert(sh.run(zig, "cc", zig_opt, libnames, tmp/app_bundle_c, "-o", tmp_output))
+
+    elseif build_config.compiler.name == "gcc" then
+
+        -- Compile and link the generated source with gcc
+        local gcc_opt = {
+            "-std=gnu2x",
+            "-O3",
+            "-I"..tmp,
+            "-fPIC",
+            "-s",
+            "-lm",
+            F.case(target_definition.os) {
+                linux   = "-flto=auto",
+                macos   = {},
+                windows = {
+                    "-flto=auto",
+                    "-lws2_32 -ladvapi32 -lshlwapi",
+                    pcall(require, "ssl") and "-lcrypt32" or {},
+                },
+            },
+            F.case(target_definition.libc) {
+                gnu  = "-rdynamic",
+                musl = {},
+                none = "-rdynamic",
+            },
+            "-Wstringop-overflow=0",
+        }
+        assert(sh.run("gcc", gcc_opt, libnames, tmp/app_bundle_c, "-o", tmp_output))
+
+    elseif build_config.compiler.name == "clang" then
+
+        -- Compile and link the generated source with clang
+        local clang_opt = {
+            "-std=gnu2x",
+            "-O3",
+            "-I"..tmp,
+            "-fPIC",
+            "-s",
+            "-lm",
+            F.case(target_definition.os) {
+                linux   = "-flto=thin",
+                macos   = {},
+                windows = {
+                    "-flto=auto",
+                    "-lws2_32 -ladvapi32 -lshlwapi",
+                    pcall(require, "ssl") and "-lcrypt32" or {},
+                },
+            },
+            F.case(target_definition.libc) {
+                gnu  = "-rdynamic",
+                musl = {},
+                none = "-rdynamic",
+            },
+        }
+        assert(sh.run("clang", clang_opt, libnames, tmp/app_bundle_c, "-o", tmp_output))
+
     end
 
-    -- Compile and link the generated source with Zig
-    local zig_opt = {
-        zig_target(target_definition),
-        "-std=gnu2x",
-        "-O3",
-        "-I"..tmp,
-        "-fPIC",
-        "-s",
-        "-lm",
-        F.case(target_definition.os) {
-            linux   = "-flto=thin",
-            macos   = {},
-            windows = {
-                "-flto=thin",
-                "-lws2_32 -ladvapi32 -lshlwapi",
-                pcall(require, "ssl") and "-lcrypt32" or {},
-            },
-        },
-        F.case(target_definition.libc) {
-            gnu  = "-rdynamic",
-            musl = {},
-            none = "-rdynamic",
-        },
-    }
-    local tmp_output = tmp/current_output:basename()
-    assert(sh.run(zig, "cc", zig_opt, libnames, tmp/app_bundle_c, "-o", tmp_output))
     assert(fs.copy(tmp_output, current_output))
 
     print_size(current_output)
@@ -314,7 +388,7 @@ else
     if target_definition then
 
         fs.with_tmpdir(function(tmp)
-            compile_zig(tmp, output, target_definition)
+            compile_native(tmp, output, target_definition)
         end)
 
     else

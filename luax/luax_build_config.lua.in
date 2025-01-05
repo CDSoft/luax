@@ -20,10 +20,13 @@ http://cdelord.fr/luax
 
 -- LuaX build configuration
 
--- @LIB@@(function q(s) return string.format("%q", s):sub(2, -2) end)
+-- @LIB@@(function q(s) return string.format("%q", s) end)
 
 return {
-    zig_version = "@(q(ZIG_VERSION))",
-    zig_path = "@(q(ZIG_PATH))",
-    zig_path_win = "@(q(ZIG_PATH_WIN))",
+    compiler = {
+        name = @q(COMPILER_NAME),
+        version = @q(COMPILER_VERSION),
+        full_version = @q(COMPILER_FULL_VERSION),
+    },
+    zig = @(COMPILER_NAME=="zig" and ("{ path=%q, path_win=%q }"):format(ZIG_PATH, ZIG_PATH_WIN) or nil),
 }

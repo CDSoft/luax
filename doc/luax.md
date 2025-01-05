@@ -73,8 +73,8 @@ Contributions on non supported platforms are welcome.
 | `bang -- nolto` | Disable LTO optimizations |
 | `bang -- ssl` | Add SSL support via LuaSec and OpenSSL |
 | `bang -- zig` | Compile LuaX with Zig |
-| `bang -- gcc` | Compile LuaX with gcc |
-| `bang -- clang` | Compile LuaX with clang |
+| `bang -- gcc` | Compile LuaX with gcc (no cross-compilation) |
+| `bang -- clang` | Compile LuaX with clang (no cross-compilation) |
 
 `bang` must be run before `ninja` to change the compilation options.
 
@@ -299,7 +299,7 @@ $ ./executable      # equivalent to pandoc lua main.lua
 
 # Available targets
 $ luax compile -t list
-Target                Interpeter / LuaX archive
+Target                Interpreter / LuaX archive
 --------------------- -------------------------
 luax                  /path/to/luax
 lua                   /path/to/lua
@@ -312,6 +312,9 @@ linux-aarch64-musl    /path/to/luax.lar
 macos-x86_64          /path/to/luax.lar
 macos-aarch64         /path/to/luax.lar
 windows-x86_64        /path/to/luax.lar
+
+Lua compiler: Lua X.Y (LuaX X.Y)
+C compiler  : zig version X.Y.Z
 ```
 
 ## Built-in modules

@@ -79,8 +79,8 @@ Option              Description
 `bang -- nolto`     Disable LTO optimizations
 `bang -- ssl`       Add SSL support via LuaSec and OpenSSL
 `bang -- zig`       Compile LuaX with Zig
-`bang -- gcc`       Compile LuaX with gcc
-`bang -- clang`     Compile LuaX with clang
+`bang -- gcc`       Compile LuaX with gcc (no cross-compilation)
+`bang -- clang`     Compile LuaX with clang (no cross-compilation)
 
 `bang` must be run before `ninja` to change the compilation options.
 
@@ -268,9 +268,13 @@ $ luax compile -t list
     : lines()
     : mapi(function(i, line)
         if i <= 2 then return line end
-        return line:gsub("^(%S+%s+)(%S+)$", function(target, path)
+        return line
+        : gsub("^(%S+%s+)(%S+)$", function(target, path)
             return target.."/path/to/"..path:basename()
         end)
+        : gsub("(Lua%s+)([%d.]+)", "%1X.Y")
+        : gsub("%((LuaX%s+)([%w.%-]+)%)", "(%1X.Y)")
+        : gsub("(C compiler%s*):(%s*).*", "%1:%2zig version X.Y.Z")
     end)
 ```
 
