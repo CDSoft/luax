@@ -533,7 +533,7 @@ static bool mkdirs(const char *path)
     }
 
     char path_dir[PATH_MAX];
-    strncpy(path_dir, path, sizeof(path_dir));
+    strncpy(path_dir, path, sizeof(path_dir)-1);
     const char *dir = dirname(path_dir);
 
     if (!mkdirs(dir)) { return false; }
@@ -830,7 +830,7 @@ return the last component of path.
 static int fs_basename(lua_State *L)
 {
     char path[PATH_MAX];
-    strncpy(path, luaL_checkstring(L, 1), sizeof(path));
+    strncpy(path, luaL_checkstring(L, 1), sizeof(path)-1);
     lua_pushstring(L, basename(path));
     return 1;
 }
@@ -845,7 +845,7 @@ return all but the last component of path.
 static int fs_dirname(lua_State *L)
 {
     char path[PATH_MAX];
-    strncpy(path, luaL_checkstring(L, 1), sizeof(path));
+    strncpy(path, luaL_checkstring(L, 1), sizeof(path)-1);
     lua_pushstring(L, dirname(path));
     return 1;
 }

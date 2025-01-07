@@ -30,14 +30,19 @@ check()
 }
 
 check fast gcc
+check fast gcc lto
 check fast gcc strip
 check fast gcc ssl
 check fast clang
+check fast clang lto
 check fast clang strip
 check fast clang ssl
 check fast zig
+check fast zig lto
 check fast zig strip
+check fast zig cross
 check fast zig ssl
+check fast zig ssl cross
 
 check small gcc
 check small gcc strip
@@ -54,7 +59,6 @@ check debug zig
 check debug zig strip
 
 check debug san
-check debug san strip
 
 # The last check shall restore the default build configuration
 check

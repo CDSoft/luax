@@ -49,7 +49,7 @@ distributions (Debian, Fedora and Arch Linux) or on MacOS.
 
 ### Quick compilation
 
-The script `bootstrap.sh` installs `ninja`, `zig` and compiles LuaX.
+The script `bootstrap.sh` installs `ninja`, `zig` (if required) and compiles LuaX.
 Once done, LuaX can be installed with `ninja install`.
 `git` must already be installed, which is likely to be the case if LuaX has been cloned with `git`...
 
@@ -71,28 +71,32 @@ Contributions on non supported platforms are welcome.
 Option              Description
 ------------------- ------------------------------------------------------------------------------
 `bang -- fast`      Optimize for speed
-`bang -- small`     Optimize for size
+`bang -- small`     Optimize for size (default)
 `bang -- debug`     Debug symbols kept, not optimized
 `bang -- san`       Compile with ASan and UBSan (implies clang) and enable `LUA_USE_APICHECK`
 `bang -- lax`       Disable strict compilation options
 `bang -- strip`     Remove debug information from precompiled bytecode
-`bang -- nolto`     Disable LTO optimizations
+`bang -- lto`       Enable LTO optimizations
+`bang -- nolto`     Disable LTO optimizations (default)
 `bang -- ssl`       Add SSL support via LuaSec and OpenSSL
-`bang -- zig`       Compile LuaX with Zig
-`bang -- gcc`       Compile LuaX with gcc (no cross-compilation)
+`bang -- nossl`     No SSL support via LuaSec and OpenSSL (default)
+`bang -- cross`     Generate cross-compilers (implies compilation with zig)
+`bang -- nocross`   Do not generate cross-compilers (default)
+`bang -- gcc`       Compile LuaX with gcc (no cross-compilation) (default)
 `bang -- clang`     Compile LuaX with clang (no cross-compilation)
+`bang -- zig`       Compile LuaX with Zig
 
 `bang` must be run before `ninja` to change the compilation options.
 
 `lua tools/bang.luax` can be used instead of [bang](https://cdelord.fr/bang) if
 it is not installed.
 
-The default compilation options are `fast` and `zig`.
+The default compilation options are `small`, `notlo`, `nossl`, `nocross` and `gcc`.
 
 Zig is downloaded by the ninja file or `bootstrap.sh`.
 gcc and clang must be already installed.
 
-These options can also be given to the bootstrap script. E.g.: `./bootstrap.sh small strip`.
+These options can also be given to the bootstrap script. E.g.: `./bootstrap.sh fast lto strip`.
 
 ### Optional features
 
@@ -167,17 +171,6 @@ $ luax compile -s -t linux-x86_64-musl -o hello hello.lua
 `luax compile` can compile Lua scripts to Lua bytecode. If scripts are large they will
 start quickly but will run as fast as the original Lua scripts.
 
-## Precompiled LuaX binaries
-
-In case precompiled binaries are needed (GNU/Linux, MacOS, Windows),
-some can be found at [cdelord.fr/pub](http://cdelord.fr/pub).
-These archives contain LuaX as well as some other softwares more or less related to LuaX.
-
-**Warning**: There are Linux binaries linked with musl and glibc. The musl
-binaries are platform independent but can not load shared libraries. The glibc
-binaries can load shared libraries but may depend on some specific glibc
-versions on the host.
-
 ## Installation
 
 ``` sh
@@ -202,7 +195,7 @@ It does not need to be installed and can be copied anywhere you want.
 - `$PREFIX/lib/luax.lua`: a pure Lua reimplementation of some LuaX libraries,
   usable in any Lua 5.4 interpreter.
 - `$PREFIX/lib/luax.lar`: a compressed archive containing the precompiled
-  LuaX runtimes for all supported platforms
+  LuaX runtimes for all supported platforms (if the cross-compilation is enabled).
 
 ## Usage
 
@@ -264,18 +257,19 @@ $ ./executable      # equivalent to pandoc lua main.lua
 
 # Available targets
 $ luax compile -t list
-@sh(LUAX, 'compile -t list')
-    : lines()
-    : mapi(function(i, line)
-        if i <= 2 then return line end
-        return line
-        : gsub("^(%S+%s+)(%S+)$", function(target, path)
-            return target.."/path/to/"..path:basename()
-        end)
-        : gsub("(Lua%s+)([%d.]+)", "%1X.Y")
-        : gsub("%((LuaX%s+)([%w.%-]+)%)", "(%1X.Y)")
-        : gsub("(C compiler%s*):(%s*).*", "%1:%2zig version X.Y.Z")
-    end)
+Target                Interpreter / LuaX archive
+--------------------- -------------------------
+luax                  ~/.local/bin/luax
+lua                   ~/.local/bin/lua
+pandoc                ~/.local/bin/pandoc
+native                ~/.local/lib/luax.lar
+linux-x86_64          ~/.local/lib/luax.lar
+linux-x86_64-musl     ~/.local/lib/luax.lar
+linux-aarch64         ~/.local/lib/luax.lar
+linux-aarch64-musl    ~/.local/lib/luax.lar
+macos-x86_64          ~/.local/lib/luax.lar
+macos-aarch64         ~/.local/lib/luax.lar
+windows-x86_64        ~/.local/lib/luax.lar
 ```
 
 ## Built-in modules

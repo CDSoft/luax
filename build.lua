@@ -87,26 +87,35 @@ $(title "LuaX bang file usage")
 
 The LuaX bang file can be given options to customize the LuaX compilation.
 
-Without any options, LuaX is:
-    - compiled with Zig
-    - optimized for speed
+Without any options, LuaX:
+    - is compiled with gcc
+    - is optimized for size
+    - is not a cross-compiler
+    - does not use OpenSSL
+
+$(title "Compiler")
+
+bang -- gcc         Compile LuaX with gcc (default)
+bang -- clang       Compile LuaX with clang
+bang -- zig         Compile LuaX with Zig
 
 $(title "Compilation mode")
 
-bang -- fast        Code optimized for speed (default)
-bang -- small       Code optimized for size
+bang -- fast        Code optimized for speed
+bang -- small       Code optimized for size (default)
 bang -- debug       Compiled with debug informations and no optimization
 bang -- san         Compiled with ASan and UBSan (implies clang)
 bang -- lax         Disable strict compilation options
 bang -- strip       Remove debug information from precompiled bytecode
-bang -- nolto       Disable LTO optimizations
+bang -- lto         Enable LTO optimizations
+bang -- nolto       Disable LTO optimizations (default)
+
+$(title "Optional features")
+
 bang -- ssl         Add SSL support via LuaSec and OpenSSL
-
-$(title "Compiler")
-
-bang -- zig         Compile LuaX with Zig (default)
-bang -- gcc         Compile LuaX with gcc
-bang -- clang       Compile LuaX with clang
+bang -- nossl       No SSL support via LuaSec and OpenSSL (default)
+bang -- cross       Generate cross-compilers (implies compilation with zig)
+bang -- nocross     Do not generate cross-compilers (default)
 
 Zig is downloaded by the ninja file.
 gcc and clang must be already installed.
@@ -120,24 +129,20 @@ if F.elem("help", arg) then
     os.exit(0)
 end
 
-local mode = nil -- fast, small, debug
-local compiler = nil -- zig, gcc, clang
-local san = nil
+local mode = "small" -- fast, small, debug
+local compiler = "gcc" -- zig, gcc, clang
+local san = false
 local strict = true -- strict compilation options and checks
-local use_lto = true
+local use_lto = false
 local ssl = false
+local release = false
+local cross = false
 
 local bytecode = "-b"
 
 F.foreach(arg, function(a)
-    local function set_mode()
-        if mode~=nil then F.error_without_stack_trace(a..": duplicate compilation mode", 2) end
-        mode = a
-    end
-    local function set_compiler()
-        if compiler~=nil then F.error_without_stack_trace(a..": duplicate compiler specification", 2) end
-        compiler = a
-    end
+    local function set_mode() mode = a end
+    local function set_compiler() compiler = a end
 
     case(a) {
         fast  = set_mode,
@@ -153,29 +158,23 @@ F.foreach(arg, function(a)
         nolto = function() use_lto = false end,
         ssl   = function() ssl = true end,
         nossl = function() ssl = false end,
+        release = function() release = true end,
+        cross   = function() cross = true end,
+        nocross = function() cross = false end,
         [Nil] = function()
             F.error_without_stack_trace(a..": unknown parameter\n\n"..usage, 1)
         end,
     } ()
 end)
 
-mode = F.default("fast", mode)
 if san then compiler = "clang" end
-
 if mode ~= "fast" then use_lto = false end
+if release or cross then compiler = "zig"; san = false end
 
-compiler = F.default("zig", compiler)
+local host_targets = F{targets:find(function(t) return t.os==sys.os and t.arch==sys.arch end)}
+assert(#host_targets == 1)
 
--- Only zig can cross-compile LuaX for all targets
-local cross_compilation = compiler=="zig"
-if not cross_compilation then
-    targets = F{targets:find(function(t) return t.os==sys.os and t.arch==sys.arch end)}
-    assert(#targets == 1)
-end
-
-if san and compiler~="clang" then
-    F.error_without_stack_trace("The sanitizers requires LuaX to be compiled with clang")
-end
+local targets_to_compile = (release or cross) and targets or host_targets
 
 BUILD_CONFIG.COMPILER_NAME = compiler
 BUILD_CONFIG.COMPILER_FULL_VERSION = F.case(compiler) {
@@ -201,7 +200,7 @@ comment(("Lua code          : %s"):format(case(bytecode) { ["-b"] = "bytecode",
 comment(("SSL support       : %s"):format(ssl and "LuaSec + OpenSSL" or "none"))
 
 local function is_dynamic(target) return target.libc~="musl" and not san end
-local function has_partial_ld(target) return cross_compilation and target.os=="linux" or target.os=="macos" end
+local function has_partial_ld(target) return compiler=="zig" and (target.os=="linux" or target.os=="macos") end
 
 local function optional(cond)
     return cond and F.id or F.const{}
@@ -273,7 +272,7 @@ rule "make_openssl" {
         "set -e;",
         "mkdir -p $openssl/$target;",
         "cd $openssl/$target;",
-        optional(cross_compilation) {
+        optional(compiler=="zig") {
             'export AR="$zig ar";',
             'export CC="$zig cc $zig_target";',
             'export CXX="$zig c++ $zig_target";',
@@ -294,7 +293,7 @@ rule "make_openssl" {
     pool = "console",
 }
 
-targets:foreach(function(target)
+targets_to_compile:foreach(function(target)
 
     openssl_libs[target.name] = build { "$openssl"/target.name/"libssl.a", "$openssl"/target.name/"libcrypto.a" } { "make_openssl",
         target = target.name,
@@ -347,7 +346,7 @@ case(compiler) {
             var("ar-"..target.name) { "$zig ar" }
             var("ld-"..target.name) { "$zig cc", target_opt }
         end
-        targets:foreach(zig_rules)
+        targets_to_compile:foreach(zig_rules)
     end,
 
     gcc = function()
@@ -559,7 +558,7 @@ ld.host = rule "ld-host" {
     implicit_in = compiler_deps,
 }
 
-targets:foreach(function(target)
+targets_to_compile:foreach(function(target)
 
     local lto = case(mode) {
         fast = case(target.os) {
@@ -996,7 +995,7 @@ local function implicit_in(name)
     }
 end
 
-targets:foreach(function(target)
+targets_to_compile:foreach(function(target)
 
     liblua[target.name] = build("$tmp"/target.name/"lib/liblua.a") { ar[target.name],
         F.flatten {
@@ -1142,7 +1141,7 @@ acc(libraries) {
         }),
 
         -- Binary runtimes
-        targets : map(function(target)
+        (cross and targets or host_targets) : map(function(target)
             local libs = F.flatten {
                 liblua[target.name],
                 libluax[target.name],
@@ -1237,7 +1236,7 @@ local libc = case(sys.os) {
     windows = "gnu",
 }
 
-local native_targets = targets
+local native_targets = (cross and targets or F{})
     : filter(function(t) return t.os==sys.os and t.arch==sys.arch end)
     : map(function(t) return t.name end)
 
@@ -1578,22 +1577,78 @@ end
 section "Update dist for all targets"
 ---------------------------------------------------------------------
 
+if release then
+
+    var "release" ("$builddir/release"/LUAX.VERSION)
+
+    rule "tar" {
+        description = "tar $out",
+        command = "GZIP_OPT=-6 tar -caf $out $in --transform='s#$prefix#$dest#'",
+    }
+
+end
+
+local function pure_lua(name)
+    local ext = name:ext()
+    return ext==".lua"
+end
+
 local function no_arch(name)
     local ext = name:ext()
     return ext==".lua" or ext==".lar"
 end
 
-local dist = targets : map(function(target)
-    local cp_to = F.curry(function(dest, file)
-        return build.cp("$dist"/target.name/dest/file:basename()) { file }
-    end)
-    local bin = {binary[target.name]}
-    local lib = shared_library[target.name] and {shared_library[target.name]} or {}
-    return {
-        (bin .. binaries:filter(no_arch)) : map(cp_to"bin"),
-        (lib .. libraries:filter(no_arch)) : map(cp_to"lib"),
-    }
-end)
+local dist = {
+    targets : map(function(target)
+        local cp_to = F.curry(function(dest, file)
+            return build.cp("$dist"/target.name/dest/file:basename()) { file }
+        end)
+        local bin = {binary[target.name]}
+        local lib = shared_library[target.name] and {shared_library[target.name]} or {}
+        local files = F{
+            (bin .. binaries:filter(no_arch)) : map(cp_to"bin"),
+            (lib .. libraries:filter(no_arch)) : map(cp_to"lib"),
+        }
+        local archive = {}
+        if release then
+            local name = F{
+                "luax",
+                ssl and "ssl" or {},
+                cross and "cross" or {},
+                LUAX.VERSION,
+                target.name,
+            } : flatten() : str "-"
+            local path = "$release"/name..".tar.gz"
+            archive = build(path) { "tar",
+                files,
+                prefix = "$dist"/target.name,
+                dest = name,
+            }
+        end
+        return { files, archive }
+    end),
+    release and (function()
+        local cp_to = F.curry(function(dest, file)
+            return build.cp("$dist"/"lua"/dest/file:basename()) { file }
+        end)
+        local files = {
+            binaries:filter(pure_lua) : map(cp_to"bin"),
+            libraries:filter(pure_lua) : map(cp_to"lib"),
+        }
+        local name = F{
+            "luax",
+            LUAX.VERSION,
+            "lua",
+        } : flatten() : str "-"
+        local path = "$release"/name..".tar.gz"
+        local archive = build(path) { "tar",
+            files,
+            prefix = "$dist"/"lua",
+            dest = name,
+        }
+        return { files, archive }
+    end)() or {},
+}
 
 --===================================================================
 section "Shorcuts"

@@ -83,25 +83,28 @@ fi
 
 eval "ZIG=$ZIG_PATH/$ZIG_VERSION/zig"
 
-COMPILER=""
+COMPILER="gcc"
 
 for arg in "$@"
 do
     case "$arg" in
         gcc)    COMPILER=gcc ;;
         clang)  COMPILER=clang ;;
+        zig)    COMPILER=zig ;;
     esac
 done
 
 case "$COMPILER" in
-    "") COMPILER="$ZIG cc"
+    zig)
+        COMPILER="$ZIG cc"
         if ! [ -x "$ZIG" ]
         then
             tools/install_zig.sh "$ZIG_VERSION" "$ZIG"
             [ -x "$ZIG" ] || error "zig can not be installed"
         fi
         ;;
-    *)  hash "$COMPILER" 2>/dev/null || error "$COMPILER is not installed"
+    *)
+        hash "$COMPILER" 2>/dev/null || error "$COMPILER is not installed"
         ;;
 esac
 
