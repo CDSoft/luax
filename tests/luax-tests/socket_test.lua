@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
 For further information about luax you can visit
-http://cdelord.fr/luax
+https://github.com/cdsoft/luax
 --]]
 
 ---------------------------------------------------------------------
@@ -49,11 +49,9 @@ return function()
         assert(require "ltn12")
 
         do
-            local t, code, attrs = http.request"http://time.cdelord.fr/time.php"
+            local s, code, _ = http.request"http://example.com"
+            eq(s:match "Example Domain", "Example Domain")
             eq(code, 200)
-            t = tonumber(t) + tonumber(attrs.age)
-            assert(math.abs(t - os.time() ) < 5)
-            assert(math.abs(t - socket.gettime() ) < 5)
         end
 
         if os.getenv "USE_SSL" then
@@ -65,13 +63,9 @@ return function()
             assert(require "ssl.core")
             assert(require "ssl.x509")
 
-            eq(F.take(2, {http.request"https://cdelord.fr/ssltest.txt"}), {"SSL test passed!\n", 200})
-
-            local t, code, attrs = http.request"https://cdelord.fr/time.php"
+            local s, code, _ = http.request"https://example.com"
+            eq(s:match "Example Domain", "Example Domain")
             eq(code, 200)
-            t = tonumber(t) + tonumber(attrs.age)
-            assert(math.abs(t - os.time() ) < 5)
-            assert(math.abs(t - socket.gettime() ) < 5)
 
         end
 

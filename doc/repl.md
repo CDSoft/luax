@@ -39,7 +39,7 @@ and inspect Pandoc AST. E.g.:
 ``` sh
 $ rlwrap luax-pandoc.lua
 
- _               __  __  |  https://cdelord.fr/luax
+ _               __  __  |  https://github.com/cdsoft/luax
 | |   _   _  __ _\ \/ /  |
 | |  | | | |/ _` |\  /   |  Version X.Y
 | |__| |_| | (_| |/  \   |  Powered by Lua X.Y

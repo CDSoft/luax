@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
 For further information about luax you can visit
-http://cdelord.fr/luax
+https://github.com/cdsoft/luax
 ]]
 
 local F = require "F"
@@ -29,7 +29,7 @@ local I = F.I(LUAX)
 local BUILD_CONFIG = import "config"
 
 LUAX.AUTHORS     = "Christophe Delord"
-LUAX.URL         = "cdelord.fr/luax"
+LUAX.URL         = "github.com/cdsoft/luax"
 LUAX.VERSION     = sh "git describe --tags" : trim()
 LUAX.DATE        = sh "git show -s --format=%cd --date=format:'%Y-%m-%d'" : trim()
 local YEAR       = LUAX.DATE : split '%-' : head()

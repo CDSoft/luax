@@ -16,7 +16,7 @@
 # along with luax.  If not, see <https://www.gnu.org/licenses/>.
 #
 # For further information about luax you can visit
-# http://cdelord.fr/luax
+# https://github.com/cdsoft/luax
 ######################################################################
 
 ######################################################################

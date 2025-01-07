@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
 For further information about luax you can visit
-http://cdelord.fr/luax
+https://github.com/cdsoft/luax
 --]]
 
 --@LIB
@@ -31,7 +31,7 @@ local function print_welcome()
     local I = (F.I % "%%{}")(_G){sys=sys}
 
     local welcome = I[===[
- _               __  __  |  https://cdelord.fr/luax
+ _               __  __  |  https://github.com/cdsoft/luax
 | |   _   _  __ _\ \/ /  |
 | |  | | | |/ _` |\  /   |  Version %{_LUAX_VERSION} (%{_LUAX_DATE})
 | |__| |_| | (_| |/  \   |  Powered by %{_VERSION}

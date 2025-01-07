@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
 For further information about luax you can visit
-http://cdelord.fr/luax
+https://github.com/cdsoft/luax
 --]]
 
 -- Use the Lua sources of luax to execute a LuaX script

@@ -20,7 +20,6 @@ cross-compile[^1] scripts for a supported platform.
 
 ## Getting in touch
 
-- [cdelord.fr/luax](https://cdelord.fr/luax)
 - [github.com/CDSoft/luax](https://github.com/CDSoft/luax)
 
 If you like LuaX and are willing to support its development, please
@@ -83,7 +82,7 @@ Contributions on non supported platforms are welcome.
 `bang` must be run before `ninja` to change the compilation options.
 
 `lua tools/bang.luax` can be used instead of
-[bang](https://cdelord.fr/bang) if it is not installed.
+[bang](https://github.com/cdsoft/bang) if it is not installed.
 
 The default compilation options are `small`, `notlo`, `nossl`, `nocross`
 and `gcc`.
@@ -312,8 +311,9 @@ windows-x86_64        ~/.local/lib/luax.lar
 
 The `luax` runtime comes with a few builtin modules.
 
-Some modules are heavily inspired by [BonaLuna](http://cdelord.fr/bl)
-and [lapp](http://cdelord.fr/lapp).
+Some modules are heavily inspired by
+[BonaLuna](https://github.com/cdsoft/bonaluna) and
+[lapp](https://github.com/cdsoft/lapp).
 
 - [LuaX interactive usage](repl.md): improved Lua REPL
 - [package](package.md): modified Lua package `package`
@@ -390,7 +390,7 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
     along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
     For further information about luax you can visit
-    http://cdelord.fr/luax
+    https://github.com/cdsoft/luax
 
 `luax` uses other third party softwares:
 
