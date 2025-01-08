@@ -116,8 +116,10 @@ if ! [ -x $LUA ]
 then
     CFLAGS=(
         -O2
-        -s
         -pipe
+    )
+    LDFLAGS=(
+        -s
         -lm
     )
     case "$OS" in
@@ -125,7 +127,7 @@ then
         (Darwin)    CFLAGS+=(-DLUA_USE_MACOSX) ;;
     esac
     LUA_SOURCES=( lua/*.c )
-    $COMPILER "${CFLAGS[@]}" "${LUA_SOURCES[@]}" -o $LUA
+    $COMPILER "${CFLAGS[@]}" "${LUA_SOURCES[@]}" "${LDFLAGS[@]}" -o $LUA
 fi
 
 ######################################################################
