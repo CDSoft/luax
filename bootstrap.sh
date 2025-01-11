@@ -114,6 +114,7 @@ esac
 
 if ! [ -x $LUA ]
 then
+    echo "Compile $LUA"
     CFLAGS=(
         -O2
         -pipe
