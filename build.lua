@@ -187,7 +187,9 @@ BUILD_CONFIG.COMPILER_VERSION = F.case(compiler) {
     gcc = function() return BUILD_CONFIG.COMPILER_FULL_VERSION:find "[%d.]+" end,
     clang = function() return BUILD_CONFIG.COMPILER_FULL_VERSION:find "[%d.]+" end,
 }()
-
+BUILD_CONFIG.MODE = mode
+BUILD_CONFIG.LTO = use_lto
+BUILD_CONFIG.SSL = ssl
 
 section("Compilation options")
 comment(("Compilation mode  : %s"):format(F{mode, use_lto and "+ LTO" or {}}:flatten():unwords()))
@@ -907,7 +909,7 @@ local expected_scripts = F.flatten{
     ls "libluax/**.lua",
     ls "ext/c/**.lua",
     ls "ext/lua/**.lua",
-    optional(ssh) { ls "ext/opt/luasec/**.lua" },
+    optional(ssl) { ls "ext/opt/luasec/**.lua" },
 } : nub()
 local unused_scripts = expected_scripts : difference(used_scripts)
 if not unused_scripts:null()

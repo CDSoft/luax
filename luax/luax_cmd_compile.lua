@@ -241,7 +241,66 @@ local function compile_native(tmp, current_output, target_definition)
 
     local tmp_output = tmp/current_output:basename()
 
-    if build_config.compiler.name == "zig" then
+    local function optional(flag)
+        return flag and F.id or F.const{}
+    end
+
+    local flto = F.case(build_config.compiler.name) {
+        zig   = "-flto=thin",
+        gcc   = "-flto=auto",
+        clang = "-flto=thin",
+    }
+
+    local cflags = {
+        F.case( build_config.compiler.name) {
+            gcc   = {},
+            clang = {},
+            zig   = {"cc", "-target", F{target_definition.arch, target_definition.os, target_definition.libc}:str"-"},
+        },
+        "-std=gnu2x",
+        F.case(build_config.mode) {
+            fast  = "-O3",
+            small = "-Os",
+            debug = { "-g", "-Og" },
+        },
+        "-I"..tmp,
+        "-fPIC",
+        optional(build_config.lto)(F.case(target_definition.os) {
+            linux   = optional(build_config.lto)(flto),
+            macos   = {},
+            windows = optional(build_config.lto)(flto),
+        }),
+        F.case( build_config.compiler.name) {
+            gcc   = "-Wstringop-overflow=0",
+            clang = "-Wno-single-bit-bitfield-constant-conversion",
+            zig   = "-Wno-single-bit-bitfield-constant-conversion",
+        },
+    }
+    local ldflags = {
+        F.case(mode) {
+            fast  = "-s",
+            small = "-s",
+            debug = {},
+        },
+        "-lm",
+        F.case(target_definition.os) {
+            linux   = {},
+            macos   = {},
+            windows = {
+                "-lws2_32 -ladvapi32 -lshlwapi",
+                optional(build_config.ssl) "-lcrypt32",
+            }
+        },
+        F.case(target_definition.libc) {
+            gnu  = "-rdynamic",
+            musl = {},
+            none = "-rdynamic",
+        },
+    }
+
+    local compiler = build_config.compiler.name
+
+    if compiler == "zig" then
 
         -- Zig configuration
         local zig_version = build_config.compiler.version
@@ -282,89 +341,12 @@ local function compile_native(tmp, current_output, target_definition)
             end
         end
 
-        -- Compile and link the generated source with Zig
-        local zig_opt = {
-            {"-target", F{target_definition.arch, target_definition.os, target_definition.libc}:str"-"},
-            "-std=gnu2x",
-            "-O3",
-            "-I"..tmp,
-            "-fPIC",
-            "-s",
-            "-lm",
-            F.case(target_definition.os) {
-                linux   = "-flto=thin",
-                macos   = {},
-                windows = {
-                    "-flto=thin",
-                    "-lws2_32 -ladvapi32 -lshlwapi",
-                    pcall(require, "ssl") and "-lcrypt32" or {},
-                },
-            },
-            F.case(target_definition.libc) {
-                gnu  = "-rdynamic",
-                musl = {},
-                none = "-rdynamic",
-            },
-            "-Wno-single-bit-bitfield-constant-conversion",
-        }
-        assert(sh.run(zig, "cc", zig_opt, libnames, tmp/app_bundle_c, "-o", tmp_output))
-
-    elseif build_config.compiler.name == "gcc" then
-
-        -- Compile and link the generated source with gcc
-        local gcc_opt = {
-            "-std=gnu2x",
-            "-O3",
-            "-I"..tmp,
-            "-fPIC",
-            "-s",
-            "-lm",
-            F.case(target_definition.os) {
-                linux   = "-flto=auto",
-                macos   = {},
-                windows = {
-                    "-flto=auto",
-                    "-lws2_32 -ladvapi32 -lshlwapi",
-                    pcall(require, "ssl") and "-lcrypt32" or {},
-                },
-            },
-            F.case(target_definition.libc) {
-                gnu  = "-rdynamic",
-                musl = {},
-                none = "-rdynamic",
-            },
-            "-Wstringop-overflow=0",
-        }
-        assert(sh.run("gcc", gcc_opt, libnames, tmp/app_bundle_c, "-o", tmp_output))
-
-    elseif build_config.compiler.name == "clang" then
-
-        -- Compile and link the generated source with clang
-        local clang_opt = {
-            "-std=gnu2x",
-            "-O3",
-            "-I"..tmp,
-            "-fPIC",
-            "-s",
-            "-lm",
-            F.case(target_definition.os) {
-                linux   = "-flto=thin",
-                macos   = {},
-                windows = {
-                    "-flto=auto",
-                    "-lws2_32 -ladvapi32 -lshlwapi",
-                    pcall(require, "ssl") and "-lcrypt32" or {},
-                },
-            },
-            F.case(target_definition.libc) {
-                gnu  = "-rdynamic",
-                musl = {},
-                none = "-rdynamic",
-            },
-        }
-        assert(sh.run("clang", clang_opt, libnames, tmp/app_bundle_c, "-o", tmp_output))
+        compiler = zig
 
     end
+
+    -- Compile and link the generated source
+    assert(sh.run(compiler, cflags, libnames, tmp/app_bundle_c, ldflags, "-o", tmp_output))
 
     assert(fs.copy(tmp_output, current_output))
 
