@@ -1615,8 +1615,6 @@ local dist = {
         if release then
             local name = F{
                 "luax",
-                ssl and "ssl" or {},
-                cross and "cross" or {},
                 LUAX.VERSION,
                 target.name,
             } : flatten() : str "-"
@@ -1649,6 +1647,33 @@ local dist = {
             dest = name,
         }
         return { files, archive }
+    end)() or {},
+    release and (function()
+        rule "releasenote" {
+            description = "$out",
+            command = {
+                "$luax tools/ypp.luax",
+                ypp_vars {
+                    VERSION = LUAX.VERSION,
+                    URL = "https://"..LUAX.URL,
+                    COMPILER = BUILD_CONFIG.COMPILER_FULL_VERSION,
+                    OPTIONS = F.flatten {
+                        mode,
+                        use_lto and "lto" or {},
+                    } : str ", ",
+                    SSL = ssl and "yes (OpenSSL)" or "no",
+                    CROSS = cross and "yes" or  "no",
+                },
+                "--MD --MT $out --MF $depfile $in -o $out",
+            },
+            depfile = "$tmp/$out.d",
+            implicit_in = {
+                "$luax",
+                "$lib/luax.lar",
+                "tools/ypp.luax",
+            },
+        }
+        return build("$release/ReleaseNote.md") { "releasenote", "tools/ReleaseNote.md.ypp" }
     end)() or {},
 }
 

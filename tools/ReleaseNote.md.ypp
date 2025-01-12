@@ -1,0 +1,17 @@
+# Luax version @VERSION
+
+LuaX @VERSION binary release for Linux, MacOS and Windows, as well as a pure
+Lua implementation of a subset of LuaX.
+
+Compilation options:
+
+- compiler: @COMPILER
+- options: @OPTIONS
+
+Optional features:
+
+- cross-compilation: @CROSS
+- HTTPS/SSL support: @SSL
+
+For customized versions of LuaX, please recompile it with your preferred
+options (see [README.md](@URL)).
