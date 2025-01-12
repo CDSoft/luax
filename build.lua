@@ -282,6 +282,11 @@ rule "make_openssl" {
             'export RANLIB="$zig ranlib";',
             'export RC="$zig rc";',
         },
+        case(mode) {
+            fast  = 'export CFLAGS="-pipe -O3";',
+            small = 'export CFLAGS="-pipe -Os";',
+            debug = 'export CFLAGS="-pipe -Og -g";',
+        },
         "$openssl_src/Configure", "$openssl_target", openssl_options, ";",
         "make", "-j", nproc,
     },

@@ -263,6 +263,7 @@ local function compile_native(tmp, current_output, target_definition)
             small = "-Os",
             debug = { "-g", "-Og" },
         },
+        "-pipe",
         "-I"..tmp,
         "-fPIC",
         optional(build_config.lto)(F.case(target_definition.os) {
