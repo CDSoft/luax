@@ -168,7 +168,6 @@ F.foreach(arg, function(a)
 end)
 
 if san then compiler = "clang" end
-if mode ~= "fast" then use_lto = false end
 if release or cross then compiler = "zig"; san = false end
 
 local host_targets = F{targets:find(function(t) return t.os==sys.os and t.arch==sys.arch end)}
@@ -263,7 +262,39 @@ local openssl_options = {
     "no-threads",
     "no-shared",
 
+    -- https://github.com/openssl/openssl/discussions/23542
+    "no-afalgeng",
+    "no-autoalginit",
+    "no-autoerrinit",
+    case(mode) {
+        fast = {},
+        small = "no-cached-fetch",
+        debug = "no-cached-fetch",
+    },
+    "no-dgram",
+    "no-dynamic-engine",
+    "no-filenames",
+    "no-fips-securitychecks",
+    "no-gost",
+    "no-module",
+    "no-nextprotoneg",
+    "no-pinshared",
+    "no-srtp",
+    "no-sse2",
+    "no-ssl-trace",
+    "no-static-engine",
+    "no-quic",
+    "no-ui-console",
+    "no-uplink",
+    "no-argon2",
+    "no-scrypt",
+
     "-DOPENSSL_NO_APPLE_CRYPTO_RANDOM",
+    case(mode) {
+        fast = {},
+        small = "-DOPENSSL_SMALL_FOOTPRINT",
+        debug = {},
+    },
 }
 
 local nproc = (sh "getconf _NPROCESSORS_ONLN" or "8"):trim()
@@ -287,6 +318,7 @@ rule "make_openssl" {
             small = 'export CFLAGS="-pipe -Os";',
             debug = 'export CFLAGS="-pipe -Og -g";',
         },
+        "$lto",
         "$openssl_src/Configure", "$openssl_target", openssl_options, ";",
         "make", "-j", nproc,
     },
@@ -302,6 +334,12 @@ rule "make_openssl" {
 
 targets_to_compile:foreach(function(target)
 
+    local lto_opt = case(compiler) {
+        zig   = 'export CFLAGS="$$CFLAGS -flto=thin";',
+        gcc   = 'export CFLAGS="$$CFLAGS -flto=auto";',
+        clang = 'export CFLAGS="$$CFLAGS -flto=thin";',
+    }
+
     openssl_libs[target.name] = build { "$openssl"/target.name/"libssl.a", "$openssl"/target.name/"libcrypto.a" } { "make_openssl",
         target = target.name,
         zig_target = zig_target(target),
@@ -314,7 +352,14 @@ targets_to_compile:foreach(function(target)
             ["macos-aarch64"]       = F.const"darwin64-arm64",
             ["windows-x86_64"]      = F.const"mingw64",
             [Nil]                   = function() error(target.name..": unsupported OpenSSL target") end,
-        } ()
+        } (),
+        lto = optional(use_lto) {
+            case(target.os) {
+                linux   = lto_opt,
+                macos   = {},
+                windows = lto_opt,
+            },
+        },
     }
 
 end)
@@ -380,7 +425,7 @@ local include_path = F.flatten {
     "libluax",
 }
 
-local lto_opt = optional(strict and use_lto) {
+local lto_opt = optional(use_lto) {
     case(compiler) {
         zig   = "-flto=thin",
         gcc   = "-flto=auto",
@@ -567,14 +612,10 @@ ld.host = rule "ld-host" {
 
 targets_to_compile:foreach(function(target)
 
-    local lto = case(mode) {
-        fast = case(target.os) {
-            linux   = lto_opt,
-            macos   = {},
-            windows = lto_opt,
-        },
-        small = {},
-        debug = {},
+    local lto = case(target.os) {
+        linux   = lto_opt,
+        macos   = {},
+        windows = lto_opt,
     }
     local target_flags = {
         "-DLUAX_ARCH='\""..target.arch.."\"'",
