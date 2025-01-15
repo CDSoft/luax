@@ -36,7 +36,7 @@ update_all()
     update_argparse     master
     update_serpent      master
     update_lz4          release
-    update_lzlib        1.14
+    update_lzlib        1.15
     update_cbor
     update_linenoise    utf8-support # switch to "master" when the UTF-8 support is merged
     #update_json         master

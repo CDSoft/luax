@@ -1,5 +1,5 @@
 /* Lzlib - Compression library for the lzip format
-   Copyright (C) 2009-2024 Antonio Diaz Diaz.
+   Copyright (C) 2009-2025 Antonio Diaz Diaz.
 
    This library is free software. Redistribution and use in source and
    binary forms, with or without modification, are permitted provided
@@ -40,7 +40,7 @@ static inline State St_set_match( const State st )
   { return ( st < 7 ) ? 7 : 10; }
 static inline State St_set_rep( const State st )
   { return ( st < 7 ) ? 8 : 11; }
-static inline State St_set_short_rep( const State st )
+static inline State St_set_shortrep( const State st )
   { return ( st < 7 ) ? 9 : 11; }
 
 
@@ -94,16 +94,16 @@ static inline void Bm_init( Bit_model * const probability )
 static inline void Bm_array_init( Bit_model bm[], const int size )
   { int i; for( i = 0; i < size; ++i ) Bm_init( &bm[i] ); }
 
-struct Len_model
+typedef struct Len_model
   {
   Bit_model choice1;
   Bit_model choice2;
   Bit_model bm_low[pos_states][len_low_symbols];
   Bit_model bm_mid[pos_states][len_mid_symbols];
   Bit_model bm_high[len_high_symbols];
-  };
+  } Len_model;
 
-static inline void Lm_init( struct Len_model * const lm )
+static inline void Lm_init( Len_model * const lm )
   {
   Bm_init( &lm->choice1 );
   Bm_init( &lm->choice2 );

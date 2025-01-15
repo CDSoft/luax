@@ -1,5 +1,5 @@
 /* Arg_parser - POSIX/GNU command-line argument parser. (C version)
-   Copyright (C) 2006-2024 Antonio Diaz Diaz.
+   Copyright (C) 2006-2025 Antonio Diaz Diaz.
 
    This library is free software. Redistribution and use in source and
    binary forms, with or without modification, are permitted provided
@@ -32,15 +32,15 @@ static void * ap_resize_buffer( void * buf, const int min_size )
   }
 
 
-static char push_back_record( struct Arg_parser * const ap, const int code,
+static char push_back_record( Arg_parser * const ap, const int code,
                               const char * const long_name,
                               const char * const argument )
   {
-  struct ap_Record * p;
+  ap_Record * p;
   void * tmp = ap_resize_buffer( ap->data,
-                 ( ap->data_size + 1 ) * sizeof (struct ap_Record) );
+                                 ( ap->data_size + 1 ) * sizeof (ap_Record) );
   if( !tmp ) return 0;
-  ap->data = (struct ap_Record *)tmp;
+  ap->data = (ap_Record *)tmp;
   p = &(ap->data[ap->data_size]);
   p->code = code;
   if( long_name )
@@ -71,7 +71,7 @@ static char push_back_record( struct Arg_parser * const ap, const int code,
   }
 
 
-static char add_error( struct Arg_parser * const ap, const char * const msg )
+static char add_error( Arg_parser * const ap, const char * const msg )
   {
   const int len = strlen( msg );
   void * tmp = ap_resize_buffer( ap->error, ap->error_size + len + 1 );
@@ -83,7 +83,7 @@ static char add_error( struct Arg_parser * const ap, const char * const msg )
   }
 
 
-static void free_data( struct Arg_parser * const ap )
+static void free_data( Arg_parser * const ap )
   {
   int i;
   for( i = 0; i < ap->data_size; ++i )
@@ -94,10 +94,9 @@ static void free_data( struct Arg_parser * const ap )
 
 
 /* Return 0 only if out of memory. */
-static char parse_long_option( struct Arg_parser * const ap,
+static char parse_long_option( Arg_parser * const ap,
                                const char * const opt, const char * const arg,
-                               const struct ap_Option options[],
-                               int * const argindp )
+                               const ap_Option options[], int * const argindp )
   {
   unsigned len;
   int index = -1, i;
@@ -148,21 +147,21 @@ static char parse_long_option( struct Arg_parser * const ap,
       add_error( ap, "' requires an argument" );
       return 1;
       }
-    return push_back_record( ap, options[index].code,
-                             options[index].long_name, &opt[len+3] );
+    return push_back_record( ap, options[index].code, options[index].long_name,
+                             &opt[len+3] );	/* argument may be empty */
     }
 
-  if( options[index].has_arg == ap_yes )
+  if( options[index].has_arg == ap_yes || options[index].has_arg == ap_yme )
     {
-    if( !arg || !arg[0] )
+    if( !arg || ( options[index].has_arg == ap_yes && !arg[0] ) )
       {
       add_error( ap, "option '--" ); add_error( ap, options[index].long_name );
       add_error( ap, "' requires an argument" );
       return 1;
       }
     ++*argindp;
-    return push_back_record( ap, options[index].code,
-                             options[index].long_name, arg );
+    return push_back_record( ap, options[index].code, options[index].long_name,
+                             arg );	/* argument may be empty */
     }
 
   return push_back_record( ap, options[index].code,
@@ -171,10 +170,9 @@ static char parse_long_option( struct Arg_parser * const ap,
 
 
 /* Return 0 only if out of memory. */
-static char parse_short_option( struct Arg_parser * const ap,
+static char parse_short_option( Arg_parser * const ap,
                                 const char * const opt, const char * const arg,
-                                const struct ap_Option options[],
-                                int * const argindp )
+                                const ap_Option options[], int * const argindp )
   {
   int cind = 1;			/* character index in opt */
 
@@ -204,15 +202,15 @@ static char parse_short_option( struct Arg_parser * const ap,
       if( !push_back_record( ap, c, 0, &opt[cind] ) ) return 0;
       ++*argindp; cind = 0;
       }
-    else if( options[index].has_arg == ap_yes )
+    else if( options[index].has_arg == ap_yes || options[index].has_arg == ap_yme )
       {
-      if( !arg || !arg[0] )
+      if( !arg || ( options[index].has_arg == ap_yes && !arg[0] ) )
         {
         add_error( ap, "option requires an argument -- '" );
         add_error( ap, code_str ); add_error( ap, "'" );
         return 1;
         }
-      ++*argindp; cind = 0;
+      ++*argindp; cind = 0;		/* argument may be empty */
       if( !push_back_record( ap, c, 0, arg ) ) return 0;
       }
     else if( !push_back_record( ap, c, 0, 0 ) ) return 0;
@@ -221,9 +219,9 @@ static char parse_short_option( struct Arg_parser * const ap,
   }
 
 
-char ap_init( struct Arg_parser * const ap,
+char ap_init( Arg_parser * const ap,
               const int argc, const char * const argv[],
-              const struct ap_Option options[], const char in_order )
+              const ap_Option options[], const char in_order )
   {
   const char ** non_options = 0;	/* skipped non-options */
   int non_options_size = 0;		/* number of skipped non-options */
@@ -282,7 +280,7 @@ out: if( non_options ) free( non_options );
   }
 
 
-void ap_free( struct Arg_parser * const ap )
+void ap_free( Arg_parser * const ap )
   {
   free_data( ap );
   if( ap->error ) { free( ap->error ); ap->error = 0; }
@@ -290,29 +288,25 @@ void ap_free( struct Arg_parser * const ap )
   }
 
 
-const char * ap_error( const struct Arg_parser * const ap )
-  { return ap->error; }
+const char * ap_error( const Arg_parser * const ap ) { return ap->error; }
 
+int ap_arguments( const Arg_parser * const ap ) { return ap->data_size; }
 
-int ap_arguments( const struct Arg_parser * const ap )
-  { return ap->data_size; }
-
-
-int ap_code( const struct Arg_parser * const ap, const int i )
+int ap_code( const Arg_parser * const ap, const int i )
   {
   if( i < 0 || i >= ap_arguments( ap ) ) return 0;
   return ap->data[i].code;
   }
 
 
-const char * ap_parsed_name( const struct Arg_parser * const ap, const int i )
+const char * ap_parsed_name( const Arg_parser * const ap, const int i )
   {
   if( i < 0 || i >= ap_arguments( ap ) || !ap->data[i].parsed_name ) return "";
   return ap->data[i].parsed_name;
   }
 
 
-const char * ap_argument( const struct Arg_parser * const ap, const int i )
+const char * ap_argument( const Arg_parser * const ap, const int i )
   {
   if( i < 0 || i >= ap_arguments( ap ) || !ap->data[i].argument ) return "";
   return ap->data[i].argument;

@@ -1,5 +1,5 @@
 /* Arg_parser - POSIX/GNU command-line argument parser. (C version)
-   Copyright (C) 2006-2024 Antonio Diaz Diaz.
+   Copyright (C) 2006-2025 Antonio Diaz Diaz.
 
    This library is free software. Redistribution and use in source and
    binary forms, with or without modification, are permitted provided
@@ -37,60 +37,65 @@
    The argument '--' terminates all options; any following arguments are
    treated as non-option arguments, even if they begin with a hyphen.
 
-   The syntax for optional option arguments is '-<short_option><argument>'
-   (without whitespace), or '--<long_option>=<argument>'.
+   The syntax of options with an optional argument is
+   '-<short_option><argument>' (without whitespace), or
+   '--<long_option>=<argument>'.
+
+   The syntax of options with an empty argument is '-<short_option> ""',
+   '--<long_option> ""', or '--<long_option>=""'.
 */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-enum ap_Has_arg { ap_no, ap_yes, ap_maybe };
+/* ap_yme = yes but maybe empty */
+typedef enum ap_Has_arg { ap_no, ap_yes, ap_maybe, ap_yme } ap_Has_arg;
 
-struct ap_Option
+typedef struct ap_Option
   {
   int code;			/* Short option letter or code ( code != 0 ) */
   const char * long_name;	/* Long option name (maybe null) */
-  enum ap_Has_arg has_arg;
-  };
+  ap_Has_arg has_arg;
+  } ap_Option;
 
 
-struct ap_Record
+typedef struct ap_Record
   {
   int code;
   char * parsed_name;
   char * argument;
-  };
+  } ap_Record;
 
 
-struct Arg_parser
+typedef struct Arg_parser
   {
-  struct ap_Record * data;
+  ap_Record * data;
   char * error;
   int data_size;
   int error_size;
-  };
+  } Arg_parser;
 
 
-char ap_init( struct Arg_parser * const ap,
+char ap_init( Arg_parser * const ap,
               const int argc, const char * const argv[],
-              const struct ap_Option options[], const char in_order );
+              const ap_Option options[], const char in_order );
 
-void ap_free( struct Arg_parser * const ap );
+void ap_free( Arg_parser * const ap );
 
-const char * ap_error( const struct Arg_parser * const ap );
+const char * ap_error( const Arg_parser * const ap );
 
 /* The number of arguments parsed. May be different from argc. */
-int ap_arguments( const struct Arg_parser * const ap );
+int ap_arguments( const Arg_parser * const ap );
 
 /* If ap_code( i ) is 0, ap_argument( i ) is a non-option.
    Else ap_argument( i ) is the option's argument (or empty). */
-int ap_code( const struct Arg_parser * const ap, const int i );
+int ap_code( const Arg_parser * const ap, const int i );
 
 /* Full name of the option parsed (short or long). */
-const char * ap_parsed_name( const struct Arg_parser * const ap, const int i );
+const char * ap_parsed_name( const Arg_parser * const ap, const int i );
 
-const char * ap_argument( const struct Arg_parser * const ap, const int i );
+const char * ap_argument( const Arg_parser * const ap, const int i );
 
 #ifdef __cplusplus
 }

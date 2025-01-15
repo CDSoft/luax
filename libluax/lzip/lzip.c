@@ -80,7 +80,7 @@ static const char *lzip_compress(const char *src, const size_t src_len, luaL_Buf
 
     const char *err = "lzip error";
 
-    struct LZ_Encoder *encoder = LZ_compress_open(dictionary_size, match_len_limit, INT64_MAX);
+    LZ_Encoder *encoder = LZ_compress_open(dictionary_size, match_len_limit, INT64_MAX);
     if (encoder == NULL || LZ_compress_errno(encoder) != LZ_ok) { goto end; }
 
     size_t pos = 0;
@@ -142,7 +142,7 @@ static const char *lzip_decompress(const char *src, const size_t src_len, luaL_B
 {
     const char *err = "lzip error";
 
-    struct LZ_Decoder * const decoder = LZ_decompress_open();
+    LZ_Decoder * const decoder = LZ_decompress_open();
     if (decoder == NULL || LZ_decompress_errno(decoder) != LZ_ok) { goto end; }
 
     size_t pos = 0;
