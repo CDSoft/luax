@@ -1063,11 +1063,10 @@ returns a 128-bit digest of `data` based on the LuaX PRNG (not suitable for cryp
 
 static inline void prng_hash128(const char *input, size_t input_size, uint64_t *hash)
 {
-    /* 2^64-59 = 0xFFFFFFFFFFFFFFC5 */
-    register uint64_t h1 = 0xFFFFFFFFFFFFFFC5;
-    register uint64_t h2 = 0xFFFFFFFFFFFFFFC5;
+    register uint64_t h1 = 0xFFFFFFFFFFFFFFC5; /* 2^64-59 (prime number less than 2^64) */
+    register uint64_t h2 = 0xFFFFFFFFFFFFFFAD; /* 2^64-83 (prime number less than 2^64-59) */
     h1 = h1*prng_a + prng_c;
-    h2 = h1*prng_a + prng_c;
+    h2 = h2*prng_a + prng_c;
     size_t i;
     for (i = 0; i+1 < input_size; i+=2)
     {
@@ -1080,6 +1079,8 @@ static inline void prng_hash128(const char *input, size_t input_size, uint64_t *
         const uint64_t c1 = (uint64_t)input[i+0];
         h1 = h1*prng_a + ((c1 << 1) | prng_c);
     }
+    h1 = h1*prng_a + prng_c;
+    h2 = h2*prng_a + prng_c;
     hash[0] = h1*prng_a + h2;
     hash[1] = h2*prng_a + h1;
 }
