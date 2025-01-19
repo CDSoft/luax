@@ -2324,6 +2324,42 @@ end)
 
 --[[@@@
 ```lua
+F.mapt2a(f, t)
+t:mapt2a(f)
+```
+> maps `f` to the values of `t` and returns the array `{f(t[k1]), f(t[k2]), ...}`
+@@@]]
+
+register2 "mapt2a" (function(f, t)
+    local ys = {}
+    local i = 0
+    for _, v in F_pairs(t) do
+        i = i+1
+        ys[i] = f(v)
+    end
+    return setmetatable(ys, mt)
+end)
+
+--[[@@@
+```lua
+F.mapk2a(f, t)
+t:mapk2a(f)
+```
+> maps `f` to the keys and the values of `t` and returns the array `{f(k1, t[k1]), f(k2, t[k2]), ...}`
+@@@]]
+
+register2 "mapk2a" (function(f, t)
+    local ys = {}
+    local i = 0
+    for k, v in F_pairs(t) do
+        i = i+1
+        ys[i] = f(k, v)
+    end
+    return setmetatable(ys, mt)
+end)
+
+--[[@@@
+```lua
 F.reverse(xs)
 xs:reverse()
 ```

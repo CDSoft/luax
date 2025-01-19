@@ -980,6 +980,12 @@ local function table_transformations()
     eq(F.mapk(h, t), {x="x:20",y="y:40",z="z:60"})
     eq(t:mapk(h), {x="x:20",y="y:40",z="z:60"})
 
+    eq(F.mapt2a(f, t), {20,40,60})
+    eq(t:mapt2a(f), {20,40,60})
+
+    eq(F.mapk2a(h, t), {"x:20","y:40","z:60"})
+    eq(t:mapk2a(h), {"x:20","y:40","z:60"})
+
     eq(F.reverse(xs), {30,20,10})
     eq(xs:reverse(), {30,20,10})
 

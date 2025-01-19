@@ -1012,6 +1012,22 @@ t:mapk(f)
 > `{k1=f(k1, t[k1]), k2=f(k2, t[k2]), ...}`
 
 ``` lua
+F.mapt2a(f, t)
+t:mapt2a(f)
+```
+
+> maps `f` to the values of `t` and returns the array
+> `{f(t[k1]), f(t[k2]), ...}`
+
+``` lua
+F.mapk2a(f, t)
+t:mapk2a(f)
+```
+
+> maps `f` to the keys and the values of `t` and returns the array
+> `{f(k1, t[k1]), f(k2, t[k2]), ...}`
+
+``` lua
 F.reverse(xs)
 xs:reverse()
 ```
