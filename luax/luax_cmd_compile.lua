@@ -271,14 +271,14 @@ local function compile_native(tmp, current_output, target_definition)
             macos   = {},
             windows = optional(build_config.lto)(flto),
         }),
-        F.case( build_config.compiler.name) {
+        F.case(build_config.compiler.name) {
             gcc   = "-Wstringop-overflow=0",
             clang = "-Wno-single-bit-bitfield-constant-conversion",
             zig   = "-Wno-single-bit-bitfield-constant-conversion",
         },
     }
     local ldflags = {
-        F.case(mode) {
+        F.case(build_config.mode) {
             fast  = "-s",
             small = "-s",
             debug = {},
