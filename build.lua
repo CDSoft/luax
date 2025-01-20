@@ -852,16 +852,9 @@ are created in `$tmp`
 var "luax_config_h"   "$tmp/luax_config.h"
 var "luax_config_lua" "$tmp/luax_config.lua"
 
-local function ypp_vars(t)
-    return F(t)
-        : mapk(function(k, v) return ("-e '%s=%q'"):format(k, v) end)
-        : values()
-        : unwords()
-end
-
 rule "ypp-config" {
     description = "ypp $out",
-    command = { "$lua tools/luax.lua tools/ypp.luax", ypp_vars(LUAX), "$in -o $out" },
+    command = { "$lua tools/luax.lua tools/ypp.luax", build.ypp_vars(LUAX), "$in -o $out" },
     implicit_in = {
         "$lua",
         "tools/luax.lua",
@@ -882,7 +875,7 @@ var "luax_build_config_lua" "$tmp/luax_build_config.lua"
 
 rule "ypp-build-config" {
     description = "ypp $out",
-    command = { "$lua tools/luax.lua tools/ypp.luax", ypp_vars(BUILD_CONFIG), "$in -o $out" },
+    command = { "$lua tools/luax.lua tools/ypp.luax", build.ypp_vars(BUILD_CONFIG), "$in -o $out" },
     implicit_in = {
         "$lua",
         "tools/luax.lua",
@@ -1579,7 +1572,7 @@ local pandoc_gfm = {
     "--fail-if-warnings",
 }
 
-local ypp_config_params = ypp_vars {
+local ypp_config_params = build.ypp_vars {
     BYTECODE = bytecode,
     LUAX = "$luax",
 }
@@ -1699,7 +1692,7 @@ local dist = {
             description = "$out",
             command = {
                 "$luax tools/ypp.luax",
-                ypp_vars {
+                build.ypp_vars {
                     VERSION = LUAX.VERSION,
                     URL = "https://"..LUAX.URL,
                     COMPILER = BUILD_CONFIG.COMPILER_FULL_VERSION,

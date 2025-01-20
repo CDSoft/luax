@@ -661,7 +661,7 @@ end
 
 return setmetatable(svg, svg_mt)
 ]=])
-libs["version"] = lib(".build/version", [=[return [[2.5.5]]]=])
+libs["version"] = lib(".build/version", [=[return [[2.6.1]]]=])
 return lib("src/lsvg.lua", [=[--/usr/bin/env luax
 
 --[[
