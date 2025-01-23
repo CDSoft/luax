@@ -326,11 +326,11 @@ local function compile_native(tmp, current_output, target_definition)
             if sys.os ~= "windows" then
                 if not xz then help.err("xz required to install Zig") end
             end
-            assert(sh.run(
-                curl and { curl, "-fSL", quiet and "-s" or "-#", url, "-o", tmp/archive }
-                or
-                wget and { wget, quiet and "-q" or "--progress=bar", url, "-O", tmp/archive }
-            ))
+            if curl then
+                assert(sh.run(curl, "-fSL", quiet and "-s" or "-#", url, "-o", tmp/archive))
+            else
+                assert(sh.run(wget, quiet and "-q" or "--progress=bar", url, "-O", tmp/archive))
+            end
             fs.mkdirs(zig_path)
             if sys.os == "windows" then
                 assert(sh.run(tar, "xf", tmp/archive, "-C", zig_path, "--strip-components", 1))

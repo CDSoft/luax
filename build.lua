@@ -793,7 +793,7 @@ local sources = F{
 section "Native Lua interpreter"
 ---------------------------------------------------------------------
 
-var "lua" "$tmp/lua"
+var "lua" "$bin/lua"
 
 var "lua_path" (
     F{
@@ -818,7 +818,7 @@ build "$lua" { ld.host,
 section "lz4 cli"
 ---------------------------------------------------------------------
 
-var "lz4" "$tmp/lz4"
+var "lz4" "$bin/lz4"
 
 build "$lz4" { ld.host,
     ls "ext/c/lz4/**.c"
@@ -831,7 +831,7 @@ build "$lz4" { ld.host,
 section "lzip cli"
 ---------------------------------------------------------------------
 
-var "lzip" "$tmp/lzip"
+var "lzip" "$bin/lzip"
 
 build "$lzip" { ld.host,
     ( ls "ext/c/lzlib/programs/*.c" .. ls "ext/c/lzlib/lib/*.c" )
@@ -893,7 +893,7 @@ section "Lua runtime"
 rule "bundle" {
     description = "bundle $out",
     command = {
-        "PATH=$tmp:$$PATH",
+        "PATH=$bin:$$PATH",
         "LUA_PATH=\"$lua_path\"",
         "LUAX_LIB=$lib",
         "$lua tools/bundle.lua $args $in -o $out",
@@ -1225,7 +1225,7 @@ section "$bin/luax.lua"
 rule "luax-bundle" {
     description = "bundle $out",
     command = {
-        "PATH=$tmp:$$PATH",
+        "PATH=$bin:$$PATH",
         "LUA_PATH=\"$lua_path\"",
         "LUAX_LIB=$lib",
         "$lua luax/luax.lua compile -q $args -o $out $in",
@@ -1291,7 +1291,7 @@ acc(test) {
             sanitizer_options,
             "$luax compile -q -b -k test-1-key -o $test/test-luax $in",
             "&&",
-            "PATH=$bin:$tmp:$$PATH",
+            "PATH=$bin:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
             "LUA_CPATH='foo/?.so'",
             "TEST_NUM=1",
@@ -1319,7 +1319,7 @@ acc(test) {
                     sanitizer_options,
                     "$luax compile -q", "-t", target_name, "-b -k test-1-key", "-o", "$test/test-compiled-"..i, "$in",
                     "&&",
-                    "PATH=$bin:$tmp:$$PATH",
+                    "PATH=$bin:$$PATH",
                     "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
                     "LUA_CPATH='foo/?.so'",
                     "TEST_NUM=1", "TEST_CASE="..i,
@@ -1357,7 +1357,7 @@ acc(test) {
             sanitizer_options,
             "export LUA_CPATH=;",
             "eval \"$$($luax env)\";",
-            "PATH=$bin:$tmp:$$PATH",
+            "PATH=$bin:$$PATH",
             "LUA_PATH='tests/luax-tests/?.lua'",
             "TEST_NUM=2",
             optional(ssl) { "USE_SSL=1" },
@@ -1382,7 +1382,7 @@ acc(test) {
         description = "test $out",
         command = {
             sanitizer_options,
-            "PATH=$bin:$tmp:$$PATH",
+            "PATH=$bin:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=3",
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
@@ -1408,7 +1408,7 @@ acc(test) {
         description = "test $out",
         command = {
             sanitizer_options,
-            "PATH=$bin:$tmp:$$PATH",
+            "PATH=$bin:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=4",
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
@@ -1433,7 +1433,7 @@ acc(test) {
         description = "test $out",
         command = {
             sanitizer_options,
-            "PATH=$bin:$tmp:$$PATH",
+            "PATH=$bin:$$PATH",
             "LIBC=lua LUA_PATH='$lib/?.lua;tests/luax-tests/?.lua'",
             "TEST_NUM=5",
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
@@ -1462,7 +1462,7 @@ acc(test) {
             "eval \"$$($luax env)\";",
             "$luax compile -q -b -k test-ext-1-key -t lua -o $test/ext-lua $in",
             "&&",
-            "PATH=$bin:$tmp:$$PATH",
+            "PATH=$bin:$$PATH",
             "TARGET=lua",
             "$test/ext-lua Lua is great",
             "&&",
@@ -1485,7 +1485,7 @@ acc(test) {
             "eval \"$$($luax env)\";",
             "$luax compile -q -b -k test-ext-3-key -t luax -o $test/ext-luax $in",
             "&&",
-            "PATH=$bin:$tmp:$$PATH",
+            "PATH=$bin:$$PATH",
             "TARGET=luax",
             "$test/ext-luax Lua is great",
             "&&",
@@ -1507,7 +1507,7 @@ acc(test) {
             "eval \"$$($luax env)\";",
             "$luax compile -q -t pandoc -o $test/ext-pandoc $in", -- no bytecode to remain compatible with pandoc
             "&&",
-            "PATH=$bin:$tmp:$$PATH",
+            "PATH=$bin:$$PATH",
             "TARGET=pandoc",
             "$test/ext-pandoc Lua is great",
             "&&",
@@ -1618,17 +1618,6 @@ end
 section "Update dist for all targets"
 ---------------------------------------------------------------------
 
-if release then
-
-    var "release" ("$builddir/release"/LUAX.VERSION)
-
-    rule "tar" {
-        description = "tar $out",
-        command = "tar -caf $out $in --transform='s#$prefix#$dest#'",
-    }
-
-end
-
 local function pure_lua(name)
     local ext = name:ext()
     return ext==".lua"
@@ -1639,82 +1628,89 @@ local function no_arch(name)
     return ext==".lua" or ext==".lar"
 end
 
-local dist = {
-    targets : map(function(target)
-        local cp_to = F.curry(function(dest, file)
-            return build.cp("$dist"/target.name/dest/file:basename()) { file }
-        end)
-        local bin = {binary[target.name]}
-        local lib = shared_library[target.name] and {shared_library[target.name]} or {}
-        local files = F{
-            (bin .. binaries:filter(no_arch)) : map(cp_to"bin"),
-            (lib .. libraries:filter(no_arch)) : map(cp_to"lib"),
-        }
-        local archive = {}
-        if release then
+local dist = (function()
+    if not release then return {} end
+
+    var "release" ("$builddir/release"/LUAX.VERSION)
+
+    rule "tar" {
+        description = "tar $out",
+        command = "tar -caf $out $in --transform='s#$prefix#$dest#'",
+    }
+
+    return {
+        targets : map(function(target)
+            local cp_to = F.curry(function(dest, file)
+                return build.cp("$dist"/target.name/dest/file:basename()) { file }
+            end)
+            local bin = {binary[target.name]}
+            local lib = shared_library[target.name] and {shared_library[target.name]} or {}
+            local files = F{
+                (bin .. binaries:filter(no_arch)) : map(cp_to"bin"),
+                (lib .. libraries:filter(no_arch)) : map(cp_to"lib"),
+            }
             local name = F{
                 "luax",
                 LUAX.VERSION,
                 target.name,
             } : flatten() : str "-"
             local path = "$release"/name..".tar.gz"
-            archive = build(path) { "tar",
+            return build(path) { "tar",
                 files,
                 prefix = "$dist"/target.name,
                 dest = name,
             }
-        end
-        return { files, archive }
-    end),
-    release and (function()
-        local cp_to = F.curry(function(dest, file)
-            return build.cp("$dist"/"lua"/dest/file:basename()) { file }
-        end)
-        local files = {
-            binaries:filter(pure_lua) : map(cp_to"bin"),
-            libraries:filter(pure_lua) : map(cp_to"lib"),
-        }
-        local name = F{
-            "luax",
-            LUAX.VERSION,
-            "lua",
-        } : flatten() : str "-"
-        local path = "$release"/name..".tar.gz"
-        local archive = build(path) { "tar",
-            files,
-            prefix = "$dist"/"lua",
-            dest = name,
-        }
-        return { files, archive }
-    end)() or {},
-    release and (function()
-        rule "releasenote" {
-            description = "$out",
-            command = {
-                "$luax tools/ypp.luax",
-                build.ypp_vars {
-                    VERSION = LUAX.VERSION,
-                    URL = "https://"..LUAX.URL,
-                    COMPILER = BUILD_CONFIG.COMPILER_FULL_VERSION,
-                    OPTIONS = F.flatten {
-                        mode,
-                        use_lto and "lto" or {},
-                    } : str ", ",
-                    SSL = ssl and "yes (OpenSSL)" or "no",
-                    CROSS = cross and "yes" or  "no",
+        end),
+        (function()
+            local cp_to = F.curry(function(dest, file)
+                return build.cp("$dist"/"lua"/dest/file:basename()) { file }
+            end)
+            local files = {
+                binaries:filter(pure_lua) : map(cp_to"bin"),
+                libraries:filter(pure_lua) : map(cp_to"lib"),
+            }
+            local name = F{
+                "luax",
+                LUAX.VERSION,
+                "lua",
+            } : flatten() : str "-"
+            local path = "$release"/name..".tar.gz"
+            return build(path) { "tar",
+                files,
+                prefix = "$dist"/"lua",
+                dest = name,
+            }
+        end)(),
+        (function()
+            rule "releasenote" {
+                description = "$out",
+                command = {
+                    "$luax tools/ypp.luax",
+                    build.ypp_vars {
+                        VERSION = LUAX.VERSION,
+                        URL = "https://"..LUAX.URL,
+                        COMPILER = BUILD_CONFIG.COMPILER_FULL_VERSION,
+                        OPTIONS = F.flatten {
+                            mode,
+                            use_lto and "lto" or {},
+                        } : str ", ",
+                        SSL = ssl and "yes (OpenSSL)" or "no",
+                        CROSS = cross and "yes" or  "no",
+                    },
+                    "--MD --MT $out --MF $depfile $in -o $out",
                 },
-                "--MD --MT $out --MF $depfile $in -o $out",
-            },
-            depfile = "$tmp/$out.d",
-            implicit_in = {
-                "$luax",
-                "$lib/luax.lar",
-                "tools/ypp.luax",
-            },
-        }
-        return build("$release/ReleaseNote.md") { "releasenote", "tools/ReleaseNote.md.ypp" }
-    end)() or {},
-}
+                depfile = "$tmp/$out.d",
+                implicit_in = {
+                    "$luax",
+                    "$lib/luax.lar",
+                    "tools/ypp.luax",
+                },
+            }
+            return build("$release/ReleaseNote.md") { "releasenote", "tools/ReleaseNote.md.ypp" }
+        end)(),
+    }
+
+end)()
 
 --===================================================================
 section "Shorcuts"

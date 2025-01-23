@@ -29,7 +29,7 @@ cd "$(dirname "$0")"
 
 . config # ZIG_VERSION ZIG_PATH
 
-B=.build/boot
+B=.build/bin
 LUA=$B/lua
 
 mkdir -p $B

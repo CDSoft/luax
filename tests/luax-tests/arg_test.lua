@@ -53,7 +53,7 @@ return function()
 
     elseif test_num == 2 then
         eq(arg, {
-            [-3] = ".build/tmp/lua",
+            [-3] = ".build/bin/lua",
             [-2] = "-l", [-1] = "libluax",
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
@@ -63,7 +63,7 @@ return function()
 
     elseif test_num == 3 then
         eq(arg, {
-            [-3] = ".build/tmp/lua",
+            [-3] = ".build/bin/lua",
             [-2] = "-l", [-1] = "luax",
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
@@ -78,7 +78,7 @@ return function()
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })
-        eq(fs.findpath(arg[-2]), ".build/tmp/lua")
+        eq(fs.findpath(arg[-2]), ".build/bin/lua")
         assert(sys.libc == "lua")
         assert(not pandoc)
 
