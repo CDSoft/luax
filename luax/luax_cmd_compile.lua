@@ -190,11 +190,12 @@ local function compile_native(tmp, current_output, target_definition)
     -- Build configuration
     local build_config = require "luax_build_config"
 
-    local function uncompress(name, content)
-        return F.case(name:ext()) {
-            [".lz"]  = function() return name:splitext(), lzip.unlzip(content) end,
-            [".lz4"] = function() return name:splitext(), lz4.unlz4(content) end,
-            [F.Nil]  = function() error(name..": unknown format") end,
+    local function uncompressed_name(name)
+        local uncompressed, ext = name:splitext()
+        return F.case(ext) {
+            [".lz"]  = function() return uncompressed, lzip.unlzip end,
+            [".lz4"] = function() return uncompressed, lz4.unlz4 end,
+            [F.Nil]  = function() return name, F.id end,
         }()
     end
 
@@ -205,7 +206,10 @@ local function compile_native(tmp, current_output, target_definition)
     if headers:null() or libs:null() then
         help.err("Compilation not available")
     end
-    local function tmp_file(filename, content) fs.write_bin(uncompress(tmp/filename:basename(), content)) end
+    local function tmp_file(filename, content)
+        local name, uncompress = uncompressed_name(filename)
+        fs.write_bin(tmp/name:basename(), uncompress(content))
+    end
     headers:foreachk(tmp_file)
     libs:foreachk(tmp_file)
     local rank = {
@@ -217,12 +221,12 @@ local function compile_native(tmp, current_output, target_definition)
         ["libcrypto.a"] = 6,
     }
     local libnames = libs:keys(function(a, b)
-        local rank_a = assert(rank[a:splitext()], a..": unknown library")
-        local rank_b = assert(rank[b:splitext()], b..": unknown library")
+        local rank_a = assert(rank[uncompressed_name(a)], a..": unknown library")
+        local rank_b = assert(rank[uncompressed_name(b)], b..": unknown library")
         return rank_a < rank_b
     end)
-    : map(function(f)
-        return tmp/f:basename():splitext()
+    : map(function(name)
+        return tmp/uncompressed_name(name):basename()
     end)
 
     -- Compile the input LuaX scripts
