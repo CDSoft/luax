@@ -25,7 +25,6 @@ cd "$(git rev-parse --show-toplevel)"
 check()
 {
     echo "# $*"
-    ninja clean || true
     ./bootstrap.sh "$@" && ninja all
 }
 

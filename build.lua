@@ -201,7 +201,10 @@ comment(("Lua code          : %s"):format(case(bytecode) { ["-b"] = "bytecode",
 comment(("SSL support       : %s"):format(ssl and "LuaSec + OpenSSL" or "none"))
 
 local function is_dynamic(target) return target.libc~="musl" and not san end
-local function has_partial_ld(target) return compiler=="zig" and (target.os=="linux" or target.os=="macos") end
+local function has_partial_ld(target)
+    if compiler=="clang" and use_lto then return false end
+    return target.os=="linux" or target.os=="macos"
+end
 
 local function optional(cond)
     return cond and F.id or F.const{}
@@ -1184,11 +1187,11 @@ acc(libraries) {
         -- Binary runtimes
         (cross and targets or host_targets) : map(function(target)
             local libs = F.flatten {
-                liblua[target.name],
-                libluax[target.name],
-                openssl_libs[target.name],
-                main_libluax[target.name],
                 main_luax[target.name],
+                main_libluax[target.name],
+                libluax[target.name],
+                liblua[target.name],
+                openssl_libs[target.name],
             }
             if has_partial_ld(target) then
                 libs = { build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs } }
