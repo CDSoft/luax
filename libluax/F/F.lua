@@ -2272,11 +2272,12 @@ F.map(f, xs)
 xs:map(f)
 ```
 > maps `f` to the elements of `xs` and returns `{f(xs[1]), f(xs[2]), ...}`
+> (`nil` values are ignored)
 @@@]]
 
 F_map = register2 "map" (function(f, xs)
     local ys = {}
-    for i = 1, #xs do ys[i] = f(xs[i]) end
+    for i = 1, #xs do ys[#ys+1] = f(xs[i]) end
     return setmetatable(ys, mt)
 end)
 
@@ -2286,11 +2287,12 @@ F.mapi(f, xs)
 xs:mapi(f)
 ```
 > maps `f` to the indices and elements of `xs` and returns `{f(1, xs[1]), f(2, xs[2]), ...}`
+> (`nil` values are ignored)
 @@@]]
 
 register2 "mapi" (function(f, xs)
     local ys = {}
-    for i = 1, #xs do ys[i] = f(i, xs[i]) end
+    for i = 1, #xs do ys[#ys+1] = f(i, xs[i]) end
     return setmetatable(ys, mt)
 end)
 
@@ -2301,11 +2303,15 @@ xs:map2t(f)
 ```
 > maps `f` to the elements of `xs` and returns the table `{fk(xs[1])=fv(xs[1]), fk(xs[2])=fv(xs[2]), ...}`
 > where `f(x)` returns two values `fk(x), fv(x)` used as the keys and values of the returned table.
+> (`nil` values are ignored)
 @@@]]
 
 register2 "map2t" (function(f, xs)
     local t = {}
-    for i = 1, #xs do rawset(t, f(xs[i])) end
+    for i = 1, #xs do
+        local k, v = f(xs[i])
+        if k~=nil then rawset(t, k, v) end
+    end
     return setmetatable(t, mt)
 end)
 
@@ -2316,11 +2322,15 @@ xs:mapi2t(f)
 ```
 > maps `f` to the indices and elements of `xs` and returns `{fk(1, xs[1])=fv(1, xs[1]), fk(2, xs[2])=fv(2, xs[2]), ...}`
 > where `f(i, x)` returns two values `fk(i, x), fv(i, x)` used as the keys and values of the returned table.
+> (`nil` values are ignored)
 @@@]]
 
 register2 "mapi2t" (function(f, xs)
     local t = {}
-    for i = 1, #xs do rawset(t, f(i, xs[i])) end
+    for i = 1, #xs do
+        local k, v = f(i, xs[i])
+        if k~=nil then rawset(t, k, v) end
+    end
     return setmetatable(t, mt)
 end)
 
@@ -2330,6 +2340,7 @@ F.mapt(f, t)
 t:mapt(f)
 ```
 > maps `f` to the values of `t` and returns `{k1=f(t[k1]), k2=f(t[k2]), ...}`
+> (`nil` values are ignored)
 @@@]]
 
 register2 "mapt" (function(f, t)
@@ -2344,6 +2355,7 @@ F.mapk(f, t)
 t:mapk(f)
 ```
 > maps `f` to the keys and values of `t` and returns `{k1=f(k1, t[k1]), k2=f(k2, t[k2]), ...}`
+> (`nil` values are ignored)
 @@@]]
 
 register2 "mapk" (function(f, t)
@@ -2358,15 +2370,12 @@ F.mapt2a(f, t)
 t:mapt2a(f)
 ```
 > maps `f` to the values of `t` and returns the array `{f(t[k1]), f(t[k2]), ...}`
+> (`nil` values are ignored)
 @@@]]
 
 register2 "mapt2a" (function(f, t)
     local ys = {}
-    local i = 0
-    for _, v in F_pairs(t) do
-        i = i+1
-        ys[i] = f(v)
-    end
+    for _, v in F_pairs(t) do ys[#ys+1] = f(v) end
     return setmetatable(ys, mt)
 end)
 
@@ -2376,15 +2385,12 @@ F.mapk2a(f, t)
 t:mapk2a(f)
 ```
 > maps `f` to the keys and the values of `t` and returns the array `{f(k1, t[k1]), f(k2, t[k2]), ...}`
+> (`nil` values are ignored)
 @@@]]
 
 register2 "mapk2a" (function(f, t)
     local ys = {}
-    local i = 0
-    for k, v in F_pairs(t) do
-        i = i+1
-        ys[i] = f(k, v)
-    end
+    for k, v in F_pairs(t) do ys[#ys+1] = f(k, v) end
     return setmetatable(ys, mt)
 end)
 

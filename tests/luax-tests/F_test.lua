@@ -961,26 +961,27 @@ end
 
 local function table_transformations()
 
-    local xs = F{10,20,30}
-    local function f(x) return 2*x end
-    local function ft(x) return "2*"..x, 2*x end
-    local function fit(i, x) return i..":2*"..x, 2*x end
-    local function g(i, x) return f(x) + i end
-    local function h(k, x) return k..":"..f(x) end
+    local xs = F{10,20,"nil",30}
+    local function discard(x) return x=="nil" or x==666 end
+    local function f(x)      if not discard(x) then return 2*x end end
+    local function ft(x)     if not discard(x) then return "2*"..x, 2*x end end
+    local function fit(i, x) if not discard(x) then return i..":2*"..x, 2*x end end
+    local function g(i, x)   if not discard(x) then return f(x) + i end end
+    local function h(k, x)   if not discard(x) then return k..":"..f(x) end end
 
     eq(F.map(f, xs), {20,40,60})
     eq(xs:map(f), {20,40,60})
 
-    eq(F.mapi(g, xs), {21,42,63})
-    eq(xs:mapi(g), {21,42,63})
+    eq(F.mapi(g, xs), {21,42,64})
+    eq(xs:mapi(g), {21,42,64})
 
     eq(F.map2t(ft, xs), {["2*10"]=20, ["2*20"]=40, ["2*30"]=60})
     eq(xs:map2t(ft), {["2*10"]=20, ["2*20"]=40, ["2*30"]=60})
 
-    eq(F.mapi2t(fit, xs), {["1:2*10"]=20, ["2:2*20"]=40, ["3:2*30"]=60})
-    eq(xs:mapi2t(fit), {["1:2*10"]=20, ["2:2*20"]=40, ["3:2*30"]=60})
+    eq(F.mapi2t(fit, xs), {["1:2*10"]=20, ["2:2*20"]=40, ["4:2*30"]=60})
+    eq(xs:mapi2t(fit), {["1:2*10"]=20, ["2:2*20"]=40, ["4:2*30"]=60})
 
-    local t = F{x=10, y=20, z=30}
+    local t = F{x=10, y=20, ["nil"]=666, z=30}
 
     eq(F.mapt(f, t), {x=20,y=40,z=60})
     eq(t:mapt(f), {x=20,y=40,z=60})
@@ -994,8 +995,8 @@ local function table_transformations()
     eq(F.mapk2a(h, t), {"x:20","y:40","z:60"})
     eq(t:mapk2a(h), {"x:20","y:40","z:60"})
 
-    eq(F.reverse(xs), {30,20,10})
-    eq(xs:reverse(), {30,20,10})
+    eq(F.reverse(xs), {30,"nil",20,10})
+    eq(xs:reverse(), {30,"nil",20,10})
 
     local m = F{{1,2,3},{4,5,6}}
     eq(F.transpose(m), {{1,4},{2,5},{3,6}})
