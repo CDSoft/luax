@@ -963,6 +963,8 @@ local function table_transformations()
 
     local xs = F{10,20,30}
     local function f(x) return 2*x end
+    local function ft(x) return "2*"..x, 2*x end
+    local function fit(i, x) return i..":2*"..x, 2*x end
     local function g(i, x) return f(x) + i end
     local function h(k, x) return k..":"..f(x) end
 
@@ -971,6 +973,12 @@ local function table_transformations()
 
     eq(F.mapi(g, xs), {21,42,63})
     eq(xs:mapi(g), {21,42,63})
+
+    eq(F.map2t(ft, xs), {["2*10"]=20, ["2*20"]=40, ["2*30"]=60})
+    eq(xs:map2t(ft), {["2*10"]=20, ["2*20"]=40, ["2*30"]=60})
+
+    eq(F.mapi2t(fit, xs), {["1:2*10"]=20, ["2:2*20"]=40, ["3:2*30"]=60})
+    eq(xs:mapi2t(fit), {["1:2*10"]=20, ["2:2*20"]=40, ["3:2*30"]=60})
 
     local t = F{x=10, y=20, z=30}
 

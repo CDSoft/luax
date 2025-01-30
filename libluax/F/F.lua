@@ -2296,6 +2296,36 @@ end)
 
 --[[@@@
 ```lua
+F.map2t(f, xs)
+xs:map2t(f)
+```
+> maps `f` to the elements of `xs` and returns the table `{fk(xs[1])=fv(xs[1]), fk(xs[2])=fv(xs[2]), ...}`
+> where `f(x)` returns two values `fk(x), fv(x)` used as the keys and values of the returned table.
+@@@]]
+
+register2 "map2t" (function(f, xs)
+    local t = {}
+    for i = 1, #xs do rawset(t, f(xs[i])) end
+    return setmetatable(t, mt)
+end)
+
+--[[@@@
+```lua
+F.mapi2t(f, xs)
+xs:mapi2t(f)
+```
+> maps `f` to the indices and elements of `xs` and returns `{fk(1, xs[1])=fv(1, xs[1]), fk(2, xs[2])=fv(2, xs[2]), ...}`
+> where `f(i, x)` returns two values `fk(i, x), fv(i, x)` used as the keys and values of the returned table.
+@@@]]
+
+register2 "mapi2t" (function(f, xs)
+    local t = {}
+    for i = 1, #xs do rawset(t, f(i, xs[i])) end
+    return setmetatable(t, mt)
+end)
+
+--[[@@@
+```lua
 F.mapt(f, t)
 t:mapt(f)
 ```
