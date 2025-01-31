@@ -21,19 +21,21 @@ https://github.com/cdsoft/luax
 local F = require "F"
 local fs = require "fs"
 local sh = require "sh"
-local import = require "import"
 
 local LUAX = {}
 local I = F.I(LUAX)
-
-local BUILD_CONFIG = import "config"
 
 LUAX.AUTHORS     = "Christophe Delord"
 LUAX.URL         = "github.com/cdsoft/luax"
 LUAX.VERSION     = sh "git describe --tags" : trim()
 LUAX.DATE        = sh "git show -s --format=%cd --date=format:'%Y-%m-%d'" : trim()
-local YEAR       = LUAX.DATE : split '%-' : head()
-LUAX.COPYRIGHT   = I{YEAR=YEAR}"LuaX $(VERSION)  Copyright (C) 2021-$(YEAR) $(URL), $(AUTHORS)"
+LUAX.COPYRIGHT   = I"LuaX $(VERSION)  Copyright (C) 2021-$(DATE:split'%-':head()) $(URL), $(AUTHORS)"
+
+local BUILD_CONFIG = {
+    ZIG_VERSION  = "0.13.0",
+    ZIG_PATH     = "~/.local/opt/zig",
+    ZIG_PATH_WIN = "~\\zig",
+}
 
 help.name "LuaX"
 help.description(I[[

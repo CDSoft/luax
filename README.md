@@ -44,10 +44,10 @@ compiles LuaX. Once done, LuaX can be installed with `ninja install`.
 `git` must already be installed, which is likely to be the case if LuaX
 has been cloned with `git`…
 
-The installation path of Zig is defined in the `config` file. On Linux
-or MacOS, the installation path is defined by the variable `ZIG_PATH`
-(`~` is replaced with `$HOME`). On Windows, the installation path is
-defined by the variable `ZIG_PATH_WIN` (`~` is replaced with
+The installation path of Zig is defined in the `build.lua` file. On
+Linux or MacOS, the installation path is defined by the variable
+`ZIG_PATH` (`~` is replaced with `$HOME`). On Windows, the installation
+path is defined by the variable `ZIG_PATH_WIN` (`~` is replaced with
 `%LOCALAPPDATA%`).
 
 ``` sh
