@@ -864,7 +864,6 @@ rule "ypp-config" {
         "$lua",
         "tools/luax.lua",
         "tools/ypp.luax",
-        gitdir/"refs/tags",
     },
 }
 
@@ -885,7 +884,6 @@ rule "ypp-build-config" {
         "$lua",
         "tools/luax.lua",
         "tools/ypp.luax",
-        gitdir/"refs/tags",
     },
 }
 
@@ -1700,7 +1698,7 @@ local dist = (function()
                             use_lto and "lto" or {},
                         } : str ", ",
                         SSL = ssl and "yes (OpenSSL)" or "no",
-                        CROSS = cross and "yes" or  "no",
+                        CROSS = cross and "yes" or "no",
                     },
                     "--MD --MT $out --MF $depfile $in -o $out",
                 },
