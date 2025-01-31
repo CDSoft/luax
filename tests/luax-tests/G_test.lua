@@ -42,7 +42,7 @@ local luax_packages = F.flatten{
     "import",
     "json",
     "linenoise",
-    "lz4",
+    os.getenv"USE_LZ4" and "lz4" or {},
     "lzip",
     "mathx",
     "package",
@@ -57,7 +57,7 @@ local luax_packages = F.flatten{
     is_luax and {"lpeg", "re"} or {},
 
     -- socket is only found in LuaX
-    is_luax and {
+    os.getenv"USE_SOCKET" and is_luax and {
         "socket",
         "socket.core",
         "socket.ftp",

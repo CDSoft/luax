@@ -25,13 +25,14 @@ https://github.com/cdsoft/luax
 local test = require "test"
 local eq = test.eq
 
-local F = require "F"
 local sys = require "sys"
 
 return function()
+    if not os.getenv"USE_SOCKET" then return end
+
     if sys.libc == "gnu" then
 
-        local socket = assert(require "socket")
+        assert(require "socket")
         assert(require "socket.core")
         assert(require "socket.ftp")
         assert(require "socket.headers")

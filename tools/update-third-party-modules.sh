@@ -162,15 +162,15 @@ update_luasocket()
     mkdir -p "$TMP"
     download "$LUASOCKET_URL" "$TMP/$LUASOCKET_ARCHIVE"
 
-    rm -rf ext/c/luasocket
-    mkdir ext/c/luasocket
-    unzip -j "$TMP/$LUASOCKET_ARCHIVE" "luasocket-$LUASOCKET_VERSION/src/*" -x "*/src/makefile" -d ext/c/luasocket
-    echo "--@LIB=socket.ftp"     >> ext/c/luasocket/ftp.lua
-    echo "--@LIB=socket.headers" >> ext/c/luasocket/headers.lua
-    echo "--@LIB=socket.http"    >> ext/c/luasocket/http.lua
-    echo "--@LIB=socket.smtp"    >> ext/c/luasocket/smtp.lua
-    echo "--@LIB=socket.tp"      >> ext/c/luasocket/tp.lua
-    echo "--@LIB=socket.url"     >> ext/c/luasocket/url.lua
+    rm -rf ext/opt/luasocket
+    mkdir ext/opt/luasocket
+    unzip -j "$TMP/$LUASOCKET_ARCHIVE" "luasocket-$LUASOCKET_VERSION/src/*" -x "*/src/makefile" -d ext/opt/luasocket
+    echo "--@LIB=socket.ftp"     >> ext/opt/luasocket/ftp.lua
+    echo "--@LIB=socket.headers" >> ext/opt/luasocket/headers.lua
+    echo "--@LIB=socket.http"    >> ext/opt/luasocket/http.lua
+    echo "--@LIB=socket.smtp"    >> ext/opt/luasocket/smtp.lua
+    echo "--@LIB=socket.tp"      >> ext/opt/luasocket/tp.lua
+    echo "--@LIB=socket.url"     >> ext/opt/luasocket/url.lua
 }
 
 update_luasec()
@@ -187,8 +187,8 @@ update_luasec()
         -x "*/src/Makefile" "*/src/luasocket/*" "*/src/options.lua" \
         -d ext/opt/luasec
 
-    sed -i -e 's#<luasocket/\(.*\.h\)>#"../../c/luasocket/\1"#' ext/opt/luasec/ssl.h
-    sed -i -e 's#<luasocket/\(.*\.h\)>#"../../c/luasocket/\1"#' ext/opt/luasec/ssl.c
+    sed -i -e 's#<luasocket/\(.*\.h\)>#"../luasocket/\1"#' ext/opt/luasec/ssl.h
+    sed -i -e 's#<luasocket/\(.*\.h\)>#"../luasocket/\1"#' ext/opt/luasec/ssl.c
 
     sed -i -e 's#<openssl/\(.*\.h\)>#"openssl/\1"#' ext/opt/luasec/ssl.c
     sed -i -e 's#<openssl/\(.*\.h\)>#"openssl/\1"#' ext/opt/luasec/ssl.h
@@ -285,10 +285,10 @@ update_lz4()
     mkdir -p "$TMP"
     download "$LZ4_URL" "$TMP/$LZ4_ARCHIVE"
 
-    rm -rf ext/c/lz4
-    mkdir -p ext/c/lz4/lib ext/c/lz4/programs
-    unzip -j "$TMP/$LZ4_ARCHIVE" '*/lib/*.[ch]' '*/lib/LICENSE' -d ext/c/lz4/lib
-    unzip -j "$TMP/$LZ4_ARCHIVE" '*/programs/*.[ch]' '*/programs/COPYING' -d ext/c/lz4/programs
+    rm -rf ext/opt/lz4
+    mkdir -p ext/opt/lz4/lib ext/opt/lz4/programs
+    unzip -j "$TMP/$LZ4_ARCHIVE" '*/lib/*.[ch]' '*/lib/LICENSE' -d ext/opt/lz4/lib
+    unzip -j "$TMP/$LZ4_ARCHIVE" '*/programs/*.[ch]' '*/programs/COPYING' -d ext/opt/lz4/programs
 }
 
 update_lzlib()

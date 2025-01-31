@@ -29,7 +29,6 @@ local bundle = require "luax_bundle"
 local help = require "luax_help"
 local welcome = require "luax_welcome"
 local targets = require "targets"
-local lz4 = require "lz4"
 local lzip = require "lzip"
 
 local lua_interpreters = F{
@@ -194,7 +193,6 @@ local function compile_native(tmp, current_output, target_definition)
         local uncompressed, ext = name:splitext()
         return F.case(ext) {
             [".lz"]  = function() return uncompressed, lzip.unlzip end,
-            [".lz4"] = function() return uncompressed, lz4.unlz4 end,
             [F.Nil]  = function() return name, F.id end,
         }()
     end

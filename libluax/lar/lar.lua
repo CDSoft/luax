@@ -21,8 +21,6 @@ https://github.com/cdsoft/luax
 --@LIB
 
 local F = require "F"
-local lz4 = require "lz4"
-local lzip = require "lzip"
 local cbor = require "cbor"
 local crypt = require "crypt"
 
@@ -52,10 +50,15 @@ local RAW  <const> = 0
 local LZ4  <const> = 1
 local LZIP <const> = 2
 
+local function lzip(...)   return require"lzip".lzip(...) end
+local function unlzip(...) return require"lzip".unlzip(...) end
+local function lz4(...)    return require"lz4".lz4(...) end
+local function unlz4(...)  return require"lz4".unlz4(...) end
+
 local compression_options = {
-    { algo=nil,    flag=RAW,  compress=F.id,      decompress=F.id        },
-    { algo="lz4",  flag=LZ4,  compress=lz4.lz4,   decompress=lz4.unlz4   },
-    { algo="lzip", flag=LZIP, compress=lzip.lzip, decompress=lzip.unlzip },
+    { algo=nil,    flag=RAW,  compress=F.id, decompress=F.id   },
+    { algo="lz4",  flag=LZ4,  compress=lz4,  decompress=unlz4  },
+    { algo="lzip", flag=LZIP, compress=lzip, decompress=unlzip },
 }
 
 local function find_options(x)

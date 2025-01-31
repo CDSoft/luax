@@ -40,7 +40,8 @@ check fast zig
 check fast zig lto
 check fast zig strip
 check fast zig cross
-check fast zig ssl
+check fast zig lz4 cross
+check fast zig socket cross
 check fast zig ssl cross
 
 check small gcc
@@ -51,11 +52,8 @@ check small zig
 check small zig strip
 
 check debug gcc
-check debug gcc strip
 check debug clang
-check debug clang strip
 check debug zig
-check debug zig strip
 
 check debug san
 

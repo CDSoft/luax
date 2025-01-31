@@ -33,12 +33,16 @@
 #include "imath/imath.h"
 #include "linenoise/linenoise.h"
 #include "lpeg/lpeg.h"
+#ifdef LUAX_USE_LZ4
 #include "lz4/lz4.h"
+#endif
 #include "lzip/lzip.h"
 #include "mathx/mathx.h"
 #include "ps/ps.h"
 #include "qmath/qmath.h"
+#ifdef LUAX_USE_SOCKET
 #include "socket/luasocket.h"
+#endif
 #ifdef LUAX_USE_SSL
 #include "sec/luasec.h"
 #endif
@@ -52,12 +56,16 @@ static const luaL_Reg lrun_libs[] = {
     {"imath",       luaopen_imath},
     {"linenoise",   luaopen_linenoise},
     {"lpeg",        luaopen_lpeg},
+#ifdef LUAX_USE_LZ4
     {"_lz4",        luaopen_lz4},
+#endif
     {"_lzip",       luaopen_lzip},
     {"mathx",       luaopen_mathx},
     {"ps",          luaopen_ps},
     {"_qmath",      luaopen_qmath},
+#ifdef LUAX_USE_SOCKET
     {"socket",      luaopen_luasocket},
+#endif
 #ifdef LUAX_USE_SSL
     {"ssl",         luaopen_luasec},
 #endif

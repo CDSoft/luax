@@ -71,6 +71,10 @@ Contributions on non supported platforms are welcome.
 | `bang -- strip` | Remove debug information from precompiled bytecode |
 | `bang -- lto` | Enable LTO optimizations |
 | `bang -- nolto` | Disable LTO optimizations (default) |
+| `bang -- lz4` | Add LZ4 support |
+| `bang -- nolz4` | No LZ4 support (default) |
+| `bang -- socket` | Add socket support via luasocket |
+| `bang -- nosocket` | No socket support via luasocket (default) |
 | `bang -- ssl` | Add SSL support via LuaSec and OpenSSL |
 | `bang -- nossl` | No SSL support via LuaSec and OpenSSL (default) |
 | `bang -- cross` | Generate cross-compilers (implies compilation with zig) |
@@ -95,20 +99,25 @@ These options can also be given to the bootstrap script. E.g.:
 
 ### Optional features
 
-### LuaSec and OpenSSL
+| Option | Description |
+|:---|:---|
+| `lz4` | Add the LZ4 compression module to LuaX |
+| `socket` | Add the socket support (LuaSocket) to LuaX |
+| `ssl` | Add the HTTPS/SSL support (LuaSec + OpenSSL) to LuaX (`ssl` implies `socket`) |
 
-LuaSec and OpenSSL can be statically linked to LuaX with the `ssl`
-option. Otherwise you will have to install LuaSec or LuaSocket apart
-from Luax (e.g. with LuaRocks).
-
-In this case, the submodules shall also be downloaded:
+Example:
 
 ``` sh
-$ git clone https://github.com/CDSoft/luax --recurse-submodules
+$ git clone https://github.com/CDSoft/luax
 $ cd luax
-$ ./bootstrap.sh ssl
+$ ./bootstrap.sh lz4 ssl
 $ ninja install
 ```
+
+These options are disabled by default.
+
+Note that LuaSocket and LuaSec can also be installed apart from Luax
+(e.g. with LuaRocks).
 
 ### Compilation in debug mode
 

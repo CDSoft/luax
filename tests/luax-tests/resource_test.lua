@@ -40,7 +40,7 @@ return function()
     if test_num == 1 then
 
         eq(require "resource.txt", rc)
-        eq(require "resource.txt.lz4" : unlz4(), rc)
+        eq(require "resource.txt.lz" : unlzip(), rc)
 
     end
 

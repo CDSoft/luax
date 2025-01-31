@@ -11,7 +11,8 @@ Compilation options:
 Optional features:
 
 - cross-compilation: @CROSS
-- HTTPS/SSL support: @SSL
+- compression: @COMPRESSION
+- sockets: @SOCKETS
 
 For customized versions of LuaX, please recompile it with your preferred
 options (see [README.md](@URL)).

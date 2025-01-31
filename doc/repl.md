@@ -64,15 +64,9 @@ LuaX preloads the following modules with the `-e` option or before
 entering the REPL:
 
 - F
-- complex
 - crypt
 - fs
-- imath
-- lz4
-- lzip
-- mathx
 - ps
-- qmath
 - sh
 - sys
 

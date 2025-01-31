@@ -144,21 +144,15 @@ local function populate_repl()
 LuaX preloads the following modules with the `-e` option or before entering the REPL:
 
 - F
-- complex
 - crypt
 - fs
-- imath
-- lz4
-- lzip
-- mathx
 - ps
-- qmath
 - sh
 - sys
 
 @@@]]
 
-    F"F complex crypt fs imath lz4 lzip mathx ps qmath sh sys"
+    F"F crypt fs ps sh sys"
         : words()
         : foreach(function(name) _ENV[name] = require(name) end)
 
