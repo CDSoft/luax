@@ -258,7 +258,7 @@ local function add_openssl_rules()
 section "OpenSSL"
 ---------------------------------------------------------------------
 
-if ssl then
+if not ssl then return end
 
 var "openssl" "$builddir/openssl"
 var "openssl_src" (fs.realpath "ext/opt/openssl")
@@ -338,7 +338,7 @@ rule "make_openssl" {
             debug = 'export CFLAGS="-pipe -Og -g";',
         },
         "$lto",
-        "$openssl_src/Configure", "$openssl_target", openssl_options, ";",
+        "$openssl_src/Configure", "$openssl_target", openssl_options, "$additional_flags", ";",
         "make", "-j", nproc,
     },
     implicit_in = {
@@ -379,11 +379,18 @@ targets_to_compile:foreach(function(target)
                 windows = lto_opt,
             },
         },
+        additional_flags = case(target.os) {
+            linux = {
+                "no-asm",
+            },
+            macos = {
+                "no-asm",
+            },
+            windows = {},
+        },
     }
 
 end)
-
-end -- ssl
 
 end -- add_openssl_rules
 
@@ -1142,20 +1149,13 @@ section "LuaX archives"
 
 rule "lzip" {
     description = "lzip $in",
-    command = "$lzip -$level $in --output=- > $out",
+    command = "$lzip -9 $in --output=- > $out",
     implicit_in = "$lzip",
 }
 
-local function compress(dest)
-    local level = case(mode) {
-        fast  = 9,
-        small = 9,
-        debug = 0,
-    }
-    return function(source)
-        return build(dest/source:basename()..".lz") { "lzip", source, level=level }
-    end
-end
+local compress = F.curry(function(dest, source)
+    return build(dest/source:basename()..".lz") { "lzip", source }
+end)
 
 rule "pack" {
     description = "pack $out",

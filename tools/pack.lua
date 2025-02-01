@@ -72,18 +72,18 @@ if args.output then
 end
 
 if args.verbose then
-    print(("%s structure:"):format(args.output or "Archive"))
+    print(("\n%s"):format(args.output or "Archive"))
     local tab = "    "
     local function dump(t, indent)
         for k, v in F.pairs(t) do
             if type(v) == "table" then
-                print(("%s%s = {"):format(indent, k))
+                print(("\n%s%s"):format(indent, k))
                 dump(v, indent..tab)
-                print(("%s}"):format(indent))
             else
                 print(("%-32s = %s"):format(("%s%s"):format(indent, k), size(#v)))
             end
         end
     end
     dump(archive, tab)
+    print()
 end
