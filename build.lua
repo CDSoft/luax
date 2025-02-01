@@ -200,6 +200,7 @@ BUILD_CONFIG.COMPILER_VERSION = F.case(compiler) {
 }()
 BUILD_CONFIG.MODE = mode
 BUILD_CONFIG.LTO = use_lto
+BUILD_CONFIG.SOCKET = socket
 BUILD_CONFIG.SSL = ssl
 
 section("Compilation options")
@@ -697,9 +698,8 @@ targets_to_compile:foreach(function(target)
             linux   = {},
             macos   = {},
             windows = {
-                "-lws2_32",
-                "-ladvapi32",
                 "-lshlwapi",
+                optional(socket) "-lws2_32",
                 optional(ssl) "-lcrypt32",
             },
         },

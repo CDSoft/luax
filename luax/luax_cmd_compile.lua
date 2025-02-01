@@ -290,7 +290,8 @@ local function compile_native(tmp, current_output, target_definition)
             linux   = {},
             macos   = {},
             windows = {
-                "-lws2_32 -ladvapi32 -lshlwapi",
+                "-lshlwapi",
+                optional(build_config.socket) "-lws2_32",
                 optional(build_config.ssl) "-lcrypt32",
             }
         },
