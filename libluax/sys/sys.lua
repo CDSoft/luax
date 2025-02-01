@@ -26,10 +26,7 @@ local sys = {
     libc = "lua",
 }
 
--- The global _SYS_TARGETS can be defined by build.lua to use a specific target list
--- instead of the (possibly outdated) list provided by the interpreter running bang
--- when building LuaX itself
-local targets = _SYS_TARGETS or require "targets"
+local targets = require "targets"
 
 local kernel, machine
 

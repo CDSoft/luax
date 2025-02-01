@@ -75,7 +75,6 @@ generator {
 
 -- list of targets used for cross compilation (with Zig only)
 local targets = dofile "libluax/sys/targets.lua"
-_ENV._SYS_TARGETS = targets -- global used by sys to override the target list of the running luax interpreter
 local sys = dofile "libluax/sys/sys.lua"
 
 local usage = I{
