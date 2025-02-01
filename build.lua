@@ -250,6 +250,20 @@ local promotion = {}
 
 local compile_flags = file "compile_flags.txt"
 
+local function once(f)
+    local cache = {}
+    return F.curry(function(x, y)
+        local hash = F.show{x, y}
+        local val = cache[hash]
+        if val ~= nil then return val end
+        val = f(x)(y)
+        cache[hash] = val
+        return val
+    end)
+end
+
+local build_once = once(build)
+
 local openssl_libs = {}
 
 local function add_openssl_rules()
@@ -1154,7 +1168,7 @@ rule "lzip" {
 }
 
 local compress = F.curry(function(dest, source)
-    return build(dest/source:basename()..".lz") { "lzip", source }
+    return build_once(dest/source:basename()..".lz") { "lzip", source }
 end)
 
 rule "pack" {
@@ -1167,15 +1181,16 @@ rule "pack" {
     },
 }
 
-acc(libraries) {
-    build "$lib/luax.lar" { "pack",
+local function luax_archive(archive, compilation_targets)
+
+    return build(archive) { "pack",
         flags = {
             "-z none",
             "-s $tmp/lib/",
         },
 
         -- Lua runtime
-        build "$tmp/lib/lua_runtime/luax.lar" {
+        build_once "$tmp/lib/lua_runtime/luax.lar" {
             "bundle", lua_runtime,
             args = {
                 "-e lib",
@@ -1185,7 +1200,7 @@ acc(libraries) {
             },
         },
 
-        -- Lua runtime
+        -- Lua headers
         F.map(compress "$tmp/lib/headers", {
             "lua/lua.h",
             "lua/luaconf.h",
@@ -1193,7 +1208,7 @@ acc(libraries) {
         }),
 
         -- Binary runtimes
-        (cross and targets or host_targets) : map(function(target)
+        compilation_targets : map(function(target)
             local libs = F.flatten {
                 main_luax[target.name],
                 main_libluax[target.name],
@@ -1202,13 +1217,22 @@ acc(libraries) {
                 openssl_libs[target.name],
             }
             if has_partial_ld(target) then
-                libs = { build("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs } }
+                libs = { build_once("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs } }
             end
             return F.map(compress("$tmp/lib/targets"/target.name), libs)
         end),
 
     }
+
+end
+
+acc(libraries) {
+    luax_archive("$lib/luax.lar", cross and targets or host_targets),
 }
+
+local luax_lar = targets : map2t(function(target)
+    return target.name, release and luax_archive("$tmp/dist"/target.name/"lib/luax.lar", cross and targets or F{target})
+end)
 
 --===================================================================
 section "LuaX Lua implementation"
@@ -1639,11 +1663,6 @@ local function pure_lua(name)
     return ext==".lua"
 end
 
-local function no_arch(name)
-    local ext = name:ext()
-    return ext==".lua" or ext==".lar"
-end
-
 local dist = (function()
     if not release then return {} end
 
@@ -1661,15 +1680,12 @@ local dist = (function()
             end)
             local bin = {binary[target.name]}
             local lib = shared_library[target.name] and {shared_library[target.name]} or {}
+            local lar =  {luax_lar[target.name]}
             local files = F{
-                (bin .. binaries:filter(no_arch)) : map(cp_to"bin"),
-                (lib .. libraries:filter(no_arch)) : map(cp_to"lib"),
+                (bin .. binaries:filter(pure_lua)) : map(cp_to"bin"),
+                (lib .. libraries:filter(pure_lua) .. lar) : map(cp_to"lib"),
             }
-            local name = F{
-                "luax",
-                LUAX.VERSION,
-                target.name,
-            } : flatten() : str "-"
+            local name = F.flatten { "luax", LUAX.VERSION, target.name } : str "-"
             local path = "$release"/name..".tar.gz"
             return build(path) { "tar",
                 files,
