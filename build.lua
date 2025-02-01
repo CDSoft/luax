@@ -64,15 +64,13 @@ and run bang to regenerate build.ninja.
 local gitdir = (function()
     local dir = ".git"
     if fs.is_file(dir) then
-        return fs.read(dir) : lines() : map(string.words) : from_list() : nth "gitdir:"
+        return fs.read(dir) : match "gitdir:%s*(.*)"
     end
     return dir
 end)()
 
 generator {
-    implicit_in = {
-        gitdir/"refs/tags",
-    },
+    implicit_in = gitdir/"refs/tags",
 }
 
 -- list of targets used for cross compilation (with Zig only)
