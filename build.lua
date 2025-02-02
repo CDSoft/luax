@@ -1197,27 +1197,31 @@ local function luax_archive(archive, compilation_targets)
             },
         },
 
-        -- Lua headers
-        F.map(compress "$tmp/lib/headers", {
-            "lua/lua.h",
-            "lua/luaconf.h",
-            "lua/lauxlib.h",
-        }),
+        compilation_targets and {
 
-        -- Binary runtimes
-        compilation_targets : map(function(target)
-            local libs = F.flatten {
-                main_luax[target.name],
-                main_libluax[target.name],
-                libluax[target.name],
-                liblua[target.name],
-                openssl_libs[target.name],
-            }
-            if has_partial_ld(target) then
-                libs = { build_once("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs } }
-            end
-            return F.map(compress("$tmp/lib/targets"/target.name), libs)
-        end),
+            -- Lua headers
+            F.map(compress "$tmp/lib/headers", {
+                "lua/lua.h",
+                "lua/luaconf.h",
+                "lua/lauxlib.h",
+            }),
+
+            -- Binary runtimes
+            compilation_targets : map(function(target)
+                local libs = F.flatten {
+                    main_luax[target.name],
+                    main_libluax[target.name],
+                    libluax[target.name],
+                    liblua[target.name],
+                    openssl_libs[target.name],
+                }
+                if has_partial_ld(target) then
+                    libs = { build_once("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs } }
+                end
+                return F.map(compress("$tmp/lib/targets"/target.name), libs)
+            end),
+
+        } or {},
 
     }
 
@@ -1230,6 +1234,7 @@ acc(libraries) {
 local luax_lar = targets : map2t(function(target)
     return target.name, release and luax_archive("$tmp/dist"/target.name/"lib/luax.lar", cross and targets or F{target})
 end)
+luax_lar.lua = luax_archive("$tmp/dist/lua/lib/luax.lar")
 
 --===================================================================
 section "LuaX Lua implementation"
@@ -1694,9 +1699,10 @@ local dist = (function()
             local cp_to = F.curry(function(dest, file)
                 return build.cp("$dist"/"lua"/dest/file:basename()) { file }
             end)
+            local lar =  {luax_lar.lua}
             local files = {
                 binaries:filter(pure_lua) : map(cp_to"bin"),
-                libraries:filter(pure_lua) : map(cp_to"lib"),
+                (libraries:filter(pure_lua) .. lar) : map(cp_to"lib"),
             }
             local name = F{
                 "luax",

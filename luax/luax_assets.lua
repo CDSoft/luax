@@ -45,7 +45,7 @@ local function find_archive()
 
     local N = F.keys(arg) : minimum()
 
-    for i = N, 0 do
+    for i = 0, N, -1 do
 
         local path = findpath(arg[i])
         if path then

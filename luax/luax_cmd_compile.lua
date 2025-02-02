@@ -53,7 +53,7 @@ local function print_targets()
             path and "" or " [NOT FOUND]"))
     end)
     local assets = require "luax_assets"
-    if assets.path then
+    if assets.path and assets.targets then
         local luax_lar = assets.path:gsub("^"..home, "~")
         if assets.targets[sys.name] then
             print(("%-22s%s"):format("native", luax_lar))
@@ -66,7 +66,7 @@ local function print_targets()
     end
     print("")
     print(("Lua compiler: %s (LuaX %s)"):format(_VERSION, _LUAX_VERSION))
-    if assets.path then
+    if assets.path and assets.targets then
         local build_config = require "luax_build_config"
         print(("C compiler  : %s"):format(build_config.compiler.full_version))
     end
