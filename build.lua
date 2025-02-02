@@ -64,7 +64,7 @@ and run bang to regenerate build.ninja.
 local gitdir = (function()
     local dir = ".git"
     if fs.is_file(dir) then
-        return fs.read(dir) : match "gitdir:%s*(.*)"
+        return fs.read(dir) : match "gitdir:%s*(%S*)"
     end
     return dir
 end)()
