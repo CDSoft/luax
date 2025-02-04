@@ -1,6 +1,6 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
-@(doc "libluax/debug/debug_hook.lua")
+@doc "libluax/debug/debug_hook.lua"

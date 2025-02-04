@@ -1,6 +1,6 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
 # serpent: Lua serializer and pretty printer

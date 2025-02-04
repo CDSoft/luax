@@ -1,6 +1,6 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
-@(doc "libluax/socket/luasocket.h")
+@doc "libluax/socket/luasocket.h"

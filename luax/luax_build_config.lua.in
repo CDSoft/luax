@@ -30,7 +30,7 @@ return {
     },
     zig = @(COMPILER_NAME=="zig" and ("{ path=%q, path_win=%q }"):format(ZIG_PATH, ZIG_PATH_WIN) or nil),
     mode = @q(MODE),
-    lto = @(LTO),
-    socket = @(SOCKET),
-    ssl = @(SSL),
+    lto = @LTO,
+    socket = @SOCKET,
+    ssl = @SSL,
 }

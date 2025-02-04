@@ -1,6 +1,6 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
 ![](luax-banner.svg){width=100%}

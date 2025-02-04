@@ -1,8 +1,8 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
-@(doc "libluax/qmath/qmath.h")
+@doc "libluax/qmath/qmath.h"
 
-@(doc "libluax/qmath/qmath.lua")
+@doc "libluax/qmath/qmath.lua"

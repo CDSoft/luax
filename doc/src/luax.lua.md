@@ -1,6 +1,6 @@
 ---
 title: Lua eXtended - pure Lua implementation
-author: Christophe Delord
+author: @AUTHORS
 ---
 
 # LuaX in Lua

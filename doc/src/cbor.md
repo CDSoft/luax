@@ -1,6 +1,6 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
 # cbor: pure Lua implementation of the CBOR

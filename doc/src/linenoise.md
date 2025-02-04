@@ -1,8 +1,8 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
-@(doc "libluax/linenoise/linenoise.c")
+@doc "libluax/linenoise/linenoise.c"
 
-@(doc "libluax/linenoise/linenoise.lua")
+@doc "libluax/linenoise/linenoise.lua"

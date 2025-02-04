@@ -1614,9 +1614,12 @@ local pandoc_gfm = {
     "--fail-if-warnings",
 }
 
-local ypp_config_params = build.ypp_vars {
-    BYTECODE = bytecode,
-    LUAX = "$luax",
+local ypp_config_params = {
+    build.ypp_vars {
+        BYTECODE = bytecode,
+        LUAX = "$luax",
+    },
+    build.ypp_vars(LUAX),
 }
 
 local gfm = pipe {

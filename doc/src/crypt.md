@@ -1,8 +1,8 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
-@(doc "libluax/crypt/crypt.c")
+@doc "libluax/crypt/crypt.c"
 
-@(doc "libluax/crypt/crypt.lua")
+@doc "libluax/crypt/crypt.lua"

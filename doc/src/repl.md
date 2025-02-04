@@ -1,6 +1,6 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
-@(doc "luax/luax_cmd_run.lua")
+@doc "luax/luax_cmd_run.lua"

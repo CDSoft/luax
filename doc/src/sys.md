@@ -1,8 +1,8 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
-@(doc "libluax/sys/sys.c")
+@doc "libluax/sys/sys.c"
 
-@(doc "libluax/sys/sys.lua")
+@doc "libluax/sys/sys.lua"

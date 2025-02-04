@@ -1,8 +1,8 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
-@(doc "libluax/lzip/lzip.c")
+@doc "libluax/lzip/lzip.c"
 
-@(doc "libluax/lzip/lzip.lua")
+@doc "libluax/lzip/lzip.lua"

@@ -1,6 +1,6 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
-@(doc "libluax/mathx/mathx.h")
+@doc "libluax/mathx/mathx.h"

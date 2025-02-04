@@ -1,6 +1,6 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
-@(doc "libluax/lpeg/lpeg.h")
+@doc "libluax/lpeg/lpeg.h"

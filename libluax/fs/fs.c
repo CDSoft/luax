@@ -195,10 +195,12 @@ static void ls(lua_State *L, const char *dir, const char *base, bool dotted, boo
                 str_add(&full_path_str, LUA_DIRSEP, sizeof(LUA_DIRSEP)-1);
                 str_add(&full_path_str, file->d_name, strnlen(file->d_name, sizeof(file->d_name)));
 
+                if (!str_ok(&full_path_str)) { continue; } /* ignore too long path names */
+
                 bool is_dir;
 #ifdef _WIN32
                 struct stat buf;
-                is_dir = str_ok(&full_path_str) && stat(full_path, &buf) == 0 && S_ISDIR(buf.st_mode);
+                is_dir = stat(full_path, &buf) == 0 && S_ISDIR(buf.st_mode);
 #else
                 switch (file->d_type) {
                     case DT_DIR:
@@ -216,13 +218,7 @@ static void ls(lua_State *L, const char *dir, const char *base, bool dotted, boo
                 }
 #endif
                 if (is_dir) {
-                    if (cwd) {
-                        ls(L, file->d_name, base, dotted, recursive, size);
-                    } else {
-                        if (str_ok(&full_path_str)) {
-                            ls(L, full_path, base, dotted, recursive, size);
-                        }
-                    }
+                    ls(L, cwd ? file->d_name : full_path, base, dotted, recursive, size);
                 }
             }
         }
@@ -239,13 +235,13 @@ static inline void get_dirname(const char *path, t_str *str_dir)
     str_add(str_dir, name, len);
 }
 
-static inline void get_basename(const char *path, t_str *str_dir)
+static inline void get_basename(const char *path, t_str *str_base)
 {
     char tmp[PATH_MAX];
     strncpy(tmp, path, PATH_MAX);
     const char *name = basename(tmp);
     const size_t len = strnlen(name, sizeof(tmp));
-    str_add(str_dir, name, len);
+    str_add(str_base, name, len);
 }
 
 static int fs_ls(lua_State *L)

@@ -1,8 +1,8 @@
 ---
 title: Lua eXtended
-author: Christophe Delord
+author: @AUTHORS
 ---
 
-@(doc "libluax/fs/fs.c")
+@doc "libluax/fs/fs.c"
 
-@(doc "libluax/fs/fs.lua")
+@doc "libluax/fs/fs.lua"
