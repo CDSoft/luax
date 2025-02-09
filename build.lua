@@ -262,7 +262,7 @@ end
 
 local build_once = once(build)
 
-local openssl_libs = {}
+local openssl_libs = targets : map2t(function(target) return target.name, {} end)
 
 local function add_openssl_rules()
 
@@ -724,7 +724,6 @@ targets_to_compile:foreach(function(target)
         },
         implicit_in = {
             compiler_deps,
-            openssl_libs[target.name],
         },
         depfile = "$out.d",
     }
@@ -735,7 +734,6 @@ targets_to_compile:foreach(function(target)
         },
         implicit_in = {
             compiler_deps,
-            openssl_libs[target.name],
         },
         depfile = "$out.d",
     }
@@ -1060,12 +1058,18 @@ local function additional_flags(name)
     }
 end
 
-local function implicit_in(name)
-    return case(name:basename():splitext()) {
-        version = "$luax_config_h",
-        limath  = "check_limath_version",
-        imath   = "check_limath_version",
-        [Nil]   = {},
+local function implicit_in(target, name)
+    return {
+        case(name:basename():splitext()) {
+            version = "$luax_config_h",
+            limath  = "check_limath_version",
+            imath   = "check_limath_version",
+            luasec  = openssl_libs[target.name],
+            [Nil]   = {},
+        },
+        case(name:dirname():basename()) {
+            luasec = openssl_libs[target.name],
+        },
     }
 end
 
@@ -1086,7 +1090,7 @@ targets_to_compile:foreach(function(target)
         } : map(function(src)
             return build("$tmp"/target.name/"obj"/src:chext".o") { cc[target.name], src,
                 additional_flags = additional_flags(src),
-                implicit_in = implicit_in(src),
+                implicit_in = implicit_in(target, src),
             }
         end),
         F.flatten {
@@ -1099,7 +1103,7 @@ targets_to_compile:foreach(function(target)
         } : map(function(src)
             return build("$tmp"/target.name/"obj"/src:chext".o") { cc_ext[target.name], src,
                 additional_flags = additional_flags(src),
-                implicit_in = implicit_in(src),
+                implicit_in = implicit_in(target, src),
             }
         end),
     }
