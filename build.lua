@@ -1765,6 +1765,7 @@ install "bin" {binaries}
 install "lib" {libraries}
 
 clean "$builddir"
+clean.mrproper "ext/opt/openssl"
 
 phony "compile" (compile)
 default "compile"
