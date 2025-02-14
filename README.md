@@ -344,6 +344,7 @@ Some modules are heavily inspired by
 - [crypt](doc/crypt.md): cryptography module
 - [lz4](doc/lz4.md): Extremely Fast Compression algorithm
 - [lzip](doc/lzip.md): A compression library for the lzip format
+- [tar](doc/tar.md): A minimalistic tar archiving library
 - [lpeg](doc/lpeg.md): Parsing Expression Grammars For Lua
 - [luasocket](doc/luasocket.md): Network support for the Lua language
 - [luasec](doc/luasec.md): add secure connections to luasocket
