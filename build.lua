@@ -1680,7 +1680,7 @@ local dist = (function()
 
     rule "tar" {
         description = "tar $out",
-        command = "tar -caf $out $in --transform='s#$prefix#$dest#' --sort=name",
+        command = "tar -caf $out $prefix --transform='s#$prefix#$dest#' --sort=name",
     }
 
     return {
@@ -1691,7 +1691,7 @@ local dist = (function()
             local bin = {binary[target.name]}
             local lib = shared_library[target.name] and {shared_library[target.name]} or {}
             local lar =  {luax_lar[target.name]}
-            local files = F{
+            local files = {
                 (bin .. binaries:filter(pure_lua)) : map(cp_to"bin"),
                 (lib .. libraries:filter(pure_lua) .. lar) : map(cp_to"lib"),
             }
