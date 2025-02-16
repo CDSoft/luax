@@ -134,11 +134,13 @@ function tar.tar(files, xform)
     local chunks = F{}
     local already_created = {}
     local function add_dir(path, st0)
-        if already_created[path] then return end
-        if path:dirname() == path then return end
-        add_dir(path:dirname(), st0)
+        if already_created[path] then return true end
+        if path:dirname() == path then return true end
+        local ok, err = add_dir(path:dirname(), st0)
+        if not ok then return nil, err end
         local st = fs.stat(path) or F.merge{st0, { name=path, mode=tonumber("755", 8), size=0, type="directory" }}
-        local hd, err = header(st, F.id)
+        local hd
+        hd, err = header(st, F.id)
         if not hd then return nil, err end
         chunks[#chunks+1] = hd
         already_created[path] = true
@@ -146,10 +148,15 @@ function tar.tar(files, xform)
     end
     local function add_file(st)
         if st.type == "directory" then
-            ls(st.name/"**") : map(add_file)
+            for _, file in ipairs(ls(st.name/"**")) do
+                local ok, err = add_file(file)
+                if not ok then return nil, err end
+            end
         elseif st.type == "file" then
-            add_dir(xform(st.name):dirname(), st)
-            local hd, err = header(st, xform)
+            local ok, err = add_dir(xform(st.name):dirname(), st)
+            if not ok then return nil, err end
+            local hd
+            hd, err = header(st, xform)
             if not hd then return nil, err end
             chunks[#chunks+1] = hd
             local content = st.content
@@ -158,7 +165,7 @@ function tar.tar(files, xform)
                 if not content then return nil, err end
             end
             chunks[#chunks+1] = content
-            chunks[#chunks+1] = rep("\0", pad(#chunks[#chunks]))
+            chunks[#chunks+1] = rep("\0", pad(#content))
         end
         return true
     end
