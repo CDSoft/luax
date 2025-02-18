@@ -62,13 +62,20 @@ local default_mode = {
     directory = tonumber("755", 8),
 }
 
-local function remove_init_sep(path)
-    local function is_sep(d) return d==fs.sep end
+local Discarded = {}
+
+local function path_components(path)
+    local function is_sep(d) return d==fs.sep or d=="." or d==" " end
     return fs.splitpath(path):drop_while(is_sep):drop_while_end(is_sep)
 end
 
+local function clean_path(path)
+    return fs.join(path_components(path))
+end
+
 local function header(st, xform)
-    local name = xform(fs.join(remove_init_sep(st.name)))
+    local name = xform(clean_path(st.name))
+    if name == nil then return Discarded end
     if #name > 100 then return nil, name..": filename too long" end
     if st.size >= 8*1024^3 then return nil, st.name..": file too big" end
     local ftype = file_type[st.type]
@@ -132,50 +139,98 @@ tar.tar(files, [xform])
 function tar.tar(files, xform)
     xform = xform or F.id
     local chunks = F{}
-    local already_created = {}
+
+    local already_done = {}
+    local function done(name)
+        if already_done[name] then return true end
+        already_done[name] = true
+        return false
+    end
+
     local function add_dir(path, st0)
-        if already_created[path] then return true end
+        if done(path) then return true end
         if path:dirname() == path then return true end
         local ok, err = add_dir(path:dirname(), st0)
         if not ok then return nil, err end
-        local st = fs.stat(path) or F.merge{st0, { name=path, mode=tonumber("755", 8), size=0, type="directory" }}
+        local st = F.merge{st0, { name=path, mode=tonumber("755", 8), size=0, type="directory" }}
         local hd
         hd, err = header(st, F.id)
         if not hd then return nil, err end
         chunks[#chunks+1] = hd
-        already_created[path] = true
         return true
     end
+
     local function add_file(st)
-        if st.type == "directory" then
-            for _, file in ipairs(ls(st.name/"**")) do
-                local ok, err = add_file(file)
-                if not ok then return nil, err end
-            end
-        elseif st.type == "file" then
-            local ok, err = add_dir(xform(st.name):dirname(), st)
-            if not ok then return nil, err end
-            local hd
-            hd, err = header(st, xform)
-            if not hd then return nil, err end
-            chunks[#chunks+1] = hd
-            local content = st.content
-            if not content then
-                content, err = fs.read_bin(st.name)
-                if not content then return nil, err end
-            end
-            chunks[#chunks+1] = content
-            chunks[#chunks+1] = rep("\0", pad(#content))
-        end
+        local xformed_name = xform(st.name)
+        if xformed_name == nil then return true end
+        if done(xformed_name) then return true end
+        local ok, err = add_dir(xformed_name:dirname(), st)
+        if not ok then return nil, err end
+        local hd
+        hd, err = header(st, xform)
+        if hd == Discarded then return true end
+        if not hd then return nil, err end
+        chunks[#chunks+1] = hd
+        chunks[#chunks+1] = st.content
+        chunks[#chunks+1] = rep("\0", pad(#st.content))
         return true
     end
+
+    local function add_real_dir(path)
+        if done(path) then return true end
+        if path:dirname() == path then return true end
+        local ok, err = add_real_dir(path:dirname())
+        if not ok then return nil, err end
+        local st
+        st, err = fs.stat(path)
+        if not st then return nil, err end
+        local hd
+        hd, err = header(st, xform)
+        if hd == Discarded then return true end
+        if not hd then return nil, err end
+        chunks[#chunks+1] = hd
+        return true
+    end
+
+    local function add_real_file(st)
+        local xformed_name = xform(st.name)
+        if xformed_name == nil then return true end
+        if done(xformed_name) then return true end
+        local ok, err = add_real_dir(st.name:dirname())
+        if not ok then return nil, err end
+        local hd
+        hd, err = header(st, xform)
+        if hd == Discarded then return true end
+        if not hd then return nil, err end
+        local content
+        content, err = fs.read_bin(st.name)
+        if not content then return nil, err end
+        chunks[#chunks+1] = hd
+        chunks[#chunks+1] = content
+        chunks[#chunks+1] = rep("\0", pad(#content))
+        return true
+    end
+
     for _, file in ipairs(files) do
+
         if type(file) == "string" then
             local st, err = fs.stat(file)
             if not st then return nil, err end
-            local ok
-            ok, err = add_file(st)
-            if not ok then return nil, err end
+            if st.type == "file" then
+                add_real_file(st)
+            elseif st.type == "directory" then
+                add_real_dir(st.name)
+                for _, name in ipairs(fs.ls(st.name/"**")) do
+                    local st, err = fs.stat(name)
+                    if not st then return nil, err end
+                    if st.type == "directory" then
+                        add_real_dir(st.name)
+                    elseif st.type == "file" then
+                        add_real_file(st)
+                    end
+                end
+            end
+
         elseif type(file) == "table" then
             local st0 = nil
             local err
@@ -203,10 +258,14 @@ function tar.tar(files, xform)
             local ok
             ok, err = add_file(st)
             if not ok then return nil, err end
+
         end
+
     end
+
     chunks[#chunks+1] = footer()
     return chunks:str()
+
 end
 
 --[[@@@
@@ -222,7 +281,6 @@ function tar.untar(archive, xform)
     xform = xform or F.id
     if #archive % 512 ~= 0 then return nil, "Corrupted archive" end
     local files = F{}
-    local non_empty_dirs = {}
     local i = 1
     while i <= #archive-512 do
         local st, err = parse(archive, i)
@@ -236,14 +294,11 @@ function tar.untar(archive, xform)
             return nil, st.type..": file type not supported"
         end
         st.name = xform(st.name)
-        non_empty_dirs[st.name:dirname()] = true
-        files[#files+1] = st
+        if st.name ~= nil then
+            files[#files+1] = st
+        end
     end
     if archive:sub(i) ~= footer() then return nil, "Corrupted archive" end
-    files = files : filter(function(file)
-        -- only keep files and non empty directories
-        return file.type=="file" or file.type=="directory" and non_empty_dirs[file.name]
-    end)
     return files
 end
 
@@ -257,9 +312,10 @@ tar.chain(xforms)
 function tar.chain(funcs)
     return function(x)
         for _, f in ipairs(funcs) do
-            x = f(x)
+            x = f(clean_path(x))
+            if x == nil then return nil end
         end
-        return x
+        return clean_path(x)
     end
 end
 
@@ -275,16 +331,16 @@ tar.strip(x)
 function tar.strip(x)
     if type(x) == "number" then
         return function(path)
-            local dirs = remove_init_sep(path:dirname())
-            if x >= #dirs then return path:basename() end
-            return fs.join(dirs:drop(x))/path:basename()
+            local dirs = path_components(path:dirname())
+            if x > #dirs then return nil end
+            return clean_path(fs.join(dirs:drop(x))/path:basename())
         end
     else
-        local prefix = fs.join(remove_init_sep(x))
+        local prefix = clean_path(x)
         return function(path)
-            path = fs.join(remove_init_sep(path))
+            path = clean_path(path)
             if path:has_prefix(prefix) then
-                return fs.join(remove_init_sep(path:sub(#prefix+1)))
+                return clean_path(path:sub(#prefix+1))
             else
                 return path
             end
@@ -300,10 +356,10 @@ tar.add(p)
 @@@]]
 
 function tar.add(p)
-    local prefix = remove_init_sep(p)
+    local prefix = path_components(p)
     return function(path)
-        local components = remove_init_sep(path)
-        return fs.join(prefix..components)
+        local components = path_components(path)
+        return clean_path(fs.join(prefix..components))
     end
 end
 

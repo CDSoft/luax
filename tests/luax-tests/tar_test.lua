@@ -121,7 +121,7 @@ drwxr-xr-x 0/0               0 2025-02-14 22:30 foo/bar
                     mtime = 1739568690,
                     size = 13,
                     content = "Hello, World!",
-                }
+                },
             })
         end
 
@@ -143,14 +143,6 @@ drwxr-xr-x 0/0               0 2025-02-14 22:30 foo/bar
                     size = 11,
                     content = "baz content",
                 },
-                {
-                    name = "hello.txt",
-                    type = "file",
-                    mode = tonumber("644", 8),
-                    mtime = 1739568690,
-                    size = 13,
-                    content = "Hello, World!",
-                }
             })
         end
 
@@ -171,7 +163,6 @@ drwxr-xr-x 0/0               0 2025-02-14 22:30 foo/bar
             eq(archive_content, [[
 drwxr-xr-x 0/0               0 2025-02-14 22:30 baz
 -rw-r--r-- 0/0              11 2025-02-14 22:30 baz/baz.txt
--rw-r--r-- 0/0              13 2025-02-14 22:31 baz/hello.txt
 ]])
         end
 
@@ -192,14 +183,6 @@ drwxr-xr-x 0/0               0 2025-02-14 22:30 baz
                 size = 11,
                 content = "baz content",
             },
-            {
-                name = "baz/hello.txt",
-                type = "file",
-                mode = tonumber("644", 8),
-                mtime = 1739568690,
-                size = 13,
-                content = "Hello, World!",
-            }
         })
 
     end
