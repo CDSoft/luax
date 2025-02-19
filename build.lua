@@ -1678,50 +1678,41 @@ local dist = (function()
 
     var "release" ("$builddir/release"/LUAX.VERSION)
 
-    rule "tar" {
-        description = "tar $out",
-        command = "tar -caf $out $prefix --transform='s#$prefix#$dest#' --sort=name",
-    }
+    local cp_to = F.curry(function(dest, files)
+            return F.flatten{files} : map(function(file)
+                return build.cp("$dist"/dest/file:basename()) { file }
+            end)
+    end)
 
     return {
         targets : map(function(target)
-            local cp_to = F.curry(function(dest, file)
-                return build.cp("$dist"/target.name/dest/file:basename()) { file }
-            end)
-            local bin = {binary[target.name]}
-            local lib = shared_library[target.name] and {shared_library[target.name]} or {}
-            local lar =  {luax_lar[target.name]}
-            local files = {
-                (bin .. binaries:filter(pure_lua)) : map(cp_to"bin"),
-                (lib .. libraries:filter(pure_lua) .. lar) : map(cp_to"lib"),
-            }
             local name = F.flatten { "luax", LUAX.VERSION, target.name } : str "-"
-            local path = "$release"/name..".tar.gz"
-            return build(path) { "tar",
-                files,
-                prefix = "$dist"/target.name,
-                dest = name,
+            cp_to(name/"bin") {
+                binary[target.name],
+                binaries:filter(pure_lua),
+            }
+            cp_to(name/"lib") {
+                shared_library[target.name] or {},
+                libraries:filter(pure_lua),
+                luax_lar[target.name],
+            }
+            return build.tar("$release"/name..".tar.gz") {
+                base = "$dist",
+                name = name,
             }
         end),
         (function()
-            local cp_to = F.curry(function(dest, file)
-                return build.cp("$dist"/"lua"/dest/file:basename()) { file }
-            end)
-            local lar =  {luax_lar.lua}
-            local files = {
-                binaries:filter(pure_lua) : map(cp_to"bin"),
-                (libraries:filter(pure_lua) .. lar) : map(cp_to"lib"),
+            local name = F.flatten { "luax", LUAX.VERSION, "lua" } : str "-"
+            cp_to(name/"bin") {
+                    binaries:filter(pure_lua),
             }
-            local name = F{
-                "luax",
-                LUAX.VERSION,
-                "lua",
-            } : flatten() : str "-"
-            local path = "$release"/name..".tar.gz"
-            return build(path) { "tar",
-                files,
-                prefix = "$dist"/"lua",
-                dest = name,
+            cp_to(name/"lib") {
+                libraries:filter(pure_lua),
+                luax_lar.lua
+            }
+            return build.tar("$release"/name..".tar.gz") {
+                base = "$dist",
+                name = name,
             }
         end)(),
         (function()
