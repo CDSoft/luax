@@ -363,6 +363,7 @@ Some modules are heavily inspired by
 - [lpeg](doc/lpeg.md): Parsing Expression Grammars For Lua
 - [luasocket](doc/luasocket.md): Network support for the Lua language
 - [luasec](doc/luasec.md): add secure connections to luasocket
+- [curl](doc/curl.md): simple curl command line interface
 - [argparse](doc/argparse.md): Feature-rich command line parser for Lua
 - [serpent](doc/serpent.md): Lua serializer and pretty printer
 - [cbor](doc/cbor.md): pure Lua implementation of the CBOR

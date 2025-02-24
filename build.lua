@@ -942,6 +942,7 @@ end
 rt { luax="libluax/F/F.lua",                        lua="libluax/F/F.lua"                                       }
 rt {                                                lua="libluax/complex/complex.lua"                           }
 rt { luax="libluax/crypt/crypt.lua",                lua={"libluax/crypt/crypt.lua", "libluax/crypt/_crypt.lua"} }
+rt { luax="libluax/curl/curl.lua",                  lua="libluax/curl/curl.lua"                                 }
 rt { luax="libluax/fs/fs.lua",                      lua={"libluax/fs/fs.lua", "libluax/fs/_fs.lua"}             }
 rt {                                                lua="libluax/imath/imath.lua"                               }
 rt { luax="libluax/import/import.lua",              lua="libluax/import/import.lua"                             }
