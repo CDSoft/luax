@@ -97,8 +97,8 @@ local function header(st, xform)
     return header1..checksum..header2
 end
 
-local function footer()
-    return pack("c512", "")
+local function end_of_archive()
+    return pack("c1024", "")
 end
 
 local function parse(archive, i)
@@ -263,7 +263,7 @@ function tar.tar(files, xform)
 
     end
 
-    chunks[#chunks+1] = footer()
+    chunks[#chunks+1] = end_of_archive()
     return chunks:str()
 
 end
@@ -280,9 +280,14 @@ tar.untar(archive, [xform])
 function tar.untar(archive, xform)
     xform = xform or F.id
     if #archive % 512 ~= 0 then return nil, "Corrupted archive" end
+    local eof = end_of_archive()
     local files = F{}
     local i = 1
-    while i <= #archive-512 do
+    while i <= #archive do
+        if archive:byte(i, i) == 0 then
+            if archive:sub(i, i+#eof-1):is_prefix_of(eof) then break end
+            return nil, "Corrupted archive"
+        end
         local st, err = parse(archive, i)
         if not st then return nil, err end
         if st.type == "file" then
@@ -298,7 +303,6 @@ function tar.untar(archive, xform)
             files[#files+1] = st
         end
     end
-    if archive:sub(i) ~= footer() then return nil, "Corrupted archive" end
     return files
 end
 
