@@ -38,6 +38,7 @@ return function()
         arg_test        = "tests/luax-tests/arg_test.lua",
         cbor_test       = "tests/luax-tests/cbor_test.lua",
         complex_test    = "tests/luax-tests/complex_test.lua",
+        curl_test       = "tests/luax-tests/curl_test.lua",
         crypt_test      = "tests/luax-tests/crypt_test.lua",
         debug_test      = "tests/luax-tests/debug_test.lua",
         fs_test         = "tests/luax-tests/fs_test.lua",
