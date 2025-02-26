@@ -4,8 +4,8 @@
 local tar = require "tar"
 ```
 
-The `tar` module can read and write tar archives. Only files and
-directories are supported.
+The `tar` module can read and write tar archives. Only files,
+directories and symbolic links are supported.
 
 ``` lua
 tar.tar(files, [xform])

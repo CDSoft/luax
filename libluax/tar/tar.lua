@@ -28,7 +28,7 @@ local tar = require "tar"
 ```
 
 The `tar` module can read and write tar archives.
-Only files and directories are supported.
+Only files, directories and symbolic links are supported.
 @@@]]
 
 -- https://fr.wikipedia.org/wiki/Tar_%28informatique%29
@@ -51,6 +51,7 @@ end
 
 local file_type = F{
     file = "0",
+    link = "2",
     directory = "5",
 }
 
@@ -59,6 +60,7 @@ rev_file_type["\0"] = rev_file_type["0"]
 
 local default_mode = {
     file = tonumber("644", 8),
+    link = tonumber("777", 8),
     directory = tonumber("755", 8),
 }
 
@@ -77,20 +79,22 @@ local function header(st, xform)
     local name = xform(clean_path(st.name))
     if name == nil then return Discarded end
     if #name > 100 then return nil, name..": filename too long" end
-    if st.size >= 8*1024^3 then return nil, st.name..": file too big" end
+    if st.type=="file" and st.size >= 8*1024^3 then return nil, st.name..": file too big" end
     local ftype = file_type[st.type]
     if not ftype then return nil, st.name..": wrong file type" end
+    if st.type=="link" and not st.link then return nil, st.name..": missing link name" end
+    if st.link and #st.link > 100 then return nil, link..": filename too long" end
     local header1 = pack("c100c8c8c8c12c12",
         name,
         format("%07o", st.mode or default_mode[st.type] or "0"),
         "",
         "",
-        format("%011o", st.size),
+        format("%011o", st.size or 0),
         format("%011o", st.mtime)
     )
     local header2 = pack("c1c100c6c2c32c32c8c8c155c12",
         ftype,
-        "",
+        st.link or "",
         "", "", "", "", "", "", "", ""
     )
     local checksum = format("%07o", sum(bytes(header1)) + sum(bytes(header2)) + 32*8)
@@ -102,7 +106,7 @@ local function end_of_archive()
 end
 
 local function parse(archive, i)
-    local name, mode, _, _, size, mtime, checksum, ftype = unpack("c100c8c8c8c12c12c8c1", archive, i)
+    local name, mode, _, _, size, mtime, checksum, ftype, link = unpack("c100c8c8c8c12c12c8c1c100", archive, i)
     if not checksum then return nil, "Corrupted archive" end
     local function cut(s) return s:match "^[^\0]*" end
     if sum(bytes(archive:sub(i, i+148-1))) + sum(bytes(archive:sub(i+156, i+512-1))) + 32*8 ~= tonumber(cut(checksum), 8) then
@@ -116,6 +120,7 @@ local function parse(archive, i)
         size = tonumber(cut(size), 8),
         mtime = tonumber(cut(mtime), 8),
         type = ftype,
+        link = ftype=="link" and cut(link) or nil,
     }
 end
 
@@ -176,6 +181,20 @@ function tar.tar(files, xform)
         return true
     end
 
+    local function add_link(st)
+        local xformed_name = xform(st.name)
+        if xformed_name == nil then return true end
+        if done(xformed_name) then return true end
+        local ok, err = add_dir(xformed_name:dirname(), st)
+        if not ok then return nil, err end
+        local hd
+        hd, err = header(st, xform)
+        if hd == Discarded then return true end
+        if not hd then return nil, err end
+        chunks[#chunks+1] = hd
+        return true
+    end
+
     local function add_real_dir(path)
         if done(path) then return true end
         if path:dirname() == path then return true end
@@ -211,6 +230,23 @@ function tar.tar(files, xform)
         return true
     end
 
+    local function add_real_link(st)
+        local xformed_name = xform(st.name)
+        if xformed_name == nil then return true end
+        if done(xformed_name) then return true end
+        local linkst, sterr = fs.stat(st.name)
+        if not linkst then return nil, sterr end
+        local ok, err = add_real_dir(st.name:dirname())
+        if not ok then return nil, err end
+        local hd
+        st.link = stlink.name
+        hd, err = header(st, xform)
+        if hd == Discarded then return true end
+        if not hd then return nil, err end
+        chunks[#chunks+1] = hd
+        return true
+    end
+
     for _, file in ipairs(files) do
 
         if type(file) == "string" then
@@ -218,6 +254,8 @@ function tar.tar(files, xform)
             if not st then return nil, err end
             if st.type == "file" then
                 add_real_file(st)
+            elseif st.type == "link" then
+                add_real_link(st)
             elseif st.type == "directory" then
                 add_real_dir(st.name)
                 for _, name in ipairs(fs.ls(st.name/"**")) do
@@ -241,14 +279,28 @@ function tar.tar(files, xform)
             if file.content then
                 st.content = file.content
                 st.size = #file.content
+            elseif file.link then
+                st.type = "link"
+                st.link = file.link
             else
-                st0, err = fs.stat(file.name)
+                if sys.os == "windows" then
+                    st0, err = fs.stat(file.name)
+                else
+                    st0, err = fs.lstat(file.name)
+                end
                 if not st0 then return nil, err end
-                local content
-                content, err = fs.read_bin(file.name)
-                if not content then return nil, err end
-                st.size = st0.size
-                st.content = content
+                if st0.type == "link" then
+                    local linkst, linkerr = fs.stat(file.name)
+                    if not linkst then return nil, linkerr end
+                    st.type = "link"
+                    st.link = linkst.name
+                else
+                    local content
+                    content, err = fs.read_bin(file.name)
+                    if not content then return nil, err end
+                    st.size = st0.size
+                    st.content = content
+                end
             end
             if file.mtime then
                 st.mtime = file.mtime
@@ -256,7 +308,11 @@ function tar.tar(files, xform)
                 st.mtime = st0 and st0.mtime or os.time()
             end
             local ok
-            ok, err = add_file(st)
+            if st.type == "link" then
+                ok, err = add_link(st)
+            else
+                ok, err = add_file(st)
+            end
             if not ok then return nil, err end
 
         end
@@ -293,7 +349,7 @@ function tar.untar(archive, xform)
         if st.type == "file" then
             st.content = archive:sub(i+512, i+512+st.size-1)
             i = i + 512 + st.size + pad(st.size)
-        elseif st.type == "directory" then
+        elseif st.type == "link" or st.type == "directory" then
             i = i + 512
         else
             return nil, st.type..": file type not supported"

@@ -74,6 +74,7 @@ return function()
         local files = {
             { name="foo/bar/baz.txt", content="baz content", mtime=1739568630 },
             { name="hello.txt", content="Hello, World!", mtime=1739568630+60 },
+            { name="baz/baz.link", link="foo/bar/baz.txt", mtime=1739568630+60*2 },
         }
         local archive = tar.tar(files)
         if sys.os == "linux" then
@@ -86,6 +87,8 @@ drwxr-xr-x 0/0               0 2025-02-14 22:30 foo
 drwxr-xr-x 0/0               0 2025-02-14 22:30 foo/bar
 -rw-r--r-- 0/0              11 2025-02-14 22:30 foo/bar/baz.txt
 -rw-r--r-- 0/0              13 2025-02-14 22:31 hello.txt
+drwxr-xr-x 0/0               0 2025-02-14 22:32 baz
+lrwxrwxrwx 0/0               0 2025-02-14 22:32 baz/baz.link -> foo/bar/baz.txt
 ]])
         end
 
@@ -122,6 +125,21 @@ drwxr-xr-x 0/0               0 2025-02-14 22:30 foo/bar
                     size = 13,
                     content = "Hello, World!",
                 },
+                {
+                    name = "baz",
+                    type = "directory",
+                    mode = tonumber("755", 8),
+                    mtime = 1739568750,
+                    size = 0,
+                },
+                {
+                    name = "baz/baz.link",
+                    type="link",
+                    mode = tonumber("777", 8),
+                    mtime = 1739568750,
+                    size = 0,
+                    link = "foo/bar/baz.txt",
+                },
             })
         end
 
@@ -143,6 +161,14 @@ drwxr-xr-x 0/0               0 2025-02-14 22:30 foo/bar
                     size = 11,
                     content = "baz content",
                 },
+                {
+                    name = "baz.link",
+                    type="link",
+                    mode = tonumber("777", 8),
+                    mtime = 1739568750,
+                    size = 0,
+                    link = "foo/bar/baz.txt",
+                }
             })
         end
 
