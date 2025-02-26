@@ -93,8 +93,8 @@ local function header(st, xform)
         "",
         "", "", "", "", "", "", "", ""
     )
-    local checksum = format("%08o", sum(bytes(header1)) + sum(bytes(header2)) + 32*8)
-    return header1..checksum..header2
+    local checksum = format("%07o", sum(bytes(header1)) + sum(bytes(header2)) + 32*8)
+    return header1..pack("c8", checksum)..header2
 end
 
 local function end_of_archive()
@@ -104,10 +104,10 @@ end
 local function parse(archive, i)
     local name, mode, _, _, size, mtime, checksum, ftype = unpack("c100c8c8c8c12c12c8c1", archive, i)
     if not checksum then return nil, "Corrupted archive" end
-    if sum(bytes(archive:sub(i, i+148-1))) + sum(bytes(archive:sub(i+156, i+512-1))) + 32*8 ~= tonumber(checksum, 8) then
+    local function cut(s) return s:match "^[^\0]*" end
+    if sum(bytes(archive:sub(i, i+148-1))) + sum(bytes(archive:sub(i+156, i+512-1))) + 32*8 ~= tonumber(cut(checksum), 8) then
         return nil, "Wrong checksum"
     end
-    local function cut(s) return s:match "^[^\0]*" end
     ftype = rev_file_type[ftype]
     if not file_type then return nil, cut(name)..": wrong file type" end
     return {
