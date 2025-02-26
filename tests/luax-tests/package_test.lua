@@ -65,6 +65,7 @@ return function()
         tar_test        = "tests/luax-tests/tar_test.lua",
         test            = "tests/luax-tests/test.lua",
         test_test       = "tests/luax-tests/test_test.lua",
+        wget_test       = "tests/luax-tests/wget_test.lua",
     }
     or {}
 
