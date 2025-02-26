@@ -53,18 +53,12 @@ download()
     local URL="$1"
     local OUTPUT="$2"
     echo "Downloading $URL"
-    if found curl
+    if ! found curl
     then
-        curl --insecure -L "$URL" -o "$OUTPUT" --progress-bar --fail
-        return
+        echo "ERROR: curl not found"
+        exit 1
     fi
-    if found wget
-    then
-        wget --no-check-certificate "$URL" -O "$OUTPUT"
-        return
-    fi
-    echo "ERROR: curl or wget not found"
-    exit 1
+    curl --insecure -L "$URL" -o "$OUTPUT" --progress-bar --fail
 }
 
 update_lua()

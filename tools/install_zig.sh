@@ -33,18 +33,12 @@ download()
     local URL="$1"
     local OUTPUT="$2"
     echo "Downloading $URL"
-    if found curl
+    if ! found curl
     then
-        curl -L "$URL" -o "$OUTPUT" --progress-bar --fail
-        return
+        echo "ERROR: curl not found"
+        exit 1
     fi
-    if found wget
-    then
-        wget "$URL" -O "$OUTPUT"
-        return
-    fi
-    echo "ERROR: curl or wget not found"
-    exit 1
+    curl -L "$URL" -o "$OUTPUT" --progress-bar --fail
 }
 
 ARCH="$(uname -m)"
