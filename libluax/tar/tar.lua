@@ -109,7 +109,7 @@ local function parse(archive, i)
         return nil, "Wrong checksum"
     end
     ftype = rev_file_type[ftype]
-    if not file_type then return nil, cut(name)..": wrong file type" end
+    if not ftype then return nil, cut(name)..": wrong file type" end
     return {
         name = cut(name),
         mode = tonumber(cut(mode), 8),
