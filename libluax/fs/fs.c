@@ -493,7 +493,7 @@ static int fs_symlink(lua_State *L)
 #else
     const char *target = luaL_checkstring(L, 1);
     const char *linkpath = luaL_checkstring(L, 2);
-    return luax_push_result_or_errno(L, symlink(target, linkpath), linkpath);
+    return luax_push_result_or_errno(L, symlink(target, linkpath) == 0, linkpath);
 #endif
 }
 
