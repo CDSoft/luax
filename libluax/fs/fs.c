@@ -52,6 +52,7 @@ local fs = require "fs"
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
@@ -782,7 +783,12 @@ fs.touch(name, other_name)
 sets the access time and the
 modification time of file `name` with the times of file `other_name`.
 @@@*/
-static int fs_touch(lua_State *L)
+
+#ifdef _WIN32
+static int do_touch(lua_State *L, int (*utime_function)(const char*, struct utimbuf *))
+#else
+static int do_touch(lua_State *L, int (*utimes_function)(const char*, const struct timeval *))
+#endif
 {
     const char *path = luaL_checkstring(L, 1);
     struct utimbuf t;
@@ -811,9 +817,44 @@ static int fs_touch(lua_State *L)
     {
         const int fd = open(path, O_CREAT, S_IRUSR | S_IWUSR);
         if (fd < 0) return luax_push_errno(L, path);
-        if (fd >= 0) close(fd);
+        close(fd);
     }
-    return luax_push_result_or_errno(L, utime(path, &t) == 0, path);
+#ifdef _WIN32
+    return luax_push_result_or_errno(L, utime_function(path, &t) == 0, path);
+#else
+    struct timeval tv[2] = {
+        { .tv_sec=t.actime, .tv_usec=0 },
+        { .tv_sec=t.modtime, .tv_usec=0 },
+    };
+    return luax_push_result_or_errno(L, utimes_function(path, tv) == 0, path);
+#endif
+}
+
+static int fs_touch(lua_State *L)
+{
+#ifdef _WIN32
+    return do_touch(L, utime);
+#else
+    return do_touch(L, utimes);
+#endif
+}
+
+/*@@@
+```lua
+fs.ltouch(name)
+fs.ltouch(name, number)
+fs.ltouch(name, other_name)
+```
+like `fs.touch` without following symbolic links.
+@@@*/
+
+static int fs_ltouch(lua_State *L)
+{
+#ifdef _WIN32
+    return do_touch(L, utime);
+#else
+    return do_touch(L, lutimes);
+#endif
 }
 
 /*@@@
@@ -1143,6 +1184,7 @@ static const luaL_Reg fslib[] =
     {"inode",       fs_inode},
     {"chmod",       fs_chmod},
     {"touch",       fs_touch},
+    {"ltouch",      fs_ltouch},
     {"copy",        fs_copy},
     {"symlink",     fs_symlink},
     {"is_file",     fs_is_file},

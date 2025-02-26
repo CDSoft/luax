@@ -153,6 +153,14 @@ sets the access time and the modification time of file `name` with the
 times of file `other_name`.
 
 ``` lua
+fs.ltouch(name)
+fs.ltouch(name, number)
+fs.ltouch(name, other_name)
+```
+
+like `fs.touch` without following symbolic links.
+
+``` lua
 fs.basename(path)
 ```
 
