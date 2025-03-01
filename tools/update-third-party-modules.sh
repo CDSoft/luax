@@ -41,6 +41,7 @@ update_all()
     update_linenoise    utf8-support # switch to "master" when the UTF-8 support is merged
     #update_json         master
     update_dkjson       2.8
+    update_isocline     1.0.9
 }
 
 found()
@@ -398,6 +399,33 @@ update_linenoise()
         -e 's/case ENTER:/case ENTER: case 10:/'                        \
         -e 's/TCSAFLUSH/TCSADRAIN/'                                     \
         ext/c/linenoise/linenoise.c
+}
+
+update_isocline()
+{
+    local ISOCLINE_REPO="daanx/isocline"
+    local ISOCLINE_VERSION="$1"
+    local ISOCLINE_ARCHIVE="isocline-$ISOCLINE_VERSION.zip"
+    local ISOCLINE_URL="https://github.com/$ISOCLINE_REPO/archive/refs/tags/v$ISOCLINE_VERSION.zip"
+
+    mkdir -p "$TMP"
+    download "$ISOCLINE_URL" "$TMP/$ISOCLINE_ARCHIVE"
+
+    rm -rf ext/c/isocline
+    mkdir -p ext/c/isocline
+    unzip "$TMP/$ISOCLINE_ARCHIVE" '*/include/*' '*/src/*' '*/LICENSE' -d ext/c/isocline
+
+    mv "ext/c/isocline/isocline-$ISOCLINE_VERSION/LICENSE" ext/c/isocline/
+    mv "ext/c/isocline/isocline-$ISOCLINE_VERSION/include" ext/c/isocline/
+    mkdir -p ext/c/isocline/{src,lib}
+    mv "ext/c/isocline/isocline-$ISOCLINE_VERSION/src/isocline.c" ext/c/isocline/src/
+    mv "ext/c/isocline/isocline-$ISOCLINE_VERSION/src"/* ext/c/isocline/lib/
+
+    rm -rf  "ext/c/isocline/isocline-$ISOCLINE_VERSION"
+
+    sed -i 's@include "\([^.].*\.[ch]\)"@include "../lib/\1"@' ext/c/isocline/src/isocline.c
+    sed -i 's@IC_MAX_HISTORY ([^)]*)@IC_MAX_HISTORY (1000)@' ext/c/isocline/lib/history.c
+
 }
 
 update_json()

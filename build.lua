@@ -541,6 +541,15 @@ local cflags = {
     optional(lz4)    "-DLUAX_USE_LZ4",
     optional(socket) "-DLUAX_USE_SOCKET",
     optional(ssl)    "-DLUAX_USE_SSL",
+    optional(san) {
+        "-DLUAI_ASSERT",
+        "-DLUA_USE_APICHECK",
+    },
+    case(mode) {
+        fast  = "-DIC_NO_DEBUG_MSG",
+        small = "-DIC_NO_DEBUG_MSG",
+        debug = {},
+    }
 }
 
 local luax_cflags = F{
@@ -668,10 +677,6 @@ targets_to_compile:foreach(function(target)
             linux   = "-DLUA_USE_LINUX",
             macos   = "-DLUA_USE_MACOSX",
             windows = {},
-        },
-        optional(san) {
-            "-DLUAI_ASSERT",
-            "-DLUA_USE_APICHECK",
         },
     }
     local opt_include_path = F.flatten {
@@ -816,7 +821,8 @@ local sources = F{
     third_party_c_files = F.flatten {
         ls "ext/c/**.c"
             : filter(function(name) return not name:match "lzlib/lib/inc" end)
-            : filter(function(name) return not name:match "lzlib/programs" end),
+            : filter(function(name) return not name:match "lzlib/programs" end)
+            : filter(function(name) return not name:match "isocline/lib" end),
         optional(lz4)    { ls "ext/opt/lz4/lib/*.c" },
         optional(socket) { ls "ext/opt/luasocket/*.c" },
         optional(ssl)    { ls "ext/opt/luasec/**.c" },
@@ -939,45 +945,46 @@ local function rt(t)
     acc(lua_runtime)  { t.lua  }
 end
 
-rt { luax="libluax/F/F.lua",                        lua="libluax/F/F.lua"                                       }
-rt {                                                lua="libluax/complex/complex.lua"                           }
-rt { luax="libluax/crypt/crypt.lua",                lua={"libluax/crypt/crypt.lua", "libluax/crypt/_crypt.lua"} }
-rt { luax="libluax/curl/curl.lua",                  lua="libluax/curl/curl.lua"                                 }
-rt { luax="libluax/fs/fs.lua",                      lua={"libluax/fs/fs.lua", "libluax/fs/_fs.lua"}             }
-rt {                                                lua="libluax/imath/imath.lua"                               }
-rt { luax="libluax/import/import.lua",              lua="libluax/import/import.lua"                             }
-rt {                                                lua="libluax/linenoise/linenoise.lua"                       }
-rt { luax="libluax/lar/lar.lua",                    lua="libluax/lar/lar.lua"                                   }
-rt { luax="libluax/lzip/lzip.lua",                  lua={"libluax/lzip/lzip.lua", "libluax/lzip/_lzip.lua"}     }
-rt {                                                lua="libluax/mathx/mathx.lua"                               }
-rt {                                                lua="libluax/ps/ps.lua"                                     }
-rt { luax="libluax/qmath/qmath.lua",                lua={"libluax/qmath/qmath.lua", "libluax/qmath/_qmath.lua"} }
-rt { luax="libluax/sh/sh.lua",                      lua="libluax/sh/sh.lua"                                     }
-rt { luax="libluax/sys/targets.lua",                lua={"libluax/sys/sys.lua", "libluax/sys/targets.lua"}      }
-rt { luax="libluax/tar/tar.lua",                    lua="libluax/tar/tar.lua"                                   }
-rt { luax="libluax/term/term.lua",                  lua={"libluax/term/term.lua", "libluax/term/_term.lua"}     }
-rt { luax="libluax/wget/wget.lua",                  lua="libluax/wget/wget.lua"                                 }
+rt { luax="libluax/F/F.lua",                        lua="libluax/F/F.lua"                                                   }
+rt {                                                lua="libluax/complex/complex.lua"                                       }
+rt { luax="libluax/crypt/crypt.lua",                lua={"libluax/crypt/crypt.lua", "libluax/crypt/_crypt.lua"}             }
+rt { luax="libluax/curl/curl.lua",                  lua="libluax/curl/curl.lua"                                             }
+rt { luax="libluax/fs/fs.lua",                      lua={"libluax/fs/fs.lua", "libluax/fs/_fs.lua"}                         }
+rt {                                                lua="libluax/imath/imath.lua"                                           }
+rt { luax="libluax/import/import.lua",              lua="libluax/import/import.lua"                                         }
+rt { luax="libluax/isocline/isocline.lua",          lua={"libluax/isocline/isocline.lua", "libluax/isocline/_isocline.lua"} }
+rt {                                                lua="libluax/linenoise/linenoise.lua"                                   }
+rt { luax="libluax/lar/lar.lua",                    lua="libluax/lar/lar.lua"                                               }
+rt { luax="libluax/lzip/lzip.lua",                  lua={"libluax/lzip/lzip.lua", "libluax/lzip/_lzip.lua"}                 }
+rt {                                                lua="libluax/mathx/mathx.lua"                                           }
+rt {                                                lua="libluax/ps/ps.lua"                                                 }
+rt { luax="libluax/qmath/qmath.lua",                lua={"libluax/qmath/qmath.lua", "libluax/qmath/_qmath.lua"}             }
+rt { luax="libluax/sh/sh.lua",                      lua="libluax/sh/sh.lua"                                                 }
+rt { luax="libluax/sys/targets.lua",                lua={"libluax/sys/sys.lua", "libluax/sys/targets.lua"}                  }
+rt { luax="libluax/tar/tar.lua",                    lua="libluax/tar/tar.lua"                                               }
+rt { luax="libluax/term/term.lua",                  lua={"libluax/term/term.lua", "libluax/term/_term.lua"}                 }
+rt { luax="libluax/wget/wget.lua",                  lua="libluax/wget/wget.lua"                                             }
 
-rt { luax="libluax/package/package_hook.lua",       lua="libluax/package/package_hook.lua"                      }
-rt { luax="libluax/debug/debug_hook.lua",           lua="libluax/debug/debug_hook.lua"                          }
+rt { luax="libluax/package/package_hook.lua",       lua="libluax/package/package_hook.lua"                                  }
+rt { luax="libluax/debug/debug_hook.lua",           lua="libluax/debug/debug_hook.lua"                                      }
 
-rt { luax={ls "ext/c/**.lua", ls "ext/lua/**.lua"}, lua={ls "ext/lua/**.lua"}                                   }
+rt { luax={ls "ext/c/**.lua", ls "ext/lua/**.lua"}, lua={ls "ext/lua/**.lua"}                                               }
 
 if lz4 then
-rt { luax="libluax/lz4/lz4.lua",                    lua={"libluax/lz4/lz4.lua", "libluax/lz4/_lz4.lua"}         }
+rt { luax="libluax/lz4/lz4.lua",                    lua={"libluax/lz4/lz4.lua", "libluax/lz4/_lz4.lua"}                     }
 end
 if socket then
-rt { luax={ls "ext/opt/luasocket/**.lua"},          lua={}                                                      }
+rt { luax={ls "ext/opt/luasocket/**.lua"},          lua={}                                                                  }
 end
 if ssl then
-rt { luax={ls "ext/opt/luasec/**.lua"},             lua={}                                                      }
+rt { luax={ls "ext/opt/luasec/**.lua"},             lua={}                                                                  }
 end
 
 -- Ensures all Lua scripts are in the runtime
 local used_scripts = F.flatten{luax_runtime, lua_runtime} : nub()
 local expected_scripts = F.flatten{
     ls "libluax/**.lua"
-        : difference(optional(not lz4)(ls "libluax/lz4/**.lua" )),
+        : difference(optional(not lz4)(ls "libluax/lz4/**.lua")),
     ls "ext/c/**.lua",
     ls "ext/lua/**.lua",
     optional(lz4)    { ls "libluax/lz4/**.lua" },

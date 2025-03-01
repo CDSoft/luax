@@ -81,6 +81,21 @@ The LuaX REPL can be run in various environments:
 $ luax
 ```
 
+The LuaX interpreter uses a subset of [isocline](https://github.com/daanx/isocline).
+It provides some interesting features:
+
+- works on Linux, MacOS and Windows
+- extensive multi-line editing mode (shift-tab)
+- history
+- unicode
+- undo/redo
+- incremental history search
+- brace matching
+- closing brace insertion
+- filename completion
+
+Some features are not implemented (yet?): completion, hints, syntax highlighting.
+
 ### Shared library usable with a standard Lua interpreter
 
 ``` sh
@@ -407,12 +422,9 @@ local function run_interpreter()
             [F.Nil] = "HOME",
         }
         local history = os.getenv(home) / ".luax_history"
-        local linenoise = require "linenoise"
-        linenoise.load(history)
-        local function hist(input)
-            linenoise.add(input)
-            linenoise.save(history)
-        end
+        local ic = require "isocline"
+        ic.set_history(history)
+        ic.set_prompt_marker(">> ", ".. ")
         local function try(input)
             local chunk, msg = load(input, "=stdin")
             if not chunk then
@@ -427,15 +439,20 @@ local function run_interpreter()
         end
         welcome()
         populate_repl()
+        local prompts = F.case(sys.libc) {
+            lua     = {">> ", ".. "},
+            [F.Nil] = {">"  , "|"  },
+        }
         while true do
             local inputs = {}
-            local prompt = ">> "
+            local prompt = prompts[1]
+            local input = ""
             while true do
-                local line = linenoise.read(prompt)
+                local line = ic.readline(prompt)
                 if not line then os.exit() end
-                hist(line)
                 table.insert(inputs, line)
-                local input = table.concat(inputs, "\n")
+                input = table.concat(inputs, "\n")
+                if #line > 1 then ic.history_remove_last() end -- removes the partial input from the history
                 local try_expr, err_expr = try("return "..input)
                 if try_expr == "done" then break end
                 local try_stat, err_stat = try(input)
@@ -444,8 +461,9 @@ local function run_interpreter()
                     print(try_stat == nil and err_stat or err_expr)
                     break
                 end
-                prompt = ".. "
+                prompt = prompts[2]
             end
+            if #input:trim() > 1 then ic.history_add(input) end -- adds the complete input to the history
         end
     end
 

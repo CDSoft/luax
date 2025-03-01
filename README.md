@@ -371,6 +371,7 @@ Some modules are heavily inspired by
 - [lar](doc/lar.md): Simple archive format for Lua values
 - [linenoise](doc/linenoise.md): A small, portable GNU readline
   replacement with UTF-8 support
+- [isocline](doc/isocline.md): A portable GNU readline alternative
 - [json](doc/json.md): JSON Module for Lua
 
 ## Shared libraries
@@ -455,6 +456,9 @@ The script `lib/luax.lua` can be reused in pure Lua programs:
 - **[Linenoise](https://github.com/yhirose/linenoise/tree/utf8-support)**:
   A minimal, zero-config, BSD licensed, readline replacement ([BSD
   license](https://github.com/antirez/linenoise/blob/master/LICENSE))
+- **[Isocline](https://github.com/daanx/isoclinet)**: A portable GNU
+  readline alternative ([MIT
+  License](https://github.com/daanx/isocline/blob/main/LICENSE))
 - **[dkjson.lua](http://dkolf.de/dkjson-lua/)**: JSON Module for Lua
   ([MIT license](http://www.lua.org/license.html))
 - **[CBOR](https://www.zash.se/lua-cbor.html)**: pure Lua implementation

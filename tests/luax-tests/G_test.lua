@@ -40,6 +40,7 @@ local luax_packages = F.flatten{
     "fs",
     "imath",
     "import",
+    "isocline",
     "json",
     "linenoise",
     os.getenv"USE_LZ4" and "lz4" or {},

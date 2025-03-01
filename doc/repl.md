@@ -13,6 +13,23 @@ The LuaX REPL can be run in various environments:
 $ luax
 ```
 
+The LuaX interpreter uses a subset of
+[isocline](https://github.com/daanx/isocline). It provides some
+interesting features:
+
+- works on Linux, MacOS and Windows
+- extensive multi-line editing mode (shift-tab)
+- history
+- unicode
+- undo/redo
+- incremental history search
+- brace matching
+- closing brace insertion
+- filename completion
+
+Some features are not implemented (yet?): completion, hints, syntax
+highlighting.
+
 ### Shared library usable with a standard Lua interpreter
 
 ``` sh

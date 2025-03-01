@@ -20,20 +20,19 @@ https://github.com/cdsoft/luax
 
 --@LIB
 
--- Pure Lua implementation of linenoise.c
+-- Pure Lua implementation of isocline.c
 
 local F = require "F"
 local term = require "term"
 
 local nop = F.const()
 
-local linenoise = {}
+local isocline = {}
 
-linenoise.read = term.prompt
-linenoise.read_mask = linenoise.read
+isocline.readline = term.prompt
+isocline.print = io.write
+isocline.println = function(s) return io.write(s, "\n") end
 
-linenoise.clear = term.clear
-
-return setmetatable(linenoise, {
+return setmetatable(isocline, {
     __index = function() return nop end,
 })

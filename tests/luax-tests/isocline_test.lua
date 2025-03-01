@@ -18,22 +18,10 @@ For further information about luax you can visit
 https://github.com/cdsoft/luax
 --]]
 
---@LIB
+---------------------------------------------------------------------
+-- isocline
+---------------------------------------------------------------------
 
--- Pure Lua implementation of linenoise.c
-
-local F = require "F"
-local term = require "term"
-
-local nop = F.const()
-
-local linenoise = {}
-
-linenoise.read = term.prompt
-linenoise.read_mask = linenoise.read
-
-linenoise.clear = term.clear
-
-return setmetatable(linenoise, {
-    __index = function() return nop end,
-})
+return function()
+    assert(require "isocline")
+end

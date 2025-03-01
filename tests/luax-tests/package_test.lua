@@ -44,6 +44,7 @@ return function()
         fs_test         = "tests/luax-tests/fs_test.lua",
         imath_test      = "tests/luax-tests/imath_test.lua",
         import_test     = "tests/luax-tests/import_test.lua",
+        isocline_test   = "tests/luax-tests/isocline_test.lua",
         json_test       = "tests/luax-tests/json_test.lua",
         lar_test        = "tests/luax-tests/lar_test.lua",
         lib             = "tests/luax-tests/lib.lua",
