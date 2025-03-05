@@ -49,7 +49,7 @@ luax runs on several platforms with no dependency:
 
 - Linux (x86_64, aarch64)
 - MacOS (x86_64, aarch64)
-- Windows (x86_64)
+- Windows (x86_64, aarch64)
 
 luax can "compile" scripts executable on all supported platforms
 (LuaX must be installed on the target environment).
@@ -338,7 +338,7 @@ local openssl_options = {
 local nproc = (sh "getconf _NPROCESSORS_ONLN" or "8"):trim()
 
 rule "make_openssl" {
-    description = "compile OpenSSL for $target",
+    description = "compile OpenSSL for $zig_target",
     command = {
         "set -e;",
         "mkdir -p $openssl/$target;",
@@ -389,6 +389,7 @@ targets_to_compile:foreach(function(target)
             ["macos-x86_64"]        = F.const"darwin64-x86_64",
             ["macos-aarch64"]       = F.const"darwin64-arm64",
             ["windows-x86_64"]      = F.const"mingw64",
+            ["windows-aarch64"]     = F.const"mingw64", -- assume the x86_64 configuration compiles for aarch64
             [Nil]                   = function() error(target.name..": unsupported OpenSSL target") end,
         } (),
         lto = optional(use_lto) {

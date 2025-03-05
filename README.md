@@ -10,7 +10,7 @@ Lua scripts.
 
 - Linux (x86_64, aarch64)
 - MacOS (x86_64, aarch64)
-- Windows (x86_64)
+- Windows (x86_64, aarch64)
 
 `luax` can compile scripts from and to any of these platforms. It can
 produce scripts that can run everywhere Lua or LuaX is installed as well
