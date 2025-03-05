@@ -311,7 +311,7 @@ function crypt.hash64(s)
     hash = hash*prng_a + prng_c
     for i = 1, #s do
         local c = byte(s, i)
-        hash = hash*prng_a + ((c << 1) | prng_c)
+        hash = hash*prng_a + ((c << 1) ~ prng_c)
     end
     hash = hash*prng_a + prng_c
     return ("<I8"):pack(hash):hex()
@@ -326,11 +326,11 @@ function crypt.hash128(s)
     h2 = h2*prng_a + prng_c
     for i = 1, #s, 2 do
         local c1 = byte(s, i)
-        h1 = h1*prng_a + ((c1 << 1) | prng_c)
+        h1 = h1*prng_a + ((c1 << 1) ~ prng_c)
     end
     for i = 2, #s, 2 do
         local c2 = byte(s, i)
-        h2 = h2*prng_a + ((c2 << 1) | prng_c)
+        h2 = h2*prng_a + ((c2 << 1) ~ prng_c)
     end
     h1 = h1*prng_a + prng_c
     h2 = h2*prng_a + prng_c

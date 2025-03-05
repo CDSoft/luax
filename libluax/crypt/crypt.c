@@ -1028,7 +1028,7 @@ static inline uint64_t prng_hash64(const char *input, size_t input_size)
     for (size_t i = 0; i < input_size; i++)
     {
         const uint64_t c = (uint64_t)input[i];
-        hash = hash*prng_a + ((c << 1) | prng_c);
+        hash = hash*prng_a + ((c << 1) ^ prng_c);
     }
     hash = hash*prng_a + prng_c;
     return hash;
@@ -1072,12 +1072,12 @@ static inline void prng_hash128(const char *input, size_t input_size, uint64_t *
     {
         const uint64_t c1 = (uint64_t)input[i+0];
         const uint64_t c2 = (uint64_t)input[i+1];
-        h1 = h1*prng_a + ((c1 << 1) | prng_c);
-        h2 = h2*prng_a + ((c2 << 1) | prng_c);
+        h1 = h1*prng_a + ((c1 << 1) ^ prng_c);
+        h2 = h2*prng_a + ((c2 << 1) ^ prng_c);
     }
     if (i < input_size) {
         const uint64_t c1 = (uint64_t)input[i+0];
-        h1 = h1*prng_a + ((c1 << 1) | prng_c);
+        h1 = h1*prng_a + ((c1 << 1) ^ prng_c);
     }
     h1 = h1*prng_a + prng_c;
     h2 = h2*prng_a + prng_c;
