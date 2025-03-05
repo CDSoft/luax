@@ -32,7 +32,7 @@ LUAX.DATE        = sh "git show -s --format=%cd --date=format:'%Y-%m-%d'" : trim
 LUAX.COPYRIGHT   = I"LuaX $(VERSION)  Copyright (C) 2021-$(DATE:split'%-':head()) $(URL), $(AUTHORS)"
 
 local BUILD_CONFIG = {
-    ZIG_VERSION  = "0.13.0",
+    ZIG_VERSION  = "0.14.0",
     ZIG_PATH     = "~/.local/opt/zig",
     ZIG_PATH_WIN = "~\\zig",
 }
@@ -228,6 +228,13 @@ local function zig_target(t)
     return {"-target", F{t.arch, t.os, t.libc}:str"-"}
 end
 
+-- fix_lto fixes a zig 0.14.0 bug
+-- malloc is missing with musl and fast+lto compilation
+local function fix_lto(target)
+    if compiler=="zig" and target.os=="linux" and target.libc=="musl" and mode=="fast" then return F.const{} end
+    return F.id
+end
+
 --===================================================================
 section "Build environment"
 ---------------------------------------------------------------------
@@ -284,7 +291,7 @@ local openssl_options = {
     "--static",
 
     "no-apps",
-    --"no-asm",
+    "no-asm",
     "no-async",
     "no-atexit",    -- atexit crashes tests with luax shared libraries
     "no-docs",
@@ -350,7 +357,7 @@ rule "make_openssl" {
             debug = 'export CFLAGS="-pipe -Og -g";',
         },
         "$lto",
-        "$openssl_src/Configure", "$openssl_target", openssl_options, "$additional_flags", ";",
+        "$openssl_src/Configure", "$openssl_target", openssl_options, ";",
         "make", "-j", nproc,
     },
     implicit_in = {
@@ -386,19 +393,10 @@ targets_to_compile:foreach(function(target)
         } (),
         lto = optional(use_lto) {
             case(target.os) {
-                linux   = lto_opt,
+                linux   = fix_lto(target) { lto_opt },
                 macos   = {},
-                windows = lto_opt,
+                windows = fix_lto(target) { lto_opt },
             },
-        },
-        additional_flags = case(target.os) {
-            linux = {
-                "no-asm",
-            },
-            macos = {
-                "no-asm",
-            },
-            windows = {},
         },
     }
 
@@ -579,6 +577,7 @@ local luax_cflags = F{
                 "-Wno-declaration-after-statement",
                 "-Wno-unsafe-buffer-usage",
                 "-Wno-pre-c2x-compat",
+                optional(ssl) "-Wno-missing-include-dirs",
             },
             gcc = {},
             clang = {
@@ -591,6 +590,7 @@ local luax_cflags = F{
                 "-Wno-declaration-after-statement",
                 "-Wno-unsafe-buffer-usage",
                 "-Wno-pre-c2x-compat",
+                optional(ssl) "-Wno-missing-include-dirs",
             },
         },
     },
@@ -660,9 +660,9 @@ ld.host = rule "ld-host" {
 targets_to_compile:foreach(function(target)
 
     local lto = case(target.os) {
-        linux   = lto_opt,
+        linux   = fix_lto(target) { lto_opt },
         macos   = {},
-        windows = lto_opt,
+        windows = fix_lto(target) { lto_opt },
     }
     local target_flags = {
         "-DLUAX_ARCH='\""..target.arch.."\"'",
@@ -712,15 +712,10 @@ targets_to_compile:foreach(function(target)
     local target_so_flags = {
         "-shared",
     }
-    local target_opt = case(compiler) {
-        zig   = zig_target(target),
-        gcc   = {},
-        clang = {},
-    }
     cc[target.name] = rule("cc-"..target.name) {
         description = "cc $in",
         command = {
-            "$cc-"..target.name, target_opt, "-c", lto, luax_cflags, lua_flags, target_flags, opt_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
+            "$cc-"..target.name, "-c", lto, luax_cflags, lua_flags, target_flags, opt_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
             case(target.os) {
                 linux   = {},
                 macos   = {},
@@ -735,7 +730,7 @@ targets_to_compile:foreach(function(target)
     cc_ext[target.name] = rule("cc_ext-"..target.name) {
         description = "cc $in",
         command = {
-            "$cc-"..target.name, target_opt, "-c", lto, ext_cflags, lua_flags, opt_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
+            "$cc-"..target.name, "-c", lto, ext_cflags, lua_flags, opt_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
         },
         implicit_in = {
             compiler_deps,
@@ -745,21 +740,21 @@ targets_to_compile:foreach(function(target)
     ld[target.name] = rule("ld-"..target.name) {
         description = "ld $out",
         command = {
-            "$ld-"..target.name, target_opt, lto, "$in -o $out", ldflags, target_ld_flags,
+            "$ld-"..target.name, lto, "$in -o $out", ldflags, target_ld_flags,
         },
         implicit_in = compiler_deps,
     }
     so[target.name] = is_dynamic(target) and rule("so-"..target.name) {
         description = "so $out",
         command = {
-            "$cc-"..target.name, target_opt, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out",
+            "$cc-"..target.name, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out",
         },
         implicit_in = compiler_deps,
     }
     partial_ld[target.name] = has_partial_ld(target) and rule("partial-ld-"..target.name) {
         description = "ld $out",
         command = {
-            "$ld-"..target.name, target_opt, "-r", "$in -o $out",
+            "$ld-"..target.name, "-r", "$in -o $out",
         },
         implicit_in = compiler_deps,
     }
@@ -1059,7 +1054,7 @@ local function additional_flags(name)
         luasec  = {
             "-Wno-cast-function-type-strict",
             case(compiler) {
-                zig   = {},
+                zig   = {"-Wno-pre-c11-compat"},
                 gcc   = {},
                 clang = {"-Wno-pre-c11-compat"},
             },

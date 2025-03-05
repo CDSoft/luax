@@ -247,10 +247,19 @@ local function compile_native(tmp, current_output, target_definition)
         return flag and F.id or F.const{}
     end
 
+    -- fix_lto fixes a zig 0.14.0 bug
+    -- malloc is missing with musl and fast+lto compilation
+    local fix_lto =
+        build_config.compiler=="zig"
+        and target_definition.os=="linux" and target_definition.libc=="musl"
+        and build_config.mode=="fast"
+            and F.const{}
+            or F.id
+
     local flto = F.case(build_config.compiler.name) {
-        zig   = "-flto=thin",
-        gcc   = "-flto=auto",
-        clang = "-flto=thin",
+        zig   = fix_lto "-flto=thin",
+        gcc   = fix_lto "-flto=auto",
+        clang = fix_lto "-flto=thin",
     }
 
     local cflags = {
@@ -269,9 +278,9 @@ local function compile_native(tmp, current_output, target_definition)
         "-I"..tmp,
         "-fPIC",
         optional(build_config.lto)(F.case(target_definition.os) {
-            linux   = optional(build_config.lto)(flto),
+            linux   = flto,
             macos   = {},
-            windows = optional(build_config.lto)(flto),
+            windows = flto,
         }),
         F.case(build_config.compiler.name) {
             gcc   = "-Wstringop-overflow=0",
