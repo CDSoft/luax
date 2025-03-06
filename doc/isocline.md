@@ -97,35 +97,35 @@ isocline.get_continuation_prompt_marker()
 Get the current continuation prompt marker.
 
 ``` lua
-isocline.ic_enable_multiline(enable)
+isocline.enable_multiline(enable)
 ```
 
 Disable or enable multi-line input (enabled by default). Returns the
 previous setting.
 
 ``` lua
-isocline.ic_enable_beep(enable)
+isocline.enable_beep(enable)
 ```
 
 Disable or enable sound (enabled by default). A beep is used when tab
 cannot find any completion for example. Returns the previous setting.
 
 ``` lua
-isocline.ic_enable_color(enable)
+isocline.enable_color(enable)
 ```
 
 Disable or enable color output (enabled by default). Returns the
 previous setting.
 
 ``` lua
-isocline.ic_enable_history_duplicates(enable)
+isocline.enable_history_duplicates(enable)
 ```
 
 Disable or enable duplicate entries in the history (disabled by
 default). Returns the previous setting.
 
 ``` lua
-isocline.ic_enable_auto_tab(enable)
+isocline.enable_auto_tab(enable)
 ```
 
 Disable or enable automatic tab completion after a completion to expand
@@ -133,14 +133,14 @@ as far as possible if the completions are unique. (disabled by default).
 Returns the previous setting.
 
 ``` lua
-isocline.ic_enable_completion_preview(enable)
+isocline.enable_completion_preview(enable)
 ```
 
 Disable or enable preview of a completion selection (enabled by default)
 Returns the previous setting.
 
 ``` lua
-isocline.ic_enable_multiline_indent(enable)
+isocline.enable_multiline_indent(enable)
 ```
 
 Disable or enable automatic identation of continuation lines in
@@ -148,7 +148,7 @@ multiline input so it aligns with the initial prompt. Returns the
 previous setting.
 
 ``` lua
-isocline.ic_enable_inline_help(enable)
+isocline.enable_inline_help(enable)
 ```
 
 Disable or enable display of short help messages for history search etc.
@@ -156,21 +156,21 @@ Disable or enable display of short help messages for history search etc.
 setting) Returns the previous setting.
 
 ``` lua
-isocline.ic_enable_hint(enable)
+isocline.enable_hint(enable)
 ```
 
 Disable or enable hinting (enabled by default) Shows a hint inline when
 there is a single possible completion. Returns the previous setting.
 
 ``` lua
-isocline.ic_set_hint_delay(delay_ms)
+isocline.set_hint_delay(delay_ms)
 ```
 
 Set millisecond delay before a hint is displayed. Can be zero. (500ms by
 default).
 
 ``` lua
-isocline.ic_enable_highlight(enable)
+isocline.enable_highlight(enable)
 ```
 
 Disable or enable syntax highlighting (enabled by default). This applies
@@ -178,7 +178,7 @@ regardless whether a syntax highlighter callback was set
 (`ic_set_highlighter`) Returns the previous setting.
 
 ``` lua
-isocline.ic_set_tty_esc_delay(initial_delay_ms, followup_delay_ms)
+isocline.set_tty_esc_delay(initial_delay_ms, followup_delay_ms)
 ```
 
 Set millisecond delay for reading escape sequences in order to
@@ -187,26 +187,26 @@ are 100ms and 10ms, but it may be increased if working with very slow
 terminals.
 
 ``` lua
-isocline.ic_enable_brace_matching(enable)
+isocline.enable_brace_matching(enable)
 ```
 
 Enable highlighting of matching braces (and error highlight unmatched
 braces).
 
 ``` lua
-isocline.ic_set_matching_braces(brace_pairs)
+isocline.set_matching_braces(brace_pairs)
 ```
 
 Set matching brace pairs. Pass `nil` for the default `"()[]{}"`.
 
 ``` lua
-isocline.ic_enable_brace_insertion(enable)
+isocline.enable_brace_insertion(enable)
 ```
 
 Enable automatic brace insertion (enabled by default).
 
 ``` lua
-isocline.ic_set_insertion_braces(brace_pairs)
+isocline.set_insertion_braces(brace_pairs)
 ```
 
 Set matching brace pairs for automatic insertion. Pass `nil` for the

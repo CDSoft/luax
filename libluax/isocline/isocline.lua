@@ -22,6 +22,15 @@ https://github.com/cdsoft/luax
 
 local isocline = require "_isocline"
 
+local term = require "term"
+
+if not term.isatty(io.stdin) then
+    -- readline does not work well on pipes.
+    -- Empty lines make readline return nil instead of "".
+    -- Some REPL may interpert it as an EOF instead of just an empty line.
+    isocline.readline = term.prompt
+end
+
 function isocline.printf(fmt, ...)
     return isocline.print(string.format(fmt, ...))
 end

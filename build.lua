@@ -1713,7 +1713,7 @@ local dist = (function()
         (function()
             local name = F.flatten { "luax", LUAX.VERSION, "lua" } : str "-"
             cp_to(name/"bin") {
-                    binaries:filter(pure_lua),
+                binaries:filter(pure_lua),
             }
             cp_to(name/"lib") {
                 libraries:filter(pure_lua),
