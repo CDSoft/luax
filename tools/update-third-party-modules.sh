@@ -425,6 +425,7 @@ update_isocline()
 
     sed -i 's@include "\([^.].*\.[ch]\)"@include "../lib/\1"@' ext/c/isocline/src/isocline.c
     sed -i 's@IC_MAX_HISTORY ([^)]*)@IC_MAX_HISTORY (1000)@' ext/c/isocline/lib/history.c
+    sed -i 's@setlocale(LC_ALL,"")@setlocale(LC_ALL, NULL)@' ext/c/isocline/lib/tty.c
 
 }
 
