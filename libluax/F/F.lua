@@ -1157,7 +1157,7 @@ register1 "show" (function(x, opt)
             if math_type(val) == "integer" then
                 emit(s_format(opt_int, val))
             elseif math_type(val) == "float" then
-                emit(s_format(opt_flt, val))
+                emit(s_gsub(s_format(opt_flt, val), ",", "."))
             else
                 emit(s_format("%s", val))
             end

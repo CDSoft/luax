@@ -500,8 +500,12 @@ local function convert_to_and_from_string()
     eq(F{1, x=2, 3, p={x=1.5, y=2.5}}:show(), "{1, 3, p={x=1.5, y=2.5}, x=2}")
     eq(F{1, x=2, 3, p={x=1.5, y=2.5}}:show(opt), "{1, 3,\n  p = {\n    x = 1.5,\n    y = 2.5,\n  },\n  x = 2,\n}")
 
-    eq(F.show{1.2}, "{1.2}")        -- check locale does not affect F.show
-    eq(F.show{1.2}:read(), {1.2})
+    F{ "fr_FR", "C" } : foreach(function(locale)
+        -- check the locale does not affect F.show
+        os.setlocale(locale)
+        eq(F.show{1.2}, "{1.2}")
+        eq(F.show{1.2}:read(), {1.2})
+    end)
 
     eq(F.read("42"), 42)
     eq(F.read("{1, 3, x=2}"), {1, x=2, 3})
