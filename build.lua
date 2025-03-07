@@ -61,18 +61,6 @@ If you need to update the build system, please modify build.lua
 and run bang to regenerate build.ninja.
 ]]
 
-local gitdir = (function()
-    local dir = ".git"
-    if fs.is_file(dir) then
-        return fs.read(dir) : match "gitdir:%s*(%S*)"
-    end
-    return dir
-end)()
-
-generator {
-    implicit_in = gitdir/"refs/tags",
-}
-
 -- list of targets used for cross compilation (with Zig only)
 local targets = dofile "libluax/sys/targets.lua"
 local sys = dofile "libluax/sys/sys.lua"
