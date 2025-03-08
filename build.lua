@@ -548,11 +548,6 @@ local cflags = {
         "-DLUAI_ASSERT",
         "-DLUA_USE_APICHECK",
     },
-    case(mode) {
-        fast  = "-DIC_NO_DEBUG_MSG",
-        small = "-DIC_NO_DEBUG_MSG",
-        debug = {},
-    }
 }
 
 local luax_cflags = F{
@@ -821,8 +816,7 @@ local sources = F{
     third_party_c_files = F.flatten {
         ls "ext/c/**.c"
             : filter(function(name) return not name:match "lzlib/lib/inc" end)
-            : filter(function(name) return not name:match "lzlib/programs" end)
-            : filter(function(name) return not name:match "isocline/lib" end),
+            : filter(function(name) return not name:match "lzlib/programs" end),
         optional(lz4)    { ls "ext/opt/lz4/lib/*.c" },
         optional(socket) { ls "ext/opt/luasocket/*.c" },
         optional(ssl)    { ls "ext/opt/luasec/**.c" },
@@ -952,7 +946,6 @@ rt { luax="libluax/curl/curl.lua",                  lua="libluax/curl/curl.lua" 
 rt { luax="libluax/fs/fs.lua",                      lua={"libluax/fs/fs.lua", "libluax/fs/_fs.lua"}                         }
 rt {                                                lua="libluax/imath/imath.lua"                                           }
 rt { luax="libluax/import/import.lua",              lua="libluax/import/import.lua"                                         }
-rt { luax="libluax/isocline/isocline.lua",          lua={"libluax/isocline/isocline.lua", "libluax/isocline/_isocline.lua"} }
 rt {                                                lua="libluax/linenoise/linenoise.lua"                                   }
 rt { luax="libluax/lar/lar.lua",                    lua="libluax/lar/lar.lua"                                               }
 rt { luax="libluax/lzip/lzip.lua",                  lua={"libluax/lzip/lzip.lua", "libluax/lzip/_lzip.lua"}                 }
