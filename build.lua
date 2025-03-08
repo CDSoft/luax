@@ -331,13 +331,23 @@ rule "make_openssl" {
         "set -e;",
         "mkdir -p $openssl/$target;",
         "cd $openssl/$target;",
-        optional(compiler=="zig") {
-            'export AR="$zig ar";',
-            'export CC="$zig cc $zig_target";',
-            'export CXX="$zig c++ $zig_target";',
-            'export LD="$zig ld $zig_target";',
-            'export RANLIB="$zig ranlib";',
-            'export RC="$zig rc";',
+        case(compiler) {
+            zig = {
+                'export AR="$zig ar";',
+                'export CC="$zig cc $zig_target";',
+                'export CXX="$zig c++ $zig_target";',
+                'export LD="$zig ld $zig_target";',
+                'export RANLIB="$zig ranlib";',
+                'export RC="$zig rc";',
+            },
+            gcc = {
+                'export CC="gcc";',
+                'export CXX="g++";',
+            },
+            clang = {
+                'export CC="clang";',
+                'export CXX="clang++";',
+            },
         },
         case(mode) {
             fast  = 'export CFLAGS="-pipe -O3";',
