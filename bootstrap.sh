@@ -79,9 +79,10 @@ fi
 # C compiler
 ######################################################################
 
+ZIG_URL=$(grep "ZIG_URL *=" build.lua | cut -d= -f2 | tr -d " \",")
 ZIG_VERSION=$(grep "ZIG_VERSION *=" build.lua | cut -d= -f2 | tr -d " \",")
 ZIG_PATH=$(grep "ZIG_PATH *=" build.lua | cut -d= -f2 | tr -d " \",")
-eval "ZIG=$ZIG_PATH/$ZIG_VERSION/zig"
+eval "ZIG=$ZIG_PATH/$ZIG_VERSION/zig" # use eval to expand "~"
 
 COMPILER="gcc"
 
@@ -99,7 +100,7 @@ case "$COMPILER" in
         COMPILER="$ZIG cc"
         if ! [ -x "$ZIG" ]
         then
-            tools/install_zig.sh "$ZIG_VERSION" "$ZIG"
+            tools/install_zig.sh "$ZIG_URL" "$ZIG_VERSION" "$ZIG"
             [ -x "$ZIG" ] || error "zig can not be installed"
         fi
         ;;

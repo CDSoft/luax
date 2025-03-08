@@ -33,6 +33,7 @@ LUAX.COPYRIGHT   = I"LuaX $(VERSION)  Copyright (C) 2021-$(DATE:split'%-':head()
 
 local BUILD_CONFIG = {
     ZIG_VERSION  = "0.14.0",
+    ZIG_URL      = "https://ziglang.org/download/VERSION/zig-OS-ARCH-VERSION",
     ZIG_PATH     = "~/.local/opt/zig",
     ZIG_PATH_WIN = "~\\zig",
 }
@@ -412,6 +413,11 @@ local compiler_deps = {}
 case(compiler) {
 
     zig = function()
+        var "zig_url" (BUILD_CONFIG.ZIG_URL
+            : gsub("OS", sys.os)
+            : gsub("ARCH", sys.arch)
+            : gsub("VERSION", BUILD_CONFIG.ZIG_VERSION)
+        )
         var "zig_version" (BUILD_CONFIG.ZIG_VERSION)
         local zig_path = case(sys.os) {
             windows = BUILD_CONFIG.ZIG_PATH_WIN:gsub("^~", os.getenv"LOCALAPPDATA" or "~"),
@@ -421,7 +427,7 @@ case(compiler) {
 
         build "$zig" {
             description = "install zig $zig_version",
-            command = "tools/install_zig.sh $zig_version $out",
+            command = "tools/install_zig.sh $zig_url $zig_version $out",
             pool = "console",
         }
 

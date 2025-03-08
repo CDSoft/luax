@@ -327,8 +327,12 @@ local function compile_native(tmp, current_output, target_definition)
         -- Install Zig (to cross compile and link C sources)
         if not zig:is_file() then
             log("Zig", "download and install Zig to %s", zig_path)
-            local archive = "zig-"..sys.os.."-"..sys.arch.."-"..zig_version..(sys.os=="windows" and ".zip" or ".tar.xz")
-            local url = "https://ziglang.org/download/"..zig_version.."/"..archive
+            local url = build_config.zig.url
+                : gsub("OS", sys.os)
+                : gsub("ARCH", sys.arch)
+                : gsub("VERSION", zig_version)
+                .. F.case(sys.os) { windows=".zip", [F.Nil]=".tar.xz" }
+            local archive = url:basename()
             local curl = require "curl"
             local term = require "term"
             assert(curl.request {

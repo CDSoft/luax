@@ -20,8 +20,9 @@
 
 set -e
 
-ZIG_VERSION="$1"
-ZIG="$2"
+ZIG_URL="$1"
+ZIG_VERSION="$2"
+ZIG="$3"
 
 found()
 {
@@ -51,17 +52,17 @@ case "$ARCH" in
 esac
 
 case "$(uname -s)" in
-    (Linux)  OS=linux ;;
-    (Darwin) OS=macos ;;
-    (MINGW*) OS=windows ;;
+    (Linux)  OS=linux;   EXT=.tar.xz ;;
+    (Darwin) OS=macos;   EXT=.tar.xz ;;
+    (MINGW*) OS=windows; EXT=.zip ;;
     (*)      OS=unknown ;;
 esac
 
-ZIG_ARCHIVE="zig-$OS-$ARCH-$ZIG_VERSION.tar.xz"
-case $ZIG_VERSION in
-    *-dev*)     ZIG_URL="https://ziglang.org/builds/$ZIG_ARCHIVE" ;;
-    *)          ZIG_URL="https://ziglang.org/download/$ZIG_VERSION/$ZIG_ARCHIVE" ;;
-esac
+ZIG_URL=${ZIG_URL//OS/$OS}
+ZIG_URL=${ZIG_URL//ARCH/$ARCH}
+ZIG_URL=${ZIG_URL//VERSION/$ZIG_VERSION}
+ZIG_URL="$ZIG_URL$EXT"
+ZIG_ARCHIVE=$(basename "$ZIG_URL")
 
 if ! [ -x "$ZIG" ]
 then
