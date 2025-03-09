@@ -43,6 +43,8 @@
 extern "C" {
 #endif
 
+#include <stddef.h> /* For size_t. */
+
 size_t linenoiseUtf8PrevCharLen(const char* buf, size_t buf_len, size_t pos, size_t *col_len);
 size_t linenoiseUtf8NextCharLen(const char* buf, size_t buf_len, size_t pos, size_t *col_len);
 size_t linenoiseUtf8ReadCode(int fd, char* buf, size_t buf_len, int* cp);
