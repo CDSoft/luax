@@ -37,6 +37,7 @@ The history can not be saved on Windows.
 #include "lauxlib.h"
 
 #ifdef _WIN32
+#define isatty _isatty
 #else
 #define HAS_LINENOISE
 #include "ext/c/linenoise/linenoise.h"
@@ -51,8 +52,9 @@ The history can not be saved on Windows.
 
 #ifdef HAS_LINENOISE
 static int mask_mode = 0;
-static bool running_in_a_tty;
 #endif
+
+static bool running_in_a_tty;
 
 /*@@@
 ```lua
@@ -77,8 +79,10 @@ static int linenoise_read(lua_State *L)
     }
 #else
     char line[LUAX_MAXINPUT];
-    fputs(prompt, stdout);
-    fflush(stdout);
+    if (running_in_a_tty) {
+        fputs(prompt, stdout);
+        fflush(stdout);
+    }
     if (fgets(line, LUAX_MAXINPUT, stdin) != NULL)
     {
         lua_pushstring(L, line);
@@ -271,14 +275,19 @@ static const luaL_Reg linenoiselib[] =
     {NULL, NULL}
 };
 
-LUAMOD_API int luaopen_linenoise (lua_State *L)
+static void init_linenoise(void)
 {
-    luaL_newlib(L, linenoiselib);
-#ifdef HAS_LINENOISE
     running_in_a_tty = isatty(STDIN_FILENO);
+#ifdef HAS_LINENOISE
     linenoiseHistorySetMaxLen(LUAX_HISTORY_LEN);
     linenoiseSetMultiLine(true);
     linenoiseSetEncodingFunctions(linenoiseUtf8PrevCharLen, linenoiseUtf8NextCharLen, linenoiseUtf8ReadCode);
 #endif
+}
+
+LUAMOD_API int luaopen_linenoise (lua_State *L)
+{
+    init_linenoise();
+    luaL_newlib(L, linenoiselib);
     return 1;
 }
