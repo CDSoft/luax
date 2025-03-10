@@ -240,7 +240,6 @@ var "dist" "$builddir/dist"
 local compile = {}
 local test = {}
 local doc = {}
-local promotion = {}
 
 local compile_flags = file "compile_flags.txt"
 
@@ -1598,21 +1597,7 @@ local images = {
     build "doc/luax-logo.svg"   {"lsvg", "doc/src/luax-logo.lua", args={ 256,  256}},
 }
 
-local promotion_images = {
-    build "$builddir/luax-banner.png"       {"lsvg", "doc/src/luax-logo.lua", args={1024,  192, "sky"}},
-    build "$builddir/luax-banner.jpg"       {"lsvg", "doc/src/luax-logo.lua", args={1024,  192, "sky"}},
-    build "$builddir/luax-social.png"       {"lsvg", "doc/src/luax-logo.lua", args={1280,  640, F.show(LUAX.URL)}},
-    build "$builddir/luax-logo.png"         {"lsvg", "doc/src/luax-logo.lua", args={1024, 1024}},
-    build "$builddir/luax-logo.jpg"         {"lsvg", "doc/src/luax-logo.lua", args={1024, 1024}},
-
-    build "$builddir/luax-profile.png"      {"lsvg", "doc/src/luax-logo.lua", args={ 237,  237}},
-    build "$builddir/luax-horizontal.png"   {"lsvg", "doc/src/luax-logo.lua", args={7400, 5000, "sky", F.show(LUAX.URL)}},
-    build "$builddir/luax-vertical.png"     {"lsvg", "doc/src/luax-logo.lua", args={5525, 6500, "sky", F.show(LUAX.URL)}},
-    build "$builddir/luax-square.png"       {"lsvg", "doc/src/luax-logo.lua", args={6000, 6000, "sky", F.show(LUAX.URL)}},
-}
-
 acc(doc)(images)
-acc(promotion)(promotion_images)
 
 local pandoc_gfm = {
     "pandoc",
@@ -1779,8 +1764,6 @@ if #doc > 0 then
 
     phony "doc" (doc)
     help "doc" "update LuaX documentation"
-
-    phony "promotion" (promotion)
 
 end
 
