@@ -37,6 +37,7 @@ The history can not be saved on Windows.
 #include "lauxlib.h"
 
 #ifdef _WIN32
+#include <string.h>
 #define isatty _isatty
 #else
 #define HAS_LINENOISE
@@ -213,7 +214,8 @@ static int linenoise_clear_screen(lua_State *L __attribute__((unused)))
     linenoiseClearScreen();
 #else
     const char *clear = "\x1b[1;1H\x1b[2J";
-    write(STDOUT_FILENO, clear, 12);
+    const unsigned int n = (unsigned int)strlen(clear);
+    write(STDOUT_FILENO, clear, n);
 #endif
     return 0;
 }
