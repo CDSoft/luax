@@ -238,7 +238,7 @@ function M.bundle(opt)
     if opt.add_luax_runtime then
         local assets = require "luax_assets"
         local runtime = assets.lua_runtime and assets.lua_runtime["luax.lar"]
-        if not runtime then asserts.error() end
+        if not runtime then assets.error() end
         runtime = lar.unlar(runtime)
         for i = 1, #runtime do
             -- runtime script => ensure_unique_module shall not check it is not part of the runtime!
