@@ -30,11 +30,12 @@ local fs = require "fs"
 
 return function()
     local test_num = tonumber(os.getenv "TEST_NUM")
+    local BUILD = os.getenv "BUILD"
 
     if test_num == 1 then
         if os.getenv "IS_COMPILED" == "true" then
             eq(arg, {
-                [0] = ".build/test/test-compiled-"..os.getenv "TEST_CASE",
+                [0] = BUILD/"test/test-compiled-"..os.getenv "TEST_CASE",
                 "Lua", "is", "great"
             })
             assert(sys.libc == os.getenv"LIBC")
@@ -43,17 +44,17 @@ return function()
             eq(arg, {
                 [-2] = "luax",
                 [-1] = "--",
-                [0] = ".build/test/test-luax",
+                [0] = BUILD/"test/test-luax",
                 "Lua", "is", "great"
             })
-            eq(fs.findpath(arg[-2]), ".build/bin/luax")
+            eq(fs.findpath(arg[-2]), BUILD/"bin/luax")
             assert(sys.libc == "gnu")
             assert(not pandoc)
         end
 
     elseif test_num == 2 then
         eq(arg, {
-            [-3] = ".build/bin/lua",
+            [-3] = BUILD/"bin/lua",
             [-2] = "-l", [-1] = "libluax",
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
@@ -63,7 +64,7 @@ return function()
 
     elseif test_num == 3 then
         eq(arg, {
-            [-3] = ".build/bin/lua",
+            [-3] = BUILD/"bin/lua",
             [-2] = "-l", [-1] = "luax",
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
@@ -74,11 +75,11 @@ return function()
     elseif test_num == 4 then
         eq(arg, {
             [-2] = "lua",
-            [-1] = ".build/bin/luax.lua",
+            [-1] = BUILD/"bin/luax.lua",
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })
-        eq(fs.findpath(arg[-2]), ".build/bin/lua")
+        eq(fs.findpath(arg[-2]), BUILD/"bin/lua")
         assert(sys.libc == "lua")
         assert(not pandoc)
 

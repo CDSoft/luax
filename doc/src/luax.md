@@ -116,6 +116,13 @@ gcc and clang must be already installed.
 
 These options can also be given to the bootstrap script. E.g.: `./bootstrap.sh fast lto strip`.
 
+`bootstrap.sh` also support options to choose a different build directory:
+
+Option              Description
+------------------- ----------------------------------------------------------------------
+`-b dir`            Compile LuaX in the directory `dir` instead of the default one (`.build`)
+`-o dir/file.ninja` Generate the ninja file in `dir/file.ninja` instead of the default one (`build.ninja`)
+
 ### Optional features
 
 Option      Description

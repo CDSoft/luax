@@ -228,8 +228,6 @@ end
 section "Build environment"
 ---------------------------------------------------------------------
 
-var "builddir" ".build"
-
 var "bin" "$builddir/bin"
 var "lib" "$builddir/lib"
 var "doc" "$builddir/doc"
@@ -1320,6 +1318,7 @@ local libc = case(sys.os) {
 }
 
 local test_options = {
+    "BUILD=$builddir",
     optional(lz4)    { "USE_LZ4=1" },
     optional(socket) { "USE_SOCKET=1" },
     optional(ssl)    { "USE_SSL=1" },
@@ -1512,6 +1511,7 @@ acc(test) {
             "&&",
             "PATH=$bin:$$PATH",
             "TARGET=lua",
+            test_options,
             "$test/ext-lua Lua is great",
             "&&",
             "touch $out",
@@ -1535,6 +1535,7 @@ acc(test) {
             "&&",
             "PATH=$bin:$$PATH",
             "TARGET=luax",
+            test_options,
             "$test/ext-luax Lua is great",
             "&&",
             "touch $out",
@@ -1557,6 +1558,7 @@ acc(test) {
             "&&",
             "PATH=$bin:$$PATH",
             "TARGET=pandoc",
+            test_options,
             "$test/ext-pandoc Lua is great",
             "&&",
             "touch $out",

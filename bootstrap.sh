@@ -27,10 +27,30 @@ set -eu
 
 cd "$(dirname "$0")"
 
-B=.build/bin
-LUA=$B/lua
+COMPILER="gcc"
+BUILDDIR=.build
+OUTPUT=build.ninja
+ARGS=()
 
-mkdir -p $B
+while [ $# -gt 0 ]
+do
+    case "$1" in
+        gcc)    COMPILER=gcc;           ARGS+=("$1") ;;
+        clang)  COMPILER=clang;         ARGS+=("$1") ;;
+        zig)    COMPILER=zig;           ARGS+=("$1") ;;
+        -b)     BUILDDIR="$2"; shift ;;
+        -b*)    BUILDDIR="${1:2}" ;;
+        -o)     OUTPUT="$2"; shift ;;
+        -o*)    OUTPUT="${1:2}" ;;
+        *)                              ARGS+=("$1") ;;
+    esac
+    shift
+done
+
+BIN=$BUILDDIR/bin
+LUA=$BIN/lua
+
+mkdir -p "$BIN"
 
 info()
 {
@@ -84,17 +104,6 @@ ZIG_VERSION=$(grep "ZIG_VERSION *=" build.lua | cut -d= -f2 | tr -d " \",")
 ZIG_PATH=$(grep "ZIG_PATH *=" build.lua | cut -d= -f2 | tr -d " \",")
 eval "ZIG=$ZIG_PATH/$ZIG_VERSION/zig" # use eval to expand "~"
 
-COMPILER="gcc"
-
-for arg in "$@"
-do
-    case "$arg" in
-        gcc)    COMPILER=gcc ;;
-        clang)  COMPILER=clang ;;
-        zig)    COMPILER=zig ;;
-    esac
-done
-
 case "$COMPILER" in
     zig)
         COMPILER="$ZIG cc"
@@ -113,7 +122,7 @@ esac
 # Lua
 ######################################################################
 
-if ! [ -x $LUA ]
+if ! [ -x "$LUA" ]
 then
     echo "Compile $LUA"
     CFLAGS=(
@@ -129,7 +138,7 @@ then
         (Darwin)    CFLAGS+=(-DLUA_USE_MACOSX) ;;
     esac
     LUA_SOURCES=( lua/*.c )
-    $COMPILER "${CFLAGS[@]}" "${LUA_SOURCES[@]}" "${LDFLAGS[@]}" -o $LUA
+    $COMPILER "${CFLAGS[@]}" "${LUA_SOURCES[@]}" "${LDFLAGS[@]}" -o "$LUA"
 fi
 
 ######################################################################
@@ -139,11 +148,12 @@ fi
 $LUA tools/luax.lua tools/bang.luax \
     -g "$LUA tools/luax.lua tools/bang.luax" \
     -q \
-    build.lua -o build.ninja \
-    -- "$@"
+    -b "$BUILDDIR" \
+    build.lua -o "$OUTPUT" \
+    -- "${ARGS[@]}"
 
 ######################################################################
 # LuaX
 ######################################################################
 
-ninja compile
+ninja -f "$OUTPUT" compile

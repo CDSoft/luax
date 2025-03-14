@@ -24,8 +24,13 @@ cd "$(git rev-parse --show-toplevel)"
 
 check()
 {
+    local ARGS="$*"
+    local NAME="${ARGS// /-}"
+    test -z "$NAME" && NAME=default_options
+    local BUILDDIR=".build/test-all/$NAME"
     echo "# $*"
-    ./bootstrap.sh "$@" && ninja all
+    ./bootstrap.sh -b "$BUILDDIR" -o "$BUILDDIR/build.ninja" "$@"
+    ninja -f "$BUILDDIR/build.ninja" test
 }
 
 check fast gcc

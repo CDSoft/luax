@@ -44,6 +44,7 @@ end
 
 return function()
     local test_num = tonumber(os.getenv "TEST_NUM")
+    local BUILD = os.getenv "BUILD"
     if F.elem(test_num, {1}) then
         local libext = F.case(sys.os) { linux="so",  macos="dylib", windows="dll" }
 
@@ -52,12 +53,12 @@ return function()
         local path_sep = fs.path_sep
         local lua_sep = package.config:words()[2]
 
-        local i = F.I{CWD=cwd, sys=sys, libext=libext, os=os, unique=unique, path_sep=path_sep, lua_sep=lua_sep}
+        local i = F.I{CWD=cwd, BUILD=BUILD, sys=sys, libext=libext, os=os, unique=unique, path_sep=path_sep, lua_sep=lua_sep}
 
         eq(shell_env(), i[[
-export PATH="$(CWD)/.build/bin:$(unique(path_sep, os.getenv'PATH', CWD/".build/bin"))";
-export LUA_PATH="$(CWD)/.build/lib/?.lua;$(unique(lua_sep, os.getenv'LUA_PATH', CWD/".build/lib/?.lua"))";
-export LUA_CPATH="$(CWD)/.build/lib/?.$(libext);$(unique(lua_sep, os.getenv'LUA_CPATH', CWD/".build/lib/?."..libext))";
+export PATH="$(CWD)/$(BUILD)/bin:$(unique(path_sep, os.getenv'PATH', CWD/BUILD/"bin"))";
+export LUA_PATH="$(CWD)/$(BUILD)/lib/?.lua;$(unique(lua_sep, os.getenv'LUA_PATH', CWD/BUILD/"lib/?.lua"))";
+export LUA_CPATH="$(CWD)/$(BUILD)/lib/?.$(libext);$(unique(lua_sep, os.getenv'LUA_CPATH', CWD/BUILD/"lib/?."..libext))";
 ]])
 
         fs.with_tmpdir(function(tmp)
