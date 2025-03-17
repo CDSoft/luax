@@ -974,7 +974,7 @@ end
 local used_scripts = F.flatten{luax_runtime, lua_runtime} : nub()
 local expected_scripts = F.flatten{
     ls "libluax/**.lua"
-        : difference(optional(not lz4)(ls "libluax/lz4/**.lua")),
+        : difference(ls "libluax/lz4/**.lua"),
     ls "ext/c/**.lua",
     ls "ext/lua/**.lua",
     optional(lz4)    { ls "libluax/lz4/**.lua" },
