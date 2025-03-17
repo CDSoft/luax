@@ -217,13 +217,6 @@ local function zig_target(t)
     return {"-target", F{t.arch, t.os, t.libc}:str"-"}
 end
 
--- fix_lto fixes a zig 0.14.0 bug
--- malloc is missing with musl and fast+lto compilation
-local function fix_lto(target)
-    if compiler=="zig" and target.os=="linux" and target.libc=="musl" and mode=="fast" then return F.const{} end
-    return F.id
-end
-
 --===================================================================
 section "Build environment"
 ---------------------------------------------------------------------
@@ -259,11 +252,11 @@ local openssl_libs = targets : map2t(function(target) return target.name, {} end
 
 local function add_openssl_rules()
 
+if not ssl then return end
+
 --===================================================================
 section "OpenSSL"
 ---------------------------------------------------------------------
-
-if not ssl then return end
 
 var "openssl" "$builddir/openssl"
 var "openssl_src" (fs.realpath "ext/opt/openssl")
@@ -390,9 +383,9 @@ targets_to_compile:foreach(function(target)
         } (),
         lto = optional(use_lto) {
             case(target.os) {
-                linux   = fix_lto(target) { lto_opt },
+                linux   = lto_opt,
                 macos   = {},
-                windows = fix_lto(target) { lto_opt },
+                windows = lto_opt,
             },
         },
     }
@@ -657,9 +650,9 @@ ld.host = rule "ld-host" {
 targets_to_compile:foreach(function(target)
 
     local lto = case(target.os) {
-        linux   = fix_lto(target) { lto_opt },
+        linux   = lto_opt,
         macos   = {},
-        windows = fix_lto(target) { lto_opt },
+        windows = lto_opt,
     }
     local target_flags = {
         "-DLUAX_ARCH='\""..target.arch.."\"'",
