@@ -40,6 +40,8 @@ local fs = require "fs"
 #include <stdint.h>
 #include <windows.h>
 #else
+#define _GNU_SOURCE
+#define _DARWIN_C_SOURCE
 #include <fnmatch.h>
 #include <glob.h>
 #endif
@@ -388,6 +390,24 @@ static int fs_glob(lua_State *L)
 }
 
 #endif
+
+/*@@@
+```lua
+fs.fnmatch(pattern, string, [flags])
+```
+matches `string` against the `pattern` using the `fnmatch` function.
+Returns `true` if the string matches the pattern, `false` otherwise.
+Optional `flags` parameter can be used to modify the matching behavior.
+@@@*/
+
+static int fs_fnmatch(lua_State *L)
+{
+    const char *pattern = luaL_checkstring(L, 1);
+    const char *string = luaL_checkstring(L, 2);
+    const int flags = lua_isnoneornil(L, 3) ? 0 : (int)luaL_checkinteger(L, 3);
+    lua_pushboolean(L, fnmatch(pattern, string, flags) == 0);
+    return 1;
+}
 
 /*@@@
 ```lua
@@ -1173,6 +1193,7 @@ static const luaL_Reg fslib[] =
     {"dir",         fs_dir},
     {"ls",          fs_ls},
     {"glob",        fs_glob},
+    {"fnmatch",     fs_fnmatch},
     {"remove",      fs_remove},
     {"rm",          fs_remove},
     {"rename",      fs_rename},
@@ -1213,6 +1234,17 @@ fs.oR, fs.oW, fs.oX
 fs.aR, fs.aW, fs.aX
 ```
 are the User/Group/Other/All Read/Write/eXecute mask for `fs.chmod`.
+
+```lua
+fs.FNM_NOESCAPE
+fs.FNM_PATHNAME
+fs.FNM_PERIOD
+fs.FNM_FILE_NAME
+fs.FNM_LEADING_DIR
+fs.FNM_CASEFOLD
+fs.FNM_EXTMATCH
+```
+are flags for `fs.fnmatch`.
 @@@*/
 
 LUAMOD_API int luaopen_fs(lua_State *L)
@@ -1238,5 +1270,27 @@ LUAMOD_API int luaopen_fs(lua_State *L)
     set_integer(L, "oR", S_IROTH);
     set_integer(L, "oW", S_IWOTH);
     set_integer(L, "oX", S_IXOTH);
+    /* fnmatch flags */
+#ifdef FNM_NOESCAPE
+    set_integer(L, "FNM_NOESCAPE", FNM_NOESCAPE);
+#endif
+#ifdef FNM_PATHNAME
+    set_integer(L, "FNM_PATHNAME", FNM_PATHNAME);
+#endif
+#ifdef FNM_PERIOD
+    set_integer(L, "FNM_PERIOD", FNM_PERIOD);
+#endif
+#ifdef FNM_FILE_NAME
+    set_integer(L, "FNM_FILE_NAME", FNM_FILE_NAME);
+#endif
+#ifdef FNM_LEADING_DIR
+    set_integer(L, "FNM_LEADING_DIR", FNM_LEADING_DIR);
+#endif
+#ifdef FNM_CASEFOLD
+    set_integer(L, "FNM_CASEFOLD", FNM_CASEFOLD);
+#endif
+#ifdef FNM_EXTMATCH
+    set_integer(L, "FNM_EXTMATCH", FNM_EXTMATCH);
+#endif
     return 1;
 }

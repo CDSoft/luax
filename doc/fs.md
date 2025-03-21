@@ -52,6 +52,14 @@ returns the list of path names matching a pattern.
 *Note*: not implemented on Windows.
 
 ``` lua
+fs.fnmatch(pattern, string, [flags])
+```
+
+matches `string` against the `pattern` using the `fnmatch` function.
+Returns `true` if the string matches the pattern, `false` otherwise.
+Optional `flags` parameter can be used to modify the matching behavior.
+
+``` lua
 fs.remove(name)
 fs.rm(name)
 ```
@@ -258,6 +266,18 @@ fs.aR, fs.aW, fs.aX
 ```
 
 are the User/Group/Other/All Read/Write/eXecute mask for `fs.chmod`.
+
+``` lua
+fs.FNM_NOESCAPE
+fs.FNM_PATHNAME
+fs.FNM_PERIOD
+fs.FNM_FILE_NAME
+fs.FNM_LEADING_DIR
+fs.FNM_CASEFOLD
+fs.FNM_EXTMATCH
+```
+
+are flags for `fs.fnmatch`.
 
 ## Additional functions (Lua)
 

@@ -103,6 +103,30 @@ local function fs_test(tmp)
         eq(fs.glob():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         eq(fs.glob("*.txt"):sort(),{"bar.txt","foo.txt"})
     end
+    do
+        eq(fs.fnmatch("*.txt", "foo.txt"), true)
+        eq(fs.fnmatch("*.txt", "foo.md"), false)
+        eq(fs.fnmatch("*.txt", "foo.md"), false)
+
+        eq(fs.fnmatch("ab/*/cd/*.txt", "ab/xy/cd/foo.txt"), true)
+        eq(fs.fnmatch("ab/*/cd/*.txt", "ab/xy/cd/foo.md"), false)
+
+        eq(fs.fnmatch("*/*.txt", "a/foo.txt"), true)
+        eq(fs.fnmatch("*/*.txt", "a/foo.md"), false)
+        eq(fs.fnmatch("*/*.txt", "a/b/foo.txt"), true)
+        eq(fs.fnmatch("*/*/*.txt", "a/b/foo.txt"), true)
+
+        if sys.os == "linux" and sys.libc == "gnu" then
+            eq(type(fs.FNM_NOESCAPE), "number")
+            eq(type(fs.FNM_PATHNAME), "number")
+            eq(type(fs.FNM_PERIOD), "number")
+            eq(type(fs.FNM_FILE_NAME), "number")
+            eq(type(fs.FNM_LEADING_DIR), "number")
+            eq(type(fs.FNM_CASEFOLD), "number")
+            eq(type(fs.FNM_EXTMATCH), "number")
+        end
+
+    end
     if sys.libc == "gnu" or sys.libc == "musl" then
         fs.chdir(cwd)
         eq(fs.dir(tmp):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})

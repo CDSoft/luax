@@ -556,6 +556,8 @@ local luax_cflags = F{
         "-Werror=implicit-fallthrough",
         "-Werror=missing-prototypes",
 
+        "-Wno-unused-macros",
+
         case(compiler) {
             zig = {
                 "-Weverything",

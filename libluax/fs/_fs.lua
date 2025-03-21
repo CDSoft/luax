@@ -189,6 +189,20 @@ function fs.inode(name)
     }
 end
 
+local pattern_cache = {}
+
+function fs.fnmatch(pattern, name)
+    local lua_pattern = pattern_cache[pattern]
+    if not lua_pattern then
+        lua_pattern = pattern
+            : gsub("%.", "%%.")
+            : gsub("%*", ".*")
+        lua_pattern = "^"..lua_pattern.."$"
+        pattern_cache[pattern] = lua_pattern
+    end
+    return name:match(lua_pattern) and true or false
+end
+
 function fs.chmod(name, ...)
     local mode = {...}
     if type(mode[1]) == "string" then
