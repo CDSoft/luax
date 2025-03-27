@@ -346,6 +346,7 @@ returns the list of path names matching a pattern.
 
 /* no glob function */
 /* TODO: implement glob in Lua */
+/* see functions FindFirstFile and FindNextFile. */
 
 static int fs_glob(lua_State *L)
 {
