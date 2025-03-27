@@ -1159,7 +1159,7 @@ section "LuaX archives"
 
 rule "lzip" {
     description = "lzip $in",
-    command = "$lzip -9 $in --output=- > $out",
+    command = "$lzip -6 $in --output=- > $out",
     implicit_in = "$lzip",
 }
 
@@ -1192,7 +1192,7 @@ local function luax_archive(archive, compilation_targets)
                 "-e lib",
                 "-t lib",
                 "-n luax",
-                "-z lzip-9",
+                "-z lzip-6",
             },
         },
 
