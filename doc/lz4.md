@@ -23,7 +23,7 @@ Only the compression level can be changed.
 ## LZ4 frame compression
 
 ``` lua
-lz4.compress(data, [level])
+lz4.lz4(data, [level])
 ```
 
 compresses `data` with LZ4. The compressed data is an LZ4 frame that can
@@ -35,7 +35,7 @@ The default compression level is 9.
 ## LZ4 frame decompression
 
 ``` lua
-lz4.decompress(data)
+lz4.unlz4(data)
 ```
 
 decompresses `data` with LZ4. `data` shall be an LZ4 frame and can be

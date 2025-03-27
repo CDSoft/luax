@@ -65,6 +65,9 @@ Only the compression level can be changed.
 
 static const char *lz4_compress(const char *src, const size_t src_len, luaL_Buffer *B, int level)
 {
+    level = level < LZ4HC_CLEVEL_MIN ? LZ4HC_CLEVEL_MIN
+          : level > LZ4HC_CLEVEL_MAX ? LZ4HC_CLEVEL_MAX
+          : level;
     const LZ4F_preferences_t prefs = {
         .frameInfo = {
             .blockSizeID = src_len <=     64*1024 ? LZ4F_max64KB
@@ -141,7 +144,7 @@ static const char *lz4_compress(const char *src, const size_t src_len, luaL_Buff
 
 /*@@@
 ```lua
-lz4.compress(data, [level])
+lz4.lz4(data, [level])
 ```
 compresses `data` with LZ4.
 The compressed data is an LZ4 frame that can be stored in a file and
@@ -222,7 +225,7 @@ static const char *lz4_decompress(const char *src, const size_t src_len, luaL_Bu
 
 /*@@@
 ```lua
-lz4.decompress(data)
+lz4.unlz4(data)
 ```
 decompresses `data` with LZ4.
 `data` shall be an LZ4 frame and

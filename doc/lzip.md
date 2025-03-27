@@ -13,7 +13,7 @@ The source code is available at
 ## lzip compression
 
 ``` lua
-lzip.compress(data, [level])
+lzip.lzip(data, [level])
 ```
 
 compresses `data` with lzip. The compressed data is an lzip frame that
@@ -26,7 +26,7 @@ The default compression level is 6.
 ## lzip decompression
 
 ``` lua
-lzip.decompress(data)
+lzip.unlzip(data)
 ```
 
 decompresses `data` with lzip. `data` shall be an lzip frame and can be

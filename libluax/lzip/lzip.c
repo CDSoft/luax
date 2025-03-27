@@ -106,7 +106,7 @@ end:
 
 /*@@@
 ```lua
-lzip.compress(data, [level])
+lzip.lzip(data, [level])
 ```
 compresses `data` with lzip.
 The compressed data is an lzip frame that can be stored in a file and
@@ -168,7 +168,7 @@ end:
 
 /*@@@
 ```lua
-lzip.decompress(data)
+lzip.unlzip(data)
 ```
 decompresses `data` with lzip.
 `data` shall be an lzip frame and
