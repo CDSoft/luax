@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with lsvg.  If not, see <https://www.gnu.org/licenses/>.
 
 For further information about lsvg you can visit
-https://github.com/cdsoft/lsvg
+https://codeberg.org/cdsoft/lsvg
 --]]
 
 local F = require "F"
@@ -681,7 +681,7 @@ You should have received a copy of the GNU General Public License
 along with lsvg.  If not, see <https://www.gnu.org/licenses/>.
 
 For further information about lsvg you can visit
-https://github.com/cdsoft/lsvg
+https://codeberg.org/cdsoft/lsvg
 --]]
 
 local F = require "F"
@@ -697,7 +697,7 @@ local function parse_args()
             "",
             "Arguments after \"--\" are given to the input scripts",
         } : rtrim())
-        : epilog "For more information, see https://github.com/CDSoft/lsvg"
+        : epilog "For more information, see https://codeberg.org/cdsoft/lsvg"
 
     parser : flag "-v"
         : description(('Print version ("%s")'):format(version))

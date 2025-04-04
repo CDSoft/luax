@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
 For further information about luax you can visit
-https://github.com/cdsoft/luax
+https://codeberg.org/cdsoft/luax
 --]]
 
 --@LIB
@@ -52,7 +52,7 @@ if not target then
         "    config  = "..package.config:lines():head().."\n",
         "    kernel  = "..tostring(kernel).."\n",
         "    machine = "..tostring(machine).."\n",
-        ">> https://github.com/CDSoft/luax/issues <<\n"
+        ">> https://codeberg.org/cdsoft/luax/issues <<\n"
     )
     os.exit(1)
 end

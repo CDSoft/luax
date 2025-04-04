@@ -18,7 +18,7 @@ libs["C"] = lib("src/C.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LIB
 
@@ -257,7 +257,7 @@ libs["Nil"] = lib("src/Nil.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LOAD
 
@@ -281,7 +281,7 @@ libs["acc"] = lib("src/acc.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LOAD
 
@@ -313,7 +313,7 @@ libs["archivers"] = lib("src/archivers.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LIB
 
@@ -401,7 +401,7 @@ libs["atexit"] = lib("src/atexit.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LIB
 
@@ -441,7 +441,7 @@ libs["builders"] = lib("src/builders.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LIB
 
@@ -777,7 +777,7 @@ libs["case"] = lib("src/case.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LOAD
 
@@ -801,7 +801,7 @@ libs["clean"] = lib("src/clean.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LOAD
 
@@ -894,7 +894,7 @@ libs["file"] = lib("src/file.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LOAD
 
@@ -955,7 +955,7 @@ libs["flatten"] = lib("src/flatten.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LIB
 
@@ -989,7 +989,7 @@ libs["help"] = lib("src/help.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LOAD
 
@@ -1103,7 +1103,7 @@ libs["ident"] = lib("src/ident.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LIB
 
@@ -1129,7 +1129,7 @@ libs["install"] = lib("src/install.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LOAD
 
@@ -1221,7 +1221,7 @@ libs["log"] = lib("src/log.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 local F = require "F"
 
@@ -1268,7 +1268,7 @@ libs["ls"] = lib("src/ls.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LOAD
 
@@ -1292,7 +1292,7 @@ libs["luax"] = lib("src/luax.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LIB
 
@@ -1444,7 +1444,7 @@ libs["ninja"] = lib("src/ninja.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LIB
 
@@ -1483,7 +1483,7 @@ local install_token = {}
 local command_line_token = {}
 
 local tokens = F{
-    "# Ninja file generated by bang (https://github.com/cdsoft/bang)\n",
+    "# Ninja file generated by bang (https://codeberg.org/cdsoft/bang)\n",
     command_line_token,
     "\n",
     help_token,
@@ -1978,7 +1978,7 @@ libs["pipe"] = lib("src/pipe.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LOAD
 
@@ -2043,7 +2043,7 @@ libs["tmp"] = lib("src/tmp.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LIB
 
@@ -2102,7 +2102,7 @@ libs["where"] = lib("src/where.lua", [[-- This file is part of bang.
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@LIB
 
@@ -2150,7 +2150,7 @@ return lib("src/bang.lua", [[--/usr/bin/env luax
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
 -- For further information about bang you can visit
--- https://github.com/cdsoft/bang
+-- https://codeberg.org/cdsoft/bang
 
 --@MAIN
 
@@ -2169,7 +2169,7 @@ local function parse_args()
             "",
             "Arguments after \"--\" are given to the input script",
         } : rtrim())
-        : epilog "For more information, see https://github.com/CDSoft/bang"
+        : epilog "For more information, see https://codeberg.org/cdsoft/bang"
 
     parser : flag "-v"
         : description(('Print Bang version ("%s")'):format(version))

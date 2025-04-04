@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
 For further information about luax you can visit
-https://github.com/cdsoft/luax
+https://codeberg.org/cdsoft/luax
 ]]
 
 local F = require "F"
@@ -26,7 +26,7 @@ local LUAX = {}
 local I = F.I(LUAX)
 
 LUAX.AUTHORS     = "Christophe Delord"
-LUAX.URL         = "github.com/cdsoft/luax"
+LUAX.URL         = "codeberg.org/cdsoft/luax"
 LUAX.VERSION     = sh "git describe --tags" : trim()
 LUAX.DATE        = sh "git show -s --format=%cd --date=format:'%Y-%m-%d'" : trim()
 LUAX.COPYRIGHT   = I"LuaX $(VERSION)  Copyright (C) 2021-$(DATE:split'%-':head()) $(URL), $(AUTHORS)"

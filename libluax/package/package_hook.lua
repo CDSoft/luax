@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
 For further information about luax you can visit
-https://github.com/cdsoft/luax
+https://codeberg.org/cdsoft/luax
 --]]
 
 --@LOAD=_
@@ -27,7 +27,7 @@ local sys = require "sys"
 
 -- This module wraps package searchers in a function that tracks package paths.
 -- The paths are stored in package.modpath, which can be used to generate dependency files
--- for [ypp](https://github.com/cdsoft/ypp) or [panda](https://github.com/cdsoft/panda).
+-- for [ypp](https://codeberg.org/cdsoft/ypp) or [panda](https://codeberg.org/cdsoft/panda).
 
 --[=[-----------------------------------------------------------------------@@@
 # package

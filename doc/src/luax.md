@@ -28,7 +28,7 @@ cross-compile[^cross-compilation] scripts for a supported platform.
         or  "The Lua scripts are actually not compiled to Lua bytecode unless explicitely required."
     ]] `luax` produces executables that do not require LuaX to be installed.
 
-LuaX is available on GitHub: <https://github.com/CDSoft/luax>
+LuaX is available on Codeberg: <https://codeberg.org/cdsoft/luax>
 
 ## Pricing
 
@@ -52,7 +52,6 @@ end end end]]
 
 @donate "https://liberapay.com/LuaX/donate"  "https://liberapay.com/assets/widgets/donate.svg"                                              "Donate using Liberapay"
 @donate "https://ko-fi.com/K3K11CD108"       "https://storage.ko-fi.com/cdn/kofi6.png?v=6"                                                  "Buy Me a Coffee at ko-fi.com"
-@donate "https://github.com/sponsors/CDSoft" "https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86" "Donate using Github"
 
 Feel free to promote LuaX!
 
@@ -77,7 +76,7 @@ On Linux or MacOS, the installation path is defined by the variable `ZIG_PATH` (
 On Windows, the installation path is defined by the variable `ZIG_PATH_WIN` (`~` is replaced with `%LOCALAPPDATA%`).
 
 ``` sh
-$ git clone https://github.com/CDSoft/luax
+$ git clone https://codeberg.org/cdsoft/luax
 $ cd luax
 $ ./bootstrap.sh
 $ ninja install
@@ -111,7 +110,7 @@ Option              Description
 
 `bang` must be run before `ninja` to change the compilation options.
 
-`lua tools/bang.luax` can be used instead of [bang](https://github.com/cdsoft/bang) if
+`lua tools/bang.luax` can be used instead of [bang](https://codeberg.org/cdsoft/bang) if
 it is not installed.
 
 The default compilation options are `small`, `notlo`, `nossl`, `nocross` and `gcc`.
@@ -139,7 +138,7 @@ Option      Description
 Example:
 
 ``` sh
-$ git clone https://github.com/CDSoft/luax
+$ git clone https://codeberg.org/cdsoft/luax
 $ cd luax
 $ ./bootstrap.sh lz4 ssl
 $ ninja install
@@ -160,7 +159,7 @@ and [UBSan](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html).
 They run slower but this helps finding tricky bugs.
 
 ``` sh
-$ git clone https://github.com/CDSoft/luax
+$ git clone https://codeberg.org/cdsoft/luax
 $ cd luax
 $ tools/bang.lua -- debug san # generate build.ninja in debug mode with sanitizers
 $ ninja                       # compile LuaX
@@ -312,8 +311,8 @@ windows-x86_64        ~/.local/lib/luax.lar
 The `luax` runtime comes with a few builtin modules.
 
 Some modules are heavily inspired by
-[BonaLuna](https://github.com/cdsoft/bonaluna) and
-[lapp](https://github.com/cdsoft/lapp).
+[BonaLuna](https://codeberg.org/cdsoft/bonaluna) and
+[lapp](https://codeberg.org/cdsoft/lapp).
 
 - [LuaX interactive usage](repl.md): improved Lua REPL
 - [package](package.md): modified Lua package `package`
@@ -392,7 +391,7 @@ script `lib/luax.lua` can be reused in pure Lua programs:
     along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
     For further information about luax you can visit
-    https://github.com/cdsoft/luax
+    https://codeberg.org/cdsoft/luax
 
 `luax` uses other third party softwares:
 
