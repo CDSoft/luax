@@ -456,7 +456,7 @@ local default_options = {
     ext = "",
 }
 
-local builder_keys = F.keys(default_options) .. { "name" }
+local builder_keys = F.keys(default_options) .. { "name", "output_prefix" }
 
 local function set_ext(name, ext)
     if vars.expand(name):lower():has_suffix(ext:lower()) then return name end
@@ -497,6 +497,7 @@ local function run(self, output)
         output = set_ext(output, self.ext)
         return build(output) (F.merge{
             { rules[self], input_list },
+            self.output_prefix and { output_prefix = output:splitext() } or {},
             input_vars,
         })
     end
@@ -605,7 +606,8 @@ local ditaa = new(default_options, "ditaa")
 
 local asymptote = new(default_options, "asymptote")
     : set "cmd" "asy"
-    : set "args" "-o $out $in"
+    : set "args" "-o $output_prefix $in"
+    : set "output_prefix" (true)
 
 local mermaid = new(default_options, "mermaid")
     : set "cmd" "mmdc"
@@ -652,41 +654,49 @@ return setmetatable({
         dot = {
             svg = dot:new "dot.svg" : add "flags" "-Tsvg" : set "ext" ".svg",
             png = dot:new "dot.png" : add "flags" "-Tpng" : set "ext" ".png",
+            jpg = dot:new "dot.jpg" : add "flags" "-Tjpg" : set "ext" ".jpg",
             pdf = dot:new "dot.pdf" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         neato = {
             svg = dot:new "neato.svg" : set "cmd" "neato" : add "flags" "-Tsvg" : set "ext" ".svg",
             png = dot:new "neato.png" : set "cmd" "neato" : add "flags" "-Tpng" : set "ext" ".png",
+            jpg = dot:new "neato.jpg" : set "cmd" "neato" : add "flags" "-Tjpg" : set "ext" ".jpg",
             pdf = dot:new "neato.pdf" : set "cmd" "neato" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         twopi = {
             svg = dot:new "twopi.svg" : set "cmd" "twopi" : add "flags" "-Tsvg" : set "ext" ".svg",
             png = dot:new "twopi.png" : set "cmd" "twopi" : add "flags" "-Tpng" : set "ext" ".png",
+            jpg = dot:new "twopi.jpg" : set "cmd" "twopi" : add "flags" "-Tjpg" : set "ext" ".jpg",
             pdf = dot:new "twopi.pdf" : set "cmd" "twopi" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         circo = {
             svg = dot:new "circo.svg" : set "cmd" "circo" : add "flags" "-Tsvg" : set "ext" ".svg",
             png = dot:new "circo.png" : set "cmd" "circo" : add "flags" "-Tpng" : set "ext" ".png",
+            jpg = dot:new "circo.jpg" : set "cmd" "circo" : add "flags" "-Tjpg" : set "ext" ".jpg",
             pdf = dot:new "circo.pdf" : set "cmd" "circo" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         fdp = {
             svg = dot:new "fdp.svg" : set "cmd" "fdp" : add "flags" "-Tsvg" : set "ext" ".svg",
             png = dot:new "fdp.png" : set "cmd" "fdp" : add "flags" "-Tpng" : set "ext" ".png",
+            jpg = dot:new "fdp.jpg" : set "cmd" "fdp" : add "flags" "-Tjpg" : set "ext" ".jpg",
             pdf = dot:new "fdp.pdf" : set "cmd" "fdp" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         sfdp = {
             svg = dot:new "sfdp.svg" : set "cmd" "sfdp" : add "flags" "-Tsvg" : set "ext" ".svg",
             png = dot:new "sfdp.png" : set "cmd" "sfdp" : add "flags" "-Tpng" : set "ext" ".png",
+            jpg = dot:new "sfdp.jpg" : set "cmd" "sfdp" : add "flags" "-Tjpg" : set "ext" ".jpg",
             pdf = dot:new "sfdp.pdf" : set "cmd" "sfdp" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         patchwork = {
             svg = dot:new "patchwork.svg" : set "cmd" "patchwork" : add "flags" "-Tsvg" : set "ext" ".svg",
             png = dot:new "patchwork.png" : set "cmd" "patchwork" : add "flags" "-Tpng" : set "ext" ".png",
+            jpg = dot:new "patchwork.jpg" : set "cmd" "patchwork" : add "flags" "-Tjpg" : set "ext" ".jpg",
             pdf = dot:new "patchwork.pdf" : set "cmd" "patchwork" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         osage = {
             svg = dot:new "osage.svg" : set "cmd" "osage" : add "flags" "-Tsvg" : set "ext" ".svg",
             png = dot:new "osage.png" : set "cmd" "osage" : add "flags" "-Tpng" : set "ext" ".png",
+            jpg = dot:new "osage.jpg" : set "cmd" "osage" : add "flags" "-Tjpg" : set "ext" ".jpg",
             pdf = dot:new "osage.pdf" : set "cmd" "osage" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
     },
@@ -703,6 +713,7 @@ return setmetatable({
     asymptote = {
         svg = asymptote:new "asymptote.svg" : add "flags" "-f svg" : set "ext" ".svg",
         png = asymptote:new "asymptote.png" : add "flags" "-f png" : set "ext" ".png",
+        jpg = asymptote:new "asymptote.jpg" : add "flags" "-f jpg" : set "ext" ".jpg",
         pdf = asymptote:new "asymptote.pdf" : add "flags" "-f pdf" : set "ext" ".pdf",
     },
     mermaid = {
@@ -743,16 +754,19 @@ return setmetatable({
     gnuplot = {
         svg = gnuplot:new "gnuplot.svg" : add "flags" { "-e 'set terminal svg'" } : set "ext" ".svg",
         png = gnuplot:new "gnuplot.png" : add "flags" { "-e 'set terminal png'" } : set "ext" ".png",
-        pdf = gnuplot:new "gnuplot.pdf" : add "flags" { "-e 'set terminal pdf'" } : set "ext" ".pdf",
+        jpg = gnuplot:new "gnuplot.jpg" : add "flags" { "-e 'set terminal jpeg'" } : set "ext" ".jpg",
+        pdf = gnuplot:new "gnuplot.pdf" : add "flags" { "-e 'set terminal context'" } : set "ext" ".pdf",
     },
     lsvg = {
         svg = lsvg:new "lsvg.svg" : set "ext" ".svg",
         png = lsvg:new "lsvg.png" : set "ext" ".png",
+        jpg = lsvg:new "lsvg.jpg" : set "ext" ".jpg",
         pdf = lsvg:new "lsvg.pdf" : set "ext" ".pdf",
     },
     octave = {
         svg = octave:new "octave.svg" : set "ext" ".svg",
         png = octave:new "octave.png" : set "ext" ".png",
+        jpg = octave:new "octave.jpg" : set "ext" ".jpg",
         pdf = octave:new "octave.pdf" : set "ext" ".pdf",
     },
 }, {
@@ -806,6 +820,7 @@ libs["clean"] = lib("src/clean.lua", [[-- This file is part of bang.
 --@LOAD
 
 local F = require "F"
+local sys = require "sys"
 local help = require "help"
 local ident = require "ident"
 
@@ -831,6 +846,16 @@ end
 
 function mt.__index:gen()
 
+    local rm_cmd = F.case(sys.os) {
+        linux   = "rm -rf",
+        macos   = "rm -rf",
+        windows = "del /F /S /Q",
+    }
+
+    local function rm(dir)
+        return { rm_cmd, dir/(dir==builddir and "*" or {}) }
+    end
+
     if #directories_to_clean > 0 then
 
         section("Clean")
@@ -841,7 +866,7 @@ function mt.__index:gen()
             return build("clean-"..ident(dir)) {
                 ["$no_default"] = true,
                 description = {"CLEAN", dir},
-                command = {"rm -rf", dir..(dir==builddir and "/*" or "")},
+                command = rm(dir),
             }
         end)
 
@@ -862,7 +887,7 @@ function mt.__index:gen()
             return build("mrproper-"..ident(dir)) {
                 ["$no_default"] = true,
                 description = {"CLEAN", dir},
-                command = {"rm -rf", dir..(dir==builddir and "/*" or "")},
+                command = rm(dir),
             }
         end)
 
@@ -1547,12 +1572,13 @@ local vars = setmetatable({}, {
 })
 local function expand(s)
     if type(s) == "string" then
-        for _ in pairs(vars) do
-            local s1 = s:gsub("%$([%w_%-]+)", vars)
-            if s1 == s then break end
-            s = s1
+        local s0 = s
+        for _ = 1, nbvars+1 do
+            local s1 = s0:gsub("%$([%w_%-]+)", vars)
+            if s1 == s0 then return s0 end
+            s0 = s1
         end
-        return s
+        log.error("vars.expand can not expand ", string.format("%q", s), " (recursive definition?)")
     end
     if type(s) == "table" then
         return map(expand, s)
@@ -1701,43 +1727,38 @@ local custom_default_statement = false
 
 local nbbuilds = 0
 
-local function build_decorator(build)
-    local self = {}
-    local mt = {
-        __call = build,
-        __index = {},
+local build = {}
+local build_mt = {}
+
+function build.files(predicate)
+    local p = F.case(type(predicate)) {
+        ["string"]   = function(name, rule) return rule ~= "phony" and name:has_prefix(predicate) end,
+        ["function"] = function(name, rule) return rule ~= "phony" and predicate(name, rule) end,
+        ["nil"]      = function(_, rule)    return rule ~= "phony" end,
+        [F.Nil]      = function() log.error("build.files expects a string or a function") end,
     }
-    local archivers = require "archivers"
-    mt.__index.archivers = archivers
-    F.foreachk(archivers, function(name, archiver) mt.__index[name] = archiver end)
-    local C = require "C"
-    mt.__index.C = C
-    F.foreachk(C, function(name, compiler) mt.__index[name] = compiler end)
-    mt.__index.luax = require "luax"
-    local builders = require "builders"
-    F.foreachk(builders, function(name, builder) mt.__index[name] = builder end)
-    mt.__index.new = function(...) return builders:new(...) end
-    mt.__index.files = function(predicate)
-        local p
-        if type(predicate) == "string" then
-            p = function(name, rule)
-                return name:has_prefix(predicate) and rule ~= "phony"
-            end
-        elseif type(predicate) == "function" then
-            p = function(name, rule)
-                return predicate(name, rule) and rule ~= "phony"
-            end
-        elseif type(predicate) == "nil" then
-            p = function(_, rule) return rule ~= "phony" end
-        else
-            log.error("build.files expects a string or a function")
-        end
-        return F.filterk(p, builds) : keys()
-    end
-    return setmetatable(self, mt)
+    return F.filterk(p, builds) : keys()
 end
 
-build = build_decorator(function(_, outputs)
+function build.new(...)
+    return build.builders:new(...)
+end
+
+local function attach(mod)
+    build[mod] = require(mod)
+end
+
+local function inject(mod)
+    attach(mod)
+    foreachk(build[mod], function(name, func) build[name] = func end)
+end
+
+inject "builders"
+attach "luax"
+inject "C"
+inject "archivers"
+
+function build_mt.__call(_, outputs)
     outputs = stringify(outputs)
     return function(inputs)
         -- variables defined in the current build statement
@@ -1800,7 +1821,9 @@ build = build_decorator(function(_, outputs)
         end
         return #output_list ~= 1 and output_list or output_list[1]
     end
-end)
+end
+
+_G.build = setmetatable(build, build_mt)
 
 local pool_variables = F{
     "depth",
@@ -2122,7 +2145,7 @@ return function()
 
 end
 ]])
-libs["version"] = lib(".build/version", [=[return [[2.6]]]=])
+libs["version"] = lib(".build/version", [=[return [[2.7.4]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"
