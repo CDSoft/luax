@@ -116,7 +116,7 @@ local function sky()
         stroke_linecap = "round",
     }
     local star_colors = { "gold", "red", "cyan", "brown" }
-    local rnd = crypt.prng(42)
+    local rnd = crypt.prng(42, 1)
     for _ = 1, number_of_stars do
         local x = F.floor(rnd:float(h))
         local y = F.floor(rnd:float(h))

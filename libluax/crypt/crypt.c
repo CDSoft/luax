@@ -51,7 +51,7 @@ local crypt = require "crypt"
 ## Random number generator
 
 The LuaX pseudorandom number generator is a
-[linear congruential generator](https://en.wikipedia.org/wiki/Linear_congruential_generator).
+[permuted congruential generator](https://en.wikipedia.org/wiki/Permuted_congruential_generator).
 This generator is not a cryptographically secure pseudorandom number generator.
 It can be used as a repeatable generator (e.g. for repeatable tests).
 
@@ -61,24 +61,26 @@ and can instantiate independent generators with their own seeds.
 
 #define PRNG_MT "prng"
 
-/* https://www.pcg-random.org/download.html */
+/* https://www.pcg-random.org */
 
 typedef struct
 {
     uint64_t state;
+    uint64_t increment;
 } t_prng;
 
 #define CRYPT_RAND_MAX 0xFFFFFFFFULL
 
 /* Low level random functions */
 
-static const uint64_t prng_a = 6364136223846793005ULL;
-static const uint64_t prng_c = 1ULL;
+static const uint64_t default_prng_state = 0x4d595df4d0f33173;
+static const uint64_t prng_multiplier = 6364136223846793005ULL;
+static const uint64_t default_prng_increment = 1442695040888963407ULL;
 
 static inline void prng_advance(t_prng *prng)
 {
     // Advance internal state
-    prng->state = prng->state*prng_a + prng_c;
+    prng->state = prng->state*prng_multiplier + prng->increment;
 }
 
 static inline uint32_t prng_int(t_prng *prng)
@@ -94,8 +96,8 @@ static inline uint32_t prng_int(t_prng *prng)
 
 static inline int64_t prng_int_range(t_prng *prng, int64_t a, int64_t b)
 {
-    const int64_t n = prng_int(prng);
-    return n % (b-a+1) + a;
+    const uint64_t n = prng_int(prng);
+    return (int64_t)(n % ((uint64_t)(b-a)+1)) + a;
 }
 
 static inline double prng_float(t_prng *prng)
@@ -124,19 +126,25 @@ static inline void prng_str(t_prng *prng, size_t size, luaL_Buffer *B)
     luaL_addsize(B, size);
 }
 
-static inline void prng_seed(t_prng *prng, uint64_t state)
+static inline void prng_seed(t_prng *prng, uint64_t state, uint64_t increment)
 {
-    prng->state = state;
+    prng->state = state == (uint64_t)-1 ? default_prng_state : state;
+    prng->increment = (increment == (uint64_t)-1 ? default_prng_increment : increment) | 1;
     /* drop the first values */
     prng_advance(prng);
     prng_advance(prng);
 }
 
-static inline uint64_t prng_default_seed(void)
+static inline uint64_t prng_random_state(void)
 {
     struct timeval t;
     gettimeofday(&t, NULL);
     return ((uint64_t)time(NULL) + (uint64_t)t.tv_sec + (uint64_t)t.tv_usec) * (uint64_t)getpid();
+}
+
+static inline uint64_t prng_random_increment(t_prng *prng)
+{
+    return (uintptr_t)prng;
 }
 
 /***************************************************************************@@@
@@ -145,10 +153,20 @@ static inline uint64_t prng_default_seed(void)
 
 /*@@@
 ```lua
-local rng = crypt.prng([seed])
+local rng = crypt.prng([seed, incr])
 ```
-returns a random number generator starting from the optional seed `seed`.
-This object has four methods: `seed([seed])`, `int([m, [n]])`, `float([a, [b]])` and `str(n)`.
+returns a random number generator starting from the optional seed `seed` and increment `incr`.
+This object has four methods: `seed([seed, incr])`, `int([m, [n]])`, `float([a, [b]])` and `str(n)`.
+
+Special `seed` and `incr` values:
+
+| `seed`    | Initial PRNG state                | `incr`    | PRNG increment            |
+|-----------|-----------------------------------|-----------|---------------------------|
+| `nil`     | Value based on the current time   | `nil`     | address of the PRNG state |
+| `-1`      | `0x4d595df4d0f33173`              | `-1`      | `1442695040888963407`     |
+| `n`       | `n`                               | `n`       | `n`                       |
+
+The increment shall be an odd number (i.e. even values are added 1).
 @@@*/
 
 static int crypt_prng(lua_State *L)
@@ -156,15 +174,18 @@ static int crypt_prng(lua_State *L)
     t_prng *prng = (t_prng *)lua_newuserdata(L, sizeof(t_prng));
     const uint64_t seed = lua_type(L, 1) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 1)
-        : prng_default_seed();
+        : prng_random_state();
+    const uint64_t increment = lua_type(L, 2) == LUA_TNUMBER
+        ? (uint64_t)luaL_checkinteger(L, 2)
+        : prng_random_increment(prng);
     luaL_setmetatable(L, PRNG_MT);
-    prng_seed(prng, seed);
+    prng_seed(prng, seed, increment);
     return 1;
 }
 
 /*@@@
 ```lua
-rng:seed([seed])
+rng:seed([seed, incr])
 ```
 sets the seed of the PRNG.
 The default seed is a number based on the current time and the process id.
@@ -175,8 +196,11 @@ static int crypt_prng_seed(lua_State *L)
     t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
     const uint64_t seed = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
-        : prng_default_seed();
-    prng_seed(prng, seed);
+        : prng_random_state();
+    const uint64_t increment = lua_type(L, 3) == LUA_TNUMBER
+        ? (uint64_t)luaL_checkinteger(L, 3)
+        : prng_random_increment(prng);
+    prng_seed(prng, seed, increment);
     return 0;
 }
 
@@ -299,7 +323,7 @@ static t_prng prng;
 
 /*@@@
 ```lua
-crypt.seed([seed])
+crypt.seed([seed, incr])
 ```
 sets the seed of the global PRNG.
 The default seed is a number based on the current time and the process id.
@@ -309,8 +333,11 @@ static int crypt_seed(lua_State *L)
 {
     const uint64_t seed = lua_type(L, 1) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 1)
-        : prng_default_seed();
-    prng_seed(&prng, seed);
+        : prng_random_state();
+    const uint64_t increment = lua_type(L, 2) == LUA_TNUMBER
+        ? (uint64_t)luaL_checkinteger(L, 2)
+        : prng_random_increment(&prng);
+    prng_seed(&prng, seed, increment);
     return 0;
 }
 
@@ -1024,13 +1051,14 @@ static inline uint64_t prng_hash64(const char *input, size_t input_size)
 {
     /* 2^64-59 = 0xFFFFFFFFFFFFFFC5 */
     register uint64_t hash = 0xFFFFFFFFFFFFFFC5;
-    hash = hash*prng_a + prng_c;
+    hash = hash*prng_multiplier + default_prng_increment;
+    hash = hash*prng_multiplier + default_prng_increment;
     for (size_t i = 0; i < input_size; i++)
     {
         const uint64_t c = (uint64_t)input[i];
-        hash = hash*prng_a + ((c << 1) ^ prng_c);
+        hash = hash*prng_multiplier + ((c << 1) ^ default_prng_increment);
     }
-    hash = hash*prng_a + prng_c;
+    hash = hash*prng_multiplier + default_prng_increment;
     return hash;
 }
 
@@ -1065,24 +1093,28 @@ static inline void prng_hash128(const char *input, size_t input_size, uint64_t *
 {
     register uint64_t h1 = 0xFFFFFFFFFFFFFFC5; /* 2^64-59 (prime number less than 2^64) */
     register uint64_t h2 = 0xFFFFFFFFFFFFFFAD; /* 2^64-83 (prime number less than 2^64-59) */
-    h1 = h1*prng_a + prng_c;
-    h2 = h2*prng_a + prng_c;
+    const uint64_t increment1 = default_prng_increment;
+    const uint64_t increment2 = (~default_prng_increment) | 1;
+    h1 = h1*prng_multiplier + increment1;
+    h1 = h1*prng_multiplier + increment1;
+    h2 = h2*prng_multiplier + increment2;
+    h2 = h2*prng_multiplier + increment2;
     size_t i;
     for (i = 0; i+1 < input_size; i+=2)
     {
         const uint64_t c1 = (uint64_t)input[i+0];
         const uint64_t c2 = (uint64_t)input[i+1];
-        h1 = h1*prng_a + ((c1 << 1) ^ prng_c);
-        h2 = h2*prng_a + ((c2 << 1) ^ prng_c);
+        h1 = h1*prng_multiplier + ((c1 << 1) ^ increment1);
+        h2 = h2*prng_multiplier + ((c2 << 1) ^ increment2);
     }
     if (i < input_size) {
         const uint64_t c1 = (uint64_t)input[i+0];
-        h1 = h1*prng_a + ((c1 << 1) ^ prng_c);
+        h1 = h1*prng_multiplier + ((c1 << 1) ^ increment1);
     }
-    h1 = h1*prng_a + prng_c;
-    h2 = h2*prng_a + prng_c;
-    hash[0] = h1*prng_a + h2;
-    hash[1] = h2*prng_a + h1;
+    h1 = h1*prng_multiplier + increment1;
+    h2 = h2*prng_multiplier + increment2;
+    hash[0] = h1*prng_multiplier + h2;
+    hash[1] = h2*prng_multiplier + h1;
 }
 
 static int crypt_hash128(lua_State *L)
@@ -1155,7 +1187,7 @@ LUAMOD_API int luaopen_crypt(lua_State *L)
     lua_pushvalue(L, -2);
     lua_settable(L, -3);
 
-    prng_seed(&prng, prng_default_seed());
+    prng_seed(&prng, prng_random_state(), prng_random_increment(&prng));
 
     /* module initialization */
 

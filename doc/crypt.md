@@ -11,8 +11,8 @@ need strong cryptography functions.
 
 ## Random number generator
 
-The LuaX pseudorandom number generator is a [linear congruential
-generator](https://en.wikipedia.org/wiki/Linear_congruential_generator).
+The LuaX pseudorandom number generator is a [permuted congruential
+generator](https://en.wikipedia.org/wiki/Permuted_congruential_generator).
 This generator is not a cryptographically secure pseudorandom number
 generator. It can be used as a repeatable generator (e.g. for repeatable
 tests).
@@ -23,15 +23,25 @@ independent generators with their own seeds.
 ### Random number generator instance
 
 ``` lua
-local rng = crypt.prng([seed])
+local rng = crypt.prng([seed, incr])
 ```
 
-returns a random number generator starting from the optional seed
-`seed`. This object has four methods: `seed([seed])`, `int([m, [n]])`,
-`float([a, [b]])` and `str(n)`.
+returns a random number generator starting from the optional seed `seed`
+and increment `incr`. This object has four methods:
+`seed([seed, incr])`, `int([m, [n]])`, `float([a, [b]])` and `str(n)`.
+
+Special `seed` and `incr` values:
+
+| `seed` | Initial PRNG state              | `incr` | PRNG increment            |
+|--------|---------------------------------|--------|---------------------------|
+| `nil`  | Value based on the current time | `nil`  | address of the PRNG state |
+| `-1`   | `0x4d595df4d0f33173`            | `-1`   | `1442695040888963407`     |
+| `n`    | `n`                             | `n`    | `n`                       |
+
+The increment shall be an odd number (i.e. even values are added 1).
 
 ``` lua
-rng:seed([seed])
+rng:seed([seed, incr])
 ```
 
 sets the seed of the PRNG. The default seed is a number based on the
@@ -82,7 +92,7 @@ returns a string with `bytes` random bytes.
 ### Global random number generator
 
 ``` lua
-crypt.seed([seed])
+crypt.seed([seed, incr])
 ```
 
 sets the seed of the global PRNG. The default seed is a number based on

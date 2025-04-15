@@ -161,13 +161,13 @@ return function()
             eq({s:arc4("key"):byte(1, -1)}, {217,183,168,237,133,97,233})
         end
         do -- hash
-            eq(crypt.hash "", "7b6a78f0d6c6494a")
-            eq(crypt.hash "abc", "aad997d90d2fc60c")
-            eq(crypt.hash "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "43b171325717ed36")
-            eq(crypt.hash "a", "ba1cdf88b948c824")
-            eq(crypt.hash "aa", "cdb204b8ec1876e7")
-            eq(crypt.hash "ab", "27b12f5147011a98")
-            eq(crypt.hash "0123456701234567012345670123456701234567012345670123456701234567", "fbc24b87f8801d96")
+            eq(crypt.hash "", "a210e25fb829f210")
+            eq(crypt.hash "abc", "473a5b2cad831f43")
+            eq(crypt.hash "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "5abfe14fd7d84a50")
+            eq(crypt.hash "a", "af98e34a6fabc2df")
+            eq(crypt.hash "aa", "f8f53768bdc10cc1")
+            eq(crypt.hash "ab", "9ef70ccf62d96810")
+            eq(crypt.hash "0123456701234567012345670123456701234567012345670123456701234567", "22d90ed48e6ee869")
             ne(crypt.hash "aa", crypt.hash "ab")
             for _ = 1, N do
                 local s = crypt.str(crypt.int()%1024)
@@ -176,14 +176,14 @@ return function()
             end
         end
         do -- hash64
-            eq(crypt.hash64 "", "7b6a78f0d6c6494a")
-            eq(crypt.hash64 "abc", "aad997d90d2fc60c")
-            eq(crypt.hash64 "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "43b171325717ed36")
-            eq(crypt.hash64 "a", "ba1cdf88b948c824")
-            eq(crypt.hash64 "b", "141b0a2214316cd5")
-            eq(crypt.hash64 "aa", "cdb204b8ec1876e7")
-            eq(crypt.hash64 "ab", "27b12f5147011a98")
-            eq(crypt.hash64 "0123456701234567012345670123456701234567012345670123456701234567", "fbc24b87f8801d96")
+            eq(crypt.hash64 "", "a210e25fb829f210")
+            eq(crypt.hash64 "abc", "473a5b2cad831f43")
+            eq(crypt.hash64 "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "5abfe14fd7d84a50")
+            eq(crypt.hash64 "a", "af98e34a6fabc2df")
+            eq(crypt.hash64 "b", "559ab8b114c31e2f")
+            eq(crypt.hash64 "aa", "f8f53768bdc10cc1")
+            eq(crypt.hash64 "ab", "9ef70ccf62d96810")
+            eq(crypt.hash64 "0123456701234567012345670123456701234567012345670123456701234567", "22d90ed48e6ee869")
             ne(crypt.hash64 "aa", crypt.hash64 "ab")
             for _ = 1, N do
                 local s = crypt.str(crypt.int()%1024)
@@ -192,14 +192,14 @@ return function()
             end
         end
         do -- hash128
-            eq(crypt.hash128 "", "42d9944a0cb600b8225091bc15228d78")
-            eq(crypt.hash128 "abc", "c91ca50f36d3245b6d8c72e128a49a83")
-            eq(crypt.hash128 "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "baa2542810f9d530fad83531ea9f9559")
-            eq(crypt.hash128 "a", "556fba793f86ae7a6102f854f8a30b53")
-            eq(crypt.hash128 "b", "27cbd97c83b76d4bbb0023ee528caf03")
-            eq(crypt.hash128 "aa", "74981d842b74b915d49dd77cfcd1e58e")
-            eq(crypt.hash128 "ab", "ce96481d865c5dc6a6f9f67f4003a55f")
-            eq(crypt.hash128 "0123456701234567012345670123456701234567012345670123456701234567", "c2410001564358cda20d437abc95847f")
+            eq(crypt.hash128 "", "f281c81645637f3aba58f55c85723744")
+            eq(crypt.hash128 "abc", "318597ea5617d4c7fdde016eeac7c86c")
+            eq(crypt.hash128 "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "5a532e4fa91f1755c2324897fb8bd8b3")
+            eq(crypt.hash128 "a", "3bdf1c349379c91bc7e0f6473cf40713")
+            eq(crypt.hash128 "b", "6983fd304f480a4b6de2cbaee10b6462")
+            eq(crypt.hash128 "aa", "a6a1125e9bcd94049622e47f0d51071c")
+            eq(crypt.hash128 "ab", "00a03df7f5b538b5687e03835182c6ec")
+            eq(crypt.hash128 "0123456701234567012345670123456701234567012345670123456701234567", "323dd52aeee45f65faaffde7e729297b")
             ne(crypt.hash128 "aa", crypt.hash128 "ab")
             for _ = 1, N do
                 local s = crypt.str(crypt.int()%1024)
@@ -248,9 +248,9 @@ return function()
         end
     end
     do
-        local r1 = crypt.prng(42)
-        local r2 = crypt.prng(42)
-        local r3 = crypt.prng(43)
+        local r1 = crypt.prng(42, 13)
+        local r2 = crypt.prng(42, 13)
+        local r3 = crypt.prng(43, 13)
         for _ = 1, N do
             local x1 = r1:int()                                eq(type(x1), "number") eq(math.type(x1), "integer")
             local x2 = r2:int()                                eq(type(x2), "number") eq(math.type(x2), "integer")
@@ -279,24 +279,33 @@ return function()
     end
     do
         -- compare C and Lua prng implementations
-        local r = crypt.prng(1337)
+        local r = crypt.prng(1337, 1)
         local xs = F.range(16):map(function(_) return r:int() end)
         eq(xs, {
             1366936323, 2922103962, 3074544265, 4240721341, 2529631336, 316793424, 2144597218, 2478277350,
             4254537736, 2560294415, 843227611, 3842418420, 690197939, 2249917264, 3773173077, 3200169535
         })
-        eq(crypt.hash "Hello World!", "a1c3651c1533317c")
+        eq(crypt.hash "Hello World!", "ec307c5cbcaa6427")
         do
             -- test setting the seed after initialization
-            local r1 = crypt.prng(666)
-            local r2 = crypt.prng(42)
+            local r1 = crypt.prng(666, 1)
+            local r2 = crypt.prng(42, 1)
             F.range(100):foreach(function(_) ne(r1:int(), r2:int()) end)
-            r1 = crypt.prng(666)
-            r2:seed(666)
+            r1 = crypt.prng(666, 1)
+            r2:seed(666, 1)
             F.range(100):foreach(function(_) eq(r1:int(), r2:int()) end)
         end
         do
-            local s = crypt.prng(1337)
+            -- test setting the increment after initialization
+            local r1 = crypt.prng(666, 1)
+            local r2 = crypt.prng(666, 3)
+            F.range(100):foreach(function(_) ne(r1:int(), r2:int()) end)
+            r1 = crypt.prng(666, 1)
+            r2:seed(666, 1)
+            F.range(100):foreach(function(_) eq(r1:int(), r2:int()) end)
+        end
+        do
+            local s = crypt.prng(1337, 1)
             eq(s:str(1):hex(), "03")
             eq(s:str(3):hex(), "9ac42b")
             eq(s:str(4):hex(), "89d241b7")

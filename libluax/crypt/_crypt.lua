@@ -43,26 +43,38 @@ local RAND_MAX <const> = 0xFFFFFFFF
 
 crypt.RAND_MAX = RAND_MAX
 
-local prng_a <const> = 6364136223846793005
-local prng_c <const> = 1
+local default_prng_state <const> = 0x4d595df4d0f33173
+local prng_multiplier <const> = 6364136223846793005
+local default_prng_increment <const> = 1442695040888963407
 
-function crypt.prng(seed)
+function crypt.prng(seed, incr)
     local self = setmetatable({}, prng_mt)
-    self:seed(seed or random(0))
+    self:seed(seed, incr)
     return self
 end
 
-function prng_mt.__index:seed(seed)
-    self.state = assert(seed, "seed parameter missing")
-    self.state = prng_a*self.state + prng_c
-    self.state = prng_a*self.state + prng_c
+local function prng_random_state()
+    return random(0)
+end
+
+local function prng_random_increment(prng)
+    return tonumber(format("%p", prng))
+end
+
+function prng_mt.__index:seed(seed, incr)
+    if seed == -1 then seed = default_prng_state end
+    if incr == -1 then incr = default_prng_increment end
+    self.state = seed or prng_random_state()
+    self.increment = incr or prng_random_increment(self)
+    self.state = prng_multiplier*self.state + self.increment
+    self.state = prng_multiplier*self.state + self.increment
 end
 
 local function prng_int(self, a, b)
     local oldstate = self.state
-    self.state = prng_a*oldstate + prng_c
+    self.state = prng_multiplier*oldstate + self.increment
     local xorshifted = (((oldstate >> 18) ~ oldstate) >> 27) & 0xFFFFFFFF
-    local rot = oldstate >> 59;
+    local rot = oldstate >> 59
     local r = ((xorshifted >> rot) | (xorshifted << ((-rot) & 31))) & 0xFFFFFFFF
 
     if not a then return r end
@@ -308,12 +320,13 @@ crypt.unarc4 = crypt.arc4
 
 function crypt.hash64(s)
     local hash = 0xFFFFFFFFFFFFFFC5
-    hash = hash*prng_a + prng_c
+    hash = hash*prng_multiplier + default_prng_increment
+    hash = hash*prng_multiplier + default_prng_increment
     for i = 1, #s do
         local c = byte(s, i)
-        hash = hash*prng_a + ((c << 1) ~ prng_c)
+        hash = hash*prng_multiplier + ((c << 1) ~ default_prng_increment)
     end
-    hash = hash*prng_a + prng_c
+    hash = hash*prng_multiplier + default_prng_increment
     return ("<I8"):pack(hash):hex()
 end
 
@@ -322,20 +335,24 @@ crypt.hash = crypt.hash64
 function crypt.hash128(s)
     local h1 = 0xFFFFFFFFFFFFFFC5
     local h2 = 0xFFFFFFFFFFFFFFAD
-    h1 = h1*prng_a + prng_c
-    h2 = h2*prng_a + prng_c
+    local increment1 = default_prng_increment
+    local increment2 = (~default_prng_increment) | 1
+    h1 = h1*prng_multiplier + increment1
+    h1 = h1*prng_multiplier + increment1
+    h2 = h2*prng_multiplier + increment2
+    h2 = h2*prng_multiplier + increment2
     for i = 1, #s, 2 do
         local c1 = byte(s, i)
-        h1 = h1*prng_a + ((c1 << 1) ~ prng_c)
+        h1 = h1*prng_multiplier + ((c1 << 1) ~ increment1)
     end
     for i = 2, #s, 2 do
         local c2 = byte(s, i)
-        h2 = h2*prng_a + ((c2 << 1) ~ prng_c)
+        h2 = h2*prng_multiplier + ((c2 << 1) ~ increment2)
     end
-    h1 = h1*prng_a + prng_c
-    h2 = h2*prng_a + prng_c
-    local hash1 = h1*prng_a + h2
-    local hash2 = h2*prng_a + h1
+    h1 = h1*prng_multiplier + increment1
+    h2 = h2*prng_multiplier + increment2
+    local hash1 = h1*prng_multiplier + h2
+    local hash2 = h2*prng_multiplier + h1
     return ("<I8I8"):pack(hash1, hash2):hex()
 end
 
