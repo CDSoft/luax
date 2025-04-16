@@ -26,6 +26,7 @@ local test = require "test"
 local eq = test.eq
 local ne = test.ne
 local bounded = test.bounded
+local id = test.id
 
 local crypt = require "crypt"
 
@@ -361,5 +362,21 @@ return function()
         ne(zs, ys)
         eq(ys:sort(), xs)
         eq(zs:sort(), xs)
+    end
+    do
+        -- test prng:clone
+        local r1 = crypt.prng()
+        local r2 = r1:clone()
+        ne(id(r1), id(r2))
+        for _ = 1, 1000 do
+            eq(r1:int(), r2:int())
+            eq(r1:float(), r2:float())
+            eq(r1:str(16), r2:str(16))
+        end
+    end
+    do
+        -- checks seed returns the prng
+        local r = crypt.prng()
+        eq(r:seed(), r)
     end
 end

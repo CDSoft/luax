@@ -35,6 +35,7 @@ local function dump(t)
     if (getmetatable(t) or {}).imag then return t:tostring() end
     if (getmetatable(t) or {}).__tostring then return ("%q"):format(tostring(t)) end
     if type(t) == "function" then return tostring(t) end
+    if type(t) == "userdata" then return tostring(t) end
     if type(t) ~= "table" then return ("%q"):format(t) end
     if is_a_list(t) then
         local s = {}
@@ -45,6 +46,10 @@ local function dump(t)
         for k,v in F.pairs(t) do s[#s+1] = ("%s=%s"):format(k, dump(v)) end
         return "{"..table.concat(s, ",").."}"
     end
+end
+
+function test.id(t)
+    return string.format("%p", t)
 end
 
 local function same(a, b)

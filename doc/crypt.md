@@ -9,9 +9,9 @@ local crypt = require "crypt"
 **WARNING**: Please do not rely on LuaX `crypt` module if you actually
 need strong cryptography functions.
 
-## Random number generator
+## Pseudo Random Number Generator
 
-The LuaX pseudorandom number generator is a [permuted congruential
+The LuaX pseudo random number generator is a [permuted congruential
 generator](https://en.wikipedia.org/wiki/Permuted_congruential_generator).
 This generator is not a cryptographically secure pseudorandom number
 generator. It can be used as a repeatable generator (e.g. for repeatable
@@ -27,25 +27,35 @@ local rng = crypt.prng([seed, incr])
 ```
 
 returns a random number generator starting from the optional seed `seed`
-and increment `incr`. This object has four methods:
-`seed([seed, incr])`, `int([m, [n]])`, `float([a, [b]])` and `str(n)`.
+and increment `incr`. This object has five methods:
+`seed([seed, incr])`, `clone()`, `int([m, [n]])`, `float([a, [b]])` and
+`str(n)`.
 
 Special `seed` and `incr` values:
 
-| `seed` | Initial PRNG state              | `incr` | PRNG increment            |
-|--------|---------------------------------|--------|---------------------------|
-| `nil`  | Value based on the current time | `nil`  | address of the PRNG state |
-| `-1`   | `0x4d595df4d0f33173`            | `-1`   | `1442695040888963407`     |
-| `n`    | `n`                             | `n`    | `n`                       |
+| `seed` | Initial PRNG state   | `incr` | PRNG increment        |
+|--------|----------------------|--------|-----------------------|
+| `nil`  | Random value         | `nil`  | Random value          |
+| `-1`   | `0x4d595df4d0f33173` | `-1`   | `1442695040888963407` |
+| `n`    | `n`                  | `n`    | `n|1`                 |
 
 The increment shall be an odd number (i.e. even values are added 1).
+
+Random state and increment values are taken from some entropy sources
+(time, memory…).
 
 ``` lua
 rng:seed([seed, incr])
 ```
 
-sets the seed of the PRNG. The default seed is a number based on the
-current time and the process id.
+sets the seed of the PRNG and returns the PRNG itself. The default seed
+is a number based on the current time and the process id.
+
+``` lua
+rng:clone()
+```
+
+returns a clone of the PRNG (same seed, same increment).
 
 ``` lua
 rng:int()

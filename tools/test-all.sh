@@ -22,13 +22,24 @@ set -e
 
 cd "$(git rev-parse --show-toplevel)"
 
+RED=41
+BLUE=44
+
+say()
+{
+    local COLOR=$1
+    local MSG=$2
+    local EOL=$3
+    printf "\\e[${COLOR}m### %-$(($(tput cols) - 4))s\\e[0m${EOL}\n" "$MSG"
+}
+
 check()
 {
     local ARGS="$*"
     local NAME="${ARGS// /-}"
     test -z "$NAME" && NAME=default_options
     local BUILDDIR=".build/test-all/$NAME"
-    echo "# $*"
+    say $BLUE "$*"
     ./bootstrap.sh -b "$BUILDDIR" -o "$BUILDDIR/build.ninja" "$@"
     ninja -f "$BUILDDIR/build.ninja" test
 }
@@ -48,6 +59,7 @@ check fast zig cross
 check fast zig lz4 cross
 check fast zig socket cross
 check fast zig ssl cross
+check fast zig lto lz4 socket ssl cross release
 
 check small gcc
 check small gcc strip
