@@ -101,8 +101,7 @@ and can instantiate independent generators with their own seeds.
 
 /* https://www.pcg-random.org */
 
-typedef struct
-{
+typedef struct {
     uint64_t state;
     uint64_t increment;
 } t_prng;
@@ -159,8 +158,7 @@ static inline double prng_float_range(t_prng *prng, double a, double b)
 static inline void prng_str(t_prng *prng, size_t size, luaL_Buffer *B)
 {
     char *buf = luaL_prepbuffsize(B, size+3);
-    for (size_t i = 0; i < size; i+=4)
-    {
+    for (size_t i = 0; i < size; i+=4) {
         const uint32_t r = prng_int(prng);
         buf[i+0] = (char)(r>>(0*8));
         buf[i+1] = (char)(r>>(1*8));
@@ -276,26 +274,18 @@ returns a random integral number between `m` and `n`.
 static int crypt_prng_int(lua_State *L)
 {
     t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
-    if (lua_type(L, 2) == LUA_TNUMBER)
-    {
-        const lua_Integer m = luaL_checkinteger(L, 2);
-        if (lua_type(L, 3) == LUA_TNUMBER)
-        {
-            const lua_Integer n = luaL_checkinteger(L, 3);
-            lua_pushinteger(L, prng_int_range(prng, m, n));
-            return 1;
-        }
-        else
-        {
-            lua_pushinteger(L, prng_int_range(prng, 1, m));
-            return 1;
-        }
-    }
-    else
-    {
+    if (lua_type(L, 2) != LUA_TNUMBER) {
         lua_pushinteger(L, prng_int(prng));
         return 1;
     }
+    const lua_Integer m = luaL_checkinteger(L, 2);
+    if (lua_type(L, 3) != LUA_TNUMBER) {
+        lua_pushinteger(L, prng_int_range(prng, 1, m));
+        return 1;
+    }
+    const lua_Integer n = luaL_checkinteger(L, 3);
+    lua_pushinteger(L, prng_int_range(prng, m, n));
+    return 1;
 }
 
 /*@@@
@@ -318,26 +308,18 @@ returns a random floating point number between `a` and `b`.
 static int crypt_prng_float(lua_State *L)
 {
     t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
-    if (lua_type(L, 2) == LUA_TNUMBER)
-    {
-        const lua_Number a = luaL_checknumber(L, 2);
-        if (lua_type(L, 3) == LUA_TNUMBER)
-        {
-            const lua_Number b = luaL_checknumber(L, 3);
-            lua_pushnumber(L, prng_float_range(prng, a, b));
-            return 1;
-        }
-        else
-        {
-            lua_pushnumber(L, prng_float_range(prng, 0, a));
-            return 1;
-        }
-    }
-    else
-    {
+    if (lua_type(L, 2) != LUA_TNUMBER) {
         lua_pushnumber(L, prng_float(prng));
         return 1;
     }
+    const lua_Number a = luaL_checknumber(L, 2);
+    if (lua_type(L, 3) != LUA_TNUMBER) {
+        lua_pushnumber(L, prng_float_range(prng, 0, a));
+        return 1;
+    }
+    const lua_Number b = luaL_checknumber(L, 3);
+    lua_pushnumber(L, prng_float_range(prng, a, b));
+    return 1;
 }
 
 /*@@@
@@ -413,25 +395,17 @@ returns a random integral number between `m` and `n`.
 
 static int crypt_int(lua_State *L)
 {
-    if (lua_type(L, 1) == LUA_TNUMBER)
-    {
-        const lua_Integer m = luaL_checkinteger(L, 1);
-        if (lua_type(L, 2) == LUA_TNUMBER)
-        {
-            const lua_Integer n = luaL_checkinteger(L, 2);
-            lua_pushinteger(L, prng_int_range(&prng, m, n));
-            return 1;
-        }
-        else
-        {
-            lua_pushinteger(L, prng_int_range(&prng, 1, m));
-            return 1;
-        }
-    }
-    else
-    {
+    if (lua_type(L, 1) != LUA_TNUMBER) {
         lua_pushinteger(L, prng_int(&prng));
+        return 1;
     }
+    const lua_Integer m = luaL_checkinteger(L, 1);
+    if (lua_type(L, 2) != LUA_TNUMBER) {
+        lua_pushinteger(L, prng_int_range(&prng, 1, m));
+        return 1;
+    }
+    const lua_Integer n = luaL_checkinteger(L, 2);
+    lua_pushinteger(L, prng_int_range(&prng, m, n));
     return 1;
 }
 
@@ -454,26 +428,18 @@ returns a random floating point number between `a` and `b`.
 
 static int crypt_float(lua_State *L)
 {
-    if (lua_type(L, 1) == LUA_TNUMBER)
-    {
-        const lua_Number a = luaL_checknumber(L, 1);
-        if (lua_type(L, 2) == LUA_TNUMBER)
-        {
-            const lua_Number b = luaL_checknumber(L, 2);
-            lua_pushnumber(L, prng_float_range(&prng, a, b));
-            return 1;
-        }
-        else
-        {
-            lua_pushnumber(L, prng_float_range(&prng, 0, a));
-            return 1;
-        }
-    }
-    else
-    {
+    if (lua_type(L, 1) != LUA_TNUMBER) {
         lua_pushnumber(L, prng_float(&prng));
         return 1;
     }
+    const lua_Number a = luaL_checknumber(L, 1);
+    if (lua_type(L, 2) != LUA_TNUMBER) {
+        lua_pushnumber(L, prng_float_range(&prng, 0, a));
+        return 1;
+    }
+    const lua_Number b = luaL_checknumber(L, 2);
+    lua_pushnumber(L, prng_float_range(&prng, a, b));
+    return 1;
 }
 
 /*@@@
@@ -520,8 +486,7 @@ static void hex_encode(const char *plain, size_t n_in, luaL_Buffer *B)
 {
     const size_t n_out = n_in*2;
     char *buf = luaL_prepbuffsize(B, n_out);
-    for (size_t i = 0; i < n_in; i++)
-    {
+    for (size_t i = 0; i < n_in; i++) {
         const char c = plain[i];
         buf[2*i+0] = hex_map[(c>>4)&0xF];
         buf[2*i+1] = hex_map[c&0xF];
@@ -533,8 +498,7 @@ static void hex_decode(const char *hex, size_t n_in, luaL_Buffer *B)
 {
     const size_t n_out = n_in/2;
     char *buf = luaL_prepbuffsize(B, n_out);
-    for (size_t i = 0; i < n_in-1; i += 2)
-    {
+    for (size_t i = 0; i < n_in-1; i += 2) {
         const size_t d1 = hex[i] & 0xFF;
         const size_t d2 = hex[i+1] & 0xFF;
         buf[i/2] = (char)((digit[d1]<<4) | digit[d2]);
@@ -660,16 +624,14 @@ static void base64_encode(const char *map, const unsigned char *plain, size_t n_
 
     size_t i = 0;
     size_t j = 0;
-    while (i + 2 < n_in)
-    {
+    while (i + 2 < n_in) {
         buf[j++] = map[plain[i] >> 2];
         buf[j++] = map[((plain[i] & 0x03) << 4) | (plain[i+1] >> 4)];
         buf[j++] = map[((plain[i+1] & 0x0f) << 2) | (plain[i+2] >> 6)];
         buf[j++] = map[(plain[i+2] & 0x3f)];
         i = i + 3;
     }
-    switch (n_in - i)
-    {
+    switch (n_in - i) {
         case 1:     /* i == n_in - 1 */
             buf[j++] = map[plain[i] >> 2];
             buf[j++] = map[(plain[i] & 0x03) << 4];
@@ -702,18 +664,15 @@ static void base64_decode(const char *rev, const unsigned char *b64, size_t n_in
 
     size_t i = 0;
     size_t j = 0;
-    while (i + 3 < n_in)
-    {
+    while (i + 3 < n_in) {
         buf[j++] = (char)((rev[b64[i]]   << 2) | (rev[b64[i+1]] >> 4));
         buf[j++] = (char)((rev[b64[i+1]] << 4) | (rev[b64[i+2]] >> 2));
         buf[j++] = (char)((rev[b64[i+2]] << 6) |  rev[b64[i+3]]);
         i = i + 4;
     }
-    if (n_in >= 1)
-    {
+    if (n_in >= 1) {
         if (b64[n_in-1] == '=') j--;
-        if (n_in >= 2)
-        {
+        if (n_in >= 2) {
             if (b64[n_in-2] == '=') j--;
         }
     }
@@ -838,8 +797,7 @@ static const uint32_t crc32_table[256] =
 static uint32_t crc32(const char *s, size_t n)
 {
     uint32_t crc = 0xFFFFFFFF;
-    for (size_t i = 0; i < n; i++)
-    {
+    for (size_t i = 0; i < n; i++) {
         crc = (crc>>8) ^ crc32_table[(crc^(uint32_t)s[i])&0xFF];
     }
     return crc ^ 0xFFFFFFFF;
@@ -939,8 +897,7 @@ static const uint64_t crc64_table[256] =
 static uint64_t crc64(const char *s, size_t n)
 {
     uint64_t crc = 0xFFFFFFFFFFFFFFFF;
-    for (size_t i = 0; i < n; i++)
-    {
+    for (size_t i = 0; i < n; i++) {
         crc = (crc>>8) ^ crc64_table[(crc^(uint64_t)s[i])&0xFF];
     }
     return crc ^ 0xFFFFFFFFFFFFFFFF;
@@ -973,8 +930,7 @@ It is designed to be fast and simple.
 
 #define ARC4_DROP       768
 
-typedef struct
-{
+typedef struct {
     uint8_t S[256];
     size_t i, j;
 } t_arc4;
@@ -989,8 +945,7 @@ static inline void swap(uint8_t *a, uint8_t *b)
 static inline void arc4_init(t_arc4 *arc4)
 {
     uint8_t *S = arc4->S;
-    for (size_t i = 0; i < 256; i++)
-    {
+    for (size_t i = 0; i < 256; i++) {
         S[i] = (uint8_t)i;
     }
     arc4->i = 0;
@@ -999,15 +954,12 @@ static inline void arc4_init(t_arc4 *arc4)
 
 static inline void arc4_schedule(t_arc4 *arc4, const char *key, size_t key_size)
 {
-    if (key_size > 0)
-    {
-        uint8_t *S = arc4->S;
-        size_t j = 0;
-        for (size_t i = 0; i < 256; i++)
-        {
-            j = (j + (size_t)S[i] + (size_t)key[i % key_size]) % 256;
-            swap(&S[i], &S[j]);
-        }
+    if (key_size == 0) { return; }
+    uint8_t *S = arc4->S;
+    size_t j = 0;
+    for (size_t i = 0; i < 256; i++) {
+        j = (j + (size_t)S[i] + (size_t)key[i % key_size]) % 256;
+        swap(&S[i], &S[j]);
     }
 }
 
@@ -1021,8 +973,7 @@ static inline void arc4_step(t_arc4 *arc4)
 
 static inline void arc4_drop(t_arc4 *arc4, size_t n)
 {
-    for (size_t i = 0; i < n; i++)
-    {
+    for (size_t i = 0; i < n; i++) {
         arc4_step(arc4);
     }
 }
@@ -1036,8 +987,7 @@ static inline uint8_t arc4_byte(t_arc4 *arc4)
 static inline void arc4_xor(t_arc4 *arc4, size_t n, const char *input, luaL_Buffer *B)
 {
     char *buf = luaL_prepbuffsize(B, n);
-    for (size_t k = 0; k < n; k++)
-    {
+    for (size_t k = 0; k < n; k++) {
         arc4_step(arc4);
         buf[k] = (char)(input[k] ^ arc4_byte(arc4));
     }
@@ -1106,8 +1056,7 @@ static inline uint64_t prng_hash64(const char *input, size_t input_size)
     register uint64_t state = 0xFFFFFFFFFFFFFFC5;
     state = state*prng_multiplier + default_prng_increment;
     state = state*prng_multiplier + default_prng_increment;
-    for (size_t i = 0; i < input_size; i++)
-    {
+    for (size_t i = 0; i < input_size; i++) {
         const uint64_t c = (uint64_t)input[i];
         state = state*prng_multiplier + ((c << 1) ^ default_prng_increment);
     }
@@ -1124,8 +1073,7 @@ static int crypt_hash64(lua_State *L)
 
     char hex[2*sizeof(hash)];
 
-    for (size_t i = 0; i < sizeof(hash); i++)
-    {
+    for (size_t i = 0; i < sizeof(hash); i++) {
         const char c = (char)((hash >> (i*8)) & 0xFF);
         hex[2*i+0] = hex_map[(c>>4)&0xF];
         hex[2*i+1] = hex_map[(c>>0)&0xF];
@@ -1153,8 +1101,7 @@ static inline void prng_hash128(const char *input, size_t input_size, uint64_t *
     state2 = state2*prng_multiplier + increment2;
     state2 = state2*prng_multiplier + increment2;
     size_t i;
-    for (i = 0; i+1 < input_size; i+=2)
-    {
+    for (i = 0; i+1 < input_size; i+=2) {
         const uint64_t c1 = (uint64_t)input[i+0];
         const uint64_t c2 = (uint64_t)input[i+1];
         state1 = state1*prng_multiplier + ((c1 << 1) ^ increment1);
@@ -1180,11 +1127,9 @@ static int crypt_hash128(lua_State *L)
 
     char hex[2*sizeof(hash)];
 
-    for (size_t i = 0; i < sizeof(hash)/sizeof(hash[0]); i++)
-    {
+    for (size_t i = 0; i < sizeof(hash)/sizeof(hash[0]); i++) {
         const uint64_t hi = hash[i];
-        for (size_t j = 0; j < sizeof(hash[0]); j++)
-        {
+        for (size_t j = 0; j < sizeof(hash[0]); j++) {
             const char c = (char)((hi >> (j*8)) & 0xFF);
             hex[2*(i*sizeof(hi)+j)+0] = hex_map[(c>>4)&0xF];
             hex[2*(i*sizeof(hi)+j)+1] = hex_map[(c>>0)&0xF];
