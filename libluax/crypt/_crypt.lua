@@ -106,7 +106,7 @@ local function prng_int(self, a, b)
     local r = xsh_rr(oldstate)
 
     if not a then return r end
-    if not b then return r % (a+1) end
+    if not b then return r % a + 1 end
     return r % (b-a+1) + a
 end
 prng_mt.__index.int = prng_int

@@ -107,7 +107,7 @@ typedef struct
     uint64_t increment;
 } t_prng;
 
-#define CRYPT_RAND_MAX 0xFFFFFFFFULL
+#define CRYPT_RAND_MAX ((uint64_t)(uint32_t)(-1))
 
 /* Low level random functions */
 
@@ -147,7 +147,7 @@ static inline int64_t prng_int_range(t_prng *prng, int64_t a, int64_t b)
 static inline double prng_float(t_prng *prng)
 {
     const uint32_t x = prng_int(prng);
-    return (double)x / (double)(CRYPT_RAND_MAX);
+    return (double)x / (CRYPT_RAND_MAX+1);
 }
 
 static inline double prng_float_range(t_prng *prng, double a, double b)
@@ -287,7 +287,7 @@ static int crypt_prng_int(lua_State *L)
         }
         else
         {
-            lua_pushinteger(L, prng_int_range(prng, 0, m));
+            lua_pushinteger(L, prng_int_range(prng, 1, m));
             return 1;
         }
     }
@@ -403,7 +403,7 @@ returns a random integral number between `0` and `crypt.RAND_MAX`.
 ```lua
 crypt.int(m)
 ```
-returns a random integral number between `0` and `m`.
+returns a random integral number between `1` and `m`.
 
 ```lua
 crypt.int(m, n)
@@ -424,7 +424,7 @@ static int crypt_int(lua_State *L)
         }
         else
         {
-            lua_pushinteger(L, prng_int_range(&prng, 0, m));
+            lua_pushinteger(L, prng_int_range(&prng, 1, m));
             return 1;
         }
     }

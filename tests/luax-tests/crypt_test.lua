@@ -241,7 +241,7 @@ return function()
         bounded(#random_values:keys(), 3*N-1, 3*N) -- mostly all generated values must be different
         for _ = 1, N do
             bounded(prng:int(), 0, crypt.RAND_MAX)
-            bounded(prng:int(15), 0, 15)
+            bounded(prng:int(15), 1, 15)
             bounded(prng:int(5, 15), 5, 15)
             bounded(prng:float(), 0.0, 1.0)
             bounded(prng:float(3.5), 0.0, 3.5)
@@ -271,11 +271,25 @@ return function()
         end
         for _ = 1, N do
             bounded(r1:int(), 0, crypt.RAND_MAX)
-            bounded(r1:int(15), 0, 15)
+            bounded(r1:int(15), 1, 15)
             bounded(r1:int(5, 15), 5, 15)
             bounded(r1:float(), 0.0, 1.0)
             bounded(r1:float(3.5), 0.0, 3.5)
             bounded(r1:float(2.5, 3.5), 2.5, 3.5)
+        end
+        do
+            local r = crypt.prng(1337, 7)
+            local function gen(a, b)
+                return F.range(100)
+                    : map(function() return r:int(a, b) end)
+                    : nub()
+                    : sort()
+            end
+            eq(gen(15)   , F.range(1, 15))
+            eq(gen(1, 15), F.range(1, 15))
+            eq(gen(0, 15), F.range(0, 15))
+            eq(gen(-5, 0), F.range(-5, 0))
+            eq(gen(-5, 5), F.range(-5, 5))
         end
     end
     do
