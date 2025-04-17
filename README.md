@@ -56,8 +56,8 @@ distributions (Debian, Fedora and Arch Linux) or on MacOS.
 
 The script `bootstrap.sh` installs `ninja`, `zig` (if required) and
 compiles LuaX. Once done, LuaX can be installed with `ninja install`.
-`git` must already be installed, which is likely to be the case if LuaX
-has been cloned with `git`…
+`git` must be installed to clone the LuaX repository but it can also be
+compiled from a source archive without git.
 
 The installation path of Zig is defined in the `build.lua` file. On
 Linux or MacOS, the installation path is defined by the variable
@@ -71,6 +71,19 @@ $ cd luax
 $ ./bootstrap.sh
 $ ninja install
 ```
+
+Or from a source archive (LuaX 8.9.2 or later):
+
+``` sh
+$ curl https://codeberg.org/cdsoft/luax/archive/X.Y.Z.tar.gz -o luax-X.Y.Z.tar.gz
+$ tar xzf luax-X.Y.Z.tar.gz
+$ cd luax
+$ ./bootstrap.sh
+$ ninja install
+```
+
+The latest source archives are available at
+<https://codeberg.org/cdsoft/luax/tags>.
 
 Contributions on non supported platforms are welcome.
 

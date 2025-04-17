@@ -18,6 +18,8 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
+version "8.9.2" "2025-04-18"
+
 local F = require "F"
 local fs = require "fs"
 local sh = require "sh"
@@ -27,8 +29,8 @@ local I = F.I(LUAX)
 
 LUAX.AUTHORS     = "Christophe Delord"
 LUAX.URL         = "codeberg.org/cdsoft/luax"
-LUAX.VERSION     = sh "git describe --tags" : trim()
-LUAX.DATE        = sh "git show -s --format=%cd --date=format:'%Y-%m-%d'" : trim()
+LUAX.VERSION     = vars.version
+LUAX.DATE        = vars.date
 LUAX.COPYRIGHT   = I"LuaX $(VERSION)  Copyright (C) 2021-$(DATE:split'%-':head()) $(URL), $(AUTHORS)"
 
 local BUILD_CONFIG = {
@@ -258,8 +260,24 @@ if not ssl then return end
 section "OpenSSL"
 ---------------------------------------------------------------------
 
+var "openssl_version" "3.4.1"
+var "openssl_archive" "openssl-${openssl_version}.tar.gz"
+var "openssl_url" "https://github.com/openssl/openssl/releases/download/openssl-${openssl_version}/${openssl_archive}"
+
 var "openssl" "$builddir/openssl"
-var "openssl_src" (fs.realpath "ext/opt/openssl")
+var "openssl_src" "$builddir/src/openssl-${openssl_version}"
+
+var "root" { fs.getcwd() }
+
+local openssl_downloaded_archive = build "$builddir/src/$openssl_archive" {
+    description = "download $out",
+    command = "curl -sSLf $openssl_url -o $out && touch $out",
+}
+
+local openssl_configure_script = build "$openssl_src/Configure" { openssl_downloaded_archive,
+    description = "extract $in",
+    command = "tar xzf $in -C $openssl_src --strip-components 1 && touch $out",
+}
 
 local openssl_options = {
     case(mode) {
@@ -346,15 +364,11 @@ rule "make_openssl" {
             debug = 'export CFLAGS="-pipe -Og -g";',
         },
         "$lto",
-        "$openssl_src/Configure", "$openssl_target", openssl_options, ";",
+        "$root/$openssl_src/Configure", "$openssl_target", openssl_options, ";",
         "make", "-j", nproc,
     },
     implicit_in = {
-        build "$openssl_src/Configure" {
-            description = "download OpenSSL",
-            command = "git submodule sync && git submodule update --init --recursive",
-            pool = "console",
-        },
+        openssl_configure_script,
     },
     pool = "console",
 }
@@ -675,7 +689,7 @@ targets_to_compile:foreach(function(target)
         optional(lz4) "ext/opt/lz4/lib",
         optional(ssl) {
             "$openssl"/target.name/"include",
-            "ext/opt/openssl/include",
+            "$openssl_src/include",
         },
     }
     local opt_flags = {
@@ -1766,7 +1780,6 @@ install "bin" {binaries}
 install "lib" {libraries}
 
 clean "$builddir"
-clean.mrproper "ext/opt/openssl"
 
 phony "compile" (compile)
 default "compile"
