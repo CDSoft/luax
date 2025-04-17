@@ -67,7 +67,7 @@ returns a random integral number between `0` and `crypt.RAND_MAX`.
 rng:int(m)
 ```
 
-returns a random integral number between `0` and `m`.
+returns a random integral number between `1` and `m`.
 
 ``` lua
 rng:int(m, n)
