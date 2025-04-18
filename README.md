@@ -141,6 +141,10 @@ directory:
 | `socket` | Add the socket support (LuaSocket) to LuaX |
 | `ssl` | Add the HTTPS/SSL support (LuaSec + OpenSSL) to LuaX (`ssl` implies `socket`) |
 
+OpenSSL is not included in LuaX source. It is download and recompiled
+when needed. Hence an Internet connexion is required to compile LuaX
+with the `ssl` option.
+
 Example:
 
 ``` sh
@@ -166,8 +170,7 @@ They run slower but this helps finding tricky bugs.
 ``` sh
 $ git clone https://codeberg.org/cdsoft/luax
 $ cd luax
-$ tools/bang.lua -- debug san # generate build.ninja in debug mode with sanitizers
-$ ninja                       # compile LuaX
+$ ./bootstrap.sh debug san    # generate build.ninja in debug mode with sanitizers
 $ ninja test                  # run tests on the host
 ```
 
