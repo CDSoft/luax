@@ -1015,8 +1015,6 @@ steps, the default value of `drop` is 768).
 
 static int crypt_arc4(lua_State *L)
 {
-    size_t drop = ARC4_DROP;    /* default number of steps dropped before encryption */
-
     /* arg 1: input data */
     const char *in = luaL_checkstring(L, 1);
     const size_t n = (size_t)lua_rawlen(L, 1);
@@ -1026,9 +1024,9 @@ static int crypt_arc4(lua_State *L)
     const size_t key_size = (size_t)lua_rawlen(L, 2);
 
     /* arg 3: drop (optional) */
-    if (!lua_isnoneornil(L, 3)) {
-        drop = (size_t)luaL_checkinteger(L, 3);
-    }
+    const size_t drop = lua_isnoneornil(L, 3)
+        ? ARC4_DROP  /* default number of steps dropped before encryption */
+        : (size_t)luaL_checkinteger(L, 3);
 
     luaL_Buffer B;
     luaL_buffinit(L, &B);
