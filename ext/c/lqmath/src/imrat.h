@@ -254,12 +254,13 @@ mp_result mp_rat_read_ustring(mp_rat r, mp_size radix, const char *str,
 
 /** Sets `r` to the value represented by a zero-terminated string `str` in the
     format `"z.ffff"` including a sign flag. It returns `MP_UNDEF` if the
-    effective denominator. */
+    effective denominator is zero. */
 mp_result mp_rat_read_decimal(mp_rat r, mp_size radix, const char *str);
 
 /** Sets `r` to the value represented by a zero-terminated string `str` in the
     format `"z.ffff"` including a sign flag. It returns `MP_UNDEF` if the
-    effective denominator. If `end` is not NULL then `*end` is set to point to
+    effective denominator is zero.
+    If `end` is not NULL then `*end` is set to point to
     the first unconsumed character in the string, after parsing. */
 mp_result mp_rat_read_cdecimal(mp_rat r, mp_size radix, const char *str,
 			       char **end);

@@ -186,7 +186,7 @@ mp_result mp_int_mul_pow2(mp_int a, mp_small p2, mp_int c);
 /** Sets `c` to the square of `a`. */
 mp_result mp_int_sqr(mp_int a, mp_int c);
 
-/** Sets `q` and `r` to the quotent and remainder of `a / b`. Division by
+/** Sets `q` and `r` to the quotient and remainder of `a / b`. Division by
     powers of 2 is detected and handled efficiently.  The remainder is pinned
     to `0 <= r < b`.
 
@@ -194,7 +194,7 @@ mp_result mp_int_sqr(mp_int a, mp_int c);
     point to the same value. */
 mp_result mp_int_div(mp_int a, mp_int b, mp_int q, mp_int r);
 
-/** Sets `q` and `*r` to the quotent and remainder of `a / value`. Division by
+/** Sets `q` and `*r` to the quotient and remainder of `a / value`. Division by
     powers of 2 is detected and handled efficiently. The remainder is pinned to
     `0 <= *r < b`. Either of `q` or `r` may be NULL. */
 mp_result mp_int_div_value(mp_int a, mp_small value, mp_int q, mp_small *r);

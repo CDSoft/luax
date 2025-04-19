@@ -27,8 +27,8 @@ update_all()
     #update_lua          5.4.7
     update_lua-git      v5.4
     update_lcomplex     100
-    update_limath       105
-    update_lqmath       107
+    update_limath       106
+    update_lqmath       108
     update_lmathx
     update_luasocket    3.1.0
     update_luasec       1.3.2

@@ -669,16 +669,18 @@ mp_result mp_rat_read_cstring(mp_rat r, mp_size radix, const char *str,
   }
 
   /* Skip whitespace between numerator and (possible) separator */
-  while (isspace((unsigned char)*endp)) {
-    ++endp;
+  char *sp = endp;
+  while (isspace((unsigned char)*sp)) {
+    ++sp;
   }
 
   /* If there is no separator, we will stop reading at this point. */
-  if (*endp != '/') {
+  if (*sp != '/') {
     mp_int_set_value(MP_DENOM_P(r), 1);
     if (end != NULL) *end = endp;
     return res;
   }
+  endp = sp;
 
   ++endp; /* skip separator */
   if ((res = mp_int_read_cstring(MP_DENOM_P(r), radix, endp, end)) != MP_OK) {
