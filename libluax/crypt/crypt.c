@@ -466,7 +466,7 @@ The hexadecimal encoder transforms a string into a string
 where bytes are coded with hexadecimal digits.
 @@@*/
 
-static const char hex_map[16] = "0123456789abcdef";
+static const char hex_map[] = "0123456789abcdef";
 
 static const char digit[256] =
 {
@@ -549,9 +549,9 @@ The base64 encoder transforms a string with non printable characters
 into a printable string (see <https://en.wikipedia.org/wiki/Base64>)
 @@@*/
 
-static const char base64_map[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                   "abcdefghijklmnopqrstuvwxyz"
-                                   "0123456789+/";
+static const char base64_map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                 "abcdefghijklmnopqrstuvwxyz"
+                                 "0123456789+/";
 
 static const char base64_rev[256] =
 {
@@ -583,9 +583,9 @@ static const char base64_rev[256] =
     ['Z'] = 25,     ['z'] = 26+25,
 };
 
-static const char base64url_map[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                      "abcdefghijklmnopqrstuvwxyz"
-                                      "0123456789-_";
+static const char base64url_map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                    "abcdefghijklmnopqrstuvwxyz"
+                                    "0123456789-_";
 
 static const char base64url_rev[256] =
 {
