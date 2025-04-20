@@ -44,7 +44,7 @@ local default_options = {
 }
 
 local function set_ext(name, ext)
-    if vars.expand(name):has_suffix(ext) then return name end
+    if (vars%name):has_suffix(ext) then return name end
     return name..ext
 end
 
@@ -459,7 +459,7 @@ local default_options = {
 local builder_keys = F.keys(default_options) .. { "name", "output_prefix" }
 
 local function set_ext(name, ext)
-    if vars.expand(name):lower():has_suffix(ext:lower()) then return name end
+    if (vars%name):lower():has_suffix(ext:lower()) then return name end
     return name..ext
 end
 
@@ -1206,7 +1206,7 @@ function mt.__index:gen(install_token)
             target_group
                 : map(function(target)
                     local files = flatten{target.sources} : map(tostring) : unwords() : words()
-                    return files:map(function(file) return "#   "..vars.expand(file).."\n" end)
+                    return files:map(function(file) return "#   "..(vars%file).."\n" end)
                 end),
             "\n",
         }
@@ -1335,7 +1335,7 @@ local default_options = {
 }
 
 local function set_ext(name, ext)
-    if vars.expand(name):has_suffix(ext) then return name end
+    if (vars%name):has_suffix(ext) then return name end
     return name..ext
 end
 
@@ -1565,11 +1565,8 @@ nl()
 
 local nbvars = 0
 
-local vars = setmetatable({}, {
-    __index = function(_, k)
-        if k == "builddir" then return builddir_token[1] end
-    end,
-})
+local vars = {}
+
 local function expand(s)
     if type(s) == "string" then
         local s0 = s
@@ -1578,15 +1575,20 @@ local function expand(s)
             if s1 == s0 then return s0 end
             s0 = s1
         end
-        log.error("vars.expand can not expand ", string.format("%q", s), " (recursive definition?)")
+        log.error("vars%... can not expand ", string.format("%q", s), " (recursive definition?)")
     end
     if type(s) == "table" then
         return map(expand, s)
     end
-    log.error("vars.expand expects a string or a list of strings")
+    log.error("vars%... expects a string or a list of strings")
 end
 
-_G.vars = setmetatable(vars, { __index = {expand = expand} })
+_G.vars = setmetatable(vars, {
+    __mod = function(_, s) return expand(s) end,
+    __index = function(_, k)
+        if k == "builddir" then return builddir_token[1] end
+    end,
+})
 
 function var(name)
     return function(value)
@@ -2208,7 +2210,7 @@ return function()
 
 end
 ]])
-libs["bang-version"] = lib(".build/bang-version", [=[return [[2.8.1]]]=])
+libs["bang-version"] = lib(".build/bang-version", [=[return [[3.0]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"

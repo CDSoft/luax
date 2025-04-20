@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "8.9.5" "2025-04-20"
+version "8.9.6" "2025-04-20"
 
 local F = require "F"
 local fs = require "fs"
@@ -618,7 +618,7 @@ local ext_cflags = {
 }
 
 compile_flags {
-    vars.expand(luax_cflags) : flatten() : unlines(),
+    (vars%luax_cflags) : flatten() : unlines(),
 }
 
 local ldflags = {
