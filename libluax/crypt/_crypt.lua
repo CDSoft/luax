@@ -28,39 +28,31 @@ local crypt = {}
 
 local prng_mt = {__index={}}
 
-local random = math.random
 local floor = math.floor
 
 local byte = string.byte
 local char = string.char
 local format = string.format
 local gsub = string.gsub
-local pack = string.pack
 
 local concat = table.concat
 
 local tonumber = tonumber
 
-local function fnv1a(s)
+local entropy do
     local hash = 0xcbf29ce484222325
-    for i = 1, #s do
-        hash = (hash ~ s:byte(i,i)) * 0x100000001b3
+    local function fnv1a(data)
+        for i = 0, 7 do
+            hash = (hash ~ ((data>>(8*i))&0xFF)) * 0x100000001b3
+        end
     end
-    return hash
-end
-
-local previous = 42
-
-local function entropy(ptr)
-    previous = fnv1a(pack("TTTTTT",
-        os.time(),
-        floor(os.clock()*1000000000),
-        random(0),
-        tonumber(format("%p", ptr)),
-        tonumber(format("%p", {})),
-        previous
-    ))
-    return previous
+    entropy = function(ptr)
+        fnv1a(os.time())
+        fnv1a(floor(os.clock()*1000000))
+        fnv1a(tonumber(format("%p", ptr)))
+        fnv1a(tonumber(format("%p", {})))
+        return hash
+    end
 end
 
 local RAND_MAX <const> = 0xFFFFFFFF

@@ -48,41 +48,24 @@ local crypt = require "crypt"
 #endif
 
 /* small fast hash function */
-static inline uint64_t fnv1a(const void *data, size_t size)
+static inline void fnv1a(uint64_t *hash, uint64_t data)
 {
-    const uint8_t *data_u8 = (const uint8_t *)data;
-    uint64_t hash = 0xcbf29ce484222325;
-    for (size_t i = 0; i < size; i++) {
-        hash = (hash ^ data_u8[i]) * 0x100000001b3;
+    for (size_t i = 0; i < sizeof(data); i++) {
+        *hash = (*hash ^ ((uint8_t*)&data)[i]) * 0x100000001b3;
     }
-    return hash;
 }
 
 /* Entropy sources for PRNG initialization */
 static uint64_t entropy(void *ptr)
 {
-    /* A structure with some sources of entropy */
-    struct {
-        struct timeval time;    /* current time */
-        clock_t clock;          /* process execution time */
-        uint64_t pid;           /* process id */
-        uintptr_t ptr;          /* address of a characteristic variable */
-        uintptr_t local_ptr;    /* address of a local variable */
-        uintptr_t global_ptr;   /* address of a global function */
-        uint64_t previous;      /* previously computed hash */
-    } entropy;
-    static uint64_t previous = 0xcbf29ce484222325;
-
-    gettimeofday(&entropy.time, NULL);
-    entropy.clock = clock();
-    entropy.pid = (uint64_t)getpid();
-    entropy.ptr = (uintptr_t)ptr;
-    entropy.local_ptr = (uintptr_t)&entropy;
-    entropy.global_ptr = (uintptr_t)malloc;
-    entropy.previous = previous;
-
-    previous = fnv1a(&entropy, sizeof(entropy));
-    return previous;
+    static uint64_t hash = 0xcbf29ce484222325;  /* Start with the previous value */
+    fnv1a(&hash, (uint64_t)time(NULL));         /* Current time */
+    fnv1a(&hash, (uint64_t)clock());            /* Process execution time */
+    fnv1a(&hash, (uint64_t)getpid());           /* Process ID */
+    fnv1a(&hash, (uintptr_t)ptr);               /* Address of a characteristic variable */
+    fnv1a(&hash, (uintptr_t)&ptr);              /* Address of a local variable */
+    fnv1a(&hash, (uintptr_t)malloc);            /* Address of a global variable */
+    return hash;
 }
 
 /***************************************************************************@@@
