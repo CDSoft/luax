@@ -43,7 +43,7 @@ stack traceback:
     end
 
     if os.getenv "IS_COMPILED" == "true" then
-        expected_traceback = expected_traceback : gsub("%$test%-luax:", "$test-compiled-"..os.getenv"TEST_CASE"..":")
+        expected_traceback = expected_traceback : gsub("%$test%-luax:", "$"..(os.getenv"EXE_NAME"):basename()..":")
     end
 
     startswith(traceback, expected_traceback)

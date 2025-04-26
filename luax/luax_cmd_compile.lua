@@ -31,6 +31,8 @@ local welcome = require "luax_welcome"
 local targets = require "targets"
 local lzip = require "lzip"
 
+local magic = 0x5861754C
+
 local lua_interpreters = F{
     { name="luax",   add_luax_runtime=false },
     { name="lua",    add_luax_runtime=true  },
@@ -82,6 +84,7 @@ local inputs = F{}
 local output = nil
 local target = nil
 local quiet = false
+local use_cc = false
 local bytecode = nil
 local strip = nil
 local key = nil
@@ -100,6 +103,8 @@ do
             if target then wrong_arg(a) end
             target = arg[i]
             if target == "list" then print_targets() os.exit() end
+        elseif a == '-c' then
+            use_cc = true
         elseif a == '-b' then
             bytecode = true
         elseif a == '-s' then
@@ -160,6 +165,7 @@ local function compile_lua(current_output, interpreter)
     local files = bundle.bundle {
         scripts = scripts,
         add_luax_runtime = interpreter.add_luax_runtime,
+        add_shebang = interpreter.add_shebang,
         output = current_output,
         target = interpreter.name,
         bytecode = bytecode,
@@ -177,6 +183,14 @@ local function compile_lua(current_output, interpreter)
     print_size(current_output)
 end
 
+local function uncompressed_name(name)
+    local uncompressed, ext = name:splitext()
+    return F.case(ext) {
+        [".lz"]  = function() return uncompressed, lzip.unlzip end,
+        [F.Nil]  = function() return name, F.id end,
+    }()
+end
+
 -- Compile LuaX scripts with LuaX and Zig, gcc or clang
 local function compile_native(tmp, current_output, target_definition)
     if current_output:ext():lower() ~= target_definition.exe then
@@ -188,14 +202,6 @@ local function compile_native(tmp, current_output, target_definition)
 
     -- Build configuration
     local build_config = require "luax_build_config"
-
-    local function uncompressed_name(name)
-        local uncompressed, ext = name:splitext()
-        return F.case(ext) {
-            [".lz"]  = function() return uncompressed, lzip.unlzip end,
-            [F.Nil]  = function() return name, F.id end,
-        }()
-    end
 
     -- Extract precompiled LuaX libraries
     local assets = require "luax_assets"
@@ -360,6 +366,68 @@ local function compile_native(tmp, current_output, target_definition)
     print_size(current_output)
 end
 
+-- Compile LuaX scripts with LuaX and prepend a precompiled loader
+local function compile_loader(tmp, current_output, target_definition)
+    if current_output:ext():lower() ~= target_definition.exe then
+        current_output = current_output..target_definition.exe
+    end
+    if not quiet then print() end
+    log("target", "%s", target_definition.name)
+    log("output", "%s", current_output)
+
+    -- Build configuration
+    local build_config = require "luax_build_config"
+
+    -- Extract precompiled LuaX loader
+    local assets = require "luax_assets"
+    local loader = assets.loaders and assets.loaders[target_definition.name]
+    if not loader then
+        help.err("No "..target_definition.name.." loader")
+    end
+
+    -- Compile the input LuaX scripts
+    local files = assert(bundle.bundle {
+        scripts = scripts,
+        output = current_output,
+        target = "luax-loader",
+        add_shebang = false,
+        bytecode = bytecode or "-b",
+        strip = strip,
+        key = key,
+    })
+
+    loader = F(loader) : mapk2a(function(k, bin)
+        local name, uncompress = uncompressed_name(k)
+        return uncompress(bin)
+    end)
+    if #loader ~= 1 then
+        help.err("Invalid "..target_definition.name.." loader")
+    end
+
+    local hash = 0x811c9dc5
+    local function fnv1a(data)
+        for i = 0, 3 do
+            hash = (hash ~ ((data>>(8*i))&0xff)) * 0x01000193
+        end
+    end
+    fnv1a(#files[current_output])
+    fnv1a(magic)
+    local header = string.pack("I4I4I4",
+        magic,
+        #files[current_output],
+        hash & 0xffffffff)
+
+    local exe = loader[1] .. files[current_output] .. header
+
+    if not fs.write_bin(current_output, exe) then
+        help.err("Can not create "..current_output)
+    end
+
+    fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
+
+    print_size(current_output)
+end
+
 local interpreter = lua_interpreters:find(function(t)
     return t.name == (target or "luax")
 end)
@@ -377,7 +445,11 @@ else
     if target_definition then
 
         fs.with_tmpdir(function(tmp)
-            compile_native(tmp, output, target_definition)
+            if use_cc then
+                compile_native(tmp, output, target_definition)
+            else
+                compile_loader(tmp, output, target_definition)
+            end
         end)
 
     else

@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "8.9.7" "2025-04-22"
+version "9.0" "2025-04-26"
 
 local F = require "F"
 local fs = require "fs"
@@ -814,6 +814,7 @@ local sources = F{
         : filter(function(name) return F.not_elem(name:basename(), {"lua.c", "luac.c"}) end),
     lua_main_c_files = F{ "lua/lua.c" },
     luax_main_c_files = F{ "luax/luax.c" },
+    loader_main_c_files = F{ "luax/luax-loader.c" },
     libluax_main_c_files = F{ "luax/libluax.c" },
     luax_c_files = ls "libluax/**.c"
         : difference(lz4 and {} or ls "libluax/lz4/**.c")
@@ -1032,8 +1033,10 @@ local libraries = F{}
 local liblua = {}
 local libluax = {}
 local main_luax = {}
+local main_loader = {}
 local main_libluax = {}
 local binary = {}
+local loader = {}
 local shared_library = {}
 
 -- imath is also provided by qmath, both versions shall be compatible
@@ -1124,6 +1127,13 @@ targets_to_compile:foreach(function(target)
             }
         end)
 
+    main_loader[target.name] = F.flatten { sources.loader_main_c_files }
+        : map(function(src)
+            return build("$tmp"/target.name/"obj"/src:chext".o") { cc[target.name], src,
+                implicit_in = "$luax_config_h",
+            }
+        end)
+
     main_libluax[target.name] = F.flatten { sources.libluax_main_c_files }
         : map(function(src)
             return build("$tmp"/target.name/"obj"/src:chext".o") { cc[target.name], src,
@@ -1132,6 +1142,7 @@ targets_to_compile:foreach(function(target)
                 },
             }
         end)
+
     binary[target.name] = build("$tmp"/target.name/"bin"/"luax"..target.exe) { ld[target.name],
         main_luax[target.name],
         main_libluax[target.name],
@@ -1139,6 +1150,14 @@ targets_to_compile:foreach(function(target)
         libluax[target.name],
         openssl_libs[target.name],
         build("$tmp"/target.name/"obj"/luax_app_bundle:chext".o") { cc[target.name], luax_app_bundle },
+    }
+
+    loader[target.name] = build("$tmp"/target.name/"lib"/"luax-loader") { ld[target.name],
+        main_loader[target.name],
+        main_libluax[target.name],
+        liblua[target.name],
+        libluax[target.name],
+        openssl_libs[target.name],
     }
 
     shared_library[target.name] = is_dynamic(target) and
@@ -1173,7 +1192,7 @@ section "LuaX archives"
 
 rule "lzip" {
     description = "lzip $in",
-    command = "$lzip -6 $in --output=- > $out",
+    command = "$lzip -0 $in --output=- > $out",
     implicit_in = "$lzip",
 }
 
@@ -1234,6 +1253,11 @@ local function luax_archive(archive, compilation_targets)
                 return F.map(compress("$tmp/lib/targets"/target.name), libs)
             end),
 
+            -- Loaders
+            compilation_targets : map(function(target)
+                return compress("$tmp/lib/loaders"/target.name) (loader[target.name])
+            end),
+
         } or {},
 
     }
@@ -1278,7 +1302,7 @@ rule "luax-bundle" {
         "PATH=$bin:$$PATH",
         "LUA_PATH=\"$lua_path\"",
         "LUAX_LIB=$lib",
-        "$lua luax/luax.lua compile -q $args -o $out $in",
+        "$lua luax/luax.lua compile -c -q $args -o $out $in",
     },
     implicit_in = {
         "$lua",
@@ -1367,13 +1391,18 @@ acc(test) {
 
     not san and {
         ({"native"} .. native_targets) : mapi(function(i, target_name)
+        return F{ false, true } : map(function(use_cc)
             local test_libc = ("-musl"):is_suffix_of(target_name) and "musl" or libc
             local test_name = target_name=="native" and sys.name or target_name
-            return build("$test/test-1-"..i.."-compiled_executable.ok") { test_sources,
+            local exe_name = "$test/test-compiled"..(use_cc and "-c" or "").."-"..i
+            return build("$test/test-1-"..i.."-compiled_executable"..(use_cc and "-c" or "")..".ok") { test_sources,
                 description = "test $out",
                 command = {
                     sanitizer_options,
-                    "$luax compile -q", "-t", target_name, "-b -k test-1-key", "-o", "$test/test-compiled-"..i, "$in",
+                    "$luax compile -q", "-t", target_name, "-b -k test-1-key",
+                        use_cc and "-c" or {},
+                        "-o", exe_name,
+                        "$in",
                     "&&",
                     "PATH=$bin:$$PATH",
                     "LUA_PATH='tests/luax-tests/?.lua;luax/?.lua'",
@@ -1381,9 +1410,9 @@ acc(test) {
                     "TEST_NUM=1", "TEST_CASE="..i,
                     test_options,
                     "LUAX=$luax",
-                    "IS_COMPILED=true",
+                    "IS_COMPILED=true", "EXE_NAME="..exe_name,
                     "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..test_libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..test_name,
-                    "$test/test-compiled-"..i, "Lua is great",
+                    exe_name, "Lua is great",
                     "&&",
                     "touch $out",
                 },
@@ -1394,6 +1423,7 @@ acc(test) {
                     imported_test_sources,
                 },
             }
+        end)
         end),
     } or {},
 

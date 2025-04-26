@@ -35,7 +35,8 @@ return function()
     if test_num == 1 then
         if os.getenv "IS_COMPILED" == "true" then
             eq(arg, {
-                [0] = BUILD/"test/test-compiled-"..os.getenv "TEST_CASE",
+                --[0] = BUILD/"test/test-compiled-"..os.getenv "TEST_CASE",
+                [0] = os.getenv "EXE_NAME",
                 "Lua", "is", "great"
             })
             assert(sys.libc == os.getenv"LIBC")

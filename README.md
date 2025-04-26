@@ -179,11 +179,27 @@ $ ninja test                  # run tests on the host
 `luax` can compile scripts and link them to precompiled libraries for
 all supported targets.
 
+There are two compilation methods:
+
+- Lua payload (bytecode) appended to a precompiled LuaX loader (default
+  method)
+- Lua payload in a C source compiled and linked with LuaX libraries.
+  This method requires a C compiler and is enabled by the `-c` option.
+
 E.g.: to produce an executable containing the LuaX runtime for the
 current host and `hello.lua`:
 
 ``` sh
 $ luax compile -t native -o hello hello.lua
+```
+
+It seems on some platforms (e.g. MacOS) reading the payload in the
+executable file while being executed does not work. In this case, the
+payload can be added to be binary with the `-c` option. It requires a C
+compiler but should work better on MacOS.
+
+``` sh
+$ luax compile -c -t native -o hello hello.lua
 ```
 
 E.g.: to produce an executable containing the LuaX runtime for
@@ -261,6 +277,7 @@ scripts:
       -t target       name of the targetted platform
       -t list         list available targets
       -o file         name the executable file to create
+      -c              use a C compiler instead of the loader
       -b              compile to Lua bytecode
       -s              emit bytecode without debug information
       -k key          script encryption key

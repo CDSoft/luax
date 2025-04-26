@@ -292,7 +292,7 @@ function M.bundle(opt)
         }
     end
 
-    if opt.target == "lua" or opt.target == "pandoc" or opt.target == "luax" then
+    if opt.target:match "^lua" or opt.target == "pandoc" then
         local product_name = opt.product_name or opt.output:basename():splitext()
         local preloads = {}
         local loads = {}
@@ -302,14 +302,15 @@ function M.bundle(opt)
             lua    = "lua",
             pandoc = "pandoc lua",
             luax   = "luax",
+            ["luax-loader"] = nil, -- no shebang in the appended payload
         }
-        local shebang = "#!/usr/bin/env -S "..interpreter[opt.target].." --"
+        local shebang = interpreter[opt.target] and "#!/usr/bin/env -S "..interpreter[opt.target].." --" or {}
         local out = F{
-            interpreter[opt.target] ~= "luax" and {
+            opt.target:match "^luax" and {} or {
                 "_LUAX_VERSION   = '"..config.version.."'",
                 "_LUAX_DATE      = '"..config.date.."'",
                 "_LUAX_COPYRIGHT = '"..config.copyright.."'",
-            } or {},
+            },
             "local libs = {}",
             "table.insert(package.searchers, 2, function(name) return libs[name] end)",
             opt.strip and {
@@ -362,10 +363,7 @@ function M.bundle(opt)
                 run_main[#run_main+1] = ("return lib(%q, %s)()"):format(script.path, compile(script))
             end
         end
-        local obfuscate = F.case(opt.target) {
-            luax = obfuscate_luax,
-            [F.Nil] = obfuscate_lua,
-        }
+        local obfuscate = opt.target:match "^luax" and obfuscate_luax or obfuscate_lua
         out = obfuscate(out:flatten():unlines(), F(opt):patch{strip=true}, product_name)
         return F{
             [opt.output] = F{shebang, out}:flatten():unlines(),

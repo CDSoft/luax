@@ -54,6 +54,7 @@ Commands:
   -t target       name of the targetted platform
   -t list         list available targets
   -o file         name the executable file to create
+  -c              use a C compiler instead of the loader
   -b              compile to Lua bytecode
   -s              emit bytecode without debug information
   -k key          script encryption key
