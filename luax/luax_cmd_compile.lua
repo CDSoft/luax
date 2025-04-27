@@ -367,16 +367,13 @@ local function compile_native(tmp, current_output, target_definition)
 end
 
 -- Compile LuaX scripts with LuaX and prepend a precompiled loader
-local function compile_loader(tmp, current_output, target_definition)
+local function compile_loader(current_output, target_definition)
     if current_output:ext():lower() ~= target_definition.exe then
         current_output = current_output..target_definition.exe
     end
     if not quiet then print() end
     log("target", "%s", target_definition.name)
     log("output", "%s", current_output)
-
-    -- Build configuration
-    local build_config = require "luax_build_config"
 
     -- Extract precompiled LuaX loader
     local assets = require "luax_assets"
@@ -397,7 +394,7 @@ local function compile_loader(tmp, current_output, target_definition)
     })
 
     loader = F(loader) : mapk2a(function(k, bin)
-        local name, uncompress = uncompressed_name(k)
+        local _, uncompress = uncompressed_name(k)
         return uncompress(bin)
     end)
     if #loader ~= 1 then
@@ -442,20 +439,16 @@ else
         return t.name == (target=="native" and sys.name or target)
     end)
 
-    if target_definition then
-
-        fs.with_tmpdir(function(tmp)
-            if use_cc then
-                compile_native(tmp, output, target_definition)
-            else
-                compile_loader(tmp, output, target_definition)
-            end
-        end)
-
-    else
-
+    if not target_definition then
         help.err(target..": unknown target")
+    end
 
+    if use_cc then
+        fs.with_tmpdir(function(tmp)
+            compile_native(tmp, output, target_definition)
+        end)
+    else
+        compile_loader(output, target_definition)
     end
 
 end
