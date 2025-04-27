@@ -186,14 +186,14 @@ end
 local function obfuscate_luax(code, opt, product_name)
     if opt.key then
         code = bytecode(code, opt, product_name)
-        -- Compress and encrypt code
-        local key = make_key(code, opt)
+        -- Compress
         local uncompress = ""
-        local compressed_code = code:lzip()
-        if #compressed_code + 8 < #code then
-            code = compressed_code
-            uncompress = ":unlzip()"
+        local compressed_code = code:lzip(0) -- level 0 to reduce the memory usage at decompression
+        if #compressed_code < 0.75 * #code then
+            code, uncompress = compressed_code, ":unlzip()"
         end
+        -- Encrypt
+        local key = make_key(code, opt)
         code = compact(F.I { b=escape(code:arc4(key)), k=escape(key), uncompress=uncompress } [===[
             return load(($(b)):unarc4$(k)$(uncompress))()
         ]===])
