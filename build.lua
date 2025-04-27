@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.0" "2025-04-26"
+version "9.1" "2025-04-27"
 
 local F = require "F"
 local fs = require "fs"
@@ -1565,17 +1565,40 @@ acc(test) {
 
 ---------------------------------------------------------------------
 
+    build "$test/test-ext-2-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
+        description = "test $out",
+        command = {
+            sanitizer_options,
+            "eval \"$$($luax env)\";",
+            "$luax compile -q -b -k test-ext-2-key -t luax -o $test/ext-luax-key $in",
+            "&&",
+            "PATH=$bin:$$PATH",
+            "TARGET=luax-key",
+            test_options,
+            "$test/ext-luax-key Lua is great",
+            "&&",
+            "touch $out",
+        },
+        implicit_in = {
+            "$lib/luax.lua",
+            "$luax",
+            "$lib/luax.lar",
+        },
+    },
+
+---------------------------------------------------------------------
+
     build "$test/test-ext-3-luax.ok" { "tests/external_interpreter_tests/external_interpreters.lua",
         description = "test $out",
         command = {
             sanitizer_options,
             "eval \"$$($luax env)\";",
-            "$luax compile -q -b -k test-ext-3-key -t luax -o $test/ext-luax $in",
+            "$luax compile -q -b -z -t luax -o $test/ext-luax-z $in",
             "&&",
             "PATH=$bin:$$PATH",
-            "TARGET=luax",
+            "TARGET=luax-z",
             test_options,
-            "$test/ext-luax Lua is great",
+            "$test/ext-luax-z Lua is great",
             "&&",
             "touch $out",
         },

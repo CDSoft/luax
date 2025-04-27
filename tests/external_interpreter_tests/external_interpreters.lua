@@ -26,10 +26,16 @@ elseif target == "lua-luax" then
     assert(sys.libc == "gnu")
     assert(not pandoc)
 
-elseif target == "luax" then
+elseif target == "luax-key" then
     assert(arg[-2] == "luax")
     assert(arg[-1] == "--")
-    assert(arg[0] == BUILD/"test/ext-luax")
+    assert(arg[0] == BUILD/"test/ext-luax-key")
+    assert(not pandoc)
+
+elseif target == "luax-z" then
+    assert(arg[-2] == "luax")
+    assert(arg[-1] == "--")
+    assert(arg[0] == BUILD/"test/ext-luax-z")
     assert(not pandoc)
 
 elseif target == "pandoc" then

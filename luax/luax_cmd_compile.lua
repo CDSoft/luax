@@ -87,6 +87,7 @@ local quiet = false
 local use_cc = false
 local bytecode = nil
 local strip = nil
+local compression = false
 local key = nil
 
 do
@@ -110,6 +111,8 @@ do
         elseif a == '-s' then
             bytecode = true
             strip = true
+        elseif a == '-z' then
+            compression = true
         elseif a == '-k' then
             i = i+1
             if key then wrong_arg(a) end
@@ -170,6 +173,7 @@ local function compile_lua(current_output, interpreter)
         target = interpreter.name,
         bytecode = bytecode,
         strip = strip,
+        compression = compression,
         key = key,
     }
     local exe = files[current_output]
@@ -243,6 +247,7 @@ local function compile_native(tmp, current_output, target_definition)
         product_name = current_output:basename():splitext(),
         bytecode = bytecode or "-b", -- defaults to bytecode compilation for native builds
         strip = strip,
+        compression = compression,
         key = key,
     })
     app_bundle : foreachk(fs.write_bin)
@@ -390,6 +395,7 @@ local function compile_loader(current_output, target_definition)
         add_shebang = false,
         bytecode = bytecode or "-b",
         strip = strip,
+        compression = compression,
         key = key,
     })
 

@@ -280,6 +280,7 @@ scripts:
       -c              use a C compiler instead of the loader
       -b              compile to Lua bytecode
       -s              emit bytecode without debug information
+      -z              compress with lzip
       -k key          script encryption key
       -q              quiet compilation (error messages only)
       scripts         scripts to compile
