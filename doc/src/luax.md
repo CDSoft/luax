@@ -147,8 +147,8 @@ Option      Description
 `socket`    Add the socket support (LuaSocket) to LuaX
 `ssl`       Add the HTTPS/SSL support (LuaSec + OpenSSL) to LuaX (`ssl` implies `socket`)
 
-OpenSSL is not included in LuaX source. It is download and recompiled when needed.
-Hence an Internet connexion is required to compile LuaX with the `ssl` option.
+OpenSSL is not included in LuaX source. It is downloaded and recompiled when needed.
+Hence an Internet connection is required to compile LuaX with the `ssl` option.
 
 Example:
 
