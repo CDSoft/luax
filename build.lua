@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.1.1" "2025-04-28"
+version "9.1.2" "2025-04-28"
 
 local F = require "F"
 local fs = require "fs"
@@ -1612,16 +1612,16 @@ end
 section "Documentation"
 ---------------------------------------------------------------------
 
-if has_pandoc then
-
-local markdown_sources = ls "doc/src/*.md"
-
 rule "lsvg" {
     description = "lsvg $out",
     command = "$luax tools/lsvg.luax $in -o $out --MF $depfile -- $args",
     depfile = "$builddir/tmp/lsvg/$out.d",
     implicit_in = "$luax tools/lsvg.luax",
 }
+
+if has_pandoc then
+
+local markdown_sources = ls "doc/src/*.md"
 
 local images = {
     build "doc/luax-banner.svg" {"lsvg", "doc/src/luax-logo.lua", args={1024,  192}},
