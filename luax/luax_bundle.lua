@@ -142,9 +142,9 @@ local function compact(s)
         : str";"
 end
 
-local function bytecode(code, opt, name)
+local function bytecode(code, opt, names)
     if opt.bytecode then
-        code = assert(string.dump(assert(load(code, "@$"..name)), opt.strip))
+        code = assert(string.dump(assert(load(code, "@$"..F(names):str":")), opt.strip))
     end
     return code
 end
@@ -159,9 +159,9 @@ local function bytes(s)
     return F.concat(bs)
 end
 
-local function obfuscate_lua(code, opt, product_name)
+local function obfuscate_lua(code, opt, names)
+    code = bytecode(code, opt, names)
     if opt.key then
-        code = bytecode(code, opt, product_name)
         -- Encrypt code by xoring bytes with pseudo random values
         local key = make_key(code, opt)
         local a <const>, c <const> = 6364136223846793005, 1
@@ -178,8 +178,8 @@ local function obfuscate_lua(code, opt, product_name)
             for i=1,#b do r=r*a+c x[i]=ch(bt(b,i)~((r>>33)&0xff))end
             return l(tc(x))()
         ]===])
+        code = bytecode(code, opt, F.take(1, names))
     end
-    code = bytecode(code, opt, product_name)
     return code
 end
 
@@ -190,9 +190,9 @@ local function compress(code, opt)
     return compressed_code, ":unlzip()"
 end
 
-local function obfuscate_luax(code, opt, product_name)
+local function obfuscate_luax(code, opt, names)
 
-    code = bytecode(code, opt, product_name)
+    code = bytecode(code, opt, names)
 
     local uncompress
     code, uncompress = compress(code, opt)
@@ -202,12 +202,12 @@ local function obfuscate_luax(code, opt, product_name)
         code = compact(F.I { b=escape(code:arc4(key)), k=escape(key), uncompress=uncompress } [===[
             return load(($(b)):unarc4$(k)$(uncompress))()
         ]===])
-        code = bytecode(code, opt, product_name)
+        code = bytecode(code, opt, F.take(1, names))
     elseif opt.compression then
         code = compact(F.I { b=escape(code), uncompress=uncompress } [===[
             return load(($(b))$(uncompress))()
         ]===])
-        code = bytecode(code, opt, product_name)
+        code = bytecode(code, opt, F.take(1, names))
     end
 
     return code
@@ -338,7 +338,7 @@ function M.bundle(opt)
             assert(load(script.content, ("@%s"):format(script.path)))
             if opt.bytecode then
                 -- compile the script with file path containing the product name
-                return qstr(bytecode(script.content, opt, ("%s:%s"):format(product_name, script.path)))
+                return qstr(bytecode(script.content, opt, {product_name, script.path}))
             else
                 return mlstr(script.content)
             end
@@ -375,7 +375,7 @@ function M.bundle(opt)
             end
         end
         local obfuscate = opt.target:match "^luax" and obfuscate_luax or obfuscate_lua
-        out = obfuscate(out:flatten():unlines(), F(opt):patch{strip=true}, product_name)
+        out = obfuscate(out:flatten():unlines(), F(opt):patch{strip=true}, {product_name})
         return F{
             [opt.output] = F{shebang, out}:flatten():unlines(),
         }
@@ -406,15 +406,7 @@ function M.bundle(opt)
         local function compile(script)
             -- check script compilation (with the actual file path in error messages)
             assert(load(script.content, ("@%s"):format(script.path)))
-            local code
-            if opt.bytecode then
-                -- compile the script with file path containing the product name
-                code = bytecode(script.content, opt, ("%s:%s"):format(product_name, script.path))
-            else
-                code = script.content
-            end
-            code = obfuscate_luax(code, opt, product_name)
-            return code
+            return obfuscate_luax(script.content, opt, {product_name, script.path})
         end
         local function stripped(prefix, name)
             return prefix .. (opt.strip and "" or ":"..name)
