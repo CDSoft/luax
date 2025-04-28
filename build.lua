@@ -364,12 +364,10 @@ rule "make_openssl" {
             debug = 'export CFLAGS="-pipe -Og -g";',
         },
         "$lto",
-        "$root/$openssl_src/Configure", "$openssl_target", openssl_options, ";",
+        "$root"/openssl_configure_script, "$openssl_target", openssl_options, ";",
         "make", "-j", nproc,
     },
-    implicit_in = {
-        openssl_configure_script,
-    },
+    implicit_in = openssl_configure_script,
     pool = "console",
 }
 
@@ -728,48 +726,34 @@ targets_to_compile:foreach(function(target)
                 windows = "$build_as_dll",
             },
         },
-        implicit_in = {
-            compiler_deps,
-        },
+        implicit_in = compiler_deps,
         depfile = "$out.d",
     }
     cc_ext[target.name] = rule("cc_ext-"..target.name) {
         description = "cc $in",
-        command = {
-            "$cc-"..target.name, "-c", lto, ext_cflags, lua_flags, opt_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
-        },
-        implicit_in = {
-            compiler_deps,
-        },
+        command = { "$cc-"..target.name, "-c", lto, ext_cflags, lua_flags, opt_flags, "$additional_flags", "-MD -MF $depfile $in -o $out" },
+        implicit_in = compiler_deps,
         depfile = "$out.d",
     }
     ld[target.name] = rule("ld-"..target.name) {
         description = "ld $out",
-        command = {
-            "$ld-"..target.name, lto, "$in -o $out", ldflags, target_ld_flags,
-        },
+        command = { "$ld-"..target.name, lto, "$in -o $out", ldflags, target_ld_flags },
         implicit_in = compiler_deps,
     }
     so[target.name] = is_dynamic(target) and rule("so-"..target.name) {
         description = "so $out",
-        command = {
-            "$cc-"..target.name, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out",
-        },
+        command = { "$cc-"..target.name, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out" },
         implicit_in = compiler_deps,
     }
     partial_ld[target.name] = has_partial_ld(target) and rule("partial-ld-"..target.name) {
         description = "ld $out",
-        command = {
-            "$ld-"..target.name, "-r", "$in -o $out",
-        },
+        command = { "$ld-"..target.name, "-r", "$in -o $out" },
         implicit_in = compiler_deps,
     }
 
     ar[target.name] = rule("ar-"..target.name) {
         description = "ar $out",
-        command = {
-            "$ar-"..target.name, "-crs $out $in",
-        },
+        command = { "$ar-"..target.name, "-crs $out $in" },
         implicit_in = compiler_deps,
     }
 
@@ -888,11 +872,7 @@ var "luax_config_lua" "$tmp/luax_config.lua"
 rule "ypp-config" {
     description = "ypp $out",
     command = { "$lua tools/luax.lua tools/ypp.luax", build.ypp_vars(LUAX), "$in -o $out" },
-    implicit_in = {
-        "$lua",
-        "tools/luax.lua",
-        "tools/ypp.luax",
-    },
+    implicit_in = "$lua tools/luax.lua tools/ypp.luax",
 }
 
 build "$luax_config_h"   { "ypp-config", "libluax/luax_config.h.in" }
@@ -908,11 +888,7 @@ var "luax_build_config_lua" "$tmp/luax_build_config.lua"
 rule "ypp-build-config" {
     description = "ypp $out",
     command = { "$lua tools/luax.lua tools/ypp.luax", build.ypp_vars(BUILD_CONFIG), "$in -o $out" },
-    implicit_in = {
-        "$lua",
-        "tools/luax.lua",
-        "tools/ypp.luax",
-    },
+    implicit_in = "$lua tools/luax.lua tools/ypp.luax",
 }
 
 build "$luax_build_config_lua" { "ypp-build-config", "luax/luax_build_config.lua.in" }
@@ -930,9 +906,8 @@ rule "bundle" {
         "$lua tools/bundle.lua $args $in -o $out",
     },
     implicit_in = {
-        "$lua",
+        "$lua tools/bundle.lua",
         "$lzip",
-        "tools/bundle.lua",
         "luax/luax_bundle.lua",
         "$luax_config_lua",
         "$luax_build_config_lua",
@@ -1203,11 +1178,7 @@ end)
 rule "pack" {
     description = "pack $out",
     command = "$luax tools/pack.lua $in -o $out $flags";
-    implicit_in = {
-        "$luax",
-        "tools/pack.lua",
-        "$lzip",
-    },
+    implicit_in = "$luax tools/pack.lua",
 }
 
 local function luax_archive(archive, compilation_targets)
@@ -1305,9 +1276,8 @@ rule "luax-bundle" {
         "$lua luax/luax.lua compile -c -q $args -o $out $in",
     },
     implicit_in = {
-        "$lua",
+        "$lua luax/luax.lua",
         "$lzip",
-        "luax/luax.lua",
         "$lib/luax.lua",
         "$luax_config_lua",
         "$luax_build_config_lua",
@@ -1650,10 +1620,7 @@ rule "lsvg" {
     description = "lsvg $out",
     command = "$luax tools/lsvg.luax $in -o $out --MF $depfile -- $args",
     depfile = "$builddir/tmp/lsvg/$out.d",
-    implicit_in = {
-        "$luax",
-        "tools/lsvg.luax",
-    },
+    implicit_in = "$luax tools/lsvg.luax",
 }
 
 local images = {
@@ -1688,9 +1655,8 @@ local gfm = pipe {
         },
         depfile = "$out.d",
         implicit_in = {
-            "$luax",
+            "$luax tools/ypp.luax",
             "$lib/luax.lar",
-            "tools/ypp.luax",
         },
     },
     rule "pandoc" {
@@ -1812,9 +1778,8 @@ local dist = (function()
                 },
                 depfile = "$tmp/$out.d",
                 implicit_in = {
-                    "$luax",
+                    "$luax tools/ypp.luax",
                     "$lib/luax.lar",
-                    "tools/ypp.luax",
                 },
             }
             return build("$release/ReleaseNote.md") { "releasenote", "tools/ReleaseNote.md.ypp" }
