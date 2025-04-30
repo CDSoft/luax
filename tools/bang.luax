@@ -25,6 +25,7 @@ libs["C"] = lib("src/C.lua", [[-- This file is part of bang.
 local F = require "F"
 local sys = require "sys"
 
+local flatten = require "flatten"
 local tmp = require "tmp"
 
 local default_options = {
@@ -231,9 +232,21 @@ require "targets" : foreach(function(target)
     zigcpp[target.name] = add_target(zigcpp : new("zigcpp-"..target.name))
 end)
 
+local compile_flags_file = nil
+
+local function compile_flags(...)
+    if not compile_flags_file then
+        compile_flags_file = file(bang.output:dirname()/"compile_flags.txt")
+    end
+    local flags = flatten{...}
+    compile_flags_file((vars%flags) : unlines())
+    return flags
+end
+
 return setmetatable({
     cc  = cc,  gcc = gcc, clang   = clang,   zigcc  = zigcc,
     cpp = cpp, gpp = gpp, clangpp = clangpp, zigcpp = zigcpp,
+    compile_flags = compile_flags,
 }, {
     __call = function(_, ...) return cc(...) end,
     __index = {
@@ -2155,14 +2168,14 @@ local function git_warning(tag)
     git_tag = git_tag : trim()
     if tag == git_tag then return end
     return F.I { tag=tag, git_tag=git_tag } [[
-+----------------------------------------------------------------------
-| WARNING: version mismatch
-|
-| Version : $(tag)
-| Git tag : $(git_tag)
-|
-| Please add a new git tag or fix the version before the next release.
-+----------------------------------------------------------------------
++----------------------------------------------------------------------+
+| WARNING: version mismatch                                            |
+|                                                                      |
+| Version : $(tag:ljust(58)                                          ) |
+| Git tag : $(git_tag:ljust(58)                                      ) |
+|                                                                      |
+| Please add a new git tag or fix the version before the next release. |
++----------------------------------------------------------------------+
 ]] : trim()
 end
 
@@ -2173,7 +2186,7 @@ local function version(tag)
         local red = term.isatty(io.stdout)
             and (term.color.white + term.color.onred + term.color.bright)
             or F.id
-        print(red(warning))
+        print(warning:lines():map(red):unlines())
     end
     var "version" { tag }
     return function(date)
@@ -2219,7 +2232,7 @@ return function()
 
 end
 ]])
-libs["bang-version"] = lib(".build/bang-version", [=[return [[3.1]]]=])
+libs["bang-version"] = lib(".build/bang-version", [=[return [[3.2]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"

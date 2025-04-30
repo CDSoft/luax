@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.1.2" "2025-04-28"
+version "9.1.3" "2025-05-04"
 
 local F = require "F"
 local fs = require "fs"
@@ -233,8 +233,6 @@ var "dist" "$builddir/dist"
 local compile = {}
 local test = {}
 local doc = {}
-
-local compile_flags = file "compile_flags.txt"
 
 local function once(f)
     local cache = {}
@@ -552,7 +550,7 @@ local cflags = {
     },
 }
 
-local luax_cflags = F{
+local luax_cflags = build.compile_flags {
     cflags,
     optional(strict) {
         "-Werror",
@@ -613,10 +611,6 @@ local ext_cflags = {
         },
     },
     sanitizer_ext_cflags,
-}
-
-compile_flags {
-    (vars%luax_cflags) : flatten() : unlines(),
 }
 
 local ldflags = {
@@ -694,11 +688,10 @@ targets_to_compile:foreach(function(target)
         F.map(F.prefix"-I", opt_include_path),
     }
     if target.name == sys.name then
-        compile_flags {
+        build.compile_flags {
             F{target_flags, lua_flags}
                 : flatten()
                 : map(function(s) return s:gsub("'", "") end)
-                : unlines()
         }
     end
     local target_ld_flags = {
