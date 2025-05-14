@@ -633,8 +633,6 @@ local ldflags = {
     sanitizer_ldflags,
 }
 
-add_openssl_rules()
-
 local cc = {}
 local cc_ext = {}
 local ar = {}
@@ -751,6 +749,8 @@ targets_to_compile:foreach(function(target)
     }
 
 end)
+
+add_openssl_rules()
 
 --===================================================================
 section "Third-party modules update"
