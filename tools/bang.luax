@@ -1935,6 +1935,7 @@ local function generator_rule(args)
 
     local command_line = F{
         bang_cmd,
+        "-g", string.format("%q", bang_cmd),
         args.quiet and "-q" or {},
         "$in -o $out",
         #_G.arg > 0 and {"--", _G.arg} or {},
@@ -2232,7 +2233,7 @@ return function()
 
 end
 ]])
-libs["bang-version"] = lib(".build/bang-version", [=[return [[3.2]]]=])
+libs["bang-version"] = lib(".build/bang-version", [=[return [[3.2.1]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"
