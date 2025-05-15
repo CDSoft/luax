@@ -2046,6 +2046,44 @@ end)
 
 --[[@@@
 ```lua
+F.filter2t(p, xs)
+xs:filter2t(p)
+```
+> filters the elements of `xs` with `p` and returns the table `{p(xs[1])=xs[1], p(xs[2])=xs[2], ...}`
+> where `p(x)` is a predicate that returns the key for `x` in the returned table (`nil` to reject `x`).
+@@@]]
+
+register2 "filter2t" (function(p, xs)
+    local t = {}
+    for i = 1, #xs do
+        local v = xs[i]
+        local k = p(v)
+        if k~=nil then rawset(t, k, v) end
+    end
+    return setmetatable(t, mt)
+end)
+
+--[[@@@
+```lua
+F.filteri2t(p, xs)
+xs:filteri2t(p)
+```
+> filters the elements of `xs` with `p` and returns the table `{p(1, xs[1])=xs[1], p(2, xs[2])=xs[2], ...}`
+> where `p(i, x)` is a predicate that returns the key for `x` in the returned table (`nil` to reject `x`).
+@@@]]
+
+register2 "filteri2t" (function(p, xs)
+    local t = {}
+    for i = 1, #xs do
+        local v = xs[i]
+        local k = p(i, v)
+        if k~=nil then rawset(t, k, v) end
+    end
+    return setmetatable(t, mt)
+end)
+
+--[[@@@
+```lua
 F.filtert(p, t)
 t:filtert(p)
 ```
@@ -2074,6 +2112,41 @@ F_filterk = register2 "filterk" (function(p, t)
         if p(k, v) then t2[k] = v end
     end
     return setmetatable(t2, mt)
+end)
+
+-- filtert2a
+-- filterk2a
+
+--[[@@@
+```lua
+F.filtert2a(p, t)
+t:filtert2a(p)
+```
+> filters `t` with `p` and returns the array `{t[k1], t[k2], ...}` for all `t[ki]` that satisfy `p(t[ki])`.
+@@@]]
+
+register2 "filtert2a" (function(p, t)
+    local ys = {}
+    for _, v in F_pairs(t) do
+        if p(v) then ys[#ys+1] = v end
+    end
+    return setmetatable(ys, mt)
+end)
+
+--[[@@@
+```lua
+F.filterk2a(f, t)
+t:filterk2a(f)
+```
+> filters `t` with `p` and returns the array `{t[k1], t[k2], ...}` for all `t[ki]` that satisfy `p(ki, t[ki])`.
+@@@]]
+
+register2 "filterk2a" (function(p, t)
+    local ys = {}
+    for k, v in F_pairs(t) do
+        if p(k, v) then ys[#ys+1] = v end
+    end
+    return setmetatable(ys, mt)
 end)
 
 --[[@@@

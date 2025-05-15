@@ -866,6 +866,26 @@ xs:filteri(p)
 > Returns the list of those elements that satisfy the predicate p(i, x).
 
 ``` lua
+F.filter2t(p, xs)
+xs:filter2t(p)
+```
+
+> filters the elements of `xs` with `p` and returns the table
+> `{p(xs[1])=xs[1], p(xs[2])=xs[2], ...}` where `p(x)` is a predicate
+> that returns the key for `x` in the returned table (`nil` to reject
+> `x`).
+
+``` lua
+F.filteri2t(p, xs)
+xs:filteri2t(p)
+```
+
+> filters the elements of `xs` with `p` and returns the table
+> `{p(1, xs[1])=xs[1], p(2, xs[2])=xs[2], ...}` where `p(i, x)` is a
+> predicate that returns the key for `x` in the returned table (`nil` to
+> reject `x`).
+
+``` lua
 F.filtert(p, t)
 t:filtert(p)
 ```
@@ -878,6 +898,22 @@ t:filterk(p)
 ```
 
 > Returns the table of those values that satisfy the predicate p(k, v).
+
+``` lua
+F.filtert2a(p, t)
+t:filtert2a(p)
+```
+
+> filters `t` with `p` and returns the array `{t[k1], t[k2], ...}` for
+> all `t[ki]` that satisfy `p(t[ki])`.
+
+``` lua
+F.filterk2a(f, t)
+t:filterk2a(f)
+```
+
+> filters `t` with `p` and returns the array `{t[k1], t[k2], ...}` for
+> all `t[ki]` that satisfy `p(ki, t[ki])`.
 
 ``` lua
 F.restrict_keys(t, ks)

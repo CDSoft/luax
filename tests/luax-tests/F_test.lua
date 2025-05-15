@@ -883,6 +883,12 @@ local function table_searching()
     eq(F{11,21,31,41,51}:filteri(function(i, _) return i%2==0 end), {21,41})
     eq(F{}:filteri(function(i, _) return i%2==0 end), {})
 
+    eq(F.filter2t(function(x) if x%2==0 then return tostring(x) end end, {1,2,3,4,5}), {["2"]=2,["4"]=4})
+    eq(F{1,2,3,4,5}:filter2t(function(x) if x%2==0 then return tostring(x) end end), {["2"]=2,["4"]=4})
+
+    eq(F.filteri2t(function(i, x) if x%2==0 then return tostring(i) end end, {1,2,3,4,5}), {["2"]=2,["4"]=4})
+    eq(F{1,2,3,4,5}:filteri2t(function(i, x) if x%2==0 then return tostring(i) end end), {["2"]=2,["4"]=4})
+
     eq(F.filtert(function(x) return x%2==0 end, {x=1,y=2,z=3,t=4}), {y=2,t=4})
     eq(F{x=1,y=2,z=3,t=4}:filtert(function(x) return x%2==0 end), {y=2,t=4})
     eq(F.filtert(function(x) return x%2==0 end, {}), {})
@@ -892,6 +898,12 @@ local function table_searching()
     eq(F{x=1,y=2,z=3,t=4}:filterk(function(k, x) return k=="y" and x%2==0 end), {y=2})
     eq(F.filterk(function(k, x) return k=="y" and x%2==0 end, {}), {})
     eq(F{}:filterk(function(k, x) return k=="y" and x%2==0 end), {})
+
+    eq(F.filtert2a(function(x) return x%2==0 end, {x=1,y=2,z=3,t=4}), {4, 2})
+    eq(F{x=1,y=2,z=3,t=4}:filtert2a(function(x) return x%2==0 end), {4, 2})
+
+    eq(F.filterk2a(function(k, x) return x%2==0 and k~="t" end, {x=1,y=2,z=3,t=4}), {2})
+    eq(F{x=1,y=2,z=3,t=4}:filterk2a(function(k, x) return x%2==0 and k~="t" end), {2})
 
     eq(F.restrict_keys({x=1,y=2}, {"y", "z"}), {y=2})
     eq(F{x=1,y=2}:restrict_keys{"y", "z"}, {y=2})
