@@ -172,6 +172,66 @@ return setmetatable({}, {
     },
 })
 ]======])
+libs["defer"] = lib("src/defer.lua", [======[--[[
+This file is part of ypp.
+
+ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about ypp you can visit
+https://codeberg.org/cdsoft/ypp
+--]]
+
+--@LOAD
+
+--[[@@@
+* `defer(func)`: emit a unique tag that will later be replaced by the result of `func()`.
+
+E.g.:
+
+@q[=====[
+```
+@@ N = 0
+total = @defer(function() return N end) (should be "2")
+...
+@@(N = N+1)
+@@(N = N+1)
+```
+]=====]
+@@@]]
+
+local deferred_functions = {}
+
+local function defer(func)
+    local tag = string.format("▶%d◀", F.size(deferred_functions))
+    deferred_functions[tag] = func
+    return tag
+end
+
+local function replace(s)
+    for tag, func in pairs(deferred_functions) do
+        s = s:gsub(tag, func())
+    end
+    return s
+end
+
+return setmetatable({
+    defer = defer,
+    replace = replace,
+}, {
+    __call = function(self, s) return self.defer(s) end,
+})
+]======])
 libs["doc"] = lib("src/doc.lua", [======[--[[
 This file is part of ypp.
 
@@ -1057,13 +1117,13 @@ return function(s, conf)
     local i = 1
     while i <= #s do
         local i1, i2, out = parse(s, i, state)
-        if not i1 then
+        if not i2 then
             ts[#ts+1] = s:sub(i, #s)
             break
         end
         if i1 > i then ts[#ts+1] = s:sub(i, i1-1) end
         ts[#ts+1] = out
-        i = i2 ---@diagnostic disable-line: cast-local-type
+        i = i2
     end
     return table.concat(ts)
 end
@@ -1249,10 +1309,11 @@ return function(cond)
     return cond and ypp or F.const ""
 end
 ]======])
-libs["_YPP_VERSION"] = lib(".build/_YPP_VERSION", [=[return [[1.7.5]]]=])
+libs["_YPP_VERSION"] = lib(".build/_YPP_VERSION", [=[return [[1.8]]]=])
 _ENV["atexit"] = require "atexit"
 _ENV["comment"] = require "comment"
 _ENV["convert"] = require "convert"
+_ENV["defer"] = require "defer"
 _ENV["doc"] = require "doc"
 _ENV["file"] = require "file"
 _ENV["image"] = require "image"
@@ -1536,7 +1597,7 @@ function ypp_mt.__call(_, content)
 end
 
 local function write_outputs(args)
-    local content = output_contents:str()
+    local content = defer.replace(output_contents:str())
     if not args.output or args.output == "-" then
         io.stdout:write(content)
     else

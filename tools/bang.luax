@@ -1503,7 +1503,6 @@ local log = require "log"
 local ident = require "ident"
 local flatten = require "flatten"
 
-local pairs = pairs
 local tostring = tostring
 local type = type
 
@@ -1591,8 +1590,12 @@ local vars = {}
 
 local function expand(s)
     if type(s) == "string" then
+        -- worst case : one iteration per variable (in case of pathologically chained definitions)
+        local max_iterations = nbvars
+            + 1 -- implicit builddir definition
+            + 1 -- to be able to detect true recursive definitions
         local s0 = s
-        for _ = 1, nbvars+1 do
+        for _ = 1, max_iterations do
             local s1 = s0:gsub("%$([%w_%-]+)", vars)
             if s1 == s0 then return s0 end
             s0 = s1
@@ -1608,25 +1611,26 @@ end
 _G.vars = setmetatable(vars, {
     __mod = function(_, s) return expand(s) end,
     __index = function(_, k)
-        if k == "builddir" then return builddir_token[1] end
+        if k == "builddir" then return overridden_builddir or builddir_token[1] end
     end,
 })
 
+local builddir_definitions = 0
+
 function var(name)
+    if name == "builddir" then builddir_definitions = builddir_definitions + 1 end
+    if rawget(vars, name) or builddir_definitions > 1 then
+        log.error("var "..name..": multiple definition")
+    end
     return function(value)
-        if rawget(vars, name) then
-            log.error("var "..name..": multiple definition")
-        end
         value = stringify(value)
         if name == "builddir" then
-            if not overridden_builddir then
-                builddir_token[1] = value
-            end
+            builddir_token[1] = overridden_builddir or value
         else
             emit(name.." = "..value.."\n")
+            vars[name] = value
+            nbvars = nbvars + 1
         end
-        vars[name] = value
-        nbvars = nbvars + 1
         return "$"..name
     end
 end
@@ -2233,7 +2237,7 @@ return function()
 
 end
 ]])
-libs["bang-version"] = lib(".build/bang-version", [=[return [[3.2.1]]]=])
+libs["bang-version"] = lib(".build/bang-version", [=[return [[3.2.2]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"
