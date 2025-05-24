@@ -34,8 +34,8 @@ LUAX.DATE        = vars.date
 LUAX.COPYRIGHT   = I"LuaX $(VERSION)  Copyright (C) 2021-$(DATE:split'%-':head()) $(URL), $(AUTHORS)"
 
 local BUILD_CONFIG = {
-    ZIG_VERSION  = "0.14.0",
-    ZIG_URL      = "https://ziglang.org/download/VERSION/zig-OS-ARCH-VERSION",
+    ZIG_VERSION  = "0.14.1",
+    ZIG_URL      = "https://ziglang.org/download/VERSION/zig-ARCH-OS-VERSION",
     ZIG_PATH     = "~/.local/opt/zig",
     ZIG_PATH_WIN = "~\\zig",
 }
