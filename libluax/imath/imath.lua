@@ -52,7 +52,13 @@ end
 local function int(n, base)
     n = n or 0
     if type(n) == "table" then return n end
-    if type(n) == "number" then n = ("%.0f"):format(floor(n)) end
+    if type(n) == "number" then
+        if math.type(n) == "float" then
+            n = ("%.0f"):format(floor(n))
+        else
+            n = ("%d"):format(n)
+        end
+    end
     assert(type(n) == "string")
     n = n:gsub("[ _]", "")
     local sign = 1
