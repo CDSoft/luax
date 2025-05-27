@@ -1309,7 +1309,7 @@ return function(cond)
     return cond and ypp or F.const ""
 end
 ]======])
-libs["_YPP_VERSION"] = lib(".build/_YPP_VERSION", [=[return [[1.8]]]=])
+libs["_YPP_VERSION"] = lib(".build/_YPP_VERSION", [=[return [[1.8.2]]]=])
 _ENV["atexit"] = require "atexit"
 _ENV["comment"] = require "comment"
 _ENV["convert"] = require "convert"
