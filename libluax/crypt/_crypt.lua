@@ -24,33 +24,50 @@ https://codeberg.org/cdsoft/luax
 
 local crypt = {}
 
--- Random number generator
-
-local prng_mt = {__index={}}
-
 local floor = math.floor
 
 local byte = string.byte
 local char = string.char
 local format = string.format
 local gsub = string.gsub
+local pack = string.pack
 
 local concat = table.concat
 
 local tonumber = tonumber
 
-local entropy do
-    local hash = 0xcbf29ce484222325
-    local function fnv1a(data)
-        for i = 0, 7 do
-            hash = (hash ~ ((data>>(8*i))&0xFF)) * 0x100000001b3
-        end
+-- FNV-1a
+local fnv1a_32_init = 0x811c9dc5
+local fnv1a_32_prime = 1<<24 | 1<<8 | 0x93
+local function fnv1a_32(hash, bs)
+    for i=1,#bs do
+        hash = (hash ~ byte(bs, i, i)) * fnv1a_32_prime
     end
+    return hash & 0xFFFFFFFF
+end
+
+local fnv1a_64_init = 0xcbf29ce484222325
+local fnv1a_64_prime = 1<<40 | 1<<8 | 0xb3
+local function fnv1a_64(hash, bs)
+    for i=1,#bs do
+        hash = (hash ~ byte(bs, i, i)) * fnv1a_64_prime
+    end
+    return hash & 0xFFFFFFFFFFFFFFFF
+end
+
+-- Random number generator
+
+local prng_mt = {__index={}}
+
+local entropy do
+    local hash = fnv1a_64_prime
     entropy = function(ptr)
-        fnv1a(os.time())
-        fnv1a(floor(os.clock()*1000000))
-        fnv1a(tonumber(format("%p", ptr)))
-        fnv1a(tonumber(format("%p", {})))
+        hash = fnv1a_64(hash, pack("<I8I8I8I8",
+            os.time(),
+            floor(os.clock()*1000000),
+            tonumber(format("%p", ptr)),
+            tonumber(format("%p", {}))
+        ))
         return hash
     end
 end
@@ -338,42 +355,10 @@ end
 
 crypt.unarc4 = crypt.arc4
 
-function crypt.hash64(s)
-    local state = 0xFFFFFFFFFFFFFFC5
-    state = state*prng_multiplier + default_prng_increment
-    state = state*prng_multiplier + default_prng_increment
-    for i = 1, #s do
-        local c = byte(s, i)
-        state = state*prng_multiplier + ((c << 1) ~ default_prng_increment)
-    end
-    state = state*prng_multiplier + default_prng_increment
-    return ("<I8"):pack(state):hex()
-end
+function crypt.hash32(s) return ("<I4"):pack(fnv1a_32(fnv1a_32_init, s)):hex() end
+function crypt.hash64(s) return ("<I8"):pack(fnv1a_64(fnv1a_64_init, s)):hex() end
+-- crypt.hash128 not implemented in Lua
 
 crypt.hash = crypt.hash64
-
-function crypt.hash128(s)
-    local state1 = 0xFFFFFFFFFFFFFFC5
-    local state2 = 0xFFFFFFFFFFFFFFAD
-    local increment1 = default_prng_increment
-    local increment2 = (~default_prng_increment) | 1
-    state1 = state1*prng_multiplier + increment1
-    state1 = state1*prng_multiplier + increment1
-    state2 = state2*prng_multiplier + increment2
-    state2 = state2*prng_multiplier + increment2
-    for i = 1, #s, 2 do
-        local c1 = byte(s, i)
-        state1 = state1*prng_multiplier + ((c1 << 1) ~ increment1)
-    end
-    for i = 2, #s, 2 do
-        local c2 = byte(s, i)
-        state2 = state2*prng_multiplier + ((c2 << 1) ~ increment2)
-    end
-    state1 = state1*prng_multiplier + increment1
-    state2 = state2*prng_multiplier + increment2
-    local hash1 = state1*prng_multiplier + state2
-    local hash2 = state2*prng_multiplier + state1
-    return ("<I8I8"):pack(hash1, hash2):hex()
-end
 
 return crypt

@@ -407,18 +407,10 @@ local function compile_loader(current_output, target_definition)
         help.err("Invalid "..target_definition.name.." loader")
     end
 
-    local hash = 0x811c9dc5
-    local function fnv1a(data)
-        for i = 0, 3 do
-            hash = (hash ~ ((data>>(8*i))&0xff)) * 0x01000193
-        end
-    end
-    fnv1a(#files[current_output])
-    fnv1a(magic)
-    local header = string.pack("I4I4I4",
+    local header = string.pack("<I4I4c4",
         magic,
         #files[current_output],
-        hash & 0xffffffff)
+        string.pack("<I4I4", #files[current_output], magic):hash32():unhex())
 
     local exe = loader[1] .. files[current_output] .. header
 

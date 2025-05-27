@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.2.1" "2025-05-24"
+version "9.2.2" "2025-05-27"
 
 local F = require "F"
 local fs = require "fs"
@@ -532,7 +532,7 @@ local host_ldflags = {
 }
 
 local cflags = {
-    "-std=gnu2x",
+    "-std=gnu23",
     case(mode) {
         fast  = "-O3",
         small = "-Os",

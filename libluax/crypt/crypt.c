@@ -32,6 +32,7 @@ local crypt = require "crypt"
 
 #include "crypt.h"
 
+#include "fnv1a.h"
 #include "lua.h"
 #include "lauxlib.h"
 
@@ -47,24 +48,16 @@ local crypt = require "crypt"
 #include <windows.h>
 #endif
 
-/* small fast hash function */
-static inline void fnv1a(uint64_t *hash, uint64_t data)
-{
-    for (size_t i = 0; i < sizeof(data); i++) {
-        *hash = (*hash ^ ((uint8_t*)&data)[i]) * 0x100000001b3;
-    }
-}
-
 /* Entropy sources for PRNG initialization */
 static uint64_t entropy(void *ptr)
 {
-    static uint64_t hash = 0xcbf29ce484222325;  /* Start with the previous value */
-    fnv1a(&hash, (uint64_t)time(NULL));         /* Current time */
-    fnv1a(&hash, (uint64_t)clock());            /* Process execution time */
-    fnv1a(&hash, (uint64_t)getpid());           /* Process ID */
-    fnv1a(&hash, (uintptr_t)ptr);               /* Address of a characteristic variable */
-    fnv1a(&hash, (uintptr_t)&ptr);              /* Address of a local variable */
-    fnv1a(&hash, (uintptr_t)malloc);            /* Address of a global variable */
+    static t_fnv1a_64 hash = fnv1a_64_init;  /* Start with the previous value */
+    fnv1a_64_u64(&hash, (uint64_t)time(NULL));         /* Current time */
+    fnv1a_64_u64(&hash, (uint64_t)clock());            /* Process execution time */
+    fnv1a_64_u64(&hash, (uint64_t)getpid());           /* Process ID */
+    fnv1a_64_u64(&hash, (uintptr_t)ptr);               /* Address of a characteristic variable */
+    fnv1a_64_u64(&hash, (uintptr_t)&ptr);              /* Address of a local variable */
+    fnv1a_64_u64(&hash, (uintptr_t)malloc);            /* Address of a global variable */
     return hash;
 }
 
@@ -1019,48 +1012,54 @@ static int crypt_arc4(lua_State *L)
 }
 
 /***************************************************************************@@@
-### Fast PRNG-based hash
+### Fast FNV-1a hash
 
 @@@*/
 
 /*@@@
 ```lua
-crypt.hash64(data)
-crypt.hash(data)        -- alias for crypt.hash64
+crypt.hash32(data)
+crypt.hash(data)        -- alias for crypt.hash32
 ```
-returns a 64-bit digest of `data` based on the LuaX PRNG (not suitable for cryptographic usage).
+returns a 32-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 @@@*/
 
-static inline uint64_t prng_hash64(const char *input, size_t input_size)
+static int crypt_hash32(lua_State *L)
 {
-    /* 2^64-59 = 0xFFFFFFFFFFFFFFC5 */
-    register uint64_t state = 0xFFFFFFFFFFFFFFC5;
-    state = state*prng_multiplier + default_prng_increment;
-    state = state*prng_multiplier + default_prng_increment;
-    for (size_t i = 0; i < input_size; i++) {
-        const uint64_t c = (uint64_t)input[i];
-        state = state*prng_multiplier + ((c << 1) ^ default_prng_increment);
-    }
-    state = state*prng_multiplier + default_prng_increment;
-    return state;
+    const char *data = (const char *)luaL_checkstring(L, 1);
+    const size_t datalen = (size_t)lua_rawlen(L, 1);
+
+    t_fnv1a_32 hash = fnv1a_32_init;
+    fnv1a_32(&hash, (const uint8_t *)data, datalen);
+
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    hex_encode((const char *)&hash, sizeof(hash), &B);
+    luaL_pushresult(&B);
+
+    return 1;
 }
+
+/*@@@
+```lua
+crypt.hash64(data)
+```
+returns a 64-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+@@@*/
 
 static int crypt_hash64(lua_State *L)
 {
     const char *data = (const char *)luaL_checkstring(L, 1);
     const size_t datalen = (size_t)lua_rawlen(L, 1);
 
-    const uint64_t hash = prng_hash64(data, datalen);
+    t_fnv1a_64 hash = fnv1a_64_init;
+    fnv1a_64(&hash, (const uint8_t *)data, datalen);
 
-    char hex[2*sizeof(hash)];
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    hex_encode((const char *)&hash, sizeof(hash), &B);
+    luaL_pushresult(&B);
 
-    for (size_t i = 0; i < sizeof(hash); i++) {
-        const char c = (char)((hash >> (i*8)) & 0xFF);
-        hex[2*i+0] = hex_map[(c>>4)&0xF];
-        hex[2*i+1] = hex_map[(c>>0)&0xF];
-    }
-
-    lua_pushlstring(L, (const char *)hex, sizeof(hex));
     return 1;
 }
 
@@ -1068,56 +1067,22 @@ static int crypt_hash64(lua_State *L)
 ```lua
 crypt.hash128(data)
 ```
-returns a 128-bit digest of `data` based on the LuaX PRNG (not suitable for cryptographic usage).
+returns a 128-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 @@@*/
-
-static inline void prng_hash128(const char *input, size_t input_size, uint64_t *hash)
-{
-    register uint64_t state1 = 0xFFFFFFFFFFFFFFC5; /* 2^64-59 (prime number less than 2^64) */
-    register uint64_t state2 = 0xFFFFFFFFFFFFFFAD; /* 2^64-83 (prime number less than 2^64-59) */
-    const uint64_t increment1 = default_prng_increment;
-    const uint64_t increment2 = (~default_prng_increment) | 1;
-    state1 = state1*prng_multiplier + increment1;
-    state1 = state1*prng_multiplier + increment1;
-    state2 = state2*prng_multiplier + increment2;
-    state2 = state2*prng_multiplier + increment2;
-    size_t i;
-    for (i = 0; i+1 < input_size; i+=2) {
-        const uint64_t c1 = (uint64_t)input[i+0];
-        const uint64_t c2 = (uint64_t)input[i+1];
-        state1 = state1*prng_multiplier + ((c1 << 1) ^ increment1);
-        state2 = state2*prng_multiplier + ((c2 << 1) ^ increment2);
-    }
-    if (i < input_size) {
-        const uint64_t c1 = (uint64_t)input[i+0];
-        state1 = state1*prng_multiplier + ((c1 << 1) ^ increment1);
-    }
-    state1 = state1*prng_multiplier + increment1;
-    state2 = state2*prng_multiplier + increment2;
-    hash[0] = state1*prng_multiplier + state2;
-    hash[1] = state2*prng_multiplier + state1;
-}
 
 static int crypt_hash128(lua_State *L)
 {
     const char *data = (const char *)luaL_checkstring(L, 1);
     const size_t datalen = (size_t)lua_rawlen(L, 1);
 
-    uint64_t hash[2];
-    prng_hash128(data, datalen, hash);
+    t_fnv1a_128 hash = fnv1a_128_init;
+    fnv1a_128(&hash, (const uint8_t *)data, datalen);
 
-    char hex[2*sizeof(hash)];
+    luaL_Buffer B;
+    luaL_buffinit(L, &B);
+    hex_encode((const char *)&hash, sizeof(hash), &B);
+    luaL_pushresult(&B);
 
-    for (size_t i = 0; i < sizeof(hash)/sizeof(hash[0]); i++) {
-        const uint64_t hi = hash[i];
-        for (size_t j = 0; j < sizeof(hash[0]); j++) {
-            const char c = (char)((hi >> (j*8)) & 0xFF);
-            hex[2*(i*sizeof(hi)+j)+0] = hex_map[(c>>4)&0xF];
-            hex[2*(i*sizeof(hi)+j)+1] = hex_map[(c>>0)&0xF];
-        }
-    }
-
-    lua_pushlstring(L, (const char *)hex, sizeof(hex));
     return 1;
 }
 
@@ -1144,6 +1109,7 @@ static const luaL_Reg crypt_module[] =
     {"crc32", crypt_crc32},
     {"crc64", crypt_crc64},
     {"hash", crypt_hash64},
+    {"hash32", crypt_hash32},
     {"hash64", crypt_hash64},
     {"hash128", crypt_hash128},
 

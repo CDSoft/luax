@@ -232,22 +232,29 @@ encrypts/decrypts `data` using the ARC4Drop algorithm and the encryption
 key `key` (drops the first `drop` encryption steps, the default value of
 `drop` is 768).
 
-### Fast PRNG-based hash
+### Fast FNV-1a hash
+
+``` lua
+crypt.hash32(data)
+crypt.hash(data)        -- alias for crypt.hash32
+```
+
+returns a 32-bit digest of `data` based on FNV-1a (not suitable for
+cryptographic usage).
 
 ``` lua
 crypt.hash64(data)
-crypt.hash(data)        -- alias for crypt.hash64
 ```
 
-returns a 64-bit digest of `data` based on the LuaX PRNG (not suitable
-for cryptographic usage).
+returns a 64-bit digest of `data` based on FNV-1a (not suitable for
+cryptographic usage).
 
 ``` lua
 crypt.hash128(data)
 ```
 
-returns a 128-bit digest of `data` based on the LuaX PRNG (not suitable
-for cryptographic usage).
+returns a 128-bit digest of `data` based on FNV-1a (not suitable for
+cryptographic usage).
 
 ## Random array access
 

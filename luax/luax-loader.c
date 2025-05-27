@@ -19,6 +19,8 @@
 
 #include "libluax.h"
 
+#include "crypt/fnv1a.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,14 +92,6 @@ static FILE *open_exe(const char *exe)
     return f;
 }
 
-static const uint32_t fnv1a_init = 0x811c9dc5;
-static void fnv1a(uint32_t *hash, uint32_t data)
-{
-    for (size_t i = 0; i < sizeof(data); i++) {
-        *hash = (*hash ^ ((data>>(8*i))&0xff)) * 0x01000193;
-    }
-}
-
 static t_header read_header(FILE *f, const char *exe)
 {
     t_header header;
@@ -109,9 +103,9 @@ static t_header read_header(FILE *f, const char *exe)
         perror("fread");
         exit(EXIT_FAILURE);
     }
-    uint32_t hash = fnv1a_init;
-    fnv1a(&hash, header.size);
-    fnv1a(&hash, header.magic);
+    t_fnv1a_32 hash = fnv1a_32_init;
+    fnv1a_32_u32(&hash, header.size);
+    fnv1a_32_u32(&hash, header.magic);
     if (header.magic != luax_magic || header.hash != hash) {
         fprintf(stderr, "%s: invalid LuaX payload\n", exe);
         exit(EXIT_FAILURE);
