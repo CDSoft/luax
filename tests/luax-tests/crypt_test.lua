@@ -207,7 +207,7 @@ return function()
                 eq(s:hash64(), crypt.hash(s))
             end
         end
-        if sys.libc ~= "lua" then -- hash128
+        do -- hash128
             eq(crypt.hash128 "", "8dc595627521b8624201bb072e27626c")
             eq(crypt.hash128 "abc", "3b7faf7779bc6d8322588bec2c628da6")
             eq(crypt.hash128 "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "4d37f102c9d44593ef797b31b724c0f5")
