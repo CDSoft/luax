@@ -77,7 +77,7 @@ end
 local prng_mt = {__index={}}
 
 local entropy do
-    local hash = fnv1a_64_prime
+    local hash = fnv1a_64_init
     entropy = function(ptr)
         hash = fnv1a_64(hash, pack("<I8I8I8I8",
             os.time(),
