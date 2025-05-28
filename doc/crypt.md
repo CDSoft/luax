@@ -288,5 +288,7 @@ s:crc64()           == crypt.crc64(s)
 s:arc4(key, drop)   == crypt.arc4(s, key, drop)
 s:unarc4(key, drop) == crypt.unarc4(s, key, drop)
 s:hash()            == crypt.hash(s)
+s:hash32()          == crypt.hash32(s)
 s:hash64()          == crypt.hash64(s)
+s:hash128()         == crypt.hash128(s)
 ```

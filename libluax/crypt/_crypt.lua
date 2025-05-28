@@ -60,13 +60,14 @@ local fnv1a_128_init = {0x6c62272e, 0x07bb0142, 0x62b82175, 0x6295c58d}
 local fnv1a_128_prime_b, fnv1a_128_prime_d = 1<<(88-2*32), 1<<8 | 0x3b
 local function fnv1a_128(hash, bs)
     local a, b, c, d = tunpack(hash)
+    local function split(n) return n & 0xFFFFFFFF, n >> 32 end
     for i=1,#bs do
         d = d ~ byte(bs, i, i)
         local a2, b2, c2, d2, carry
-        d2 =         d*fnv1a_128_prime_d                                d2, carry = d2 & 0xFFFFFFFF, d2 >> 32
-        c2 = carry + c*fnv1a_128_prime_d                                c2, carry = c2 & 0xFFFFFFFF, c2 >> 32
-        b2 = carry + b*fnv1a_128_prime_d + d*fnv1a_128_prime_b          b2, carry = b2 & 0xFFFFFFFF, b2 >> 32
-        a2 = carry + a*fnv1a_128_prime_d + c*fnv1a_128_prime_b          a2        = a2 & 0xFFFFFFFF
+        d2, carry = split(        d*fnv1a_128_prime_d)
+        c2, carry = split(carry + c*fnv1a_128_prime_d)
+        b2, carry = split(carry + b*fnv1a_128_prime_d + d*fnv1a_128_prime_b)
+        a2, carry = split(carry + a*fnv1a_128_prime_d + c*fnv1a_128_prime_b)
         a, b, c, d = a2, b2, c2, d2
     end
     return a, b, c, d
