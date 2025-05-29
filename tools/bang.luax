@@ -30,7 +30,7 @@ local tmp = require "tmp"
 
 local default_options = {
     builddir = "$builddir/tmp",
-    cc = "cc", cflags = {"-c", "-MD -MF $depfile"}, cargs = "$in -o $out",
+    cc = "cc", cflags = {"-c", "-MMD -MF $depfile"}, cargs = "$in -o $out",
     depfile = "$out.d",
     cvalid = {},
     ar = "ar", aflags = "-crs", aargs = "$out $in",
@@ -2239,7 +2239,7 @@ return function()
 
 end
 ]])
-libs["bang-version"] = lib(".build/bang-version", [=[return [[3.3]]]=])
+libs["bang-version"] = lib(".build/bang-version", [=[return [[3.3.2]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"

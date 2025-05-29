@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.2.3" "2025-05-27"
+version "9.2.4" "2025-05-29"
 
 local F = require "F"
 local fs = require "fs"
@@ -642,7 +642,7 @@ local partial_ld = {}
 
 cc.host = rule "cc-host" {
     description = "cc $in",
-    command = { "$cc-"..sys.name, "-c", host_cflags, "-MD -MF $depfile $in -o $out" },
+    command = { "$cc-"..sys.name, "-c", host_cflags, "-MMD -MF $depfile $in -o $out" },
     implicit_in = compiler_deps,
     depfile = "$out.d",
 }
@@ -710,7 +710,7 @@ targets_to_compile:foreach(function(target)
     cc[target.name] = rule("cc-"..target.name) {
         description = "cc $in",
         command = {
-            "$cc-"..target.name, "-c", lto, luax_cflags, lua_flags, target_flags, opt_flags, "$additional_flags", "-MD -MF $depfile $in -o $out",
+            "$cc-"..target.name, "-c", lto, luax_cflags, lua_flags, target_flags, opt_flags, "$additional_flags", "-MMD -MF $depfile $in -o $out",
             case(target.os) {
                 linux   = {},
                 macos   = {},
@@ -722,7 +722,7 @@ targets_to_compile:foreach(function(target)
     }
     cc_ext[target.name] = rule("cc_ext-"..target.name) {
         description = "cc $in",
-        command = { "$cc-"..target.name, "-c", lto, ext_cflags, lua_flags, opt_flags, "$additional_flags", "-MD -MF $depfile $in -o $out" },
+        command = { "$cc-"..target.name, "-c", lto, ext_cflags, lua_flags, opt_flags, "$additional_flags", "-MMD -MF $depfile $in -o $out" },
         implicit_in = compiler_deps,
         depfile = "$out.d",
     }
