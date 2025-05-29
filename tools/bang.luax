@@ -640,7 +640,7 @@ local lsvg = new(default_options, "lsvg")
     : set "cmd" "lsvg"
     : set "flags" { "--MF $depfile" }
     : set "depfile" "$out.d"
-    : set "args" "$in -o $out"
+    : set "args" "$in -o $out -- $args"
 
 local octave = new(default_options, "octave")
     : set "cmd" "octave"
@@ -2239,7 +2239,7 @@ return function()
 
 end
 ]])
-libs["bang-version"] = lib(".build/bang-version", [=[return [[3.2.3]]]=])
+libs["bang-version"] = lib(".build/bang-version", [=[return [[3.3]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"

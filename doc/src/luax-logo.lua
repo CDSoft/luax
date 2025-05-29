@@ -21,19 +21,25 @@ https://codeberg.org/cdsoft/luax
 local F = require "F"
 local crypt = require "crypt"
 
+local opt = (function()
+    local parser = require "argparse"() : name "LuaX logo generator"
+    parser : flag "--sky" : description "Add stars in the sky"
+    parser : option "--name" : description "Set the name printed on the planet"
+    parser : option "--text" : description "Set the text printed below the planet"
+    parser : argument "size" : description "Image resolution" : args "0-2"
+    return parser:parse(arg)
+end)()
+
 img {
-    Raw (F.unlines { "<!--", license:trim(), "-->" })
+    Raw (F.unlines { "<!--",
+        license:trim(), ---@diagnostic disable-line: undefined-field
+        "-->"
+    })
 }
 
-local w = tonumber(arg[1]) or 1024
-local h = tonumber(arg[2]) or w
+local w = tonumber(opt.size[1]) or 1024
+local h = tonumber(opt.size[2]) or w
 local fh = h/4
-arg = F.drop(2, arg)
-
-local fill_the_sky_with_stars = arg:head() == "sky"
-if fill_the_sky_with_stars then arg = F.drop(1, arg) end
-
-local text = arg
 
 img {
     width = w,
@@ -143,9 +149,13 @@ end
 
 local d = h * 16/1024
 
-if fill_the_sky_with_stars then
+if opt.sky then
     img { sky() }
 end
+
+local name, size = "LuaX", nil
+if opt.name then name, size = opt.name, 4 * fh // #opt.name end
+if #name == 4 then size = nil end
 
 img {
     G {
@@ -153,15 +163,15 @@ img {
         moon(),
         ring(-1),
         planet(),
-        Text "LuaX" { dx =  0, dy = fh/4,   fill="black", stroke="black", stroke_width=d/2 },
-        Text "LuaX" { dx = -d, dy = fh/4-d, fill="SeaShell" },
         ring(1),
+        Text (name) { font_size=size, dx =  0, dy = fh/4,   fill="black", stroke="black", stroke_width=d/2 },
+        Text (name) { font_size=size, dx = -d, dy = fh/4-d, fill="SeaShell" },
     },
 }
 
-if #text > 0 then
+if opt.text then
     img {
-        Text(text:unwords()) {
+        Text(opt.text) {
             x = w - fh/8, y = h - fh/8,
             text_anchor = "end",
             font_size = fh/4,

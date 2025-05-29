@@ -49,8 +49,8 @@ https://codeberg.org/cdsoft/luax
 <circle cx="76.37" cy="-76.37" fill="url(#MoonGradient)" r="30"/>
 <ellipse fill-opacity="0" rx="120" ry="39.6" stroke="url(#BottomRingGradient)" stroke-width="20"/>
 <circle fill="url(#PlanetGradient)" r="96"/>
+<ellipse fill-opacity="0" rx="120" ry="39.6" stroke="url(#TopRingGradient)" stroke-width="20"/>
 <text dx="0" dy="16.0" fill="black" stroke="black" stroke-width="2">LuaX</text>
 <text dx="-4.0" dy="12.0" fill="SeaShell">LuaX</text>
-<ellipse fill-opacity="0" rx="120" ry="39.6" stroke="url(#TopRingGradient)" stroke-width="20"/>
 </g>
 </svg>
