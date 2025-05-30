@@ -1189,7 +1189,7 @@ local function luax_archive(archive, compilation_targets)
                 "-e lib",
                 "-t lib",
                 "-n luax",
-                "-z lzip-6",
+                "-z none", -- do not compress the Lua runtime => no external lzip required by luax.lua
             },
         },
 
