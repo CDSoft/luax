@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.2.4" "2025-05-29"
+version "9.2.5" "2025-05-30"
 
 local F = require "F"
 local fs = require "fs"
@@ -186,13 +186,17 @@ BUILD_CONFIG.COMPILER_FULL_VERSION = F.case(compiler) {
 }()
 BUILD_CONFIG.COMPILER_VERSION = F.case(compiler) {
     zig = function() return BUILD_CONFIG.ZIG_VERSION end,
-    gcc = function() return BUILD_CONFIG.COMPILER_FULL_VERSION:find "[%d.]+" end,
-    clang = function() return BUILD_CONFIG.COMPILER_FULL_VERSION:find "[%d.]+" end,
+    gcc = function() return BUILD_CONFIG.COMPILER_FULL_VERSION:match "[%d.]+" end,
+    clang = function() return BUILD_CONFIG.COMPILER_FULL_VERSION:match "[%d.]+" end,
 }()
 BUILD_CONFIG.MODE = mode
 BUILD_CONFIG.LTO = use_lto
 BUILD_CONFIG.SOCKET = socket
 BUILD_CONFIG.SSL = ssl
+
+-- disable strict mode with old compilers to avoid unknown options
+if compiler == "gcc"   and tonumber(BUILD_CONFIG.COMPILER_VERSION:match"%d+") < 13 then strict = false end
+if compiler == "clang" and tonumber(BUILD_CONFIG.COMPILER_VERSION:match"%d+") < 16 then strict = false end
 
 section("Compilation options")
 comment(("Compilation mode  : %s"):format(F{mode, use_lto and "+ LTO" or {}}:flatten():unwords()))
@@ -532,7 +536,7 @@ local host_ldflags = {
 }
 
 local cflags = {
-    "-std=gnu23",
+    "-std=gnu2x",
     case(mode) {
         fast  = "-O3",
         small = "-Os",
@@ -622,12 +626,8 @@ local ldflags = {
     },
     "-lm",
     case(compiler) {
-        zig = {
-            "-Wno-single-bit-bitfield-constant-conversion",
-        },
-        gcc = {
-            "-Wstringop-overflow=0",
-        },
+        zig = {},
+        gcc = "-Wstringop-overflow=0",
         clang = {},
     },
     sanitizer_ldflags,

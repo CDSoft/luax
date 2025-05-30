@@ -295,8 +295,8 @@ local function compile_native(tmp, current_output, target_definition)
         }),
         F.case(build_config.compiler.name) {
             gcc   = "-Wstringop-overflow=0",
-            clang = "-Wno-single-bit-bitfield-constant-conversion",
-            zig   = "-Wno-single-bit-bitfield-constant-conversion",
+            clang = {},
+            zig   = {},
         },
     }
     local ldflags = {
