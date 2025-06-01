@@ -180,19 +180,40 @@ end
 
 -- see <https://en.wikipedia.org/wiki/Base64>
 
-local b64chars <const> = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+local base64_map = { [0] =
+   'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+   'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+   '0','1','2','3','4','5','6','7','8','9',
+   '+','/',
+}
+
+local base64_rev = {}
+for i, c in pairs(base64_map) do base64_rev[byte(c)] = i end
+base64_rev[byte'='] = 0
 
 function crypt.base64(s)
-    return ((s:gsub('.', function(x)
-        local r,b='',x:byte()
-        for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
-        return r;
-    end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
-        if (#x < 6) then return '' end
-        local c=0
-        for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
-        return b64chars:sub(c+1,c+1)
-    end)..({ '', '==', '=' })[#s%3+1])
+    local tokens = {}
+    local remainder = #s % 3
+    for i = 1, #s-remainder, 3 do
+        local a, b, c = byte(s, i, i+2)
+        tokens[#tokens+1] = base64_map[a>>2]
+        tokens[#tokens+1] = base64_map[(a&3)<<4|b>>4]
+        tokens[#tokens+1] = base64_map[(b&15)<<2|c>>6]
+        tokens[#tokens+1] = base64_map[c&63]
+    end
+    if remainder == 1 then
+        local a = byte(s, -1)
+        tokens[#tokens+1] = base64_map[a>>2]
+        tokens[#tokens+1] = base64_map[(a&3)<<4]
+        tokens[#tokens+1] = "=="
+    elseif remainder == 2 then
+        local a, b = byte(s, -2, -1)
+        tokens[#tokens+1] = base64_map[a>>2]
+        tokens[#tokens+1] = base64_map[(a&3)<<4|b>>4]
+        tokens[#tokens+1] = base64_map[(b&15)<<2]
+        tokens[#tokens+1] = "="
+    end
+    return concat(tokens)
 end
 
 function crypt.base64url(s)
@@ -200,18 +221,19 @@ function crypt.base64url(s)
 end
 
 function crypt.unbase64(s)
-    s = string.gsub(s, '[^'..b64chars..'=]', '')
-    return (s:gsub('.', function(x)
-        if (x == '=') then return '' end
-        local r,f='',(b64chars:find(x)-1)
-        for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
-        return r;
-    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
-        if (#x ~= 8) then return '' end
-        local c=0
-        for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
-        return string.char(c)
-    end))
+    local tokens = {}
+    for i = 1, #s, 4 do
+        local a, b, c, d = byte(s, i, i+3)
+        a = base64_rev[a]
+        b = base64_rev[b]
+        c = base64_rev[c]
+        d = base64_rev[d]
+        tokens[#tokens+1] = char((a<<2 | b>>4)&0xFF)
+        tokens[#tokens+1] = char((b<<4 | c>>2)&0xFF)
+        tokens[#tokens+1] = char((c<<6 | d)&0xFF)
+    end
+    local y, z = byte(s, -2, -1)
+    return concat(tokens, nil, 1, #tokens - (y==61 and 2 or z==61 and 1 or 0))
 end
 
 function crypt.unbase64url(s)
