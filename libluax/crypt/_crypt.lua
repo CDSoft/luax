@@ -42,7 +42,7 @@ local fnv1a_32_init = 0x811c9dc5
 local fnv1a_32_prime = 1<<24 | 1<<8 | 0x93
 local function fnv1a_32(hash, bs)
     for i=1,#bs do
-        hash = (hash ~ byte(bs, i, i)) * fnv1a_32_prime
+        hash = (hash ~ byte(bs, i)) * fnv1a_32_prime
     end
     return hash & 0xFFFFFFFF
 end
@@ -51,7 +51,7 @@ local fnv1a_64_init = 0xcbf29ce484222325
 local fnv1a_64_prime = 1<<40 | 1<<8 | 0xb3
 local function fnv1a_64(hash, bs)
     for i=1,#bs do
-        hash = (hash ~ byte(bs, i, i)) * fnv1a_64_prime
+        hash = (hash ~ byte(bs, i)) * fnv1a_64_prime
     end
     return hash & 0xFFFFFFFFFFFFFFFF
 end
@@ -60,17 +60,16 @@ local fnv1a_128_init = {0x6c62272e, 0x07bb0142, 0x62b82175, 0x6295c58d}
 local fnv1a_128_prime_b, fnv1a_128_prime_d = 1<<(88-2*32), 1<<8 | 0x3b
 local function fnv1a_128(hash, bs)
     local a, b, c, d = tunpack(hash)
-    local function split(n) return n & 0xFFFFFFFF, n >> 32 end
     for i=1,#bs do
-        d = d ~ byte(bs, i, i)
-        local a2, b2, c2, d2, carry
-        d2, carry = split(        d*fnv1a_128_prime_d)
-        c2, carry = split(carry + c*fnv1a_128_prime_d)
-        b2, carry = split(carry + b*fnv1a_128_prime_d + d*fnv1a_128_prime_b)
-        a2, carry = split(carry + a*fnv1a_128_prime_d + c*fnv1a_128_prime_b)
-        a, b, c, d = a2, b2, c2, d2
+        d = d ~ byte(bs, i)
+        local c2, d2, carry
+        d2 =         d*fnv1a_128_prime_d                            d2, carry = d2 & 0xFFFFFFFF, d2 >> 32
+        c2 = carry + c*fnv1a_128_prime_d                            c2, carry = c2 & 0xFFFFFFFF, c2 >> 32
+        b  = carry + b*fnv1a_128_prime_d + d*fnv1a_128_prime_b      b , carry = b  & 0xFFFFFFFF, b  >> 32
+        a  = carry + a*fnv1a_128_prime_d + c*fnv1a_128_prime_b
+        c, d = c2, d2
     end
-    return a, b, c, d
+    return a&0xFFFFFFFF, b, c, d
 end
 
 -- Random number generator
