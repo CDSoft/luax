@@ -34,9 +34,19 @@ local function wrong_arg(a)
     help.err("unrecognized option '%s'", a)
 end
 
+local function msgtostr(msg)
+    if type(msg) == "string" then return msg end
+    local mt = getmetatable(msg)
+    if mt and mt.__tostring then
+        local str = tostring(msg)
+        if type(str) == "string" then return str end
+    end
+    return string.format("(error object is a %s value)", type(msg))
+end
+
 local function traceback(message)
     local trace = F.flatten {
-        "luax: "..message,
+        "luax: "..msgtostr(message),
         debug.traceback():lines(),
     }
     local pos = 1

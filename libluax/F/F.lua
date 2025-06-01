@@ -978,7 +978,18 @@ local function err(msg, level, tb)
     local info = debug.getinfo(level)
     local file = info.short_src
     local line = info.currentline
-    msg = t_concat{arg[0], ": ", file, ":", line, ": ", msg}
+
+    msg = (function()
+        if type(msg) == "string" then return msg end
+        local msg_mt = getmetatable(msg)
+        if msg_mt and msg_mt.__tostring then
+            local str = tostring(msg)
+            if type(str) == "string" then return str end
+        end
+        return string.format("(error object is a %s value)", type(msg))
+    end)()
+
+    msg = t_concat{arg[0] or "LuaX", ": ", file, ":", line, ": ", msg}
     io.stderr:write(tb and debug.traceback(msg, level) or msg, "\n")
     os.exit(1)
 end
