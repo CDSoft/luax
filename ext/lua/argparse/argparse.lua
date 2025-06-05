@@ -2,6 +2,7 @@
 
 -- Copyright (c) 2013 - 2018 Peter Melnichenko
 --                      2019 Paul Ouellette
+--                      2025 Christophe Delord
 
 -- Permission is hereby granted, free of charge, to any person obtaining a copy of
 -- this software and associated documentation files (the "Software"), to deal in
@@ -539,13 +540,8 @@ function Option:_get_label_lines()
    local argument_list_repr = table.concat(argument_list, " ")
    local lines = {}
 
-   for i, alias in ipairs(self._public_aliases) do
-      local line = (" "):rep(longest_alias_length - #alias) .. alias .. " " .. argument_list_repr
-
-      if i ~= #self._public_aliases then
-         line = line .. ","
-      end
-
+   for _, alias in ipairs(self._public_aliases) do
+      local line = alias .. " " .. argument_list_repr
       table.insert(lines, line)
    end
 

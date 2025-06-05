@@ -33,7 +33,7 @@ update_all()
     update_luasocket    3.1.0
     update_luasec       1.3.2
     update_lpeg         1.1.0
-    update_argparse     master
+    update_argparse     LuaX
     update_serpent      master
     update_lz4          release
     update_lzlib        1.15
@@ -244,7 +244,7 @@ update_argparse()
 {
     local ARGPARSE_VERSION="$1"
     local ARGPARSE_ARCHIVE="argparse-$ARGPARSE_VERSION.zip"
-    local ARGPARSE_URL="https://github.com/luarocks/argparse/archive/refs/heads/$ARGPARSE_VERSION.zip"
+    local ARGPARSE_URL="https://github.com/CDSoft/argparse/archive/refs/heads/$ARGPARSE_VERSION.zip"
 
     mkdir -p "$TMP"
     download "$ARGPARSE_URL" "$TMP/$ARGPARSE_ARCHIVE"
