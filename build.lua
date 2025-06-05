@@ -210,10 +210,6 @@ comment(("Compression       : %s"):format(F.flatten{"Lzip", lz4 and "LZ4" or {}}
 comment(("Socket support    : %s"):format(F.flatten{socket and "LuaSocket" or "none", ssl and {"LuaSec", "OpenSSL"} or {}} : str " + "))
 
 local function is_dynamic(target) return target.libc~="musl" and not san end
-local function has_partial_ld(target)
-    if compiler=="clang" and use_lto then return false end
-    return target.os=="linux" or target.os=="macos"
-end
 
 local function optional(cond)
     return cond and F.id or F.const{}
@@ -638,7 +634,6 @@ local cc_ext = {}
 local ar = {}
 local ld = {}
 local so = {}
-local partial_ld = {}
 
 cc.host = rule "cc-host" {
     description = "cc $in",
@@ -734,11 +729,6 @@ targets_to_compile:foreach(function(target)
     so[target.name] = is_dynamic(target) and rule("so-"..target.name) {
         description = "so $out",
         command = { "$cc-"..target.name, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out" },
-        implicit_in = compiler_deps,
-    }
-    partial_ld[target.name] = has_partial_ld(target) and rule("partial-ld-"..target.name) {
-        description = "ld $out",
-        command = { "$ld-"..target.name, "-r", "$in -o $out" },
         implicit_in = compiler_deps,
     }
 
@@ -1211,9 +1201,6 @@ local function luax_archive(archive, compilation_targets)
                     liblua[target.name],
                     openssl_libs[target.name],
                 }
-                if has_partial_ld(target) then
-                    libs = { build_once("$tmp"/target.name/"obj"/"luax.o") { partial_ld[target.name], libs } }
-                end
                 return F.map(compress("$tmp/lib/targets"/target.name), libs)
             end),
 
