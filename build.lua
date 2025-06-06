@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.2.7" "2025-06-05"
+version "9.2.8" "2025-06-06"
 
 local F = require "F"
 local fs = require "fs"
@@ -631,22 +631,15 @@ local ldflags = {
 
 local cc = {}
 local cc_ext = {}
-local ar = {}
-local ld = {}
-local so = {}
 
-cc.host = rule "cc-host" {
-    description = "cc $in",
-    command = { "$cc-"..sys.name, "-c", host_cflags, "-MMD -MF $depfile $in -o $out" },
-    implicit_in = compiler_deps,
-    depfile = "$out.d",
-}
-
-ld.host = rule "ld-host" {
-    description = "ld $out",
-    command = { "$ld-"..sys.name, "$in -o $out", host_ldflags },
-    implicit_in = compiler_deps,
-}
+cc.host = build.cc : new "cc-host"
+    : set "cc" { "$cc-"..sys.name }
+    : set "ar" { "$ar-"..sys.name }
+    : set "so" { "$ld-"..sys.name }
+    : set "ld" { "$ld-"..sys.name }
+    : add "implicit_in" { compiler_deps }
+    : add "cflags" { host_cflags }
+    : add "ldflags" { host_ldflags }
 
 targets_to_compile:foreach(function(target)
 
@@ -699,44 +692,31 @@ targets_to_compile:foreach(function(target)
             },
         },
     }
-    local target_so_flags = {
-        "-shared",
-    }
-    cc[target.name] = rule("cc-"..target.name) {
-        description = "cc $in",
-        command = {
-            "$cc-"..target.name, "-c", lto, luax_cflags, lua_flags, target_flags, opt_flags, "$additional_flags", "-MMD -MF $depfile $in -o $out",
+    cc[target.name] = build.cc : new("cc-"..target.name)
+        : set "cc" { "$cc-"..target.name }
+        : set "ar" { "$ar-"..target.name }
+        : set "so" { "$ld-"..target.name }
+        : set "ld" { "$ld-"..target.name }
+        : add "implicit_in" { compiler_deps }
+        : add "cflags" {
+            lto, luax_cflags, lua_flags, target_flags, opt_flags, "$additional_flags",
             case(target.os) {
                 linux   = {},
                 macos   = {},
                 windows = "$build_as_dll",
             },
-        },
-        implicit_in = compiler_deps,
-        depfile = "$out.d",
-    }
-    cc_ext[target.name] = rule("cc_ext-"..target.name) {
-        description = "cc $in",
-        command = { "$cc-"..target.name, "-c", lto, ext_cflags, lua_flags, opt_flags, "$additional_flags", "-MMD -MF $depfile $in -o $out" },
-        implicit_in = compiler_deps,
-        depfile = "$out.d",
-    }
-    ld[target.name] = rule("ld-"..target.name) {
-        description = "ld $out",
-        command = { "$ld-"..target.name, lto, "$in -o $out", ldflags, target_ld_flags },
-        implicit_in = compiler_deps,
-    }
-    so[target.name] = is_dynamic(target) and rule("so-"..target.name) {
-        description = "so $out",
-        command = { "$cc-"..target.name, lto, ldflags, target_ld_flags, target_so_flags, "$in -o $out" },
-        implicit_in = compiler_deps,
-    }
-
-    ar[target.name] = rule("ar-"..target.name) {
-        description = "ar $out",
-        command = { "$ar-"..target.name, "-crs $out $in" },
-        implicit_in = compiler_deps,
-    }
+        }
+        : add "ldflags" { lto, ldflags, target_ld_flags }
+        : add "soflags" { lto, ldflags, target_ld_flags }
+    cc_ext[target.name] = build.cc : new("cc_ext-"..target.name)
+        : set "cc" { "$cc-"..target.name }
+        : set "ar" { "$ar-"..target.name }
+        : set "so" { "$ld-"..target.name }
+        : set "ld" { "$ld-"..target.name }
+        : add "implicit_in" { compiler_deps }
+        : add "cflags" { lto, ext_cflags, lua_flags, opt_flags, "$additional_flags" }
+        : add "ldflags" { lto, ldflags, target_ld_flags }
+        : add "soflags" { lto, ldflags, target_ld_flags }
 
 end)
 
@@ -821,10 +801,9 @@ var "lua_path" (
     : str ";"
 )
 
-build "$lua" { ld.host,
-    (sources.lua_c_files .. sources.lua_main_c_files) : map(function(src)
-        return build("$tmp/obj/lua"/src:chext".o") { cc.host, src }
-    end),
+cc.host "$lua" {
+    sources.lua_c_files,
+    sources.lua_main_c_files,
 }
 
 --===================================================================
@@ -833,11 +812,9 @@ section "lzip cli"
 
 var "lzip" "$bin/lzip"
 
-build "$lzip" { ld.host,
-    ( ls "ext/c/lzlib/programs/*.c" .. ls "ext/c/lzlib/lib/*.c" )
-    : map(function(src)
-        return build("$tmp/obj/lzip"/src:chext".o") { cc.host, src }
-    end),
+cc.host "$lzip" {
+    ls "ext/c/lzlib/programs/*.c",
+    ls "ext/c/lzlib/lib/*.c",
 }
 
 --===================================================================
@@ -852,14 +829,15 @@ are created in `$tmp`
 var "luax_config_h"   "$tmp/luax_config.h"
 var "luax_config_lua" "$tmp/luax_config.lua"
 
-rule "ypp-config" {
-    description = "ypp $out",
-    command = { "$lua tools/luax.lua tools/ypp.luax", build.ypp_vars(LUAX), "$in -o $out" },
-    implicit_in = "$lua tools/luax.lua tools/ypp.luax",
-}
+local ypp = build.ypp : new "ypp-luax"
+    : set "cmd" "$lua tools/luax.lua tools/ypp.luax"
+    : add "implicit_in" "$lua tools/luax.lua tools/ypp.luax"
 
-build "$luax_config_h"   { "ypp-config", "libluax/luax_config.h.in" }
-build "$luax_config_lua" { "ypp-config", "libluax/luax_config.lua.in" }
+local ypp_config = ypp : new "ypp-config"
+    : add "flags" { build.ypp_vars(LUAX) }
+
+ypp_config "$luax_config_h"   { "libluax/luax_config.h.in" }
+ypp_config "$luax_config_lua" { "libluax/luax_config.lua.in" }
 
 comment [[
 The LuaX build configuration file (luax_build_config.lua)
@@ -868,13 +846,10 @@ is created in `$tmp`
 
 var "luax_build_config_lua" "$tmp/luax_build_config.lua"
 
-rule "ypp-build-config" {
-    description = "ypp $out",
-    command = { "$lua tools/luax.lua tools/ypp.luax", build.ypp_vars(BUILD_CONFIG), "$in -o $out" },
-    implicit_in = "$lua tools/luax.lua tools/ypp.luax",
-}
+local ypp_build_config = ypp : new "ypp-build-config"
+    : add "flags" { build.ypp_vars(BUILD_CONFIG) }
 
-build "$luax_build_config_lua" { "ypp-build-config", "luax/luax_build_config.lua.in" }
+ypp_build_config "$luax_build_config_lua" { "luax/luax_build_config.lua.in" }
 
 --===================================================================
 section "Lua runtime"
@@ -1045,20 +1020,17 @@ end
 
 targets_to_compile:foreach(function(target)
 
-    liblua[target.name] = build("$tmp"/target.name/"lib/liblua.a") { ar[target.name],
-        F.flatten {
-            sources.lua_c_files,
-        } : map(function(src)
-            return build("$tmp"/target.name/"obj"/src:chext".o") { cc_ext[target.name], src }
-        end),
+    liblua[target.name] = cc_ext[target.name]:static_lib("$tmp"/target.name/"lib/liblua.a") {
+        sources.lua_c_files,
     }
 
-    libluax[target.name] = build("$tmp"/target.name/"lib/libluax.a") { ar[target.name],
+    libluax[target.name] = cc[target.name]:static_lib("$tmp"/target.name/"lib/libluax.a") {
         F.flatten {
             sources.luax_c_files,
             luax_runtime_bundle,
         } : map(function(src)
-            return build("$tmp"/target.name/"obj"/src:chext".o") { cc[target.name], src,
+            return cc[target.name]:compile("$tmp"/target.name/"obj"/src:chext".o") {
+                src,
                 additional_flags = additional_flags(src),
                 implicit_in = implicit_in(target, src),
             }
@@ -1071,7 +1043,8 @@ targets_to_compile:foreach(function(target)
                 windows = sources.windows_third_party_c_files,
             },
         } : map(function(src)
-            return build("$tmp"/target.name/"obj"/src:chext".o") { cc_ext[target.name], src,
+            return cc_ext[target.name]:compile("$tmp"/target.name/"obj"/src:chext".o") {
+                src,
                 additional_flags = additional_flags(src),
                 implicit_in = implicit_in(target, src),
             }
@@ -1080,37 +1053,40 @@ targets_to_compile:foreach(function(target)
 
     main_luax[target.name] = F.flatten { sources.luax_main_c_files }
         : map(function(src)
-            return build("$tmp"/target.name/"obj"/src:chext".o") { cc[target.name], src,
+            return cc[target.name]:compile("$tmp"/target.name/"obj"/src:chext".o") {
+                src,
                 implicit_in = "$luax_config_h",
             }
         end)
 
     main_loader[target.name] = F.flatten { sources.loader_main_c_files }
         : map(function(src)
-            return build("$tmp"/target.name/"obj"/src:chext".o") { cc[target.name], src,
+            return cc[target.name]:compile("$tmp"/target.name/"obj"/src:chext".o") {
+                src,
                 implicit_in = "$luax_config_h",
             }
         end)
 
     main_libluax[target.name] = F.flatten { sources.libluax_main_c_files }
         : map(function(src)
-            return build("$tmp"/target.name/"obj"/src:chext".o") { cc[target.name], src,
+            return cc[target.name]:compile("$tmp"/target.name/"obj"/src:chext".o") {
+                src,
                 build_as_dll = case(target.os) {
                     windows = "-DLUA_BUILD_AS_DLL -DLUA_LIB",
                 },
             }
         end)
 
-    binary[target.name] = build("$tmp"/target.name/"bin"/"luax"..target.exe) { ld[target.name],
+    binary[target.name] = cc[target.name]("$tmp"/target.name/"bin"/"luax"..target.exe) {
         main_luax[target.name],
         main_libluax[target.name],
         liblua[target.name],
         libluax[target.name],
         openssl_libs[target.name],
-        build("$tmp"/target.name/"obj"/luax_app_bundle:chext".o") { cc[target.name], luax_app_bundle },
+        luax_app_bundle,
     }
 
-    loader[target.name] = build("$tmp"/target.name/"lib"/"luax-loader") { ld[target.name],
+    loader[target.name] = cc[target.name]("$tmp"/target.name/"lib"/"luax-loader") {
         main_loader[target.name],
         main_libluax[target.name],
         liblua[target.name],
@@ -1119,7 +1095,7 @@ targets_to_compile:foreach(function(target)
     }
 
     shared_library[target.name] = is_dynamic(target) and
-        build("$tmp"/target.name/"lib/libluax"..target.so) { so[target.name],
+        cc[target.name]:dynamic_lib("$tmp"/target.name/"lib/libluax"..target.so) {
             main_libluax[target.name],
             case(target.os) {
                 linux   = {},
@@ -1592,30 +1568,21 @@ end
 section "Documentation"
 ---------------------------------------------------------------------
 
-rule "lsvg" {
-    description = "lsvg $out",
-    command = "$luax tools/lsvg.luax $in -o $out --MF $depfile -- $args",
-    depfile = "$builddir/tmp/lsvg/$out.d",
-    implicit_in = "$luax tools/lsvg.luax",
-}
+build.lsvg.svg
+    : set "cmd" "$luax tools/lsvg.luax"
+    : add "implicit_in" "$luax tools/lsvg.luax"
+    : set "depfile" "$tmp/$out.d"
 
 if has_pandoc then
 
 local markdown_sources = ls "doc/src/*.md"
 
 local images = {
-    build "doc/luax-banner.svg" {"lsvg", "doc/src/luax-logo.lua", args={1024,  192}},
-    build "doc/luax-logo.svg"   {"lsvg", "doc/src/luax-logo.lua", args={ 256,  256}},
+    build.lsvg.svg "doc/luax-banner.svg" {"doc/src/luax-logo.lua", args={1024,  192}},
+    build.lsvg.svg "doc/luax-logo.svg"   {"doc/src/luax-logo.lua", args={ 256,  256}},
 }
 
 acc(doc)(images)
-
-local pandoc_gfm = {
-    "pandoc",
-    "--to gfm",
-    "--lua-filter doc/src/fix_links.lua",
-    "--fail-if-warnings",
-}
 
 local ypp_config_params = {
     build.ypp_vars {
@@ -1626,27 +1593,12 @@ local ypp_config_params = {
 }
 
 local gfm = pipe {
-    rule "ypp.md" {
-        description = "ypp $in",
-        command = {
-            "$luax tools/ypp.luax",
-            ypp_config_params,
-            "--MD --MT $out --MF $depfile $in -o $out",
-        },
-        depfile = "$out.d",
-        implicit_in = {
-            "$luax tools/ypp.luax",
-            "$lib/luax.lar",
-        },
-    },
-    rule "pandoc" {
-        description = "pandoc $out",
-        command = { pandoc_gfm, "$in -o $out" },
-        implicit_in = {
-            "doc/src/fix_links.lua",
-            images,
-        },
-    },
+    ypp : new "ypp.md"
+        : add "implicit_in" "$lib/luax.lar"
+        : add "flags" { ypp_config_params },
+    build.pandoc_gfm : new "pandoc-gfm-luax"
+        : add "flags" "--lua-filter doc/src/fix_links.lua"
+        : add "implicit_in" { "doc/src/fix_links.lua", images }
 }
 
 acc(doc) {
@@ -1713,10 +1665,10 @@ local dist = (function()
             }
         end)(),
         (function()
-            rule "releasenote" {
-                description = "$out",
-                command = {
-                    "$luax tools/ypp.luax",
+            local releasenote = ypp : new "ypp-releasenote"
+                : add "implicit_in" "$lib/luax.lar"
+                : set "depfile" "$tmp/$out.d"
+                : add "flags" {
                     build.ypp_vars {
                         VERSION = LUAX.VERSION,
                         URL = "https://"..LUAX.URL,
@@ -1729,15 +1681,8 @@ local dist = (function()
                         SOCKETS = F.flatten{socket and "LuaSocket" or "no", optional(ssl){"LuaSec", "OpenSSL"}} : str " + ",
                         CROSS = cross and "yes" or "no",
                     },
-                    "--MD --MT $out --MF $depfile $in -o $out",
-                },
-                depfile = "$tmp/$out.d",
-                implicit_in = {
-                    "$luax tools/ypp.luax",
-                    "$lib/luax.lar",
-                },
-            }
-            return build("$release/ReleaseNote.md") { "releasenote", "tools/ReleaseNote.md.ypp" }
+                }
+            return releasenote "$release/ReleaseNote.md" { "tools/ReleaseNote.md.ypp" }
         end)(),
     }
 
