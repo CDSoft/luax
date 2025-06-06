@@ -1662,31 +1662,6 @@ acc(doc) {
 end
 
 --===================================================================
-section "LuaX promotion images"
----------------------------------------------------------------------
-
-var "img" "$builddir/images"
-
-local logo = "doc/src/luax-logo.lua"
-
-phony "promotion" {
-    build "$img/luax-banner.png"       {"lsvg", logo, args={1024,  192, "--sky"}},
-    build "$img/luax-banner.jpg"       {"lsvg", logo, args={1024,  192, "--sky"}},
-    build "$img/luax-social.png"       {"lsvg", logo, args={1280,  640, "--text", F.show(LUAX.URL)}},
-    build "$img/luax-logo.png"         {"lsvg", logo, args={1024, 1024}},
-    build "$img/luax-logo.jpg"         {"lsvg", logo, args={1024, 1024}},
-
-    build "$img/luax-profile.png"      {"lsvg", logo, args={ 237,  237}},
-    build "$img/luax-horizontal.png"   {"lsvg", logo, args={7400, 5000, "--sky", "--text", F.show(LUAX.URL)}},
-    build "$img/luax-vertical.png"     {"lsvg", logo, args={5525, 6500, "--sky", "--text", F.show(LUAX.URL)}},
-    build "$img/luax-square.png"       {"lsvg", logo, args={6000, 6000, "--sky", "--text", F.show(LUAX.URL)}},
-
-    build "$img/luax-yt-banner.png"    {"lsvg", logo, args={2048, 1152, "--sky", "--text", F.show(LUAX.URL)}},
-    build "$img/luax-yt-profile.png"   {"lsvg", logo, args={98*2, 98*2}},
-    build "$img/luax-yt-watermark.png" {"lsvg", logo, args={150,   150}},
-}
-
---===================================================================
 section "Update dist for all targets"
 ---------------------------------------------------------------------
 
