@@ -34,8 +34,8 @@ local default_options = {
     depfile = "$out.d",
     cvalid = {},
     ar = "ar", aflags = "-crs", aargs = "$out $in",
-    so = "cc", soflags = "-shared", soargs = "-o $out $in",
-    ld = "cc", ldflags = {}, ldargs = "-o $out $in",
+    so = "cc", soflags = "-shared", soargs = "-o $out $in", solibs = {},
+    ld = "cc", ldflags = {}, ldargs = "-o $out $in", ldlibs = {},
     c_exts = { ".c" },
     o_ext = ".o",
     a_ext = ".a",
@@ -76,12 +76,12 @@ local rules = setmetatable({}, {
             },
             so = rule(so) {
                 description = {compiler.so, "$out"},
-                command = { compiler.so, compiler.soflags, compiler.soargs },
+                command = { compiler.so, compiler.soflags, compiler.soargs, compiler.solibs },
                 implicit_in = compiler.implicit_in,
             },
             ld = rule(ld) {
                 description = {compiler.ld, "$out"},
-                command = { compiler.ld, compiler.ldflags, compiler.ldargs },
+                command = { compiler.ld, compiler.ldflags, compiler.ldargs, compiler.ldlibs },
                 implicit_in = compiler.implicit_in,
             },
         }
@@ -234,12 +234,12 @@ end)
 
 local compile_flags_file = nil
 
-local function compile_flags(...)
+local function compile_flags(flags)
     if not compile_flags_file then
         compile_flags_file = file(bang.output:dirname()/"compile_flags.txt")
     end
-    local flags = flatten{...}
-    compile_flags_file((vars%flags) : unlines())
+    local flag_list = type(flags) == "string" and {flags} or flatten(flags)
+    compile_flags_file((vars%flag_list) : unlines())
     return flags
 end
 
@@ -2239,7 +2239,7 @@ return function()
 
 end
 ]])
-libs["bang-version"] = lib(".build/bang-version", [=[return [[3.3.2]]]=])
+libs["bang-version"] = lib(".build/bang-version", [=[return [[3.4]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"

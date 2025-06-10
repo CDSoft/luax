@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.2.8" "2025-06-06"
+version "9.2.9" "2025-06-10"
 
 local F = require "F"
 local fs = require "fs"
@@ -527,6 +527,8 @@ local host_cflags = {
 local host_ldflags = {
     "-pipe",
     optional(is_dynamic(sys)) "-rdynamic",
+}
+local host_ldlibs = {
     "-s",
     "-lm",
 }
@@ -620,13 +622,15 @@ local ldflags = {
         small = "-s",
         debug = {},
     },
-    "-lm",
     case(compiler) {
         zig = {},
         gcc = "-Wstringop-overflow=0",
         clang = {},
     },
     sanitizer_ldflags,
+}
+local ldlibs = {
+    "-lm",
 }
 
 local cc = {}
@@ -638,8 +642,9 @@ cc.host = build.cc : new "cc-host"
     : set "so" { "$ld-"..sys.name }
     : set "ld" { "$ld-"..sys.name }
     : add "implicit_in" { compiler_deps }
-    : add "cflags" { host_cflags }
+    : add "cflags"  { host_cflags }
     : add "ldflags" { host_ldflags }
+    : add "ldlibs"  { host_ldlibs }
 
 targets_to_compile:foreach(function(target)
 
@@ -707,16 +712,20 @@ targets_to_compile:foreach(function(target)
             },
         }
         : add "ldflags" { lto, ldflags, target_ld_flags }
+        : add "ldlibs"  { ldlibs }
         : add "soflags" { lto, ldflags, target_ld_flags }
+        : add "solibs"  { ldlibs }
     cc_ext[target.name] = build.cc : new("cc_ext-"..target.name)
         : set "cc" { "$cc-"..target.name }
         : set "ar" { "$ar-"..target.name }
         : set "so" { "$ld-"..target.name }
         : set "ld" { "$ld-"..target.name }
         : add "implicit_in" { compiler_deps }
-        : add "cflags" { lto, ext_cflags, lua_flags, opt_flags, "$additional_flags" }
+        : add "cflags"  { lto, ext_cflags, lua_flags, opt_flags, "$additional_flags" }
         : add "ldflags" { lto, ldflags, target_ld_flags }
+        : add "ldlibs"  { ldlibs }
         : add "soflags" { lto, ldflags, target_ld_flags }
+        : add "solibs"  { ldlibs }
 
 end)
 
