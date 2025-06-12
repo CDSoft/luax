@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.2.9" "2025-06-10"
+version "9.2.10" "2025-06-12"
 
 local F = require "F"
 local fs = require "fs"
@@ -179,12 +179,12 @@ assert(#host_targets == 1)
 local targets_to_compile = (release or cross) and targets or host_targets
 
 BUILD_CONFIG.COMPILER_NAME = compiler
-BUILD_CONFIG.COMPILER_FULL_VERSION = F.case(compiler) {
+BUILD_CONFIG.COMPILER_FULL_VERSION = case(compiler) {
     zig = function() return compiler.." version "..BUILD_CONFIG.ZIG_VERSION end,
     gcc = function() return assert(sh "gcc --version"):lines():head() end,
     clang = function() return assert(sh "clang --version"):lines():head() end,
 }()
-BUILD_CONFIG.COMPILER_VERSION = F.case(compiler) {
+BUILD_CONFIG.COMPILER_VERSION = case(compiler) {
     zig = function() return BUILD_CONFIG.ZIG_VERSION end,
     gcc = function() return BUILD_CONFIG.COMPILER_FULL_VERSION:match "[%d.]+" end,
     clang = function() return BUILD_CONFIG.COMPILER_FULL_VERSION:match "[%d.]+" end,
@@ -299,11 +299,7 @@ local openssl_options = {
     "no-afalgeng",
     "no-autoalginit",
     "no-autoerrinit",
-    case(mode) {
-        fast = {},
-        small = "no-cached-fetch",
-        debug = "no-cached-fetch",
-    },
+    "no-cached-fetch",
     "no-dgram",
     "no-dynamic-engine",
     "no-filenames",
@@ -323,11 +319,7 @@ local openssl_options = {
     "no-scrypt",
 
     "-DOPENSSL_NO_APPLE_CRYPTO_RANDOM",
-    case(mode) {
-        fast = {},
-        small = "-DOPENSSL_SMALL_FOOTPRINT",
-        debug = {},
-    },
+    "-DOPENSSL_SMALL_FOOTPRINT",
 }
 
 local nproc = (sh "getconf _NPROCESSORS_ONLN" or "8"):trim()
@@ -357,7 +349,7 @@ rule "make_openssl" {
             },
         },
         case(mode) {
-            fast  = 'export CFLAGS="-pipe -O3";',
+            fast  = 'export CFLAGS="-pipe -Os";',
             small = 'export CFLAGS="-pipe -Os";',
             debug = 'export CFLAGS="-pipe -Og -g";',
         },
@@ -1135,12 +1127,18 @@ section "LuaX archives"
 
 rule "lzip" {
     description = "lzip $in",
-    command = "$lzip -0 $in --output=- > $out",
+    command = "$lzip -$level $in --output=- > $out",
     implicit_in = "$lzip",
 }
 
 local compress = F.curry(function(dest, source)
-    return build_once(dest/source:basename()..".lz") { "lzip", source }
+    return build_once(dest/source:basename()..".lz") { "lzip", source,
+        level = case(source:ext()) {
+            [".a"] = ssl and 6 or 0,
+            [".o"] = ssl and 6 or 0,
+            [Nil]  = 0,
+        }
+    }
 end)
 
 rule "pack" {
