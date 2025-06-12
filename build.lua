@@ -362,7 +362,7 @@ rule "make_openssl" {
             debug = 'export CFLAGS="-pipe -Og -g";',
         },
         "$lto",
-        "$root"/openssl_configure_script, "$openssl_target", openssl_options, ";",
+        "$root"/(vars%openssl_configure_script), "$openssl_target", openssl_options, ";",
         "make", "-j", nproc,
     },
     implicit_in = openssl_configure_script,
