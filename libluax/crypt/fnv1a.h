@@ -108,6 +108,10 @@ typedef unsigned _BitInt(128) t_fnv1a_128;
 static const t_fnv1a_128 fnv1a_128_init  = (t_fnv1a_128)0x6c62272e07bb0142<<64 | 0x62b821756295c58d;
 static const t_fnv1a_128 fnv1a_128_prime = (t_fnv1a_128)1<<88 | (t_fnv1a_128)1<<8 | 0x3b;
 
+static inline void fnv1a_128_u8(t_fnv1a_128 *hash, uint8_t b) {
+     *hash = (*hash ^ b) * fnv1a_128_prime;
+}
+
 #else
 
 typedef struct { uint32_t d, c, b, a; } t_fnv1a_128;
@@ -115,18 +119,12 @@ typedef struct { uint32_t d, c, b, a; } t_fnv1a_128;
 static const t_fnv1a_128 fnv1a_128_init  = { .a = 0x6c62272e, .b = 0x07bb0142, .c = 0x62b82175, .d = 0x6295c58d };
 static const t_fnv1a_128 fnv1a_128_prime = { .a = 0, .b = 1<<(88-2*32), .c = 0, .d = 1<<8 | 0x3b };
 
-static inline void split(uint32_t *digit, uint32_t *carry, uint64_t n)
-{
+static inline void split(uint32_t *digit, uint32_t *carry, uint64_t n) {
     *digit = n & 0xFFFFFFFF;
     *carry = n >> 32;
 }
 
-#endif
-
 static inline void fnv1a_128_u8(t_fnv1a_128 *hash, uint8_t b) {
-#ifdef HAS_BITINT
-     *hash = (*hash ^ b) * fnv1a_128_prime;
-#else
     t_fnv1a_128 hash2;
     uint32_t carry;
     hash->d ^= b;
@@ -135,8 +133,9 @@ static inline void fnv1a_128_u8(t_fnv1a_128 *hash, uint8_t b) {
     split(&hash2.b, &carry, carry + (uint64_t)hash->b*fnv1a_128_prime.d + (uint64_t)hash->d*fnv1a_128_prime.b);
     split(&hash2.a, &carry, carry + (uint64_t)hash->a*fnv1a_128_prime.d + (uint64_t)hash->c*fnv1a_128_prime.b);
     *hash = hash2;
-#endif
 }
+
+#endif
 
 static inline void fnv1a_128_u16(t_fnv1a_128 *hash, uint16_t n) {
     for (size_t i = 0; i < sizeof(uint16_t); i++) {
