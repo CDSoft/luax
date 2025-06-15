@@ -518,10 +518,10 @@ local host_cflags = {
 
 local host_ldflags = {
     "-pipe",
+    "-s",
     optional(is_dynamic(sys)) "-rdynamic",
 }
 local host_ldlibs = {
-    "-s",
     "-lm",
 }
 
