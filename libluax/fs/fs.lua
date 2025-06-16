@@ -38,22 +38,17 @@ return a path name made of several path components
 If a component is absolute, the previous components are removed.
 @@@]]
 
-if pandoc and pandoc.path then
-    function fs.join(...)
-        return pandoc.path.join(F.flatten{...})
+function fs.join(...)
+    if pandoc then return pandoc.path.join(F.flatten{...}) end
+    local function add_path(ps, p)
+        if p:match("^"..fs.sep) then return F{p} end
+        ps[#ps+1] = p
+        return ps
     end
-else
-    function fs.join(...)
-        local function add_path(ps, p)
-            if p:match("^"..fs.sep) then return F{p} end
-            ps[#ps+1] = p
-            return ps
-        end
-        return F{...}
-            :flatten()
-            :fold(add_path, F{})
-            :str(fs.sep)
-    end
+    return F{...}
+        :flatten()
+        :fold(add_path, F{})
+        :str(fs.sep)
 end
 
 --[[@@@
@@ -88,21 +83,18 @@ end
 
 --[[@@@
 ```lua
-fs.rmdir(path, [params])
+fs.rmdir(path)
 ```
 deletes the directory `path` and its content recursively.
 @@@]]
 
-if pandoc and pandoc.system then
-    function fs.rmdir(path)
+function fs.rmdir(path)
+    if pandoc then
         pandoc.system.remove_directory(path, true)
         return true
     end
-else
-    function fs.rmdir(path)
-        fs.walk(path, {reverse=true}):foreach(fs.rm)
-        return fs.rm(path)
-    end
+    fs.walk(path, {reverse=true}):foreach(fs.rm)
+    return fs.rm(path)
 end
 
 --[[@@@
@@ -196,19 +188,16 @@ fs.with_tmpfile(f)
 calls `f(tmp)` where `tmp` is the name of a temporary file.
 @@@]]
 
-if pandoc and pandoc.system then
-    function fs.with_tmpfile(f)
+function fs.with_tmpfile(f)
+    if pandoc then
         return pandoc.system.with_temporary_directory("luax", function(tmpdir)
             return f(tmpdir/"tmpfile")
         end)
     end
-else
-    function fs.with_tmpfile(f)
-        local tmp = fs.tmpfile()
-        local ret = {f(tmp)}
-        fs.rm(tmp)
-        return table.unpack(ret)
-    end
+    local tmp = fs.tmpfile()
+    local ret = {f(tmp)}
+    fs.rm(tmp)
+    return table.unpack(ret)
 end
 
 --[[@@@
@@ -218,17 +207,14 @@ fs.with_tmpdir(f)
 calls `f(tmp)` where `tmp` is the name of a temporary directory.
 @@@]]
 
-if pandoc and pandoc.system then
-    function fs.with_tmpdir(f)
+function fs.with_tmpdir(f)
+    if pandoc then
         return pandoc.system.with_temporary_directory("luax", f)
     end
-else
-    function fs.with_tmpdir(f)
-        local tmp = fs.tmpdir()
-        local ret = {f(tmp)}
-        fs.rmdir(tmp)
-        return table.unpack(ret)
-    end
+    local tmp = fs.tmpdir()
+    local ret = {f(tmp)}
+    fs.rmdir(tmp)
+    return table.unpack(ret)
 end
 
 --[[@@@
@@ -238,16 +224,16 @@ fs.with_dir(path, f)
 changes the current working directory to `path` and calls `f()`.
 @@@]]
 
-if pandoc and pandoc.system then
-    fs.with_dir = pandoc.system.with_working_directory
-elseif fs.chdir then
-    function fs.with_dir(path, f)
+function fs.with_dir(path, f)
+    if pandoc then return pandoc.system.with_working_directory(path, f) end
+    if fs.chdir then
         local old = fs.getcwd()
         fs.chdir(path)
-        local ret = {f()}
+        local ret = {f(path)}
         fs.chdir(old)
         return table.unpack(ret)
     end
+    error "fs.with_dir not implemented"
 end
 
 --[[@@@

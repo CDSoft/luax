@@ -31,10 +31,7 @@ local opt = (function()
 end)()
 
 img {
-    Raw (F.unlines { "<!--",
-        license:trim(), ---@diagnostic disable-line: undefined-field
-        "-->"
-    })
+    Raw (F.unlines { "<!--", license:trim(), "-->" })
 }
 
 local w = tonumber(opt.size[1]) or 1024

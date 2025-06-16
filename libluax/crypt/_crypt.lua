@@ -160,10 +160,14 @@ prng_mt.__index.str = prng_str
 
 -- global random number generator
 local _rng = crypt.prng()
-function crypt.seed(...) return _rng:seed(...) end
-function crypt.int(...) return _rng:int(...) end
-function crypt.float(...) return _rng:float(...) end
-function crypt.str(...) return _rng:str(...) end
+
+function crypt.seed(seed, incr) return _rng:seed(seed, incr) end
+
+function crypt.int(a, b) return _rng:int(a, b) end
+
+function crypt.float(a, b) return _rng:float(a, b) end
+
+function crypt.str(n) return _rng:str(n) end
 
 -- Hexadecimal encoding
 
@@ -216,7 +220,7 @@ function crypt.base64(s)
 end
 
 function crypt.base64url(s)
-    return crypt.base64(s):gsub("+", "-"):gsub("/", "_")
+    return (crypt.base64(s):gsub("+", "-"):gsub("/", "_"))
 end
 
 function crypt.unbase64(s)
@@ -395,7 +399,9 @@ end
 crypt.unarc4 = crypt.arc4
 
 function crypt.hash32(s) return ("<I4"):pack(fnv1a_32(fnv1a_32_init, s)):hex() end
+
 function crypt.hash64(s) return ("<I8"):pack(fnv1a_64(fnv1a_64_init, s)):hex() end
+
 function crypt.hash128(s)
     local a, b, c, d = fnv1a_128(fnv1a_128_init, s)
     return ("<I4I4I4I4"):pack(d, c, b, a):hex()

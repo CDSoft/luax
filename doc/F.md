@@ -758,7 +758,7 @@ F.is_infix_of(infix, xs)
 infix:is_infix_of(xs)
 ```
 
-> Returns `true` iff `xs` caontains `infix`
+> Returns `true` iff `xs` contains `infix`
 
 ``` lua
 F.has_prefix(xs, prefix)
@@ -927,7 +927,7 @@ F.without_keys(t, ks)
 t:without_keys(ks)
 ```
 
-> Restrict a map to only those keys found in a list.
+> Remove all keys in a list from a map.
 
 ``` lua
 F.partition(p, xs)

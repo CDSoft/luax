@@ -433,14 +433,12 @@ local function miscellaneous_functions()
     -- F.memo1
     do
         local fibcount = 0
-        local function fib(n)
+        local fib; fib = F.memo1(function(n)
             fibcount = fibcount+1
             assert(fibcount < 1000, "The memoized fib function still takes to much time")
-            --return n <= 1 and imath.new(n) or fib(n-1) + fib(n-2)
             if n <= 1 then return imath.new(n), n end
             return fib(n-1) + fib(n-2), n
-        end
-        fib = F.memo1(fib) ---@diagnostic disable-line:cast-local-type
+        end)
 
         eq({fib(0)}, {imath.new"0", 0})
         eq({fib(1)}, {imath.new"1", 1})

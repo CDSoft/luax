@@ -852,6 +852,25 @@ local ypp_build_config = ypp : new "ypp-build-config"
 
 ypp_build_config "$luax_build_config_lua" { "luax/luax_build_config.lua.in" }
 
+if bang.output:dirname() == bang.input:dirname() then
+    local function dirs(path)
+        return fs.ls(path/"**.lua")
+            : map(F.compose{F.prefix"    \"", F.suffix"\",", fs.dirname})
+            : nub() : unlines() : rtrim() : gsub(",$", "")
+    end
+    file(bang.input:dirname()/".luarc.json")(F.unlines(F.flatten{
+        "{",
+        [=[  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",]=],
+        [=[  "runtime.version": "Lua 5.4",]=],
+        [=[  "workspace.library": []=],
+        dirs "libluax" .. ",",
+        dirs "ext/lua",
+        [=[  ],]=],
+        [=[  "workspace.checkThirdParty": false]=],
+        "}",
+    }))
+end
+
 --===================================================================
 section "Lua runtime"
 ---------------------------------------------------------------------

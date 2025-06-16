@@ -33,7 +33,7 @@ local fs = {}
 
 local sh = require "sh"
 
-if pandoc and pandoc.path then
+if pandoc then
     fs.sep = pandoc.path.separator
     fs.path_sep = pandoc.path.search_path_separator
 else
@@ -41,28 +41,22 @@ else
     fs.path_sep = fs.sep == '\\' and ";" or ":"
 end
 
-if pandoc and pandoc.system then
-    fs.getcwd = pandoc.system.get_working_directory
-elseif sys.os == "windows" then
-    function fs.getcwd()
-        return sh.read "cd" : trim() ---@diagnostic disable-line:undefined-field
-    end
-else
-    function fs.getcwd()
-        return sh.read "pwd" : trim() ---@diagnostic disable-line:undefined-field
-    end
+local function safe_sh(...)
+    local out, msg = sh.read(...)
+    if not out then error(msg) end
+    return out
 end
 
-if pandoc and pandoc.system then
-    fs.dir = F.compose{F, pandoc.system.list_directory}
-elseif sys.os == "windows" then
-    function fs.dir(path)
-        return sh.read("dir /b", path) : lines() : sort() ---@diagnostic disable-line:undefined-field
-    end
-else
-    function fs.dir(path)
-        return sh.read("ls", path) : lines() : sort() ---@diagnostic disable-line:undefined-field
-    end
+function fs.getcwd()
+    if pandoc then return pandoc.system.get_working_directory() end
+    if sys.os == "windows" then return safe_sh "cd" : trim() end
+    return safe_sh "pwd" : trim()
+end
+
+function fs.dir(path)
+    if pandoc then return F(pandoc.system.list_directory(path)) end
+    if sys.os == "windows" then return safe_sh("dir /b", path) : lines() : sort() end
+    return safe_sh("ls", path) : lines() : sort()
 end
 
 fs.remove = os.remove
@@ -82,18 +76,17 @@ function fs.copy(source_name, target_name)
             return ok, err
         end
     end
+    return true
 end
 
 function fs.symlink(target, linkpath)
+    if sys.os == "windows" then return nil, "symlink not implemented" end
     return sh.run("ln -s", target, linkpath)
 end
 
-if pandoc and pandoc.system then
-    fs.mkdir = pandoc.system.make_directory
-else
-    function fs.mkdir(path)
-        return sh.run("mkdir", path)
-    end
+function fs.mkdir(path)
+    if pandoc and pandoc.system then return pandoc.system.make_directory(path) end
+    return sh.run("mkdir", path)
 end
 
 local S_IFMT  <const> = 0xF << 12
@@ -111,12 +104,16 @@ local S_IROTH <const> = 1 << 2
 local S_IWOTH <const> = 1 << 1
 local S_IXOTH <const> = 1 << 0
 
+local S_IRALL <const> = 1 << 8 | 1 << 5 | 1 << 2
+local S_IWALL <const> = 1 << 7 | 1 << 4 | 1 << 1
+local S_IXALL <const> = 1 << 6 | 1 << 3 | 1 << 0
+
 fs.uR = S_IRUSR
 fs.uW = S_IWUSR
 fs.uX = S_IXUSR
-fs.aR = S_IRUSR|S_IRGRP|S_IROTH
-fs.aW = S_IWUSR|S_IWGRP|S_IWOTH
-fs.aX = S_IXUSR|S_IXGRP|S_IXOTH
+fs.aR = S_IRALL
+fs.aW = S_IWALL
+fs.aX = S_IXALL
 fs.gR = S_IRGRP
 fs.gW = S_IWGRP
 fs.gX = S_IXGRP
@@ -224,38 +221,25 @@ function fs.touch(name, opt)
     end
 end
 
-if pandoc and pandoc.path then
-    fs.basename = pandoc.path.filename
-else
-    function fs.basename(path)
-        return (path:gsub(".*[/\\]", ""))
-    end
+function fs.basename(path)
+    if pandoc then return pandoc.path.filename(path) end
+    return (path:gsub(".*[/\\]", ""))
 end
 
-if pandoc and pandoc.path then
-    fs.dirname = pandoc.path.directory
-else
-    function fs.dirname(path)
-        local dir, n = path:gsub("[/\\][^/\\]*$", "")
-        return n > 0 and dir or "."
-    end
+function fs.dirname(path)
+    if pandoc then return pandoc.path.directory(path) end
+    local dir, n = path:gsub("[/\\][^/\\]*$", "")
+    return n > 0 and dir or "."
 end
 
-if pandoc and pandoc.path then
-    function fs.splitext(path)
-        if fs.basename(path):match "^%." then
-            return path, ""
-        end
+function fs.splitext(path)
+    if pandoc then
+        if fs.basename(path):match "^%." then return path, "" end
         return pandoc.path.split_extension(path)
     end
-else
-    function fs.splitext(path)
-        local name, ext = path:match("^(.*)(%.[^/\\]-)$")
-        if name and ext and #name > 0 and not name:has_suffix(fs.sep) then
-            return name, ext
-        end
-        return path, ""
-    end
+    local name, ext = path:match("^(.*)(%.[^/\\]-)$")
+    if name and ext and #name > 0 and not name:has_suffix(fs.sep) then return name, ext end
+    return path, ""
 end
 
 function fs.ext(path)
@@ -267,16 +251,13 @@ function fs.chext(path, new_ext)
     return fs.splitext(path) .. new_ext
 end
 
-if pandoc and pandoc.path then
-    fs.realpath = pandoc.path.normalize
-else
-    function fs.realpath(path)
-        return sh.read("realpath", path) : trim() ---@diagnostic disable-line:undefined-field
-    end
+function fs.realpath(path)
+    if pandoc then return pandoc.path.normalize(path) end
+    return safe_sh("realpath", path) : trim()
 end
 
 function fs.readlink(path)
-    return sh.read("readlink", path) : trim() ---@diagnostic disable-line:undefined-field
+    return safe_sh("readlink", path) : trim()
 end
 
 function fs.absname(path)
@@ -284,32 +265,25 @@ function fs.absname(path)
     return fs.getcwd()..fs.sep..path
 end
 
-if pandoc and pandoc.system then
-    function fs.mkdirs(path)
-        return pandoc.system.make_directory(path, true)
-    end
-elseif sys.os == "windows" then
-    function fs.mkdirs(path)
-        return sh.run("mkdir", path)
-    end
-else
-    function fs.mkdirs(path)
-        return sh.run("mkdir", "-p", path)
-    end
+function fs.mkdirs(path)
+    if pandoc then return pandoc.system.make_directory(path, true) end
+    if sys.os == "windows" then return sh.run("mkdir", path) end
+    return sh.run("mkdir", "-p", path)
 end
 
-if sys.os == "windows" then
-    function fs.ls(dir)
-        dir = dir or "."
-        local base = dir:basename()
-        local path = dir:dirname()
-        local recursive = base:match"%*%*"
-        local pattern = base:match"%*" and base:gsub("%*+", "*")
+function fs.ls(dir, dotted) ---@diagnostic disable-line: unused-local (hidden files not supported in the Lua implementation)
+    dir = dir or "."
+    local base = dir:basename()
+    local path = dir:dirname()
+    local recursive = base:match"%*%*"
+    local pattern = base:match"%*" and base:gsub("%*+", "*")
 
-        local useless_path_prefix = "^%."..fs.sep
-        local function clean_path(fullpath)
-            return fullpath:gsub(useless_path_prefix, "")
-        end
+    local useless_path_prefix = "^%."..fs.sep
+    local function clean_path(fullpath)
+        return fullpath:gsub(useless_path_prefix, "")
+    end
+
+    if sys.os == "windows" then
 
         local files
         if recursive then
@@ -324,36 +298,23 @@ if sys.os == "windows" then
             : map(clean_path)
             : sort()
     end
-else
-    function fs.ls(dir)
-        dir = dir or "."
-        local base = dir:basename()
-        local path = dir:dirname()
-        local recursive = base:match"%*%*"
-        local pattern = base:match"%*" and base:gsub("%*+", "*")
 
-        local useless_path_prefix = "^%."..fs.sep
-        local function clean_path(fullpath)
-            return fullpath:gsub(useless_path_prefix, "")
-        end
-
-        local files
-        if recursive then
-            files = sh("find", path, ("-name %q"):format(pattern))
-                : lines()
-                : filter(F.partial(F.op.ne, path))
-        elseif pattern then
-            files = sh("ls -d", path/pattern)
-                : lines()
-        else
-            files = sh("ls", dir)
-                : lines()
-                : map(F.partial(fs.join, dir))
-        end
-        return files
-            : map(clean_path)
-            : sort()
+    local files
+    if recursive then
+        files = sh("find", path, ("-name %q"):format(pattern))
+            : lines()
+            : filter(F.partial(F.op.ne, path))
+    elseif pattern then
+        files = sh("ls -d", path/pattern)
+            : lines()
+    else
+        files = sh("ls", dir)
+            : lines()
+            : map(F.partial(fs.join, dir))
     end
+    return files
+        : map(clean_path)
+        : sort()
 end
 
 function fs.is_file(name)

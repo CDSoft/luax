@@ -125,37 +125,6 @@ local F_zip
 local F_minimum
 local F_permutations
 
-local function register0(name)
-    return function(f)
-        F[name] = f
-        return f
-    end
-end
-
-local function register1(name)
-    return function(f)
-        F[name] = f
-        mt.__index[name] = f
-        return f
-    end
-end
-
-local function register2(name)
-    return function(f)
-        F[name] = f
-        mt.__index[name] = function(t, x1, ...) return f(x1, t, ...) end
-        return f
-    end
-end
-
-local function register3(name)
-    return function(f)
-        F[name] = f
-        mt.__index[name] = function(t, x1, x2, ...) return f(x1, x2, t, ...) end
-        return f
-    end
-end
-
 --[[------------------------------------------------------------------------@@@
 ## Standard types, and related functions
 @@@]]
@@ -464,7 +433,9 @@ xs:fst()
 ```
 > Extract the first component of a list.
 @@@]]
-register1 "fst" (function(xs) return xs[1] end)
+
+function F.fst(xs) return xs[1] end
+mt.__index.fst = F.fst
 
 --[[@@@
 ```lua
@@ -473,7 +444,9 @@ xs:snd()
 ```
 > Extract the second component of a list.
 @@@]]
-register1 "snd" (function(xs) return xs[2] end)
+
+function F.snd(xs) return xs[2] end
+mt.__index.snd = F.snd
 
 --[[@@@
 ```lua
@@ -482,7 +455,9 @@ xs:thd()
 ```
 > Extract the third component of a list.
 @@@]]
-register1 "thd" (function(xs) return xs[3] end)
+
+function F.thd(xs) return xs[3] end
+mt.__index.thd = F.thd
 
 --[[@@@
 ```lua
@@ -491,7 +466,9 @@ xs:nth(n)
 ```
 > Extract the n-th component of a list.
 @@@]]
-register2 "nth" (function(n, xs) return xs[n] end)
+
+function F.nth(n, xs) return xs[n] end
+function mt.__index:nth(n) return F.nth(n, self) end
 
 --[[------------------------------------------------------------------------@@@
 ### Basic type classes
@@ -526,6 +503,7 @@ F.max(a, b)
 ```
 > max(a, b)
 @@@]]
+
 function F.max(a, b) if a >= b then return a else return b end end
 
 --[[@@@
@@ -534,6 +512,7 @@ F.min(a, b)
 ```
 > min(a, b)
 @@@]]
+
 function F.min(a, b) if a <= b then return a else return b end end
 
 --[[@@@
@@ -542,6 +521,7 @@ F.succ(a)
 ```
 > a + 1
 @@@]]
+
 function F.succ(a) return a + 1 end
 
 --[[@@@
@@ -550,6 +530,7 @@ F.pred(a)
 ```
 > a - 1
 @@@]]
+
 function F.pred(a) return a - 1 end
 
 --[[------------------------------------------------------------------------@@@
@@ -590,6 +571,7 @@ F.quot(a, b)
 ```
 > integer division truncated toward zero
 @@@]]
+
 function F.quot(a, b)
     return (a - fmod(a, b)) // b
 end
@@ -608,6 +590,7 @@ F.quot_rem(a, b)
 ```
 > simultaneous quot and rem
 @@@]]
+
 F_quot_rem = function(a, b)
     local r = fmod(a, b)
     local q = (a - r) // b
@@ -621,6 +604,7 @@ F.div(a, b)
 ```
 > integer division truncated toward negative infinity
 @@@]]
+
 function F.div(a, b)
     return a // b
 end
@@ -631,6 +615,7 @@ F.mod(a, b)
 ```
 > integer modulus satisfying div(a, b)*b + mod(a, b) == a, 0 <= mod(a, b) < abs(b)
 @@@]]
+
 function F.mod(a, b)
     return a - b*(a//b)
 end
@@ -641,6 +626,7 @@ F.div_mod(a, b)
 ```
 > simultaneous div and mod
 @@@]]
+
 F_div_mod = function(a, b)
     local q = a // b
     local r = a - b*q
@@ -654,6 +640,7 @@ F.recip(a)
 ```
 > Reciprocal fraction.
 @@@]]
+
 function F.recip(a) return 1 / a end
 
 --[[@@@
@@ -808,7 +795,9 @@ F.odd(n)
 ```
 > parity check
 @@@]]
+
 function F.even(n) return n&1 == 0 end
+
 function F.odd(n) return n&1 == 1 end
 
 --[[@@@
@@ -818,6 +807,9 @@ F.lcm(a, b)
 ```
 > Greatest Common Divisor and Least Common Multiple of a and b.
 @@@]]
+
+do
+
 local function gcd(a, b)
     a, b = abs(a), abs(b)
     while b > 0 do
@@ -825,10 +817,14 @@ local function gcd(a, b)
     end
     return a
 end
+
 local function lcm(a, b)
     return abs(a // gcd(a,b) * b)
 end
+
 F.gcd, F.lcm = gcd, lcm
+
+end
 
 --[[------------------------------------------------------------------------@@@
 ### Miscellaneous functions
@@ -840,6 +836,7 @@ F.id(x)
 ```
 > Identity function.
 @@@]]
+
 function F.id(...) return ... end
 
 --[[@@@
@@ -848,6 +845,7 @@ F.const(...)
 ```
 > Constant function. const(...)(y) always returns ...
 @@@]]
+
 F_const = function(...)
     local val = {...}
     return function(...) ---@diagnostic disable-line:unused-vararg
@@ -862,6 +860,7 @@ F.compose(fs)
 ```
 > Function composition. compose{f, g, h}(...) returns f(g(h(...))).
 @@@]]
+
 function F.compose(fs)
     local n = #fs
     local function apply(i, ...)
@@ -879,6 +878,7 @@ F.flip(f)
 ```
 > takes its (first) two arguments in the reverse order of f.
 @@@]]
+
 function F.flip(f)
     return function(a, b, ...)
         return f(b, a, ...)
@@ -891,6 +891,7 @@ F.curry(f)
 ```
 > curry(f)(x)(...) calls f(x, ...)
 @@@]]
+
 function F.curry(f)
     return function(x)
         return function(...)
@@ -905,6 +906,7 @@ F.uncurry(f)
 ```
 > uncurry(f)(x, ...) calls f(x)(...)
 @@@]]
+
 function F.uncurry(f)
     return function(x, ...)
         return f(x)(...)
@@ -917,6 +919,7 @@ F.partial(f, ...)
 ```
 > F.partial(f, xs)(ys) calls f(xs..ys)
 @@@]]
+
 function F.partial(f, ...)
     local n = select("#", ...)
     if n == 1 then
@@ -959,6 +962,7 @@ F.until_(p, f, x)
 ```
 > yields the result of applying f until p holds.
 @@@]]
+
 function F.until_(p, f, x)
     while not p(x) do
         x = f(x)
@@ -973,6 +977,9 @@ F.error_without_stack_trace(message, level)
 ```
 > stops execution and displays an error message (with out without a stack trace).
 @@@]]
+
+do
+
 local function err(msg, level, tb)
     level = (level or 1) + 2
     local info = debug.getinfo(level)
@@ -993,8 +1000,12 @@ local function err(msg, level, tb)
     io.stderr:write(tb and debug.traceback(msg, level) or msg, "\n")
     os.exit(1)
 end
+
 function F.error(message, level) err(message, level, true) end
+
 function F.error_without_stack_trace(message, level) err(message, level, false) end
+
+end
 
 --[[@@@
 ```lua
@@ -1094,6 +1105,8 @@ F.show(x, [opt])
 >   - `opt.indent`: number of spaces use to indent tables (`nil` for a single line output)
 @@@]]
 
+do
+
 local default_show_options = {
     int = "%s",
     flt = "%s",
@@ -1101,7 +1114,7 @@ local default_show_options = {
     lt = F.op.klt,
 }
 
-register1 "show" (function(x, opt)
+function F.show(x, opt)
 
     opt = F_merge{default_show_options, opt}
     local opt_indent = opt.indent
@@ -1182,7 +1195,10 @@ register1 "show" (function(x, opt)
     fmt(x)
     return t_concat(tokens)
 
-end)
+end
+mt.__index.show = F.show
+
+end
 
 --[[------------------------------------------------------------------------@@@
 ### Converting from string
@@ -1226,11 +1242,13 @@ t:clone()
 > `F.clone(t)` clones the first level of `t`.
 @@@]]
 
-F_clone = register1 "clone" (function(t)
+F_clone = function(t)
     local t2 = {}
     for k, v in pairs(t) do t2[k] = v end
     return setmetatable(t2, mt)
-end)
+end
+F.clone = F_clone
+mt.__index.clone = F_clone
 
 --[[@@@
 ```lua
@@ -1240,7 +1258,7 @@ t:deep_clone()
 > `F.deep_clone(t)` recursively clones `t`.
 @@@]]
 
-register1 "deep_clone" (function(t)
+function F.deep_clone(t)
     local function go(t1)
         if type(t1) ~= "table" then return t1 end
         local t2 = {}
@@ -1248,7 +1266,8 @@ register1 "deep_clone" (function(t)
         return setmetatable(t2, getmetatable(t1))
     end
     return setmetatable(go(t), mt)
-end)
+end
+mt.__index.deep_clone = F.deep_clone
 
 --[[@@@
 ```lua
@@ -1257,13 +1276,13 @@ F.rep(n, x)
 > Returns a list of length n with x the value of every element.
 @@@]]
 
-register0 "rep" (function(n, x)
+function F.rep(n, x)
     local xs = {}
     for i = 1, n do
         xs[i] = x
     end
     return setmetatable(xs, mt)
-end)
+end
 
 --[[@@@
 ```lua
@@ -1274,7 +1293,7 @@ F.range(a, b, step)
 > Returns a range [1, a], [a, b] or [a, a+step, ... b]
 @@@]]
 
-register0 "range" (function(a, b, step)
+function F.range(a, b, step)
     step = step or 1
     if step == 0 then return nil, "range step can not be zero" end
     if b == nil then a, b = 1, a end
@@ -1291,7 +1310,7 @@ register0 "range" (function(a, b, step)
         end
     end
     return setmetatable(r, mt)
-end)
+end
 
 --[[@@@
 ```lua
@@ -1302,7 +1321,7 @@ xs1 .. xs2
 > concatenates lists
 @@@]]
 
-F_concat = register1 "concat"(function(xss)
+F_concat = function(xss)
     local ys = {}
     for i = 1, #xss do
         local xs = xss[i]
@@ -1311,7 +1330,9 @@ F_concat = register1 "concat"(function(xss)
         end
     end
     return setmetatable(ys, mt)
-end)
+end
+F.concat = F_concat
+mt.__index.concat = F_concat
 
 function mt.__concat(xs1, xs2)
     return F_concat{xs1, xs2}
@@ -1327,13 +1348,15 @@ xs:flatten([leaf])
   By default, `flatten` only recurses on tables with no metatable or on `F` tables.
 @@@]]
 
+do
+
 local function default_leaf(x)
     -- by default, a table is a leaf if it has a metatable and is not an F' list
     local xmt = getmetatable(x)
     return xmt and xmt ~= mt
 end
 
-F_flatten = register1 "flatten" (function(xs, leaf)
+F_flatten = function(xs, leaf)
     leaf = leaf or default_leaf
     local zs = {}
     local function f(ys)
@@ -1348,7 +1371,11 @@ F_flatten = register1 "flatten" (function(xs, leaf)
     end
     f(xs)
     return setmetatable(zs, mt)
-end)
+end
+F.flatten = F_flatten
+mt.__index.flatten = F_flatten
+
+end
 
 --[=[@@@
 ```lua
@@ -1358,14 +1385,15 @@ ss:str([separator, [last_separator]])
 > concatenates strings (separated with an optional separator) and returns a string.
 @@@]=]
 
-register1 "str" (function(ss, sep, last_sep)
+function F.str(ss, sep, last_sep)
     if last_sep then
         if #ss <= 1 then return ss[1] or "" end
         return t_concat({t_concat(ss, sep, 1, #ss-1), ss[#ss]}, last_sep)
     else
         return t_concat(ss, sep)
     end
-end)
+end
+mt.__index.str = F.str
 
 --[[@@@
 ```lua
@@ -1375,14 +1403,16 @@ ks:from_set(f)
 > Build a map from a set of keys and a function which for each key computes its value.
 @@@]]
 
-F_from_set = register2 "from_set" (function(f, ks)
+F_from_set = function(f, ks)
     local t = {}
     for i = 1, #ks do
         local k = ks[i]
         t[k] = f(k)
     end
     return setmetatable(t, mt)
-end)
+end
+F.from_set = F_from_set
+mt.__index.from_set = function(ks, f) return F_from_set(f, ks) end
 
 --[[@@@
 ```lua
@@ -1392,14 +1422,15 @@ kvs:from_list()
 > Build a map from a list of key/value pairs.
 @@@]]
 
-register1 "from_list" (function(kvs)
+function F.from_list(kvs)
     local t = {}
     for i = 1, #kvs do
         local k, v = t_unpack(kvs[i])
         t[k] = v
     end
     return setmetatable(t, mt)
-end)
+end
+mt.__index.from_list = F.from_list
 
 --[[------------------------------------------------------------------------@@@
 ## Iterators
@@ -1416,9 +1447,10 @@ xs:ipairs([comp_lt])
 > `F.pairs` sorts keys using the function `comp_lt` or the default `<=` operator for keys (`F.op.klt`).
 @@@]]
 
-register1 "ipairs" (ipairs)
+F.ipairs = ipairs
+mt.__index.ipairs = ipairs
 
-F_pairs = register1 "pairs" (function(t, comp_lt)
+F_pairs = function(t, comp_lt)
     local ks = F_keys(t, comp_lt)
     local i = 0
     return function()
@@ -1428,7 +1460,9 @@ F_pairs = register1 "pairs" (function(t, comp_lt)
             return k, t[k]
         end
     end
-end)
+end
+F.pairs = F_pairs
+mt.__index.pairs = F_pairs
 
 --[[@@@
 ```lua
@@ -1442,29 +1476,33 @@ t:items([comp_lt])
 > returns the list of keys, values or pairs of keys/values (same order than F.pairs).
 @@@]]
 
-F_keys = register1 "keys" (function(t, comp_lt)
+F_keys = function(t, comp_lt)
     comp_lt = comp_lt or key_lt
     local ks = {}
     for k, _ in pairs(t) do ks[#ks+1] = k end
     t_sort(ks, comp_lt)
     return setmetatable(ks, mt)
-end)
+end
+F.keys = F_keys
+mt.__index.keys = F_keys
 
-register1 "values" (function(t, comp_lt)
+function F.values(t, comp_lt)
     local ks = F_keys(t, comp_lt)
     local vs = {}
     for i = 1, #ks do vs[i] = t[ks[i]] end
     return setmetatable(vs, mt)
-end)
+end
+mt.__index.values = F.values
 
-register1 "items" (function(t, comp_lt)
+function F.items(t, comp_lt)
     local ks = F_keys(t, comp_lt)
     local kvs = {}
     for i = 1, #ks do
         local k = ks[i]
         kvs[i] = setmetatable({k, t[k]}, mt) end
     return setmetatable(kvs, mt)
-end)
+end
+mt.__index.items = F.items
 
 --[[------------------------------------------------------------------------@@@
 ## Table extraction
@@ -1480,8 +1518,13 @@ xs:last()
 > returns the first element (head) or the last element (last) of a list.
 @@@]]
 
-F_head = register1 "head" (function(xs) return xs[1] end)
-F_last = register1 "last" (function(xs) return xs[#xs] end)
+F_head = function(xs) return xs[1] end
+F.head = F_head
+mt.__index.head = F.head
+
+F_last = function(xs) return xs[#xs] end
+F.last = F_last
+mt.__index.last = F.last
 
 --[[@@@
 ```lua
@@ -1493,19 +1536,23 @@ xs:init()
 > returns the list after the head (tail) or before the last element (init).
 @@@]]
 
-F_tail = register1 "tail" (function(xs)
+F_tail = function(xs)
     if #xs == 0 then return nil end
     local tail = {}
     for i = 2, #xs do tail[#tail+1] = xs[i] end
     return setmetatable(tail, mt)
-end)
+end
+F.tail = F_tail
+mt.__index.tail = F_tail
 
-F_init = register1 "init" (function(xs)
+F_init = function(xs)
     if #xs == 0 then return nil end
     local init = {}
     for i = 1, #xs-1 do init[#init+1] = xs[i] end
     return setmetatable(init, mt)
-end)
+end
+F.init = F_init
+mt.__index.init = F_init
 
 --[[@@@
 ```lua
@@ -1515,7 +1562,8 @@ xs:uncons()
 > returns the head and the tail of a list.
 @@@]]
 
-register1 "uncons" (function(xs) return F_head(xs), F_tail(xs) end)
+function F.uncons(xs) return F_head(xs), F_tail(xs) end
+mt.__index.uncons = F.uncons
 
 --[[@@@
 ```lua
@@ -1525,7 +1573,8 @@ xs:unpack([ i, [j] ])
 > returns the elements of xs between indices i and j
 @@@]]
 
-register1 "unpack" (table.unpack)
+F.unpack = table.unpack
+mt.__index.unpack = table.unpack
 
 --[[@@@
 ```lua
@@ -1535,13 +1584,15 @@ xs:take(n)
 > Returns the prefix of xs of length n.
 @@@]]
 
-F_take = register2 "take" (function(n, xs)
+F_take = function(n, xs)
     local ys = {}
     for i = 1, n do
         ys[i] = xs[i]
     end
     return setmetatable(ys, mt)
-end)
+end
+F.take = F_take
+mt.__index.take = function(xs, n) return F_take(n, xs) end
 
 --[[@@@
 ```lua
@@ -1551,13 +1602,15 @@ xs:drop(n)
 > Returns the suffix of xs after the first n elements.
 @@@]]
 
-F_drop = register2 "drop" (function(n, xs)
+F_drop = function(n, xs)
     local ys = {}
     for i = n+1, #xs do
         ys[#ys+1] = xs[i]
     end
     return setmetatable(ys, mt)
-end)
+end
+F.drop = F_drop
+mt.__index.drop = function(xs, n) return F_drop(n, xs) end
 
 --[[@@@
 ```lua
@@ -1567,9 +1620,15 @@ xs:split_at(n)
 > Returns a tuple where first element is xs prefix of length n and second element is the remainder of the list.
 @@@]]
 
-register2 "split_at" (function(n, xs)
+do
+
+local function F_split_at(n, xs)
     return F_take(n, xs), F_drop(n, xs)
-end)
+end
+F.split_at = F_split_at
+mt.__index.split_at = function(xs, n) return F_split_at(n, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -1579,7 +1638,7 @@ xs:take_while(p)
 > Returns the longest prefix (possibly empty) of xs of elements that satisfy p.
 @@@]]
 
-F_take_while = register2 "take_while" (function(p, xs)
+F_take_while = function(p, xs)
     local ys = {}
     local i = 1
     while i <= #xs and p(xs[i]) do
@@ -1587,7 +1646,9 @@ F_take_while = register2 "take_while" (function(p, xs)
         i = i+1
     end
     return setmetatable(ys, mt)
-end)
+end
+F.take_while = F_take_while
+mt.__index.take_while = function(xs, p) return F_take_while(p, xs) end
 
 --[[@@@
 ```lua
@@ -1597,7 +1658,7 @@ xs:drop_while(p)
 > Returns the suffix remaining after `take_while(p, xs)`{.lua}.
 @@@]]
 
-F_drop_while = register2 "drop_while" (function(p, xs)
+F_drop_while = function(p, xs)
     local zs = {}
     local i = 1
     while i <= #xs and p(xs[i]) do
@@ -1608,7 +1669,9 @@ F_drop_while = register2 "drop_while" (function(p, xs)
         i = i+1
     end
     return setmetatable(zs, mt)
-end)
+end
+F.drop_while = F_drop_while
+mt.__index.drop_while = function(xs, p) return F_drop_while(p, xs) end
 
 --[[@@@
 ```lua
@@ -1618,7 +1681,7 @@ xs:drop_while_end(p)
 > Drops the largest suffix of a list in which the given predicate holds for all elements.
 @@@]]
 
-F_drop_while_end = register2 "drop_while_end" (function(p, xs)
+F_drop_while_end = function(p, xs)
     local zs = {}
     local i = #xs
     while i > 0 and p(xs[i]) do
@@ -1628,7 +1691,9 @@ F_drop_while_end = register2 "drop_while_end" (function(p, xs)
         zs[j] = xs[j]
     end
     return setmetatable(zs, mt)
-end)
+end
+F.drop_while_end = F_drop_while_end
+mt.__index.drop_while_end = function(xs, p) return F_drop_while_end(p, xs) end
 
 --[[@@@
 ```lua
@@ -1638,7 +1703,9 @@ xs:span(p)
 > Returns a tuple where first element is longest prefix (possibly empty) of xs of elements that satisfy p and second element is the remainder of the list.
 @@@]]
 
-register2 "span" (function(p, xs)
+do
+
+local function F_span(p, xs)
     local ys = {}
     local zs = {}
     local i = 1
@@ -1651,7 +1718,11 @@ register2 "span" (function(p, xs)
         i = i+1
     end
     return setmetatable(ys, mt), setmetatable(zs, mt)
-end)
+end
+F.span = F_span
+mt.__index.span = function(xs, p) return F_span(p, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -1661,7 +1732,9 @@ xs:break_(p)
 > Returns a tuple where first element is longest prefix (possibly empty) of xs of elements that do not satisfy p and second element is the remainder of the list.
 @@@]]
 
-register2 "break_" (function(p, xs)
+do
+
+local function F_break(p, xs)
     local ys = {}
     local zs = {}
     local i = 1
@@ -1674,7 +1747,11 @@ register2 "break_" (function(p, xs)
         i = i+1
     end
     return setmetatable(ys, mt), setmetatable(zs, mt)
-end)
+end
+F.break_ = F_break
+mt.__index.break_ = function(xs, p) return F_break(p, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -1684,7 +1761,9 @@ xs:strip_prefix(prefix)
 > Drops the given prefix from a list.
 @@@]]
 
-register2 "strip_prefix" (function(prefix, xs)
+do
+
+local function F_strip_prefix(prefix, xs)
     for i = 1, #prefix do
         if xs[i] ~= prefix[i] then return nil end
     end
@@ -1693,7 +1772,11 @@ register2 "strip_prefix" (function(prefix, xs)
         ys[#ys+1] = xs[i]
     end
     return setmetatable(ys, mt)
-end)
+end
+F.strip_prefix = F_strip_prefix
+mt.__index.strip_prefix = function(xs, prefix) return F_strip_prefix(prefix, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -1703,7 +1786,9 @@ xs:strip_suffix(suffix)
 > Drops the given suffix from a list.
 @@@]]
 
-register2 "strip_suffix" (function(suffix, xs)
+do
+
+local function F_strip_suffix(suffix, xs)
     for i = 1, #suffix do
         if xs[#xs-#suffix+i] ~= suffix[i] then return nil end
     end
@@ -1712,7 +1797,11 @@ register2 "strip_suffix" (function(suffix, xs)
         ys[i] = xs[i]
     end
     return setmetatable(ys, mt)
-end)
+end
+F.strip_suffix = F_strip_suffix
+mt.__index.strip_suffix = function(xs, suffix) return F_strip_suffix(suffix, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -1722,7 +1811,7 @@ xs:group([comp_eq])
 > Returns a list of lists such that the concatenation of the result is equal to the argument. Moreover, each sublist in the result contains only equal elements.
 @@@]]
 
-register1 "group" (function(xs, comp_eq)
+function F.group(xs, comp_eq)
     comp_eq = comp_eq or F_op_eq
     local yss = {}
     if #xs == 0 then return setmetatable(yss, mt) end
@@ -1740,7 +1829,8 @@ register1 "group" (function(xs, comp_eq)
     end
     yss[#yss+1] = setmetatable(ys, mt)
     return setmetatable(yss, mt)
-end)
+end
+mt.__index.group = F.group
 
 --[[@@@
 ```lua
@@ -1750,7 +1840,7 @@ xs:inits()
 > Returns all initial segments of the argument, shortest first.
 @@@]]
 
-register1 "inits" (function(xs)
+function F.inits(xs)
     local yss = {}
     for i = 0, #xs do
         local ys = {}
@@ -1760,7 +1850,8 @@ register1 "inits" (function(xs)
         yss[#yss+1] = setmetatable(ys, mt)
     end
     return setmetatable(yss, mt)
-end)
+end
+mt.__index.inits = F.inits
 
 --[[@@@
 ```lua
@@ -1770,7 +1861,7 @@ xs:tails()
 > Returns all final segments of the argument, longest first.
 @@@]]
 
-register1 "tails" (function(xs)
+function F.tails(xs)
     local yss = {}
     for i = 1, #xs+1 do
         local ys = {}
@@ -1780,7 +1871,8 @@ register1 "tails" (function(xs)
         yss[#yss+1] = setmetatable(ys, mt)
     end
     return setmetatable(yss, mt)
-end)
+end
+mt.__index.tails = F.tails
 
 --[[------------------------------------------------------------------------@@@
 ## Predicates
@@ -1794,12 +1886,14 @@ prefix:is_prefix_of(xs)
 > Returns `true` iff `xs` starts with `prefix`
 @@@]]
 
-F_is_prefix_of = register1 "is_prefix_of" (function(prefix, xs)
+F_is_prefix_of = function(prefix, xs)
     for i = 1, #prefix do
         if xs[i] ~= prefix[i] then return false end
     end
     return true
-end)
+end
+F.is_prefix_of = F_is_prefix_of
+mt.__index.is_prefix_of = F_is_prefix_of
 
 --[[@@@
 ```lua
@@ -1809,22 +1903,24 @@ suffix:is_suffix_of(xs)
 > Returns `true` iff `xs` ends with `suffix`
 @@@]]
 
-F_is_suffix_of = register1 "is_suffix_of" (function(suffix, xs)
+F_is_suffix_of = function(suffix, xs)
     for i = 1, #suffix do
         if xs[#xs-#suffix+i] ~= suffix[i] then return false end
     end
     return true
-end)
+end
+F.is_suffix_of = F_is_suffix_of
+mt.__index.is_suffix_of = F_is_suffix_of
 
 --[[@@@
 ```lua
 F.is_infix_of(infix, xs)
 infix:is_infix_of(xs)
 ```
-> Returns `true` iff `xs` caontains `infix`
+> Returns `true` iff `xs` contains `infix`
 @@@]]
 
-F_is_infix_of = register1 "is_infix_of" (function(infix, xs)
+F_is_infix_of = function(infix, xs)
     for i = 1, #xs-#infix+1 do
         local found = true
         for j = 1, #infix do
@@ -1833,7 +1929,9 @@ F_is_infix_of = register1 "is_infix_of" (function(infix, xs)
         if found then return true end
     end
     return false
-end)
+end
+F.is_infix_of = F_is_infix_of
+mt.__index.is_infix_of = F_is_infix_of
 
 --[[@@@
 ```lua
@@ -1843,7 +1941,8 @@ xs:has_prefix(prefix)
 > Returns `true` iff `xs` starts with `prefix`
 @@@]]
 
-register1 "has_prefix" (function(xs, prefix) return F_is_prefix_of(prefix, xs) end)
+F.has_prefix = function(xs, prefix) return F_is_prefix_of(prefix, xs) end
+mt.__index.has_prefix = F.has_prefix
 
 --[[@@@
 ```lua
@@ -1853,7 +1952,8 @@ xs:has_suffix(suffix)
 > Returns `true` iff `xs` ends with `suffix`
 @@@]]
 
-register1 "has_suffix" (function(xs, suffix) return F_is_suffix_of(suffix, xs) end)
+F.has_suffix = function(xs, suffix) return F_is_suffix_of(suffix, xs) end
+mt.__index.has_suffix = F.has_suffix
 
 --[[@@@
 ```lua
@@ -1863,7 +1963,8 @@ xs:has_infix(infix)
 > Returns `true` iff `xs` caontains `infix`
 @@@]]
 
-register1 "has_infix" (function(xs, infix) return F_is_infix_of(infix, xs) end)
+F.has_infix = function(xs, infix) return F_is_infix_of(infix, xs) end
+mt.__index.has_infix = F.has_infix
 
 --[[@@@
 ```lua
@@ -1873,7 +1974,7 @@ seq:is_subsequence_of(xs)
 > Returns `true` if all the elements of the first list occur, in order, in the second. The elements do not have to occur consecutively.
 @@@]]
 
-register1 "is_subsequence_of" (function(seq, xs, comp_eq)
+function  F.is_subsequence_of(seq, xs, comp_eq)
     comp_eq = comp_eq or F_op_eq
     local i = 1
     local j = 1
@@ -1885,7 +1986,8 @@ register1 "is_subsequence_of" (function(seq, xs, comp_eq)
         j = j+1
     end
     return false
-end)
+end
+mt.__index.is_subsequence_of = F.is_subsequence_of
 
 --[[@@@
 ```lua
@@ -1895,12 +1997,13 @@ t1:is_submap_of(t2)
 > returns true if all keys in t1 are in t2.
 @@@]]
 
-register1 "is_submap_of" (function(t1, t2)
+function F.is_submap_of(t1, t2)
     for k, _ in pairs(t1) do
         if t2[k] == nil then return false end
     end
     return true
-end)
+end
+mt.__index.is_submap_of = F.is_submap_of
 
 --[[@@@
 ```lua
@@ -1910,12 +2013,13 @@ t1:map_contains(t2)
 > returns true if all keys in t2 are in t1.
 @@@]]
 
-register1 "map_contains" (function(t1, t2)
+function F.map_contains(t1, t2)
     for k, _ in pairs(t2) do
         if t1[k] == nil then return false end
     end
     return true
-end)
+end
+mt.__index.map_contains = F.map_contains
 
 --[[@@@
 ```lua
@@ -1925,7 +2029,7 @@ t1:is_proper_submap_of(t2)
 > returns true if all keys in t1 are in t2 and t1 keys and t2 keys are different.
 @@@]]
 
-register1 "is_proper_submap_of" (function(t1, t2)
+function F.is_proper_submap_of(t1, t2)
     for k, _ in pairs(t1) do
         if t2[k] == nil then return false end
     end
@@ -1933,7 +2037,8 @@ register1 "is_proper_submap_of" (function(t1, t2)
         if t1[k] == nil then return true end
     end
     return false
-end)
+end
+mt.__index.is_proper_submap_of = F.is_proper_submap_of
 
 --[[@@@
 ```lua
@@ -1943,7 +2048,7 @@ t1:map_strictly_contains(t2)
 > returns true if all keys in t2 are in t1.
 @@@]]
 
-register1 "map_strictly_contains" (function(t1, t2)
+function F.map_strictly_contains(t1, t2)
     for k, _ in pairs(t2) do
         if t1[k] == nil then return false end
     end
@@ -1951,7 +2056,8 @@ register1 "map_strictly_contains" (function(t1, t2)
         if t2[k] == nil then return true end
     end
     return false
-end)
+end
+mt.__index.map_strictly_contains = F.map_strictly_contains
 
 --[[------------------------------------------------------------------------@@@
 ## Searching
@@ -1965,13 +2071,19 @@ xs:elem(x, [comp_eq])
 > Returns `true` if x occurs in xs (using the optional comp_eq function).
 @@@]]
 
-register2 "elem" (function(x, xs, comp_eq)
+do
+
+local F_elem = function(x, xs, comp_eq)
     comp_eq = comp_eq or F_op_eq
     for i = 1, #xs do
         if comp_eq(xs[i], x) then return true end
     end
     return false
-end)
+end
+F.elem = F_elem
+mt.__index.elem = function(xs, x, comp_eq) return F_elem(x, xs, comp_eq) end
+
+end
 
 --[[@@@
 ```lua
@@ -1981,13 +2093,19 @@ xs:not_elem(x, [comp_eq])
 > Returns `true` if x does not occur in xs (using the optional comp_eq function).
 @@@]]
 
-register2 "not_elem" (function(x, xs, comp_eq)
+do
+
+local function F_not_elem(x, xs, comp_eq)
     comp_eq = comp_eq or F_op_eq
     for i = 1, #xs do
         if comp_eq(xs[i], x) then return false end
     end
     return true
-end)
+end
+F.not_elem = F_not_elem
+mt.__index.not_elem = function(xs, x, comp_eq) return F_not_elem(x, xs, comp_eq) end
+
+end
 
 --[[@@@
 ```lua
@@ -1997,13 +2115,19 @@ xys:lookup(x, [comp_eq])
 > Looks up a key `x` in an association list (using the optional comp_eq function).
 @@@]]
 
-register2 "lookup" (function(x, xys, comp_eq)
+do
+
+local function F_lookup(x, xys, comp_eq)
     comp_eq = comp_eq or F_op_eq
     for i = 1, #xys do
         if comp_eq(xys[i][1], x) then return xys[i][2] end
     end
     return nil
-end)
+end
+F.lookup = F_lookup
+mt.__index.lookup = function(xys, x, comp_eq) return F_lookup(x, xys, comp_eq) end
+
+end
 
 --[[@@@
 ```lua
@@ -2013,13 +2137,19 @@ xs:find(p)
 > Returns the leftmost element of xs matching the predicate p.
 @@@]]
 
-register2 "find" (function(p, xs)
+do
+
+local function F_find(p, xs)
     for i = 1, #xs do
         local x = xs[i]
         if p(x) then return x end
     end
     return nil
-end)
+end
+F.find = F_find
+mt.__index.find = function(xs, p) return F_find(p, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2029,14 +2159,20 @@ xs:filter(p)
 > Returns the list of those elements that satisfy the predicate p(x).
 @@@]]
 
-register2 "filter" (function(p, xs)
+do
+
+local function F_filter(p, xs)
     local ys = {}
     for i = 1, #xs do
         local x = xs[i]
         if p(x) then ys[#ys+1] = x end
     end
     return setmetatable(ys, mt)
-end)
+end
+F.filter = F_filter
+mt.__index.filter = function(xs, p) return F_filter(p, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2046,14 +2182,20 @@ xs:filteri(p)
 > Returns the list of those elements that satisfy the predicate p(i, x).
 @@@]]
 
-register2 "filteri" (function(p, xs)
+do
+
+local function F_filteri(p, xs)
     local ys = {}
     for i = 1, #xs do
         local x = xs[i]
         if p(i, x) then ys[#ys+1] = x end
     end
     return setmetatable(ys, mt)
-end)
+end
+F.filteri = F_filteri
+mt.__index.filteri = function(xs, p) return F_filteri(p, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2064,7 +2206,9 @@ xs:filter2t(p)
 > where `p(x)` is a predicate that returns the key for `x` in the returned table (`nil` to reject `x`).
 @@@]]
 
-register2 "filter2t" (function(p, xs)
+do
+
+local function F_filter2t(p, xs)
     local t = {}
     for i = 1, #xs do
         local v = xs[i]
@@ -2072,7 +2216,11 @@ register2 "filter2t" (function(p, xs)
         if k~=nil then rawset(t, k, v) end
     end
     return setmetatable(t, mt)
-end)
+end
+F.filter2t = F_filter2t
+mt.__index.filter2t = function(xs, p) return F_filter2t(p, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2083,7 +2231,9 @@ xs:filteri2t(p)
 > where `p(i, x)` is a predicate that returns the key for `x` in the returned table (`nil` to reject `x`).
 @@@]]
 
-register2 "filteri2t" (function(p, xs)
+do
+
+local function F_filteri2t(p, xs)
     local t = {}
     for i = 1, #xs do
         local v = xs[i]
@@ -2091,7 +2241,11 @@ register2 "filteri2t" (function(p, xs)
         if k~=nil then rawset(t, k, v) end
     end
     return setmetatable(t, mt)
-end)
+end
+F.filteri2t = F_filteri2t
+mt.__index.filteri2t = function(xs, p) return F_filteri2t(p, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2101,13 +2255,19 @@ t:filtert(p)
 > Returns the table of those values that satisfy the predicate p(v).
 @@@]]
 
-register2 "filtert" (function(p, t)
+do
+
+local function F_filtert(p, t)
     local t2 = {}
     for k, v in pairs(t) do
         if p(v) then t2[k] = v end
     end
     return setmetatable(t2, mt)
-end)
+end
+F.filtert = F_filtert
+mt.__index.filtert = function(t, p) return F_filtert(p, t) end
+
+end
 
 --[[@@@
 ```lua
@@ -2117,13 +2277,15 @@ t:filterk(p)
 > Returns the table of those values that satisfy the predicate p(k, v).
 @@@]]
 
-F_filterk = register2 "filterk" (function(p, t)
+F_filterk = function(p, t)
     local t2 = {}
     for k, v in pairs(t) do
         if p(k, v) then t2[k] = v end
     end
     return setmetatable(t2, mt)
-end)
+end
+F.filterk = F_filterk
+mt.__index.filterk = function(t, p) return F_filterk(p, t) end
 
 -- filtert2a
 -- filterk2a
@@ -2136,13 +2298,19 @@ t:filtert2a(p)
 > filters `t` with `p` and returns the array `{t[k1], t[k2], ...}` for all `t[ki]` that satisfy `p(t[ki])`.
 @@@]]
 
-register2 "filtert2a" (function(p, t)
+do
+
+local function F_filtert2a(p, t)
     local ys = {}
     for _, v in F_pairs(t) do
         if p(v) then ys[#ys+1] = v end
     end
     return setmetatable(ys, mt)
-end)
+end
+F.filtert2a = F_filtert2a
+mt.__index.filtert2a = function(t, p) return F_filtert2a(p, t) end
+
+end
 
 --[[@@@
 ```lua
@@ -2152,13 +2320,19 @@ t:filterk2a(f)
 > filters `t` with `p` and returns the array `{t[k1], t[k2], ...}` for all `t[ki]` that satisfy `p(ki, t[ki])`.
 @@@]]
 
-register2 "filterk2a" (function(p, t)
+do
+
+local function F_filterk2a(p, t)
     local ys = {}
     for k, v in F_pairs(t) do
         if p(k, v) then ys[#ys+1] = v end
     end
     return setmetatable(ys, mt)
-end)
+end
+F.filterk2a = F_filterk2a
+mt.__index.filterk2a = function(t, p) return F_filterk2a(p, t) end
+
+end
 
 --[[@@@
 ```lua
@@ -2168,25 +2342,27 @@ t:restrict_keys(ks)
 > Restrict a map to only those keys found in a list.
 @@@]]
 
-register1 "restrict_keys" (function(t, ks)
+function F.restrict_keys(t, ks)
     local kset = F_from_set(F_const(true), ks)
     local function p(k, _) return kset[k] end
     return F_filterk(p, t)
-end)
+end
+mt.__index.restrict_keys = F.restrict_keys
 
 --[[@@@
 ```lua
 F.without_keys(t, ks)
 t:without_keys(ks)
 ```
-> Restrict a map to only those keys found in a list.
+> Remove all keys in a list from a map.
 @@@]]
 
-register1 "without_keys" (function(t, ks)
+function F.without_keys(t, ks)
     local kset = F_from_set(F_const(true), ks)
     local function p(k, _) return not kset[k] end
     return F_filterk(p, t)
-end)
+end
+mt.__index.without_keys = F.without_keys
 
 --[[@@@
 ```lua
@@ -2196,7 +2372,9 @@ xs:partition(p)
 > Returns the pair of lists of elements which do and do not satisfy the predicate, respectively.
 @@@]]
 
-register2 "partition" (function(p, xs)
+do
+
+local function F_partition(p, xs)
     local ys = {}
     local zs = {}
     for i = 1, #xs do
@@ -2204,7 +2382,11 @@ register2 "partition" (function(p, xs)
         if p(x) then ys[#ys+1] = x else zs[#zs+1] = x end
     end
     return setmetatable(ys, mt), setmetatable(zs, mt)
-end)
+end
+F.partition = F_partition
+mt.__index.partition = function(xs, p) return F_partition(p, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2214,13 +2396,19 @@ t:table_partition(p)
 > Partition the map according to a predicate. The first map contains all elements that satisfy the predicate, the second all elements that fail the predicate.
 @@@]]
 
-register2 "table_partition" (function(p, t)
+do
+
+local function F_table_partition(p, t)
     local t1, t2 = {}, {}
     for k, v in pairs(t) do
         if p(v) then t1[k] = v else t2[k] = v end
     end
     return setmetatable(t1, mt), setmetatable(t2, mt)
-end)
+end
+F.table_partition = F_table_partition
+mt.__index.table_partition = function(t, p) return F_table_partition(p, t) end
+
+end
 
 --[[@@@
 ```lua
@@ -2230,13 +2418,19 @@ t:table_partition_with_key(p)
 > Partition the map according to a predicate. The first map contains all elements that satisfy the predicate, the second all elements that fail the predicate.
 @@@]]
 
-register2 "table_partition_with_key" (function(p, t)
+do
+
+local function F_table_partition_with_key(p, t)
     local t1, t2 = {}, {}
     for k, v in pairs(t) do
         if p(k, v) then t1[k] = v else t2[k] = v end
     end
     return setmetatable(t1, mt), setmetatable(t2, mt)
-end)
+end
+F.table_partition_with_key = F_table_partition_with_key
+mt.__index.table_partition_with_key = function(t, p) return F_table_partition_with_key(p, t) end
+
+end
 
 --[[@@@
 ```lua
@@ -2246,12 +2440,18 @@ xs:elem_index(x)
 > Returns the index of the first element in the given list which is equal to the query element.
 @@@]]
 
-register2 "elem_index" (function(x, xs)
+do
+
+local function F_elem_index(x, xs)
     for i = 1, #xs do
         if x == xs[i] then return i end
     end
     return nil
-end)
+end
+F.elem_index = F_elem_index
+mt.__index.elem_index = function(xs, x) return F_elem_index(x, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2261,13 +2461,19 @@ xs:elem_indices(x)
 > Returns the indices of all elements equal to the query element, in ascending order.
 @@@]]
 
-register2 "elem_indices" (function(x, xs)
+do
+
+local function F_elem_indices(x, xs)
     local indices = {}
     for i = 1, #xs do
         if x == xs[i] then indices[#indices+1] = i end
     end
     return setmetatable(indices, mt)
-end)
+end
+F.elem_indices = F_elem_indices
+mt.__index.elem_indices = function(xs, x) return F_elem_indices(x, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2277,12 +2483,18 @@ xs:find_index(p)
 > Returns the index of the first element in the list satisfying the predicate.
 @@@]]
 
-register2 "find_index" (function(p, xs)
+do
+
+local function F_find_index(p, xs)
     for i = 1, #xs do
         if p(xs[i]) then return i end
     end
     return nil
-end)
+end
+F.find_index = F_find_index
+mt.__index.find_index = function(xs, p) return F_find_index(p, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2292,13 +2504,19 @@ xs:find_indices(p)
 > Returns the indices of all elements satisfying the predicate, in ascending order.
 @@@]]
 
-register2 "find_indices" (function(p, xs)
+do
+
+local function F_find_indices(p, xs)
     local indices = {}
     for i = 1, #xs do
         if p(xs[i]) then indices[#indices+1] = i end
     end
     return setmetatable(indices, mt)
-end)
+end
+F.find_indices = F_find_indices
+mt.__index.find_indices = function(xs, p) return F_find_indices(p, xs) end
+
+end
 
 --[[------------------------------------------------------------------------@@@
 ## Table size
@@ -2314,9 +2532,11 @@ t:null("t")
 > checks wether a list or a table is empty.
 @@@]]
 
-F_null = register1 "null" (function(t)
+F_null = function(t)
     return next(t) == nil
-end)
+end
+F.null = F_null
+mt.__index.null = F_null
 
 --[[@@@
 ```lua
@@ -2327,9 +2547,11 @@ xs:length()
 > Length of a list.
 @@@]]
 
-F_length = register1 "length" (function(xs)
+F_length = function(xs)
     return #xs
-end)
+end
+F.length = F_length
+mt.__index.length = F_length
 
 --[[@@@
 ```lua
@@ -2339,13 +2561,14 @@ t:size()
 > Size of a table (number of (key, value) pairs).
 @@@]]
 
-register1 "size" (function(t)
+function F.size(t)
     local n = 0
     for _, _ in pairs(t) do
         n = n+1
     end
     return n
-end)
+end
+mt.__index.size = F.size
 
 --[[------------------------------------------------------------------------@@@
 ## Table transformations
@@ -2360,11 +2583,13 @@ xs:map(f)
 > (`nil` values are ignored)
 @@@]]
 
-F_map = register2 "map" (function(f, xs)
+F_map = function(f, xs)
     local ys = {}
     for i = 1, #xs do ys[#ys+1] = f(xs[i]) end
     return setmetatable(ys, mt)
-end)
+end
+F.map = F_map
+mt.__index.map = function(xs, f) return F_map(f, xs) end
 
 --[[@@@
 ```lua
@@ -2375,11 +2600,17 @@ xs:mapi(f)
 > (`nil` values are ignored)
 @@@]]
 
-register2 "mapi" (function(f, xs)
+do
+
+local function F_mapi(f, xs)
     local ys = {}
     for i = 1, #xs do ys[#ys+1] = f(i, xs[i]) end
     return setmetatable(ys, mt)
-end)
+end
+F.mapi = F_mapi
+mt.__index.mapi = function(xs, f) return F_mapi(f, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2391,14 +2622,20 @@ xs:map2t(f)
 > (`nil` values are ignored)
 @@@]]
 
-register2 "map2t" (function(f, xs)
+do
+
+local function F_map2t(f, xs)
     local t = {}
     for i = 1, #xs do
         local k, v = f(xs[i])
         if k~=nil then rawset(t, k, v) end
     end
     return setmetatable(t, mt)
-end)
+end
+F.map2t = F_map2t
+mt.__index.map2t = function(xs, f) return F_map2t(f, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2410,14 +2647,20 @@ xs:mapi2t(f)
 > (`nil` values are ignored)
 @@@]]
 
-register2 "mapi2t" (function(f, xs)
+do
+
+local function F_mapi2t(f, xs)
     local t = {}
     for i = 1, #xs do
         local k, v = f(i, xs[i])
         if k~=nil then rawset(t, k, v) end
     end
     return setmetatable(t, mt)
-end)
+end
+F.mapi2t = F_mapi2t
+mt.__index.mapi2t = function(xs, f) return F_mapi2t(f, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2428,11 +2671,17 @@ t:mapt(f)
 > (`nil` values are ignored)
 @@@]]
 
-register2 "mapt" (function(f, t)
+do
+
+local function F_mapt(f, t)
     local t2 = {}
     for k, v in pairs(t) do t2[k] = f(v) end
     return setmetatable(t2, mt)
-end)
+end
+F.mapt = F_mapt
+mt.__index.mapt = function(t, f) return F_mapt(f, t) end
+
+end
 
 --[[@@@
 ```lua
@@ -2443,11 +2692,17 @@ t:mapk(f)
 > (`nil` values are ignored)
 @@@]]
 
-register2 "mapk" (function(f, t)
+do
+
+local function F_mapk(f, t)
     local t2 = {}
     for k, v in pairs(t) do t2[k] = f(k, v) end
     return setmetatable(t2, mt)
-end)
+end
+F.mapk = F_mapk
+mt.__index.mapk = function(t, f) return F_mapk(f, t) end
+
+end
 
 --[[@@@
 ```lua
@@ -2458,11 +2713,17 @@ t:mapt2a(f)
 > (`nil` values are ignored)
 @@@]]
 
-register2 "mapt2a" (function(f, t)
+do
+
+local function F_mapt2a(f, t)
     local ys = {}
     for _, v in F_pairs(t) do ys[#ys+1] = f(v) end
     return setmetatable(ys, mt)
-end)
+end
+F.mapt2a = F_mapt2a
+mt.__index.mapt2a = function(t, f) return F_mapt2a(f, t) end
+
+end
 
 --[[@@@
 ```lua
@@ -2473,11 +2734,17 @@ t:mapk2a(f)
 > (`nil` values are ignored)
 @@@]]
 
-register2 "mapk2a" (function(f, t)
+do
+
+local function F_mapk2a(f, t)
     local ys = {}
     for k, v in F_pairs(t) do ys[#ys+1] = f(k, v) end
     return setmetatable(ys, mt)
-end)
+end
+F.mapk2a = F_mapk2a
+mt.__index.mapk2a = function(t, f) return F_mapk2a(f, t) end
+
+end
 
 --[[@@@
 ```lua
@@ -2487,11 +2754,12 @@ xs:reverse()
 > reverses the order of a list
 @@@]]
 
-register1 "reverse" (function(xs)
+function F.reverse(xs)
     local ys = {}
     for i = #xs, 1, -1 do ys[#ys+1] = xs[i] end
     return setmetatable(ys, mt)
-end)
+end
+mt.__index.reverse = F.reverse
 
 --[[@@@
 ```lua
@@ -2501,7 +2769,7 @@ xss:transpose()
 > Transposes the rows and columns of its argument.
 @@@]]
 
-register1 "transpose" (function(xss)
+function F.transpose(xss)
     local N = #xss
     local M = max(t_unpack(F_map(F_length, xss)))
     local yss = {}
@@ -2511,7 +2779,8 @@ register1 "transpose" (function(xss)
         yss[j] = setmetatable(ys, mt)
     end
     return setmetatable(yss, mt)
-end)
+end
+mt.__index.transpose = F.transpose
 
 --[[@@@
 ```lua
@@ -2523,10 +2792,16 @@ t:update(f, k)
 > **Warning**: in-place modification.
 @@@]]
 
-register3 "update" (function(f, k, t)
+do
+
+local function F_update(f, k, t)
     t[k] = f(t[k])
     return t
-end)
+end
+F.update = F_update
+mt.__index.update = function(t, f, k) return F_update(f, k, t) end
+
+end
 
 --[[@@@
 ```lua
@@ -2538,10 +2813,16 @@ t:updatek(f, k)
 > **Warning**: in-place modification.
 @@@]]
 
-register3 "updatek" (function(f, k, t)
+do
+
+local function F_updatek(f, k, t)
     t[k] = f(k, t[k])
     return t
-end)
+end
+F.updatek = F_updatek
+mt.__index.updatek = function(t, f, k) return F_updatek(f, k, t) end
+
+end
 
 --[[------------------------------------------------------------------------@@@
 ## Table transversal
@@ -2555,9 +2836,11 @@ xs:foreach(f)
 > calls `f` with the elements of `xs` (`f(xi)` for `xi` in `xs`)
 @@@]]
 
-F_foreach = register1 "foreach" (function(xs, f)
+F_foreach = function(xs, f)
     for i = 1, #xs do f(xs[i]) end
-end)
+end
+F.foreach = F_foreach
+mt.__index.foreach = F_foreach
 
 --[[@@@
 ```lua
@@ -2567,9 +2850,10 @@ xs:foreachi(f)
 > calls `f` with the indices and elements of `xs` (`f(i, xi)` for `xi` in `xs`)
 @@@]]
 
-register1 "foreachi" (function(xs, f)
+function F.foreachi(xs, f)
     for i = 1, #xs do f(i, xs[i]) end
-end)
+end
+mt.__index.foreachi = F.foreachi
 
 --[[@@@
 ```lua
@@ -2579,9 +2863,10 @@ t:foreacht(f)
 > calls `f` with the values of `t` (`f(v)` for `v` in `t` such that `v = t[k]`)
 @@@]]
 
-register1 "foreacht" (function(t, f)
+function F.foreacht(t, f)
     for _, v in F_pairs(t) do f(v) end
-end)
+end
+mt.__index.foreacht = F.foreacht
 
 --[[@@@
 ```lua
@@ -2591,9 +2876,10 @@ t:foreachk(f)
 > calls `f` with the keys and values of `t` (`f(k, v)` for (`k`, `v`) in `t` such that `v = t[k]`)
 @@@]]
 
-register1 "foreachk" (function(t, f)
+function F.foreachk(t, f)
     for k, v in F_pairs(t) do f(k, v) end
-end)
+end
+mt.__index.foreachk = F.foreachk
 
 --[[------------------------------------------------------------------------@@@
 ## Table reductions (folds)
@@ -2607,12 +2893,18 @@ xs:fold(f, x)
 > Left-associative fold of a list (`f(...f(f(x, xs[1]), xs[2]), ...)`).
 @@@]]
 
-register3 "fold" (function(fzx, z, xs)
+do
+
+local function F_fold(fzx, z, xs)
     for i = 1, #xs do
         z = fzx(z, xs[i])
     end
     return z
-end)
+end
+F.fold = F_fold
+mt.__index.fold = function(xs, fzx, z) return F_fold(fzx, z, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2622,12 +2914,18 @@ xs:foldi(f, x)
 > Left-associative fold of a list (`f(...f(f(x, 1, xs[1]), 2, xs[2]), ...)`).
 @@@]]
 
-register3 "foldi" (function(fzx, z, xs)
+do
+
+local function F_foldi(fzx, z, xs)
     for i = 1, #xs do
         z = fzx(z, i, xs[i])
     end
     return z
-end)
+end
+F.foldi = F_foldi
+mt.__index.foldi = function(xs, fzx, z) return F_foldi(fzx, z, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2637,13 +2935,19 @@ xs:fold1(f)
 > Left-associative fold of a list, the initial value is `xs[1]`.
 @@@]]
 
-register2 "fold1" (function(fzx, xs)
+do
+
+local function F_fold1(fzx, xs)
     local z = xs[1]
     for i = 2, #xs do
         z = fzx(z, xs[i])
     end
     return z
-end)
+end
+F.fold1 = F_fold1
+mt.__index.fold1 = function(xs, fzx) return F_fold1(fzx, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2653,12 +2957,18 @@ t:foldt(f, x)
 > Left-associative fold of a table (in the order given by F.pairs).
 @@@]]
 
-register3 "foldt" (function(fzx, z, t)
+do
+
+local function F_foldt(fzx, z, t)
     for _, v in F_pairs(t) do
         z = fzx(z, v)
     end
     return z
-end)
+end
+F.foldt = F_foldt
+mt.__index.foldt = function(t, fzx, z) return F_foldt(fzx, z, t) end
+
+end
 
 --[[@@@
 ```lua
@@ -2668,12 +2978,18 @@ t:foldk(f, x)
 > Left-associative fold of a table (in the order given by F.pairs).
 @@@]]
 
-register3 "foldk" (function(fzx, z, t)
+do
+
+local function F_foldk(fzx, z, t)
     for k, v in F_pairs(t) do
         z = fzx(z, k, v)
     end
     return z
-end)
+end
+F.foldk = F_foldk
+mt.__index.foldk = function(t, fzx, z) return F_foldk(fzx, z, t) end
+
+end
 
 --[[@@@
 ```lua
@@ -2683,10 +2999,11 @@ bs:land()
 > Returns the conjunction of a container of booleans.
 @@@]]
 
-register1 "land" (function(bs)
+function F.land(bs)
     for i = 1, #bs do if not bs[i] then return false end end
     return true
-end)
+end
+mt.__index.land = F.land
 
 --[[@@@
 ```lua
@@ -2696,10 +3013,11 @@ bs:lor()
 > Returns the disjunction of a container of booleans.
 @@@]]
 
-register1 "lor" (function(bs)
+function F.lor(bs)
     for i = 1, #bs do if bs[i] then return true end end
     return false
-end)
+end
+mt.__index.lor = F.lor
 
 --[[@@@
 ```lua
@@ -2709,10 +3027,16 @@ xs:any(p)
 > Determines whether any element of the structure satisfies the predicate.
 @@@]]
 
-register2 "any" (function(p, xs)
+do
+
+local function F_any(p, xs)
     for i = 1, #xs do if p(xs[i]) then return true end end
     return false
-end)
+end
+F.any = F_any
+mt.__index.any = function(xs, p) return F_any(p, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2722,10 +3046,16 @@ xs:all(p)
 > Determines whether all elements of the structure satisfy the predicate.
 @@@]]
 
-register2 "all" (function(p, xs)
+do
+
+local function F_all(p, xs)
     for i = 1, #xs do if not p(xs[i]) then return false end end
     return true
-end)
+end
+F.all = F_all
+mt.__index.all = function(xs, p) return F_all(p, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2735,11 +3065,12 @@ xs:sum()
 > Returns the sum of the numbers of a structure.
 @@@]]
 
-register1 "sum" (function(xs)
+function F.sum(xs)
     local s = 0
     for i = 1, #xs do s = s + xs[i] end
     return s
-end)
+end
+mt.__index.sum = F.sum
 
 --[[@@@
 ```lua
@@ -2749,11 +3080,12 @@ xs:product()
 > Returns the product of the numbers of a structure.
 @@@]]
 
-register1 "product" (function(xs)
+function F.product(xs)
     local p = 1
     for i = 1, #xs do p = p * xs[i] end
     return p
-end)
+end
+mt.__index.product = F.product
 
 --[[@@@
 ```lua
@@ -2763,7 +3095,7 @@ xs:maximum([comp_lt])
 > The largest element of a non-empty structure, according to the optional comparison function.
 @@@]]
 
-register1 "maximum" (function(xs, comp_lt)
+function F.maximum(xs, comp_lt)
     if #xs == 0 then return nil end
     comp_lt = comp_lt or F_op_lt
     local xmax = xs[1]
@@ -2771,7 +3103,8 @@ register1 "maximum" (function(xs, comp_lt)
         if not comp_lt(xs[i], xmax) then xmax = xs[i] end
     end
     return xmax
-end)
+end
+mt.__index.maximum = F.maximum
 
 --[[@@@
 ```lua
@@ -2781,7 +3114,7 @@ xs:minimum([comp_lt])
 > The least element of a non-empty structure, according to the optional comparison function.
 @@@]]
 
-F_minimum = register1 "minimum" (function(xs, comp_lt)
+F_minimum = function(xs, comp_lt)
     if #xs == 0 then return nil end
     comp_lt = comp_lt or F_op_lt
     local min = xs[1]
@@ -2789,7 +3122,9 @@ F_minimum = register1 "minimum" (function(xs, comp_lt)
         if comp_lt(xs[i], min) then min = xs[i] end
     end
     return min
-end)
+end
+F.minimum = F_minimum
+mt.__index.minimum = F_minimum
 
 --[[@@@
 ```lua
@@ -2799,14 +3134,20 @@ xs:scan(f, x)
 > Similar to `fold` but returns a list of successive reduced values from the left.
 @@@]]
 
-register3 "scan" (function(fzx, z, xs)
+do
+
+local function F_scan(fzx, z, xs)
     local zs = {z}
     for i = 1, #xs do
         z = fzx(z, xs[i])
         zs[#zs+1] = z
     end
     return setmetatable(zs, mt)
-end)
+end
+F.scan = F_scan
+mt.__index.scan = function(xs, fzx, z) return F_scan(fzx, z, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2816,7 +3157,9 @@ xs:scan1(f)
 > Like `scan` but the initial value is `xs[1]`.
 @@@]]
 
-register2 "scan1" (function(fzx, xs)
+do
+
+local function F_scan1(fzx, xs)
     local z = xs[1]
     local zs = {z}
     for i = 2, #xs do
@@ -2824,7 +3167,11 @@ register2 "scan1" (function(fzx, xs)
         zs[#zs+1] = z
     end
     return setmetatable(zs, mt)
-end)
+end
+F.scan1 = F_scan1
+mt.__index.scan1 = function(xs, fzx) return F_scan1(fzx, xs) end
+
+end
 
 --[[@@@
 ```lua
@@ -2834,9 +3181,15 @@ xs:concat_map(f)
 > Map a function over all the elements of a container and concatenate the resulting lists.
 @@@]]
 
-register2 "concat_map" (function(fx, xs)
+do
+
+local function F_concat_map(fx, xs)
     return F_concat(F_map(fx, xs))
-end)
+end
+F.concat_map = F_concat_map
+mt.__index.concat_map = function(xs, fx) return F_concat_map(fx,xs) end
+
+end
 
 --[[------------------------------------------------------------------------@@@
 ## Zipping
@@ -2850,7 +3203,7 @@ xss:zip([f])
 > `zip` takes a list of lists and returns a list of corresponding tuples.
 @@@]]
 
-F_zip = register1 "zip" (function(xss, f)
+F_zip = function(xss, f)
     local yss = {}
     local ns = F_minimum(F_map(F_length, xss))
     if f then
@@ -2865,7 +3218,9 @@ F_zip = register1 "zip" (function(xss, f)
         end
     end
     return setmetatable(yss, mt)
-end)
+end
+F.zip = F_zip
+mt.__index.zip = F_zip
 
 --[[@@@
 ```lua
@@ -2875,9 +3230,10 @@ xss:unzip()
 > Transforms a list of n-tuples into n lists
 @@@]]
 
-register1 "unzip" (function(xss)
+function F.unzip(xss)
     return t_unpack(F_zip(xss))
-end)
+end
+mt.__index.unzip = F.unzip
 
 --[[@@@
 ```lua
@@ -2887,7 +3243,8 @@ xss:zip_with(f)
 > `zip_with` generalises `zip` by zipping with the function given as the first argument, instead of a tupling function.
 @@@]]
 
-register2 "zip_with" (function(f, xss) return F_zip(xss, f) end)
+function F.zip_with(f, xss) return F_zip(xss, f) end
+mt.__index.zip_with = F_zip
 
 --[[------------------------------------------------------------------------@@@
 ## Set operations
@@ -2901,7 +3258,7 @@ xs:nub([comp_eq])
 > Removes duplicate elements from a list. In particular, it keeps only the first occurrence of each element, according to the optional comp_eq function.
 @@@]]
 
-register1 "nub" (function(xs, comp_eq)
+function F.nub(xs, comp_eq)
     comp_eq = comp_eq or F_op_eq
     local ys = {}
     for i = 1, #xs do
@@ -2913,7 +3270,8 @@ register1 "nub" (function(xs, comp_eq)
         if not found then ys[#ys+1] = x end
     end
     return setmetatable(ys, mt)
-end)
+end
+mt.__index.nub = F.nub
 
 --[[@@@
 ```lua
@@ -2923,7 +3281,9 @@ xs:delete(x, [comp_eq])
 > Removes the first occurrence of x from its list argument, according to the optional comp_eq function.
 @@@]]
 
-register2 "delete" (function(x, xs, comp_eq)
+do
+
+local function F_delete(x, xs, comp_eq)
     comp_eq = comp_eq or F_op_eq
     local ys = {}
     local i = 1
@@ -2938,7 +3298,11 @@ register2 "delete" (function(x, xs, comp_eq)
         i = i+1
     end
     return setmetatable(ys, mt)
-end)
+end
+F.delete = F_delete
+mt.__index.delete = function(xs, x, comp_eq) return F_delete(x, xs, comp_eq) end
+
+end
 
 --[[@@@
 ```lua
@@ -2948,7 +3312,7 @@ xs:difference(ys, [comp_eq])
 > Returns the list difference. In `difference(xs, ys)`{.lua} the first occurrence of each element of ys in turn (if any) has been removed from xs, according to the optional comp_eq function.
 @@@]]
 
-register1 "difference" (function(xs, ys, comp_eq)
+function F.difference(xs, ys, comp_eq)
     comp_eq = comp_eq or F_op_eq
     local zs = {}
     ys = {t_unpack(ys)}
@@ -2965,7 +3329,8 @@ register1 "difference" (function(xs, ys, comp_eq)
         if not found then zs[#zs+1] = x end
     end
     return setmetatable(zs, mt)
-end)
+end
+mt.__index.difference = F.difference
 
 --[[@@@
 ```lua
@@ -2975,7 +3340,7 @@ xs:union(ys, [comp_eq])
 > Returns the list union of the two lists. Duplicates, and elements of the first list, are removed from the the second list, but if the first list contains duplicates, so will the result, according to the optional comp_eq function.
 @@@]]
 
-register1 "union" (function(xs, ys, comp_eq)
+function F.union(xs, ys, comp_eq)
     comp_eq = comp_eq or F_op_eq
     local zs = {t_unpack(xs)}
     for i = 1, #ys do
@@ -2987,7 +3352,8 @@ register1 "union" (function(xs, ys, comp_eq)
         if not found then zs[#zs+1] = y end
     end
     return setmetatable(zs, mt)
-end)
+end
+mt.__index.union = F.union
 
 --[[@@@
 ```lua
@@ -2997,7 +3363,7 @@ xs:intersection(ys, [comp_eq])
 > Returns the list intersection of two lists. If the first list contains duplicates, so will the result, according to the optional comp_eq function.
 @@@]]
 
-register1 "intersection" (function(xs, ys, comp_eq)
+function F.intersection(xs, ys, comp_eq)
     comp_eq = comp_eq or F_op_eq
     local zs = {}
     for i = 1, #xs do
@@ -3009,7 +3375,8 @@ register1 "intersection" (function(xs, ys, comp_eq)
         if found then zs[#zs+1] = x end
     end
     return setmetatable(zs, mt)
-end)
+end
+mt.__index.intersection = F.intersection
 
 --[[------------------------------------------------------------------------@@@
 ## Table operations
@@ -3025,15 +3392,18 @@ ts:table_union()
 > Right-biased union of tables.
 @@@]]
 
-F_merge = register1 "merge" (function(ts)
+F_merge = function(ts)
     local u = {}
     for i = 1, #ts do
         for k, v in pairs(ts[i]) do u[k] = v end
     end
     return setmetatable(u, mt)
-end)
+end
+F.merge = F_merge
+mt.__index.merge = F_merge
 
-register1 "table_union" (F.merge)
+F.table_union = F_merge
+mt.__index.table_union = F_merge
 
 --[[@@@
 ```lua
@@ -3045,7 +3415,9 @@ ts:table_union_with(f)
 > Right-biased union of tables with a combining function.
 @@@]]
 
-register2 "merge_with" (function(f, ts)
+do
+
+local function F_merge_with(f, ts)
     local u = {}
     for i = 1, #ts do
         for k, v in pairs(ts[i]) do
@@ -3058,9 +3430,14 @@ register2 "merge_with" (function(f, ts)
         end
     end
     return setmetatable(u, mt)
-end)
+end
+F.merge_with = F_merge_with
+mt.__index.merge_with = function(ts, f) return F_merge_with(f, ts) end
 
-register2 "table_union_with" (F.merge_with)
+F.table_union_with = F_merge_with
+mt.__index.table_union_with = mt.__index.merge_with
+
+end
 
 --[[@@@
 ```lua
@@ -3072,7 +3449,9 @@ ts:table_union_with_key(f)
 > Right-biased union of tables with a combining function.
 @@@]]
 
-register2 "merge_with_key" (function(f, ts)
+do
+
+local function F_merge_with_key(f, ts)
     local u = {}
     for i = 1, #ts do
         for k, v in pairs(ts[i]) do
@@ -3085,9 +3464,14 @@ register2 "merge_with_key" (function(f, ts)
         end
     end
     return setmetatable(u, mt)
-end)
+end
+F.merge_with_key = F_merge_with_key
+mt.__index.merge_with_key = function(ts,f) return F_merge_with_key(f, ts) end
 
-register2 "table_union_with_key" (F.merge_with_key)
+F.table_union_with_key = F_merge_with_key
+mt.__index.table_union_with_key = mt.__index.merge_with_key
+
+end
 
 --[[@@@
 ```lua
@@ -3097,11 +3481,12 @@ t1:table_difference(t2)
 > Difference of two maps. Return elements of the first map not existing in the second map.
 @@@]]
 
-register1 "table_difference" (function(t1, t2)
+function F.table_difference(t1, t2)
     local t = {}
     for k, v in pairs(t1) do if t2[k] == nil then t[k] = v end end
     return setmetatable(t, mt)
-end)
+end
+mt.__index.table_difference = F.table_difference
 
 --[[@@@
 ```lua
@@ -3111,7 +3496,9 @@ t1:table_difference_with(f, t2)
 > Difference with a combining function. When two equal keys are encountered, the combining function is applied to the values of these keys.
 @@@]]
 
-register2 "table_difference_with" (function(f, t1, t2)
+do
+
+local function F_table_difference_with(f, t1, t2)
     local t = {}
     for k, v1 in pairs(t1) do
         local v2 = t2[k]
@@ -3122,7 +3509,11 @@ register2 "table_difference_with" (function(f, t1, t2)
         end
     end
     return setmetatable(t, mt)
-end)
+end
+F.table_difference_with = F_table_difference_with
+mt.__index.table_difference_with = function(t1, f, t2) return F_table_difference_with(f, t1, t2) end
+
+end
 
 --[[@@@
 ```lua
@@ -3132,7 +3523,9 @@ t1:table_difference_with_key(f, t2)
 > Union with a combining function.
 @@@]]
 
-register2 "table_difference_with_key" (function(f, t1, t2)
+do
+
+local function F_table_difference_with_key(f, t1, t2)
     local t = {}
     for k, v1 in pairs(t1) do
         local v2 = t2[k]
@@ -3143,7 +3536,11 @@ register2 "table_difference_with_key" (function(f, t1, t2)
         end
     end
     return setmetatable(t, mt)
-end)
+end
+F.table_difference_with_key = F_table_difference_with_key
+mt.__index.table_difference_with_key = function(t1, f, t2) return F_table_difference_with_key(f, t1, t2) end
+
+end
 
 --[[@@@
 ```lua
@@ -3153,11 +3550,12 @@ t1:table_intersection(t2)
 > Intersection of two maps. Return data in the first map for the keys existing in both maps.
 @@@]]
 
-register1 "table_intersection" (function(t1, t2)
+function F.table_intersection(t1, t2)
     local t = {}
     for k, v in pairs(t1) do if t2[k] ~= nil then t[k] = v end end
     return setmetatable(t, mt)
-end)
+end
+mt.__index.table_intersection = F.table_intersection
 
 --[[@@@
 ```lua
@@ -3167,7 +3565,9 @@ t1:table_intersection_with(f, t2)
 > Difference with a combining function. When two equal keys are encountered, the combining function is applied to the values of these keys.
 @@@]]
 
-register2 "table_intersection_with" (function(f, t1, t2)
+do
+
+local function F_table_intersection_with(f, t1, t2)
     local t = {}
     for k, v1 in pairs(t1) do
         local v2 = t2[k]
@@ -3176,7 +3576,11 @@ register2 "table_intersection_with" (function(f, t1, t2)
         end
     end
     return setmetatable(t, mt)
-end)
+end
+F.table_intersection_with = F_table_intersection_with
+mt.__index.table_intersection_with = function(t1, f, t2) return F_table_intersection_with(f, t1, t2) end
+
+end
 
 --[[@@@
 ```lua
@@ -3186,7 +3590,9 @@ t1:table_intersection_with_key(f, t2)
 > Union with a combining function.
 @@@]]
 
-register2 "table_intersection_with_key" (function(f, t1, t2)
+do
+
+local function F_table_intersection_with_key(f, t1, t2)
     local t = {}
     for k, v1 in pairs(t1) do
         local v2 = t2[k]
@@ -3195,7 +3601,11 @@ register2 "table_intersection_with_key" (function(f, t1, t2)
         end
     end
     return setmetatable(t, mt)
-end)
+end
+F.table_intersection_with_key = F_table_intersection_with_key
+mt.__index.table_intersection_with_key = function(t1, f, t2) return F_table_intersection_with_key(f, t1, t2) end
+
+end
 
 --[[@@@
 ```lua
@@ -3205,10 +3615,11 @@ t1:disjoint(t2)
 > Check the intersection of two maps is empty.
 @@@]]
 
-register1 "disjoint" (function(t1, t2)
+function F.disjoint(t1, t2)
     for k, _ in pairs(t1) do if t2[k] ~= nil then return false end end
     return true
-end)
+end
+mt.__index.disjoint = F.disjoint
 
 --[[@@@
 ```lua
@@ -3218,14 +3629,15 @@ t1:table_compose(t2)
 > Relate the keys of one map to the values of the other, by using the values of the former as keys for lookups in the latter.
 @@@]]
 
-register1 "table_compose" (function(t1, t2)
+function F.table_compose(t1, t2)
     local t = {}
     for k2, v2 in pairs(t2) do
         local v1 = t1[v2]
         t[k2] = v1
     end
     return setmetatable(t, mt)
-end)
+end
+mt.__index.table_compose = F.table_compose
 
 --[[@@@
 ```lua
@@ -3251,7 +3663,9 @@ If `t2` contains `F.Nil` then the corresponding key is removed from `t1`.
 Unmodified subtrees are not cloned but returned as is (common subtrees are shared).
 @@@]]
 
-local function patch(t1, t2)
+do
+
+local function F_patch(t1, t2)
     if t2 == nil then return t1 end -- value not patched
     if t2 == Nil then return nil end -- remove t1
     if type(t1) ~= "table" then return t2 end -- replace a scalar field by a scalar or a table
@@ -3260,7 +3674,7 @@ local function patch(t1, t2)
     -- patch fields from t1 with values from t2
     for k, v1 in pairs(t1) do
         local v2 = t2[k]
-        t[k] = patch(v1, v2)
+        t[k] = F_patch(v1, v2)
     end
     -- add new values from t2
     for k, v2 in pairs(t2) do
@@ -3272,7 +3686,10 @@ local function patch(t1, t2)
     return setmetatable(t, mt)
 end
 
-register1 "patch" (patch)
+F.patch = F_patch
+mt.__index.patch = F_patch
+
+end
 
 --[[------------------------------------------------------------------------@@@
 ## Ordered lists
@@ -3286,12 +3703,13 @@ xs:sort([comp_lt])
 > Sorts xs from lowest to highest, according to the optional comp_lt function.
 @@@]]
 
-register1 "sort" (function(xs, comp_lt)
+function F.sort(xs, comp_lt)
     local ys = {}
     for i = 1, #xs do ys[i] = xs[i] end
     t_sort(ys, comp_lt)
     return setmetatable(ys, mt)
-end)
+end
+mt.__index.sort = F.sort
 
 --[[@@@
 ```lua
@@ -3301,7 +3719,9 @@ xs:sort_on(f, [comp_lt])
 > Sorts a list by comparing the results of a key function applied to each element, according to the optional comp_lt function.
 @@@]]
 
-register2 "sort_on" (function(f, xs, comp_lt)
+do
+
+local function F_sort_on(f, xs, comp_lt)
     comp_lt = comp_lt or F_op_lt
     local ys = {}
     for i = 1, #xs do ys[i] = {f(xs[i]), xs[i]} end
@@ -3309,7 +3729,11 @@ register2 "sort_on" (function(f, xs, comp_lt)
     local zs = {}
     for i = 1, #ys do zs[i] = ys[i][2] end
     return setmetatable(zs, mt)
-end)
+end
+F.sort_on = F_sort_on
+mt.__index.sort_on = function(xs, f, comp_lt) return F_sort_on(f, xs, comp_lt) end
+
+end
 
 --[[@@@
 ```lua
@@ -3319,7 +3743,9 @@ xs:insert(x, [comp_lt])
 > Inserts the element into the list at the first position where it is less than or equal to the next element, according to the optional comp_lt function.
 @@@]]
 
-register2 "insert" (function(x, xs, comp_lt)
+do
+
+local function F_insert(x, xs, comp_lt)
     comp_lt = comp_lt or F_op_lt
     local ys = {}
     local i = 1
@@ -3333,7 +3759,11 @@ register2 "insert" (function(x, xs, comp_lt)
         i = i+1
     end
     return setmetatable(ys, mt)
-end)
+end
+F.insert = F_insert
+mt.__index.insert = function(xs, x, comp_lt) return F_insert(x, xs, comp_lt) end
+
+end
 
 --[[------------------------------------------------------------------------@@@
 ## Miscellaneous functions
@@ -3347,14 +3777,18 @@ xs:subsequences()
 > Returns the list of all subsequences of the argument.
 @@@]]
 
+do
+
 local function F_subsequences(xs)
     if F_null(xs) then return setmetatable({{}}, mt) end
     local inits = F_subsequences(F_init(xs))
     local last = F_last(xs)
     return inits .. F_map(function(seq) return F_concat{seq, {last}} end, inits)
 end
+F.subsequences = F_subsequences
+mt.__index.subsequences = F_subsequences
 
-register1 "subsequences" (F_subsequences)
+end
 
 --[[@@@
 ```lua
@@ -3364,7 +3798,7 @@ xs:permutations()
 > Returns the list of all permutations of the argument.
 @@@]]
 
-F_permutations = register1 "permutations" (function(xs)
+F_permutations = function(xs)
     local perms = {}
     local n = #xs
     xs = F_clone(xs)
@@ -3380,7 +3814,9 @@ F_permutations = register1 "permutations" (function(xs)
     end
     permute(1)
     return setmetatable(perms, mt)
-end)
+end
+F.permutations = F_permutations
+mt.__index.permutations = F_permutations
 
 --[[------------------------------------------------------------------------@@@
 ## Functions on strings
@@ -3856,14 +4292,15 @@ xs:unlines()
 > Appends a `\n` character to each input string, then concatenates the results.
 @@@]]
 
-register1 "unlines" (function(xs)
+function F.unlines(xs)
     local s = {}
     for i = 1, #xs do
         s[#s+1] = xs[i]
         s[#s+1] = "\n"
     end
     return t_concat(s)
-end)
+end
+mt.__index.unlines = F.unlines
 
 --[[@@@
 ```lua
@@ -3873,9 +4310,10 @@ xs:unwords()
 > Joins words with separating spaces.
 @@@]]
 
-register1 "unwords" (function(xs)
+function F.unwords(xs)
     return t_concat(xs, " ")
-end)
+end
+mt.__index.unwords = F.unwords
 
 --[[@@@
 ```lua
@@ -4031,12 +4469,23 @@ function string.dotted_upper_snake_case(...)
     return t_concat(F_map(s_upper, split_identifier(...)), ".")
 end
 
-register1 "lower_snake_case" (string.lower_snake_case)
-register1 "upper_snake_case" (string.upper_snake_case)
-register1 "lower_camel_case" (string.lower_camel_case)
-register1 "upper_camel_case" (string.upper_camel_case)
-register1 "dotted_lower_snake_case" (string.dotted_lower_snake_case)
-register1 "dotted_upper_snake_case" (string.dotted_upper_snake_case)
+F.lower_snake_case = string.lower_snake_case
+mt.__index.lower_snake_case = string.lower_snake_case
+
+F.upper_snake_case = string.upper_snake_case
+mt.__index.upper_snake_case = string.upper_snake_case
+
+F.lower_camel_case = string.lower_camel_case
+mt.__index.lower_camel_case = string.lower_camel_case
+
+F.upper_camel_case = string.upper_camel_case
+mt.__index.upper_camel_case = string.upper_camel_case
+
+F.dotted_lower_snake_case = string.dotted_lower_snake_case
+mt.__index.dotted_lower_snake_case = string.dotted_lower_snake_case
+
+F.dotted_upper_snake_case = string.dotted_upper_snake_case
+mt.__index.dotted_upper_snake_case = string.dotted_upper_snake_case
 
 --[[------------------------------------------------------------------------@@@
 ## String evaluation
@@ -4069,6 +4518,8 @@ F.I(t)
 > E.g. `F.I % "@[]"` is an interpolator that replaces `@[...]` with
 > the value of `...`.
 @@@]]
+
+do
 
 local interpolator_mt = {}
 
@@ -4108,6 +4559,8 @@ end
 
 F.I = setmetatable({env=nil}, interpolator_mt) % "%$()"
 
+end
+
 --[[------------------------------------------------------------------------@@@
 ## Random array access
 
@@ -4123,13 +4576,14 @@ xs:choose()     -- using the global PRNG
 returns a random item from `xs`
 @@@]]
 
-register1 "choose" (function(xs, prng)
+function F.choose(xs, prng)
     if prng then
         return prng:choose(xs)
     else
         return require "crypt".choose(xs)
     end
-end)
+end
+mt.__index.choose = F.choose
 
 --[[@@@
 ```lua
@@ -4141,13 +4595,14 @@ xs:shuffle()    -- using the global PRNG
 returns a shuffled copy of `xs`
 @@@]]
 
-register1 "shuffle" (function(xs, prng)
+function F.shuffle(xs, prng)
     if prng then
         return prng:shuffle(xs)
     else
         return require "crypt".shuffle(xs)
     end
-end)
+end
+mt.__index.shuffle = F.shuffle
 
 -------------------------------------------------------------------------------
 -- module

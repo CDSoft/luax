@@ -40,8 +40,8 @@ returns a random item from `xs`
 
 local prng_mt = getmetatable(crypt.prng())
 
-function prng_mt.__index.choose(prng, xs)
-    return xs[prng:int(1, #xs)]
+function prng_mt.__index:choose(xs)
+    return xs[self:int(1, #xs)]
 end
 
 function crypt.choose(xs)
@@ -56,10 +56,10 @@ crypt.shuffle(xs)    -- using the global PRNG
 returns a shuffled copy of `xs`
 @@@]]
 
-function prng_mt.__index.shuffle(prng, xs)
+function prng_mt.__index:shuffle(xs)
     local ys = F.clone(xs)
     for i = 1, #ys-1 do
-        local j = prng:int(i, #ys)
+        local j = self:int(i, #ys)
         ys[i], ys[j] = ys[j], ys[i]
     end
     return ys

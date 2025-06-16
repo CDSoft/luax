@@ -302,7 +302,7 @@ fs.findpath(name)
 returns the full path of `name` if `name` is found in `$PATH` or `nil`.
 
 ``` lua
-fs.rmdir(path, [params])
+fs.rmdir(path)
 ```
 
 deletes the directory `path` and its content recursively.

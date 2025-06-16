@@ -1,13 +1,32 @@
 {
-    "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
-    "Lua.diagnostics.globals": [
-        "pandoc",
-        "PANDOC_STATE",
-        "FORMAT",
-        "on",
-        "eq",
-        "ne",
-        "bounded"
-    ],
-    "Lua.workspace.checkThirdParty": false
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "Lua 5.4",
+  "workspace.library": [
+    "libluax/F",
+    "libluax/complex",
+    "libluax/crypt",
+    "libluax/curl",
+    "libluax/debug",
+    "libluax/fs",
+    "libluax/imath",
+    "libluax/import",
+    "libluax/lar",
+    "libluax/linenoise",
+    "libluax/lz4",
+    "libluax/lzip",
+    "libluax/mathx",
+    "libluax/package",
+    "libluax/ps",
+    "libluax/qmath",
+    "libluax/sh",
+    "libluax/sys",
+    "libluax/tar",
+    "libluax/term",
+    "libluax/wget",
+    "ext/lua/argparse",
+    "ext/lua/cbor",
+    "ext/lua/json",
+    "ext/lua/serpent"
+  ],
+  "workspace.checkThirdParty": false
 }
