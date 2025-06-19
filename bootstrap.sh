@@ -47,10 +47,10 @@ do
     shift
 done
 
-BIN=$BUILDDIR/bin
-LUA=$BIN/lua
+BOOT=$BUILDDIR/boot
+LUA=$BOOT/minilua
 
-mkdir -p "$BIN"
+mkdir -p "$BOOT"
 
 info()
 {
@@ -126,7 +126,6 @@ if ! [ -x "$LUA" ]
 then
     echo "Compile $LUA"
     CFLAGS=(
-        -O2
         -pipe
     )
     LDFLAGS=(
