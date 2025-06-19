@@ -29,10 +29,9 @@ Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
 sh.pipe(...)(data)
 ```
 
-Runs the command `...` with `io.popen` or `pandoc.pipe` and feeds
-`stdin` with `data`. When `sh.pipe` succeeds, it returns the content of
-stdout. Otherwise it returns the error identified by `op.popen` or
-`pandoc.pipe`.
+Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
+When `sh.pipe` succeeds, it returns the content of stdout. Otherwise it
+returns the error identified by `io.popen`.
 
 ``` lua
 sh(...)

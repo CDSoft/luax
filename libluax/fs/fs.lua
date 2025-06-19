@@ -29,6 +29,8 @@ local fs = require "_fs"
 
 local F = require "F"
 
+local __PANDOC__, pandoc  = PANDOC_VERSION ~= nil, pandoc
+
 --[[@@@
 ```lua
 fs.join(...)
@@ -39,7 +41,7 @@ If a component is absolute, the previous components are removed.
 @@@]]
 
 function fs.join(...)
-    if pandoc then return pandoc.path.join(F.flatten{...}) end
+    if __PANDOC__ then return pandoc.path.join(F.flatten{...}) end
     local function add_path(ps, p)
         if p:match("^"..fs.sep) then return F{p} end
         ps[#ps+1] = p
@@ -89,7 +91,7 @@ deletes the directory `path` and its content recursively.
 @@@]]
 
 function fs.rmdir(path)
-    if pandoc then
+    if __PANDOC__ then
         pandoc.system.remove_directory(path, true)
         return true
     end
@@ -189,7 +191,7 @@ calls `f(tmp)` where `tmp` is the name of a temporary file.
 @@@]]
 
 function fs.with_tmpfile(f)
-    if pandoc then
+    if __PANDOC__ then
         return pandoc.system.with_temporary_directory("luax", function(tmpdir)
             return f(tmpdir/"tmpfile")
         end)
@@ -208,7 +210,7 @@ calls `f(tmp)` where `tmp` is the name of a temporary directory.
 @@@]]
 
 function fs.with_tmpdir(f)
-    if pandoc then
+    if __PANDOC__ then
         return pandoc.system.with_temporary_directory("luax", f)
     end
     local tmp = fs.tmpdir()
@@ -225,7 +227,9 @@ changes the current working directory to `path` and calls `f()`.
 @@@]]
 
 function fs.with_dir(path, f)
-    if pandoc then return pandoc.system.with_working_directory(path, f) end
+    if __PANDOC__ then
+        return pandoc.system.with_working_directory(path, f)
+    end
     if fs.chdir then
         local old = fs.getcwd()
         fs.chdir(path)

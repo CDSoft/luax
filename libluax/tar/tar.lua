@@ -37,6 +37,9 @@ local tar = {}
 
 local F = require "F"
 local fs = require "fs"
+local sys = require "sys"
+
+local __WINDOWS__ = sys.os == "windows"
 
 local format = string.format
 local pack   = string.pack
@@ -283,7 +286,7 @@ function tar.tar(files, xform)
                 st.type = "link"
                 st.link = file.link
             else
-                if sys.os == "windows" then
+                if __WINDOWS__ then
                     st0, err = fs.stat(file.name)
                 else
                     st0, err = fs.lstat(file.name)

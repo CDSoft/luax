@@ -29,11 +29,15 @@ local sys = require "sys"
 
 -- Pure Lua / Pandoc Lua implementation of fs.c
 
+local __PANDOC__, pandoc  = PANDOC_VERSION ~= nil, pandoc
+local __WINDOWS__ = sys.os == "windows"
+local __MACOS__   = sys.os == "macos"
+
 local fs = {}
 
 local sh = require "sh"
 
-if pandoc then
+if __PANDOC__ then
     fs.sep = pandoc.path.separator
     fs.path_sep = pandoc.path.search_path_separator
 else
@@ -48,14 +52,14 @@ local function safe_sh(...)
 end
 
 function fs.getcwd()
-    if pandoc then return pandoc.system.get_working_directory() end
-    if sys.os == "windows" then return safe_sh "cd" : trim() end
+    if __PANDOC__ then return pandoc.system.get_working_directory() end
+    if __WINDOWS__ then return safe_sh "cd" : trim() end
     return safe_sh "pwd" : trim()
 end
 
 function fs.dir(path)
-    if pandoc then return F(pandoc.system.list_directory(path)) end
-    if sys.os == "windows" then return safe_sh("dir /b", path) : lines() : sort() end
+    if __PANDOC__ then return F(pandoc.system.list_directory(path)) end
+    if __WINDOWS__ then return safe_sh("dir /b", path) : lines() : sort() end
     return safe_sh("ls", path) : lines() : sort()
 end
 
@@ -80,12 +84,12 @@ function fs.copy(source_name, target_name)
 end
 
 function fs.symlink(target, linkpath)
-    if sys.os == "windows" then return nil, "symlink not implemented" end
+    if __WINDOWS__ then return nil, "symlink not implemented" end
     return sh.run("ln -s", target, linkpath)
 end
 
 function fs.mkdir(path)
-    if pandoc and pandoc.system then return pandoc.system.make_directory(path) end
+    if __PANDOC__ then return pandoc.system.make_directory(path) end
     return sh.run("mkdir", path)
 end
 
@@ -123,7 +127,7 @@ fs.oX = S_IXOTH
 
 local function stat(name, follow)
     local size, mtime, atime, ctime, mode
-    if sys.os == "macos" then
+    if __MACOS__ then
         local st = sh.read("LC_ALL=C", "stat", follow, "-r", name, "2>/dev/null")
         if not st then return nil, "cannot stat "..name end
         local _
@@ -171,7 +175,7 @@ end
 
 function fs.inode(name)
     local dev, ino
-    if sys.os == "macos" then
+    if __MACOS__ then
         local st = sh.read("LC_ALL=C", "stat", "-L", "-r", name, "2>/dev/null")
         if not st then return nil, "cannot stat "..name end
         dev, ino = st:words():unpack()
@@ -222,18 +226,18 @@ function fs.touch(name, opt)
 end
 
 function fs.basename(path)
-    if pandoc then return pandoc.path.filename(path) end
+    if __PANDOC__ then return pandoc.path.filename(path) end
     return (path:gsub(".*[/\\]", ""))
 end
 
 function fs.dirname(path)
-    if pandoc then return pandoc.path.directory(path) end
+    if __PANDOC__ then return pandoc.path.directory(path) end
     local dir, n = path:gsub("[/\\][^/\\]*$", "")
     return n > 0 and dir or "."
 end
 
 function fs.splitext(path)
-    if pandoc then
+    if __PANDOC__ then
         if fs.basename(path):match "^%." then return path, "" end
         return pandoc.path.split_extension(path)
     end
@@ -252,7 +256,7 @@ function fs.chext(path, new_ext)
 end
 
 function fs.realpath(path)
-    if pandoc then return pandoc.path.normalize(path) end
+    if __PANDOC__ then return pandoc.path.normalize(path) end
     return safe_sh("realpath", path) : trim()
 end
 
@@ -266,8 +270,8 @@ function fs.absname(path)
 end
 
 function fs.mkdirs(path)
-    if pandoc then return pandoc.system.make_directory(path, true) end
-    if sys.os == "windows" then return sh.run("mkdir", path) end
+    if __PANDOC__ then return pandoc.system.make_directory(path, true) end
+    if __WINDOWS__ then return sh.run("mkdir", path) end
     return sh.run("mkdir", "-p", path)
 end
 
@@ -283,7 +287,7 @@ function fs.ls(dir, dotted) ---@diagnostic disable-line: unused-local (hidden fi
         return fullpath:gsub(useless_path_prefix, "")
     end
 
-    if sys.os == "windows" then
+    if __WINDOWS__ then
 
         local files
         if recursive then

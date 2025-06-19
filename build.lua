@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.2.10" "2025-06-12"
+version "9.2.11" "2025-06-19"
 
 local F = require "F"
 local fs = require "fs"
