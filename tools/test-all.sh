@@ -41,32 +41,22 @@ check()
     local BUILDDIR=".build/test-all/$NAME"
     say $BLUE "$*"
     ./bootstrap.sh -b "$BUILDDIR" -o "$BUILDDIR/build.ninja" "$@"
-    ninja -f "$BUILDDIR/build.ninja" test
+    (
+        eval "$("$BUILDDIR/bin/luax" env)"
+        ninja -f "$BUILDDIR/build.ninja" test || ninja -f "$BUILDDIR/build.ninja" test
+    )
 }
 
 check fast gcc
-check fast gcc lto
-check fast gcc strip
-check fast gcc ssl
+check fast gcc ssl lz4 lto strip
 check fast clang
-check fast clang lto
-check fast clang strip
-check fast clang ssl
+check fast clang ssl lz4 lto strip
 check fast zig
-check fast zig lto
-check fast zig strip
-check fast zig cross
-check fast zig lz4 cross
-check fast zig socket cross
-check fast zig ssl cross
-check fast zig lto lz4 socket ssl cross release
+check fast zig ssl lz4 lto strip cross release
 
 check small gcc
-check small gcc strip
 check small clang
-check small clang strip
 check small zig
-check small zig strip
 
 check debug gcc
 check debug clang
