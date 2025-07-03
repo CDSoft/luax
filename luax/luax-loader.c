@@ -19,7 +19,8 @@
 
 #include "libluax.h"
 
-#include "crypt/fnv1a.h"
+#include "crypt/fnv1a_32.h"
+#include "endianness.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -103,9 +104,12 @@ static t_header read_header(FILE *f, const char *exe)
         perror("fread");
         exit(EXIT_FAILURE);
     }
-    t_fnv1a_32 hash = fnv1a_32_init;
-    fnv1a_32_u32(&hash, header.size);
-    fnv1a_32_u32(&hash, header.magic);
+    header.magic = le32toh(header.magic);
+    header.size  = le32toh(header.size);
+    header.hash  = le32toh(header.hash);
+    t_fnv1a_32 hash;
+    fnv1a_32_init(&hash);
+    fnv1a_32_update(&hash, &header, sizeof(header)-sizeof(header.hash));
     if (header.magic != luax_magic || header.hash != hash) {
         fprintf(stderr, "%s: invalid LuaX payload\n", exe);
         exit(EXIT_FAILURE);

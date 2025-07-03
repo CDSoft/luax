@@ -32,7 +32,9 @@ local crypt = require "crypt"
 
 #include "crypt.h"
 
-#include "fnv1a.h"
+#include "fnv1a_32.h"
+#include "fnv1a_64.h"
+#include "fnv1a_128.h"
 #include "lua.h"
 #include "lauxlib.h"
 
@@ -51,13 +53,16 @@ local crypt = require "crypt"
 /* Entropy sources for PRNG initialization */
 static uint64_t entropy(void *ptr)
 {
-    static t_fnv1a_64 hash = fnv1a_64_init;  /* Start with the previous value */
-    fnv1a_64_u64(&hash, (uint64_t)time(NULL));         /* Current time */
-    fnv1a_64_u64(&hash, (uint64_t)clock());            /* Process execution time */
-    fnv1a_64_u64(&hash, (uint64_t)getpid());           /* Process ID */
-    fnv1a_64_u64(&hash, (uintptr_t)ptr);               /* Address of a characteristic variable */
-    fnv1a_64_u64(&hash, (uintptr_t)&ptr);              /* Address of a local variable */
-    fnv1a_64_u64(&hash, (uintptr_t)malloc);            /* Address of a global variable */
+    static t_fnv1a_64 hash = 0xcbf29ce484222325;    /* Start with the previous value */
+    const uint64_t random[] = {
+        (uint64_t)time(NULL),         /* Current time */
+        (uint64_t)clock(),            /* Process execution time */
+        (uint64_t)getpid(),           /* Process ID */
+        (uintptr_t)ptr,               /* Address of a characteristic variable */
+        (uintptr_t)&ptr,              /* Address of a local variable */
+        (uintptr_t)malloc,            /* Address of a global variable */
+    };
+    fnv1a_64_update(&hash, &random, sizeof(random));
     return hash;
 }
 
@@ -1029,13 +1034,12 @@ static int crypt_hash32(lua_State *L)
     const char *data = (const char *)luaL_checkstring(L, 1);
     const size_t datalen = (size_t)lua_rawlen(L, 1);
 
-    t_fnv1a_32 hash = fnv1a_32_init;
-    fnv1a_32(&hash, (const uint8_t *)data, datalen);
-
-    luaL_Buffer B;
-    luaL_buffinit(L, &B);
-    hex_encode((const char *)&hash, sizeof(hash), &B);
-    luaL_pushresult(&B);
+    t_fnv1a_32 hash;
+    t_fnv1a_32_digest digest;
+    fnv1a_32_init(&hash);
+    fnv1a_32_update(&hash, data, datalen);
+    fnv1a_32_digest(&hash, digest);
+    lua_pushstring(L, digest);
 
     return 1;
 }
@@ -1052,13 +1056,12 @@ static int crypt_hash64(lua_State *L)
     const char *data = (const char *)luaL_checkstring(L, 1);
     const size_t datalen = (size_t)lua_rawlen(L, 1);
 
-    t_fnv1a_64 hash = fnv1a_64_init;
-    fnv1a_64(&hash, (const uint8_t *)data, datalen);
-
-    luaL_Buffer B;
-    luaL_buffinit(L, &B);
-    hex_encode((const char *)&hash, sizeof(hash), &B);
-    luaL_pushresult(&B);
+    t_fnv1a_64 hash;
+    t_fnv1a_64_digest digest;
+    fnv1a_64_init(&hash);
+    fnv1a_64_update(&hash, data, datalen);
+    fnv1a_64_digest(&hash, digest);
+    lua_pushstring(L, digest);
 
     return 1;
 }
@@ -1075,13 +1078,12 @@ static int crypt_hash128(lua_State *L)
     const char *data = (const char *)luaL_checkstring(L, 1);
     const size_t datalen = (size_t)lua_rawlen(L, 1);
 
-    t_fnv1a_128 hash = fnv1a_128_init;
-    fnv1a_128(&hash, (const uint8_t *)data, datalen);
-
-    luaL_Buffer B;
-    luaL_buffinit(L, &B);
-    hex_encode((const char *)&hash, sizeof(hash), &B);
-    luaL_pushresult(&B);
+    t_fnv1a_128 hash;
+    t_fnv1a_128_digest digest;
+    fnv1a_128_init(&hash);
+    fnv1a_128_update(&hash, data, datalen);
+    fnv1a_128_digest(&hash, digest);
+    lua_pushstring(L, digest);
 
     return 1;
 }

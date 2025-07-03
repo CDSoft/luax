@@ -398,12 +398,11 @@ local function compile_loader(current_output, target_definition)
         help.err("Invalid "..target_definition.name.." loader")
     end
 
-    local header = string.pack("<I4I4c4",
-        magic,
-        #files[current_output],
-        string.pack("<I4I4", #files[current_output], magic):hash32():unhex())
+    local header = string.pack("<I4I4", magic, #files[current_output])
+    header = header .. header:hash32():unhex()
+    local payload = files[current_output] .. header
 
-    local exe = loader[1] .. files[current_output] .. header
+    local exe = loader[1] .. payload
 
     if not fs.write_bin(current_output, exe) then
         help.err("Can not create "..current_output)

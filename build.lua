@@ -194,9 +194,19 @@ BUILD_CONFIG.LTO = use_lto
 BUILD_CONFIG.SOCKET = socket
 BUILD_CONFIG.SSL = ssl
 
+-- check for "modern" compiler
+local compiler_version = tonumber(BUILD_CONFIG.COMPILER_VERSION:match"%d+")
+local modern_compiler = case(compiler) {
+    gcc   = compiler_version >= 13,
+    clang = compiler_version >= 16,
+    zig   = true,
+}
+
 -- disable strict mode with old compilers to avoid unknown options
-if compiler == "gcc"   and tonumber(BUILD_CONFIG.COMPILER_VERSION:match"%d+") < 13 then strict = false end
-if compiler == "clang" and tonumber(BUILD_CONFIG.COMPILER_VERSION:match"%d+") < 16 then strict = false end
+strict = strict and modern_compiler
+
+-- enable FNV1A BITINT implementation on modern compilers only
+local bitint = modern_compiler
 
 section("Compilation options")
 comment(("Compilation mode  : %s"):format(F{mode, use_lto and "+ LTO" or {}}:flatten():unwords()))
@@ -546,6 +556,7 @@ local cflags = {
 
 local luax_cflags = build.compile_flags {
     cflags,
+    bitint and "-DFNV1A_BITINT" or "-DFNV1A_BIT128",
     optional(strict) {
         "-Werror",
         "-Wall",
