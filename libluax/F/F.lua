@@ -922,7 +922,9 @@ F.partial(f, ...)
 
 function F.partial(f, ...)
     local n = select("#", ...)
-    if n == 1 then
+    if n == 0 then
+        return f
+    elseif n == 1 then
         local x1 = ...
         return function(...)
             return f(x1, ...)
