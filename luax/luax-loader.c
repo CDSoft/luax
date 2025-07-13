@@ -29,10 +29,8 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-static const uint32_t luax_magic = 0x5861754C;
-
-typedef struct __attribute__((__packed__)) {
-    uint32_t magic;
+typedef struct {
+    uint8_t magic[4];
     uint32_t size;
     uint32_t hash;
 } t_header;
@@ -104,13 +102,12 @@ static t_header read_header(FILE *f, const char *exe)
         perror("fread");
         exit(EXIT_FAILURE);
     }
-    header.magic = le32toh(header.magic);
-    header.size  = le32toh(header.size);
-    header.hash  = le32toh(header.hash);
     t_fnv1a_32 hash;
     fnv1a_32_init(&hash);
     fnv1a_32_update(&hash, &header, sizeof(header)-sizeof(header.hash));
-    if (header.magic != luax_magic || header.hash != hash) {
+    header.size  = le32toh(header.size);
+    header.hash  = le32toh(header.hash);
+    if (fnv1a_32_cmp(&hash, &header.hash) != 0) {
         fprintf(stderr, "%s: invalid LuaX payload\n", exe);
         exit(EXIT_FAILURE);
     }
@@ -174,7 +171,7 @@ int main(int argc, const char *argv[])
     /* read the payload in the current executable */
     char *exe = get_exe();
     FILE *f = open_exe(exe);
-    t_header header = read_header(f, exe);
+    const t_header header = read_header(f, exe);
     char *payload = read_payload(f, header);
     fclose(f);
 

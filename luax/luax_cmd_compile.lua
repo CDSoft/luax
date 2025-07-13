@@ -31,7 +31,7 @@ local welcome = require "luax_welcome"
 local targets = require "targets"
 local lzip = require "lzip"
 
-local magic = 0x5861754C
+local magic = "LuaX"
 
 local lua_interpreters = F{
     { name="luax",   add_luax_runtime=false },
@@ -398,9 +398,12 @@ local function compile_loader(current_output, target_definition)
         help.err("Invalid "..target_definition.name.." loader")
     end
 
-    local header = string.pack("<I4I4", magic, #files[current_output])
-    header = header .. header:hash32():unhex()
-    local payload = files[current_output] .. header
+    local header = string.pack("<c4I4", magic, #files[current_output])
+    local payload = F.str {
+        files[current_output],
+        header,
+        header:hash32():unhex(),
+    }
 
     local exe = loader[1] .. payload
 
