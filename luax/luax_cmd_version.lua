@@ -21,5 +21,14 @@ https://codeberg.org/cdsoft/luax
 --@LIB
 
 local luax_config = require "luax_config"
+local F = require "F"
 
-print(luax_config.copyright)
+local copyright_pattern = "(%S+%s+)(%S+%s*)(.*)"
+local luax_name, luax_version, luax_copyright = luax_config.copyright:match(copyright_pattern)
+local lua_name,  lua_version,  lua_copyright  = luax_config.lua_copyright:match(copyright_pattern)
+
+local w_name = math.max(#luax_name, #lua_name)
+local w_version = math.max(#luax_version, #lua_version)
+
+io.stdout:write(F.str{luax_name:ljust(w_name), luax_version:ljust(w_version), luax_copyright}, "\n")
+io.stdout:write(F.str{lua_name :ljust(w_name), lua_version :ljust(w_version), lua_copyright }:rtrim(), "\n")

@@ -26,6 +26,7 @@ local test = require "test"
 local eq = test.eq
 
 local F = require "F"
+local sys = require "sys"
 
 local is_luax =
     (arg[0] and arg[0]:basename():match"^test%-")
@@ -84,11 +85,12 @@ luax_packages:foreach(require)
 return function()
     -- Check that LuaX does not pollute the global environment
     local global_variables = F.keys(_G)
-    local expected_global_variables = F{
+    local expected_global_variables = F.flatten {
         "_G",
         "_LUAX_VERSION",
         "_LUAX_DATE",
         "_LUAX_COPYRIGHT",
+        sys.libc == "lua" and {} or "_LUA_COPYRIGHT",
         "_VERSION",
         "arg",
         "assert",

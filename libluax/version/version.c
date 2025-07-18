@@ -32,5 +32,7 @@ void set_version(lua_State *L)
     lua_setfield(L, -2, "_LUAX_DATE");      /* _G._LUAX_DATE = LUAX_DATE */
     lua_pushstring(L, LUAX_COPYRIGHT);      /* push LUAX_COPYRIGHT */
     lua_setfield(L, -2, "_LUAX_COPYRIGHT"); /* _G._LUAX_COPYRIGHT = LUAX_COPYRIGHT */
+    lua_pushstring(L, LUA_COPYRIGHT);       /* push LUA_COPYRIGHT */
+    lua_setfield(L, -2, "_LUA_COPYRIGHT");  /* _G._LUA_COPYRIGHT = LUA_COPYRIGHT */
     lua_remove(L, -1);                      /* remove _G */
 }
