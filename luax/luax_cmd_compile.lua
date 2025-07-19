@@ -116,7 +116,7 @@ do
         elseif a == '-k' then
             i = i+1
             if key then wrong_arg(a) end
-            key = arg[i]
+            key = F.even(#arg[i]) and arg[i]:match("^[0-9A-Fa-f]+$") and arg[i]:unhex() or arg[i]
         elseif a == '-q' then
             quiet = true
         elseif a:match "^%-" then
