@@ -688,7 +688,7 @@ F.atanh = mathx.atanh
 ```lua
 F.proper_fraction(x)
 ```
-> returns a pair (n,f) such that x = n+f, and:
+> returns a pair (n, f) such that x = n+f, and:
 >
 > - n is an integral number with the same sign as x
 > - f is a fraction with the same type and sign as x, and with absolute value less than 1.
@@ -783,7 +783,7 @@ end
 ```lua
 F.atan2(y, x)
 ```
-> computes the angle (from the positive x-axis) of the vector from the origin to the point (x,y).
+> computes the angle (from the positive x-axis) of the vector from the origin to the point (x, y).
 @@@]]
 
 F.atan2 = mathx.atan
@@ -819,7 +819,7 @@ local function gcd(a, b)
 end
 
 local function lcm(a, b)
-    return abs(a // gcd(a,b) * b)
+    return abs(a // gcd(a, b) * b)
 end
 
 F.gcd, F.lcm = gcd, lcm
@@ -3189,7 +3189,7 @@ local function F_concat_map(fx, xs)
     return F_concat(F_map(fx, xs))
 end
 F.concat_map = F_concat_map
-mt.__index.concat_map = function(xs, fx) return F_concat_map(fx,xs) end
+mt.__index.concat_map = function(xs, fx) return F_concat_map(fx, xs) end
 
 end
 
@@ -3468,7 +3468,7 @@ local function F_merge_with_key(f, ts)
     return setmetatable(u, mt)
 end
 F.merge_with_key = F_merge_with_key
-mt.__index.merge_with_key = function(ts,f) return F_merge_with_key(f, ts) end
+mt.__index.merge_with_key = function(ts, f) return F_merge_with_key(f, ts) end
 
 F.table_union_with_key = F_merge_with_key
 mt.__index.table_union_with_key = mt.__index.merge_with_key
@@ -4536,7 +4536,7 @@ end
 function interpolator_mt.__call(self, s)
     if type(s) == "string" then
         return (s_gsub(s, self.pattern, function(x)
-            local y = ((assert(load("return "..s_sub(x, 2,-2), nil, "t", self.env)))())
+            local y = ((assert(load("return "..s_sub(x, 2, -2), nil, "t", self.env)))())
             if type(y) == "table" or type(y) == "userdata" then
                 y = tostring(y)
             end

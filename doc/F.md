@@ -292,7 +292,7 @@ F.atanh(x)
 F.proper_fraction(x)
 ```
 
-> returns a pair (n,f) such that x = n+f, and:
+> returns a pair (n, f) such that x = n+f, and:
 >
 > - n is an integral number with the same sign as x
 > - f is a fraction with the same type and sign as x, and with absolute
@@ -361,7 +361,7 @@ F.atan2(y, x)
 ```
 
 > computes the angle (from the positive x-axis) of the vector from the
-> origin to the point (x,y).
+> origin to the point (x, y).
 
 ``` lua
 F.even(n)
