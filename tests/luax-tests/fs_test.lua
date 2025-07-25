@@ -27,6 +27,8 @@ local sh = require "sh"
 local sys = require "sys"
 local F = require "F"
 
+local pandoc = _ENV.pandoc
+
 local function createfile(name)
     assert(io.open(name, "w")):close()
 end

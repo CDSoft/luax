@@ -28,6 +28,8 @@ local eq = test.eq
 local sys = require "sys"
 local fs = require "fs"
 
+local pandoc = _ENV.pandoc
+
 return function()
     local test_num = tonumber(os.getenv "TEST_NUM")
     local BUILD = os.getenv "BUILD"

@@ -86,7 +86,7 @@ local function header(st, xform)
     local ftype = file_type[st.type]
     if not ftype then return nil, st.name..": wrong file type" end
     if st.type=="link" and not st.link then return nil, st.name..": missing link name" end
-    if st.link and #st.link > 100 then return nil, link..": filename too long" end
+    if st.link and #st.link > 100 then return nil, st.link..": filename too long" end
     local header1 = pack("c100c8c8c8c12c12",
         name,
         format("%07o", st.mode or default_mode[st.type] or "0"),
@@ -242,7 +242,7 @@ function tar.tar(files, xform)
         local ok, err = add_real_dir(st.name:dirname())
         if not ok then return nil, err end
         local hd
-        st.link = stlink.name
+        st.link = linkst.name
         hd, err = header(st, xform)
         if hd == Discarded then return true end
         if not hd then return nil, err end
@@ -262,12 +262,12 @@ function tar.tar(files, xform)
             elseif st.type == "directory" then
                 add_real_dir(st.name)
                 for _, name in ipairs(fs.ls(st.name/"**")) do
-                    local st, err = fs.stat(name)
-                    if not st then return nil, err end
-                    if st.type == "directory" then
-                        add_real_dir(st.name)
-                    elseif st.type == "file" then
-                        add_real_file(st)
+                    local childst, childerr = fs.stat(name)
+                    if not childst then return nil, childerr end
+                    if childst.type == "directory" then
+                        add_real_dir(childst.name)
+                    elseif childst.type == "file" then
+                        add_real_file(childst)
                     end
                 end
             end

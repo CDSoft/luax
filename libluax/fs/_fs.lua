@@ -29,7 +29,7 @@ local sys = require "sys"
 
 -- Pure Lua / Pandoc Lua implementation of fs.c
 
-local __PANDOC__, pandoc  = PANDOC_VERSION ~= nil, pandoc
+local __PANDOC__, pandoc  = _ENV.PANDOC_VERSION ~= nil, _ENV.pandoc
 local __WINDOWS__ = sys.os == "windows"
 local __MACOS__   = sys.os == "macos"
 

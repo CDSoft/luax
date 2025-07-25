@@ -29,7 +29,7 @@ local fs = require "_fs"
 
 local F = require "F"
 
-local __PANDOC__, pandoc  = PANDOC_VERSION ~= nil, pandoc
+local __PANDOC__, pandoc  = _ENV.PANDOC_VERSION ~= nil, _ENV.pandoc
 
 --[[@@@
 ```lua

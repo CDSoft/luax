@@ -3,6 +3,8 @@ local sys = require "sys"
 local target = os.getenv "TARGET"
 local BUILD = os.getenv "BUILD"
 
+local pandoc = _ENV.pandoc
+
 --print("TARGET", os.getenv "TARGET")
 --print("arg", require"F".show(arg))
 

@@ -18,10 +18,10 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 --]]
 
-local path = pandoc.path
-local output_path = path.directory(PANDOC_STATE.output_file)
+local path = _ENV.pandoc.path
+local output_path = path.directory(_ENV.PANDOC_STATE.output_file)
 
-if FORMAT == "gfm" and PANDOC_STATE.output_file == "README.md" then
+if _ENV.FORMAT == "gfm" and _ENV.PANDOC_STATE.output_file == "README.md" then
 
     function Link(el)
         if el.target:match"%.md$" then
@@ -41,7 +41,7 @@ if FORMAT == "gfm" and PANDOC_STATE.output_file == "README.md" then
 
 end
 
-if FORMAT == "html5" then
+if _ENV.FORMAT == "html5" then
 
     function Link(el)
         el.target = el.target:gsub("%.md$", ".html")
