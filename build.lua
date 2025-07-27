@@ -268,7 +268,7 @@ if not ssl then return end
 section "OpenSSL"
 ---------------------------------------------------------------------
 
-var "openssl_version" "3.5.0"
+var "openssl_version" "3.5.1"
 var "openssl_archive" "openssl-${openssl_version}.tar.gz"
 var "openssl_url" "https://github.com/openssl/openssl/releases/download/openssl-${openssl_version}/${openssl_archive}"
 
