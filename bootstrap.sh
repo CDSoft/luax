@@ -130,7 +130,6 @@ then
         -pipe
     )
     LDFLAGS=(
-        -s
         -lm
     )
     case "$OS" in

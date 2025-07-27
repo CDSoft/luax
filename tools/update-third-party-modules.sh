@@ -24,8 +24,8 @@ TMP="$1"
 
 update_all()
 {
-    #update_lua          5.4.7
-    update_lua-git      v5.4
+    update_lua          5.5.0
+    #update_lua-git      master
     update_lcomplex     100
     update_limath       106
     update_lqmath       108
@@ -64,14 +64,21 @@ update_lua()
 {
     local LUA_VERSION="$1"
     local LUA_ARCHIVE="lua-$LUA_VERSION.tar.gz"
-    local LUA_URL="https://www.lua.org/ftp/$LUA_ARCHIVE"
+    local LUA_URL
+    case $LUA_VERSION in
+        *-beta) LUA_URL="https://www.lua.org/work/$LUA_ARCHIVE" ;;
+        *-rc*)  LUA_URL="https://www.lua.org/work/$LUA_ARCHIVE" ;;
+        *)      LUA_URL="https://www.lua.org/ftp/$LUA_ARCHIVE" ;;
+    esac
 
     mkdir -p "$TMP"
     download "$LUA_URL" "$TMP/$LUA_ARCHIVE"
 
     rm -rf lua
     mkdir -p lua
-    tar -xzf "$TMP/$LUA_ARCHIVE" -C lua --exclude=Makefile --exclude=lua.hpp --strip-components=2 "lua-$LUA_VERSION/src"
+    tar -xzf "$TMP/$LUA_ARCHIVE" -C lua --exclude=Makefile --exclude=lua.hpp --exclude=luac.c --strip-components=2 "lua-${LUA_VERSION%-*}/src"
+
+    sed -i 's/#define LUA_COMPAT_GLOBAL/#undef LUA_COMPAT_GLOBAL/' lua/luaconf.h
 }
 
 update_lua-git()
@@ -88,6 +95,8 @@ update_lua-git()
     unzip "$TMP/$LUA_ARCHIVE" -d "$TMP/lua"
     mv "$TMP"/lua/*/l*.[ch] lua/
     rm lua/ltests.[ch]
+
+    sed -i 's/#define LUA_COMPAT_GLOBAL/#undef LUA_COMPAT_GLOBAL/' lua/luaconf.h
 }
 
 update_lcomplex()

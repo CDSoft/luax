@@ -72,6 +72,7 @@ Commands:
   -l g=name       require library 'name' into global 'g'
   -l _=name       require library 'name' (no global variable)
   -v              show version information
+  -W              turn warnings on
   --              stop handling options
   -               stop handling options and execute stdin
   script [args]   script to execute
@@ -449,6 +450,8 @@ prints `show(x)`
                         _G[modname] = mod
                     end
                 end)
+            elseif a == '-W' then
+                warn "@on"
             elseif a == '-v' then
                 cmd_version()
                 os.exit()
