@@ -39,6 +39,7 @@ int main(int argc, const char *argv[])
 {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
+    lua_warning(L, "@off", 0);  /* by default, Lua stand-alone has warnings off */
     luaopen_libluax(L);
 
     createargtable(L, argv, argc);
