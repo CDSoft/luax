@@ -30,12 +30,20 @@ local F = require "F"
 return function()
     local lib = require "lib"
     local traceback = lib.hello "World":gsub("\t", "    ")
-    local expected_traceback = [[
+    local expected_traceback = F.case(_VERSION) {
+        ["Lua 5.4"] = [[
 @$test-luax:tests/luax-tests/lib.lua says: Hello World
 Traceback test
 stack traceback:
     $test-luax:tests/luax-tests/lib.lua:25: in function 'lib.hello'
-    $test-luax:tests/luax-tests/require_test.lua:32: in function 'require_test']]
+    $test-luax:tests/luax-tests/require_test.lua:32: in function 'require_test']],
+        ["Lua 5.5"] = [[
+@$test-luax:tests/luax-tests/lib.lua says: Hello World
+Traceback test
+stack traceback:
+    $test-luax:tests/luax-tests/lib.lua:25: in field 'hello'
+    $test-luax:tests/luax-tests/require_test.lua:32: in function 'require_test']],
+    }
 
     local test_num = tonumber(os.getenv "TEST_NUM")
     if F.elem(test_num, {2, 3, 4, 5}) then
