@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.2.11" "2025-06-19"
+version "9.3" "2025-07-27"
 
 local F = require "F"
 local fs = require "fs"
@@ -701,7 +701,7 @@ targets_to_compile:foreach(function(target)
             },
         },
     }
-    cc[target.name] = build.cc : new("cc-"..target.name)
+    cc[target.name] = build.zigcc[target.name] : new("cc-"..target.name)
         : set "cc" { "$cc-"..target.name }
         : set "ar" { "$ar-"..target.name }
         : set "so" { "$ld-"..target.name }
@@ -719,7 +719,7 @@ targets_to_compile:foreach(function(target)
         : add "ldlibs"  { ldlibs }
         : add "soflags" { lto, ldflags, target_ld_flags }
         : add "solibs"  { ldlibs }
-    cc_ext[target.name] = build.cc : new("cc_ext-"..target.name)
+    cc_ext[target.name] = build.zigcc[target.name] : new("cc_ext-"..target.name)
         : set "cc" { "$cc-"..target.name }
         : set "ar" { "$ar-"..target.name }
         : set "so" { "$ld-"..target.name }
@@ -1109,7 +1109,7 @@ targets_to_compile:foreach(function(target)
             }
         end)
 
-    binary[target.name] = cc[target.name]("$tmp"/target.name/"bin"/"luax"..target.exe) {
+    binary[target.name] = cc[target.name]("$tmp"/target.name/"bin"/"luax") {
         main_luax[target.name],
         main_libluax[target.name],
         liblua[target.name],
@@ -1127,7 +1127,7 @@ targets_to_compile:foreach(function(target)
     }
 
     shared_library[target.name] = is_dynamic(target) and
-        cc[target.name]:dynamic_lib("$tmp"/target.name/"lib/libluax"..target.so) {
+        cc[target.name]:dynamic_lib("$tmp"/target.name/"lib/libluax") {
             main_libluax[target.name],
             case(target.os) {
                 linux   = {},
