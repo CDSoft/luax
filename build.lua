@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.5.1" "2025-08-27"
+version "9.6-beta" "2025-08-27"
 
 local F = require "F"
 local fs = require "fs"
@@ -44,7 +44,7 @@ help.name "LuaX"
 help.description(I[[
 $(COPYRIGHT)
 
-luax is a Lua interpreter and REPL based on Lua 5.4
+luax is a Lua interpreter and REPL based on Lua 5.5
 augmented with some useful packages.
 luax can also produce standalone scripts from Lua scripts.
 
