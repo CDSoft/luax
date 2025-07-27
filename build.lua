@@ -44,7 +44,7 @@ help.name "LuaX"
 help.description(I[[
 $(COPYRIGHT)
 
-luax is a Lua interpreter and REPL based on Lua 5.4
+luax is a Lua interpreter and REPL based on Lua 5.5
 augmented with some useful packages.
 luax can also produce standalone scripts from Lua scripts.
 
