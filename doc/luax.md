@@ -2,7 +2,7 @@
 
 # Lua eXtended
 
-`luax` is a Lua interpreter and REPL based on Lua 5.4, augmented with
+`luax` is a Lua interpreter and REPL based on Lua 5.5, augmented with
 some useful packages. `luax` can also produce executable scripts from
 Lua scripts.
 
@@ -247,14 +247,14 @@ installed and can be copied anywhere you want.
 
 - `$PREFIX/bin/luax`: LuaX binary
 - `$PREFIX/bin/luax.lua`: a pure Lua REPL reimplementing some LuaX
-  libraries, usable in any Lua 5.4 interpreter (e.g.: lua, pandoc lua,
-  …)
+  libraries, usable in any Lua 5.4 or 5.5 interpreter (e.g.: lua, pandoc
+  lua, …)
 - `$PREFIX/bin/luax-pandoc.lua`: LuaX run in a Pandoc Lua interpreter
 - `$PREFIX/lib/libluax.so`: Linux LuaX shared libraries
 - `$PREFIX/lib/libluax.dylib`: MacOS LuaX shared libraries
 - `$PREFIX/lib/libluax.dll`: Windows LuaX shared libraries
 - `$PREFIX/lib/libluax.lua`: a pure Lua reimplementation of some LuaX
-  libraries, usable in any Lua 5.4 interpreter.
+  libraries, usable in any Lua 5.4 or 5.5 interpreter.
 - `$PREFIX/lib/libluax.lar`: a compressed archive containing the
   precompiled LuaX runtimes for all supported platforms (if the
   cross-compilation is enabled).
@@ -317,10 +317,10 @@ scripts:
 
     Environment variables:
 
-      LUA_INIT_5_4, LUA_INIT
+      LUA_INIT_5_5, LUA_INIT
                     code executed before handling command line
                     options and scripts (not in compilation
-                    mode). When LUA_INIT_5_4 is defined,
+                    mode). When LUA_INIT_5_5 is defined,
                     LUA_INIT is ignored.
 
       PATH          PATH shall contain the bin directory where
@@ -495,7 +495,7 @@ The script `lib/libluax.lua` can be reused in pure Lua programs:
 - **[Zig](https://ziglang.org/)**: General-purpose programming language
   and toolchain for maintaining robust, optimal, and reusable software.
   ([MIT license](https://github.com/ziglang/zig/blob/master/LICENSE))
-- **[Lua 5.4](http://www.lua.org)**: Copyright (C) 1994-2025 Lua.org,
+- **[Lua 5.5](http://www.lua.org)**: Copyright (C) 1994-2025 Lua.org,
   PUC-Rio ([MIT license](http://www.lua.org/license.html))
 - **[Lpeg](http://www.inf.puc-rio.br/~roberto/lpeg/)**: Parsing
   Expression Grammars For Lua ([MIT

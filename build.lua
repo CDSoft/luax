@@ -44,7 +44,7 @@ help.name "LuaX"
 help.description(I[[
 $(COPYRIGHT)
 
-luax is a Lua interpreter and REPL based on Lua 5.4
+luax is a Lua interpreter and REPL based on Lua 5.5
 augmented with some useful packages.
 luax can also produce standalone scripts from Lua scripts.
 
@@ -878,7 +878,7 @@ if bang.output:dirname() == bang.input:dirname() then
     file(bang.input:dirname()/".luarc.json")(F.unlines(F.flatten{
         "{",
         [=[  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",]=],
-        [=[  "runtime.version": "Lua 5.4",]=],
+        [=[  "runtime.version": "Lua 5.5",]=],
         [=[  "workspace.library": []=],
         dirs "libluax" .. ",",
         dirs "ext/lua",
