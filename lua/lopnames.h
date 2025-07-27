@@ -45,8 +45,8 @@ static const char *const opnames[] = {
   "BANDK",
   "BORK",
   "BXORK",
-  "SHRI",
   "SHLI",
+  "SHRI",
   "ADD",
   "SUB",
   "MUL",
@@ -94,6 +94,7 @@ static const char *const opnames[] = {
   "SETLIST",
   "CLOSURE",
   "VARARG",
+  "GETVARG",
   "VARARGPREP",
   "EXTRAARG",
   NULL

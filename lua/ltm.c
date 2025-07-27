@@ -58,7 +58,7 @@ void luaT_init (lua_State *L) {
 ** tag methods
 */
 const TValue *luaT_gettm (Table *events, TMS event, TString *ename) {
-  const TValue *tm = luaH_getshortstr(events, ename);
+  const TValue *tm = luaH_Hgetshortstr(events, ename);
   lua_assert(event <= TM_EQ);
   if (notm(tm)) {  /* no tag method? */
     events->flags |= cast_byte(1u<<event);  /* cache this fact */
@@ -80,7 +80,7 @@ const TValue *luaT_gettmbyobj (lua_State *L, const TValue *o, TMS event) {
     default:
       mt = G(L)->mt[ttype(o)];
   }
-  return (mt ? luaH_getshortstr(mt, G(L)->tmname[event]) : &G(L)->nilvalue);
+  return (mt ? luaH_Hgetshortstr(mt, G(L)->tmname[event]) : &G(L)->nilvalue);
 }
 
 
@@ -92,7 +92,7 @@ const char *luaT_objtypename (lua_State *L, const TValue *o) {
   Table *mt;
   if ((ttistable(o) && (mt = hvalue(o)->metatable) != NULL) ||
       (ttisfulluserdata(o) && (mt = uvalue(o)->metatable) != NULL)) {
-    const TValue *name = luaH_getshortstr(mt, luaS_new(L, "__name"));
+    const TValue *name = luaH_Hgetshortstr(mt, luaS_new(L, "__name"));
     if (ttisstring(name))  /* is '__name' a string? */
       return getstr(tsvalue(name));  /* use it as type name */
   }
@@ -116,8 +116,8 @@ void luaT_callTM (lua_State *L, const TValue *f, const TValue *p1,
 }
 
 
-void luaT_callTMres (lua_State *L, const TValue *f, const TValue *p1,
-                     const TValue *p2, StkId res) {
+lu_byte luaT_callTMres (lua_State *L, const TValue *f, const TValue *p1,
+                        const TValue *p2, StkId res) {
   ptrdiff_t result = savestack(L, res);
   StkId func = L->top.p;
   setobj2s(L, func, f);  /* push function (assume EXTRA_STACK) */
@@ -131,6 +131,7 @@ void luaT_callTMres (lua_State *L, const TValue *f, const TValue *p1,
     luaD_callnoyield(L, func, 1);
   res = restorestack(L, result);
   setobjs2s(L, res, --L->top.p);  /* move result to its place */
+  return ttypetag(s2v(res));  /* return tag of the result */
 }
 
 
@@ -139,15 +140,16 @@ static int callbinTM (lua_State *L, const TValue *p1, const TValue *p2,
   const TValue *tm = luaT_gettmbyobj(L, p1, event);  /* try first operand */
   if (notm(tm))
     tm = luaT_gettmbyobj(L, p2, event);  /* try second operand */
-  if (notm(tm)) return 0;
-  luaT_callTMres(L, tm, p1, p2, res);
-  return 1;
+  if (notm(tm))
+    return -1;  /* tag method not found */
+  else  /* call tag method and return the tag of the result */
+    return luaT_callTMres(L, tm, p1, p2, res);
 }
 
 
 void luaT_trybinTM (lua_State *L, const TValue *p1, const TValue *p2,
                     StkId res, TMS event) {
-  if (l_unlikely(!callbinTM(L, p1, p2, res, event))) {
+  if (l_unlikely(callbinTM(L, p1, p2, res, event) < 0)) {
     switch (event) {
       case TM_BAND: case TM_BOR: case TM_BXOR:
       case TM_SHL: case TM_SHR: case TM_BNOT: {
@@ -164,11 +166,14 @@ void luaT_trybinTM (lua_State *L, const TValue *p1, const TValue *p2,
 }
 
 
+/*
+** The use of 'p1' after 'callbinTM' is safe because, when a tag
+** method is not found, 'callbinTM' cannot change the stack.
+*/
 void luaT_tryconcatTM (lua_State *L) {
-  StkId top = L->top.p;
-  if (l_unlikely(!callbinTM(L, s2v(top - 2), s2v(top - 1), top - 2,
-                               TM_CONCAT)))
-    luaG_concaterror(L, s2v(top - 2), s2v(top - 1));
+  StkId p1 = L->top.p - 2;  /* first argument */
+  if (l_unlikely(callbinTM(L, s2v(p1), s2v(p1 + 1), p1, TM_CONCAT) < 0))
+    luaG_concaterror(L, s2v(p1), s2v(p1 + 1));
 }
 
 
@@ -191,28 +196,12 @@ void luaT_trybiniTM (lua_State *L, const TValue *p1, lua_Integer i2,
 
 /*
 ** Calls an order tag method.
-** For lessequal, LUA_COMPAT_LT_LE keeps compatibility with old
-** behavior: if there is no '__le', try '__lt', based on l <= r iff
-** !(r < l) (assuming a total order). If the metamethod yields during
-** this substitution, the continuation has to know about it (to negate
-** the result of r<l); bit CIST_LEQ in the call status keeps that
-** information.
 */
 int luaT_callorderTM (lua_State *L, const TValue *p1, const TValue *p2,
                       TMS event) {
-  if (callbinTM(L, p1, p2, L->top.p, event))  /* try original event */
-    return !l_isfalse(s2v(L->top.p));
-#if defined(LUA_COMPAT_LT_LE)
-  else if (event == TM_LE) {
-      /* try '!(p2 < p1)' for '(p1 <= p2)' */
-      L->ci->callstatus |= CIST_LEQ;  /* mark it is doing 'lt' for 'le' */
-      if (callbinTM(L, p2, p1, L->top.p, TM_LT)) {
-        L->ci->callstatus ^= CIST_LEQ;  /* clear mark */
-        return l_isfalse(s2v(L->top.p));
-      }
-      /* else error will remove this 'ci'; no need to clear mark */
-  }
-#endif
+  int tag = callbinTM(L, p1, p2, L->top.p, event);  /* try original event */
+  if (tag >= 0)  /* found tag method? */
+    return !tagisfalse(tag);
   luaG_ordererror(L, p1, p2);  /* no metamethod found */
   return 0;  /* to avoid warnings */
 }
@@ -235,11 +224,38 @@ int luaT_callorderiTM (lua_State *L, const TValue *p1, int v2,
 }
 
 
-void luaT_adjustvarargs (lua_State *L, int nfixparams, CallInfo *ci,
-                         const Proto *p) {
+/*
+** Create a vararg table at the top of the stack, with 'n' elements
+** starting at 'f'.
+*/
+static void createvarargtab (lua_State *L, StkId f, int n) {
   int i;
-  int actual = cast_int(L->top.p - ci->func.p) - 1;  /* number of arguments */
-  int nextra = actual - nfixparams;  /* number of extra arguments */
+  TValue key, value;
+  Table *t = luaH_new(L);
+  sethvalue(L, s2v(L->top.p), t);
+  L->top.p++;
+  luaH_resize(L, t, cast_uint(n), 1);
+  setsvalue(L, &key, luaS_new(L, "n"));  /* key is "n" */
+  setivalue(&value, n);  /* value is n */
+  /* No need to anchor the key: Due to the resize, the next operation
+     cannot trigger a garbage collection */
+  luaH_set(L, t, &key, &value);  /* t.n = n */
+  for (i = 0; i < n; i++)
+    luaH_setint(L, t, i + 1, s2v(f + i));
+}
+
+
+/*
+** initial stack:  func arg1 ... argn extra1 ...
+**                 ^ ci->func                    ^ L->top
+** final stack: func nil ... nil extra1 ... func arg1 ... argn
+**                                          ^ ci->func         ^ L->top
+*/
+void luaT_adjustvarargs (lua_State *L, CallInfo *ci, const Proto *p) {
+  int i;
+  int totalargs = cast_int(L->top.p - ci->func.p) - 1;
+  int nfixparams = p->numparams;
+  int nextra = totalargs - nfixparams;  /* number of extra arguments */
   ci->u.l.nextraargs = nextra;
   luaD_checkstack(L, p->maxstacksize + 1);
   /* copy function to the top of the stack */
@@ -249,9 +265,37 @@ void luaT_adjustvarargs (lua_State *L, int nfixparams, CallInfo *ci,
     setobjs2s(L, L->top.p++, ci->func.p + i);
     setnilvalue(s2v(ci->func.p + i));  /* erase original parameter (for GC) */
   }
-  ci->func.p += actual + 1;
-  ci->top.p += actual + 1;
+  if (p->flag & PF_VAVAR) {  /* is there a vararg parameter? */
+    if (p->flag & PF_VATAB)  /* does it need a vararg table? */
+      createvarargtab(L, ci->func.p + nfixparams + 1, nextra);
+    else  /* no table; set parameter to nil */
+      setnilvalue(s2v(L->top.p));
+  }
+  ci->func.p += totalargs + 1;
+  ci->top.p += totalargs + 1;
   lua_assert(L->top.p <= ci->top.p && ci->top.p <= L->stack_last.p);
+}
+
+
+void luaT_getvararg (CallInfo *ci, StkId ra, TValue *rc) {
+  int nextra = ci->u.l.nextraargs;
+  lua_Integer n;
+  if (tointegerns(rc, &n)) {  /* integral value? */
+    if (l_castS2U(n) - 1 < cast_uint(nextra)) {
+      StkId slot = ci->func.p - nextra + cast_int(n) - 1;
+      setobjs2s(((lua_State*)NULL), ra, slot);
+      return;
+    }
+  }
+  else if (ttisshrstring(rc)) {  /* short-string value? */
+    size_t len;
+    const char *s = getlstr(tsvalue(rc), len);
+    if (len == 1 && s[0] == 'n') {  /* key is "n"? */
+      setivalue(s2v(ra), nextra);
+      return;
+    }
+  }
+  setnilvalue(s2v(ra));  /* else produce nil */
 }
 
 
@@ -260,7 +304,7 @@ void luaT_getvarargs (lua_State *L, CallInfo *ci, StkId where, int wanted) {
   int nextra = ci->u.l.nextraargs;
   if (wanted < 0) {
     wanted = nextra;  /* get all extra arguments available */
-    checkstackGCp(L, nextra, where);  /* ensure stack space */
+    checkstackp(L, nextra, where);  /* ensure stack space */
     L->top.p = where + nextra;  /* next instruction will need top */
   }
   for (i = 0; i < wanted && i < nextra; i++)
