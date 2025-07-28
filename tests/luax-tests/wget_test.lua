@@ -29,13 +29,13 @@ local F = require "F"
 local ps = require "ps"
 
 local server = os.getenv "HTTP_SERVER"
-local port = os.getenv "HTTP_PORT2"
 
 return function()
 
     local wget = require "wget"
 
     if server then
+        local port = os.getenv "HTTP_PORT_RANGE" + 2
         local httpd<close> = assert(io.popen(server.." "..port))
         ps.sleep(0.1)
         local s, msg, err = wget { "http://localhost:"..port, "-O -" }

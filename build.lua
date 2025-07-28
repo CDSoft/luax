@@ -1326,8 +1326,8 @@ local native_targets = (cross and targets or F{})
     : map(function(t) return t.name end)
 
 local _port = 8000
-local function new_httpd_port()
-    _port = _port + 1
+local function new_httpd_port_range()
+    _port = _port + 10
     return _port
 end
 
@@ -1351,8 +1351,7 @@ acc(test) {
             test_options,
             optional(sys.os=="linux") {
                 "HTTP_SERVER=$httpd",
-                "HTTP_PORT1="..new_httpd_port(),
-                "HTTP_PORT2="..new_httpd_port(),
+                "HTTP_PORT_RANGE="..new_httpd_port_range(),
             },
             "LUAX=$luax",
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,

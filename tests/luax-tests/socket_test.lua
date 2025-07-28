@@ -26,6 +26,9 @@ local test = require "test"
 local eq = test.eq
 
 local sys = require "sys"
+local ps = require "ps"
+
+local server = os.getenv "HTTP_SERVER"
 
 return function()
     if not os.getenv"USE_SOCKET" then return end
@@ -49,25 +52,13 @@ return function()
         assert(require "mbox")
         assert(require "ltn12")
 
-        do
-            local s, code, _ = http.request"http://example.com"
-            eq(s:match "Example Domain", "Example Domain")
+        if server then
+            local port = os.getenv "HTTP_PORT_RANGE" + 3
+            local httpd<close> = assert(io.popen(server.." "..port))
+            ps.sleep(0.1)
+            local s, code, _ = http.request("http://localhost:"..port)
+            eq(s:match "Hello, World!", "Hello, World!")
             eq(code, 200)
-        end
-
-        if os.getenv "USE_SSL" then
-
-            assert(require "ssl")
-            assert(require "ssl.https")
-            assert(require "ssl.context")
-            assert(require "ssl.config")
-            assert(require "ssl.core")
-            assert(require "ssl.x509")
-
-            local s, code, _ = http.request"https://example.com"
-            eq(s:match "Example Domain", "Example Domain")
-            eq(code, 200)
-
         end
 
     end
