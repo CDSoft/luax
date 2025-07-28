@@ -259,6 +259,19 @@ It does not need to be installed and can be copied anywhere you want.
 - `$PREFIX/lib/luax.lar`: a compressed archive containing the precompiled
   LuaX runtimes for all supported platforms (if the cross-compilation is enabled).
 
+### Post installation command
+
+The `postinstall` command can optionally be executed after LuaX is installed or updated.
+
+It checks that all required files are actually installed
+and removes obsolete files if any.
+
+``` sh
+$ path/to/luax postinstall [-f]
+```
+
+The `-f` option forces the removal of obsolete files without confirmation.
+
 ## Usage
 
 `luax` is very similar to `lua` and adds more options to compile scripts:

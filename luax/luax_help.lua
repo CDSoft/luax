@@ -38,6 +38,7 @@ Commands:
   "run"     (or none)   Run scripts
   "compile" (or "c")    Compile scripts
   "env"                 Set LuaX environment variables
+  "postinstall"         Post install updates
 
 "run" options:
   -e stat         execute string 'stat'
@@ -61,6 +62,9 @@ Commands:
   -k key          script encryption key
   -q              quiet compilation (error messages only)
   scripts         scripts to compile
+
+"postinstall" options:
+  -f              do not ask for confirmations
 
 Environment variables:
 

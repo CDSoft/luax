@@ -248,6 +248,21 @@ installed and can be copied anywhere you want.
   precompiled LuaX runtimes for all supported platforms (if the
   cross-compilation is enabled).
 
+### Post installation command
+
+The `postinstall` command can optionally be executed after LuaX is
+installed or updated.
+
+It checks that all required files are actually installed and removes
+obsolete files if any.
+
+``` sh
+$ path/to/luax postinstall [-f]
+```
+
+The `-f` option forces the removal of obsolete files without
+confirmation.
+
 ## Usage
 
 `luax` is very similar to `lua` and adds more options to compile
@@ -261,6 +276,7 @@ scripts:
       "run"     (or none)   Run scripts
       "compile" (or "c")    Compile scripts
       "env"                 Set LuaX environment variables
+      "postinstall"         Post install updates
 
     "run" options:
       -e stat         execute string 'stat'
@@ -284,6 +300,9 @@ scripts:
       -k key          script encryption key
       -q              quiet compilation (error messages only)
       scripts         scripts to compile
+
+    "postinstall" options:
+      -f              do not ask for confirmations
 
     Environment variables:
 

@@ -30,11 +30,12 @@ local function command(name, drop)
 end
 
 return F.case(arg[1]) {
-    help    = command "help",
-    version = command "version",
-    [F.Nil] = command("run", 0),
-    run     = command "run",
-    compile = command "compile",
-    c       = command "compile",
-    env     = command "env",
+    help        = command "help",
+    version     = command "version",
+    [F.Nil]     = command("run", 0),
+    run         = command "run",
+    compile     = command "compile",
+    c           = command "compile",
+    env         = command "env",
+    postinstall = command "postinstall",
 }()
