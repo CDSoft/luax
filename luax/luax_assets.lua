@@ -39,7 +39,7 @@ local function find_archive()
 
     local libdir = os.getenv "LUAX_LIB"
     if libdir then
-        local archive = libdir/"luax.lar"
+        local archive = libdir/"libluax.lar"
         if archive:is_file() then return archive end
     end
 
@@ -49,7 +49,7 @@ local function find_archive()
 
         local path = findpath(arg[i])
         if path then
-            local archive = path:dirname():dirname()/"lib"/"luax.lar"
+            local archive = path:dirname():dirname()/"lib"/"libluax.lar"
             if archive:is_file() then return archive end
         end
 
@@ -59,7 +59,7 @@ end
 
 local mt = {
     __index = {
-        error = function() error("The LuaX runtime (lib/luax.lar) is not installed or is corrupted") end,
+        error = function() error("The LuaX runtime (lib/libluax.lar) is not installed or is corrupted") end,
     }
 }
 

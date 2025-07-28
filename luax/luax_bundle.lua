@@ -218,7 +218,7 @@ local known_modules = {}
 local runtime_modules = setmetatable({}, {
     __index = function(self, k)
         local assets = require "luax_assets"
-        local luax = assets.lua_runtime and lar.unlar(assets.lua_runtime["luax.lar"]) or {}
+        local luax = assets.lua_runtime and lar.unlar(assets.lua_runtime["libluax.lar"]) or {}
         for i = 1, #luax do
             local script = luax[i]
             self[script.lib_name] = true
@@ -248,7 +248,7 @@ function M.bundle(opt)
 
     if opt.add_luax_runtime then
         local assets = require "luax_assets"
-        local runtime = assets.lua_runtime and assets.lua_runtime["luax.lar"]
+        local runtime = assets.lua_runtime and assets.lua_runtime["libluax.lar"]
         if not runtime then assets.error() end
         runtime = lar.unlar(runtime)
         for i = 1, #runtime do

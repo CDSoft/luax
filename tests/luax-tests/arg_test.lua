@@ -68,7 +68,7 @@ return function()
     elseif test_num == 3 then
         eq(arg, {
             [-3] = BUILD/"bin/lua",
-            [-2] = "-l", [-1] = "luax",
+            [-2] = "-l", [-1] = "libluax",
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })
@@ -89,7 +89,7 @@ return function()
     elseif test_num == 5 then
         eq(arg, {
             [-3] = "pandoc lua",
-            [-2] = "-l", [-1] = "luax",
+            [-2] = "-l", [-1] = "libluax",
             [0] = "tests/luax-tests/main.lua",
             "Lua", "is", "great"
         })

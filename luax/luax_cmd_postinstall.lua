@@ -33,8 +33,8 @@ local expected_files = F.flatten {
     "bin"/"luax.lua",
     "bin"/"luax-pandoc.lua",
     sys.libc=="gnu" and "lib"/"libluax"..sys.so or {},
-    "lib"/"luax.lar",
-    "lib"/"luax.lua",
+    "lib"/"libluax.lar",
+    "lib"/"libluax.lua",
 }
 
 local arg0 <const> = arg[0]

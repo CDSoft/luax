@@ -242,9 +242,9 @@ installed and can be copied anywhere you want.
 - `$PREFIX/lib/libluax.so`: Linux LuaX shared libraries
 - `$PREFIX/lib/libluax.dylib`: MacOS LuaX shared libraries
 - `$PREFIX/lib/libluax.dll`: Windows LuaX shared libraries
-- `$PREFIX/lib/luax.lua`: a pure Lua reimplementation of some LuaX
+- `$PREFIX/lib/libluax.lua`: a pure Lua reimplementation of some LuaX
   libraries, usable in any Lua 5.4 interpreter.
-- `$PREFIX/lib/luax.lar`: a compressed archive containing the
+- `$PREFIX/lib/libluax.lar`: a compressed archive containing the
   precompiled LuaX runtimes for all supported platforms (if the
   cross-compilation is enabled).
 
@@ -382,14 +382,14 @@ Target                Interpreter / LuaX archive
 luax                  ~/.local/bin/luax
 lua                   ~/.local/bin/lua
 pandoc                ~/.local/bin/pandoc
-native                ~/.local/lib/luax.lar
-linux-x86_64          ~/.local/lib/luax.lar
-linux-x86_64-musl     ~/.local/lib/luax.lar
-linux-aarch64         ~/.local/lib/luax.lar
-linux-aarch64-musl    ~/.local/lib/luax.lar
-macos-x86_64          ~/.local/lib/luax.lar
-macos-aarch64         ~/.local/lib/luax.lar
-windows-x86_64        ~/.local/lib/luax.lar
+native                ~/.local/lib/libluax.lar
+linux-x86_64          ~/.local/lib/libluax.lar
+linux-x86_64-musl     ~/.local/lib/libluax.lar
+linux-aarch64         ~/.local/lib/libluax.lar
+linux-aarch64-musl    ~/.local/lib/libluax.lar
+macos-x86_64          ~/.local/lib/libluax.lar
+macos-aarch64         ~/.local/lib/libluax.lar
+windows-x86_64        ~/.local/lib/libluax.lar
 ```
 
 ## Built-in modules
@@ -459,7 +459,7 @@ E.g.:
 ## Pure Lua modules
 
 LuaX modules also provide pure Lua implementations (no LuaX dependency).
-The script `lib/luax.lua` can be reused in pure Lua programs:
+The script `lib/libluax.lua` can be reused in pure Lua programs:
 
 - [luax.lua](doc/luax.lua.md): LuaX modules reimplemented in pure Lua
   (except LuaSocket and lpeg)

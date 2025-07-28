@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.3" "2025-07-27"
+version "9.4" "2025-07-28"
 
 local F = require "F"
 local fs = require "fs"
@@ -1187,7 +1187,7 @@ local function luax_archive(archive, compilation_targets)
         },
 
         -- Lua runtime
-        build_once "$tmp/lib/lua_runtime/luax.lar" {
+        build_once "$tmp/lib/lua_runtime/libluax.lar" {
             "bundle", lua_runtime,
             args = {
                 "-e lib",
@@ -1230,24 +1230,24 @@ local function luax_archive(archive, compilation_targets)
 end
 
 acc(libraries) {
-    luax_archive("$lib/luax.lar", cross and targets or host_targets),
+    luax_archive("$lib/libluax.lar", cross and targets or host_targets),
 }
 
 local luax_lar = targets : map2t(function(target)
-    return target.name, release and luax_archive("$tmp/dist"/target.name/"lib/luax.lar", cross and targets or F{target})
+    return target.name, release and luax_archive("$tmp/dist"/target.name/"lib/libluax.lar", cross and targets or F{target})
 end)
-luax_lar.lua = luax_archive("$tmp/dist/lua/lib/luax.lar")
+luax_lar.lua = luax_archive("$tmp/dist/lua/lib/libluax.lar")
 
 --===================================================================
 section "LuaX Lua implementation"
 ---------------------------------------------------------------------
 
 --===================================================================
-section "$lib/luax.lua"
+section "$lib/libluax.lua"
 ---------------------------------------------------------------------
 
 acc(libraries) {
-    build "$lib/luax.lua" {
+    build "$lib/libluax.lua" {
         "bundle", "$luax_config_lua", "$luax_build_config_lua", lua_runtime,
         args = {
             "-e lib",
@@ -1272,7 +1272,7 @@ rule "luax-bundle" {
     implicit_in = {
         "$lua luax/luax.lua",
         "$lzip",
-        "$lib/luax.lua",
+        "$lib/libluax.lua",
         "$luax_config_lua",
         "$luax_build_config_lua",
         libraries,
@@ -1362,7 +1362,7 @@ acc(test) {
         },
         implicit_in = {
             "$luax",
-            "$lib/luax.lar",
+            "$lib/libluax.lar",
             imported_test_sources,
             "$httpd",
         },
@@ -1397,7 +1397,7 @@ acc(test) {
                 },
                 implicit_in = {
                     "$luax",
-                    "$lib/luax.lar",
+                    "$lib/libluax.lar",
                     libraries,
                     imported_test_sources,
                 },
@@ -1434,7 +1434,7 @@ acc(test) {
         implicit_in = {
             "$lua",
             "$luax",
-            "$lib/luax.lar",
+            "$lib/libluax.lar",
             libraries,
             test_sources,
             imported_test_sources,
@@ -1452,14 +1452,14 @@ acc(test) {
             "TEST_NUM=3",
             test_options,
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
-            "$lua -l luax $in Lua is great",
+            "$lua -l libluax $in Lua is great",
             "&&",
             "touch $out",
         },
         implicit_in = {
             "$lua",
-            "$lib/luax.lua",
-            "$lib/luax.lar",
+            "$lib/libluax.lua",
+            "$lib/libluax.lar",
             "$lzip",
             libraries,
             test_sources,
@@ -1485,7 +1485,7 @@ acc(test) {
         implicit_in = {
             "$lua",
             "$bin/luax.lua",
-            "$lib/luax.lar",
+            "$lib/libluax.lar",
             "$lzip",
             test_sources,
             imported_test_sources,
@@ -1503,14 +1503,14 @@ acc(test) {
             "TEST_NUM=5",
             test_options,
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
-            "pandoc lua -l luax $in Lua is great",
+            "pandoc lua -l libluax $in Lua is great",
             "&&",
             "touch $out",
         },
         implicit_in = {
             "$lua",
-            "$lib/luax.lua",
-            "$lib/luax.lar",
+            "$lib/libluax.lua",
+            "$lib/libluax.lar",
             "$lzip",
             libraries,
             test_sources,
@@ -1535,9 +1535,9 @@ acc(test) {
             "touch $out",
         },
         implicit_in = {
-            "$lib/luax.lua",
+            "$lib/libluax.lua",
             "$luax",
-            "$lib/luax.lar",
+            "$lib/libluax.lar",
             binaries,
         },
     },
@@ -1559,9 +1559,9 @@ acc(test) {
             "touch $out",
         },
         implicit_in = {
-            "$lib/luax.lua",
+            "$lib/libluax.lua",
             "$luax",
-            "$lib/luax.lar",
+            "$lib/libluax.lar",
         },
     },
 
@@ -1582,9 +1582,9 @@ acc(test) {
             "touch $out",
         },
         implicit_in = {
-            "$lib/luax.lua",
+            "$lib/libluax.lua",
             "$luax",
-            "$lib/luax.lar",
+            "$lib/libluax.lar",
         },
     },
 
@@ -1605,9 +1605,9 @@ acc(test) {
             "touch $out",
         },
         implicit_in = {
-            "$lib/luax.lua",
+            "$lib/libluax.lua",
             "$luax",
-            "$lib/luax.lar",
+            "$lib/libluax.lar",
             binaries,
         },
     } or {},
@@ -1647,7 +1647,7 @@ local ypp_config_params = {
 
 local gfm = pipe {
     ypp : new "ypp.md"
-        : add "implicit_in" "$lib/luax.lar"
+        : add "implicit_in" "$lib/libluax.lar"
         : add "flags" { ypp_config_params },
     build.pandoc_gfm : new "pandoc-gfm-luax"
         : add "flags" "--lua-filter doc/src/fix_links.lua"
@@ -1719,7 +1719,7 @@ local dist = (function()
         end)(),
         (function()
             local releasenote = ypp : new "ypp-releasenote"
-                : add "implicit_in" "$lib/luax.lar"
+                : add "implicit_in" "$lib/libluax.lar"
                 : set "depfile" "$tmp/$out.d"
                 : add "flags" {
                     build.ypp_vars {
