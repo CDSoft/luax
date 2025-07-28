@@ -40,12 +40,12 @@ function term.isatty(fd)
     return _isatty[fd]
 end
 
-function term.size(fd)
-    fd = file_descriptor(fd, 1)
-    local size = fd==0 and sh.read("stty", "size") or sh.read("tput lines; tput cols")
-    return size and size
-        : words()
-        : map(tonumber):unpack()
+function term.size()
+    local size = sh.read("tput lines cols")
+    if size then
+        local rows, cols = size : words() : map(tonumber) : unpack()
+        return { rows=rows, cols=cols }
+    end
 end
 
 return term
