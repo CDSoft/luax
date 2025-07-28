@@ -26,14 +26,20 @@ local test = require "test"
 local eq = test.eq
 
 local F = require "F"
+local ps = require "ps"
+
+local server = os.getenv "HTTP_SERVER"
+local port = os.getenv "HTTP_PORT1"
 
 return function()
 
     local curl = require "curl"
 
-    do
-        local s, msg, err = curl "https://example.com"
-        eq(s:match "Example Domain", "Example Domain")
+    if server then
+        local httpd<close> = assert(io.popen(server.." "..port))
+        ps.sleep(0.1)
+        local s, msg, err = assert(curl("http://localhost:"..port))
+        eq(s:match "Hello, World!", "Hello, World!")
         eq(msg, nil)
         eq(err, nil)
     end

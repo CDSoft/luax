@@ -1325,6 +1325,15 @@ local native_targets = (cross and targets or F{})
     : filter(function(t) return t.os==sys.os and t.arch==sys.arch end)
     : map(function(t) return t.name end)
 
+local _port = 8000
+local function new_httpd_port()
+    _port = _port + 1
+    return _port
+end
+
+var "httpd" "$test/httpd"
+cc.host "$httpd" { "tests/luax-tests/httpd.c" }
+
 acc(test) {
 
 ---------------------------------------------------------------------
@@ -1340,6 +1349,11 @@ acc(test) {
             "LUA_CPATH='foo/?.so'",
             "TEST_NUM=1",
             test_options,
+            optional(sys.os=="linux") {
+                "HTTP_SERVER=$httpd",
+                "HTTP_PORT1="..new_httpd_port(),
+                "HTTP_PORT2="..new_httpd_port(),
+            },
             "LUAX=$luax",
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
             "$test/test-luax Lua is great",
@@ -1350,6 +1364,7 @@ acc(test) {
             "$luax",
             "$lib/luax.lar",
             imported_test_sources,
+            "$httpd",
         },
     },
 

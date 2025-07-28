@@ -26,14 +26,20 @@ local test = require "test"
 local eq = test.eq
 
 local F = require "F"
+local ps = require "ps"
+
+local server = os.getenv "HTTP_SERVER"
+local port = os.getenv "HTTP_PORT2"
 
 return function()
 
     local wget = require "wget"
 
-    do
-        local s, msg, err = wget { "https://example.com", "-O -" }
-        eq(s:match "Example Domain", "Example Domain")
+    if server then
+        local httpd<close> = assert(io.popen(server.." "..port))
+        ps.sleep(0.1)
+        local s, msg, err = wget { "http://localhost:"..port, "-O -" }
+        eq(s:match "Hello, World!", "Hello, World!")
         eq(msg, nil)
         eq(err, nil)
     end
