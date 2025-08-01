@@ -44,6 +44,7 @@ local function wrong_arg(a)
 end
 
 local force = false
+local interactive = term.isatty(0) and term.isatty(1)
 
 do
     local i = 1
@@ -74,7 +75,7 @@ local lib = prefix/"lib"
 local new_files = expected_files : map(function(file) return prefix/file end)
 
 print(_LUAX_COPYRIGHT)
-print(("="):rep(math.min(#_LUAX_COPYRIGHT, term.size().cols)))
+print(("="):rep(#_LUAX_COPYRIGHT))
 
 local found = term.color.green "✔"
 local not_found = term.color.red "✖"
@@ -113,8 +114,12 @@ if #obsolete_files > 0 then
         if force then
             print(string.format("%s remove %s", recycle, file))
             assert(fs.remove(file))
-        elseif confirm("%s remove obsolete LuaX file '%s'", recycle, file) then
-            assert(fs.remove(file))
+        elseif interactive then
+            if confirm("%s remove obsolete LuaX file '%s'", recycle, file) then
+                assert(fs.remove(file))
+            end
+        else
+            print(string.format("%s %s is obsolete", recycle, file))
         end
     end)
 end
