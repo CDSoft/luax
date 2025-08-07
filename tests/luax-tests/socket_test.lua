@@ -57,7 +57,7 @@ return function()
             local httpd<close> = assert(io.popen(server.." "..port))
             ps.sleep(0.1)
             local s, code, _ = http.request("http://localhost:"..port)
-            eq(s:match "Hello, World!", "Hello, World!")
+            eq(s, "Hello, World!")
             eq(code, 200)
         end
 
