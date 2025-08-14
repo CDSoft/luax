@@ -66,29 +66,26 @@ static inline void split(t_fnv1a_128_digit *digit, t_fnv1a_128_digit *carry, t_f
     *carry = n >> 8*sizeof(t_fnv1a_128_digit);
 }
 
-static inline void swap(t_fnv1a_128 **hash1, t_fnv1a_128 **hash2)
-{
-    t_fnv1a_128 *tmp = *hash1;
-    *hash1 = *hash2;
-    *hash2 = tmp;
+static inline void step(uint8_t data, t_fnv1a_128 *h1, t_fnv1a_128 *h2) {
+    t_fnv1a_128_digit carry = 0;
+    (*h1)[0] ^= data;
+    split(&(*h2)[0], &carry, carry + (t_fnv1a_128_double_digit)(*h1)[0]*fnv1a_128_prime[0]);
+    split(&(*h2)[1], &carry, carry + (t_fnv1a_128_double_digit)(*h1)[1]*fnv1a_128_prime[0]);
+    split(&(*h2)[2], &carry, carry + (t_fnv1a_128_double_digit)(*h1)[2]*fnv1a_128_prime[0] + (t_fnv1a_128_double_digit)(*h1)[0]*fnv1a_128_prime[2]);
+    split(&(*h2)[3], &carry, carry + (t_fnv1a_128_double_digit)(*h1)[3]*fnv1a_128_prime[0] + (t_fnv1a_128_double_digit)(*h1)[1]*fnv1a_128_prime[2]);
 }
 
 void fnv1a_128_update(t_fnv1a_128 *hash, const void *data, size_t size)
 {
     t_fnv1a_128 hash2;
-    t_fnv1a_128 *h1 = hash;
-    t_fnv1a_128 *h2 = &hash2;
-
-    for (size_t i = 0; i < size; i++) {
-        (*h1)[0] ^= ((const uint8_t *)data)[i];
-        t_fnv1a_128_digit carry = 0;
-        split(&(*h2)[0], &carry, carry + (t_fnv1a_128_double_digit)(*h1)[0]*fnv1a_128_prime[0]);
-        split(&(*h2)[1], &carry, carry + (t_fnv1a_128_double_digit)(*h1)[1]*fnv1a_128_prime[0]);
-        split(&(*h2)[2], &carry, carry + (t_fnv1a_128_double_digit)(*h1)[2]*fnv1a_128_prime[0] + (t_fnv1a_128_double_digit)(*h1)[0]*fnv1a_128_prime[2]);
-        split(&(*h2)[3], &carry, carry + (t_fnv1a_128_double_digit)(*h1)[3]*fnv1a_128_prime[0] + (t_fnv1a_128_double_digit)(*h1)[1]*fnv1a_128_prime[2]);
-        swap(&h1, &h2);
+    size_t i;
+    if (size == 0) { return; }
+    for (i = 0; i < size-1; i += 2) {
+        step(((const uint8_t *)data)[i], hash, &hash2);
+        step(((const uint8_t *)data)[i+1], &hash2, hash);
     }
-    if (size % 2 == 1) {
+    if (i < size) {
+        step(((const uint8_t *)data)[i], hash, &hash2);
         memcpy(hash, &hash2, sizeof(t_fnv1a_128));
     }
 }

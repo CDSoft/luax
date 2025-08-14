@@ -62,12 +62,12 @@ local function fnv1a_128(hash, bs)
     local a, b, c, d = tunpack(hash)
     for i=1,#bs do
         d = d ~ byte(bs, i)
-        local c2, d2, carry
-        d2 =         d*fnv1a_128_prime_d                            d2, carry = d2 & 0xFFFFFFFF, d2 >> 32
-        c2 = carry + c*fnv1a_128_prime_d                            c2, carry = c2 & 0xFFFFFFFF, c2 >> 32
-        b  = carry + b*fnv1a_128_prime_d + d*fnv1a_128_prime_b      b , carry = b  & 0xFFFFFFFF, b  >> 32
-        a  = carry + a*fnv1a_128_prime_d + c*fnv1a_128_prime_b
-        c, d = c2, d2
+        local c0, d0 = c, d
+        local carry
+        d =         d0*fnv1a_128_prime_d                            d, carry = d & 0xFFFFFFFF, d >> 32
+        c = carry + c0*fnv1a_128_prime_d                            c, carry = c & 0xFFFFFFFF, c >> 32
+        b = carry + b *fnv1a_128_prime_d + d0*fnv1a_128_prime_b     b, carry = b & 0xFFFFFFFF, b >> 32
+        a = carry + a *fnv1a_128_prime_d + c0*fnv1a_128_prime_b
     end
     return a&0xFFFFFFFF, b, c, d
 end

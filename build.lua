@@ -205,9 +205,6 @@ local modern_compiler = case(compiler) {
 -- disable strict mode with old compilers to avoid unknown options
 strict = strict and modern_compiler
 
--- enable FNV1A BITINT implementation on modern compilers only
-local bitint = modern_compiler
-
 section("Compilation options")
 comment(("Compilation mode  : %s"):format(F{mode, use_lto and "+ LTO" or {}}:flatten():unwords()))
 comment(("Compiler          : %s"):format(compiler))
@@ -557,7 +554,7 @@ local cflags = {
 
 local luax_cflags = build.compile_flags {
     cflags,
-    bitint and "-DFNV1A_BITINT" or "-DFNV1A_BIT128",
+    "-DFNV1A_BIT128",
     optional(strict) {
         "-Werror",
         "-Wall",
