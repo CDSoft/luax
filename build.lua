@@ -82,7 +82,7 @@ Without any options, LuaX:
     - is optimized for size
     - is not a cross-compiler
     - does not use optional modules (lz4, luasocket, luasec)
-    - does not use OpenSSL
+    - does not use OpenSSL or LibreSSL
 
 $(title "Compiler")
 
@@ -108,7 +108,9 @@ bang -- nolz4       No LZ4 support (default)
 bang -- socket      Add socket support via luasocket
 bang -- nosocket    No socket support via luasocket (default)
 bang -- ssl         Add SSL support via LuaSec and OpenSSL
-bang -- nossl       No SSL support via LuaSec and OpenSSL (default)
+bang -- openssl     Add SSL support via LuaSec and OpenSSL
+bang -- libressl    Add SSL support via LuaSec and LibreSSL
+bang -- nossl       No SSL support via LuaSec and OpenSSL/LibreSSL (default)
 bang -- cross       Generate cross-compilers (implies compilation with zig)
 bang -- nocross     Do not generate cross-compilers (default)
 
@@ -124,14 +126,14 @@ if F.elem("help", arg) then
     os.exit(0)
 end
 
-local mode = "small" -- fast, small, debug
-local compiler = "gcc" -- zig, gcc, clang
+local mode = "small" ---@type "fast" | "small" | "debug"
+local compiler = "gcc" ---@type "zig" | "gcc" | "clang"
 local san = false
 local strict = true -- strict compilation options and checks
 local use_lto = false
 local lz4 = false
 local socket = false
-local ssl = false
+local ssl = false ---@type boolean | "OpenSSL" | "LibreSSL"
 local release = false
 local cross = false
 
@@ -157,7 +159,9 @@ F.foreach(arg, function(a)
         nolz4 = function() lz4 = false end,
         socket   = function() socket = true end,
         nosocket = function() socket = false end,
-        ssl      = function() ssl = true end,
+        ssl      = function() ssl = "OpenSSL" end,
+        openssl  = function() ssl = "OpenSSL" end,
+        libressl = function() ssl = "LibreSSL" end,
         nossl    = function() ssl = false end,
         release = function() release = true end,
         cross   = function() cross = true end,
@@ -214,7 +218,7 @@ comment(("Lua code          : %s"):format(case(bytecode) { ["-b"] = "bytecode",
                                                            ["-s"] = "stripped bytecode",
                                                            [Nil]  = "source code" }))
 comment(("Compression       : %s"):format(F.flatten{"Lzip", lz4 and "LZ4" or {}} : str " + "))
-comment(("Socket support    : %s"):format(F.flatten{socket and "LuaSocket" or "none", ssl and {"LuaSec", "OpenSSL"} or {}} : str " + "))
+comment(("Socket support    : %s"):format(F.flatten{socket and "LuaSocket" or "none", ssl and {"LuaSec", ssl} or {}} : str " + "))
 
 local function is_dynamic(target) return target.libc~="musl" and not san end
 
@@ -255,11 +259,9 @@ end
 
 local build_once = once(build)
 
-local openssl_libs = targets : map2t(function(target) return target.name, {} end)
+local ssl_libs = targets : map2t(function(target) return target.name, {} end)
 
 local function add_openssl_rules()
-
-if not ssl then return end
 
 --===================================================================
 section "OpenSSL"
@@ -377,7 +379,7 @@ targets_to_compile:foreach(function(target)
         clang = 'export CFLAGS="$$CFLAGS -flto=thin";',
     }
 
-    openssl_libs[target.name] = build { "$openssl"/target.name/"libssl.a", "$openssl"/target.name/"libcrypto.a" } { "make_openssl",
+    ssl_libs[target.name] = build { "$openssl"/target.name/"libssl.a", "$openssl"/target.name/"libcrypto.a" } { "make_openssl",
         target = target.name,
         zig_target = zig_target(target),
         openssl_target = case(target.name) {
@@ -403,6 +405,158 @@ targets_to_compile:foreach(function(target)
 end)
 
 end -- add_openssl_rules
+
+local function add_libressl_rules()
+
+--===================================================================
+section "LibreSSL"
+---------------------------------------------------------------------
+
+var "libressl_version" "4.1.0"
+var "libressl_archive" "libressl-${libressl_version}.tar.gz"
+var "libressl_url" "https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/${libressl_archive}"
+
+var "libressl" "$builddir/libressl"
+var "libressl_src" "$builddir/src/libressl-${libressl_version}"
+
+var "root" { fs.getcwd() }
+
+local libressl_downloaded_archive = build "$builddir/src/$libressl_archive" {
+    description = "download $out",
+    command = "curl -sSLf $libressl_url -o $out && touch $out",
+}
+
+local libressl_configure_script = build "$libressl_src/configure" { libressl_downloaded_archive,
+    description = "extract $in",
+    command = "tar xzf $in -C $libressl_src --strip-components 1 && touch $out",
+}
+
+local libressl_options = {
+    "--disable-shared",
+    "--enable-static",
+    "--disable-tests",
+    "--disable-nc",
+    --"--disable-asm",
+    --"--disable-curve25519",
+    --"--disable-poly1305",
+    --"--disable-chacha",
+    --"--disable-gost",
+    --"--disable-idea",
+    --"--disable-md4",
+    --"--disable-md5",
+    --"--disable-mdc2",
+    --"--disable-rc2",
+    --"--disable-rc4",
+    --"--disable-rc5",
+    --"--disable-rmd160",
+    --"--disable-whirlpool",
+    --"--disable-cast",
+    --"--disable-bf",
+    --"--disable-seed",
+    --"--disable-camellia",
+    --"--disable-ssl3",
+    --"--disable-dtls1",
+}
+
+local nproc = (sh "getconf _NPROCESSORS_ONLN" or "8"):trim()
+
+rule "make_libressl" {
+    description = "compile LibreSSL for $zig_target",
+    command = {
+        "set -e;",
+        "mkdir -p $libressl/$target;",
+        "cd $libressl/$target;",
+        case(compiler) {
+            zig = {
+                'export AR="$zig ar";',
+                'export CC="$zig cc $zig_target";',
+                'export CXX="$zig c++ $zig_target";',
+                'export LD="$zig ld $zig_target";',
+                'export RANLIB="$zig ranlib";',
+                'export RC="$zig rc";',
+            },
+            gcc = {
+                'export CC="gcc";',
+                'export CXX="g++";',
+            },
+            clang = {
+                'export CC="clang";',
+                'export CXX="clang++";',
+            },
+        },
+        case(mode) {
+            fast  = 'export CFLAGS="-pipe -Os";',
+            small = 'export CFLAGS="-pipe -Os";',
+            debug = 'export CFLAGS="-pipe -Og -g";',
+        },
+        'export CFLAGS="$$CFLAGS -fPIC $libressl_cflags";',
+        "$lto",
+        "$root"/(vars%libressl_configure_script),
+            "--host=$libressl_target",
+            "--prefix=$root/$libressl/$target/local",
+            libressl_options,
+            "$libressl_options",
+            ";",
+        "make", "-j", nproc, "-C", "crypto", "libcrypto.la", ";",
+        "make", "-j", nproc, "-C", "ssl", "libssl.la", ";",
+        --"strip --strip-unneeded */.libs/*.a", ";",
+        --"touch *.a",
+    },
+    implicit_in = libressl_configure_script,
+    pool = "console",
+}
+
+targets_to_compile:foreach(function(target)
+
+    local lto_opt = case(compiler) {
+        zig   = 'export CFLAGS="$$CFLAGS -flto=thin";',
+        gcc   = 'export CFLAGS="$$CFLAGS -flto=auto";',
+        clang = 'export CFLAGS="$$CFLAGS -flto=thin";',
+    }
+
+    ssl_libs[target.name] = build {
+        "$libressl"/target.name/"ssl/.libs/libssl.a",
+        "$libressl"/target.name/"crypto/.libs/libcrypto.a",
+    } { "make_libressl",
+        target = target.name,
+        zig_target = zig_target(target),
+        libressl_target = case(target.name) {
+            ["linux-x86_64"]        = F.const"x86_64-linux-gnu",
+            ["linux-x86_64-musl"]   = F.const"x86_64-linux-musl",
+            ["linux-aarch64"]       = F.const"aarch64-linux-gnu",
+            ["linux-aarch64-musl"]  = F.const"aarch64-linux-musl",
+            ["macos-x86_64"]        = F.const"x86_64-macos-none",
+            ["macos-aarch64"]       = F.const"arm64-macos-none",
+            ["windows-x86_64"]      = F.const"x86_64-windows-none",
+            ["windows-aarch64"]     = F.const"aarch64-windows-gnu",
+            [Nil]                   = function() error(target.name..": unsupported LibreSSL target") end,
+        } (),
+        libressl_options = case(target.name) {
+            ["macos-x86_64"]        = "--disable-asm",
+            ["macos-aarch64"]       = "--disable-asm",
+            ["windows-x86_64"]      = "--disable-asm",
+            ["windows-aarch64"]     = "--disable-asm",
+        },
+        libressl_cflags = case(target.name) {
+            ["windows-x86_64"]      = {
+                "-Wno-implicit-function-declaration",
+            },
+            ["windows-aarch64"]     = {
+                "-Wno-implicit-function-declaration",
+            },
+        },
+        lto = optional(use_lto) {
+            case(target.os) {
+                linux   = lto_opt,
+                macos   = {},
+                windows = lto_opt,
+            },
+        },
+    }
+
+end)
+
+end -- add_libressl_rules
 
 --===================================================================
 section "Compiler"
@@ -534,7 +688,7 @@ local host_ldlibs = {
 }
 
 local cflags = {
-    "-std=gnu2x",
+    "-std=gnu11",
     case(mode) {
         fast  = "-O3",
         small = "-Os",
@@ -671,9 +825,16 @@ targets_to_compile:foreach(function(target)
     }
     local opt_include_path = F.flatten {
         optional(lz4) "ext/opt/lz4/lib",
-        optional(ssl) {
-            "$openssl"/target.name/"include",
-            "$openssl_src/include",
+        case(ssl) {
+            OpenSSL = {
+                "$openssl"/target.name/"include",
+                "$openssl_src/include",
+            },
+            LibreSSL = {
+                "$libressl"/target.name/"local/include",
+                "$libressl_src/include",
+            },
+            [Nil] = {},
         },
     }
     local opt_flags = {
@@ -730,7 +891,11 @@ targets_to_compile:foreach(function(target)
 
 end)
 
-add_openssl_rules()
+case(ssl) {
+    OpenSSL = add_openssl_rules,
+    LibreSSL = add_libressl_rules,
+    [Nil] = F.const(),
+}()
 
 --===================================================================
 section "Third-party modules update"
@@ -1038,11 +1203,11 @@ local function implicit_in(target, name)
             version = "$luax_config_h",
             limath  = "check_limath_version",
             imath   = "check_limath_version",
-            luasec  = openssl_libs[target.name],
+            luasec  = ssl_libs[target.name],
             [Nil]   = {},
         },
         case(name:dirname():basename()) {
-            luasec = openssl_libs[target.name],
+            luasec = ssl_libs[target.name],
         },
     }
 end
@@ -1111,7 +1276,7 @@ targets_to_compile:foreach(function(target)
         main_libluax[target.name],
         liblua[target.name],
         libluax[target.name],
-        openssl_libs[target.name],
+        ssl_libs[target.name],
         luax_app_bundle,
     }
 
@@ -1120,7 +1285,7 @@ targets_to_compile:foreach(function(target)
         main_libluax[target.name],
         liblua[target.name],
         libluax[target.name],
-        openssl_libs[target.name],
+        ssl_libs[target.name],
     }
 
     shared_library[target.name] = is_dynamic(target) and
@@ -1132,7 +1297,7 @@ targets_to_compile:foreach(function(target)
                 windows = liblua[target.name],
             },
             libluax[target.name],
-            openssl_libs[target.name],
+            ssl_libs[target.name],
         }
 
 end)
@@ -1210,7 +1375,7 @@ local function luax_archive(archive, compilation_targets)
                     main_libluax[target.name],
                     libluax[target.name],
                     liblua[target.name],
-                    openssl_libs[target.name],
+                    ssl_libs[target.name],
                 }
                 return F.map(compress("$tmp/lib/targets"/target.name), libs)
             end),
@@ -1727,7 +1892,7 @@ local dist = (function()
                             use_lto and "lto" or {},
                         } : str ", ",
                         COMPRESSION = F.flatten{"Lzip", optional(lz4)"LZ4"} : str " + ",
-                        SOCKETS = F.flatten{socket and "LuaSocket" or "no", optional(ssl){"LuaSec", "OpenSSL"}} : str " + ",
+                        SOCKETS = F.flatten{socket and "LuaSocket" or "no", optional(ssl){"LuaSec", ssl}} : str " + ",
                         CROSS = cross and "yes" or "no",
                     },
                 }

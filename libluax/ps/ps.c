@@ -61,8 +61,8 @@ static int ps_sleep(lua_State *L)
     double sec;
     double nsec = modf(t, &sec);
     const struct timespec ts = {
-        .tv_sec = (typeof(ts.tv_sec))sec,
-        .tv_nsec = (typeof(ts.tv_nsec))(nsec*1e9),
+        .tv_sec = (long)sec,
+        .tv_nsec = (long)(nsec*1e9),
     };
     nanosleep(&ts, NULL);
 #endif
