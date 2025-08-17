@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.4.1" "2025-08-01"
+version "9.4.2" "2025-08-20"
 
 local F = require "F"
 local fs = require "fs"
@@ -1155,18 +1155,12 @@ section "LuaX archives"
 
 rule "lzip" {
     description = "lzip $in",
-    command = "$lzip -$level $in --output=- > $out",
+    command = { "$lzip", ssl and "-6" or "-0", "$in --output=- > $out" },
     implicit_in = "$lzip",
 }
 
 local compress = F.curry(function(dest, source)
-    return build_once(dest/source:basename()..".lz") { "lzip", source,
-        level = case(source:ext()) {
-            [".a"] = ssl and 6 or 0,
-            [".o"] = ssl and 6 or 0,
-            [Nil]  = 0,
-        }
-    }
+    return build_once(dest/source:basename()..".lz") { "lzip", source }
 end)
 
 rule "pack" {
