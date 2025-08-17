@@ -243,11 +243,11 @@ local doc = {}
 
 local function once(f)
     local cache = {}
-    return F.curry(function(x, y)
-        local hash = F.show{x, y}
+    return F.curry(function(output, input)
+        local hash = F.show{output=output, input=input}
         local val = cache[hash]
         if val ~= nil then return val end
-        val = f(x)(y)
+        val = f(output)(input)
         cache[hash] = val
         return val
     end)
