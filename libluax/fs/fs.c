@@ -339,18 +339,61 @@ fs.glob(pattern)
 ```
 returns the list of path names matching a pattern.
 
-*Note*: not implemented on Windows.
+*Note*: The windows implementation is limited and accepts wildcards in the basename only, not in the path components.
 @@@*/
 
 #ifdef _WIN32
 
-/* no glob function */
-/* TODO: implement glob in Lua */
-/* see functions FindFirstFile and FindNextFile. */
-
 static int fs_glob(lua_State *L)
 {
-    return luax_pusherror(L, "glob: not implemented on Windows");
+    const char *pattern;
+    if (lua_isstring(L, 1))
+    {
+        pattern = luaL_checkstring(L, 1);
+    }
+    else if (lua_isnoneornil(L, 1))
+    {
+        pattern = "*";
+    }
+    else
+    {
+        return luax_pusherror(L, "bad argument #1 to pattern (none, nil or string expected)");
+    }
+
+    WIN32_FIND_DATA file;
+    HANDLE h = FindFirstFile(pattern, &file);
+    if (h == INVALID_HANDLE_VALUE) {
+        return luax_pusherror(L, "%s: FindFirstFile error %d", pattern, GetLastError());
+    }
+
+    char path_dir[PATH_MAX];
+    strncpy(path_dir, pattern, sizeof(pattern)-1);
+    const char *dir = dirname(path_dir);
+    const bool in_current_dir = strcmp(dir, ".") == 0;
+
+    lua_newtable(L); /* file list */
+    unsigned int i = 0;
+    do {
+        if (strcmp(file.cFileName, ".")!=0 && strcmp(file.cFileName, "..")!=0) {
+            if (!in_current_dir) {
+                char full_path[PATH_MAX];
+                t_str full_path_str;
+                str_init(&full_path_str, full_path, sizeof(full_path));
+                str_add(&full_path_str, dir, strnlen(dir, PATH_MAX));
+                str_add(&full_path_str, LUA_DIRSEP, sizeof(LUA_DIRSEP)-1);
+                str_add(&full_path_str, file.cFileName, strnlen(file.cFileName, sizeof(file.cFileName)));
+                lua_pushstring(L, full_path);
+            } else {
+                lua_pushstring(L, file.cFileName);
+            }
+            i++;
+            lua_rawseti(L, -2, i);
+        }
+    } while (FindNextFile(h, &file) != 0);
+    FindClose(h);
+
+    set_F_metatable(L);
+    return 1;
 }
 
 #else

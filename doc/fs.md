@@ -49,7 +49,8 @@ fs.glob(pattern)
 
 returns the list of path names matching a pattern.
 
-*Note*: not implemented on Windows.
+*Note*: The windows implementation is limited and accepts wildcards in
+the basename only, not in the path components.
 
 ``` lua
 fs.fnmatch(pattern, string, [flags])
