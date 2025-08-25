@@ -244,7 +244,7 @@ update_argparse()
 {
     local ARGPARSE_VERSION="$1"
     local ARGPARSE_ARCHIVE="argparse-$ARGPARSE_VERSION.zip"
-    local ARGPARSE_URL="https://github.com/CDSoft/argparse/archive/refs/heads/$ARGPARSE_VERSION.zip"
+    local ARGPARSE_URL="https://codeberg.org/cdsoft/argparse/archive/$ARGPARSE_VERSION.zip"
 
     mkdir -p "$TMP"
     download "$ARGPARSE_URL" "$TMP/$ARGPARSE_ARCHIVE"
@@ -402,10 +402,9 @@ EOF
 
 update_linenoise()
 {
-    local LINENOISE_REPO="CDSoft/linenoise"
     local LINENOISE_VERSION="$1"
     local LINENOISE_ARCHIVE="linenoise-$LINENOISE_VERSION.zip"
-    local LINENOISE_URL="https://github.com/$LINENOISE_REPO/archive/refs/heads/$LINENOISE_VERSION.zip"
+    local LINENOISE_URL="https://codeberg.org/cdsoft/linenoise/archive/$LINENOISE_VERSION.zip"
 
     mkdir -p "$TMP"
     download "$LINENOISE_URL" "$TMP/$LINENOISE_ARCHIVE"
