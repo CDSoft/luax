@@ -37,8 +37,7 @@ The history can not be saved on Windows.
 #include "lauxlib.h"
 
 #ifdef _WIN32
-#include <string.h>
-#define isatty _isatty
+/* No linenoise on Windows */
 #else
 #define HAS_LINENOISE
 #include "ext/c/linenoise/linenoise.h"

@@ -78,11 +78,7 @@ static int term_isatty(lua_State *L)
     if (!get_file_descriptor(L, STDIN_FILENO, &fd)) {
         return luax_pusherror(L, "isatty: bad file descriptor");
     }
-#ifdef _WIN32
-    lua_pushboolean(L, _isatty(fd));
-#else
     lua_pushboolean(L, isatty(fd));
-#endif
     return 1;
 }
 

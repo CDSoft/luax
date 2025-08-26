@@ -46,10 +46,6 @@ local crypt = require "crypt"
 
 #include <unistd.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 /* Entropy sources for PRNG initialization */
 static uint64_t entropy(void *ptr)
 {
