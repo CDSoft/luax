@@ -20,27 +20,9 @@
 
 set -e
 
-ZIG_URL="$1"
-ZIG_VERSION="$2"
-ZIG="$3"
-
-found()
-{
-    hash "$@" 2>/dev/null
-}
-
-download()
-{
-    local URL="$1"
-    local OUTPUT="$2"
-    echo "Downloading $URL"
-    if ! found curl
-    then
-        echo "ERROR: curl not found"
-        exit 1
-    fi
-    curl -L "$URL" -o "$OUTPUT" --progress-bar --fail
-}
+ZIG_VERSION="$1"
+ZIG="$2"
+ZIG_KEY="$3"
 
 ARCH="$(uname -m)"
 case "$ARCH" in
@@ -58,19 +40,50 @@ case "$(uname -s)" in
     (*)      OS=unknown ;;
 esac
 
-ZIG_URL=${ZIG_URL//OS/$OS}
-ZIG_URL=${ZIG_URL//ARCH/$ARCH}
-ZIG_URL=${ZIG_URL//VERSION/$ZIG_VERSION}
-ZIG_URL="$ZIG_URL$EXT"
-ZIG_ARCHIVE=$(basename "$ZIG_URL")
+ZIG_ARCHIVE=zig-$ARCH-$OS-$ZIG_VERSION$EXT
+
+found()
+{
+    hash "$@" 2>/dev/null
+}
+
+download()
+{
+    local OUTPUT="$1"
+    echo "Downloading $ZIG_ARCHIVE"
+    if ! found curl
+    then
+        echo "ERROR: curl not found"
+        exit 1
+    fi
+    if ! found minisign
+    then
+        echo "ERROR: minisign not found"
+        exit 1
+    fi
+    local MIRRORS
+    MIRRORS=$(curl -s https://ziglang.org/download/community-mirrors.txt)
+    mapfile -t MIRRORS < <(shuf -e "${MIRRORS[@]}")
+    for mirror in "${MIRRORS[@]}"
+    do
+        echo "Try mirror: $mirror/$ZIG_ARCHIVE"
+        if curl -L "$mirror/$ZIG_ARCHIVE?source=luax-zig-setup" -o "$OUTPUT" --progress-bar --fail
+        then
+            curl -L "$mirror/$ZIG_ARCHIVE.minisig?source=luax-zig-setup" -o "$OUTPUT.minisig" --progress-bar --fail
+            minisign -Vm "$OUTPUT" -x "$OUTPUT.minisig" -P "$ZIG_KEY"
+            break
+        fi
+    done
+}
 
 if ! [ -x "$ZIG" ]
 then
     mkdir -p "$(dirname "$ZIG")"
-    download "$ZIG_URL" "$(dirname "$ZIG")/$ZIG_ARCHIVE"
+    download "$(dirname "$ZIG")/$ZIG_ARCHIVE"
 
     tar xJf "$(dirname "$ZIG")/$ZIG_ARCHIVE" -C "$(dirname "$ZIG")" --strip-components 1
     rm "$(dirname "$ZIG")/$ZIG_ARCHIVE"
+    rm "$(dirname "$ZIG")/$ZIG_ARCHIVE.minisig"
 fi
 
 touch "$ZIG"

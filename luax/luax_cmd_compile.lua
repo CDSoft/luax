@@ -323,26 +323,43 @@ local function compile_native(tmp, current_output, target_definition)
             windows = build_config.zig.path_win:gsub("^~", os.getenv"LOCALAPPDATA" or "~"),
             [F.Nil] = build_config.zig.path:gsub("^~", os.getenv"HOME" or "~"),
         }/zig_version
+        local zig_key = build_config.zig.key;
 
         local zig = zig_path/"zig"..sys.exe
 
         -- Install Zig (to cross compile and link C sources)
         if not zig:is_file() then
             log("Zig", "download and install Zig to %s", zig_path)
-            local url = build_config.zig.url
-                : gsub("OS", sys.os)
-                : gsub("ARCH", sys.arch)
-                : gsub("VERSION", zig_version)
-                .. F.case(sys.os) { windows=".zip", [F.Nil]=".tar.xz" }
-            local archive = url:basename()
             local curl = require "curl"
             local term = require "term"
-            assert(curl.request {
-                "-fSL",
-                (quiet or not term.isatty(io.stdout)) and "-s" or "-#",
-                url,
-                "-o", tmp/archive,
-            })
+            local ext = F.case(sys.os) { windows=".zip", [F.Nil]=".tar.xz" }
+            local archive, ok, err
+            local mirrors = curl "https://ziglang.org/download/community-mirrors.txt" : lines() : shuffle()
+            for _, mirror in ipairs(mirrors) do
+                local url = string.format("%s/zig-%s-%s-%s%s", mirror, sys.arch, sys.os, zig_version, ext)
+                local source = "?source=luax-zig-setup"
+                log("Zig", "try mirror %s", mirror)
+                archive = url:basename()
+                ok, err = curl.request {
+                    "-fSL",
+                    (quiet or not term.isatty(io.stdout)) and "-s" or "-#",
+                    url..source,
+                    "-o", tmp/archive,
+                }
+                if ok then
+                    assert(curl.request {
+                        "-fSL",
+                        (quiet or not term.isatty(io.stdout)) and "-s" or "-#",
+                        url..".minisig"..source,
+                        "-o", tmp/archive..".minisig",
+                    })
+                    if not ok then break end
+                    ok = sh.run { "minisign", "-Vm", tmp/archive, "-x", tmp/archive..".minisig", "-P", zig_key }
+                    if not ok then err = "minisig error" end
+                    break
+                end
+            end
+            assert(ok, err)
             fs.mkdirs(zig_path)
             assert(sh.run("tar -xJf", tmp/archive, "-C", zig_path, "--strip-components", 1))
             if not zig:is_file() then
