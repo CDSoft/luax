@@ -355,7 +355,7 @@ local function compile_native(tmp, current_output, target_definition)
                     })
                     if not ok then break end
                     ok = sh.run { "minisign", "-Vm", tmp/archive, "-x", tmp/archive..".minisig", "-P", zig_key }
-                    if not ok then err = "minisig error" end
+                    if not ok then err = "minisign error" end
                     break
                 end
             end
