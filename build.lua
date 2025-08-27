@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.5" "2025-08-26"
+version "9.5.1" "2025-08-27"
 
 local F = require "F"
 local fs = require "fs"
@@ -35,7 +35,7 @@ LUAX.COPYRIGHT   = I"LuaX $(VERSION)  Copyright (C) 2021-$(DATE:split'%-':head()
 
 local BUILD_CONFIG = {
     ZIG_VERSION  = "0.14.1",
-    ZIG_URL      = "https://ziglang.org/download/VERSION/zig-ARCH-OS-VERSION",
+    ZIG_KEY      = "RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U",
     ZIG_PATH     = "~/.local/opt/zig",
     ZIG_PATH_WIN = "~\\zig",
 }
@@ -413,21 +413,17 @@ local compiler_deps = {}
 case(compiler) {
 
     zig = function()
-        var "zig_url" (BUILD_CONFIG.ZIG_URL
-            : gsub("OS", sys.os)
-            : gsub("ARCH", sys.arch)
-            : gsub("VERSION", BUILD_CONFIG.ZIG_VERSION)
-        )
         var "zig_version" (BUILD_CONFIG.ZIG_VERSION)
         local zig_path = case(sys.os) {
             windows = BUILD_CONFIG.ZIG_PATH_WIN:gsub("^~", os.getenv"LOCALAPPDATA" or "~"),
             [Nil]   = BUILD_CONFIG.ZIG_PATH:gsub("^~", os.getenv"HOME" or "~"),
         }
         var "zig" { zig_path/"$zig_version"/"zig" }
+        var "zig_key" { BUILD_CONFIG.ZIG_KEY }
 
         build "$zig" {
             description = "install zig $zig_version",
-            command = "tools/install_zig.sh $zig_url $zig_version $out",
+            command = "tools/install_zig.sh $zig_version $out $zig_key",
             pool = "console",
         }
 

@@ -68,6 +68,8 @@ distributions (Debian, Fedora and Arch Linux) or on MacOS.
 ### Quick compilation
 
 The script `bootstrap.sh` installs `ninja`, `zig` (if required) and compiles LuaX.
+`curl`, `minisign` and `tar` are needed to compile LuaX with `zig`.
+
 Once done, LuaX can be installed with `ninja install`.
 `git` must be installed to clone the LuaX repository but it can also be compiled from a source archive without git.
 
