@@ -195,6 +195,10 @@ local function uncompressed_name(name)
     }()
 end
 
+local function assert_sh(ok, _, code)
+    assert(ok and code==0)
+end
+
 -- Compile LuaX scripts with LuaX and Zig, gcc or clang
 local function compile_native(tmp, current_output, target_definition)
     if current_output:ext():lower() ~= target_definition.exe then
@@ -333,35 +337,38 @@ local function compile_native(tmp, current_output, target_definition)
             local curl = require "curl"
             local term = require "term"
             local ext = F.case(sys.os) { windows=".zip", [F.Nil]=".tar.xz" }
-            local archive, ok, err
+            local archive
             local mirrors = curl "https://ziglang.org/download/community-mirrors.txt" : lines() : shuffle()
             for _, mirror in ipairs(mirrors) do
                 local url = string.format("%s/zig-%s-%s-%s%s", mirror, sys.arch, sys.os, zig_version, ext)
                 local source = "?source=luax-zig-setup"
                 log("Zig", "try mirror %s", mirror)
                 archive = url:basename()
-                ok, err = curl.request {
+                local curl_ok = curl.request {
                     "-fSL",
                     (quiet or not term.isatty(io.stdout)) and "-s" or "-#",
                     url..source,
                     "-o", tmp/archive,
                 }
-                if ok then
+                if curl_ok then
                     assert(curl.request {
                         "-fSL",
                         (quiet or not term.isatty(io.stdout)) and "-s" or "-#",
                         url..".minisig"..source,
                         "-o", tmp/archive..".minisig",
                     })
-                    if not ok then break end
-                    ok = sh.run { "minisign", "-Vm", tmp/archive, "-x", tmp/archive..".minisig", "-P", zig_key }
-                    if not ok then err = "minisign error" end
+                    local minisign_ok, _, minisign_code  = sh.run { "minisign", "-V", "-m", tmp/archive, "-x", tmp/archive..".minisig", "-P", zig_key }
+                    if not minisign_ok        then archive = nil -- minisign not installed ?
+                    elseif minisign_code ~= 0 then archive = nil -- bad signature
+                    end
                     break
                 end
+                archive = nil -- archive not found, try another mirror
             end
-            assert(ok, err)
-            fs.mkdirs(zig_path)
-            assert(sh.run("tar -xJf", tmp/archive, "-C", zig_path, "--strip-components", 1))
+            if archive then
+                fs.mkdirs(zig_path)
+                assert_sh(sh.run("tar -xJf", tmp/archive, "-C", zig_path, "--strip-components", 1))
+            end
             if not zig:is_file() then
                 help.err("Unable to install Zig to %s", zig_path)
             end
@@ -372,7 +379,7 @@ local function compile_native(tmp, current_output, target_definition)
     end
 
     -- Compile and link the generated source
-    assert(sh.run(compiler, cflags, libnames, tmp/app_bundle_c, ldflags, "-o", tmp_output))
+    assert_sh(sh.run(compiler, cflags, libnames, tmp/app_bundle_c, ldflags, "-o", tmp_output))
 
     assert(fs.copy(tmp_output, current_output))
 

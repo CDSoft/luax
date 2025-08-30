@@ -70,7 +70,7 @@ download()
         if curl -L "$mirror/$ZIG_ARCHIVE?source=luax-zig-setup" -o "$OUTPUT" --progress-bar --fail
         then
             curl -L "$mirror/$ZIG_ARCHIVE.minisig?source=luax-zig-setup" -o "$OUTPUT.minisig" --progress-bar --fail
-            minisign -Vm "$OUTPUT" -x "$OUTPUT.minisig" -P "$ZIG_KEY"
+            minisign -V -m "$OUTPUT" -x "$OUTPUT.minisig" -P "$ZIG_KEY"
             break
         fi
     done
