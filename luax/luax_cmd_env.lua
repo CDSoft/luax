@@ -71,6 +71,7 @@ local function user_env(args)
             local s = tostring(t)
                   : gsub("\n", "\\n")
                   : gsub("\'", "\\'")
+            p = p : gsub("[^%w]", "_")
             script[#script+1] = F{"export ", p:upper(), "='", s, "';"}:str()
         end
     end
