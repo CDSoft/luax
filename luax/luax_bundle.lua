@@ -43,11 +43,11 @@ local function last_line(s)
 end
 
 local function to_bool(x)
-    if x then return true end
+    return x and true or nil
 end
 
 local function to_string(x)
-    if x then return x end
+    return x or nil
 end
 
 local function mlstr(s)
@@ -421,7 +421,7 @@ function M.bundle(opt)
             mods[#mods+1] = {
                 "static int luaopen_"..func_name.."(lua_State *L) {",
                 "  static const unsigned char code[] = {",
-                chunks_of(16, code) : map(function(g) return "    "..g:str",".."," end),
+                chunks_of(32, code) : map(function(g) return "    "..g:str",".."," end),
                 "  };",
                 "  const int arg = lua_gettop(L);",
                 "  if (luaL_loadbuffer(L, (const char*)code, sizeof(code), \"@$"..stripped(product_name, script.path).."\") != LUA_OK) {",
@@ -472,7 +472,7 @@ function M.bundle(opt)
             }
             run_main[#run_main+1] = {
                 "  static const unsigned char code[] = {",
-                chunks_of(16, code) : map(function(g) return "    "..g:str",".."," end),
+                chunks_of(32, code) : map(function(g) return "    "..g:str",".."," end),
                 "  };",
                 "  if (luaL_loadbuffer(L, (const char*)code, sizeof(code), \"@$"..stripped(product_name, script.path).."\") != LUA_OK) {",
                 "    fprintf(stderr, \"%s\\n\", lua_tostring(L, -1));",
