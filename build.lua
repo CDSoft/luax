@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.5.6" "2025-09-10"
+version "9.5.7" "2025-09-16"
 
 local F = require "F"
 local fs = require "fs"
@@ -265,7 +265,7 @@ if not ssl then return end
 section "OpenSSL"
 ---------------------------------------------------------------------
 
-var "openssl_version" "3.5.1"
+var "openssl_version" "3.5.3"
 var "openssl_archive" "openssl-${openssl_version}.tar.gz"
 var "openssl_url" "https://github.com/openssl/openssl/releases/download/openssl-${openssl_version}/${openssl_archive}"
 
