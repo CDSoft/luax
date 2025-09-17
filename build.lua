@@ -1721,7 +1721,7 @@ local dist = (function()
                         CROSS = cross and "yes" or "no",
                     },
                 }
-            return releasenote "$release/ReleaseNote.md" { "tools/ReleaseNote.md.ypp" }
+            return releasenote "$release/ReleaseNote.md" { "tools/ReleaseNote.md.in" }
         end)(),
     }
 
