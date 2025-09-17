@@ -1148,11 +1148,10 @@ function F.show(x, opt)
                 local need_nl = false
                 emit "{"
                 if opt_indent then tabs = tabs + opt_indent end
-                local n = 0
-                for i = 1, #val do
+                local n = #val
+                for i = 1, n do
                     fmt(val[i])
                     emit ", "
-                    n = n + 1
                 end
                 local first_field = true
                 for k, v in F_pairs(val, opt_lt) do
