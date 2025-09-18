@@ -145,10 +145,15 @@ static inline void prng_str(t_prng *prng, size_t size, luaL_Buffer *B)
     luaL_addsize(B, size);
 }
 
+static inline uint64_t optional(uint64_t value, uint64_t def)
+{
+    return value == (uint64_t)(-1) ? def : value;
+}
+
 static inline void prng_seed(t_prng *prng, uint64_t state, uint64_t increment)
 {
-    prng->state = state == (uint64_t)-1 ? default_prng_state : state;
-    prng->increment = (increment == (uint64_t)-1 ? default_prng_increment : increment) | 1;
+    prng->state = optional(state, default_prng_state);
+    prng->increment = optional(increment, default_prng_increment) | 1;
     /* drop the first values */
     prng_advance(prng);
     prng_advance(prng);
