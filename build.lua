@@ -764,7 +764,7 @@ local ignored_sources = {
 
 local sources = F{
     lua_c_files = ls "lua/*.c"
-        : filter(function(name) return F.not_elem(name:basename(), {"lua.c", "luac.c"}) end),
+        : difference { "lua/lua.c", "lua/luac.c" },
     lua_main_c_files = F{ "lua/lua.c" },
     luax_main_c_files = F{ "luax/luax.c" },
     loader_main_c_files = F{ "luax/luax-loader.c" },
@@ -775,8 +775,8 @@ local sources = F{
         : difference(ssl and {} or ls "libluax/sec/**.c"),
     third_party_c_files = F.flatten {
         ls "ext/c/**.c"
-            : filter(function(name) return not name:match "lzlib/lib/inc" end)
-            : filter(function(name) return not name:match "lzlib/programs" end),
+            : difference(ls "ext/c/lzlib/lib/inc/*.c")
+            : difference(ls "ext/c/lzlib/programs/*.c"),
         optional(lz4)    { ls "ext/opt/lz4/lib/*.c" },
         optional(socket) { ls "ext/opt/luasocket/*.c" },
         optional(ssl)    { ls "ext/opt/luasec/**.c" },
