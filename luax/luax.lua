@@ -21,9 +21,6 @@ https://codeberg.org/cdsoft/luax
 --@MAIN
 
 local F = require "F"
-local fs = require "fs"
-local sys = require "sys"
-local term = require "term"
 
 -------------------------------------------------------------------------------
 -- Help command
@@ -31,6 +28,8 @@ local term = require "term"
 
 local function print_welcome()
 
+    local sys = require "sys"
+    local term = require "term"
 
     local I = (F.I % "%%{}")(_G){sys=sys}
 
@@ -499,6 +498,9 @@ prints `show(x)`
 
     local function run_interpreter()
 
+        local fs = require "fs"
+        local sys = require "sys"
+
         -- scripts
 
         if #args >= 1 then
@@ -604,7 +606,9 @@ end
 
 local function cmd_compile()
 
+    local fs = require "fs"
     local sh = require "sh"
+    local sys = require "sys"
 
     local bundle = require "luax_bundle"
     local targets = require "targets"
@@ -904,6 +908,7 @@ local function cmd_compile()
 
             -- Install Zig (to cross compile and link C sources)
             if not zig:is_file() then
+                local term = require "term"
                 log("Zig", "download and install Zig to %s", zig_path)
                 local curl = require "curl"
                 local ext = F.case(sys.os) { windows=".zip", [F.Nil]=".tar.xz" }
@@ -1044,6 +1049,10 @@ end
 -------------------------------------------------------------------------------
 
 local function find_exe(name)
+
+    local fs = require "fs"
+    local sys = require "sys"
+
     local exe = fs.is_file(name) and name
             or (sys.exe ~= "" and fs.is_file(name..sys.exe) and name..sys.exe)
             or fs.findpath(name)
@@ -1055,6 +1064,9 @@ local function find_exe(name)
 end
 
 local function cmd_env()
+
+    local fs = require "fs"
+    local sys = require "sys"
 
     local function luax_env(luax)
 
@@ -1119,6 +1131,9 @@ end
 
 local function cmd_postinstall()
 
+    local fs = require "fs"
+    local sys = require "sys"
+    local term = require "term"
     local linenoise = require "linenoise"
 
     local expected_files = F.flatten {

@@ -35,7 +35,6 @@ package.path = table.concat({
     "libluax/fs/?.lua",
     "libluax/import/?.lua",
     "libluax/mathx/?.lua",
-    "libluax/ps/?.lua",
     "libluax/sh/?.lua",
     "libluax/sys/?.lua",
     "libluax/term/?.lua",
