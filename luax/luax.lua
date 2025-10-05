@@ -105,7 +105,7 @@ Environment variables:
 
   LUA_PATH      LUA_PATH shall point to the lib directory
                 where the Lua implementation of LuaX
-                lbraries are installed
+                libraries are installed
 
   LUA_CPATH     LUA_CPATH shall point to the lib directory
                 where LuaX shared libraries are installed
