@@ -40,6 +40,8 @@ local ps = require "ps"
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <errno.h>
 #endif
 
 #include "lua.h"
@@ -56,15 +58,21 @@ static int ps_sleep(lua_State *L)
 {
     const double t = luaL_checknumber(L, 1);
 #ifdef __WIN32
-    usleep((useconds_t)(t * 1e6));
+    Sleep((useconds_t)(t * 1e3));
 #else
     double sec;
-    double nsec = modf(t, &sec);
-    const struct timespec ts = {
+    double nsec = modf(t, &sec) * 1e9;
+    struct timespec ts = {
         .tv_sec = (typeof(ts.tv_sec))sec,
-        .tv_nsec = (typeof(ts.tv_nsec))(nsec*1e9),
+        .tv_nsec = (typeof(ts.tv_nsec))nsec,
     };
-    nanosleep(&ts, NULL);
+    struct timespec rem;
+    while (nanosleep(&ts, &rem) == -1) {
+        if (errno != EINTR) {
+            return 0; /* silently fail */
+        }
+        ts = rem;
+    }
 #endif
     return 0;
 }
