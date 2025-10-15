@@ -32,35 +32,17 @@ local crypt = require "crypt"
 
 #include "crypt.h"
 
+#include "entropy.h"
 #include "fnv1a_32.h"
 #include "fnv1a_64.h"
 #include "fnv1a_128.h"
 #include "lua.h"
 #include "lauxlib.h"
+#include "pcg.h"
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-#include <sys/time.h>
-
-#include <unistd.h>
-
-/* Entropy sources for PRNG initialization */
-static uint64_t entropy(void *ptr)
-{
-    static t_fnv1a_64 hash = 0xcbf29ce484222325;    /* Start with the previous value */
-    const uint64_t random[] = {
-        (uint64_t)time(NULL),         /* Current time */
-        (uint64_t)clock(),            /* Process execution time */
-        (uint64_t)getpid(),           /* Process ID */
-        (uintptr_t)ptr,               /* Address of a characteristic variable */
-        (uintptr_t)&ptr,              /* Address of a local variable */
-        (uintptr_t)malloc,            /* Address of a global variable */
-    };
-    fnv1a_64_update(&hash, &random, sizeof(random));
-    return hash;
-}
 
 /***************************************************************************@@@
 ## Pseudo Random Number Generator
@@ -75,89 +57,6 @@ and can instantiate independent generators with their own seeds.
 @@@*/
 
 #define PRNG_MT "prng"
-
-/* https://www.pcg-random.org */
-
-typedef struct {
-    uint64_t state;
-    uint64_t increment;
-} t_prng;
-
-#define CRYPT_RAND_MAX ((uint64_t)(uint32_t)(-1))
-
-/* Low level random functions */
-
-static const uint64_t default_prng_state = 0x4d595df4d0f33173;
-static const uint64_t prng_multiplier = 6364136223846793005ULL;
-static const uint64_t default_prng_increment = 1442695040888963407ULL;
-
-static inline void prng_advance(t_prng *prng)
-{
-    // Advance internal state
-    prng->state = prng->state*prng_multiplier + prng->increment;
-}
-
-static inline uint32_t xsh_rr(uint64_t state)
-{
-    // Calculate output function (XSH RR)
-    const uint32_t xorshifted = (uint32_t)(((state >> 18u) ^ state) >> 27u);
-    const uint32_t rot = state >> 59u;
-    return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
-}
-
-static inline uint32_t prng_int(t_prng *prng)
-{
-    const uint64_t oldstate = prng->state;
-    // Advance internal state
-    prng_advance(prng);
-    // Calculate output function (XSH RR), uses old state for max ILP
-    return xsh_rr(oldstate);
-}
-
-static inline int64_t prng_int_range(t_prng *prng, int64_t a, int64_t b)
-{
-    const uint64_t n = prng_int(prng);
-    return (int64_t)(n % ((uint64_t)(b-a)+1)) + a;
-}
-
-static inline double prng_float(t_prng *prng)
-{
-    const uint32_t x = prng_int(prng);
-    return (double)x / (CRYPT_RAND_MAX+1);
-}
-
-static inline double prng_float_range(t_prng *prng, double a, double b)
-{
-    const double x = prng_float(prng);
-    return x*(b-a) + a;
-}
-
-static inline void prng_str(t_prng *prng, size_t size, luaL_Buffer *B)
-{
-    char *buf = luaL_prepbuffsize(B, size+3);
-    for (size_t i = 0; i < size; i+=4) {
-        const uint32_t r = prng_int(prng);
-        buf[i+0] = (char)(r>>(0*8));
-        buf[i+1] = (char)(r>>(1*8));
-        buf[i+2] = (char)(r>>(2*8));
-        buf[i+3] = (char)(r>>(3*8));
-    }
-    luaL_addsize(B, size);
-}
-
-static inline uint64_t optional(uint64_t value, uint64_t def)
-{
-    return value == (uint64_t)(-1) ? def : value;
-}
-
-static inline void prng_seed(t_prng *prng, uint64_t state, uint64_t increment)
-{
-    prng->state = optional(state, default_prng_state);
-    prng->increment = optional(increment, default_prng_increment) | 1;
-    /* drop the first values */
-    prng_advance(prng);
-    prng_advance(prng);
-}
 
 /***************************************************************************@@@
 ### Random number generator instance
@@ -185,7 +84,7 @@ Random state and increment values are taken from some entropy sources (time, mem
 
 static int crypt_prng(lua_State *L)
 {
-    t_prng *prng = (t_prng *)lua_newuserdata(L, sizeof(t_prng));
+    t_pcg *prng = (t_pcg *)lua_newuserdata(L, sizeof(t_pcg));
     const uint64_t seed = lua_type(L, 1) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 1)
         : entropy(prng);
@@ -193,7 +92,7 @@ static int crypt_prng(lua_State *L)
         ? (uint64_t)luaL_checkinteger(L, 2)
         : entropy(prng);
     luaL_setmetatable(L, PRNG_MT);
-    prng_seed(prng, seed, increment);
+    pcg_seed(prng, seed, increment);
     return 1;
 }
 
@@ -207,14 +106,14 @@ The default seed is a number based on the current time and the process id.
 
 static int crypt_prng_seed(lua_State *L)
 {
-    t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
+    t_pcg *prng = luaL_checkudata(L, 1, PRNG_MT);
     const uint64_t seed = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
         : entropy(prng);
     const uint64_t increment = lua_type(L, 3) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 3)
         : entropy(prng);
-    prng_seed(prng, seed, increment);
+    pcg_seed(prng, seed, increment);
     lua_pushvalue(L, 1); /* return the PRNG */
     return 1;
 }
@@ -228,10 +127,9 @@ returns a clone of the PRNG (same seed, same increment).
 
 static int crypt_prng_clone(lua_State *L)
 {
-    t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
-    t_prng *clone = (t_prng *)lua_newuserdata(L, sizeof(t_prng));
-    clone->state = prng->state;
-    clone->increment = prng->increment;
+    t_pcg *prng = luaL_checkudata(L, 1, PRNG_MT);
+    t_pcg *clone = (t_pcg *)lua_newuserdata(L, sizeof(t_pcg));
+    pcg_clone(prng, clone);
     luaL_setmetatable(L, PRNG_MT);
     return 1;
 }
@@ -255,18 +153,18 @@ returns a random integral number between `m` and `n`.
 
 static int crypt_prng_int(lua_State *L)
 {
-    t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
+    t_pcg *prng = luaL_checkudata(L, 1, PRNG_MT);
     if (lua_type(L, 2) != LUA_TNUMBER) {
-        lua_pushinteger(L, prng_int(prng));
+        lua_pushinteger(L, pcg_int(prng));
         return 1;
     }
     const lua_Integer m = luaL_checkinteger(L, 2);
     if (lua_type(L, 3) != LUA_TNUMBER) {
-        lua_pushinteger(L, prng_int_range(prng, 1, m));
+        lua_pushinteger(L, pcg_int_range(prng, 1, m));
         return 1;
     }
     const lua_Integer n = luaL_checkinteger(L, 3);
-    lua_pushinteger(L, prng_int_range(prng, m, n));
+    lua_pushinteger(L, pcg_int_range(prng, m, n));
     return 1;
 }
 
@@ -289,18 +187,18 @@ returns a random floating point number between `a` and `b`.
 
 static int crypt_prng_float(lua_State *L)
 {
-    t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
+    t_pcg *prng = luaL_checkudata(L, 1, PRNG_MT);
     if (lua_type(L, 2) != LUA_TNUMBER) {
-        lua_pushnumber(L, prng_float(prng));
+        lua_pushnumber(L, pcg_float(prng));
         return 1;
     }
     const lua_Number a = luaL_checknumber(L, 2);
     if (lua_type(L, 3) != LUA_TNUMBER) {
-        lua_pushnumber(L, prng_float_range(prng, 0, a));
+        lua_pushnumber(L, pcg_float_range(prng, 0, a));
         return 1;
     }
     const lua_Number b = luaL_checknumber(L, 3);
-    lua_pushnumber(L, prng_float_range(prng, a, b));
+    lua_pushnumber(L, pcg_float_range(prng, a, b));
     return 1;
 }
 
@@ -313,11 +211,12 @@ returns a string with `bytes` random bytes.
 
 static int crypt_prng_str(lua_State *L)
 {
-    t_prng *prng = luaL_checkudata(L, 1, PRNG_MT);
+    t_pcg *prng = luaL_checkudata(L, 1, PRNG_MT);
     const size_t bytes = (size_t)luaL_checkinteger(L, 2);
     luaL_Buffer B;
     luaL_buffinit(L, &B);
-    prng_str(prng, bytes, &B);
+    pcg_str(prng, bytes, luaL_prepbuffsize(&B, bytes+3));
+    luaL_addsize(&B, bytes);
     luaL_pushresult(&B);
     return 1;
 }
@@ -336,7 +235,7 @@ static const luaL_Reg prng_funcs[] =
 ### Global random number generator
 @@@*/
 
-static t_prng prng;
+static t_pcg prng;
 
 /*@@@
 ```lua
@@ -354,7 +253,7 @@ static int crypt_seed(lua_State *L)
     const uint64_t increment = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
         : entropy(&prng);
-    prng_seed(&prng, seed, increment);
+    pcg_seed(&prng, seed, increment);
     return 0;
 }
 
@@ -378,16 +277,16 @@ returns a random integral number between `m` and `n`.
 static int crypt_int(lua_State *L)
 {
     if (lua_type(L, 1) != LUA_TNUMBER) {
-        lua_pushinteger(L, prng_int(&prng));
+        lua_pushinteger(L, pcg_int(&prng));
         return 1;
     }
     const lua_Integer m = luaL_checkinteger(L, 1);
     if (lua_type(L, 2) != LUA_TNUMBER) {
-        lua_pushinteger(L, prng_int_range(&prng, 1, m));
+        lua_pushinteger(L, pcg_int_range(&prng, 1, m));
         return 1;
     }
     const lua_Integer n = luaL_checkinteger(L, 2);
-    lua_pushinteger(L, prng_int_range(&prng, m, n));
+    lua_pushinteger(L, pcg_int_range(&prng, m, n));
     return 1;
 }
 
@@ -411,16 +310,16 @@ returns a random floating point number between `a` and `b`.
 static int crypt_float(lua_State *L)
 {
     if (lua_type(L, 1) != LUA_TNUMBER) {
-        lua_pushnumber(L, prng_float(&prng));
+        lua_pushnumber(L, pcg_float(&prng));
         return 1;
     }
     const lua_Number a = luaL_checknumber(L, 1);
     if (lua_type(L, 2) != LUA_TNUMBER) {
-        lua_pushnumber(L, prng_float_range(&prng, 0, a));
+        lua_pushnumber(L, pcg_float_range(&prng, 0, a));
         return 1;
     }
     const lua_Number b = luaL_checknumber(L, 2);
-    lua_pushnumber(L, prng_float_range(&prng, a, b));
+    lua_pushnumber(L, pcg_float_range(&prng, a, b));
     return 1;
 }
 
@@ -436,7 +335,8 @@ static int crypt_str(lua_State *L)
     const size_t bytes = (size_t)luaL_checkinteger(L, 1);
     luaL_Buffer B;
     luaL_buffinit(L, &B);
-    prng_str(&prng, bytes, &B);
+    pcg_str(&prng, bytes, luaL_prepbuffsize(&B, bytes+3));
+    luaL_addsize(&B, bytes);
     luaL_pushresult(&B);
     return 1;
 }
@@ -1135,11 +1035,11 @@ LUAMOD_API int luaopen_crypt(lua_State *L)
     lua_pushvalue(L, -2);
     lua_settable(L, -3);
 
-    prng_seed(&prng, entropy(&prng), entropy(&prng));
+    pcg_seed(&prng, entropy(&prng), entropy(&prng));
 
     /* module initialization */
 
     luaL_newlib(L, crypt_module);
-    set_integer(L, "RAND_MAX", CRYPT_RAND_MAX);
+    set_integer(L, "RAND_MAX", PCG_RAND_MAX);
     return 1;
 }

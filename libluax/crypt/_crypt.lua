@@ -89,13 +89,13 @@ local entropy do
     end
 end
 
-local RAND_MAX <const> = 0xFFFFFFFF
+local PCG_RAND_MAX <const> = 0xFFFFFFFF
 
-crypt.RAND_MAX = RAND_MAX
+crypt.RAND_MAX = PCG_RAND_MAX
 
-local default_prng_state <const> = 0x4d595df4d0f33173
-local prng_multiplier <const> = 6364136223846793005
-local default_prng_increment <const> = 1442695040888963407
+local default_pcg_state <const> = 0x4d595df4d0f33173
+local pcg_multiplier <const> = 6364136223846793005
+local default_pcg_increment <const> = 1442695040888963407
 
 function crypt.prng(seed, incr)
     local self = setmetatable({}, prng_mt)
@@ -103,12 +103,12 @@ function crypt.prng(seed, incr)
 end
 
 function prng_mt.__index:seed(seed, incr)
-    if seed == -1 then seed = default_prng_state end
-    if incr == -1 then incr = default_prng_increment end
+    if seed == -1 then seed = default_pcg_state end
+    if incr == -1 then incr = default_pcg_increment end
     self.state = seed or entropy(self)
     self.increment = incr or entropy(self)
-    self.state = prng_multiplier*self.state + self.increment
-    self.state = prng_multiplier*self.state + self.increment
+    self.state = pcg_multiplier*self.state + self.increment
+    self.state = pcg_multiplier*self.state + self.increment
     return self
 end
 
@@ -126,29 +126,29 @@ local function xsh_rr(state)
     return ((xorshifted >> rot) | (xorshifted << ((-rot) & 31))) & 0xFFFFFFFF
 end
 
-local function prng_int(self, a, b)
+local function pcg_int(self, a, b)
     local oldstate = self.state
-    self.state = prng_multiplier*oldstate + self.increment
+    self.state = pcg_multiplier*oldstate + self.increment
     local r = xsh_rr(oldstate)
 
     if not a then return r end
     if not b then return r % a + 1 end
     return r % (b-a+1) + a
 end
-prng_mt.__index.int = prng_int
+prng_mt.__index.int = pcg_int
 
-local function prng_float(self, a, b)
-    local r = prng_int(self) / RAND_MAX
+local function pcg_float(self, a, b)
+    local r = pcg_int(self) / (PCG_RAND_MAX+1)
     if not a then return r end
     if not b then return r * a end
     return r*(b-a) + a
 end
-prng_mt.__index.float = prng_float
+prng_mt.__index.float = pcg_float
 
-local function prng_str(self, n)
+local function pcg_str(self, n)
     local bs = {}
     for i = 1, n, 4 do
-        local r = prng_int(self)
+        local r = pcg_int(self)
         bs[i  ] = char((r>>(0*8))&0xff)
         bs[i+1] = char((r>>(1*8))&0xff)
         bs[i+2] = char((r>>(2*8))&0xff)
@@ -156,7 +156,7 @@ local function prng_str(self, n)
     end
     return concat(bs, nil, 1, n)
 end
-prng_mt.__index.str = prng_str
+prng_mt.__index.str = pcg_str
 
 -- global random number generator
 local _rng = crypt.prng()
