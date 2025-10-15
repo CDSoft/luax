@@ -106,7 +106,7 @@ function prng_mt.__index:seed(seed, incr)
     if seed == -1 then seed = default_pcg_state end
     if incr == -1 then incr = default_pcg_increment end
     self.state = seed or entropy(self)
-    self.increment = incr or entropy(self)
+    self.increment = incr or entropy({})
     self.state = pcg_multiplier*self.state + self.increment
     self.state = pcg_multiplier*self.state + self.increment
     return self

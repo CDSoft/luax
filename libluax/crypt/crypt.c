@@ -90,7 +90,7 @@ static int crypt_prng(lua_State *L)
         : entropy(prng);
     const uint64_t increment = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
-        : entropy(prng);
+        : entropy(prng+1);
     luaL_setmetatable(L, PRNG_MT);
     pcg_seed(prng, seed, increment);
     return 1;
@@ -112,7 +112,7 @@ static int crypt_prng_seed(lua_State *L)
         : entropy(prng);
     const uint64_t increment = lua_type(L, 3) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 3)
-        : entropy(prng);
+        : entropy(prng+1);
     pcg_seed(prng, seed, increment);
     lua_pushvalue(L, 1); /* return the PRNG */
     return 1;
@@ -252,7 +252,7 @@ static int crypt_seed(lua_State *L)
         : entropy(&prng);
     const uint64_t increment = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
-        : entropy(&prng);
+        : entropy(&prng+1);
     pcg_seed(&prng, seed, increment);
     return 0;
 }
@@ -1035,7 +1035,7 @@ LUAMOD_API int luaopen_crypt(lua_State *L)
     lua_pushvalue(L, -2);
     lua_settable(L, -3);
 
-    pcg_seed(&prng, entropy(&prng), entropy(&prng));
+    pcg_seed(&prng, entropy(&prng), entropy(&prng+1));
 
     /* module initialization */
 
