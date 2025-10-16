@@ -158,8 +158,12 @@ return function()
         do
             local s = "foobar!"
             -- C and Lua implementations shall implement the same arc4 algorithm
-            eq({s:arc4(""):byte(1, -1)}, {135,151,174,56,231,102,98})
-            eq({s:arc4("key"):byte(1, -1)}, {217,183,168,237,133,97,233})
+            eq(s:arc4(""):bytes(), {135,151,174,56,231,102,98})
+            eq(s:arc4("key"):bytes(), {217,183,168,237,133,97,233})
+            -- Test vectors: https://en.wikipedia.org/wiki/RC4
+            eq(crypt.arc4("Plaintext", "Key", 0):hex(), "bbf316e8d940af0ad3")
+            eq(crypt.arc4("pedia", "Wiki", 0):hex(), "1021bf0420")
+            eq(crypt.arc4("Attack at dawn", "Secret", 0):hex(), "45a01f645fc35b383552544b9bf5")
         end
         do -- hash
             eq(crypt.hash "", "25232284e49cf2cb")
