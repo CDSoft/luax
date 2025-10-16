@@ -19,25 +19,29 @@
 
 #include "entropy.h"
 
-#include "fnv1a_64.h"
-
-#include <time.h>
 #include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 /* Entropy sources for PRNG initialization */
+
 uint64_t entropy(void *ptr)
 {
-    static t_fnv1a_64 hash = 0xcbf29ce484222325;    /* Start with the previous value */
+    static uint64_t hash = 0xcbf29ce484222325;
+    static const uint64_t prime = 0x100000001b3;
+
     struct timespec ts;
+
+    register uint64_t h = hash;
+    h = (h ^ (uintptr_t)ptr) * prime;         /* Address of a characteristic variable */
+    h = (h ^ (uintptr_t)&ts) * prime;         /* Address of a local variable */
+
     clock_gettime(CLOCK_REALTIME, &ts);
-    const uint32_t random[] = {
-        (uint32_t)ts.tv_sec,        /* Time in seconds */
-        (uint32_t)ts.tv_nsec,       /* and nanoseconds */
-        (uint32_t)getpid(),         /* Process ID */
-        (uint32_t)(uintptr_t)ptr,   /* Address of a characteristic variable */
-        (uint32_t)(uintptr_t)&ts,   /* Address of a local variable */
-    };
-    fnv1a_64_update(&hash, &random, sizeof(random));
-    return hash;
+    h = (h ^ (uint64_t)ts.tv_sec) * prime;    /* Time in seconds */
+    h = (h ^ (uint64_t)ts.tv_nsec) * prime;   /* ... and nanoseconds */
+
+    h = (h ^ (uint64_t)getpid()) * prime;     /* Process ID */
+    hash = h;
+
+    return h;
 }
