@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.5.8" "2025-10-06"
+version "9.5.9" "2025-10-17"
 
 local F = require "F"
 local fs = require "fs"
@@ -34,7 +34,7 @@ LUAX.DATE        = vars.date
 LUAX.COPYRIGHT   = I"LuaX $(VERSION)  Copyright (C) 2021-$(DATE:split'%-':head()) $(URL), $(AUTHORS)"
 
 local BUILD_CONFIG = {
-    ZIG_VERSION  = "0.14.1",
+    ZIG_VERSION  = "0.15.2",
     ZIG_KEY      = "RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U",
     ZIG_PATH     = "~/.local/opt/zig",
     ZIG_PATH_WIN = "~\\zig",
