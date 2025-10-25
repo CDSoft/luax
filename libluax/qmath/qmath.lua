@@ -35,8 +35,8 @@ The default `eps` value is $10^{-6}$.
 @@@]]
 
 local rat = qmath.new
-local floor = math.floor
 local abs = math.abs
+local modf = math.modf
 
 local function frac(a)
     local q = rat(a[#a])
@@ -49,13 +49,11 @@ end
 function qmath.torat(x, eps)
     eps = eps or 1e-6
     local x0 = x
-    local a = {floor(x)}
-    x = x - a[1]
+    local a = {}
+    a[1], x = modf(x)
     local q = frac(a)
     while abs(x0 - q:tonumber()) > eps and #a < 64 do
-        local y = 1/x
-        a[#a+1] = floor(y)
-        x = y - a[#a]
+        a[#a+1], x = modf(1/x)
         q = frac(a)
     end
     return q
