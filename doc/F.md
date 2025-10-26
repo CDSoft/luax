@@ -15,14 +15,15 @@ languages, especially by these Haskell modules:
 This module provides functions for Lua tables that can represent both
 arrays (i.e. integral indices) and tables (i.e. any indice types). The
 `F` constructor adds methods to tables which may interfere with table
-fields that could have the same names. In this case, F also defines a
-method alias (same name prefixed with `__`). E.g.:
+fields that could have the same names. In this case, F also defines the
+`__call` metamethod that takes a method name and returns a function that
+actually calls the requested method. E.g.:
 
 ``` lua
 t = F{foo = 12, mapk = 42} -- note that mapk is also a method of F tables
 
-t:mapk(func)   -- fails because mapk is a field of t
-t:__mapk(func) -- works and is equivalent to F.mapk(func, t)
+t:mapk(func)    -- fails because mapk is a field of t
+t"mapk"(func)   -- works and is equivalent to F.mapk(func, t)
 ```
 
 ## Standard types, and related functions

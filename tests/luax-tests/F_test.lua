@@ -36,15 +36,10 @@ local sys = require "sys"
 
 local function aliases()
 
-    local F_mt = getmetatable(F{})
-    local F_index = F_mt.__index
-    for k, v in pairs(F_index) do
-        if k:match"^__" then
-            eq(F_index["__"..k], nil) -- k is an alias, it shall not have one
-        else
-            eq(F_index["__"..k], v) -- k is not an alias, it shall have one
-        end
-    end
+    local t = F { map = "value of map", filterk = "value of filter", other = "something else" }
+
+    eq(t"mapt"(function(v) return v:upper_camel_case() end), {map="ValueOfMap", filterk="ValueOfFilter", other="SomethingElse"})
+    eq(t"filterk"(function(k) return k:match"^m" end), {map="value of map"})
 
 end
 
