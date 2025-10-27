@@ -319,19 +319,17 @@ update_lzlib()
 
 update_cbor()
 {
-    local CBOR_ARCHIVE=lua-cbor.tar.gz
-    local CBOR_URL="https://code.zash.se/lua-cbor/archive/tip.tar.gz"
+    local CBOR_REPO="https://code.zash.se/lua-cbor/"
 
     mkdir -p "$TMP"
-    download "$CBOR_URL" "$TMP/$CBOR_ARCHIVE"
+    rm -rf "$TMP/lua-cbor"
+    hg clone $CBOR_REPO "$TMP/lua-cbor"
 
     rm -rf ext/lua/cbor
     mkdir -p ext/lua/cbor
-    tar -xzf "$TMP/$CBOR_ARCHIVE" -C ext/lua/cbor
-    mv ext/lua/cbor/lua-cbor-*/cbor.lua ext/lua/cbor/
-    mv ext/lua/cbor/lua-cbor-*/README.* ext/lua/cbor/
-    mv ext/lua/cbor/lua-cbor-*/COPYING ext/lua/cbor/
-    rm -rf ext/lua/cbor/lua-cbor-*
+    cp "$TMP/lua-cbor"/cbor.lua ext/lua/cbor/
+    cp "$TMP/lua-cbor"/README.* ext/lua/cbor/
+    cp "$TMP/lua-cbor"/COPYING ext/lua/cbor/
     echo "--@LIB" >> ext/lua/cbor/cbor.lua
 
     patch -p1 <<EOF
