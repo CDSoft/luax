@@ -116,7 +116,7 @@ static t_header read_header(FILE *f, const char *exe)
 
 static char *read_payload(FILE *f, t_header header)
 {
-    char *payload = malloc(header.size);
+    char *payload = (char*)malloc(header.size);
     if (payload == NULL) {
         perror("malloc");
         exit(EXIT_FAILURE);

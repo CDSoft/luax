@@ -1172,13 +1172,13 @@ static int fs_tmpfile(lua_State *L)
     lua_pushstring(L, file);
     return 1;
 #else
-    char template[] = "/tmp/luax-XXXXXX";
-    const int fd = mkstemp(template);
+    char tmp_template[] = "/tmp/luax-XXXXXX";
+    const int fd = mkstemp(tmp_template);
     if (fd == -1) {
-        return luax_push_errno(L, template);
+        return luax_push_errno(L, tmp_template);
     }
     close(fd);
-    lua_pushstring(L, template);
+    lua_pushstring(L, tmp_template);
     return 1;
 #endif
 }
@@ -1212,10 +1212,10 @@ static int fs_tmpdir(lua_State *L)
     lua_pushstring(L, dir);
     return 1;
 #else
-    char template[] = "/tmp/luax-XXXXXX";
-    char *tmp = mkdtemp(template);
+    char tmp_template[] = "/tmp/luax-XXXXXX";
+    char *tmp = mkdtemp(tmp_template);
     if (tmp == NULL) {
-        return luax_push_errno(L, template);
+        return luax_push_errno(L, tmp_template);
     }
     lua_pushstring(L, tmp);
     return 1;

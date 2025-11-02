@@ -106,7 +106,7 @@ The default seed is a number based on the current time and the process id.
 
 static int crypt_prng_seed(lua_State *L)
 {
-    t_pcg *prng = luaL_checkudata(L, 1, PRNG_MT);
+    t_pcg *prng = (t_pcg*)luaL_checkudata(L, 1, PRNG_MT);
     const uint64_t seed = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
         : entropy(prng);
@@ -127,7 +127,7 @@ returns a clone of the PRNG (same seed, same increment).
 
 static int crypt_prng_clone(lua_State *L)
 {
-    t_pcg *prng = luaL_checkudata(L, 1, PRNG_MT);
+    t_pcg *prng = (t_pcg*)luaL_checkudata(L, 1, PRNG_MT);
     t_pcg *clone = (t_pcg *)lua_newuserdata(L, sizeof(t_pcg));
     pcg_clone(prng, clone);
     luaL_setmetatable(L, PRNG_MT);
@@ -153,7 +153,7 @@ returns a random integral number between `m` and `n`.
 
 static int crypt_prng_int(lua_State *L)
 {
-    t_pcg *prng = luaL_checkudata(L, 1, PRNG_MT);
+    t_pcg *prng = (t_pcg*)luaL_checkudata(L, 1, PRNG_MT);
     if (lua_type(L, 2) != LUA_TNUMBER) {
         lua_pushinteger(L, pcg_int(prng));
         return 1;
@@ -187,7 +187,7 @@ returns a random floating point number between `a` and `b`.
 
 static int crypt_prng_float(lua_State *L)
 {
-    t_pcg *prng = luaL_checkudata(L, 1, PRNG_MT);
+    t_pcg *prng = (t_pcg*)luaL_checkudata(L, 1, PRNG_MT);
     if (lua_type(L, 2) != LUA_TNUMBER) {
         lua_pushnumber(L, pcg_float(prng));
         return 1;
@@ -211,7 +211,7 @@ returns a string with `bytes` random bytes.
 
 static int crypt_prng_str(lua_State *L)
 {
-    t_pcg *prng = luaL_checkudata(L, 1, PRNG_MT);
+    t_pcg *prng = (t_pcg*)luaL_checkudata(L, 1, PRNG_MT);
     const size_t bytes = (size_t)luaL_checkinteger(L, 2);
     luaL_Buffer B;
     luaL_buffinit(L, &B);
