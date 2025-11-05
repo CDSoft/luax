@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.6.1" "2025-11-02"
+version "9.6.2" "2025-11-05"
 
 local F = require "F"
 local fs = require "fs"
@@ -823,6 +823,21 @@ cc.host "$lzip" {
     ls "ext/c/lzlib/lib/*.c",
 }
 
+if lz4 then
+
+--===================================================================
+section "lz4 cli"
+---------------------------------------------------------------------
+
+var "lz4" "$bin/lz4"
+
+cc.host "$lz4" {
+    ls "ext/opt/lz4/programs/*.c",
+    ls "ext/opt/lz4/lib/*.c",
+}
+
+end -- lz4
+
 --===================================================================
 section "LuaX configuration"
 ---------------------------------------------------------------------
@@ -1447,6 +1462,7 @@ acc(test) {
             "$lib/libluax.lua",
             "$lib/libluax.lar",
             "$lzip",
+            optional(lz4) "$lz4",
             libraries,
             test_sources,
             imported_test_sources,
@@ -1473,6 +1489,7 @@ acc(test) {
             "$bin/luax.lua",
             "$lib/libluax.lar",
             "$lzip",
+            optional(lz4) "$lz4",
             test_sources,
             imported_test_sources,
         },
@@ -1498,6 +1515,7 @@ acc(test) {
             "$lib/libluax.lua",
             "$lib/libluax.lar",
             "$lzip",
+            optional(lz4) "$lz4",
             libraries,
             test_sources,
             imported_test_sources,
