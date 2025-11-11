@@ -428,7 +428,7 @@ static int crypt_hex_decode(lua_State *L)
 ## Base64 encoding
 
 The base64 encoder transforms a string with non printable characters
-into a printable string (see <https://en.wikipedia.org/wiki/Base64>)
+into a printable string (see <https://en.wikipedia.org/wiki/Base64>).
 @@@*/
 
 static const char base64_map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -437,7 +437,7 @@ static const char base64_map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 static const char base64_rev[256] =
 {
-    ['A'] = 0,      ['a'] = 26+0,       ['0'] = 2*26+0,
+    ['A'] = 0,      ['a'] = 26+0,       ['0'] = 2*26+0,         ['='] = 0,
     ['B'] = 1,      ['b'] = 26+1,       ['1'] = 2*26+1,
     ['C'] = 2,      ['c'] = 26+2,       ['2'] = 2*26+2,
     ['D'] = 3,      ['d'] = 26+3,       ['3'] = 2*26+3,
@@ -471,7 +471,7 @@ static const char base64url_map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 static const char base64url_rev[256] =
 {
-    ['A'] = 0,      ['a'] = 26+0,       ['0'] = 2*26+0,
+    ['A'] = 0,      ['a'] = 26+0,       ['0'] = 2*26+0,         ['='] = 0,
     ['B'] = 1,      ['b'] = 26+1,       ['1'] = 2*26+1,
     ['C'] = 2,      ['c'] = 26+2,       ['2'] = 2*26+2,
     ['D'] = 3,      ['d'] = 26+3,       ['3'] = 2*26+3,
@@ -507,25 +507,30 @@ static void base64_encode(const char *map, const unsigned char *plain, size_t n_
     size_t i = 0;
     size_t j = 0;
     while (i + 2 < n_in) {
-        buf[j++] = map[plain[i] >> 2];
-        buf[j++] = map[((plain[i] & 0x03) << 4) | (plain[i+1] >> 4)];
-        buf[j++] = map[((plain[i+1] & 0x0f) << 2) | (plain[i+2] >> 6)];
-        buf[j++] = map[(plain[i+2] & 0x3f)];
+        const uint32_t u24 = (uint32_t)(plain[i] << 16) | (uint32_t)(plain[i+1] << 8) | (uint32_t)plain[i+2];
+        buf[j++] = map[(u24 >> (3*6)) & 0x3F];
+        buf[j++] = map[(u24 >> (2*6)) & 0x3F];
+        buf[j++] = map[(u24 >> (1*6)) & 0x3F];
+        buf[j++] = map[(u24 >> (0*6)) & 0x3F];
         i = i + 3;
     }
     switch (n_in - i) {
-        case 1:     /* i == n_in - 1 */
-            buf[j++] = map[plain[i] >> 2];
-            buf[j++] = map[(plain[i] & 0x03) << 4];
+        case 1: {   /* i == n_in - 1 */
+            const uint32_t u24 = (uint32_t)(plain[i] << 16);
+            buf[j++] = map[(u24 >> (3*6)) & 0x3F];
+            buf[j++] = map[(u24 >> (2*6)) & 0x3F];
             buf[j++] = '=';
             buf[j++] = '=';
             break;
-        case 2:     /* i+1 == n_in - 1 */
-            buf[j++] = map[plain[i] >> 2];
-            buf[j++] = map[((plain[i] & 0x03) << 4) | (plain[i+1] >> 4)];
-            buf[j++] = map[(plain[i+1] & 0x0f) << 2];
+        }
+        case 2: {   /* i+1 == n_in - 1 */
+            const uint32_t u24 = (uint32_t)(plain[i] << 16) | (uint32_t)(plain[i+1] << 8);
+            buf[j++] = map[(u24 >> (3*6)) & 0x3F];
+            buf[j++] = map[(u24 >> (2*6)) & 0x3F];
+            buf[j++] = map[(u24 >> (1*6)) & 0x3F];
             buf[j++] = '=';
             break;
+        }
         case 0:
         default:
             /* i + 2 >= n_in
@@ -547,9 +552,14 @@ static void base64_decode(const char *rev, const unsigned char *b64, size_t n_in
     size_t i = 0;
     size_t j = 0;
     while (i + 3 < n_in) {
-        buf[j++] = (char)((rev[b64[i]]   << 2) | (rev[b64[i+1]] >> 4));
-        buf[j++] = (char)((rev[b64[i+1]] << 4) | (rev[b64[i+2]] >> 2));
-        buf[j++] = (char)((rev[b64[i+2]] << 6) |  rev[b64[i+3]]);
+        const uint32_t u32 = ((uint32_t)rev[b64[i+0]] << (3*6))
+                           | ((uint32_t)rev[b64[i+1]] << (2*6))
+                           | ((uint32_t)rev[b64[i+2]] << (1*6))
+                           | ((uint32_t)rev[b64[i+3]] << (0*6))
+                           ;
+        buf[j++] = (char)((u32 >> (2*8)) & 0xFF);
+        buf[j++] = (char)((u32 >> (1*8)) & 0xFF);
+        buf[j++] = (char)((u32 >> (0*8)) & 0xFF);
         i = i + 4;
     }
     if (n_in >= 1) {

@@ -199,21 +199,24 @@ function crypt.base64(s)
     local remainder = #s % 3
     for i = 1, #s-remainder, 3 do
         local a, b, c = byte(s, i, i+2)
-        tokens[#tokens+1] = base64_map[a>>2]
-        tokens[#tokens+1] = base64_map[(a&3)<<4|b>>4]
-        tokens[#tokens+1] = base64_map[(b&15)<<2|c>>6]
-        tokens[#tokens+1] = base64_map[c&63]
+        local u24 = (a << 16) | (b << 8) | c
+        tokens[#tokens+1] = base64_map[(u24 >> (3*6)) & 0x3F]
+        tokens[#tokens+1] = base64_map[(u24 >> (2*6)) & 0x3F]
+        tokens[#tokens+1] = base64_map[(u24 >> (1*6)) & 0x3F]
+        tokens[#tokens+1] = base64_map[(u24 >> (0*6)) & 0x3F]
     end
     if remainder == 1 then
         local a = byte(s, -1)
-        tokens[#tokens+1] = base64_map[a>>2]
-        tokens[#tokens+1] = base64_map[(a&3)<<4]
+        local u24 = (a << 16)
+        tokens[#tokens+1] = base64_map[(u24 >> (3*6)) & 0x3F]
+        tokens[#tokens+1] = base64_map[(u24 >> (2*6)) & 0x3F]
         tokens[#tokens+1] = "=="
     elseif remainder == 2 then
         local a, b = byte(s, -2, -1)
-        tokens[#tokens+1] = base64_map[a>>2]
-        tokens[#tokens+1] = base64_map[(a&3)<<4|b>>4]
-        tokens[#tokens+1] = base64_map[(b&15)<<2]
+        local u24 = (a << 16) | (b << 8)
+        tokens[#tokens+1] = base64_map[(u24 >> (3*6)) & 0x3F]
+        tokens[#tokens+1] = base64_map[(u24 >> (2*6)) & 0x3F]
+        tokens[#tokens+1] = base64_map[(u24 >> (1*6)) & 0x3F]
         tokens[#tokens+1] = "="
     end
     return concat(tokens)
@@ -227,13 +230,13 @@ function crypt.unbase64(s)
     local tokens = {}
     for i = 1, #s, 4 do
         local a, b, c, d = byte(s, i, i+3)
-        a = base64_rev[a]
-        b = base64_rev[b]
-        c = base64_rev[c]
-        d = base64_rev[d]
-        tokens[#tokens+1] = char((a<<2 | b>>4)&0xFF)
-        tokens[#tokens+1] = char((b<<4 | c>>2)&0xFF)
-        tokens[#tokens+1] = char((c<<6 | d)&0xFF)
+        local u32 = (base64_rev[a] << (3*6))
+                  | (base64_rev[b] << (2*6))
+                  | (base64_rev[c] << (1*6))
+                  | (base64_rev[d] << (0*6))
+        tokens[#tokens+1] = char((u32 >> (2*8)) & 0xFF)
+        tokens[#tokens+1] = char((u32 >> (1*8)) & 0xFF)
+        tokens[#tokens+1] = char((u32 >> (0*8)) & 0xFF)
     end
     local y, z = byte(s, -2, -1)
     return concat(tokens, nil, 1, #tokens - (y==61 and 2 or z==61 and 1 or 0))

@@ -170,7 +170,7 @@ decodes the hexa `data`.
 ## Base64 encoding
 
 The base64 encoder transforms a string with non printable characters
-into a printable string (see <https://en.wikipedia.org/wiki/Base64>)
+into a printable string (see <https://en.wikipedia.org/wiki/Base64>).
 
 ``` lua
 crypt.base64(data)
