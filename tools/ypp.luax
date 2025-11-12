@@ -359,7 +359,6 @@ local langs = {
 
   -- Scientific languages
   ["r"] = "r",
-  ["R"] = "r",
   ["m"] = "matlab",
   ["jl"] = "julia",
   ["f"] = "fortran",
@@ -427,7 +426,7 @@ return flex.str(function(filename, opts)
             name = name:lower()
             ext = ext and ext:gsub("^%.", ""):lower()
             if opts.code == true then
-                lang = langs[ext] or langs[name]
+                lang = langs[ext] or langs[name:basename()]
             else
                 lang = langs[opts.code:gsub("^%.", "")] or opts.code
             end
@@ -1493,7 +1492,7 @@ return function(cond)
     return cond and ypp or F.const ""
 end
 ]======])
-libs["_YPP_VERSION"] = lib(".build/_YPP_VERSION", [=[return [[1.10.1]]]=])
+libs["_YPP_VERSION"] = lib(".build/_YPP_VERSION", [=[return [[1.10.2]]]=])
 _ENV["atexit"] = require "atexit"
 _ENV["comment"] = require "comment"
 _ENV["convert"] = require "convert"
