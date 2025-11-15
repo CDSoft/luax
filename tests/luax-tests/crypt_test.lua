@@ -262,9 +262,13 @@ return function()
             bounded(prng:int(), 0, crypt.RAND_MAX)
             bounded(prng:int(15), 1, 15)
             bounded(prng:int(5, 15), 5, 15)
+            bounded(prng:int(-15, -5), -15, -5)
+            bounded(prng:int(-15, 5), -15, 5)
             bounded(prng:float(), 0.0, 1.0)
             bounded(prng:float(3.5), 0.0, 3.5)
             bounded(prng:float(2.5, 3.5), 2.5, 3.5)
+            bounded(prng:float(-3.5, -2.5), -3.5, -2.5)
+            bounded(prng:float(-3.5, 2.5), -3.5, 2.5)
         end
     end
     do
