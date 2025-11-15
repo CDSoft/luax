@@ -99,7 +99,7 @@ static inline char digit(uint8_t n)
 
 void fnv1a_128_digest(const t_fnv1a_128 *hash, t_fnv1a_128_digest digest)
 {
-    for (size_t i = 0; i < sizeof(t_fnv1a_128); i++) {
+    for (size_t i = 0; i < (sizeof(t_fnv1a_128)); i++) {
         const uint8_t b = ((const uint8_t*)(hash))[i];
         digest[2*i+0] = digit(b>>4);
         digest[2*i+1] = digit(b&0xf);

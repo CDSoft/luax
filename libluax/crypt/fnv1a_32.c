@@ -47,7 +47,7 @@ static inline char digit(uint8_t n)
 
 void fnv1a_32_digest(const t_fnv1a_32 *hash, t_fnv1a_32_digest digest)
 {
-    for (size_t i = 0; i < sizeof(t_fnv1a_32); i++) {
+    for (size_t i = 0; i < (sizeof(t_fnv1a_32)); i++) {
         const uint8_t b = (uint8_t)((*hash)>>(8*i));
         digest[2*i+0] = digit(b>>4);
         digest[2*i+1] = digit(b&0xf);
