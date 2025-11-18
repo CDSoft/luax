@@ -22,6 +22,21 @@ https://codeberg.org/cdsoft/luax
 
 local F = require "F"
 
+--[[ Target definitions:
+
+Field       Description                         Value
+----------- ----------------------------------- -------------------------------------------------------------
+name        LuaX target name                    "OS"-"ARCH"[-musl]
+machine     architecture name                   uname -m on Linux/MacOS, %PROCESSOR_ARCHITECTURE% on Windows
+kernel      OS kernel                           uname -s on Linux/MacOS, %OS% on Windows
+os          OS name known by LuaX               linux, macos, windows
+arch        architecture name known by LuaX     x86_64, aarch64
+libc        C library name                      gnu, musl, none
+exe         executable file extension           .exe on Windows
+so          shared library file extension       .so, .dylib, .dll
+
+--]]
+
 return F{
     {name="linux-x86_64",       machine="x86_64",  kernel="Linux",      os="linux",   arch="x86_64",  libc="gnu",   exe="",     so=".so"   },
     {name="linux-x86_64-musl",  machine="x86_64",  kernel="Linux",      os="linux",   arch="x86_64",  libc="musl",  exe="",     so=".so"   },

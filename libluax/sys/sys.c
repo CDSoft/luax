@@ -60,7 +60,7 @@ sys.libc
 ```lua
 sys.exe
 ```
-Extension of executable files on the platform.
+Extension of executable files on the platform (`""` or `".exe"`).
 
 ```lua
 sys.so
