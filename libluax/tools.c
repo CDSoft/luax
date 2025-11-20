@@ -60,10 +60,8 @@ int luax_pusherror(lua_State *L, const char *msg, ...)
 void str_init(t_str *str, char *mem, size_t capacity)
 {
     str->capacity = capacity;
-    str->len = 0;
-    str->overflow = false;
     str->s = mem;
-    str->s[0] = '\0';
+    str_reset(str);
 }
 
 void str_reset(t_str *str)
