@@ -66,7 +66,7 @@ color_mt = {
     __tostring = function(self) return self.value end,
     __concat = function(self, other) return tostring(self)..tostring(other) end,
     __call = function(self, s) return self..s..color_reset end,
-    __add = function(self, other) return setmetatable({value=self..other}, color_mt) end,
+    __add = function(self, other) return setmetatable({value=self.value..other}, color_mt) end,
 }
 local function color(value) return setmetatable({value=CSI..tostring(value).."m"}, color_mt) end
 --                                @@@`term.color` field     Description                         @@@
@@ -145,13 +145,13 @@ term.cursor = {
 @@@]]
 
 local function f(fmt)
-    local function w(h, ...)
-        if io.type(h) ~= 'file' then
-            return w(io.stdout, h, ...)
+    return function(h, ...)
+        if io.type(h) == "file" then
+            return h:write(fmt:format(...))
+        else
+            return io.stdout:write(fmt:format(h, ...))
         end
-        return h:write(fmt:format(...))
     end
-    return w
 end
 
 --[[@@@
