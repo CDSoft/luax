@@ -960,6 +960,7 @@ return the name without the extension and the extension.
 
 static size_t find_ext(const char *path, size_t len)
 {
+    if (len == 0) { return 0; }
     for (size_t i = len-1; i > 0; i--) {
         if (path[i] == '.' && path[i-1] != '/' && path[i-1] != '\\') {
             return i;
