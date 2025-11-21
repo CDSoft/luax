@@ -2064,8 +2064,14 @@ local function pipe(rules)
         local rule_names = F.map(function(r)
             return type(r)=="table" and r:rule() or r
         end, rules)
+        local current_names = F.range(1, #rules):scan(function(name, _)
+            local prefix, ext = name:splitext()
+            return ext == ".i" and prefix or name
+        end, input_list:head())
         local tmpfiles = F.range(1, #rules-1):map(function(i)
-            return tmp(builddir, output, output:basename():splitext().."-"..tostring(i))..rule_names[i]:ext()
+            local ext = rule_names[i]:ext()
+            if ext == "" then ext = current_names[i+1]:ext() end
+            return tmp(builddir, output, output:basename():splitext().."-"..tostring(i))..ext
         end)
         for i = 1, #rules do
             build(tmpfiles[i] or output) (F.merge{
@@ -2239,7 +2245,7 @@ return function()
 
 end
 ]])
-libs["bang-version"] = lib(".build/bang-version", [=[return [[3.4.5]]]=])
+libs["bang-version"] = lib(".build/bang-version", [=[return [[3.4.6]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"
