@@ -405,7 +405,7 @@ E.g.:
 
 ```
 $ lua -l libluax
-Lua 5.4.7  Copyright (C) 1994-2024 Lua.org, PUC-Rio
+Lua 5.4.8  Copyright (C) 1994-2025 Lua.org, PUC-Rio
 > F = require "F"
 > F.range(100):sum()
 5050
@@ -449,7 +449,7 @@ script `lib/libluax.lua` can be reused in pure Lua programs:
 * **[Zig](https://ziglang.org/)**: General-purpose programming language and
   toolchain for maintaining robust, optimal, and reusable software. ([MIT
   license](https://github.com/ziglang/zig/blob/master/LICENSE))
-* **[Lua 5.4](http://www.lua.org)**: Copyright (C) 1994-2023 Lua.org, PUC-Rio
+* **[Lua 5.4](http://www.lua.org)**: Copyright (C) 1994-2025 Lua.org, PUC-Rio
   ([MIT license](http://www.lua.org/license.html))
 * **[Lpeg](http://www.inf.puc-rio.br/~roberto/lpeg/)**: Parsing Expression
   Grammars For Lua ([MIT license](http://www.lua.org/license.html))
