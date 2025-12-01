@@ -32,6 +32,7 @@
 #include "fs/fs.h"
 #include "imath/imath.h"
 #include "linenoise/linenoise.h"
+#include "readline/readline.h"
 #include "lpeg/lpeg.h"
 #ifdef LUAX_USE_LZ4
 #include "lz4/lz4.h"
@@ -55,6 +56,7 @@ static const luaL_Reg lrun_libs[] = {
     {"_fs",         luaopen_fs},
     {"imath",       luaopen_imath},
     {"linenoise",   luaopen_linenoise},
+    {"readline",    luaopen_readline},
     {"lpeg",        luaopen_lpeg},
 #ifdef LUAX_USE_LZ4
     {"_lz4",        luaopen_lz4},

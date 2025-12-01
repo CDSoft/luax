@@ -549,11 +549,11 @@ prints `show(x)`
                 [F.Nil] = "HOME",
             }
             local history = os.getenv(home) / ".luax_history"
-            local linenoise = require "linenoise"
-            linenoise.load(history)
+            local readline = require "readline"
+            readline.load(history)
             local function hist(input)
-                linenoise.add(input)
-                linenoise.save(history)
+                readline.add(input)
+                readline.save(history)
             end
             local function try(input)
                 local chunk, msg = load(input, "=stdin")
@@ -574,7 +574,7 @@ prints `show(x)`
                 local inputs = {}
                 local prompt = prompts[1]
                 while true do
-                    local line = linenoise.read(prompt)
+                    local line = readline.read(prompt)
                     if not line then os.exit() end
                     hist(line)
                     table.insert(inputs, line)
@@ -1134,7 +1134,7 @@ local function cmd_postinstall()
     local fs = require "fs"
     local sys = require "sys"
     local term = require "term"
-    local linenoise = require "linenoise"
+    local readline = require "readline"
 
     local expected_files = F.flatten {
         (sys.libc=="gnu" or sys.libc=="musl") and "bin"/"luax"..sys.exe or {},
@@ -1178,7 +1178,7 @@ local function cmd_postinstall()
         local prompt = string.format(msg, ...).."? [y/N]"
         local ans = nil
         repeat
-            ans = linenoise.read(prompt) : trim() : lower()
+            ans = readline.read(prompt) : trim() : lower()
         until ans:match "^[yn]?$"
         return ans == "y"
     end

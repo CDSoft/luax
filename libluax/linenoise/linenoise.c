@@ -20,6 +20,8 @@
 /***************************************************************************@@@
 # linenoise: light readline alternative
 
+**WARNING**: This module is deprecated. Use `readline` instead.
+
 [linenoise](https://github.com/antirez/linenoise)
 is a small self-contained alternative to readline and libedit.
 

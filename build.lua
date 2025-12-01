@@ -927,6 +927,7 @@ rt { luax="libluax/fs/fs.lua",                      lua={"libluax/fs/fs.lua", "l
 rt {                                                lua="libluax/imath/imath.lua"                               }
 rt { luax="libluax/import/import.lua",              lua="libluax/import/import.lua"                             }
 rt {                                                lua="libluax/linenoise/linenoise.lua"                       }
+rt {                                                lua="libluax/readline/readline.lua"                         }
 rt { luax="libluax/lar/lar.lua",                    lua="libluax/lar/lar.lua"                                   }
 rt { luax="libluax/lzip/lzip.lua",                  lua={"libluax/lzip/lzip.lua", "libluax/lzip/_lzip.lua"}     }
 rt {                                                lua="libluax/mathx/mathx.lua"                               }

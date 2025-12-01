@@ -18,6 +18,7 @@
     "libluax/package",
     "libluax/ps",
     "libluax/qmath",
+    "libluax/readline",
     "libluax/sh",
     "libluax/sys",
     "libluax/tar",
