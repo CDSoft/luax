@@ -391,7 +391,6 @@ Some modules are heavily inspired by
 - [serpent](serpent.md): Lua serializer and pretty printer
 - [cbor](cbor.md): pure Lua implementation of the CBOR
 - [lar](lar.md): Simple archive format for Lua values
-- [linenoise](linenoise.md): A small, portable GNU readline replacement with UTF-8 support [DEPRECATED]
 - [readline](readline.md): Command line editing functions
 - [json](json.md): JSON Module for Lua
 
@@ -475,9 +474,6 @@ script `lib/libluax.lua` can be reused in pure Lua programs:
 - **[Argparse](https://github.com/mpeterv/argparse)**: a feature-rich command
   line parser for Lua ([MIT
   license](https://github.com/mpeterv/argparse/blob/master/LICENSE))
-- **[Linenoise](https://github.com/yhirose/linenoise/tree/utf8-support)**: A
-  minimal, zero-config, BSD licensed, readline replacement ([BSD
-  license](https://github.com/antirez/linenoise/blob/master/LICENSE))
 - **[readline](https://tiswww.case.edu/php/chet/readline/rltop.html)**:
   Command line editing functions
   [GPLv3 License](https://www.gnu.org/licenses/gpl-3.0.html)

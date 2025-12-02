@@ -31,7 +31,6 @@
 #include "crypt/crypt.h"
 #include "fs/fs.h"
 #include "imath/imath.h"
-#include "linenoise/linenoise.h"
 #include "readline/readline.h"
 #include "lpeg/lpeg.h"
 #ifdef LUAX_USE_LZ4
@@ -55,7 +54,6 @@ static const luaL_Reg lrun_libs[] = {
     {"_crypt",      luaopen_crypt},
     {"_fs",         luaopen_fs},
     {"imath",       luaopen_imath},
-    {"linenoise",   luaopen_linenoise},
     {"readline",    luaopen_readline},
     {"lpeg",        luaopen_lpeg},
 #ifdef LUAX_USE_LZ4

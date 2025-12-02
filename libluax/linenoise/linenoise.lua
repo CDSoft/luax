@@ -20,20 +20,6 @@ https://codeberg.org/cdsoft/luax
 
 --@LIB
 
--- Pure Lua implementation of linenoise.c
+io.stderr:write "DEPRECATED: linenoise is obsolete, please use readline instead\n"
 
-local F = require "F"
-local term = require "term"
-
-local nop = F.const()
-
-local linenoise = {}
-
-linenoise.read = term.prompt
-linenoise.read_mask = linenoise.read
-
-linenoise.clear = term.clear
-
-return setmetatable(linenoise, {
-    __index = function() return nop end,
-})
+return require "readline"
