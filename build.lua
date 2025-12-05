@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.7" "2025-12-02"
+version "9.7.1" "2025-12-05"
 
 local F = require "F"
 local fs = require "fs"
@@ -265,7 +265,7 @@ if not ssl then return end
 section "OpenSSL"
 ---------------------------------------------------------------------
 
-var "openssl_version" "3.5.3"
+var "openssl_version" "3.6.0"
 var "openssl_archive" "openssl-${openssl_version}.tar.gz"
 var "openssl_url" "https://github.com/openssl/openssl/releases/download/openssl-${openssl_version}/${openssl_archive}"
 
@@ -326,7 +326,6 @@ local openssl_options = {
     "no-scrypt",
 
     "-DOPENSSL_NO_APPLE_CRYPTO_RANDOM",
-    "-DOPENSSL_SMALL_FOOTPRINT",
 }
 
 local nproc = (sh "getconf _NPROCESSORS_ONLN" or "8"):trim()
