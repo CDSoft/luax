@@ -145,11 +145,9 @@ adds `line` to the current history.
 
 static int readline_history_add(lua_State *L)
 {
-    if (running_in_a_tty) {
-        if (lua_isstring(L, 1)) {
-            const char *line = luaL_checkstring(L, 1);
-            add_history(line);
-        }
+    if (lua_isstring(L, 1)) {
+        const char *line = luaL_checkstring(L, 1);
+        add_history(line);
     }
     return 0;
 }
@@ -176,9 +174,7 @@ saves the history to the file `filename`.
 
 static int readline_history_save(lua_State *L)
 {
-    if (running_in_a_tty) {
-        write_history(luaL_checkstring(L, 1));
-    }
+    write_history(luaL_checkstring(L, 1));
     return 0;
 }
 
@@ -191,9 +187,7 @@ loads the history from the file `filename`.
 
 static int readline_history_load(lua_State *L)
 {
-    if (running_in_a_tty) {
-        read_history(luaL_checkstring(L, 1));
-    }
+    read_history(luaL_checkstring(L, 1));
     return 0;
 }
 
