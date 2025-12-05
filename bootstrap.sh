@@ -114,7 +114,7 @@ case "$COMPILER" in
         fi
         ;;
     *)
-        hash "$COMPILER" 2>/dev/null || error "$COMPILER is not installed"
+        found "$COMPILER" || error "$COMPILER is not installed"
         ;;
 esac
 
