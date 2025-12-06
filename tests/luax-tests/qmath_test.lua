@@ -71,7 +71,7 @@ return function()
     eq(x ^ -1, 1/x)                 eq(qmath.pow(x, -1), x^-1)
 
     eq(x:sign(), 1)                 eq(qmath.sign(x), 1)
-    eq((-x):sign(), -1)             eq(qmath.sign(-x), -1)
+    eq((-x):sign(), -1)             eq(qmath.sign(-x), -1)  ---@diagnostic disable-line: undefined-field
     eq((x-x):sign(), 0)             eq(qmath.sign(x-x), 0)
 
     eq(x - y, Q(-89, 357))          eq(qmath.sub(x, y), x-y)

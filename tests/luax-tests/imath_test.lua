@@ -90,7 +90,7 @@ return function()
     eq(-x, Z"-123456789123456789123456789123456789")    eq(imath.neg(x), -x) eq(imath.neg(-x), x)
 
     eq(x:abs(), Z"123456789123456789123456789123456789")
-    eq((-x):abs(), Z"123456789123456789123456789123456789")
+    eq((-x):abs(), Z"123456789123456789123456789123456789") ---@diagnostic disable-line: undefined-field
 
     eq(x:gcd(y), Z"123456789")      eq(imath.gcd(x, y), x:gcd(y))
     eq((1337*x):gcd(1337*y), Z"123456789"*Z"1337")

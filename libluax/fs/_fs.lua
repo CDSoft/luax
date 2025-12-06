@@ -130,14 +130,15 @@ local function stat(name, follow)
     if __MACOS__ then
         local st = sh.read("LC_ALL=C", "stat", follow, "-r", name, "2>/dev/null")
         if not st then return nil, "cannot stat "..name end
-        local _
-        _, _, mode, _, _, _, _, size, atime, mtime, _, ctime, _, _, _ = st:words():unpack()
-        mode = tonumber(mode, 8)
+        local _, mode_str
+        _, _, mode_str, _, _, _, _, size, atime, mtime, _, ctime, _, _, _ = st:words():unpack()
+        mode = tonumber(mode_str, 8)
     else
         local st = sh.read("LC_ALL=C", "stat", follow, "-c '%s;%Y;%X;%W;%f'", name, "2>/dev/null")
         if not st then return nil, "cannot stat "..name end
-        size, mtime, atime, ctime, mode = st:trim():split ";":unpack()
-        mode = tonumber(mode, 16)
+        local mode_str
+        size, mtime, atime, ctime, mode_str = st:trim():split ";":unpack()
+        mode = tonumber(mode_str, 16)
     end
     return F{
         name = name,
