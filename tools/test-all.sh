@@ -22,15 +22,14 @@ set -e
 
 cd "$(git rev-parse --show-toplevel)"
 
-RED=41
-BLUE=44
+TITLE=$(tput setaf 253; tput setab 4)
+TEXT=$(tput sgr0)
 
-say()
+title()
 {
-    local COLOR=$1
-    local MSG=$2
-    local EOL=$3
-    printf "\\e[${COLOR}m### %-$(($(tput cols) - 4))s\\e[0m${EOL}\n" "$MSG"
+    local MSG=$1
+    local W=$(($(tput cols) - 4))
+    printf "${TITLE}### %-${W}s${TEXT}\n" "$MSG"
 }
 
 check()
@@ -39,7 +38,7 @@ check()
     local NAME="${ARGS// /-}"
     test -z "$NAME" && NAME=default_options
     local BUILDDIR=".build/test-all/$NAME"
-    say $BLUE "$*"
+    title "$*"
     ./bootstrap.sh -b "$BUILDDIR" -o "$BUILDDIR/build.ninja" "$@"
     (
         eval "$("$BUILDDIR/bin/luax" env)"
