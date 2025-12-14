@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.7.1" "2025-12-05"
+version "9.7.2" "2025-12-14"
 
 local F = require "F"
 local fs = require "fs"
@@ -422,7 +422,7 @@ case(compiler) {
 
         build "$zig" {
             description = "install zig $zig_version",
-            command = "tools/install_zig.sh $zig_version $out $zig_key",
+            command = { "tools/install_zig.sh $zig_version $out $zig_key", (LUAX.URL:gsub("/", "-")) },
             pool = "console",
         }
 

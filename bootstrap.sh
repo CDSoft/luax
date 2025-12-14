@@ -102,6 +102,7 @@ fi
 ZIG_VERSION=$(grep "ZIG_VERSION *=" build.lua | cut -d= -f2 | tr -d " \",")
 ZIG_KEY=$(grep "ZIG_KEY *=" build.lua | cut -d= -f2 | tr -d " \",")
 ZIG_PATH=$(grep "ZIG_PATH *=" build.lua | cut -d= -f2 | tr -d " \",")
+REQUEST_SOURCE=$(grep "LUAX.URL *=" build.lua | cut -d= -f2 | tr -d " \"," | tr "/" "-")
 eval "ZIG=$ZIG_PATH/$ZIG_VERSION/zig" # use eval to expand "~"
 
 case "$COMPILER" in
@@ -109,7 +110,7 @@ case "$COMPILER" in
         COMPILER="$ZIG cc"
         if ! [ -x "$ZIG" ]
         then
-            tools/install_zig.sh "$ZIG_VERSION" "$ZIG" "$ZIG_KEY"
+            tools/install_zig.sh "$ZIG_VERSION" "$ZIG" "$ZIG_KEY" "$REQUEST_SOURCE"
             [ -x "$ZIG" ] || error "zig can not be installed"
         fi
         ;;

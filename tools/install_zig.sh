@@ -23,6 +23,7 @@ set -e
 ZIG_VERSION="$1"
 ZIG="$2"
 ZIG_KEY="$3"
+REQUEST_SOURCE="$4"
 
 ARCH="$(uname -m)"
 case "$ARCH" in
@@ -66,11 +67,23 @@ download()
     mapfile -t MIRRORS < <(shuf -e "${MIRRORS[@]}")
     for mirror in "${MIRRORS[@]}"
     do
-        echo "Try mirror: $mirror/$ZIG_ARCHIVE"
-        if curl -L "$mirror/$ZIG_ARCHIVE?source=luax-zig-setup" -o "$OUTPUT" --progress-bar --fail
+        local ARCHIVE_URL="$mirror/$ZIG_ARCHIVE?source=$REQUEST_SOURCE"
+        local SIGNATURE_URL="$mirror/$ZIG_ARCHIVE.minisig?source=$REQUEST_SOURCE"
+        echo "Try mirror: $ARCHIVE_URL"
+        if curl -L "$ARCHIVE_URL" -o "$OUTPUT" --progress-bar --fail
         then
-            curl -L "$mirror/$ZIG_ARCHIVE.minisig?source=luax-zig-setup" -o "$OUTPUT.minisig" --progress-bar --fail
+            curl -L "$SIGNATURE_URL" -o "$OUTPUT.minisig" --progress-bar --fail
             minisign -V -m "$OUTPUT" -x "$OUTPUT.minisig" -P "$ZIG_KEY"
+            local FILE
+            FILE=$(grep "^trusted comment:" "$OUTPUT.minisig" | sed "s/^trusted comment: //" | tr '\t' '\n' | grep "^file:")
+            if [ "$FILE" != "file:$(basename "$OUTPUT")" ]
+            then
+                echo "Warning: file mismatch in the trusted comment"
+                echo "- signature: $FILE"
+                echo "- expected : file:$(basename "$OUTPUT")"
+                echo "trying another mirror..."
+                continue
+            fi
             break
         fi
     done

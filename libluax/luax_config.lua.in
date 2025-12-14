@@ -27,5 +27,6 @@ return {
     date = "@(DATE)",
     copyright = "@(COPYRIGHT)",
     authors = "@(AUTHORS)",
+    url = "@(URL)",
     lua_copyright = _LUA_COPYRIGHT or _VERSION,
 }

@@ -908,6 +908,7 @@ local function cmd_compile()
 
             -- Install Zig (to cross compile and link C sources)
             if not zig:is_file() then
+                local luax_config = require "luax_config"
                 local term = require "term"
                 log("Zig", "download and install Zig to %s", zig_path)
                 local curl = require "curl"
@@ -916,9 +917,9 @@ local function cmd_compile()
                 local mirrors = curl "https://ziglang.org/download/community-mirrors.txt" : lines() : shuffle()
                 for _, mirror in ipairs(mirrors) do
                     local url = string.format("%s/zig-%s-%s-%s%s", mirror, sys.arch, sys.os, zig_version, ext)
-                    local source = "?source=luax-zig-setup"
-                    log("Zig", "try mirror %s", mirror)
+                    local source = "?source="..(luax_config.url : gsub("/", "-"))
                     archive = url:basename()
+                    log("curl", "%s", url..source)
                     local curl_ok = curl.request {
                         "-fSL",
                         (quiet or not term.isatty(io.stdout)) and "-s" or "-#",
@@ -926,6 +927,7 @@ local function cmd_compile()
                         "-o", tmp/archive,
                     }
                     if curl_ok then
+                        log("curl", "%s", url..".minisig"..source)
                         assert(curl.request {
                             "-fSL",
                             (quiet or not term.isatty(io.stdout)) and "-s" or "-#",
@@ -935,6 +937,24 @@ local function cmd_compile()
                         local minisign_ok, _, minisign_code  = sh.run { "minisign", "-V", "-m", tmp/archive, "-x", tmp/archive..".minisig", "-P", zig_key }
                         if not minisign_ok        then archive = nil -- minisign not installed ?
                         elseif minisign_code ~= 0 then archive = nil -- bad signature
+                        end
+                        local signature = assert(fs.read(tmp/archive..".minisig"))
+                        local trusted_comment = {}
+                        signature : lines() : foreach(function(l)
+                            local fields = l:match "^trusted comment: (.*)"
+                            if not fields then return end
+                            fields : split "\t" : foreach(function(field)
+                                local k, v = field:match("^([^:]+):(.*)$")
+                                if k then
+                                    trusted_comment[k] = v
+                                else
+                                    trusted_comment[#trusted_comment+1] = field
+                                end
+                            end)
+                        end)
+                        if trusted_comment.file ~= archive then
+                            io.stderr:write(mirror/archive..".minisig: invalid trusted comment\n")
+                            archive = nil
                         end
                         break
                     end
