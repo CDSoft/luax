@@ -145,12 +145,16 @@ fi
 # build.ninja
 ######################################################################
 
-$LUA tools/luax.lua tools/bang.luax \
-    -g "$LUA tools/luax.lua tools/bang.luax" \
-    -q \
-    -b "$BUILDDIR" \
-    build.lua -o "$OUTPUT" \
+BANG_CMD="$LUA tools/luax.lua tools/bang.luax"
+BANG_ARGS=(
+    -g "$BANG_CMD"
+    -q
+    -b "$BUILDDIR"
+    build.lua -o "$OUTPUT"
     -- "${ARGS[@]}"
+)
+
+$BANG_CMD "${BANG_ARGS[@]}"
 
 ######################################################################
 # LuaX
