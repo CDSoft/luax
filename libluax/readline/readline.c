@@ -97,7 +97,7 @@ static t_stifle_history_func stifle_history = noreadline_stifle_history;
 #ifndef _WIN32
 static void load_readline(void)
 {
-    void *handle = dlopen("libreadline.so", RTLD_LAZY);
+    void *handle = dlopen("libreadline.so", RTLD_NOW | RTLD_LOCAL);
     if (handle != NULL) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
