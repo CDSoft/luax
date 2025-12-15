@@ -1120,10 +1120,14 @@ local function cmd_env()
                 end)
             else
                 local s = tostring(t)
-                    : gsub("\n", "\\n")
-                    : gsub("\'", "\\'")
+                    : gsub('\\', '\\\\')
+                    : gsub('\"', '\\"')
+                    : gsub('`', '\\`')
+                    : gsub('%$', '\\$')
+                    : gsub('\n', '\\n')
+                    : gsub('\r', '\\r')
                 p = p : gsub("[^%w]", "_")
-                script[#script+1] = F{"export ", p:upper(), "='", s, "';"}:str()
+                script[#script+1] = F{"export ", p:upper(), '="', s, '";'}:str()
             end
         end
         F.foreach(scripts, F.compose{dump, import})

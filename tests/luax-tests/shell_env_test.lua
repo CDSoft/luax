@@ -75,22 +75,22 @@ export LUA_CPATH="$(CWD)/$(BUILD)/lib/?.$(libext);$(unique(lua_sep, os.getenv'LU
             ]])
             eq(shell_env{script},
 [===[
-export ARRAY_1='d';
-export ARRAY_2='e';
-export ARRAY_3='f';
-export ARRAY_STRUCT_X='100';
-export ARRAY_STRUCT_Y='200';
-export ARRAY_STRUCT_Z_A='1000';
-export ARRAY_STRUCT_Z_B='2000';
-export STRUCT_ARRAY_1='a';
-export STRUCT_ARRAY_2='b';
-export STRUCT_ARRAY_3='c';
-export STRUCT_X='1';
-export STRUCT_Y='2';
-export STRUCT_Z_A='10';
-export STRUCT_Z_B='20';
-export VAR_A='this is the first variable';
-export VAR_B='this is the second variable';
+export ARRAY_1="d";
+export ARRAY_2="e";
+export ARRAY_3="f";
+export ARRAY_STRUCT_X="100";
+export ARRAY_STRUCT_Y="200";
+export ARRAY_STRUCT_Z_A="1000";
+export ARRAY_STRUCT_Z_B="2000";
+export STRUCT_ARRAY_1="a";
+export STRUCT_ARRAY_2="b";
+export STRUCT_ARRAY_3="c";
+export STRUCT_X="1";
+export STRUCT_Y="2";
+export STRUCT_Z_A="10";
+export STRUCT_Z_B="20";
+export VAR_A="this is the first variable";
+export VAR_B="this is the second variable";
 ]===]
 )
         end)
