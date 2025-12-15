@@ -928,37 +928,30 @@ local function cmd_compile()
                     }
                     if curl_ok then
                         log("curl", "%s", url..".minisig"..source)
-                        assert(curl.request {
+                        curl_ok = curl.request {
                             "-fSL",
                             (quiet or not term.isatty(io.stdout)) and "-s" or "-#",
                             url..".minisig"..source,
                             "-o", tmp/archive..".minisig",
-                        })
-                        local minisign_ok, _, minisign_code  = sh.run { "minisign", "-V", "-m", tmp/archive, "-x", tmp/archive..".minisig", "-P", zig_key }
-                        if not minisign_ok        then archive = nil -- minisign not installed ?
-                        elseif minisign_code ~= 0 then archive = nil -- bad signature
+                        }
+                        if curl_ok then
+                            local trusted_comment = sh.read {
+                                "minisign", "-V", "-Q",
+                                "-m", tmp/archive,
+                                "-x", tmp/archive..".minisig",
+                                "-P", zig_key
+                            } or ""
+                            local file = trusted_comment : split "\t" : map(function(field)
+                                return field:match "^file:(.*)$"
+                            end) : head()
+                            if file ~= archive then
+                                io.stderr:write(mirror/archive..".minisig: signature verification failed\n")
+                            else
+                                break -- valid archive
+                            end
                         end
-                        local signature = assert(fs.read(tmp/archive..".minisig"))
-                        local trusted_comment = {}
-                        signature : lines() : foreach(function(l)
-                            local fields = l:match "^trusted comment: (.*)"
-                            if not fields then return end
-                            fields : split "\t" : foreach(function(field)
-                                local k, v = field:match("^([^:]+):(.*)$")
-                                if k then
-                                    trusted_comment[k] = v
-                                else
-                                    trusted_comment[#trusted_comment+1] = field
-                                end
-                            end)
-                        end)
-                        if trusted_comment.file ~= archive then
-                            io.stderr:write(mirror/archive..".minisig: invalid trusted comment\n")
-                            archive = nil
-                        end
-                        break
                     end
-                    archive = nil -- archive not found, try another mirror
+                    archive = nil -- archive not found or not valid, try another mirror
                 end
                 if archive then
                     fs.mkdirs(zig_path)

@@ -70,23 +70,21 @@ download()
         local ARCHIVE_URL="$mirror/$ZIG_ARCHIVE?source=$REQUEST_SOURCE"
         local SIGNATURE_URL="$mirror/$ZIG_ARCHIVE.minisig?source=$REQUEST_SOURCE"
         echo "Try mirror: $ARCHIVE_URL"
-        if curl -L "$ARCHIVE_URL" -o "$OUTPUT" --progress-bar --fail
+        curl -L "$ARCHIVE_URL" -o "$OUTPUT" --progress-bar --fail || continue
+        curl -L "$SIGNATURE_URL" -o "$OUTPUT.minisig" --progress-bar --fail || continue
+        #shellcheck disable=SC2155
+        local TRUSTED_COMMENT=$(minisign -V -Q -m "$OUTPUT" -x "$OUTPUT.minisig" -P "$ZIG_KEY")
+        #shellcheck disable=SC2155
+        local FILE=$(echo "$TRUSTED_COMMENT" | tr "\t" "\n" | grep "^file:")
+        if [ "$FILE" != "file:$(basename "$OUTPUT")" ]
         then
-            curl -L "$SIGNATURE_URL" -o "$OUTPUT.minisig" --progress-bar --fail
-            minisign -V -m "$OUTPUT" -x "$OUTPUT.minisig" -P "$ZIG_KEY"
-            local FILE
-            FILE=$(grep "^trusted comment:" "$OUTPUT.minisig" | sed "s/^trusted comment: //" | tr '\t' '\n' | grep "^file:")
-            if [ "$FILE" != "file:$(basename "$OUTPUT")" ]
-            then
-                echo "Warning: file mismatch in the trusted comment"
-                echo "- signature: $FILE"
-                echo "- expected : file:$(basename "$OUTPUT")"
-                echo "trying another mirror..."
-                continue
-            fi
-            break
+            echo "Zig signature verification failed, trying next mirror..."
+            continue
         fi
+        return
     done
+    echo "No valid Zig archive found"
+    exit 1
 }
 
 if ! [ -x "$ZIG" ]
