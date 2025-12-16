@@ -1,7 +1,7 @@
 # File System
 
 `fs` is a File System module. It provides functions to handle files and
-directory in a portable way.
+directories in a portable way.
 
 ``` lua
 local fs = require "fs"
