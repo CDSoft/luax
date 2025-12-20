@@ -25,23 +25,26 @@
 
 /* Entropy sources for PRNG initialization */
 
+static uint64_t hash = 0xcbf29ce484222325;
+static const uint64_t prime = 0x100000001b3;
+
+static inline void feed(uint64_t data)
+{
+    hash ^= data;
+    hash *= prime;
+}
+
 uint64_t entropy(void *ptr)
 {
-    static uint64_t hash = 0xcbf29ce484222325;
-    static const uint64_t prime = 0x100000001b3;
-
     struct timespec ts;
-
-    register uint64_t h = hash;
-    h = (h ^ (uintptr_t)ptr) * prime;         /* Address of a characteristic variable */
-    h = (h ^ (uintptr_t)&ts) * prime;         /* Address of a local variable */
-
     clock_gettime(CLOCK_REALTIME, &ts);
-    h = (h ^ (uint64_t)ts.tv_sec) * prime;    /* Time in seconds */
-    h = (h ^ (uint64_t)ts.tv_nsec) * prime;   /* ... and nanoseconds */
+    int pid = getpid();
 
-    h = (h ^ (uint64_t)getpid()) * prime;     /* Process ID */
-    hash = h;
+    feed((uintptr_t)ptr);           /* Address of a characteristic variable */
+    feed((uintptr_t)&ptr);          /* Address of a local variable */
+    feed((uint64_t)ts.tv_sec);      /* Time in seconds */
+    feed((uint64_t)ts.tv_nsec);     /* ... and nanoseconds */
+    feed((uint64_t)pid);            /* Process ID */
 
-    return h;
+    return hash;
 }
