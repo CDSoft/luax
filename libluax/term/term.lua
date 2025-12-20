@@ -229,11 +229,11 @@ prints `p` and waits for a user input
 @@@]]
 
 function term.prompt(p)
-    if p and term.isatty() then
-        io.write(p)
-        io.flush()
+    if p and term.isatty(io.stdin) then
+        io.stdout:write(p)
+        io.stdout:flush()
     end
-    return io.read "l"
+    return io.stdin:read "l"
 end
 
 return term

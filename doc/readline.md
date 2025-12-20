@@ -10,6 +10,13 @@ libreadline. If it fails, it uses basic functions with no editing and
 history capabilities.
 
 ``` lua
+readline.name(appname)
+```
+
+sets a unique application name. This name allows conditional parsing of
+the inputrc file.
+
+``` lua
 readline.read(prompt)
 ```
 

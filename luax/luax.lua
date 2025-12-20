@@ -550,6 +550,7 @@ prints `show(x)`
             }
             local history = os.getenv(home) / ".luax_history"
             local readline = require "readline"
+            readline.name "LuaX"
             readline.load(history)
             local function hist(input)
                 readline.add(input)

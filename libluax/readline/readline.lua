@@ -25,12 +25,8 @@ https://codeberg.org/cdsoft/luax
 local F = require "F"
 local term = require "term"
 
-local nop = F.const()
-
-local readline = {}
-
-readline.read = term.prompt
-
-return setmetatable(readline, {
-    __index = function() return nop end,
+return setmetatable({
+    read = term.prompt,
+}, {
+    __index = F.const(F.const()),
 })
