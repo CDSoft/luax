@@ -46,14 +46,6 @@ But it has a cost. It takes time to develop, maintain and support.
 To help LuaX remain free, open source and supported,
 users are cordially invited to contribute financially to its development.
 
-| LuaX price         | Europe        | United States | Rest of the World |
-| ------------------ | ------------- | ------------- | ----------------- |
-| Personal usage     | Free donation | Free donation | Free donation     |
-| Academic usage     | €10 or more   | $20 or more   | $15 or more       |
-| Professional usage | €20 or more   | $40 or more   | $25 or more       |
-
-These prices are per month and per tools (see [`PRICING`](PRICING)).
-
 @@[[ donate = function(url) return function(img) return function(alt)
     return ("<a href='%s' target='_blank'><img height='36' style='border:0px;height:36px;' src='%s' border='0' alt='%s' /></a>"):format(url, img, alt)
 end end end]]
