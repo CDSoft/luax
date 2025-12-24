@@ -207,16 +207,19 @@ static int crypt_prng_float(lua_State *L)
 rng:str(bytes)
 ```
 returns a string with `bytes` random bytes.
+If `bytes` is negative, `str` returns an empty string.
 @@@*/
 
 static int crypt_prng_str(lua_State *L)
 {
     t_pcg *prng = (t_pcg*)luaL_checkudata(L, 1, PRNG_MT);
-    const size_t bytes = (size_t)luaL_checkinteger(L, 2);
+    const ssize_t bytes = (ssize_t)luaL_checkinteger(L, 2);
     luaL_Buffer B;
     luaL_buffinit(L, &B);
-    pcg_str(prng, bytes, luaL_prepbuffsize(&B, bytes+3));
-    luaL_addsize(&B, bytes);
+    if (bytes > 0 && bytes < SSIZE_MAX-3) {
+        pcg_str(prng, (size_t)bytes, luaL_prepbuffsize(&B, (size_t)bytes+3));
+        luaL_addsize(&B, (size_t)bytes);
+    }
     luaL_pushresult(&B);
     return 1;
 }
@@ -328,15 +331,18 @@ static int crypt_float(lua_State *L)
 crypt.str(bytes)
 ```
 returns a string with `bytes` random bytes.
+If `bytes` is negative, `str` returns an empty string.
 @@@*/
 
 static int crypt_str(lua_State *L)
 {
-    const size_t bytes = (size_t)luaL_checkinteger(L, 1);
+    const ssize_t bytes = (ssize_t)luaL_checkinteger(L, 1);
     luaL_Buffer B;
     luaL_buffinit(L, &B);
-    pcg_str(&prng, bytes, luaL_prepbuffsize(&B, bytes+3));
-    luaL_addsize(&B, bytes);
+    if (bytes > 0 && bytes < SSIZE_MAX-3) {
+        pcg_str(&prng, (size_t)bytes, luaL_prepbuffsize(&B, (size_t)bytes+3));
+        luaL_addsize(&B, (size_t)bytes);
+    }
     luaL_pushresult(&B);
     return 1;
 }

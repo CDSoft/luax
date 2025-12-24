@@ -257,6 +257,12 @@ return function()
             eq(#x, 16)
             random_values[x] = true
         end
+        for n = 0, 20 do
+            eq(#crypt.str(n), n)
+        end
+        for n = -20, 0 do
+            eq(#crypt.str(n), 0)
+        end
         bounded(#random_values:keys(), 3*N-1, 3*N) -- mostly all generated values must be different
         for _ = 1, N do
             bounded(prng:int(), 0, crypt.RAND_MAX)
@@ -353,6 +359,9 @@ return function()
             eq(s:str(8):hex(), "0ffe9a98dba14232")
             for i = 0, 20 do
                 eq(#s:str(i), i)
+            end
+            for i = -20, 0 do
+                eq(#s:str(i), 0)
             end
         end
     end

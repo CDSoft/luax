@@ -97,7 +97,8 @@ returns a random floating point number between `a` and `b`.
 rng:str(bytes)
 ```
 
-returns a string with `bytes` random bytes.
+returns a string with `bytes` random bytes. If `bytes` is negative,
+`str` returns an empty string.
 
 ### Global random number generator
 
@@ -148,7 +149,8 @@ returns a random floating point number between `a` and `b`.
 crypt.str(bytes)
 ```
 
-returns a string with `bytes` random bytes.
+returns a string with `bytes` random bytes. If `bytes` is negative,
+`str` returns an empty string.
 
 ## Hexadecimal encoding
 

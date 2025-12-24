@@ -48,7 +48,7 @@ do
 done
 
 BOOT=$BUILDDIR/boot
-LUA=$BOOT/minilua
+LUA=$BOOT/lua
 
 mkdir -p "$BOOT"
 
