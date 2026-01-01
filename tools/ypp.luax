@@ -1186,6 +1186,7 @@ local function parse_quoted_string(c)
         while i <= #s do
             local ci = s:sub(i, i)
             if ci == c then return i1, i+1 end
+            if ci == '\n' or ci == '\r' then return end
             if ci == '\\' then i = i + 1 end
             i = i + 1
         end
@@ -1234,22 +1235,23 @@ local LHS = seq {
 }
 
 local RHS = alt {
-    token"%-?%d+%.%d+e%-?%d+",  -- RHS -> number
-    token"%-?%d+%.e%-?%d+",     -- RHS -> number
-    token"%-?%.%d+e%-?%d+",     -- RHS -> number
-    token"%-?%d+e%-?%d+",       -- RHS -> number
-    token"%-?%d+%.%d+",         -- RHS -> number
-    token"%-?%d+%.",            -- RHS -> number
-    token"%-?%.%d+",            -- RHS -> number
-    token"%-?%d+",              -- RHS -> number
-    token"true",                -- RHS -> boolean
-    token"false",               -- RHS -> boolean
-    PARENS,                     -- RHS -> (...)
-    BRACKETS,                   -- RHS -> {...}
-    DOUBLE_QUOTE_STRING,        -- RHS -> "..."
-    SINGLE_QUOTE_STRING,        -- RHS -> '..."
-    LONGSTRING,                 -- RHS -> [=[ ... ]=]
-    E,                          -- RHS -> E
+    token"0[xX]%x+",                -- RHS -> hexadecimal number
+    token"%-?%d+%.%d+[eE]%-?%d+",   -- RHS -> real number
+    token"%-?%d+%.[eE]%-?%d+",      -- RHS -> real number
+    token"%-?%.%d+[eE]%-?%d+",      -- RHS -> real number
+    token"%-?%d+[eE]%-?%d+",        -- RHS -> real number
+    token"%-?%d+%.%d+",             -- RHS -> real number
+    token"%-?%d+%.",                -- RHS -> real number
+    token"%-?%.%d+",                -- RHS -> real number
+    token"%-?%d+",                  -- RHS -> integral number
+    token"true",                    -- RHS -> boolean
+    token"false",                   -- RHS -> boolean
+    PARENS,                         -- RHS -> (...)
+    BRACKETS,                       -- RHS -> {...}
+    DOUBLE_QUOTE_STRING,            -- RHS -> "..."
+    SINGLE_QUOTE_STRING,            -- RHS -> '...'
+    LONGSTRING,                     -- RHS -> [=[ ... ]=]
+    E,                              -- RHS -> E
 }
 
 -- assignement -> LHS "=" RHS
@@ -1492,7 +1494,7 @@ return function(cond)
     return cond and ypp or F.const ""
 end
 ]======])
-libs["_YPP_VERSION"] = lib(".build/_YPP_VERSION", [=[return [[1.10.2]]]=])
+libs["_YPP_VERSION"] = lib(".build/_YPP_VERSION", [=[return [[1.10.5]]]=])
 _ENV["atexit"] = require "atexit"
 _ENV["comment"] = require "comment"
 _ENV["convert"] = require "convert"

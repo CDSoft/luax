@@ -23,10 +23,10 @@ https://codeberg.org/cdsoft/luax
 -- @LIB
 
 return {
-    version = "@(VERSION)",
-    date = "@(DATE)",
-    copyright = "@(COPYRIGHT)",
-    authors = "@(AUTHORS)",
-    url = "@(URL)",
+    version = "@VERSION",
+    date = "@DATE",
+    copyright = "@COPYRIGHT",
+    authors = "@AUTHORS",
+    url = "@URL",
     lua_copyright = _LUA_COPYRIGHT or _VERSION,
 }

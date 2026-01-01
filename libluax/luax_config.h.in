@@ -21,6 +21,6 @@
 
 #pragma once
 
-#define LUAX_VERSION   "@(VERSION)"
-#define LUAX_DATE      "@(DATE)"
-#define LUAX_COPYRIGHT "@(COPYRIGHT)"
+#define LUAX_VERSION   "@VERSION"
+#define LUAX_DATE      "@DATE"
+#define LUAX_COPYRIGHT "@COPYRIGHT"
