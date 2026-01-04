@@ -28,6 +28,11 @@ readline.add(line)
 
 adds `line` to the current history.
 
+The history is cleaned on the fly:
+
+- empty lines are ignored
+- duplicates are removed, only the last entry is kept
+
 ``` lua
 readline.set_len(len)
 ```
@@ -38,7 +43,8 @@ sets the maximal history length to `len`.
 readline.save(filename)
 ```
 
-saves the history to the file `filename`.
+saves the history to the file `filename` (unless the history has not
+been modified).
 
 ``` lua
 readline.load(filename)

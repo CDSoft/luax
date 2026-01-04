@@ -29,6 +29,7 @@ If it fails, it uses basic functions with no editing and history capabilities.
 
 #include "readline.h"
 
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,41 +44,83 @@ If it fails, it uses basic functions with no editing and history capabilities.
 
 #define LUAX_MAXINPUT       4096
 #define LUAX_APPNAME_LEN    64
+#define MAX_HISTORY_SEARCH  1000
 
 static bool running_in_a_tty;
+static bool dirty_history = false;
+static bool has_readline = false;
+static bool has_name = false;
+static bool has_history = false;
+static bool has_history_set_len = false;
+static bool has_history_clean = false;
 
 /* readline functions */
 
+typedef struct _hist_entry {
+    char *line;
+    char *timestamp;
+    void *data;
+} HIST_ENTRY;
+
 typedef const char ** t_readline_name;
-typedef char *      (*t_readline_func)      (const char *);
-typedef void        (*t_add_history_func)   (const char *);
-typedef int         (*t_read_history_func)  (const char *);
-typedef int         (*t_write_history_func) (const char *);
-typedef void        (*t_stifle_history_func)(int);
+typedef int         * t_history_base;
+typedef int         * t_history_length;
+typedef char *      (*t_readline)      (const char *);
+typedef void        (*t_add_history)   (const char *);
+typedef int         (*t_read_history)  (const char *);
+typedef int         (*t_write_history) (const char *);
+typedef void        (*t_stifle_history)(int);
+typedef HIST_ENTRY* (*t_history_get)   (int);
+typedef HIST_ENTRY* (*t_remove_history)(int);
 
-static const char *         *rl_readline_name  = NULL;
-static t_readline_func       rl_readline       = NULL;
-static t_add_history_func    rl_add_history    = NULL;
-static t_read_history_func   rl_read_history   = NULL;
-static t_write_history_func  rl_write_history  = NULL;
-static t_stifle_history_func rl_stifle_history = NULL;
+static const char *    *rl_readline_name  = NULL;
+static int             *rl_history_base   = NULL;
+static int             *rl_history_length = NULL;
+static t_readline       rl_readline       = NULL;
+static t_add_history    rl_add_history    = NULL;
+static t_read_history   rl_read_history   = NULL;
+static t_write_history  rl_write_history  = NULL;
+static t_stifle_history rl_stifle_history = NULL;
+static t_history_get    rl_history_get    = NULL;
+static t_remove_history rl_remove_history = NULL;
 
-#ifndef _WIN32
 static void load_readline(void)
 {
+    running_in_a_tty = isatty(STDIN_FILENO);
+    if (!running_in_a_tty) { return; }
+
+#ifndef _WIN32
+
     void *handle = dlopen("libreadline.so", RTLD_NOW | RTLD_LOCAL);
     if (handle == NULL) { return ; }
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
-    rl_readline_name  = (t_readline_name)      dlsym(handle, "rl_readline_name");
-    rl_readline       = (t_readline_func)      dlsym(handle, "readline");
-    rl_add_history    = (t_add_history_func)   dlsym(handle, "add_history");
-    rl_read_history   = (t_read_history_func)  dlsym(handle, "read_history");
-    rl_write_history  = (t_write_history_func) dlsym(handle, "write_history");
-    rl_stifle_history = (t_stifle_history_func)dlsym(handle, "stifle_history");
+
+    rl_readline       = (t_readline)        dlsym(handle, "readline");
+    has_readline = rl_readline!=NULL;
+
+    rl_readline_name  = (t_readline_name)   dlsym(handle, "rl_readline_name");
+    has_name = has_readline && rl_readline_name!=NULL;
+
+    rl_add_history    = (t_add_history)     dlsym(handle, "add_history");
+    rl_read_history   = (t_read_history)    dlsym(handle, "read_history");
+    rl_write_history  = (t_write_history)   dlsym(handle, "write_history");
+    has_history = has_readline && rl_add_history!=NULL && rl_read_history!=NULL && rl_write_history!=NULL;
+
+    rl_stifle_history  = (t_stifle_history) dlsym(handle, "stifle_history");
+    has_history_set_len = has_history && rl_stifle_history!=NULL;
+
+    rl_history_base   = (t_history_base)    dlsym(handle, "history_base");
+    rl_history_length = (t_history_length)  dlsym(handle, "history_length");
+    rl_history_get    = (t_history_get)     dlsym(handle, "history_get");
+    rl_remove_history = (t_remove_history)  dlsym(handle, "remove_history");
+    has_history_clean = has_history && rl_history_base!=NULL && rl_history_length!=NULL &&rl_history_get!=NULL && rl_remove_history!=NULL;
+
 #pragma GCC diagnostic pop
-}
+
 #endif
+}
 
 /*@@@
 ``` lua
@@ -89,7 +132,7 @@ This name allows conditional parsing of the inputrc file.
 
 static int readline_name(lua_State *L)
 {
-    if (rl_readline_name != NULL) {
+    if (has_name) {
         static char rl_appname[LUAX_APPNAME_LEN];
         strncpy(rl_appname, luaL_checkstring(L, 1), sizeof(rl_appname)-1);
         *rl_readline_name = rl_appname;
@@ -107,7 +150,7 @@ prints `prompt` and returns the string entered by the user.
 static int readline_read(lua_State *L)
 {
     const char *prompt = luaL_checkstring(L, 1);
-    if (rl_readline != NULL) {
+    if (has_readline) {
         char *line = rl_readline(prompt);
         lua_pushstring(L, line);
         free(line);
@@ -131,13 +174,42 @@ static int readline_read(lua_State *L)
 readline.add(line)
 ```
 adds `line` to the current history.
+
+The history is cleaned on the fly:
+
+- empty lines are ignored
+- duplicates are removed, only the last entry is kept
 @@@*/
 
 static int readline_history_add(lua_State *L)
 {
-    if (rl_add_history != NULL && lua_isstring(L, 1)) {
+    if (has_history && lua_isstring(L, 1)) {
+        const char *line = luaL_checkstring(L, 1);
+        bool empty = true;
+        for (const char *c = line; *c != '\0'; c++) {
+            if (!isspace((unsigned char)*c)) { empty = false; }
+        }
+        if (empty) { goto done; }
+        if (has_history_clean) {
+            const int history_len = *rl_history_length;
+            const int search_limit = (history_len < MAX_HISTORY_SEARCH) ? history_len : MAX_HISTORY_SEARCH;
+            for (int i = 0; i < search_limit; i++) {
+                const int index = history_len - 1 - i;
+                const HIST_ENTRY *entry = rl_history_get(*rl_history_base + index);
+                if (entry && strcmp(entry->line, line) == 0) {
+                    HIST_ENTRY *removed = rl_remove_history(index);
+                    if (removed != NULL) {
+                        free(removed->line);
+                        free(removed->timestamp);
+                        free(removed);
+                    }
+                }
+            }
+        }
+        dirty_history = true;
         rl_add_history(luaL_checkstring(L, 1));
     }
+done:
     return 0;
 }
 
@@ -150,7 +222,7 @@ sets the maximal history length to `len`.
 
 static int readline_history_set_len(lua_State *L)
 {
-    if (rl_stifle_history != NULL) {
+    if (has_history_set_len) {
         rl_stifle_history((int)luaL_checkinteger(L, 1));
     }
     return 0;
@@ -160,13 +232,15 @@ static int readline_history_set_len(lua_State *L)
 ```lua
 readline.save(filename)
 ```
-saves the history to the file `filename`.
+saves the history to the file `filename`
+(unless the history has not been modified).
 @@@*/
 
 static int readline_history_save(lua_State *L)
 {
-    if (rl_write_history != NULL) {
+    if (has_history && dirty_history) {
         rl_write_history(luaL_checkstring(L, 1));
+        dirty_history = false;
     }
     return 0;
 }
@@ -180,8 +254,9 @@ loads the history from the file `filename`.
 
 static int readline_history_load(lua_State *L)
 {
-    if (rl_read_history != NULL) {
+    if (has_history) {
         rl_read_history(luaL_checkstring(L, 1));
+        dirty_history = false;
     }
     return 0;
 }
@@ -199,12 +274,7 @@ static const luaL_Reg readlinelib[] =
 
 LUAMOD_API int luaopen_readline(lua_State *L)
 {
-    running_in_a_tty = isatty(STDIN_FILENO);
-#ifndef _WIN32
-    if (running_in_a_tty) {
-        load_readline();
-    }
-#endif
+    load_readline();
     luaL_newlib(L, readlinelib);
     return 1;
 }
