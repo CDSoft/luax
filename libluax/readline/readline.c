@@ -56,33 +56,35 @@ static bool has_history_clean = false;
 
 /* readline functions */
 
-typedef struct _hist_entry {
+typedef struct {
     char *line;
     char *timestamp;
     void *data;
 } HIST_ENTRY;
 
-typedef const char ** t_readline_name;
-typedef int         * t_history_base;
-typedef int         * t_history_length;
-typedef char *      (*t_readline)      (const char *);
-typedef void        (*t_add_history)   (const char *);
-typedef int         (*t_read_history)  (const char *);
-typedef int         (*t_write_history) (const char *);
-typedef void        (*t_stifle_history)(int);
-typedef HIST_ENTRY* (*t_history_get)   (int);
-typedef HIST_ENTRY* (*t_remove_history)(int);
+typedef const char *  *t_readline_name;
+typedef int           *t_history_base;
+typedef int           *t_history_length;
+typedef char *       (*t_readline)          (const char *);
+typedef void         (*t_add_history)       (const char *);
+typedef int          (*t_read_history)      (const char *);
+typedef int          (*t_write_history)     (const char *);
+typedef void         (*t_stifle_history)    (int);
+typedef HIST_ENTRY * (*t_history_get)       (int);
+typedef HIST_ENTRY * (*t_remove_history)    (int);
+typedef void *       (*t_free_history_entry)(HIST_ENTRY *);
 
-static const char *    *rl_readline_name  = NULL;
-static int             *rl_history_base   = NULL;
-static int             *rl_history_length = NULL;
-static t_readline       rl_readline       = NULL;
-static t_add_history    rl_add_history    = NULL;
-static t_read_history   rl_read_history   = NULL;
-static t_write_history  rl_write_history  = NULL;
-static t_stifle_history rl_stifle_history = NULL;
-static t_history_get    rl_history_get    = NULL;
-static t_remove_history rl_remove_history = NULL;
+static t_readline_name      rl_readline_name      = NULL;
+static t_history_base       rl_history_base       = NULL;
+static t_history_length     rl_history_length     = NULL;
+static t_readline           rl_readline           = NULL;
+static t_add_history        rl_add_history        = NULL;
+static t_read_history       rl_read_history       = NULL;
+static t_write_history      rl_write_history      = NULL;
+static t_stifle_history     rl_stifle_history     = NULL;
+static t_history_get        rl_history_get        = NULL;
+static t_remove_history     rl_remove_history     = NULL;
+static t_free_history_entry rl_free_history_entry = NULL;
 
 static void load_readline(void)
 {
@@ -97,25 +99,37 @@ static void load_readline(void)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 
-    rl_readline       = (t_readline)        dlsym(handle, "readline");
+    rl_readline           = (t_readline)        dlsym(handle, "readline");
+
     has_readline = rl_readline!=NULL;
+    if (!has_readline) {
+        dlclose(handle);
+        return;
+    }
 
-    rl_readline_name  = (t_readline_name)   dlsym(handle, "rl_readline_name");
-    has_name = has_readline && rl_readline_name!=NULL;
+    rl_readline_name      = (t_readline_name)   dlsym(handle, "rl_readline_name");
 
-    rl_add_history    = (t_add_history)     dlsym(handle, "add_history");
-    rl_read_history   = (t_read_history)    dlsym(handle, "read_history");
-    rl_write_history  = (t_write_history)   dlsym(handle, "write_history");
-    has_history = has_readline && rl_add_history!=NULL && rl_read_history!=NULL && rl_write_history!=NULL;
+    has_name = rl_readline_name!=NULL;
 
-    rl_stifle_history  = (t_stifle_history) dlsym(handle, "stifle_history");
+    rl_add_history        = (t_add_history)     dlsym(handle, "add_history");
+    rl_read_history       = (t_read_history)    dlsym(handle, "read_history");
+    rl_write_history      = (t_write_history)   dlsym(handle, "write_history");
+
+    has_history = rl_add_history!=NULL && rl_read_history!=NULL && rl_write_history!=NULL;
+
+    rl_stifle_history     = (t_stifle_history) dlsym(handle, "stifle_history");
+
     has_history_set_len = has_history && rl_stifle_history!=NULL;
 
-    rl_history_base   = (t_history_base)    dlsym(handle, "history_base");
-    rl_history_length = (t_history_length)  dlsym(handle, "history_length");
-    rl_history_get    = (t_history_get)     dlsym(handle, "history_get");
-    rl_remove_history = (t_remove_history)  dlsym(handle, "remove_history");
-    has_history_clean = has_history && rl_history_base!=NULL && rl_history_length!=NULL &&rl_history_get!=NULL && rl_remove_history!=NULL;
+    rl_history_base       = (t_history_base)    dlsym(handle, "history_base");
+    rl_history_length     = (t_history_length)  dlsym(handle, "history_length");
+    rl_history_get        = (t_history_get)     dlsym(handle, "history_get");
+    rl_remove_history     = (t_remove_history)  dlsym(handle, "remove_history");
+    rl_free_history_entry = (t_free_history_entry)  dlsym(handle, "free_history_entry");
+
+    has_history_clean = has_history
+                     && rl_history_base!=NULL && rl_history_length!=NULL
+                     && rl_history_get!=NULL && rl_remove_history!=NULL && rl_free_history_entry!=NULL;
 
 #pragma GCC diagnostic pop
 
@@ -191,18 +205,13 @@ static int readline_history_add(lua_State *L)
         }
         if (empty) { goto done; }
         if (has_history_clean) {
-            const int history_len = *rl_history_length;
-            const int search_limit = (history_len < MAX_HISTORY_SEARCH) ? history_len : MAX_HISTORY_SEARCH;
-            for (int i = 0; i < search_limit; i++) {
-                const int index = history_len - 1 - i;
-                const HIST_ENTRY *entry = rl_history_get(*rl_history_base + index);
-                if (entry && strcmp(entry->line, line) == 0) {
-                    HIST_ENTRY *removed = rl_remove_history(index);
-                    if (removed != NULL) {
-                        free(removed->line);
-                        free(removed->timestamp);
-                        free(removed);
-                    }
+            const int latest = *rl_history_length - 1;
+            const int oldest = latest - MAX_HISTORY_SEARCH < 0 ? 0 : latest - MAX_HISTORY_SEARCH;
+            for (int i = latest; i > oldest; i--) {
+                const HIST_ENTRY *entry = rl_history_get(*rl_history_base + i);
+                if (entry != NULL && strcmp(entry->line, line) == 0) {
+                    HIST_ENTRY *removed = rl_remove_history(i);
+                    rl_free_history_entry(removed);
                 }
             }
         }
