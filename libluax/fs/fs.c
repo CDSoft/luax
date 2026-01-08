@@ -105,26 +105,21 @@ returns the list of files and directories in
 static int fs_dir(lua_State *L)
 {
     const char *path;
-    if (lua_isstring(L, 1))
-    {
+    if (lua_isstring(L, 1)) {
         path = luaL_checkstring(L, 1);
     }
-    else if (lua_isnoneornil(L, 1))
-    {
+    else if (lua_isnoneornil(L, 1)) {
         path = ".";
     }
-    else
-    {
+    else {
         return luax_pusherror(L, "bad argument #1 to dir (none, nil or string expected)");
     }
     DIR *dir = opendir(path);
-    if (dir)
-    {
+    if (dir) {
         lua_newtable(L); /* file list */
         struct dirent *file;
         int n = 0;
-        while ((file = readdir(dir)) != NULL)
-        {
+        while ((file = readdir(dir)) != NULL) {
             if (strcmp(file->d_name, ".")==0) continue;
             if (strcmp(file->d_name, "..")==0) continue;
             lua_pushstring(L, file->d_name);
@@ -133,9 +128,7 @@ static int fs_dir(lua_State *L)
         closedir(dir);
         set_F_metatable(L);
         return 1;
-    }
-    else
-    {
+    } else {
         return luax_push_errno(L, path);
     }
 }
@@ -210,11 +203,9 @@ static void ls(lua_State *L, const char *dir, const char *base, bool dotted, boo
                         is_dir = true;
                         break;
                     case DT_LNK:
-                    {
                         struct stat buf;
                         is_dir = stat(file->d_name, &buf) == 0 && S_ISDIR(buf.st_mode);
                         break;
-                    }
                     default:
                         is_dir = false;
                         break;
@@ -347,16 +338,11 @@ returns the list of path names matching a pattern.
 static int fs_glob(lua_State *L)
 {
     const char *pattern;
-    if (lua_isstring(L, 1))
-    {
+    if (lua_isstring(L, 1)) {
         pattern = luaL_checkstring(L, 1);
-    }
-    else if (lua_isnoneornil(L, 1))
-    {
+    } else if (lua_isnoneornil(L, 1)) {
         pattern = "*";
-    }
-    else
-    {
+    } else {
         return luax_pusherror(L, "bad argument #1 to pattern (none, nil or string expected)");
     }
 
@@ -401,34 +387,25 @@ static int fs_glob(lua_State *L)
 static int fs_glob(lua_State *L)
 {
     const char *pattern;
-    if (lua_isstring(L, 1))
-    {
+    if (lua_isstring(L, 1)) {
         pattern = luaL_checkstring(L, 1);
-    }
-    else if (lua_isnoneornil(L, 1))
-    {
+    } else if (lua_isnoneornil(L, 1)) {
         pattern = "*";
-    }
-    else
-    {
+    } else {
         return luax_pusherror(L, "bad argument #1 to pattern (none, nil or string expected)");
     }
     glob_t globres;
     const int r = glob(pattern, 0, NULL, &globres);
-    if (r == 0 || r == GLOB_NOMATCH)
-    {
+    if (r == 0 || r == GLOB_NOMATCH) {
         lua_newtable(L); /* file list */
-        for (unsigned int i=1; i<=globres.gl_pathc; i++)
-        {
+        for (unsigned int i=1; i<=globres.gl_pathc; i++) {
             lua_pushstring(L, globres.gl_pathv[i-1]);
             lua_rawseti(L, -2, i);
         }
         globfree(&globres);
         set_F_metatable(L);
         return 1;
-    }
-    else
-    {
+    } else {
         return luax_push_errno(L, pattern);
     }
 }
@@ -467,8 +444,7 @@ static int fs_remove(lua_State *L)
 #ifdef _WIN32
     struct stat st;
     stat(filename, &st);
-    if (S_ISDIR(st.st_mode))
-    {
+    if (S_ISDIR(st.st_mode)) {
         return luax_push_result_or_errno(L, rmdir(filename) == 0, filename);
     }
 #endif
@@ -505,8 +481,7 @@ static int fs_copy(lua_State *L)
     FILE *from = fopen(fromname, "rb");
     if (!from) return luax_push_errno(L, fromname);
     FILE *to = fopen(toname, "wb");
-    if (!to)
-    {
+    if (!to) {
         const int _en = errno;
         fclose(from);
         errno = _en;
@@ -514,10 +489,8 @@ static int fs_copy(lua_State *L)
     }
     size_t n;
     char buffer[BUFSIZE];
-    while ((n = fread(buffer, sizeof(char), sizeof(buffer), from)))
-    {
-        if (fwrite(buffer, sizeof(char), n, to) != n)
-        {
+    while ((n = fread(buffer, sizeof(char), sizeof(buffer), from))) {
+        if (fwrite(buffer, sizeof(char), n, to) != n) {
             const int _en = errno;
             fclose(from);
             fclose(to);
@@ -526,8 +499,7 @@ static int fs_copy(lua_State *L)
             return luax_push_errno(L, toname);
         }
     }
-    if (ferror(from))
-    {
+    if (ferror(from)) {
         const int _en = errno;
         fclose(from);
         fclose(to);
@@ -654,8 +626,7 @@ static int get_stat(lua_State *L, int (*stat_func)(const char *restrict, struct 
 {
     const char *path = luaL_checkstring(L, 1);
     struct stat buf;
-    if (stat_func(path, &buf)==0)
-    {
+    if (stat_func(path, &buf)==0) {
         lua_newtable(L); /* stat */
         set_string(L, "name", path);
         set_integer(L, "size", buf.st_size);
@@ -684,9 +655,7 @@ static int get_stat(lua_State *L, int (*stat_func)(const char *restrict, struct 
         set_boolean(L, "aX", buf.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH));
         set_F_metatable(L);
         return 1;
-    }
-    else
-    {
+    } else {
         return luax_push_errno(L, path);
     }
 }
@@ -770,8 +739,7 @@ static int fs_inode(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 1);
     struct stat buf;
-    if (stat(path, &buf)==0)
-    {
+    if (stat(path, &buf)==0) {
         lua_newtable(L); /* stat */
         set_integer(L, "dev", (lua_Integer)buf.st_dev);
 #ifdef _WIN32
@@ -780,9 +748,7 @@ static int fs_inode(lua_State *L)
         set_integer(L, "ino", (lua_Integer)buf.st_ino);
 #endif
         return 1;
-    }
-    else
-    {
+    } else {
         return luax_push_errno(L, path);
     }
 }
@@ -805,24 +771,18 @@ static int fs_chmod(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 1);
     mode_t mode;
-    if (lua_type(L, 2) == LUA_TNUMBER)
-    {
+    if (lua_type(L, 2) == LUA_TNUMBER) {
         mode = 0;
-        for (int i=2; !lua_isnone(L, i); i++)
-        {
+        for (int i=2; !lua_isnone(L, i); i++) {
             const lua_Number n = luaL_checknumber(L, i);
             mode |= (mode_t)n;
         }
-    }
-    else if (lua_type(L, 2) == LUA_TSTRING)
-    {
+    } else if (lua_type(L, 2) == LUA_TSTRING) {
         const char *ref = luaL_checkstring(L, 2);
         struct stat st;
         if (stat(ref, &st) != 0) return luax_push_errno(L, ref);
         mode = st.st_mode;
-    }
-    else
-    {
+    } else {
         return luax_pusherror(L, "bad argument #2 to 'chmod' (number or string expected)");
     }
     return luax_push_result_or_errno(L, chmod(path, mode) == 0, path);
@@ -856,29 +816,21 @@ static int do_touch(lua_State *L, int (*utimes_function)(const char*, const stru
 {
     const char *path = luaL_checkstring(L, 1);
     struct utimbuf t;
-    if (lua_isnoneornil(L, 2))
-    {
+    if (lua_isnoneornil(L, 2)) {
         t.actime = t.modtime = time(NULL);
-    }
-    else if (lua_type(L, 2) == LUA_TNUMBER)
-    {
+    } else if (lua_type(L, 2) == LUA_TNUMBER) {
         const lua_Number n = luaL_checknumber(L, 2);
         t.actime = t.modtime = (time_t)n;
-    }
-    else if (lua_type(L, 2) == LUA_TSTRING)
-    {
+    } else if (lua_type(L, 2) == LUA_TSTRING) {
         const char *ref = luaL_checkstring(L, 2);
         struct stat st;
         if (stat(ref, &st) != 0) return luax_push_errno(L, ref);
         t.actime = st.st_atime;
         t.modtime = st.st_mtime;
-    }
-    else
-    {
+    } else {
         return luax_pusherror(L, "bad argument #2 to touch (none, nil, number or string expected)");
     }
-    if (access(path, F_OK) != 0)
-    {
+    if (access(path, F_OK) != 0) {
         const int fd = open(path, O_CREAT, S_IRUSR | S_IWUSR);
         if (fd < 0) return luax_push_errno(L, path);
         close(fd);
@@ -1060,8 +1012,7 @@ static int fs_readlink(lua_State *L)
     const char *path = luaL_checkstring(L, 1);
     char dest[PATH_MAX];
     const ssize_t n = readlink(path, dest, sizeof(dest));
-    if (n < 0)
-    {
+    if (n < 0) {
         return luax_pusherror(L, "readlink failure");
     }
     dest[n] = '\0';
@@ -1082,8 +1033,7 @@ static int fs_absname(lua_State *L)
     const char *name = luaL_checkstring(L, 1);
     if (  name[0] == '/' || name[0] == '\\'
        || (name[0] && name[1] == ':')
-       )
-    {
+       ) {
         /* already an absolute path */
         lua_pushstring(L, name);
         return 1;
@@ -1091,8 +1041,7 @@ static int fs_absname(lua_State *L)
     luaL_Buffer B;
     luaL_buffinit(L, &B);
     char *path = luaL_prepbuffsize(&B, PATH_MAX);
-    if (getcwd(path, PATH_MAX) == NULL)
-    {
+    if (getcwd(path, PATH_MAX) == NULL) {
         return luax_pusherror(L, "getcwd failure");
     }
     luaL_addsize(&B, strnlen(path, PATH_MAX));
