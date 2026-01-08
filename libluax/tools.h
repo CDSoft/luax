@@ -23,6 +23,8 @@
 
 #include "lua.h"
 
+static inline int imax(int a, int b) { return a < b ? b : a; }
+
 int luax_push_result_or_errno(lua_State *L, int res, const char *filename);
 int luax_push_errno(lua_State *L, const char *filename);
 int luax_pusherror(lua_State *L, const char *msg, ...);

@@ -29,6 +29,8 @@ If it fails, it uses basic functions with no editing and history capabilities.
 
 #include "readline.h"
 
+#include "tools.h"
+
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -206,7 +208,7 @@ static int readline_history_add(lua_State *L)
         if (empty) { goto done; }
         if (has_history_clean) {
             const int latest = *rl_history_length - 1;
-            const int oldest = latest - MAX_HISTORY_SEARCH < 0 ? 0 : latest - MAX_HISTORY_SEARCH;
+            const int oldest = imax(0, latest - MAX_HISTORY_SEARCH);
             for (int i = latest; i > oldest; i--) {
                 const HIST_ENTRY *entry = rl_history_get(*rl_history_base + i);
                 if (entry != NULL && strcmp(entry->line, line) == 0) {
