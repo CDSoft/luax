@@ -435,6 +435,8 @@ Some modules are heavily inspired by
 - [cbor](doc/cbor.md): pure Lua implementation of the CBOR
 - [lar](doc/lar.md): Simple archive format for Lua values
 - [readline](doc/readline.md): Command line editing functions
+- [linenoise](doc/linenoise.md): A small, portable GNU readline
+  replacement with UTF-8 support
 - [json](doc/json.md): JSON Module for Lua
 
 ## Shared libraries
@@ -519,6 +521,9 @@ The script `lib/libluax.lua` can be reused in pure Lua programs:
 - **[readline](https://tiswww.case.edu/php/chet/readline/rltop.html)**:
   Command line editing functions [GPLv3
   License](https://www.gnu.org/licenses/gpl-3.0.html)
+- **[Linenoise](https://github.com/antirez/linenoise)**: A minimal,
+  zero-config, BSD licensed, readline replacement ([BSD
+  license](https://github.com/antirez/linenoise/blob/master/LICENSE))
 - **[dkjson.lua](http://dkolf.de/dkjson-lua/)**: JSON Module for Lua
   ([MIT license](http://www.lua.org/license.html))
 - **[CBOR](https://www.zash.se/lua-cbor.html)**: pure Lua implementation

@@ -18,15 +18,10 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 --]]
 
---@LIB
+---------------------------------------------------------------------
+-- linenoise
+---------------------------------------------------------------------
 
--- Pure Lua implementation of linenoise.c
-
-local F = require "F"
-local term = require "term"
-
-return setmetatable({
-    read = term.prompt,
-}, {
-    __index = F.const(F.const()),
-})
+return function()
+    assert(require "linenoise")
+end

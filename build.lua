@@ -742,6 +742,7 @@ section "LuaX sources"
 ---------------------------------------------------------------------
 
 local linux_only = F.flatten {
+    "ext/c/linenoise/linenoise.c",
     optional(socket) {
         "ext/opt/luasocket/serial.c",
         "ext/opt/luasocket/unixdgram.c",
@@ -923,7 +924,7 @@ rt { luax="libluax/curl/curl.lua",                  lua="libluax/curl/curl.lua" 
 rt { luax="libluax/fs/fs.lua",                      lua={"libluax/fs/fs.lua", "libluax/fs/_fs.lua"}             }
 rt {                                                lua="libluax/imath/imath.lua"                               }
 rt { luax="libluax/import/import.lua",              lua="libluax/import/import.lua"                             }
-rt { luax="libluax/linenoise/linenoise.lua",        lua="libluax/linenoise/linenoise.lua"                       }
+rt {                                                lua="libluax/linenoise/linenoise.lua"                       }
 rt {                                                lua="libluax/readline/readline.lua"                         }
 rt { luax="libluax/lar/lar.lua",                    lua="libluax/lar/lar.lua"                                   }
 rt { luax="libluax/lzip/lzip.lua",                  lua={"libluax/lzip/lzip.lua", "libluax/lzip/_lzip.lua"}     }

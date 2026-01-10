@@ -29,6 +29,7 @@ If it fails, it uses basic functions with no editing and history capabilities.
 
 #include "readline.h"
 
+#include "linenoise/linenoise.h"
 #include "tools.h"
 
 #include <ctype.h>
@@ -44,6 +45,7 @@ If it fails, it uses basic functions with no editing and history capabilities.
 #include "lua.h"
 #include "lauxlib.h"
 
+#define LUAX_HISTORY_LEN    1000
 #define LUAX_MAXINPUT       4096
 #define LUAX_APPNAME_LEN    64
 #define MAX_HISTORY_SEARCH  1000
@@ -101,7 +103,7 @@ static void load_readline(void)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 
-    rl_readline           = (t_readline)        dlsym(handle, "readline");
+    rl_readline           = (t_readline)          dlsym(handle, "readline");
 
     has_readline = rl_readline!=NULL;
     if (!has_readline) {
@@ -109,31 +111,35 @@ static void load_readline(void)
         return;
     }
 
-    rl_readline_name      = (t_readline_name)   dlsym(handle, "rl_readline_name");
+    rl_readline_name      = (t_readline_name)     dlsym(handle, "rl_readline_name");
 
     has_name = rl_readline_name!=NULL;
 
-    rl_add_history        = (t_add_history)     dlsym(handle, "add_history");
-    rl_read_history       = (t_read_history)    dlsym(handle, "read_history");
-    rl_write_history      = (t_write_history)   dlsym(handle, "write_history");
+    rl_add_history        = (t_add_history)       dlsym(handle, "add_history");
+    rl_read_history       = (t_read_history)      dlsym(handle, "read_history");
+    rl_write_history      = (t_write_history)     dlsym(handle, "write_history");
 
     has_history = rl_add_history!=NULL && rl_read_history!=NULL && rl_write_history!=NULL;
 
-    rl_stifle_history     = (t_stifle_history) dlsym(handle, "stifle_history");
+    rl_stifle_history     = (t_stifle_history)    dlsym(handle, "stifle_history");
 
     has_history_set_len = has_history && rl_stifle_history!=NULL;
 
-    rl_history_base       = (t_history_base)    dlsym(handle, "history_base");
-    rl_history_length     = (t_history_length)  dlsym(handle, "history_length");
-    rl_history_get        = (t_history_get)     dlsym(handle, "history_get");
-    rl_remove_history     = (t_remove_history)  dlsym(handle, "remove_history");
-    rl_free_history_entry = (t_free_history_entry)  dlsym(handle, "free_history_entry");
+    rl_history_base       = (t_history_base)      dlsym(handle, "history_base");
+    rl_history_length     = (t_history_length)    dlsym(handle, "history_length");
+    rl_history_get        = (t_history_get)       dlsym(handle, "history_get");
+    rl_remove_history     = (t_remove_history)    dlsym(handle, "remove_history");
+    rl_free_history_entry = (t_free_history_entry)dlsym(handle, "free_history_entry");
 
     has_history_clean = has_history
                      && rl_history_base!=NULL && rl_history_length!=NULL
                      && rl_history_get!=NULL && rl_remove_history!=NULL && rl_free_history_entry!=NULL;
 
 #pragma GCC diagnostic pop
+
+    if (has_history_set_len) {
+        rl_stifle_history(LUAX_HISTORY_LEN);
+    }
 
 #endif
 }
@@ -165,23 +171,11 @@ prints `prompt` and returns the string entered by the user.
 
 static int readline_read(lua_State *L)
 {
+    if (!has_readline) { return linenoise_read(L); }
     const char *prompt = luaL_checkstring(L, 1);
-    if (has_readline) {
-        char *line = rl_readline(prompt);
-        lua_pushstring(L, line);
-        free(line);
-    } else {
-        static char line[LUAX_MAXINPUT];
-        if (running_in_a_tty) {
-            fputs(prompt, stdout);
-            fflush(stdout);
-        }
-        if (fgets(line, sizeof(line), stdin) != NULL) {
-            lua_pushlstring(L, line, strcspn(line, "\n"));
-        } else {
-            lua_pushnil(L);
-        }
-    }
+    char *line = rl_readline(prompt);
+    lua_pushstring(L, line);
+    free(line);
     return 1;
 }
 
@@ -199,7 +193,8 @@ The history is cleaned on the fly:
 
 static int readline_history_add(lua_State *L)
 {
-    if (has_history && lua_isstring(L, 1)) {
+    if (!has_readline) { return linenoise_history_add(L); }
+    if (has_history && running_in_a_tty && lua_isstring(L, 1)) {
         const char *line = luaL_checkstring(L, 1);
         bool empty = true;
         for (const char *c = line; *c != '\0'; c++) {
@@ -233,6 +228,7 @@ sets the maximal history length to `len`.
 
 static int readline_history_set_len(lua_State *L)
 {
+    if (!has_readline) { return linenoise_history_set_len(L); }
     if (has_history_set_len) {
         rl_stifle_history((int)luaL_checkinteger(L, 1));
     }
@@ -249,7 +245,8 @@ saves the history to the file `filename`
 
 static int readline_history_save(lua_State *L)
 {
-    if (has_history && dirty_history) {
+    if (!has_readline) { return linenoise_history_save(L); }
+    if (has_history && running_in_a_tty && dirty_history) {
         rl_write_history(luaL_checkstring(L, 1));
         dirty_history = false;
     }
@@ -265,7 +262,8 @@ loads the history from the file `filename`.
 
 static int readline_history_load(lua_State *L)
 {
-    if (has_history) {
+    if (!has_readline) { return linenoise_history_load(L); }
+    if (has_history && running_in_a_tty) {
         rl_read_history(luaL_checkstring(L, 1));
         dirty_history = false;
     }
