@@ -90,8 +90,13 @@ static t_history_get        rl_history_get        = NULL;
 static t_remove_history     rl_remove_history     = NULL;
 static t_free_history_entry rl_free_history_entry = NULL;
 
+static bool loaded = false;
+
 static void load_readline(void)
 {
+    if (loaded) { return; }
+    loaded = true;
+
     running_in_a_tty = isatty(STDIN_FILENO);
     if (!running_in_a_tty) { return; }
 
@@ -154,6 +159,7 @@ This name allows conditional parsing of the inputrc file.
 
 static int readline_name(lua_State *L)
 {
+    load_readline();
     if (has_name) {
         static char rl_appname[LUAX_APPNAME_LEN];
         strncpy(rl_appname, luaL_checkstring(L, 1), sizeof(rl_appname)-1);
@@ -171,6 +177,7 @@ prints `prompt` and returns the string entered by the user.
 
 static int readline_read(lua_State *L)
 {
+    load_readline();
     if (!has_readline) { return linenoise_read(L); }
     const char *prompt = luaL_checkstring(L, 1);
     char *line = rl_readline(prompt);
@@ -193,6 +200,7 @@ The history is cleaned on the fly:
 
 static int readline_history_add(lua_State *L)
 {
+    load_readline();
     if (!has_readline) { return linenoise_history_add(L); }
     if (has_history && running_in_a_tty && lua_isstring(L, 1)) {
         const char *line = luaL_checkstring(L, 1);
@@ -228,6 +236,7 @@ sets the maximal history length to `len`.
 
 static int readline_history_set_len(lua_State *L)
 {
+    load_readline();
     if (!has_readline) { return linenoise_history_set_len(L); }
     if (has_history_set_len) {
         rl_stifle_history((int)luaL_checkinteger(L, 1));
@@ -245,6 +254,7 @@ saves the history to the file `filename`
 
 static int readline_history_save(lua_State *L)
 {
+    load_readline();
     if (!has_readline) { return linenoise_history_save(L); }
     if (has_history && running_in_a_tty && dirty_history) {
         rl_write_history(luaL_checkstring(L, 1));
@@ -262,6 +272,7 @@ loads the history from the file `filename`.
 
 static int readline_history_load(lua_State *L)
 {
+    load_readline();
     if (!has_readline) { return linenoise_history_load(L); }
     if (has_history && running_in_a_tty) {
         rl_read_history(luaL_checkstring(L, 1));
@@ -283,7 +294,6 @@ static const luaL_Reg readlinelib[] =
 
 LUAMOD_API int luaopen_readline(lua_State *L)
 {
-    load_readline();
     luaL_newlib(L, readlinelib);
     return 1;
 }

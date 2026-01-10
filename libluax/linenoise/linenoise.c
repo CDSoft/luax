@@ -55,6 +55,20 @@ static bool running_in_a_tty;
 static bool dirty_history = false;
 #endif
 
+static bool initialized = false;
+
+static void init_linenoise(void)
+{
+    if (initialized) { return; }
+    initialized = true;
+
+    running_in_a_tty = isatty(STDIN_FILENO);
+#ifdef HAS_LINENOISE
+    linenoiseHistorySetMaxLen(LUAX_HISTORY_LEN);
+    linenoiseSetMultiLine(true);
+#endif
+}
+
 /*@@@
 ```lua
 linenoise.read(prompt)
@@ -64,6 +78,7 @@ prints `prompt` and returns the string entered by the user.
 
 int linenoise_read(lua_State *L)
 {
+    init_linenoise();
     const char *prompt = luaL_checkstring(L, 1);
 #ifdef HAS_LINENOISE
     char *line = linenoise(prompt);
@@ -94,6 +109,7 @@ adds `line` to the current history.
 int linenoise_history_add(lua_State *L)
 {
 #ifdef HAS_LINENOISE
+    init_linenoise();
     if (running_in_a_tty && lua_isstring(L, 1)) {
         const char *line = luaL_checkstring(L, 1);
         linenoiseHistoryAdd(line);
@@ -115,6 +131,7 @@ sets the maximal history length to `len`.
 int linenoise_history_set_len(lua_State *L)
 {
 #ifdef HAS_LINENOISE
+    init_linenoise();
     linenoiseHistorySetMaxLen((int)luaL_checkinteger(L, 1));
 #else
     (void)L;
@@ -132,6 +149,7 @@ saves the history to the file `filename`.
 int linenoise_history_save(lua_State *L)
 {
 #ifdef HAS_LINENOISE
+    init_linenoise();
     if (running_in_a_tty && dirty_history) {
         linenoiseHistorySave(luaL_checkstring(L, 1));
         dirty_history = false;
@@ -152,6 +170,7 @@ loads the history from the file `filename`.
 int linenoise_history_load(lua_State *L)
 {
 #ifdef HAS_LINENOISE
+    init_linenoise();
     if (running_in_a_tty) {
         linenoiseHistoryLoad(luaL_checkstring(L, 1));
         dirty_history = false;
@@ -172,18 +191,8 @@ static const luaL_Reg linenoiselib[] =
     {NULL, NULL}
 };
 
-static void init_linenoise(void)
-{
-    running_in_a_tty = isatty(STDIN_FILENO);
-#ifdef HAS_LINENOISE
-    linenoiseHistorySetMaxLen(LUAX_HISTORY_LEN);
-    linenoiseSetMultiLine(true);
-#endif
-}
-
 LUAMOD_API int luaopen_linenoise (lua_State *L)
 {
-    init_linenoise();
     luaL_newlib(L, linenoiselib);
     return 1;
 }
