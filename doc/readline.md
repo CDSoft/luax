@@ -5,9 +5,13 @@ library](https://tiswww.case.edu/php/chet/readline/rltop.html) provides
 a set of functions for use by applications that allow users to edit
 command lines as they are typed in.
 
-**Warning**: the LuaX readline module tries to dynamically load
-libreadline. If it fails, it uses basic functions with no editing and
-history capabilities.
+**Note**: the LuaX readline module tries to dynamically load
+libreadline. If it fails, it uses the linenoise module that has similar
+and slightly more limited editing and history capabilities.
+
+**Warning**: readline and linenoise have not been ported to Windows. The
+following functions work on Windows but are stubbed using the C `fgets`
+function. The history can not be saved on Windows.
 
 ``` lua
 readline.name(appname)

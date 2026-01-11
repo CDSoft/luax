@@ -4,8 +4,8 @@
 self-contained alternative to readline and libedit.
 
 **Warning**: linenoise has not been ported to Windows. The following
-functions works on Windows but are stubbed using the Lua `io` module
-when possible. The history can not be saved on Windows.
+functions work on Windows but are stubbed using the C `fgets` function.
+The history can not be saved on Windows.
 
 ``` lua
 linenoise.read(prompt)
