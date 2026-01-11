@@ -20,7 +20,7 @@ curl.request(...)
 curl(...)
 ```
 
-> Like `curl(...)` with some default options:
+> Like `curl.request(...)` with some default options:
 >
 > - `--silent`: silent mode
 > - `--show-error`: show an error message if it fails

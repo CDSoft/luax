@@ -77,7 +77,7 @@ wget.request(...)
 ```lua
 wget(...)
 ```
-> Like `wget(...)` with some default options:
+> Like `wget.request(...)` with some default options:
 >
 > - `--quiet`: quiet mode
 
