@@ -34,6 +34,11 @@
 
 #include "term.h"
 
+/***************************************************************************@@@
+## Terminal characterization
+
+@@@*/
+
 static bool get_file_descriptor(lua_State *L, int default_fd, int *fd)
 {
     switch (lua_type(L, 1))

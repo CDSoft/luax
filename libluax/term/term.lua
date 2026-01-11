@@ -40,8 +40,8 @@ local CSI <const> = ESC..'['
 --[[------------------------------------------------------------------------@@@
 ## Colors
 
-The table `term.colors` contain objects that can be used to build
-colorized string with ANSI sequences.
+The table `term.color` contain objects that can be used to build
+colorized strings with ANSI sequences.
 
 An object `term.color.X` can be used:
 

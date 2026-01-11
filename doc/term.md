@@ -14,8 +14,8 @@ local term = require "term"
 
 ## Colors
 
-The table `term.colors` contain objects that can be used to build
-colorized string with ANSI sequences.
+The table `term.color` contain objects that can be used to build
+colorized strings with ANSI sequences.
 
 An object `term.color.X` can be used:
 
@@ -139,6 +139,8 @@ s = term.prompt(p)
 ```
 
 prints `p` and waits for a user input
+
+## Terminal characterization
 
 ``` lua
 term.isatty([fileno])
