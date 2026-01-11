@@ -37,7 +37,7 @@ Special `seed` and `incr` values:
 |--------|----------------------|--------|-----------------------|
 | `nil`  | Random value         | `nil`  | Random value          |
 | `-1`   | `0x4d595df4d0f33173` | `-1`   | `1442695040888963407` |
-| `n`    | `n`                  | `n`    | `n|1`                 |
+| `n`    | `n`                  | `n`    | `n\|1`                |
 
 The increment shall be an odd number (i.e. even values are added 1).
 
