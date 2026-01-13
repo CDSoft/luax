@@ -346,6 +346,15 @@ fs.with_dir(path, f)
 changes the current working directory to `path` and calls `f()`.
 
 ``` lua
+fs.expand(path, [vars])
+```
+
+returns the expanded path where `"~"` at the beginning of the path is
+replaced by the home directory of the current user and `$XXX` or
+`${XXX}` is replaced by the environment variable `XXX`. Variable values
+can also be taken from the optional `vars` table.
+
+``` lua
 fs.read(filename)
 ```
 

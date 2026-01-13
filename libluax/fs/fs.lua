@@ -28,6 +28,7 @@ https://codeberg.org/cdsoft/luax
 local fs = require "_fs"
 
 local F = require "F"
+local sys = require "sys"
 
 local __PANDOC__, pandoc  = _ENV.PANDOC_VERSION ~= nil, _ENV.pandoc
 
@@ -238,6 +239,34 @@ function fs.with_dir(path, f)
         return table.unpack(ret)
     end
     error "fs.with_dir not implemented"
+end
+
+--[[@@@
+```lua
+fs.expand(path, [vars])
+```
+returns the expanded path
+where `"~"` at the beginning of the path is replaced by the home directory of the current user
+and `$XXX` or `${XXX}` is replaced by the environment variable `XXX`.
+Variable values can also be taken from the optional `vars` table.
+@@@]]
+
+local function expanduser(path)
+    local home = os.getenv(sys.os == "windows" and "USERPROFILE" or "HOME")
+    if path == "~" then return home end
+    local local_path = path:match "^~([/\\].*)"
+    if local_path then return home..local_path end
+    return path
+end
+
+local function expandvars(path, vars)
+    vars = vars or {}
+    local function expand(var) return os.getenv(var) or vars[var] or var end
+    return path : gsub("${([%w_]+)}", expand) : gsub("$([%w_]+)", expand)
+end
+
+function fs.expand(path, vars)
+    return expandvars(expanduser(path), vars)
 end
 
 --[[@@@

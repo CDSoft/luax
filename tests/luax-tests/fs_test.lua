@@ -385,6 +385,16 @@ local function fs_test(tmp)
         fs.chdir(cwd)
     end
 
+    eq(fs.expand("foo/bar"), "foo/bar")
+    eq(fs.expand("~"), os.getenv "HOME" or os.getenv "USERPROFILE")
+    eq(fs.expand("~/foo/bar"), (os.getenv "HOME" or os.getenv "USERPROFILE") / "foo/bar")
+    eq(fs.expand("~/$foo/${bar}"), (os.getenv "HOME" or os.getenv "USERPROFILE") / "foo/bar")
+    eq(fs.expand("~/$foo/${bar}", {}), (os.getenv "HOME" or os.getenv "USERPROFILE") / "foo/bar")
+    eq(fs.expand("~/$foo/${bar}", {foo="FOO"}), (os.getenv "HOME" or os.getenv "USERPROFILE") / "FOO/bar")
+    eq(fs.expand("~/$foo/${bar}", {foo="FOO", bar="BAR"}), (os.getenv "HOME" or os.getenv "USERPROFILE") / "FOO/BAR")
+    eq(fs.expand("$HOME/$foo/${bar}", {foo="FOO", bar="BAR"}), (os.getenv "HOME" or os.getenv "USERPROFILE") / "FOO/BAR")
+    eq(fs.expand("${HOME}/$foo/${bar}", {foo="FOO", bar="BAR"}), (os.getenv "HOME" or os.getenv "USERPROFILE") / "FOO/BAR")
+
 end
 
 return function()
