@@ -262,7 +262,8 @@ end
 local function expandvars(path, vars)
     vars = vars or {}
     local function expand(var) return os.getenv(var) or vars[var] or var end
-    return path : gsub("${([%w_]+)}", expand) : gsub("$([%w_]+)", expand)
+    path = path : gsub("${([%w_]+)}", expand) : gsub("$([%w_]+)", expand)
+    return path
 end
 
 function fs.expand(path, vars)
