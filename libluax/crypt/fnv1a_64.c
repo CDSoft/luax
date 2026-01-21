@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with luax.  If not, see <https://www.gnu.org/licenses/>.
+ * along with fnv1a.  If not, see <https://www.gnu.org/licenses/>.
  *
  * For further information about fnv1a you can visit
  * https://codeberg.org/cdsoft/fnv1a
