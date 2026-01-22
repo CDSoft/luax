@@ -31,32 +31,16 @@ The import module can be used to manage simple configuration files,
 configuration parameters being global variables defined in the configuration file.
 
 ```lua
-local conf = import "myconf.lua"
+local conf = import("myconf.lua", [env])
 ```
 Evaluates `"myconf.lua"` in a new table and returns this table.
 All files are tracked in `package.modpath`.
 
-The imported files are stored in a cache.
-Subsequent calls to `import` can read files from the cache instead of actually reloading them.
-The cache can be disabled with an optional parameter:
-
-```lua
-local conf = import("myconf.lua", {cache=false})
-```
-Reloads the file instead of using the cache.
-
+The execution environment inherits from `env` (or `_ENV` if `env` is not defined).
 @@@]]
 
-local cache = {}
-
-return function(fname, opt)
-    local use_cache = not opt or opt.cache==nil or opt.cache
-    if use_cache then
-        local mod = cache[fname]
-        if mod then return mod end
-    end
-    local mod = setmetatable({}, {__index = _ENV})
+return function(fname, env)
+    local mod = setmetatable({}, {__index = env or _ENV})
     assert(loadfile(fname, "t", mod))()
-    if use_cache then cache[fname] = mod end
     return mod
 end
