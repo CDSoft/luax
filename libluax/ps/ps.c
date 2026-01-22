@@ -134,25 +134,17 @@ executes `func` and returns its execution time in seconds (using `ps.clock`).
 
 static int ps_profile(lua_State *L)
 {
-    if (lua_gettop(L) == 1 && lua_isfunction(L, 1))
-    {
-        const lua_Number t0 = getclock();
-        const int status = lua_pcall(L, 0, 0, 0);
-        const lua_Number t1 = getclock();
-        if (status == LUA_OK)
-        {
-            lua_pushnumber(L, t1 - t0);
-            return 1;
-        }
-        else
-        {
-            return luax_pusherror(L, "ps.profile argument failed");
-        }
-    }
-    else
-    {
+    if (lua_gettop(L) != 1 || !lua_isfunction(L, 1)) {
         return luax_pusherror(L, "ps.profile argument shall be callable");
     }
+    volatile const lua_Number t0 = getclock();
+    const int status = lua_pcall(L, 0, 0, 0);
+    volatile const lua_Number t1 = getclock();
+    if (status != LUA_OK) {
+        return luax_pusherror(L, "ps.profile argument failed");
+    }
+    lua_pushnumber(L, t1 - t0);
+    return 1;
 }
 
 static const luaL_Reg pslib[] =

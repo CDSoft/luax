@@ -739,18 +739,17 @@ static int fs_inode(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 1);
     struct stat buf;
-    if (stat(path, &buf)==0) {
-        lua_newtable(L); /* stat */
-        set_integer(L, "dev", (lua_Integer)buf.st_dev);
-#ifdef _WIN32
-        set_integer(L, "ino", (lua_Integer)getino(path));
-#else
-        set_integer(L, "ino", (lua_Integer)buf.st_ino);
-#endif
-        return 1;
-    } else {
+    if (stat(path, &buf)!=0) {
         return luax_push_errno(L, path);
     }
+    lua_newtable(L); /* stat */
+    set_integer(L, "dev", (lua_Integer)buf.st_dev);
+#ifdef _WIN32
+    set_integer(L, "ino", (lua_Integer)getino(path));
+#else
+    set_integer(L, "ino", (lua_Integer)buf.st_ino);
+#endif
+    return 1;
 }
 
 /*@@@
