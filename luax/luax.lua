@@ -50,10 +50,10 @@ local function print_welcome()
 end
 
 local function usage()
-    local I = (F.I % "%%{}") (F.patch(require "luax_config", {
+    local I = (F.I % "%%{}") (require "luax_config") {
         arg = arg,
         lua_init = { "LUA_INIT_".._VERSION:words()[2]:gsub("%.", "_"), "LUA_INIT" },
-    }))
+    }
     return (I[===[
 usage: %{arg[0]:basename()} [cmd] [options]
 
@@ -152,7 +152,7 @@ local function cmd_version()
     local w_version = math.max(#luax_version, #lua_version)
 
     io.stdout:write(F.str{luax_name:ljust(w_name), luax_version:ljust(w_version), luax_copyright}, "\n")
-    io.stdout:write(F.str{lua_name :ljust(w_name), lua_version :ljust(w_version), lua_copyright }:rtrim(), "\n")
+    io.stdout:write(F.str{lua_name :ljust(w_name), lua_version :ljust(w_version), lua_copyright }, "\n")
 
 end
 
@@ -573,10 +573,11 @@ prints `show(x)`
             end
             print_welcome()
             populate_repl()
-            local prompts = {">> ", ".. "}
+            local initial_prompt      = ">> "
+            local continuation_prompt = ".. "
             while true do
                 local inputs = {}
-                local prompt = prompts[1]
+                local prompt = initial_prompt
                 while true do
                     local line = readline.read(prompt)
                     if not line then os.exit() end
@@ -591,7 +592,7 @@ prints `show(x)`
                         print(try_stat == nil and err_stat or err_expr)
                         break
                     end
-                    prompt = prompts[2]
+                    prompt = continuation_prompt
                 end
             end
         end
