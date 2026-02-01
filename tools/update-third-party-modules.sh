@@ -41,6 +41,7 @@ update_all()
     update_linenoise    master
     #update_json         master
     update_dkjson       2.8
+    update_mbedtls      4.0.0
 }
 
 found()
@@ -452,6 +453,25 @@ index 7a86724..076f679 100644
            local k = order[i]
 EOF
     rm -f ext/lua/json/json.lua.orig
+}
+
+update_mbedtls()
+{
+    local MBEDTLS_VERSION="$1"
+    local MBEDTLS_ARCHIVE="mbedtls-$MBEDTLS_VERSION.tar.gz"
+    local MBEDTLS_URL="https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/$MBEDTLS_ARCHIVE"
+
+    mkdir -p "$TMP"
+    download "$MBEDTLS_URL" "$TMP/$MBEDTLS_ARCHIVE"
+
+    rm -rf ext/c/mbedtls
+    mkdir -p ext/c/mbedtls
+    tar -xzf "$TMP/$MBEDTLS_ARCHIVE" -C ext/c/mbedtls
+
+    mv "ext/c/mbedtls/mbedtls-mbedtls-$MBEDTLS_VERSION"/include ext/c/mbedtls/
+    mv "ext/c/mbedtls/mbedtls-mbedtls-$MBEDTLS_VERSION"/library ext/c/mbedtls/
+
+    rm -rf "ext/c/mbedtls/mbedtls-mbedtls-$MBEDTLS_VERSION"
 }
 
 update_all
