@@ -78,8 +78,6 @@ update_lua()
     rm -rf lua
     mkdir -p lua
     tar -xzf "$TMP/$LUA_ARCHIVE" -C lua --exclude=Makefile --exclude=lua.hpp --exclude=luac.c --strip-components=2 "lua-${LUA_VERSION%-*}/src"
-
-    sed -i 's/#define LUA_COMPAT_GLOBAL/#undef LUA_COMPAT_GLOBAL/' lua/luaconf.h
 }
 
 update_lua-git()
@@ -96,8 +94,6 @@ update_lua-git()
     unzip "$TMP/$LUA_ARCHIVE" -d "$TMP/lua"
     mv "$TMP"/lua/*/l*.[ch] lua/
     rm lua/ltests.[ch]
-
-    sed -i 's/#define LUA_COMPAT_GLOBAL/#undef LUA_COMPAT_GLOBAL/' lua/luaconf.h
 }
 
 update_lcomplex()
