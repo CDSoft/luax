@@ -87,6 +87,11 @@ return function()
             eq(s:base64url():unbase64url(), s)
             eq(s:base64url(), s:base64():gsub("+", "-"):gsub("/", "_"))
         end
+        for i = 0, 32 do
+            local s = ("a"):rep(i)
+            eq(#s, i)
+            eq(s:base64():unbase64(), s)
+        end
     end
     do
         local x = "foo123456789"

@@ -568,12 +568,8 @@ static void base64_decode(const char *rev, const unsigned char *b64, size_t n_in
         buf[j++] = (char)((u32 >> (0*8)) & 0xFF);
         i = i + 4;
     }
-    if (n_in >= 1) {
-        if (b64[n_in-1] == '=') j--;
-        if (n_in >= 2) {
-            if (b64[n_in-2] == '=') j--;
-        }
-    }
+    if (n_in >= 1 && b64[n_in-1] == '=') j--;
+    if (n_in >= 2 && b64[n_in-2] == '=') j--;
     luaL_addsize(B, j);
 }
 
