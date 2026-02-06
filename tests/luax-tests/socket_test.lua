@@ -31,8 +31,6 @@ local ps = require "ps"
 local server = os.getenv "HTTP_SERVER"
 
 return function()
-    if not os.getenv"USE_SOCKET" then return end
-
     if sys.libc == "gnu" then
 
         assert(require "socket")

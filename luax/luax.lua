@@ -888,7 +888,7 @@ local function cmd_compile()
                 macos   = {},
                 windows = {
                     "-lshlwapi",
-                    optional(build_config.socket) "-lws2_32",
+                    "-lws2_32",
                     optional(build_config.ssl) "-lcrypt32",
                 }
             },

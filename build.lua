@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.11.2" "2026-01-30"
+version "9.12" "2026-02-07"
 
 local F = require "F"
 local fs = require "fs"
@@ -81,7 +81,7 @@ Without any options, LuaX:
     - is compiled with gcc
     - is optimized for size
     - is not a cross-compiler
-    - does not use optional modules (luasocket, luasec)
+    - does not use optional modules (luasec)
     - does not use OpenSSL
 
 $(title "Compiler")
@@ -103,8 +103,6 @@ bang -- nolto       Disable LTO optimizations (default)
 
 $(title "Optional features")
 
-bang -- socket      Add socket support via luasocket
-bang -- nosocket    No socket support via luasocket (default)
 bang -- ssl         Add SSL support via LuaSec and OpenSSL
 bang -- nossl       No SSL support via LuaSec and OpenSSL (default)
 bang -- cross       Generate cross-compilers (implies compilation with zig)
@@ -127,7 +125,6 @@ local compiler = "gcc" -- zig, gcc, clang
 local san = false
 local strict = true -- strict compilation options and checks
 local use_lto = false
-local socket = false
 local ssl = false
 local release = false
 local cross = false
@@ -150,8 +147,6 @@ F.foreach(arg, function(a)
         strip = function() bytecode = "-s" end,
         lto   = function() use_lto = true end,
         nolto = function() use_lto = false end,
-        socket   = function() socket = true end,
-        nosocket = function() socket = false end,
         ssl      = function() ssl = true end,
         nossl    = function() ssl = false end,
         release = function() release = true end,
@@ -165,8 +160,6 @@ end)
 
 if san then compiler = "clang" end
 if release or cross then compiler = "zig"; san = false end
-
-if ssl then socket = true end
 
 local host_targets = F{targets:find(function(t) return t.os==sys.os and t.arch==sys.arch end)}
 assert(#host_targets == 1)
@@ -186,7 +179,6 @@ BUILD_CONFIG.COMPILER_VERSION = case(compiler) {
 }()
 BUILD_CONFIG.MODE = mode
 BUILD_CONFIG.LTO = use_lto
-BUILD_CONFIG.SOCKET = socket
 BUILD_CONFIG.SSL = ssl
 
 -- check for "modern" compiler
@@ -208,7 +200,7 @@ comment(("Compilation checks: %s"):format(strict and "strict" or "lax"))
 comment(("Lua code          : %s"):format(case(bytecode) { ["-b"] = "bytecode",
                                                            ["-s"] = "stripped bytecode",
                                                            [Nil]  = "source code" }))
-comment(("Socket support    : %s"):format(F.flatten{socket and "LuaSocket" or "none", ssl and {"LuaSec", "OpenSSL"} or {}} : str " + "))
+comment(("Socket support    : %s"):format(F.flatten{"LuaSocket", ssl and {"LuaSec", "OpenSSL"} or {}} : str " + "))
 
 local function is_dynamic(target) return target.libc~="musl" and not san end
 
@@ -532,7 +524,6 @@ local cflags = {
     "-pipe",
     "-fPIC",
     include_path:map(F.prefix"-I"),
-    optional(socket) "-DLUAX_USE_SOCKET",
     optional(ssl)    "-DLUAX_USE_SSL",
     optional(san) {
         "-DLUAI_ASSERT",
@@ -680,7 +671,7 @@ targets_to_compile:foreach(function(target)
             macos   = {},
             windows = {
                 "-lshlwapi",
-                optional(socket) "-lws2_32",
+                "-lws2_32",
                 optional(ssl) "-lcrypt32",
             },
         },
@@ -735,18 +726,14 @@ section "LuaX sources"
 
 local linux_only = F.flatten {
     "ext/c/linenoise/linenoise.c",
-    optional(socket) {
-        "ext/opt/luasocket/serial.c",
-        "ext/opt/luasocket/unixdgram.c",
-        "ext/opt/luasocket/unixstream.c",
-        "ext/opt/luasocket/usocket.c",
-        "ext/opt/luasocket/unix.c",
-    },
+    "ext/c/luasocket/serial.c",
+    "ext/c/luasocket/unixdgram.c",
+    "ext/c/luasocket/unixstream.c",
+    "ext/c/luasocket/usocket.c",
+    "ext/c/luasocket/unix.c",
 }
 local windows_only = F.flatten {
-    optional(socket) {
-        "ext/opt/luasocket/wsocket.c",
-    },
+    "ext/c/luasocket/wsocket.c",
 }
 local ignored_sources = {
     "ext/c/lqmath/src/imath.c",
@@ -760,14 +747,12 @@ local sources = F{
     loader_main_c_files = F{ "luax/luax-loader.c" },
     libluax_main_c_files = F{ "luax/libluax.c" },
     luax_c_files = ls "libluax/**.c"
-        : difference(socket and {} or ls "libluax/socket/**.c")
         : difference(ssl and {} or ls "libluax/sec/**.c"),
     third_party_c_files = F.flatten {
         ls "ext/c/**.c"
             : difference(ls "ext/c/lzlib/lib/inc/*.c")
             : difference(ls "ext/c/lzlib/programs/*.c")
             : difference(ls "ext/c/lz4/programs/*.c"),
-        optional(socket) { ls "ext/opt/luasocket/*.c" },
         optional(ssl)    { ls "ext/opt/luasec/**.c" },
     }
     : difference(linux_only)
@@ -914,6 +899,7 @@ rt { luax="libluax/import/import.lua",              lua="libluax/import/import.l
 rt {                                                lua="libluax/linenoise/linenoise.lua"                       }
 rt {                                                lua="libluax/readline/readline.lua"                         }
 rt { luax="libluax/lar/lar.lua",                    lua="libluax/lar/lar.lua"                                   }
+rt { luax="libluax/lz4/lz4.lua",                    lua={"libluax/lz4/lz4.lua", "libluax/lz4/_lz4.lua"}         }
 rt { luax="libluax/lzip/lzip.lua",                  lua={"libluax/lzip/lzip.lua", "libluax/lzip/_lzip.lua"}     }
 rt {                                                lua="libluax/mathx/mathx.lua"                               }
 rt {                                                lua="libluax/ps/ps.lua"                                     }
@@ -929,10 +915,6 @@ rt { luax="libluax/debug/debug_hook.lua",           lua="libluax/debug/debug_hoo
 
 rt { luax={ls "ext/c/**.lua", ls "ext/lua/**.lua"}, lua={ls "ext/lua/**.lua"}                                   }
 
-rt { luax="libluax/lz4/lz4.lua",                    lua={"libluax/lz4/lz4.lua", "libluax/lz4/_lz4.lua"}         }
-if socket then
-rt { luax={ls "ext/opt/luasocket/**.lua"},          lua={}                                                      }
-end
 if ssl then
 rt { luax={ls "ext/opt/luasec/**.lua"},             lua={}                                                      }
 end
@@ -943,7 +925,6 @@ local expected_scripts = F.flatten{
     ls "libluax/**.lua",
     ls "ext/c/**.lua",
     ls "ext/lua/**.lua",
-    optional(socket) { ls "ext/opt/luasocket/**.lua" },
     optional(ssl)    { ls "ext/opt/luasec/**.lua" },
 } : nub()
 local unused_scripts = expected_scripts : difference(used_scripts)
@@ -1300,7 +1281,6 @@ local libc = case(sys.os) {
 
 local test_options = {
     "BUILD=$builddir",
-    optional(socket) { "USE_SOCKET=1" },
     optional(ssl)    { "USE_SSL=1" },
 }
 
@@ -1715,7 +1695,7 @@ local dist = (function()
                             mode,
                             use_lto and "lto" or {},
                         } : str ", ",
-                        SOCKETS = F.flatten{socket and "LuaSocket" or "no", optional(ssl){"LuaSec", "OpenSSL"}} : str " + ",
+                        SOCKETS = F.flatten{"LuaSocket", optional(ssl){"LuaSec", "OpenSSL"}} : str " + ",
                         CROSS = cross and "yes" or "no",
                     },
                 }

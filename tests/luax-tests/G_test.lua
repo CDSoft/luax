@@ -59,7 +59,7 @@ local luax_packages = F.flatten{
     is_luax and {"lpeg", "re"} or {},
 
     -- socket is only found in LuaX
-    os.getenv"USE_SOCKET" and is_luax and {
+    is_luax and {
         "socket",
         "socket.core",
         "socket.ftp",

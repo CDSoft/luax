@@ -59,6 +59,3 @@ check debug clang
 check debug zig
 
 check debug san
-
-# The last check shall restore the default build configuration
-check

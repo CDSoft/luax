@@ -39,9 +39,7 @@
 #include "mathx/mathx.h"
 #include "ps/ps.h"
 #include "qmath/qmath.h"
-#ifdef LUAX_USE_SOCKET
 #include "socket/luasocket.h"
-#endif
 #ifdef LUAX_USE_SSL
 #include "sec/luasec.h"
 #endif
@@ -61,9 +59,7 @@ static const luaL_Reg lrun_libs[] = {
     {"mathx",       luaopen_mathx},
     {"ps",          luaopen_ps},
     {"_qmath",      luaopen_qmath},
-#ifdef LUAX_USE_SOCKET
     {"socket",      luaopen_luasocket},
-#endif
 #ifdef LUAX_USE_SSL
     {"ssl",         luaopen_luasec},
 #endif

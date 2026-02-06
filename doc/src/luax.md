@@ -110,9 +110,7 @@ Option              Description
 `bang -- strip`     Remove debug information from precompiled bytecode
 `bang -- lto`       Enable LTO optimizations
 `bang -- nolto`     Disable LTO optimizations (default)
-`bang -- socket`    Add socket support via luasocket
-`bang -- nosocket`  No socket support via luasocket (default)
-`bang -- ssl`       Add SSL support via LuaSec and OpenSSL
+`bang -- ssl`       Add SSL support to LuaSocket via LuaSec and OpenSSL
 `bang -- nossl`     No SSL support via LuaSec and OpenSSL (default)
 `bang -- cross`     Generate cross-compilers (implies compilation with zig)
 `bang -- nocross`   Do not generate cross-compilers (default)
@@ -142,9 +140,8 @@ Option              Description
 ### Optional features
 
 Option      Description
------------ ------------------------------------------------------------------------------
-`socket`    Add the socket support (LuaSocket) to LuaX
-`ssl`       Add the HTTPS/SSL support (LuaSec + OpenSSL) to LuaX (`ssl` implies `socket`)
+----------- -----------------------------------------------------------------
+`ssl`       Add the HTTPS/SSL support to LuaSocket (LuaSec + OpenSSL) to LuaX
 
 OpenSSL is not included in LuaX source. It is downloaded and recompiled when needed.
 Hence an Internet connection is required to compile LuaX with the `ssl` option.
@@ -160,7 +157,7 @@ $ ninja install
 
 These options are disabled by default.
 
-Note that LuaSocket and LuaSec can also be installed apart from Luax
+Note that LuaSec can also be installed apart from Luax
 (e.g. with LuaRocks).
 
 ### Compilation in debug mode
