@@ -617,6 +617,7 @@ local function cmd_compile()
 
     local bundle = require "luax_bundle"
     local targets = require "targets"
+    local lz4 = require "lz4"
     local lzip = require "lzip"
     local assets = require "luax_assets"
     local build_config = require "luax_build_config"
@@ -774,6 +775,7 @@ local function cmd_compile()
     local function uncompressed_name(name)
         local uncompressed, ext = name:splitext()
         return F.case(ext) {
+            [".lz4"] = function() return uncompressed, lz4.unlz4 end,
             [".lz"]  = function() return uncompressed, lzip.unlzip end,
             [F.Nil]  = function() return name, F.id end,
         }()

@@ -28,7 +28,6 @@ local ne = test.ne
 
 local fs = require "fs"
 local lzip = require "lzip"
-
 local crypt = require "crypt"
 
 return function()

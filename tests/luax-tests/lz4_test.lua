@@ -26,13 +26,11 @@ local test = require "test"
 local eq = test.eq
 local ne = test.ne
 
+local fs = require "fs"
+local lz4 = require "lz4"
+local crypt = require "crypt"
+
 return function()
-    if not os.getenv "USE_LZ4" then return end
-
-    local fs = require "fs"
-    local lz4 = require "lz4"
-    local crypt = require "crypt"
-
     do
         for i = 1, 5 do
             local s = ("a"):rep((1<<i)*1024)

@@ -34,9 +34,7 @@
 #include "readline/readline.h"
 #include "linenoise/linenoise.h"
 #include "lpeg/lpeg.h"
-#ifdef LUAX_USE_LZ4
 #include "lz4/lz4.h"
-#endif
 #include "lzip/lzip.h"
 #include "mathx/mathx.h"
 #include "ps/ps.h"
@@ -58,9 +56,7 @@ static const luaL_Reg lrun_libs[] = {
     {"readline",    luaopen_readline},
     {"linenoise",   luaopen_linenoise},
     {"lpeg",        luaopen_lpeg},
-#ifdef LUAX_USE_LZ4
     {"_lz4",        luaopen_lz4},
-#endif
     {"_lzip",       luaopen_lzip},
     {"mathx",       luaopen_mathx},
     {"ps",          luaopen_ps},

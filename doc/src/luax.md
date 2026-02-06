@@ -110,8 +110,6 @@ Option              Description
 `bang -- strip`     Remove debug information from precompiled bytecode
 `bang -- lto`       Enable LTO optimizations
 `bang -- nolto`     Disable LTO optimizations (default)
-`bang -- lz4`       Add LZ4 support
-`bang -- nolz4`     No LZ4 support (default)
 `bang -- socket`    Add socket support via luasocket
 `bang -- nosocket`  No socket support via luasocket (default)
 `bang -- ssl`       Add SSL support via LuaSec and OpenSSL
@@ -145,7 +143,6 @@ Option              Description
 
 Option      Description
 ----------- ------------------------------------------------------------------------------
-`lz4`       Add the LZ4 compression module to LuaX
 `socket`    Add the socket support (LuaSocket) to LuaX
 `ssl`       Add the HTTPS/SSL support (LuaSec + OpenSSL) to LuaX (`ssl` implies `socket`)
 
@@ -157,7 +154,7 @@ Example:
 ``` sh
 $ git clone https://codeberg.org/cdsoft/luax
 $ cd luax
-$ ./bootstrap.sh lz4 ssl
+$ ./bootstrap.sh ssl
 $ ninja install
 ```
 

@@ -284,10 +284,10 @@ update_lz4()
     mkdir -p "$TMP"
     download "$LZ4_URL" "$TMP/$LZ4_ARCHIVE"
 
-    rm -rf ext/opt/lz4
-    mkdir -p ext/opt/lz4/lib ext/opt/lz4/programs
-    unzip -j "$TMP/$LZ4_ARCHIVE" '*/lib/*.[ch]' '*/lib/LICENSE' -d ext/opt/lz4/lib
-    unzip -j "$TMP/$LZ4_ARCHIVE" '*/programs/*.[ch]' -d ext/opt/lz4/programs
+    rm -rf ext/c/lz4
+    mkdir -p ext/c/lz4/lib ext/c/lz4/programs
+    unzip -j "$TMP/$LZ4_ARCHIVE" '*/lib/*.[ch]' '*/lib/LICENSE' -d ext/c/lz4/lib
+    unzip -j "$TMP/$LZ4_ARCHIVE" '*/programs/*.[ch]' -d ext/c/lz4/programs
 }
 
 update_lzlib()
