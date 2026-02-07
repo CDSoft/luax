@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.12" "2026-02-07"
+version "9.12.1" "2026-02-07"
 
 local F = require "F"
 local fs = require "fs"
@@ -1129,7 +1129,7 @@ section "LuaX archives"
 
 rule "lzip" {
     description = "lzip $in",
-    command = { "$lzip -f", ssl and "-6" or "-0", "$in -o $out" },
+    command = { "$lzip", ssl and "-6" or "-0", "$in -o - > $out" },
     implicit_in = "$lzip",
 }
 
