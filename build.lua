@@ -1371,7 +1371,7 @@ acc(test) {
 }
 
 local pandoc_version = (sh"pandoc --version" or "0") : match"[%d%.]+" : split"%." : map(tonumber)
-local has_pandoc = F.op.uge(pandoc_version, {3, 1, 2})
+local has_pandoc = F.op.uge(pandoc_version, {3, 1, 12, 3})
 
 if not san then
 acc(test) {
@@ -1615,7 +1615,10 @@ local gfm = pipe {
         : add "implicit_in" "$lib/libluax.lar"
         : add "flags" { ypp_config_params },
     build.pandoc_gfm : new "pandoc-gfm-luax"
-        : add "flags" "--lua-filter doc/src/fix_links.lua"
+        : add "flags" {
+            "--reference-location=section",
+            "--lua-filter doc/src/fix_links.lua",
+        }
         : add "implicit_in" { "doc/src/fix_links.lua", images }
 }
 

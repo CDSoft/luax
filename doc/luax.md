@@ -20,6 +20,10 @@ cross-compile[^1] scripts for a supported platform.
 
 LuaX is available on Codeberg: <https://codeberg.org/cdsoft/luax>
 
+[^1]: `luax` uses `zig` to link the LuaX runtime with the Lua scripts.
+    The Lua scripts are actually compiled to Lua bytecode. `luax`
+    produces executables that do not require LuaX to be installed.
+
 ## Releases
 
 It is strongly recommended to build LuaX from source, as this is the
@@ -521,7 +525,3 @@ The script `lib/libluax.lua` can be reused in pure Lua programs:
 - **[CBOR](https://www.zash.se/lua-cbor.html)**: pure Lua implementation
   of the CBOR
   ([License](https://code.zash.se/lua-cbor/file/tip/COPYING))
-
-[^1]: `luax` uses `zig` to link the LuaX runtime with the Lua scripts.
-    The Lua scripts are actually compiled to Lua bytecode. `luax`
-    produces executables that do not require LuaX to be installed.
