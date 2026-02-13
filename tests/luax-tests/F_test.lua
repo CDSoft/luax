@@ -534,6 +534,14 @@ local function convert_to_and_from_string()
     eq(F.show(t, {lt=F.op.ult}),               "{[{1, 1}]=1, [{1, 2}]=2, [{1, 2, 3}]=3, [{2, 1}]=4, [{2, 2}]=5}")
     eq(F.show(t, F.patch(opt, {lt=F.op.ult})), "{\n  [{1, 1}] = 1,\n  [{1, 2}] = 2,\n  [{1, 2, 3}] = 3,\n  [{2, 1}] = 4,\n  [{2, 2}] = 5,\n}")
 
+    local kwd = {
+        ["if"] = 1,
+        ["global"] = 2,
+        ["nothing"] = 3,
+    }
+    eq(F.read(F.show(kwd)), kwd)
+    eq(F.show(kwd), "{[\"global\"]=2, [\"if\"]=1, nothing=3}")
+
 end
 
 ---------------------------------------------------------------------

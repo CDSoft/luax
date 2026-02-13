@@ -1118,6 +1118,14 @@ local default_show_options = {
     lt = F.op.klt,
 }
 
+local keywords = {}
+for _, k in ipairs {
+    "and",       "break",     "do",        "else",      "elseif",    "end",
+    "false",     "for",       "function",  "global",    "goto",      "if",
+    "in",        "local",     "nil",       "not",       "or",        "repeat",
+    "return",    "then",      "true",      "until",     "while",
+} do keywords[k] = true end
+
 function F.show(x, opt)
 
     opt = F_merge{default_show_options, opt}
@@ -1162,7 +1170,7 @@ function F.show(x, opt)
                         first_field = false
                         need_nl = opt_indent ~= nil
                         if opt_indent then emit "\n" emit(s_rep(" ", tabs)) end
-                        if type(k) == "string" and s_match(k, "^[%a_][%w_]*$") then
+                        if type(k) == "string" and s_match(k, "^[%a_][%w_]*$") and not keywords[k] then
                             emit(k)
                         else
                             emit "[" fmt(k) emit "]"
