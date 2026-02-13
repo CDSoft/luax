@@ -6,7 +6,7 @@ local getmetatable = debug and debug.getmetatable or getmetatable
 local pairs = function(t) return next, t end -- avoid using __pairs in Lua 5.2+
 local keyword, globals, G = {}, {}, (_G or _ENV)
 for _,k in ipairs({'and', 'break', 'do', 'else', 'elseif', 'end', 'false',
-  'for', 'function', 'goto', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat',
+  'for', 'function', 'goto', 'if', 'in', 'local', 'global', 'nil', 'not', 'or', 'repeat',
   'return', 'then', 'true', 'until', 'while'}) do keyword[k] = true end
 for k,v in pairs(G) do globals[v] = k end -- build func to name mapping
 for _,g in ipairs({'coroutine', 'debug', 'io', 'math', 'string', 'table', 'os'}) do
