@@ -333,7 +333,6 @@ Some functions of the `fs` package are added to the string module:
 
 --[[@@@
 ```lua
-path:dir()              == fs.dir(path)
 path:stat()             == fs.stat(path)
 path:inode()            == fs.inode(path)
 path:basename()         == fs.basename(path)
@@ -348,11 +347,9 @@ path1 / path2           == fs.join(path1, path2)
 path:is_file()          == fs.is_file(path)
 path:is_dir()           == fs.is_dir(path)
 path:findpath()         == fs.findpath(path)
-path:walk(...)          == fs.walk(path, ...)
 ```
 @@@]]
 
-string.dir              = fs.dir
 string.stat             = fs.stat
 string.inode            = fs.inode
 string.basename         = fs.basename
@@ -367,7 +364,6 @@ string.absname          = fs.absname
 string.is_file          = fs.is_file
 string.is_dir           = fs.is_dir
 string.findpath         = fs.findpath
-string.walk             = fs.walk
 
 getmetatable("").__div  = fs.join
 

@@ -383,7 +383,6 @@ write `...` to the binary file `filename`.
 Some functions of the `fs` package are added to the string module:
 
 ``` lua
-path:dir()              == fs.dir(path)
 path:stat()             == fs.stat(path)
 path:inode()            == fs.inode(path)
 path:basename()         == fs.basename(path)
@@ -398,5 +397,4 @@ path1 / path2           == fs.join(path1, path2)
 path:is_file()          == fs.is_file(path)
 path:is_dir()           == fs.is_dir(path)
 path:findpath()         == fs.findpath(path)
-path:walk(...)          == fs.walk(path, ...)
 ```

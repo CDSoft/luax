@@ -99,7 +99,6 @@ local function fs_test(tmp)
     if sys.libc == "gnu" or sys.libc == "musl" then
         eq(fs.dir():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
         eq(fs.dir("."):sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
-        eq(("."):dir():sort(), fs.dir("."):sort())
     end
     if sys.os == "linux" and (sys.libc == "gnu" or sys.libc == "musl") then
         eq(fs.glob():sort(),{"bar","bar.txt","foo","foo.txt", "level1"})
@@ -145,13 +144,10 @@ local function fs_test(tmp)
         eq(f(tmp, {reverse=reverse}), F.map(function(name) return F.prefix(tmp)(name:gsub("/", fs.sep)) end, testfiles))
     end
 
-    test_files(fs.walk,     {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/foo.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
-    test_files(string.walk, {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/foo.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
+    test_files(fs.walk, {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/foo.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
     assert(fs.rename(fs.join(tmp, "foo.txt"), fs.join(tmp, "foo2.txt")))
-    test_files(fs.walk,     {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
-    test_files(string.walk, {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
-    test_files(fs.walk,     {"/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt","/bar/baz","/level1/level2/level3","/level1/level2","/level1","/foo","/bar"}, true)
-    test_files(string.walk, {"/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt","/bar/baz","/level1/level2/level3","/level1/level2","/level1","/foo","/bar"}, true)
+    test_files(fs.walk, {"/bar","/foo","/level1","/level1/level2","/level1/level2/level3","/bar/baz","/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt"})
+    test_files(fs.walk, {"/bar.txt","/foo2.txt","/foo/foo.txt","/bar/bar.txt","/bar/baz/baz.txt","/bar/baz","/level1/level2/level3","/level1/level2","/level1","/foo","/bar"}, true)
 
     local function trim_tmp(path)
         assert(path:sub(1, #tmp) == tmp)
