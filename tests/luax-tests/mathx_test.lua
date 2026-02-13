@@ -83,9 +83,7 @@ local function cbrt(x)
     return x^(1/3)
 end
 
-return function()
-
-    local mathx = require "mathx"
+local function test_module(mathx)
 
     for x = -10, 10, 0.25 do
         eq(mathx.fabs(x), math.abs(x))
@@ -223,4 +221,9 @@ return function()
     assert(mathx.pi == math.pi)
     eq(mathx.pi, 3.1415926535898)
 
+end
+
+return function()
+    test_module(require "mathx")
+    test_module(require "math")     -- check mathx has been injected into math
 end

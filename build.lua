@@ -910,6 +910,7 @@ rt { luax="libluax/tar/tar.lua",                    lua="libluax/tar/tar.lua"   
 rt { luax="libluax/term/term.lua",                  lua={"libluax/term/term.lua", "libluax/term/_term.lua"}     }
 rt { luax="libluax/wget/wget.lua",                  lua="libluax/wget/wget.lua"                                 }
 
+rt { luax="libluax/mathx/math_hook.lua",            lua="libluax/mathx/math_hook.lua"                           }
 rt { luax="libluax/package/package_hook.lua",       lua="libluax/package/package_hook.lua"                      }
 rt { luax="libluax/debug/debug_hook.lua",           lua="libluax/debug/debug_hook.lua"                          }
 

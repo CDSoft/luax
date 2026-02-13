@@ -27,3 +27,7 @@ mathx library:
     ceil        fdim        isnan       nextafter   trunc
     copysign    floor       isnormal    pow         version
     cos         fma         ldexp       rad
+
+# math
+
+The standard Lua package `math` is enhanced with the `mathx` functions.

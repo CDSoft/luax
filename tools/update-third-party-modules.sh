@@ -271,6 +271,7 @@ update_serpent()
     unzip -j "$TMP/$SERPENT_ARCHIVE" '*/serpent.lua' -d ext/lua/serpent
     sed -i -e 's/(loadstring or load)/load/g'                   \
            -e '/^ *if setfenv then setfenv(f, env) end *$/d'    \
+           -e "s/\(globals\[v\] = g..'.'..k\)/if v==v then \1 end/" \
            ext/lua/serpent/serpent.lua
     echo "--@LIB" >> ext/lua/serpent/serpent.lua
 }
