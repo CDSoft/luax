@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.13" "2026-02-26"
+version "9.13.1" "2026-02-26"
 
 local F = require "F"
 local fs = require "fs"
@@ -255,7 +255,20 @@ var "openssl_version" "3.6.1"
 var "openssl_archive" "openssl-${openssl_version}.tar.gz"
 var "openssl_url" "https://github.com/openssl/openssl/releases/download/openssl-${openssl_version}/${openssl_archive}"
 
-var "openssl" "$builddir/openssl"
+var "openssl_mode" ( case(mode) {
+    fast  = "release",
+    small = "release",
+    debug = "debug",
+})
+
+var "openssl" (
+    "$builddir/openssl" / F{
+        "${openssl_version}",
+        compiler,
+        "${openssl_mode}",
+        use_lto and "lto" or {},
+    } : flatten() : str"-"
+)
 var "openssl_src" "$builddir/src/openssl-${openssl_version}"
 
 var "root" { fs.getcwd() }
@@ -271,11 +284,7 @@ local openssl_configure_script = build "$openssl_src/Configure" { openssl_downlo
 }
 
 local openssl_options = {
-    case(mode) {
-        fast  = "--release",
-        small = "--release",
-        debug = "--debug",
-    },
+    "--${openssl_mode}",
     "--static",
 
     "no-apps",
