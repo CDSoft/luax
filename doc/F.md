@@ -1780,28 +1780,28 @@ s:trim()
 > Removes heading and trailing spaces
 
 ``` lua
-string.ljust(s, w)
+string.ljust(s, w, [c])
 s:ljust(w)
 ```
 
-> Left-justify `s` by appending spaces. The result is at least `w` byte
-> long. `s` is not truncated.
+> Left-justify `s` by appending spaces (or the character `c`). The
+> result is at least `w` byte long. `s` is not truncated.
 
 ``` lua
-string.rjust(s, w)
+string.rjust(s, w, [c])
 s:rjust(w)
 ```
 
-> Right-justify `s` by prepending spaces. The result is at least `w`
-> byte long. `s` is not truncated.
+> Right-justify `s` by prepending spaces (or the character `c`). The
+> result is at least `w` byte long. `s` is not truncated.
 
 ``` lua
 string.center(s, w)
 s:center(w)
 ```
 
-> Center `s` by appending and prepending spaces. The result is at least
-> `w` byte long. `s` is not truncated.
+> Center `s` by appending and prepending spaces (or the character `c`).
+> The result is at least `w` byte long. `s` is not truncated.
 
 ``` lua
 string.cap(s)

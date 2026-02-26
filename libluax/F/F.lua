@@ -4364,26 +4364,28 @@ end
 
 --[[@@@
 ```lua
-string.ljust(s, w)
+string.ljust(s, w, [c])
 s:ljust(w)
 ```
-> Left-justify `s` by appending spaces. The result is at least `w` byte long. `s` is not truncated.
+> Left-justify `s` by appending spaces (or the character `c`).
+  The result is at least `w` byte long. `s` is not truncated.
 @@@]]
 
-function string.ljust(s, w)
-    return s .. s_rep(" ", w-#s)
+function string.ljust(s, w, c)
+    return s .. s_rep(c or " ", w-#s)
 end
 
 --[[@@@
 ```lua
-string.rjust(s, w)
+string.rjust(s, w, [c])
 s:rjust(w)
 ```
-> Right-justify `s` by prepending spaces. The result is at least `w` byte long. `s` is not truncated.
+> Right-justify `s` by prepending spaces (or the character `c`).
+  The result is at least `w` byte long. `s` is not truncated.
 @@@]]
 
-function string.rjust(s, w)
-    return s_rep(" ", w-#s) .. s
+function string.rjust(s, w, c)
+    return s_rep(c or " ", w-#s) .. s
 end
 
 --[[@@@
@@ -4391,13 +4393,15 @@ end
 string.center(s, w)
 s:center(w)
 ```
-> Center `s` by appending and prepending spaces. The result is at least `w` byte long. `s` is not truncated.
+> Center `s` by appending and prepending spaces (or the character `c`).
+  The result is at least `w` byte long. `s` is not truncated.
 @@@]]
 
-function string.center(s, w)
+function string.center(s, w, c)
+    c = c or " "
     local l = (w-#s)//2
     local r = (w-#s)-l
-    return s_rep(" ", l) .. s .. s_rep(" ", r)
+    return s_rep(c, l) .. s .. s_rep(c, r)
 end
 
 --[[@@@
