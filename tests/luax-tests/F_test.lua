@@ -879,6 +879,51 @@ local function table_searching()
     eq(F{1,2,3,4,5}:filter(function(x) return x%2==0 end), {2,4})
     eq(F{}:filter(function(x) return x%2==0 end), {})
 
+    eq(F.filter_eq(3, {1,2,3,4,5}), {3})
+    eq(F{1,2,3,4,5}:filter_eq(3), {3})
+    eq(F.filter_ne(3, {1,2,3,4,5}), {1,2,4,5})
+    eq(F{1,2,3,4,5}:filter_ne(3), {1,2,4,5})
+    eq(F.filter_lt(3, {1,2,3,4,5}), {1,2})
+    eq(F{1,2,3,4,5}:filter_lt(3), {1,2})
+    eq(F.filter_le(3, {1,2,3,4,5}), {1,2,3})
+    eq(F{1,2,3,4,5}:filter_le(3), {1,2,3})
+    eq(F.filter_gt(3, {1,2,3,4,5}), {4,5})
+    eq(F{1,2,3,4,5}:filter_gt(3), {4,5})
+    eq(F.filter_ge(3, {1,2,3,4,5}), {3,4,5})
+    eq(F{1,2,3,4,5}:filter_ge(3), {3,4,5})
+
+    do
+        local t = {1,2,"3",{4,5}}
+        eq(F.filter_ueq("3", t), {"3"})
+        eq(F(t):filter_ueq("3"), {"3"})
+        eq(F.filter_une("3", t), {1,2,{4,5}})
+        eq(F(t):filter_une("3"), {1,2,{4,5}})
+        eq(F.filter_ult("3", t), {1,2})
+        eq(F(t):filter_ult("3"), {1,2})
+        eq(F.filter_ule("3", t), {1,2,"3"})
+        eq(F(t):filter_ule("3"), {1,2,"3"})
+        eq(F.filter_ugt("3", t), {{4,5}})
+        eq(F(t):filter_ugt("3"), {{4,5}})
+        eq(F.filter_uge("3", t), {"3",{4,5}})
+        eq(F(t):filter_uge("3"), {"3",{4,5}})
+    end
+
+    do
+        local t = {1,2,"3",{4,5}}
+        eq(F.filter_keq("3", t), {"3"})
+        eq(F(t):filter_keq("3"), {"3"})
+        eq(F.filter_kne("3", t), {1,2,{4,5}})
+        eq(F(t):filter_kne("3"), {1,2,{4,5}})
+        eq(F.filter_klt("3", t), {1,2})
+        eq(F(t):filter_klt("3"), {1,2})
+        eq(F.filter_kle("3", t), {1,2,"3"})
+        eq(F(t):filter_kle("3"), {1,2,"3"})
+        eq(F.filter_kgt("3", t), {{4,5}})
+        eq(F(t):filter_kgt("3"), {{4,5}})
+        eq(F.filter_kge("3", t), {"3",{4,5}})
+        eq(F(t):filter_kge("3"), {"3",{4,5}})
+    end
+
     eq(F.filteri(function(i, _) return i%2==0 end, {11,21,31,41,51}), {21,41})
     eq(F.filteri(function(i, _) return i%2==0 end, {}), {})
     eq(F{11,21,31,41,51}:filteri(function(i, _) return i%2==0 end), {21,41})

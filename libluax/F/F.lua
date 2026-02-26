@@ -2170,8 +2170,6 @@ xs:filter(p)
 > Returns the list of those elements that satisfy the predicate p(x).
 @@@]]
 
-do
-
 local function F_filter(p, xs)
     local ys = {}
     for i = 1, #xs do
@@ -2183,6 +2181,69 @@ end
 F.filter = F_filter
 mt.__index.filter = function(xs, p) return F_filter(p, xs) end
 
+--[[@@@
+```lua
+F.filter_eq(y, xs)
+xs:filter_eq(y)
+F.filter_ne(y, xs)
+xs:filter_ne(y)
+F.filter_lt(y, xs)
+xs:filter_lt(y)
+F.filter_le(y, xs)
+xs:filter_le(y)
+F.filter_gt(y, xs)
+xs:filter_gt(y)
+F.filter_ge(y, xs)
+xs:filter_ge(y)
+```
+> Returns the list of those elements that satisfy the predicate
+  F.op.eq(x, y), f.op.ne(x, y), f.op.lt(x, y), f.op.le(x, y), f.op.gt(x, y), f.op.ge(x, y).
+@@@]]
+
+--[[@@@
+```lua
+F.filter_ueq(y, xs)
+xs:filter_ueq(y)
+F.filter_une(y, xs)
+xs:filter_une(y)
+F.filter_ult(y, xs)
+xs:filter_ult(y)
+F.filter_ule(y, xs)
+xs:filter_ule(y)
+F.filter_ugt(y, xs)
+xs:filter_ugt(y)
+F.filter_uge(y, xs)
+xs:filter_uge(y)
+```
+> Returns the list of those elements that satisfy the predicate
+  F.op.ueq(x, y), f.op.une(x, y), f.op.ult(x, y), f.op.ule(x, y), f.op.ugt(x, y), f.op.uge(x, y).
+@@@]]
+
+--[[@@@
+```lua
+F.filter_keq(y, xs)
+xs:filter_keq(y)
+F.filter_kne(y, xs)
+xs:filter_kne(y)
+F.filter_klt(y, xs)
+xs:filter_klt(y)
+F.filter_kle(y, xs)
+xs:filter_kle(y)
+F.filter_kgt(y, xs)
+xs:filter_kgt(y)
+F.filter_kge(y, xs)
+xs:filter_kge(y)
+```
+> Returns the list of those elements that satisfy the predicate
+  F.op.keq(x, y), f.op.kne(x, y), f.op.klt(x, y), f.op.kle(x, y), f.op.kgt(x, y), f.op.kge(x, y).
+@@@]]
+
+for _, op in ipairs{"eq", "ne", "lt", "le", "gt", "ge"} do
+    for _, t in ipairs{"", "u", "k"} do
+        local f = F.op[t..op]
+        F["filter_"..t..op]          = function(y, xs) return F_filter(function(x) return f(x, y) end, xs) end
+        mt.__index["filter_"..t..op] = function(xs, y) return F_filter(function(x) return f(x, y) end, xs) end
+    end
 end
 
 --[[@@@
