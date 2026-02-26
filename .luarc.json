@@ -20,6 +20,7 @@
     "libluax/qmath",
     "libluax/readline",
     "libluax/sh",
+    "libluax/strict",
     "libluax/sys",
     "libluax/tar",
     "libluax/term",

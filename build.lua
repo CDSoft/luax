@@ -913,6 +913,7 @@ rt { luax="libluax/wget/wget.lua",                  lua="libluax/wget/wget.lua" 
 rt { luax="libluax/mathx/math_hook.lua",            lua="libluax/mathx/math_hook.lua"                           }
 rt { luax="libluax/package/package_hook.lua",       lua="libluax/package/package_hook.lua"                      }
 rt { luax="libluax/debug/debug_hook.lua",           lua="libluax/debug/debug_hook.lua"                          }
+rt { luax="libluax/strict/strict.lua",              lua="libluax/strict/strict.lua",                            }
 
 rt { luax={ls "ext/c/**.lua", ls "ext/lua/**.lua"}, lua={ls "ext/lua/**.lua"}                                   }
 
