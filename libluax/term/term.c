@@ -92,7 +92,7 @@ static int term_isatty(lua_State *L)
 term.size([fileno])
 ```
 returns a table with the number of rows (field `rows`) and columns (field `cols`) of the terminal attached to `fileno`.
-The default file descriptor is `stdout` (`0`).
+The default file descriptor is `stdout` (`1`).
 @@@*/
 
 static inline void set_integer(lua_State *L, const char *name, lua_Integer val)

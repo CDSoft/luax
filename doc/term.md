@@ -170,4 +170,4 @@ term.size([fileno])
 
 returns a table with the number of rows (field `rows`) and columns
 (field `cols`) of the terminal attached to `fileno`. The default file
-descriptor is `stdout` (`0`).
+descriptor is `stdout` (`1`).
