@@ -38,6 +38,7 @@ do
         gcc)    COMPILER=gcc;           ARGS+=("$1") ;;
         clang)  COMPILER=clang;         ARGS+=("$1") ;;
         zig)    COMPILER=zig;           ARGS+=("$1") ;;
+        cross)  COMPILER=zig;           ARGS+=("$1") ;;
         -b)     BUILDDIR="$2"; shift ;;
         -b*)    BUILDDIR="${1:2}" ;;
         -o)     OUTPUT="$2"; shift ;;
