@@ -1656,6 +1656,9 @@ local dist = (function()
             end)
     end)
 
+    binaries  = binaries:flatten()
+    libraries = libraries:flatten()
+
     return {
         targets : map(function(target)
             local name = F.flatten { "luax", LUAX.VERSION, target.name } : str "-"

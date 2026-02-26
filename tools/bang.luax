@@ -298,13 +298,9 @@ libs["acc"] = lib("src/acc.lua", [[-- This file is part of bang.
 
 --@LOAD
 
-local flatten = require "flatten"
-
 local function acc(list)
     return function(xs)
-        flatten{xs} : foreach(function(x)
-            list[#list+1] = x
-        end)
+        list[#list+1] = xs
     end
 end
 
@@ -739,35 +735,35 @@ return setmetatable({
         png = blockdiag:new "blockdiag.png" : add "flags" "-Tpng" : set "ext" ".png",
         pdf = blockdiag:new "blockdiag.pdf" : add "flags" "-Tpdf" : set "ext" ".pdf",
         activity = {
-            svg = blockdiag:new "actdiag.svg" : set "cmd" "actdiag"  : add "flags" "-Tsvg" : set "ext" ".svg",
-            png = blockdiag:new "actdiag.png" : set "cmd" "actdiag"  : add "flags" "-Tpng" : set "ext" ".png",
-            pdf = blockdiag:new "actdiag.pdf" : set "cmd" "actdiag"  : add "flags" "-Tpdf" : set "ext" ".pdf",
+            svg = blockdiag:new "actdiag.svg" : set "cmd" "actdiag" : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = blockdiag:new "actdiag.png" : set "cmd" "actdiag" : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = blockdiag:new "actdiag.pdf" : set "cmd" "actdiag" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         network = {
-            svg = blockdiag:new "nwdiag.svg" : set "cmd" "nwdiag"  : add "flags" "-Tsvg" : set "ext" ".svg",
-            png = blockdiag:new "nwdiag.png" : set "cmd" "nwdiag"  : add "flags" "-Tpng" : set "ext" ".png",
-            pdf = blockdiag:new "nwdiag.pdf" : set "cmd" "nwdiag"  : add "flags" "-Tpdf" : set "ext" ".pdf",
+            svg = blockdiag:new "nwdiag.svg" : set "cmd" "nwdiag" : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = blockdiag:new "nwdiag.png" : set "cmd" "nwdiag" : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = blockdiag:new "nwdiag.pdf" : set "cmd" "nwdiag" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         packet = {
-            svg = blockdiag:new "packetdiag.svg" : set "cmd" "packetdiag"  : add "flags" "-Tsvg" : set "ext" ".svg",
-            png = blockdiag:new "packetdiag.png" : set "cmd" "packetdiag"  : add "flags" "-Tpng" : set "ext" ".png",
-            pdf = blockdiag:new "packetdiag.pdf" : set "cmd" "packetdiag"  : add "flags" "-Tpdf" : set "ext" ".pdf",
+            svg = blockdiag:new "packetdiag.svg" : set "cmd" "packetdiag" : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = blockdiag:new "packetdiag.png" : set "cmd" "packetdiag" : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = blockdiag:new "packetdiag.pdf" : set "cmd" "packetdiag" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         rack = {
-            svg = blockdiag:new "rackdiag.svg" : set "cmd" "rackdiag"  : add "flags" "-Tsvg" : set "ext" ".svg",
-            png = blockdiag:new "rackdiag.png" : set "cmd" "rackdiag"  : add "flags" "-Tpng" : set "ext" ".png",
-            pdf = blockdiag:new "rackdiag.pdf" : set "cmd" "rackdiag"  : add "flags" "-Tpdf" : set "ext" ".pdf",
+            svg = blockdiag:new "rackdiag.svg" : set "cmd" "rackdiag" : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = blockdiag:new "rackdiag.png" : set "cmd" "rackdiag" : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = blockdiag:new "rackdiag.pdf" : set "cmd" "rackdiag" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
         sequence = {
-            svg = blockdiag:new "seqdiag.svg" : set "cmd" "seqdiag"  : add "flags" "-Tsvg" : set "ext" ".svg",
-            png = blockdiag:new "seqdiag.png" : set "cmd" "seqdiag"  : add "flags" "-Tpng" : set "ext" ".png",
-            pdf = blockdiag:new "seqdiag.pdf" : set "cmd" "seqdiag"  : add "flags" "-Tpdf" : set "ext" ".pdf",
+            svg = blockdiag:new "seqdiag.svg" : set "cmd" "seqdiag" : add "flags" "-Tsvg" : set "ext" ".svg",
+            png = blockdiag:new "seqdiag.png" : set "cmd" "seqdiag" : add "flags" "-Tpng" : set "ext" ".png",
+            pdf = blockdiag:new "seqdiag.pdf" : set "cmd" "seqdiag" : add "flags" "-Tpdf" : set "ext" ".pdf",
         },
     },
     gnuplot = {
-        svg = gnuplot:new "gnuplot.svg" : add "flags" { "-e 'set terminal svg'" } : set "ext" ".svg",
-        png = gnuplot:new "gnuplot.png" : add "flags" { "-e 'set terminal png'" } : set "ext" ".png",
-        jpg = gnuplot:new "gnuplot.jpg" : add "flags" { "-e 'set terminal jpeg'" } : set "ext" ".jpg",
+        svg = gnuplot:new "gnuplot.svg" : add "flags" { "-e 'set terminal svg'" }     : set "ext" ".svg",
+        png = gnuplot:new "gnuplot.png" : add "flags" { "-e 'set terminal png'" }     : set "ext" ".png",
+        jpg = gnuplot:new "gnuplot.jpg" : add "flags" { "-e 'set terminal jpeg'" }    : set "ext" ".jpg",
         pdf = gnuplot:new "gnuplot.pdf" : add "flags" { "-e 'set terminal context'" } : set "ext" ".pdf",
     },
     lsvg = {
@@ -2230,6 +2226,8 @@ local sh = require "sh"
 local term = require "term"
 local fs = require "fs"
 
+local red = term.color.white + term.color.onred + term.color.bright
+
 local function git_warning(tag)
     if not fs.stat ".git" then return end
     if not fs.findpath "git" then return end
@@ -2249,15 +2247,17 @@ local function git_warning(tag)
 ]] : trim()
 end
 
-local function version(tag)
-    local warning = git_warning(tag)
+local function print_warning(warning_function, tag)
+    local warning = warning_function(tag)
     if warning then
         comment(warning)
-        local red = term.isatty(io.stdout)
-            and (term.color.white + term.color.onred + term.color.bright)
-            or F.id
         print(warning:lines():map(red):unlines())
     end
+end
+
+local function version(tag)
+    term.color.enable(term.isatty(io.stdout))
+    print_warning(git_warning, tag)
     var "version" { tag }
     return function(date)
         var "date" { date }
@@ -2302,7 +2302,7 @@ return function()
 
 end
 ]])
-libs["bang-version"] = lib(".build/bang-version", [=[return [[3.5]]]=])
+libs["bang-version"] = lib(".build/bang-version", [=[return [[3.5.2]]]=])
 _ENV["Nil"] = require "Nil"
 _ENV["acc"] = require "acc"
 _ENV["case"] = require "case"
