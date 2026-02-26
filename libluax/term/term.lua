@@ -59,51 +59,65 @@ term.color.X("...")
 -- build a complex color with attributes
 local c = term.color.red + term.color.italic + term.color.oncyan
 ```
+
+The user can disable the color support (e.g. when not running on a terminal):
+
+``` lua
+if not term.isatty(io.stdout) then
+    term.color.disable()
+end
+```
 @@@]]
 
 local color_mt, color_reset
+local color_enable = true
 color_mt = {
-    __tostring = function(self) return self.value end,
+    __tostring = function(self) return color_enable and self.value or ""end,
     __concat = function(self, other) return tostring(self)..tostring(other) end,
-    __call = function(self, s) return self..s..color_reset end,
+    __call = function(self, s) return color_enable and self..s..color_reset or s end,
     __add = function(self, other) return setmetatable({value=self.value..other}, color_mt) end,
 }
 local function color(value) return setmetatable({value=CSI..tostring(value).."m"}, color_mt) end
+local function enable(en) color_enable = en==nil or en end
+local function disable() color_enable = false end
 --                                @@@`term.color` field     Description                         @@@
 --                                @@@---------------------- ------------------------------------@@@
 term.color = {
-    -- attributes
-    reset       = color(0),     --@@@reset                  reset the colors                    @@@
-    clear       = color(0),     --@@@clear                  same as reset                       @@@
-    default     = color(0),     --@@@default                same as reset                       @@@
-    bright      = color(1),     --@@@bright                 bold or more intense                @@@
-    bold        = color(1),     --@@@bold                   same as bold                        @@@
-    dim         = color(2),     --@@@dim                    thiner or less intense              @@@
-    italic      = color(3),     --@@@italic                 italic (sometimes inverse or blink) @@@
-    underline   = color(4),     --@@@underline              underlined                          @@@
-    blink       = color(5),     --@@@blink                  slow blinking (less than 150 bpm)   @@@
-    fast        = color(6),     --@@@fast                   fast blinking (more than 150 bpm)   @@@
-    reverse     = color(7),     --@@@reverse                swap foreground and background      @@@
-    hidden      = color(8),     --@@@hidden                 hidden text                         @@@
-    strike      = color(9),     --@@@strike                 strike or crossed-out               @@@
-    -- foreground
-    black       = color(30),    --@@@black                  black foreground                    @@@
-    red         = color(31),    --@@@red                    red foreground                      @@@
-    green       = color(32),    --@@@green                  green foreground                    @@@
-    yellow      = color(33),    --@@@yellow                 yellow foreground                   @@@
-    blue        = color(34),    --@@@blue                   blue foreground                     @@@
-    magenta     = color(35),    --@@@magenta                magenta foreground                  @@@
-    cyan        = color(36),    --@@@cyan                   cyan foreground                     @@@
-    white       = color(37),    --@@@white                  white foreground                    @@@
-    -- background
-    onblack     = color(40),    --@@@onblack                black background                    @@@
-    onred       = color(41),    --@@@onred                  red background                      @@@
-    ongreen     = color(42),    --@@@ongreen                green background                    @@@
-    onyellow    = color(43),    --@@@onyellow               yellow background                   @@@
-    onblue      = color(44),    --@@@onblue                 blue background                     @@@
-    onmagenta   = color(45),    --@@@onmagenta              magenta background                  @@@
-    oncyan      = color(46),    --@@@oncyan                 cyan background                     @@@
-    onwhite     = color(47),    --@@@onwhite                white background                    @@@
+    -- attributes               --@@@*Attributes*                                               @@@
+    reset       = color(0),     --@@@`reset`                reset the colors                    @@@
+    clear       = color(0),     --@@@`clear`                same as reset                       @@@
+    default     = color(0),     --@@@`default`              same as reset                       @@@
+    bright      = color(1),     --@@@`bright`               bold or more intense                @@@
+    bold        = color(1),     --@@@`bold`                 same as bold                        @@@
+    dim         = color(2),     --@@@`dim`                  thiner or less intense              @@@
+    italic      = color(3),     --@@@`italic`               italic (sometimes inverse or blink) @@@
+    underline   = color(4),     --@@@`underline`            underlined                          @@@
+    blink       = color(5),     --@@@`blink`                slow blinking (less than 150 bpm)   @@@
+    fast        = color(6),     --@@@`fast`                 fast blinking (more than 150 bpm)   @@@
+    reverse     = color(7),     --@@@`reverse`              swap foreground and background      @@@
+    hidden      = color(8),     --@@@`hidden`               hidden text                         @@@
+    strike      = color(9),     --@@@`strike`               strike or crossed-out               @@@
+    -- foreground               --@@@*Foreground colors*                                        @@@
+    black       = color(30),    --@@@`black`                black foreground                    @@@
+    red         = color(31),    --@@@`red`                  red foreground                      @@@
+    green       = color(32),    --@@@`green`                green foreground                    @@@
+    yellow      = color(33),    --@@@`yellow`               yellow foreground                   @@@
+    blue        = color(34),    --@@@`blue`                 blue foreground                     @@@
+    magenta     = color(35),    --@@@`magenta`              magenta foreground                  @@@
+    cyan        = color(36),    --@@@`cyan`                 cyan foreground                     @@@
+    white       = color(37),    --@@@`white`                white foreground                    @@@
+    -- background               --@@@*Background colors*                                        @@@
+    onblack     = color(40),    --@@@`onblack`              black background                    @@@
+    onred       = color(41),    --@@@`onred`                red background                      @@@
+    ongreen     = color(42),    --@@@`ongreen`              green background                    @@@
+    onyellow    = color(43),    --@@@`onyellow`             yellow background                   @@@
+    onblue      = color(44),    --@@@`onblue`               blue background                     @@@
+    onmagenta   = color(45),    --@@@`onmagenta`            magenta background                  @@@
+    oncyan      = color(46),    --@@@`oncyan`               cyan background                     @@@
+    onwhite     = color(47),    --@@@`onwhite`              white background                    @@@
+    -- enable/disable           --@@@*Control functions*                                        @@@
+    enable      = enable,       --@@@`enable(b)`            enable colors if `b` is `true` or `nil` (default) @@@
+    disable     = disable,      --@@@`disable`              disable colors                      @@@
 }
 
 color_reset = term.color.reset
@@ -130,13 +144,13 @@ end
 --                                  @@@`term.cursor` field      Description                         @@@
 --                                  @@@------------------------ ------------------------------------@@@
 term.cursor = {
-    reset           = cursor(0),  --@@@reset                    reset to the initial shape          @@@
-    block_blink     = cursor(1),  --@@@block_blink              blinking block cursor               @@@
-    block           = cursor(2),  --@@@block                    fixed block cursor                  @@@
-    underline_blink = cursor(3),  --@@@underline_blink          blinking underline cursor           @@@
-    underline       = cursor(4),  --@@@underline                fixed underline cursor              @@@
-    bar_blink       = cursor(5),  --@@@bar_blink                blinking bar cursor                 @@@
-    bar             = cursor(6),  --@@@bar                      fixed bar cursor                    @@@
+    reset           = cursor(0),  --@@@`reset`                  reset to the initial shape          @@@
+    block_blink     = cursor(1),  --@@@`block_blink`            blinking block cursor               @@@
+    block           = cursor(2),  --@@@`block`                  fixed block cursor                  @@@
+    underline_blink = cursor(3),  --@@@`underline_blink`        blinking underline cursor           @@@
+    underline       = cursor(4),  --@@@`underline`              fixed underline cursor              @@@
+    bar_blink       = cursor(5),  --@@@`bar_blink`              blinking bar cursor                 @@@
+    bar             = cursor(6),  --@@@`bar`                    fixed bar cursor                    @@@
 }
 
 --[[------------------------------------------------------------------------@@@

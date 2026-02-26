@@ -34,37 +34,52 @@ term.color.X("...")
 local c = term.color.red + term.color.italic + term.color.oncyan
 ```
 
-| `term.color` field | Description                         |
-|:-------------------|:------------------------------------|
-| reset              | reset the colors                    |
-| clear              | same as reset                       |
-| default            | same as reset                       |
-| bright             | bold or more intense                |
-| bold               | same as bold                        |
-| dim                | thiner or less intense              |
-| italic             | italic (sometimes inverse or blink) |
-| underline          | underlined                          |
-| blink              | slow blinking (less than 150 bpm)   |
-| fast               | fast blinking (more than 150 bpm)   |
-| reverse            | swap foreground and background      |
-| hidden             | hidden text                         |
-| strike             | strike or crossed-out               |
-| black              | black foreground                    |
-| red                | red foreground                      |
-| green              | green foreground                    |
-| yellow             | yellow foreground                   |
-| blue               | blue foreground                     |
-| magenta            | magenta foreground                  |
-| cyan               | cyan foreground                     |
-| white              | white foreground                    |
-| onblack            | black background                    |
-| onred              | red background                      |
-| ongreen            | green background                    |
-| onyellow           | yellow background                   |
-| onblue             | blue background                     |
-| onmagenta          | magenta background                  |
-| oncyan             | cyan background                     |
-| onwhite            | white background                    |
+The user can disable the color support (e.g. when not running on a
+terminal):
+
+``` lua
+if not term.isatty(io.stdout) then
+    term.color.disable()
+end
+```
+
+| `term.color` field  | Description                                       |
+|:--------------------|:--------------------------------------------------|
+| *Attributes*        |                                                   |
+| `reset`             | reset the colors                                  |
+| `clear`             | same as reset                                     |
+| `default`           | same as reset                                     |
+| `bright`            | bold or more intense                              |
+| `bold`              | same as bold                                      |
+| `dim`               | thiner or less intense                            |
+| `italic`            | italic (sometimes inverse or blink)               |
+| `underline`         | underlined                                        |
+| `blink`             | slow blinking (less than 150 bpm)                 |
+| `fast`              | fast blinking (more than 150 bpm)                 |
+| `reverse`           | swap foreground and background                    |
+| `hidden`            | hidden text                                       |
+| `strike`            | strike or crossed-out                             |
+| *Foreground colors* |                                                   |
+| `black`             | black foreground                                  |
+| `red`               | red foreground                                    |
+| `green`             | green foreground                                  |
+| `yellow`            | yellow foreground                                 |
+| `blue`              | blue foreground                                   |
+| `magenta`           | magenta foreground                                |
+| `cyan`              | cyan foreground                                   |
+| `white`             | white foreground                                  |
+| *Background colors* |                                                   |
+| `onblack`           | black background                                  |
+| `onred`             | red background                                    |
+| `ongreen`           | green background                                  |
+| `onyellow`          | yellow background                                 |
+| `onblue`            | blue background                                   |
+| `onmagenta`         | magenta background                                |
+| `oncyan`            | cyan background                                   |
+| `onwhite`           | white background                                  |
+| *Control functions* |                                                   |
+| `enable(b)`         | enable colors if `b` is `true` or `nil` (default) |
+| `disable`           | disable colors                                    |
 
 ## Cursor
 
@@ -78,13 +93,13 @@ term.cursor.bar_blink()
 
 | `term.cursor` field | Description                |
 |:--------------------|:---------------------------|
-| reset               | reset to the initial shape |
-| block_blink         | blinking block cursor      |
-| block               | fixed block cursor         |
-| underline_blink     | blinking underline cursor  |
-| underline           | fixed underline cursor     |
-| bar_blink           | blinking bar cursor        |
-| bar                 | fixed bar cursor           |
+| `reset`             | reset to the initial shape |
+| `block_blink`       | blinking block cursor      |
+| `block`             | fixed block cursor         |
+| `underline_blink`   | blinking underline cursor  |
+| `underline`         | fixed underline cursor     |
+| `bar_blink`         | blinking bar cursor        |
+| `bar`               | fixed bar cursor           |
 
 ## Terminal
 
