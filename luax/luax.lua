@@ -21,15 +21,19 @@ https://codeberg.org/cdsoft/luax
 --@MAIN
 
 local F = require "F"
+local term = require "term"
 
 -------------------------------------------------------------------------------
 -- Help command
 -------------------------------------------------------------------------------
 
+local function colorize(fd)
+    term.color.enable(term.isatty(fd))
+end
+
 local function print_welcome()
 
     local sys = require "sys"
-    local term = require "term"
 
     local I = (F.I % "%%{}")(_G){sys=sys}
 
@@ -42,22 +46,24 @@ local function print_welcome()
                          |  %{sys.os:cap()} %{sys.arch} %{sys.libc}
 ]===]
 
-    if term.isatty() then
-        print(welcome)
+    if term.isatty(io.stdout) then
+        colorize(1)
+        print((term.color.green+term.color.bold)(welcome))
     end
 
     print_welcome = F.const() -- print the welcome message once
 end
 
 local function usage()
-    local I = (F.I % "%%{}") (require "luax_config") {
+    colorize(1)
+    local I = (F.I % "%%{}") (require "luax_config") (term.color) {
         arg = arg,
         lua_init = { "LUA_INIT_".._VERSION:words()[2]:gsub("%.", "_"), "LUA_INIT" },
     }
     return (I[===[
 usage: %{arg[0]:basename()} [cmd] [options]
 
-Commands:
+%{green'Commands:'}
   "help"    (or "-h")   Show this help
   "version" (or "-v")   Show LuaX version
   "run"     (or none)   Run scripts
@@ -65,7 +71,7 @@ Commands:
   "env"                 Set LuaX environment variables
   "postinstall"         Post install updates
 
-"run" options:
+%{green'"run" options:'}
   -e stat         execute string 'stat'
   -i              enter interactive mode after executing 'script'
   -l name         require library 'name' into global 'name'
@@ -77,7 +83,7 @@ Commands:
   -               stop handling options and execute stdin
   script [args]   script to execute
 
-"compile" options:
+%{green'"compile" options:'}
   -t target       name of the targetted platform
   -t list         list available targets
   -o file         name the executable file to create
@@ -89,10 +95,10 @@ Commands:
   -q              quiet compilation (error messages only)
   scripts         scripts to compile
 
-"postinstall" options:
+%{green'"postinstall" options:'}
   -f              do not ask for confirmations
 
-Environment variables:
+%{green'Environment variables:'}
 
   %{lua_init[1]}, %{lua_init[2]}
                 code executed before handling command line
@@ -110,12 +116,12 @@ Environment variables:
   LUA_CPATH     LUA_CPATH shall point to the lib directory
                 where LuaX shared libraries are installed
 
-PATH, LUA_PATH and LUA_CPATH can be set in .bashrc or .zshrc
-with "luax env".
-E.g.: eval $(luax env)
+PATH, LUA_PATH and LUA_CPATH can be set in %{italic'.bashrc'} or %{italic'.zshrc'}
+with "%{italic'luax env'}".
+E.g.: %{italic'eval $(luax env)'}
 
-"luax env" can also generate shell variables from a script.
-E.g.: eval $(luax env script.lua)
+"%{italic'luax env"'} can also generate shell variables from a script.
+E.g.: %{italic'eval $(luax env script.lua)'}
 ]===]):trim()
 end
 
@@ -125,9 +131,10 @@ local function print_usage()
 end
 
 local function print_error(fmt, ...)
-    print("")
-    print(("error: %s"):format(fmt:format(...)))
-    print("")
+    colorize(2)
+    io.stderr:write("\n")
+    io.stderr:write((term.color.red"error: %s"):format(fmt:format(...)), "\n")
+    io.stderr:write("\n")
     os.exit(1)
 end
 
@@ -179,8 +186,9 @@ local function cmd_run()
     end
 
     local function traceback(message)
+        colorize(2)
         local trace = F.flatten {
-            "luax: "..msgtostr(message),
+            term.color.red("luax: "..msgtostr(message)),
             debug.traceback():lines(),
         }
         local pos = 1
@@ -388,7 +396,8 @@ prints `show(x)`
                     chunk, chunk_err = load(code, "="..var)
                 end
                 if not chunk then
-                    print(chunk_err)
+                    colorize(2)
+                    io.stderr:write(term.color.red(chunk_err), "\n")
                     os.exit(1)
                 end
                 if chunk and not xpcall(chunk, traceback) then
@@ -422,7 +431,8 @@ prints `show(x)`
                     assert(stat)
                     local chunk, msg = load(stat, "=(command line)")
                     if not chunk then
-                        io.stderr:write(("%s: %s\n"):format(arg[0], msg))
+                        colorize(2)
+                        io.stderr:write((term.color.red"%s: %s"):format(arg[0], msg), "\n")
                         os.exit(1)
                     end
                     assert(chunk)
@@ -521,8 +531,9 @@ prints `show(x)`
                             return candidate
                         end
                     end
+                    colorize(2)
                     candidates : foreach(function(path)
-                        io.stderr:write(("    no file '%s' in '%s'\n"):format(name, path))
+                        io.stderr:write((term.color.red"    no file '%s' in '%s'"):format(name, path), "\n")
                     end)
                     os.exit(1)
                 end
@@ -530,7 +541,8 @@ prints `show(x)`
                 chunk, msg = load(bundle.comment_shebang(assert(fs.read_bin(real_script))), "@"..real_script)
             end
             if not chunk then
-                io.stderr:write(("%s: %s\n"):format(script, msg))
+                colorize(2)
+                io.stderr:write((term.color.red"%s: %s"):format(script, msg), "\n")
                 os.exit(1)
             end
             assert(chunk)
@@ -573,12 +585,13 @@ prints `show(x)`
             end
             print_welcome()
             populate_repl()
-            local initial_prompt      = ">> "
-            local continuation_prompt = ".. "
+            local initial_prompt      = term.color.green">> "
+            local continuation_prompt = term.color.green".. "
             while true do
                 local inputs = {}
                 local prompt = initial_prompt
                 while true do
+                    colorize(1)
                     local line = readline.read(prompt)
                     if not line then os.exit() end
                     hist(line)
@@ -589,7 +602,8 @@ prints `show(x)`
                     local try_stat, err_stat = try(input)
                     if try_stat == "done" then break end
                     if try_expr ~= "cont" and try_stat ~= "cont" then
-                        print(try_stat == nil and err_stat or err_expr)
+                        colorize(2)
+                        io.stderr:write(term.color.red(try_stat == nil and err_stat or err_expr), "\n")
                         break
                     end
                     prompt = continuation_prompt
@@ -631,8 +645,9 @@ local function cmd_compile()
     }
 
     local function print_targets()
-        print(("%-22s%-25s"):format("Target", "Interpreter / LuaX archive"))
-        print(("%-22s%-25s"):format(("-"):rep(21), ("-"):rep(25)))
+        colorize(1)
+        print((term.color.green"%-22s%-25s"):format("Target", "Interpreter / LuaX archive"))
+        print((term.color.green"%-22s%-25s"):format(("-"):rep(21), ("-"):rep(25)))
         local home = os.getenv(F.case(sys.os) {
             windows = "LOCALAPPDATA",
             [F.Nil] = "HOME",
@@ -643,7 +658,7 @@ local function cmd_compile()
             print(("%-22s%s%s"):format(
                 name,
                 path and path:gsub("^"..home, "~") or name,
-                path and "" or " [NOT FOUND]"))
+                path and "" or term.color.red" [NOT FOUND]"))
         end)
         if assets.path and assets.targets then
             local luax_lar = assets.path:gsub("^"..home, "~")
@@ -657,9 +672,9 @@ local function cmd_compile()
             end)
         end
         print("")
-        print(("Lua compiler: %s (LuaX %s)"):format(_VERSION, _LUAX_VERSION))
+        print((term.color.green"Lua compiler: %s (LuaX %s)"):format(_VERSION, _LUAX_VERSION))
         if assets.path and assets.targets then
-            print(("C compiler  : %s"):format(build_config.compiler.full_version))
+            print((term.color.green"C compiler  : %s"):format(build_config.compiler.full_version))
         end
     end
 
@@ -916,7 +931,6 @@ local function cmd_compile()
             -- Install Zig (to cross compile and link C sources)
             if not zig:is_file() then
                 local luax_config = require "luax_config"
-                local term = require "term"
                 log("Zig", "download and install Zig to %s", zig_path)
                 local curl = require "curl"
                 local ext = F.case(sys.os) { windows=".zip", [F.Nil]=".tar.xz" }
@@ -952,7 +966,8 @@ local function cmd_compile()
                                 return field:match "^file:(.*)$"
                             end) : head()
                             if file ~= archive then
-                                io.stderr:write(mirror/archive..".minisig: signature verification failed\n")
+                                colorize(2)
+                                io.stderr:write(term.color.red(mirror/archive..".minisig: signature verification failed"), "\n")
                             else
                                 break -- valid archive
                             end
@@ -1157,14 +1172,13 @@ local function cmd_postinstall()
 
     local fs = require "fs"
     local sys = require "sys"
-    local term = require "term"
     local readline = require "readline"
 
     local found = term.color.green "✔"
     local not_found = term.color.red "✖"
     local recycle = term.color.yellow "♻"
 
-    term.color.enable(term.isatty(io.stdout))
+    colorize(1)
 
     local expected_files = F.flatten {
         (sys.libc=="gnu" or sys.libc=="musl") and "bin"/"luax"..sys.exe or {},

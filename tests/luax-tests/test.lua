@@ -21,6 +21,7 @@ https://codeberg.org/cdsoft/luax
 local test = {}
 
 local F = require "F"
+local term = require "term"
 
 local function is_a_list(t)
     for k, _ in pairs(t) do
@@ -80,7 +81,7 @@ end
 
 function test.eq(a, b)
     if same(a, b) then return end
-    error(([[
+    error((term.color.red[[
 
 Got     : %s
 Expected: %s
@@ -89,12 +90,12 @@ end
 
 function test.ne(a, b)
     if not same(a, b) then return end
-    error(("Unexpected: %s"):format(dump(a)))
+    error((term.color.red"Unexpected: %s"):format(dump(a)))
 end
 
 function test.bounded(x, a, b)
     if x >= a and x <= b then return end
-    error(([[
+    error((term.color.red[[
 
 Got     : %s
 Expected: [%s, %s]
@@ -103,7 +104,7 @@ end
 
 function test.startswith(a, b)
     if a:sub(1, #b) == b then return end
-error(([[
+    error((term.color.red[[
 
 Got     : %s
 Expected: %s
