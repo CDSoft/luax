@@ -1160,6 +1160,12 @@ local function cmd_postinstall()
     local term = require "term"
     local readline = require "readline"
 
+    local found = term.color.green "✔"
+    local not_found = term.color.red "✖"
+    local recycle = term.color.yellow "♻"
+
+    term.color.enable(term.isatty(io.stdout))
+
     local expected_files = F.flatten {
         (sys.libc=="gnu" or sys.libc=="musl") and "bin"/"luax"..sys.exe or {},
         "bin"/"luax.lua",
@@ -1185,18 +1191,15 @@ local function cmd_postinstall()
         end
     end
 
-    local exe = find_exe(arg[0])
+    local exe = find_exe(arg[0]):realpath()
     local prefix = assert(exe):dirname():dirname():realpath()
     local bin = prefix/"bin"
     local lib = prefix/"lib"
     local new_files = expected_files : map(function(file) return prefix/file end)
 
-    print(_LUAX_COPYRIGHT)
-    print(("="):rep(#_LUAX_COPYRIGHT))
-
-    local found = term.color.green "✔"
-    local not_found = term.color.red "✖"
-    local recycle = term.color.yellow "♻"
+    local copyright = F{ _LUAX_COPYRIGHT : match "^(%S+%s+%S+)%s+(%S+%s+%S+%s+%S+)%s+(%S+),%s*(.+)" }
+    copyright[#copyright+1] = ("="):rep(copyright:map(F.op.len):maximum())
+    print(copyright : map(term.color.green) : unlines())
 
     local function confirm(msg, ...)
         local prompt = string.format(msg, ...).."? [y/N]"
@@ -1209,11 +1212,10 @@ local function cmd_postinstall()
 
     -- Search for installed files
 
-    print("")
     local all_found = true
     new_files : foreach(function(file)
         local exists = fs.is_file(file)
-        print((exists and found or not_found).." "..file)
+        print((exists and found or not_found).." "..(exists and F.id or term.color.red)(file))
         all_found = all_found and exists
     end)
 
@@ -1229,14 +1231,14 @@ local function cmd_postinstall()
         print("")
         obsolete_files : foreach(function(file)
             if force then
-                print(string.format("%s remove %s", recycle, file))
+                print(string.format("%s remove %s", recycle, term.color.yellow(file)))
                 assert(fs.remove(file))
             elseif interactive then
-                if confirm("%s remove obsolete LuaX file '%s'", recycle, file) then
+                if confirm("%s remove obsolete LuaX file '%s'", recycle, term.color.yellow(file)) then
                     assert(fs.remove(file))
                 end
             else
-                print(string.format("%s %s is obsolete", recycle, file))
+                print(string.format("%s %s is obsolete", recycle, term.color.yellow(file)))
             end
         end)
     end
