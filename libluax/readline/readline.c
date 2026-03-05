@@ -96,6 +96,21 @@ static t_free_history_entry rl_free_history_entry = NULL;
 
 static bool loaded = false;
 
+#ifndef _WIN32
+static const char *libs[] = {
+#ifdef __linux__
+    "libreadline.so.8",
+    "libreadline.so",
+#endif
+#ifdef __APPLE__
+    "libreadline.8.dylib",
+    "libreadline.dylib",
+    "libedit.dylib",
+#endif
+    NULL,
+};
+#endif
+
 static void load_readline(void)
 {
     if (loaded) { return; }
@@ -106,7 +121,10 @@ static void load_readline(void)
 
 #ifndef _WIN32
 
-    void *handle = dlopen("libreadline.so", RTLD_NOW | RTLD_LOCAL);
+    void *handle = NULL;
+    for (int i = 0; handle == NULL && libs[i] != NULL; i++) {
+        handle = dlopen(libs[i], RTLD_NOW | RTLD_LOCAL);
+    }
     if (handle == NULL) { return ; }
 
 #pragma GCC diagnostic push
