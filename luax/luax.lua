@@ -585,13 +585,12 @@ prints `show(x)`
             end
             print_welcome()
             populate_repl()
-            local initial_prompt      = term.color.green">> "
-            local continuation_prompt = term.color.green".. "
+            local initial_prompt      = ">> "
+            local continuation_prompt = ".. "
             while true do
                 local inputs = {}
                 local prompt = initial_prompt
                 while true do
-                    colorize(1)
                     local line = readline.read(prompt)
                     if not line then os.exit() end
                     hist(line)
