@@ -1,6 +1,6 @@
-#define PROGVERSION "1.15"
+#define PROGVERSION "1.16"
 /* Minilzip - Test program for the library lzlib
-   Copyright (C) 2009-2025 Antonio Diaz Diaz.
+   Copyright (C) 2009-2026 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -42,7 +42,6 @@
 #if defined __MSVCRT__
 #define fchmod(x,y) 0
 #define fchown(x,y,z) 0
-#define strtoull strtoul
 #define SIGHUP SIGTERM
 #define S_ISSOCK(x) 0
 #ifndef S_IRGRP
@@ -92,7 +91,7 @@ static const char * const mem_msg = "Not enough memory.";
 int verbosity = 0;
 
 static const char * const program_name = "minilzip";
-static const char * const program_year = "2025";
+static const char * const program_year = "2026";
 static const char * invocation_name = "minilzip";	/* default value */
 
 static const struct { const char * from; const char * to; } known_extensions[] = {
@@ -115,68 +114,72 @@ static int outfd = -1;
 static bool delete_output_on_interrupt = false;
 
 
-static void show_help( void )
+static void show_help( const bool full )
   {
-  printf( "Minilzip is a test program for the compression library lzlib. Minilzip is\n"
-          "not intended to be installed because lzip has more features, but minilzip is\n"
-          "well tested and you can use it as your main compressor if so you wish.\n"
-          "\nLzip is a lossless data compressor with a user interface similar to the one\n"
-          "of gzip or bzip2. Lzip uses a simplified form of LZMA (Lempel-Ziv-Markov\n"
-          "chain-Algorithm) designed to achieve complete interoperability between\n"
-          "implementations. The maximum dictionary size is 512 MiB so that any lzip\n"
-          "file can be decompressed on 32-bit machines. Lzip provides accurate and\n"
-          "robust 3-factor integrity checking. 'lzip -0' compresses about as fast as\n"
-          "gzip, while 'lzip -9' compresses most files more than bzip2. Decompression\n"
-          "speed is intermediate between gzip and bzip2. Lzip provides better data\n"
-          "recovery capabilities than gzip and bzip2. Lzip has been designed, written,\n"
-          "and tested with great care to replace gzip and bzip2 as general-purpose\n"
-          "compressed format for Unix-like systems.\n"
-          "\nUsage: %s [options] [files]\n", invocation_name );
-  printf( "\nOptions:\n"
-          "  -h, --help                     display this help and exit\n"
-          "  -V, --version                  output version information and exit\n"
-          "  -a, --trailing-error           exit with error status if trailing data\n"
-          "  -b, --member-size=<bytes>      set member size limit of multimember files\n"
-          "  -c, --stdout                   write to standard output, keep input files\n"
-          "  -d, --decompress               decompress, test compressed file integrity\n"
-          "  -f, --force                    overwrite existing output files\n"
-          "  -F, --recompress               force re-compression of compressed files\n"
-          "  -k, --keep                     keep (don't delete) input files\n"
-          "  -m, --match-length=<bytes>     set match length limit in bytes [36]\n"
-          "  -o, --output=<file>            write to <file>, keep input files\n"
-          "  -q, --quiet                    suppress all messages\n"
-          "  -s, --dictionary-size=<bytes>  set dictionary size limit in bytes [8 MiB]\n"
-          "  -S, --volume-size=<bytes>      set volume size limit in bytes\n"
-          "  -t, --test                     test compressed file integrity\n"
-          "  -v, --verbose                  be verbose (a 2nd -v gives more)\n"
-          "  -0 .. -9                       set compression level [default 6]\n"
-          "      --fast                     alias for -0\n"
-          "      --best                     alias for -9\n"
-          "      --loose-trailing           allow trailing data seeming corrupt header\n"
-          "      --check-lib                compare version of lzlib.h with liblz.{a,so}\n"
-          "\nIf no file names are given, or if a file is '-', minilzip compresses or\n"
-          "decompresses from standard input to standard output.\n"
-          "Numbers may be followed by a multiplier: k = kB = 10^3 = 1000,\n"
-          "Ki = KiB = 2^10 = 1024, M = 10^6, Mi = 2^20, G = 10^9, Gi = 2^30, etc...\n"
-          "Dictionary sizes 12 to 29 are interpreted as powers of two, meaning 2^12 to\n"
-          "2^29 bytes.\n"
-          "\nThe bidimensional parameter space of LZMA can't be mapped to a linear scale\n"
-          "optimal for all files. If your files are large, very repetitive, etc, you\n"
-          "may need to use the options --dictionary-size and --match-length directly\n"
-          "to achieve optimal performance.\n"
-          "\nTo extract all the files from archive 'foo.tar.lz', use the commands\n"
-          "'tar -xf foo.tar.lz' or 'minilzip -cd foo.tar.lz | tar -xf -'.\n"
-          "\nExit status: 0 for a normal exit, 1 for environmental problems\n"
-          "(file not found, invalid command-line options, I/O errors, etc), 2 to\n"
-          "indicate a corrupt or invalid input file, 3 for an internal consistency\n"
-          "error (e.g., bug) which caused minilzip to panic.\n"
-          "\nThe ideas embodied in lzlib are due to (at least) the following people:\n"
-          "Abraham Lempel and Jacob Ziv (for the LZ algorithm), Andrei Markov (for the\n"
-          "definition of Markov chains), G.N.N. Martin (for the definition of range\n"
-          "encoding), Igor Pavlov (for putting all the above together in LZMA), and\n"
-          "Julian Seward (for bzip2's CLI).\n"
-          "\nReport bugs to lzip-bug@nongnu.org\n"
-          "Lzlib home page: http://www.nongnu.org/lzip/lzlib.html\n" );
+  if( !full )
+    fputs( "Minilzip is a test program for the library lzlib.\n", stdout );
+  else fputs(
+    "Minilzip is a test program for the compression library lzlib. Minilzip is\n"
+    "not intended to be installed because lzip has more features, but minilzip is\n"
+    "well tested and you can use it as your main compressor if so you wish.\n"
+    "\nLzip is a lossless data compressor with a user interface similar to the one\n"
+    "of gzip or bzip2. Lzip uses a simplified form of LZMA (Lempel-Ziv-Markov\n"
+    "chain-Algorithm) and is designed to achieve complete interoperability\n"
+    "between implementations. The maximum dictionary size is 512 MiB so that any\n"
+    "lzip file can be decompressed on 32-bit machines. Lzip provides accurate and\n"
+    "robust 3-factor integrity checking. 'lzip -0' compresses about as fast as\n"
+    "gzip, while 'lzip -9' compresses most files more than bzip2. Decompression\n"
+    "speed is intermediate between gzip and bzip2. Lzip provides better data\n"
+    "recovery capabilities than gzip and bzip2. Lzip has been designed, written,\n"
+    "and tested with great care to replace gzip and bzip2 as general-purpose\n"
+    "compressed format for Unix-like systems.\n", stdout );
+  printf( "\nUsage: %s [options] [files]\n", invocation_name );
+  fputs( "\nOptions:\n"
+    "  -h                             display usage help and exit\n"
+    "      --help                     display full help and exit\n"
+    "  -V, --version                  output version information and exit\n"
+    "  -a, --trailing-error           exit with error status if trailing data\n"
+    "  -b, --member-size=<bytes>      set member size limit of multimember files\n"
+    "  -c, --stdout                   write to standard output, keep input files\n"
+    "  -d, --decompress               decompress, test compressed file integrity\n"
+    "  -f, --force                    overwrite existing output files\n"
+    "  -F, --recompress               force re-compression of compressed files\n"
+    "  -k, --keep                     keep (don't delete) input files\n"
+    "  -m, --match-length=<bytes>     set match length limit in bytes [36]\n"
+    "  -o, --output=<file>            write to <file>, keep input files\n"
+    "  -q, --quiet                    suppress all messages\n"
+    "  -s, --dictionary-size=<bytes>  set dictionary size limit in bytes [8 MiB]\n"
+    "  -S, --volume-size=<bytes>      set volume size limit in bytes\n"
+    "  -t, --test                     test compressed file integrity\n"
+    "  -v, --verbose                  be verbose (a 2nd -v gives more)\n"
+    "  -0 .. -9                       set compression level [default 6]\n"
+    "      --loose-trailing           allow trailing data seeming corrupt header\n"
+    "      --check-lib                compare version of lzlib.h with liblz.{a,so}\n"
+    "\nIf no file names are given, or if a file is '-', minilzip compresses or\n"
+    "decompresses from standard input to standard output.\n", stdout );
+  if( full ) fputs(
+    "Numbers may contain underscore separators between groups of digits and\n"
+    "may be followed by a SI or binary multiplier: 1_234_567kB, 4KiB.\n"
+    "Dictionary sizes 12 to 29 are interpreted as powers of two, meaning 2^12 to\n"
+    "2^29 bytes.\n"
+    "\nThe bidimensional parameter space of LZMA can't be mapped to a linear scale\n"
+    "optimal for all files. If your files are large, very repetitive, etc, you\n"
+    "may need to use the options --dictionary-size and --match-length directly\n"
+    "to achieve optimal performance.\n"
+    "\nTo extract all the files from archive 'foo.tar.lz', use the commands\n"
+    "'tar -xf foo.tar.lz' or 'minilzip -cd foo.tar.lz | tar -xf -'.\n"
+    "\nThe ideas embodied in lzlib are due to (at least) the following people:\n"
+    "Abraham Lempel and Jacob Ziv (for the LZ algorithm), Andrei Markov (for the\n"
+    "definition of Markov chains), G.N.N. Martin (for the definition of range\n"
+    "encoding), Igor Pavlov (for putting all the above together in LZMA), and\n"
+    "Julian Seward (for bzip2's CLI).\n"
+    "\n*Exit status*\n"
+    "0 for a normal exit, 1 for environmental problems (file not found, invalid\n"
+    "command-line options, I/O errors, etc), 2 to indicate a corrupt or invalid\n"
+    "input file, 3 for an internal consistency error (e.g., bug) which caused\n"
+    "minilzip to panic.\n"
+    "\nReport bugs to lzip-bug@nongnu.org\n"
+    "Lzlib home page: http://www.nongnu.org/lzip/lzlib.html\n", stdout );
   }
 
 
@@ -198,9 +201,9 @@ static void show_version( void )
   {
   printf( "%s %s\n", program_name, PROGVERSION );
   printf( "Copyright (C) %s Antonio Diaz Diaz.\n", program_year );
-  printf( "License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>\n"
-          "This is free software: you are free to change and redistribute it.\n"
-          "There is NO WARRANTY, to the extent permitted by law.\n" );
+  fputs( "License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>\n"
+         "This is free software: you are free to change and redistribute it.\n"
+         "There is NO WARRANTY, to the extent permitted by law.\n", stdout );
   show_lzlib_version();
   }
 
@@ -257,12 +260,12 @@ static int check_lib()
 
 
 /* assure at least a minimum size for buffer 'buf' */
-static void * resize_buffer( void * buf, const unsigned min_size )
+static char * resize_buffer( void * buf, const unsigned min_size )
   {
   if( buf ) buf = realloc( buf, min_size );
   else buf = malloc( min_size );
   if( !buf ) { show_error( mem_msg, 0, false ); cleanup_and_fail( 1 ); }
-  return buf;
+  return (char *)buf;
   }
 
 
@@ -349,26 +352,72 @@ static void show_header( const unsigned dictionary_size )
   }
 
 
-/* separate numbers of 5 or more digits in groups of 3 digits using '_' */
-static const char * format_num3( unsigned long long num )
+static int chvalue( const unsigned char ch )
   {
-  enum { buffers = 8, bufsize = 4 * sizeof num, n = 10 };
+  if( ch >= '0' && ch <= '9' ) return ch - '0';
+  if( ch >= 'A' && ch <= 'Z' ) return ch - 'A' + 10;
+  if( ch >= 'a' && ch <= 'z' ) return ch - 'a' + 10;
+  return 255;
+  }
+
+static unsigned long long strtoull_( const char * const ptr,
+                                     const char ** tail, int base )
+  {
+  if( tail ) *tail = ptr;				/* error value */
+  int i = 0;
+  while( isspace( ptr[i] ) || (unsigned char)ptr[i] == 0xA0 ) ++i;
+  const bool minus = ptr[i] == '-';
+  if( minus || ptr[i] == '+' ) ++i;
+  if( base < 0 || base > 36 || base == 1 ||
+      ( base == 0 && !isdigit( ptr[i] ) ) ||
+      ( base != 0 && chvalue( ptr[i] ) >= base ) )
+    { errno = EINVAL; return 0; }
+
+  if( base == 0 )
+    {
+    if( ptr[i] != '0' ) base = 10;			/* decimal */
+    else if( ptr[i+1] == 'x' || ptr[i+1] == 'X' ) { base = 16; i += 2; }
+    else base = 8;					/* octal or 0 */
+    }
+  const int dpg = ( base != 16 ) ? 3 : 2;	/* min digits per group */
+  int dig = dpg - 1;	/* digits in current group, first may have 1 digit */
+  unsigned long long result = 0;
+  bool erange = false;
+  for( ; ptr[i]; ++i )
+    {
+    if( ptr[i] == '_' ) { if( dig < dpg ) break; else { dig = 0; continue; } }
+    const int val = chvalue( ptr[i] ); if( val >= base ) break; else ++dig;
+    if( !erange && ( ULLONG_MAX - val ) / base >= result )
+      result = result * base + val;
+    else erange = true;
+    }
+  if( dig < dpg ) { errno = EINVAL; return 0; }
+  if( tail ) *tail = ptr + i;
+  if( erange ) { errno = ERANGE; return ULLONG_MAX; }
+  return minus ? 0ULL - result : result;
+  }
+
+
+/* separate numbers of 5 or more digits in groups of 3 digits using '_' */
+static const char * format_num3r( unsigned long long num, const bool raw )
+  {
+  enum { buffers = 8, bufsize = 4 * sizeof num };
   const char * const si_prefix = "kMGTPEZYRQ";
   const char * const binary_prefix = "KMGTPEZYRQ";
-  static char buffer[buffers][bufsize];	/* circle of static buffers for printf */
+  static char buffer[buffers][bufsize];	/* circle of buffers for printf */
   static int current = 0;
   int i;
   char * const buf = buffer[current++]; current %= buffers;
   char * p = buf + bufsize - 1;		/* fill the buffer backwards */
-  *p = 0;	/* terminator */
-  if( num > 9999 )
+  *p = 0;				/* terminator */
+  if( !raw && num >= 10000 )
     {
     char prefix = 0;			/* try binary first, then si */
-    for( i = 0; i < n && num != 0 && num % 1024 == 0; ++i )
+    for( i = 0; num != 0 && num % 1024 == 0 && binary_prefix[i]; ++i )
       { num /= 1024; prefix = binary_prefix[i]; }
     if( prefix ) *(--p) = 'i';
     else
-      for( i = 0; i < n && num != 0 && num % 1000 == 0; ++i )
+      for( i = 0; num != 0 && num % 1000 == 0 && si_prefix[i]; ++i )
         { num /= 1000; prefix = si_prefix[i]; }
     if( prefix ) *(--p) = prefix;
     }
@@ -381,6 +430,9 @@ static const char * format_num3( unsigned long long num )
     }
   return p;
   }
+
+static const char * format_num3p( unsigned long long num )
+  { return format_num3r( num, false ); }
 
 
 void show_option_error( const char * const arg, const char * const msg,
@@ -398,19 +450,19 @@ static unsigned long long getnum( const char * const arg,
                                   const unsigned long long llimit,
                                   const unsigned long long ulimit )
   {
-  char * tail;
+  const char * tail;
   errno = 0;
-  unsigned long long result = strtoull( arg, &tail, 0 );
+  unsigned long long result = strtoull_( arg, &tail, 0 );
   if( tail == arg )
     { show_option_error( arg, "Bad or missing numerical argument in",
                          option_name ); exit( 1 ); }
 
-  if( !errno && tail[0] )
+  if( !errno && *tail )
     {
     const unsigned factor = (tail[1] == 'i') ? 1024 : 1000;
     int exponent = 0;				/* 0 = bad multiplier */
     int i;
-    switch( tail[0] )
+    switch( *tail )
       {
       case 'Q': exponent = 10; break;
       case 'R': exponent = 9; break;
@@ -438,8 +490,8 @@ static unsigned long long getnum( const char * const arg,
     {
     if( verbosity >= 0 )
       fprintf( stderr, "%s: '%s': Value out of limits [%s,%s] in "
-               "option '%s'.\n", program_name, arg, format_num3( llimit ),
-               format_num3( ulimit ), option_name );
+               "option '%s'.\n", program_name, arg, format_num3p( llimit ),
+               format_num3p( ulimit ), option_name );
     exit( 1 );
     }
   return result;
@@ -522,6 +574,10 @@ static void set_d_outname( const char * const name, const int eindex )
     fprintf( stderr, "%s: %s: Can't guess original name -- using '%s'\n",
              program_name, name, output_filename );
   }
+
+
+static const char * format_num3( unsigned long long num )
+  { return format_num3r( num, true ); }
 
 
 static int open_instream( const char * const name, struct stat * const in_statsp,
@@ -804,15 +860,13 @@ static int do_compress( LZ_Encoder * const encoder,
     {
     const unsigned long long in_size = LZ_compress_total_in_size( encoder );
     const unsigned long long out_size = LZ_compress_total_out_size( encoder );
-    if( in_size == 0 || out_size == 0 )
-      fputs( " no data compressed.\n", stderr );
-    else
-      fprintf( stderr, "%6.3f:1, %5.2f%% ratio, %5.2f%% saved, "
-                       "%llu in, %llu out.\n",
+    if( in_size > 0 && out_size > 0 )
+      fprintf( stderr, "%6.3f:1, %5.2f%% ratio, %5.2f%% saved,",
                (double)in_size / out_size,
                ( 100.0 * out_size ) / in_size,
-               100.0 - ( ( 100.0 * out_size ) / in_size ),
-               in_size, out_size );
+               100.0 - ( ( 100.0 * out_size ) / in_size ) );
+    fprintf( stderr, " %s in, %s out.\n",
+             format_num3( in_size ), format_num3( out_size ) );
     }
   return 0;
   }
@@ -906,17 +960,15 @@ static int do_decompress( LZ_Decoder * const decoder, const int infd,
             {
             if( verbosity >= 4 )
               show_header( LZ_decompress_dictionary_size( decoder ) );
-            if( data_size == 0 || member_size == 0 )
-              fputs( "no data compressed. ", stderr );
-            else
-              fprintf( stderr, "%6.3f:1, %5.2f%% ratio, %5.2f%% saved. ",
+            if( verbosity >= 3 && data_size > 0 && member_size > 0 )
+              fprintf( stderr, "%6.3f:1, %5.2f%% ratio, %5.2f%% saved, ",
                      (double)data_size / member_size,
                      ( 100.0 * member_size ) / data_size,
                      100.0 - ( ( 100.0 * member_size ) / data_size ) );
             if( verbosity >= 4 )
               fprintf( stderr, "CRC %08X, ", LZ_decompress_data_crc( decoder ) );
-            if( verbosity >= 3 )
-              fprintf( stderr, "%9llu out, %8llu in. ", data_size, member_size );
+            fprintf( stderr, "%11s out, %10s in. ",
+                     format_num3( data_size ), format_num3( member_size ) );
             fputs( testing ? "ok\n" : "done\n", stderr ); Pp_reset( pp );
             }
           }
@@ -975,9 +1027,9 @@ static int do_decompress( LZ_Decoder * const decoder, const int infd,
       if( verbosity >= 0 )
         {
         Pp_show_msg( pp, 0 );
-        fprintf( stderr, "%s at pos %llu\n", ( lz_errno == LZ_unexpected_eof ) ?
+        fprintf( stderr, "%s at pos %s\n", ( lz_errno == LZ_unexpected_eof ) ?
                  "File ends unexpectedly" : "Decoder error",
-                 LZ_decompress_total_in_size( decoder ) );
+                 format_num3( LZ_decompress_total_in_size( decoder ) ) );
         }
       return 2;
       }
@@ -1061,8 +1113,8 @@ int main( const int argc, const char * const argv[] )
     { 3 << 23, 132 },		/* -8 */
     { 1 << 25, 273 } };		/* -9 */
   Lzma_options encoder_options = option_mapping[6];	/* default = "-6" */
-  const unsigned long long max_member_size = 0x0008000000000000ULL; /* 2 PiB */
-  const unsigned long long max_volume_size = 0x4000000000000000ULL; /* 4 EiB */
+  const unsigned long long max_member_size = 1ULL << 51;	/* 2 PiB */
+  const unsigned long long max_volume_size = 1ULL << 62;	/* 4 EiB */
   unsigned long long member_size = max_member_size;
   unsigned long long volume_size = 0;
   const char * default_output_filename = "";
@@ -1075,7 +1127,7 @@ int main( const int argc, const char * const argv[] )
   bool to_stdout = false;
   if( argc > 0 ) invocation_name = argv[0];
 
-  enum { opt_chk = 256, opt_lt };
+  enum { opt_chk = 256, opt_hlp, opt_lt };
   const ap_Option options[] =
     {
     { '0', "fast",              ap_no  },
@@ -1094,7 +1146,7 @@ int main( const int argc, const char * const argv[] )
     { 'd', "decompress",        ap_no  },
     { 'f', "force",             ap_no  },
     { 'F', "recompress",        ap_no  },
-    { 'h', "help",              ap_no  },
+    { 'h', 0,                   ap_no  },
     { 'k', "keep",              ap_no  },
     { 'm', "match-length",      ap_yes },
     { 'n', "threads",           ap_yes },
@@ -1106,6 +1158,7 @@ int main( const int argc, const char * const argv[] )
     { 'v', "verbose",           ap_no  },
     { 'V', "version",           ap_no  },
     { opt_chk, "check-lib",     ap_no  },
+    { opt_hlp, "help",          ap_no  },
     { opt_lt, "loose-trailing", ap_no  },
     { 0, 0,                     ap_no  } };
 
@@ -1134,7 +1187,7 @@ int main( const int argc, const char * const argv[] )
       case 'd': set_mode( &program_mode, m_decompress ); break;
       case 'f': force = true; break;
       case 'F': recompress = true; break;
-      case 'h': show_help(); return 0;
+      case 'h': show_help( false ); return 0;
       case 'k': keep_input_files = true; break;
       case 'm': encoder_options.match_len_limit =
                   getnum( arg, pn, LZ_min_match_len_limit(),
@@ -1150,6 +1203,7 @@ int main( const int argc, const char * const argv[] )
       case 'v': if( verbosity < 4 ) ++verbosity; break;
       case 'V': show_version(); return 0;
       case opt_chk: return check_lib();
+      case opt_hlp: show_help( true ); return 0;
       case opt_lt: loose_trailing = true; break;
       default: internal_error( "uncaught option." );
       }
@@ -1176,8 +1230,9 @@ int main( const int argc, const char * const argv[] )
 #endif
 
   static const char ** filenames = 0;
-  int num_filenames = max( 1, ap_arguments( &parser ) - argind );
-  filenames = resize_buffer( filenames, num_filenames * sizeof filenames[0] );
+  const int num_filenames = max( 1, ap_arguments( &parser ) - argind );
+  filenames = (const char **)
+    resize_buffer( filenames, num_filenames * sizeof filenames[0] );
   filenames[0] = "-";
 
   int i;
@@ -1213,7 +1268,7 @@ int main( const int argc, const char * const argv[] )
   static Pretty_print pp;
   Pp_init( &pp, filenames, num_filenames );
 
-  int failed_tests = 0;
+  unsigned failed_tests = 0;
   int retval = 0;
   const bool one_to_one = !to_stdout && program_mode != m_test && !to_file;
   bool stdin_used = false;
@@ -1296,7 +1351,7 @@ int main( const int argc, const char * const argv[] )
     set_retval( &retval, 1 );
     }
   if( failed_tests > 0 && verbosity >= 1 && num_filenames > 1 )
-    fprintf( stderr, "%s: warning: %d %s failed the test.\n",
+    fprintf( stderr, "%s: warning: %u %s failed the test.\n",
              program_name, failed_tests,
              ( failed_tests == 1 ) ? "file" : "files" );
   free( output_filename );

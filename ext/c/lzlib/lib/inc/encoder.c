@@ -1,5 +1,5 @@
 /* Lzlib - Compression library for the lzip format
-   Copyright (C) 2009-2025 Antonio Diaz Diaz.
+   Copyright (C) 2009-2026 Antonio Diaz Diaz.
 
    This library is free software. Redistribution and use in source and
    binary forms, with or without modification, are permitted provided
@@ -157,7 +157,7 @@ static void LZe_update_distance_prices( LZ_encoder * const e )
 
 /* Return the number of bytes advanced (ahead).
    trials[0]..trials[ahead-1] contain the steps to encode.
-   ( trials[0].dis4 == -1 ) means literal.
+   ( trials[0].cdis == -1 ) means literal.
    A match/rep longer or equal than match_len_limit finishes the sequence.
 */
 static int LZe_sequence_optimizer( LZ_encoder * const e,
@@ -186,7 +186,7 @@ static int LZe_sequence_optimizer( LZ_encoder * const e,
   if( replens[rep_index] >= e->match_len_limit )
     {
     e->trials[0].price = replens[rep_index];
-    e->trials[0].dis4 = rep_index;
+    e->trials[0].cdis = rep_index;
     if( !LZe_move_and_update( e, replens[rep_index] ) ) return 0;
     return replens[rep_index];
     }
@@ -194,7 +194,7 @@ static int LZe_sequence_optimizer( LZ_encoder * const e,
   if( main_len >= e->match_len_limit )
     {
     e->trials[0].price = main_len;
-    e->trials[0].dis4 = e->pairs[num_pairs-1].dis + num_rep_distances;
+    e->trials[0].cdis = e->pairs[num_pairs-1].dis + num_rep_distances;
     if( !LZe_move_and_update( e, main_len ) ) return 0;
     return main_len;
     }
@@ -209,7 +209,7 @@ static int LZe_sequence_optimizer( LZ_encoder * const e,
     e->trials[1].price += LZeb_price_literal( &e->eb, prev_byte, cur_byte );
   else
     e->trials[1].price += LZeb_price_matched( &e->eb, prev_byte, cur_byte, match_byte );
-  e->trials[1].dis4 = -1;				/* literal */
+  e->trials[1].cdis = -1;				/* literal */
 
   const int match_price = price1( e->eb.bm_match[state][pos_state] );
   const int rep_match_price = match_price + price1( e->eb.bm_rep[state] );
@@ -223,7 +223,7 @@ static int LZe_sequence_optimizer( LZ_encoder * const e,
   if( num_trials < min_match_len )
     {
     e->trials[0].price = 1;
-    e->trials[0].dis4 = e->trials[1].dis4;
+    e->trials[0].cdis = e->trials[1].cdis;
     if( !Mb_move_pos( &e->eb.mb ) ) return 0;
     return 1;
     }
@@ -282,7 +282,7 @@ static int LZe_sequence_optimizer( LZ_encoder * const e,
     Trial * cur_trial = &e->trials[cur];
     State cur_state;
     {
-    const int dis4 = cur_trial->dis4;
+    const int cdis = cur_trial->cdis;
     int prev_index = cur_trial->prev_index;
     const int prev_index2 = cur_trial->prev_index2;
 
@@ -291,15 +291,15 @@ static int LZe_sequence_optimizer( LZ_encoder * const e,
       cur_state = e->trials[prev_index].state;
       if( prev_index + 1 == cur )			/* len == 1 */
         {
-        if( dis4 == 0 ) cur_state = St_set_shortrep( cur_state );
+        if( cdis == 0 ) cur_state = St_set_shortrep( cur_state );
         else cur_state = St_set_char( cur_state );	/* literal */
         }
-      else if( dis4 < num_rep_distances ) cur_state = St_set_rep( cur_state );
+      else if( cdis < num_rep_distances ) cur_state = St_set_rep( cur_state );
       else cur_state = St_set_match( cur_state );
       }
     else
       {
-      if( prev_index2 == dual_step_trial )	/* dis4 == 0 (rep0) */
+      if( prev_index2 == dual_step_trial )	/* cdis == 0 (rep0) */
         --prev_index;
       else					/* prev_index2 >= 0 */
         prev_index = prev_index2;
@@ -308,7 +308,7 @@ static int LZe_sequence_optimizer( LZ_encoder * const e,
     cur_trial->state = cur_state;
     for( i = 0; i < num_rep_distances; ++i )
       cur_trial->reps[i] = e->trials[prev_index].reps[i];
-    mtf_reps( dis4, cur_trial->reps );		/* literal is ignored */
+    mtf_reps( cdis, cur_trial->reps );		/* literal is ignored */
     }
 
     const int pos_state = Mb_data_position( &e->eb.mb ) & pos_state_mask;
@@ -328,18 +328,19 @@ static int LZe_sequence_optimizer( LZ_encoder * const e,
 
     Tr_update( next_trial, next_price, -1, cur );	/* literal */
 
-    const int match_price = cur_trial->price + price1( e->eb.bm_match[cur_state][pos_state] );
+    const int match_price =
+      cur_trial->price + price1( e->eb.bm_match[cur_state][pos_state] );
     const int rep_match_price = match_price + price1( e->eb.bm_rep[cur_state] );
 
-    if( match_byte == cur_byte && next_trial->dis4 != 0 &&
+    if( match_byte == cur_byte && next_trial->cdis != 0 &&
         next_trial->prev_index2 == single_step_trial )
       {
-      const int price = rep_match_price +
-                        LZeb_price_shortrep( &e->eb, cur_state, pos_state );
+      const int price =
+        rep_match_price + LZeb_price_shortrep( &e->eb, cur_state, pos_state );
       if( price <= next_trial->price )
         {
         next_trial->price = price;
-        next_trial->dis4 = 0;				/* rep0 */
+        next_trial->cdis = 0;				/* rep0 */
         next_trial->prev_index = cur;
         }
       }
@@ -520,7 +521,7 @@ static bool LZe_encode_member( LZ_encoder * const e )
       const int pos_state =
         ( Mb_data_position( &e->eb.mb ) - ahead ) & pos_state_mask;
       const int len = e->trials[i].price;
-      int dis = e->trials[i].dis4;
+      int dis = e->trials[i].cdis;
 
       bool bit = dis < 0;
       Re_encode_bit( &e->eb.renc, &e->eb.bm_match[*state][pos_state], !bit );

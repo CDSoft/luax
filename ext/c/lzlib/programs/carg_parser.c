@@ -1,5 +1,5 @@
 /* Arg_parser - POSIX/GNU command-line argument parser. (C version)
-   Copyright (C) 2006-2025 Antonio Diaz Diaz.
+   Copyright (C) 2006-2026 Antonio Diaz Diaz.
 
    This library is free software. Redistribution and use in source and
    binary forms, with or without modification, are permitted provided
@@ -17,10 +17,19 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "carg_parser.h"
+
+
+static char is_number( const char * const p )
+  {
+  return isdigit( (unsigned char)(p[*p=='.']) ) ||
+         strcmp( p, "inf" ) == 0 || strcmp( p, "Inf" ) == 0 ||
+         strcmp( p, "INF" ) == 0;
+  }
 
 
 /* assure at least a minimum size for buffer 'buf' */
@@ -32,53 +41,73 @@ static void * ap_resize_buffer( void * buf, const int min_size )
   }
 
 
-static char push_back_record( Arg_parser * const ap, const int code,
-                              const char * const long_name,
-                              const char * const argument )
+static char set_argument( Arg_parser * const ap, const char * const argument )
   {
-  ap_Record * p;
-  void * tmp = ap_resize_buffer( ap->data,
-                                 ( ap->data_size + 1 ) * sizeof (ap_Record) );
+  ap_Record * const p = &(ap->data[ap->data_size-1]);
+  const int len = strlen( argument );
+  p->argument = (char *)malloc( len + 1 );
+  if( !p->argument ) return 0;
+  memcpy( p->argument, argument, len + 1 );
+  return 1;
+  }
+
+
+static ap_Record * push_back_record( Arg_parser * const ap )
+  {
+  const int min_size = ( ap->data_size + 1 ) * sizeof (ap_Record);
+  void * tmp = ap_resize_buffer( ap->data, min_size );
   if( !tmp ) return 0;
   ap->data = (ap_Record *)tmp;
-  p = &(ap->data[ap->data_size]);
+  return &(ap->data[ap->data_size++]);
+  }
+
+
+static char push_back_option( Arg_parser * const ap, const int code,
+                              const char * const long_name )
+  {
+  ap_Record * const p = push_back_record( ap );
+  if( !p ) return 0;
   p->code = code;
+  p->argument = 0;
   if( long_name )
     {
     const int len = strlen( long_name );
     p->parsed_name = (char *)malloc( len + 2 + 1 );
     if( !p->parsed_name ) return 0;
     p->parsed_name[0] = p->parsed_name[1] = '-';
-    strncpy( p->parsed_name + 2, long_name, len + 1 );
+    memcpy( p->parsed_name + 2, long_name, len + 1 );
     }
-  else if( code > 0 && code < 256 )
+  else
     {
     p->parsed_name = (char *)malloc( 2 + 1 );
     if( !p->parsed_name ) return 0;
     p->parsed_name[0] = '-'; p->parsed_name[1] = code; p->parsed_name[2] = 0;
     }
-  else p->parsed_name = 0;
-  if( argument )
-    {
-    const int len = strlen( argument );
-    p->argument = (char *)malloc( len + 1 );
-    if( !p->argument ) { free( p->parsed_name ); return 0; }
-    strncpy( p->argument, argument, len + 1 );
-    }
-  else p->argument = 0;
-  ++ap->data_size;
   return 1;
   }
 
 
-static char add_error( Arg_parser * const ap, const char * const msg )
+static char push_back_argument( Arg_parser * const ap,
+                                const char * const argument )
   {
-  const int len = strlen( msg );
-  void * tmp = ap_resize_buffer( ap->error, ap->error_size + len + 1 );
+  ap_Record * const p = push_back_record( ap );
+  if( !p ) return 0;
+  p->code = 0;
+  p->parsed_name = 0;
+  return set_argument( ap, argument );
+  }
+
+
+static char set_error( Arg_parser * const ap, const char * const s1,
+                       const char * const s2, const char * const s3 )
+  {
+  const int l1 = strlen( s1 ), l2 = strlen( s2 ), l3 = strlen( s3 );
+  void * tmp = ap_resize_buffer( ap->error, l1 + l2 + l3 + 1 );
   if( !tmp ) return 0;
   ap->error = (char *)tmp;
-  strncpy( ap->error + ap->error_size, msg, len + 1 );
-  ap->error_size += len;
+  memcpy( ap->error, s1, l1 );
+  memcpy( ap->error + l1, s2, l2 );
+  memcpy( ap->error + l1 + l2, s3, l3 + 1 );
   return 1;
   }
 
@@ -118,54 +147,36 @@ static char parse_long_option( Arg_parser * const ap,
       }
 
   if( ambig && !exact )
-    {
-    add_error( ap, "option '" ); add_error( ap, opt );
-    add_error( ap, "' is ambiguous" );
-    return 1;
-    }
+    return set_error( ap, "option '", opt, "' is ambiguous" );
 
   if( index < 0 )		/* nothing found */
-    {
-    add_error( ap, "unrecognized option '" ); add_error( ap, opt );
-    add_error( ap, "'" );
-    return 1;
-    }
+    return set_error( ap, "unrecognized option '", opt, "'" );
 
   ++*argindp;
+  if( !push_back_option( ap, options[index].code, options[index].long_name ) )
+    return 0;
 
   if( opt[len+2] )		/* '--<long_option>=<argument>' syntax */
     {
     if( options[index].has_arg == ap_no )
-      {
-      add_error( ap, "option '--" ); add_error( ap, options[index].long_name );
-      add_error( ap, "' doesn't allow an argument" );
-      return 1;
-      }
+      return set_error( ap, "option '--", options[index].long_name,
+                        "' doesn't allow an argument" );
     if( options[index].has_arg == ap_yes && !opt[len+3] )
-      {
-      add_error( ap, "option '--" ); add_error( ap, options[index].long_name );
-      add_error( ap, "' requires an argument" );
-      return 1;
-      }
-    return push_back_record( ap, options[index].code, options[index].long_name,
-                             &opt[len+3] );	/* argument may be empty */
+      return set_error( ap, "option '--", options[index].long_name,
+                        "' requires an argument" );
+    return set_argument( ap, &opt[len+3] );	/* argument may be empty */
     }
 
-  if( options[index].has_arg == ap_yes || options[index].has_arg == ap_yme )
+  if( options[index].has_arg == ap_yes || options[index].has_arg == ap_yesme )
     {
     if( !arg || ( options[index].has_arg == ap_yes && !arg[0] ) )
-      {
-      add_error( ap, "option '--" ); add_error( ap, options[index].long_name );
-      add_error( ap, "' requires an argument" );
-      return 1;
-      }
+      return set_error( ap, "option '--", options[index].long_name,
+                        "' requires an argument" );
     ++*argindp;
-    return push_back_record( ap, options[index].code, options[index].long_name,
-                             arg );	/* argument may be empty */
+    return set_argument( ap, arg );		/* argument may be empty */
     }
 
-  return push_back_record( ap, options[index].code,
-                           options[index].long_name, 0 );
+  return 1;
   }
 
 
@@ -189,49 +200,42 @@ static char parse_short_option( Arg_parser * const ap,
           { index = i; break; }
 
     if( index < 0 )
-      {
-      add_error( ap, "invalid option -- '" ); add_error( ap, code_str );
-      add_error( ap, "'" );
-      return 1;
-      }
+      return set_error( ap, "invalid option -- '", code_str, "'" );
 
+    if( !push_back_option( ap, c, 0 ) ) return 0;
     if( opt[++cind] == 0 ) { ++*argindp; cind = 0; }	/* opt finished */
 
     if( options[index].has_arg != ap_no && cind > 0 && opt[cind] )
       {
-      if( !push_back_record( ap, c, 0, &opt[cind] ) ) return 0;
+      if( !set_argument( ap, &opt[cind] ) ) return 0;
       ++*argindp; cind = 0;
       }
-    else if( options[index].has_arg == ap_yes || options[index].has_arg == ap_yme )
+    else if( options[index].has_arg == ap_yes || options[index].has_arg == ap_yesme )
       {
       if( !arg || ( options[index].has_arg == ap_yes && !arg[0] ) )
-        {
-        add_error( ap, "option requires an argument -- '" );
-        add_error( ap, code_str ); add_error( ap, "'" );
-        return 1;
-        }
-      ++*argindp; cind = 0;		/* argument may be empty */
-      if( !push_back_record( ap, c, 0, arg ) ) return 0;
+        return set_error( ap, "option requires an argument -- '", code_str, "'" );
+      ++*argindp; cind = 0;
+      if( !set_argument( ap, arg ) ) return 0;	/* argument may be empty */
       }
-    else if( !push_back_record( ap, c, 0, 0 ) ) return 0;
     }
   return 1;
   }
 
 
+/* Return 0 only if out of memory. */
 char ap_init( Arg_parser * const ap,
               const int argc, const char * const argv[],
-              const ap_Option options[], const char in_order )
+              const ap_Option options[], const int flags )
   {
   const char ** non_options = 0;	/* skipped non-options */
   int non_options_size = 0;		/* number of skipped non-options */
   int argind = 1;			/* index in argv */
-  char done = 0;			/* false until success */
+  char done = 0;			/* false until success or error */
 
   ap->data = 0;
   ap->error = 0;
   ap->data_size = 0;
-  ap->error_size = 0;
+  ap->argv_index = argc;
   if( argc < 2 || !argv || !options ) return 1;
 
   while( argind < argc )
@@ -239,43 +243,43 @@ char ap_init( Arg_parser * const ap,
     const unsigned char ch1 = argv[argind][0];
     const unsigned char ch2 = ch1 ? argv[argind][1] : 0;
 
-    if( ch1 == '-' && ch2 )		/* we found an option */
+    if( ch1 == '-' && ch2 && ( ch2 == '-' || (flags & ap_neg_non_opt) == 0 ||
+                               !is_number( argv[argind] + 1 ) ) )
       {
-      const char * const opt = argv[argind];
+      const char * const opt = argv[argind];	/* we found an option */
       const char * const arg = ( argind + 1 < argc ) ? argv[argind+1] : 0;
       if( ch2 == '-' )
         {
         if( !argv[argind][2] ) { ++argind; break; }	/* we found "--" */
-        else if( !parse_long_option( ap, opt, arg, options, &argind ) ) goto out;
+        else if( !parse_long_option( ap, opt, arg, options, &argind ) ) goto oom;
         }
-      else if( !parse_short_option( ap, opt, arg, options, &argind ) ) goto out;
+      else if( !parse_short_option( ap, opt, arg, options, &argind ) ) goto oom;
       if( ap->error ) break;
       }
+    else if( flags & (ap_in_order_stop | ap_in_order_skip) ) break;
+    else if( flags & ap_in_order )
+      { if( !push_back_argument( ap, argv[argind++] ) ) goto oom; }
     else
       {
-      if( in_order )
-        { if( !push_back_record( ap, 0, 0, argv[argind++] ) ) goto out; }
-      else
-        {
-        void * tmp = ap_resize_buffer( non_options,
-                       ( non_options_size + 1 ) * sizeof *non_options );
-        if( !tmp ) goto out;
-        non_options = (const char **)tmp;
-        non_options[non_options_size++] = argv[argind++];
-        }
+      const int min_size = ( non_options_size + 1 ) * sizeof non_options[0];
+      void * tmp = ap_resize_buffer( non_options, min_size );
+      if( !tmp ) goto oom;
+      non_options = (const char **)tmp;
+      non_options[non_options_size++] = argv[argind++];
       }
     }
   if( ap->error ) free_data( ap );
-  else
+  else if( flags & ap_in_order_skip ) ap->argv_index = argind;
+  else						/* copy non-option arguments */
     {
     int i;
     for( i = 0; i < non_options_size; ++i )
-      if( !push_back_record( ap, 0, 0, non_options[i] ) ) goto out;
+      if( !push_back_argument( ap, non_options[i] ) ) goto oom;
     while( argind < argc )
-      if( !push_back_record( ap, 0, 0, argv[argind++] ) ) goto out;
+      if( !push_back_argument( ap, argv[argind++] ) ) goto oom;
     }
   done = 1;
-out: if( non_options ) free( non_options );
+oom: if( non_options ) free( non_options );
   return done;
   }
 
@@ -284,11 +288,12 @@ void ap_free( Arg_parser * const ap )
   {
   free_data( ap );
   if( ap->error ) { free( ap->error ); ap->error = 0; }
-  ap->error_size = 0;
   }
 
 
 const char * ap_error( const Arg_parser * const ap ) { return ap->error; }
+
+int ap_argv_index( const Arg_parser * const ap ) { return ap->argv_index; }
 
 int ap_arguments( const Arg_parser * const ap ) { return ap->data_size; }
 

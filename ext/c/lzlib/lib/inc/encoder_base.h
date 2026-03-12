@@ -1,5 +1,5 @@
 /* Lzlib - Compression library for the lzip format
-   Copyright (C) 2009-2025 Antonio Diaz Diaz.
+   Copyright (C) 2009-2026 Antonio Diaz Diaz.
 
    This library is free software. Redistribution and use in source and
    binary forms, with or without modification, are permitted provided
@@ -509,7 +509,7 @@ static inline void Re_encode_len( Range_encoder * const renc,
   }
 
 
-enum { max_marker_size = 16,
+enum { max_marker_size = 16,		/* rd_min_available_bytes + 5 */
        num_rep_distances = 4 };		/* must be 4 */
 
 typedef struct LZ_encoder_base
@@ -531,7 +531,7 @@ typedef struct LZ_encoder_base
   Len_model match_len_model;
   Len_model rep_len_model;
   Range_encoder renc;
-  int reps[num_rep_distances];
+  int reps[num_rep_distances];		/* latest four distances */
   State state;
   bool member_finished;
   } LZ_encoder_base;

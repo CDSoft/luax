@@ -36,7 +36,7 @@ update_all()
     update_argparse     LuaX
     update_serpent      master
     update_lz4          release
-    update_lzlib        1.15
+    update_lzlib        1.16
     update_cbor
     update_linenoise    master
     #update_json         master

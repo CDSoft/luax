@@ -1,5 +1,5 @@
 /* Lzlib - Compression library for the lzip format
-   Copyright (C) 2009-2025 Antonio Diaz Diaz.
+   Copyright (C) 2009-2026 Antonio Diaz Diaz.
 
    This library is free software. Redistribution and use in source and
    binary forms, with or without modification, are permitted provided
@@ -17,7 +17,7 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
 
-enum { rd_min_available_bytes = 10 };
+enum { rd_min_available_bytes = 11 };
 
 typedef struct Range_decoder
   {
@@ -155,13 +155,10 @@ static inline void Rd_normalize( Range_decoder * const rdec )
     { rdec->range <<= 8; rdec->code = (rdec->code << 8) | Rd_get_byte( rdec ); }
   }
 
-static inline unsigned Rd_decode( Range_decoder * const rdec,
-                                  const int num_bits )
+static inline unsigned Rd_decode( Range_decoder * const rdec, int num_bits )
   {
   unsigned symbol = 0;
-  int i;
-  for( i = num_bits; i > 0; --i )
-    {
+  do {
     Rd_normalize( rdec );
     rdec->range >>= 1;
 /*    symbol <<= 1; */
@@ -169,7 +166,7 @@ static inline unsigned Rd_decode( Range_decoder * const rdec,
     const bool bit = rdec->code >= rdec->range;
     symbol <<= 1; symbol += bit;
     rdec->code -= rdec->range & ( 0U - bit );
-    }
+    } while( --num_bits > 0 );
   return symbol;
   }
 
@@ -339,10 +336,10 @@ typedef struct LZ_decoder
   bool check_trailer_pending;
   bool member_finished;
   bool pos_wrapped;
-  unsigned rep0;		/* rep[0-3] latest four distances */
-  unsigned rep1;		/* used for efficient coding of */
-  unsigned rep2;		/* repeated distances */
-  unsigned rep3;
+  unsigned dis0;		/* dis[0-3] latest four distances */
+  unsigned dis1;		/* used for efficient coding of */
+  unsigned dis2;		/* repeated distances */
+  unsigned dis3;
   State state;
 
   Bit_model bm_literal[1<<literal_context_bits][0x300];
@@ -385,16 +382,17 @@ static inline void LZd_put_byte( LZ_decoder * const d, const uint8_t b )
 static inline void LZd_copy_block( LZ_decoder * const d,
                                    const unsigned distance, unsigned len )
   {
-  unsigned lpos = d->cb.put, i = lpos - distance - 1;
+  unsigned lpos = d->cb.put, i;
   bool fast, fast2;
   if( lpos > distance )
     {
+    i = lpos - distance - 1;
     fast = len < d->cb.buffer_size - lpos;
     fast2 = fast && len <= lpos - i;
     }
   else
     {
-    i += d->cb.buffer_size;
+    i = d->cb.buffer_size + lpos - distance - 1;
     fast = len < d->cb.buffer_size - i;		/* (i == pos) may happen */
     fast2 = fast && len <= i - lpos;
     }
@@ -427,12 +425,11 @@ static inline bool LZd_init( LZ_decoder * const d, Range_decoder * const rde,
   d->check_trailer_pending = false;
   d->member_finished = false;
   d->pos_wrapped = false;
-  /* prev_byte of first byte; also for LZd_peek( 0 ) on corrupt file */
-  d->cb.buffer[d->cb.buffer_size-1] = 0;
-  d->rep0 = 0;
-  d->rep1 = 0;
-  d->rep2 = 0;
-  d->rep3 = 0;
+  d->cb.buffer[d->cb.buffer_size-1] = 0;	/* prev_byte of first byte */
+  d->dis0 = 0;
+  d->dis1 = 0;
+  d->dis2 = 0;
+  d->dis3 = 0;
   d->state = 0;
 
   Bm_array_init( d->bm_literal[0], (1 << literal_context_bits) * 0x300 );

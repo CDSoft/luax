@@ -1,5 +1,5 @@
 /* Lzlib - Compression library for the lzip format
-   Copyright (C) 2009-2025 Antonio Diaz Diaz.
+   Copyright (C) 2009-2026 Antonio Diaz Diaz.
 
    This library is free software. Redistribution and use in source and
    binary forms, with or without modification, are permitted provided
@@ -100,19 +100,19 @@ typedef struct Trial
   {
   State state;
   int price;		/* dual use var; cumulative price, match length */
-  int dis4;		/* -1 for literal, or rep, or match distance + 4 */
+  int cdis;		/* -1 for literal, or rep, or match distance + 4 */
   int prev_index;	/* index of prev trial in trials[] */
   int prev_index2;	/*   -2  trial is single step */
 			/*   -1  literal + rep0 */
 			/* >= 0  ( rep or match ) + literal + rep0 */
-  int reps[num_rep_distances];
+  int reps[num_rep_distances];		/* latest four distances */
   } Trial;
 
 static inline void Tr_update( Trial * const trial, const int pr,
-                              const int distance4, const int p_i )
+                              const int cdi, const int p_i )
   {
   if( pr < trial->price )
-    { trial->price = pr; trial->dis4 = distance4; trial->prev_index = p_i;
+    { trial->price = pr; trial->cdis = cdi; trial->prev_index = p_i;
       trial->prev_index2 = single_step_trial; }
   }
 
@@ -120,16 +120,16 @@ static inline void Tr_update2( Trial * const trial, const int pr,
                                const int p_i )
   {
   if( pr < trial->price )
-    { trial->price = pr; trial->dis4 = 0; trial->prev_index = p_i;
+    { trial->price = pr; trial->cdis = 0; trial->prev_index = p_i;
       trial->prev_index2 = dual_step_trial; }
   }
 
 static inline void Tr_update3( Trial * const trial, const int pr,
-                               const int distance4, const int p_i,
+                               const int cdi, const int p_i,
                                const int p_i2 )
   {
   if( pr < trial->price )
-    { trial->price = pr; trial->dis4 = distance4; trial->prev_index = p_i;
+    { trial->price = pr; trial->cdis = cdi; trial->prev_index = p_i;
       trial->prev_index2 = p_i2; }
   }
 
@@ -166,18 +166,18 @@ static inline bool Mb_dec_pos( Matchfinder_base * const mb, const int ahead )
 
 static int LZe_get_match_pairs( LZ_encoder * const e, Pair * pairs );
 
-       /* move-to-front dis in/into reps; do nothing if( dis4 <= 0 ) */
-static inline void mtf_reps( const int dis4, int reps[num_rep_distances] )
+       /* move-to-front dis in/into reps; do nothing if( cdis <= 0 ) */
+static inline void mtf_reps( const int cdis, int reps[num_rep_distances] )
   {
-  if( dis4 >= num_rep_distances )			/* match */
+  if( cdis >= num_rep_distances )			/* match */
     {
     reps[3] = reps[2]; reps[2] = reps[1]; reps[1] = reps[0];
-    reps[0] = dis4 - num_rep_distances;
+    reps[0] = cdis - num_rep_distances;
     }
-  else if( dis4 > 0 )				/* repeated match */
+  else if( cdis > 0 )				/* repeated match */
     {
-    const int distance = reps[dis4];
-    int i; for( i = dis4; i > 0; --i ) reps[i] = reps[i-1];
+    const int distance = reps[cdis];
+    int i; for( i = cdis; i > 0; --i ) reps[i] = reps[i-1];
     reps[0] = distance;
     }
   }
@@ -252,7 +252,7 @@ static inline bool LZe_move_and_update( LZ_encoder * const e, int n )
 
 static inline void LZe_backward( LZ_encoder * const e, int cur )
   {
-  int dis4 = e->trials[cur].dis4;
+  int cdis = e->trials[cur].cdis;
   while( cur > 0 )
     {
     const int prev_index = e->trials[cur].prev_index;
@@ -260,19 +260,19 @@ static inline void LZe_backward( LZ_encoder * const e, int cur )
 
     if( e->trials[cur].prev_index2 != single_step_trial )
       {
-      prev_trial->dis4 = -1;					/* literal */
+      prev_trial->cdis = -1;					/* literal */
       prev_trial->prev_index = prev_index - 1;
       prev_trial->prev_index2 = single_step_trial;
       if( e->trials[cur].prev_index2 >= 0 )
         {
         Trial * const prev_trial2 = &e->trials[prev_index-1];
-        prev_trial2->dis4 = dis4; dis4 = 0;			/* rep0 */
+        prev_trial2->cdis = cdis; cdis = 0;			/* rep0 */
         prev_trial2->prev_index = e->trials[cur].prev_index2;
         prev_trial2->prev_index2 = single_step_trial;
         }
       }
     prev_trial->price = cur - prev_index;			/* len */
-    cur = dis4; dis4 = prev_trial->dis4; prev_trial->dis4 = cur;
+    cur = cdis; cdis = prev_trial->cdis; prev_trial->cdis = cur;
     cur = prev_index;
     }
   }

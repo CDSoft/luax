@@ -1,5 +1,5 @@
 /* Lzlib - Compression library for the lzip format
-   Copyright (C) 2009-2025 Antonio Diaz Diaz.
+   Copyright (C) 2009-2026 Antonio Diaz Diaz.
 
    This library is free software. Redistribution and use in source and
    binary forms, with or without modification, are permitted provided
@@ -123,7 +123,7 @@ static void Mb_reset( Matchfinder_base * const mb )
   }
 
 
-/* End Of Stream marker => (dis == 0xFFFFFFFFU, len == min_match_len) */
+/* End Of Stream marker => (dis == 0xFFFF_FFFF, len == min_match_len) */
 static void LZeb_try_full_flush( LZ_encoder_base * const eb )
   {
   if( eb->member_finished || Cb_free_bytes( &eb->renc.cb ) <
@@ -143,7 +143,7 @@ static void LZeb_try_full_flush( LZ_encoder_base * const eb )
   }
 
 
-/* Sync Flush marker => (dis == 0xFFFFFFFFU, len == min_match_len + 1) */
+/* Sync Flush marker => (dis == 0xFFFF_FFFF, len == min_match_len + 1) */
 static void LZeb_try_sync_flush( LZ_encoder_base * const eb )
   {
   const unsigned min_size = eb->renc.ff_count + max_marker_size;
@@ -167,7 +167,7 @@ static void LZeb_reset( LZ_encoder_base * const eb,
                         const unsigned long long member_size )
   {
   const unsigned long long min_member_size = min_dictionary_size;
-  const unsigned long long max_member_size = 0x0008000000000000ULL; /* 2 PiB */
+  const unsigned long long max_member_size = 1ULL << 51;	/* 2 PiB */
   Mb_reset( &eb->mb );
   eb->member_size_limit = min( max( min_member_size, member_size ),
                           max_member_size ) - Lt_size - max_marker_size;
