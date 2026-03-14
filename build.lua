@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.13.4" "2026-03-12"
+version "9.13.5" "2026-03-14"
 
 local F = require "F"
 local fs = require "fs"
@@ -185,7 +185,7 @@ BUILD_CONFIG.SSL = ssl
 local compiler_version = tonumber(BUILD_CONFIG.COMPILER_VERSION:match"%d+")
 local modern_compiler = case(compiler) {
     gcc   = compiler_version >= 13,
-    clang = compiler_version >= 16,
+    clang = compiler_version >= 19,
     zig   = true,
 }
 
