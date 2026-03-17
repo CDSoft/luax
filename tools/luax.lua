@@ -44,6 +44,7 @@ package.path = table.concat({
 
     "ext/lua/argparse/?.lua",
     "ext/lua/cbor/?.lua",
+    "ext/lua/toml/?.lua",
 }, ";")
 
 -- Install LuaX hooks

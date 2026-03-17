@@ -41,16 +41,26 @@ package.modpath      -- { module_name = module_path }
 ```
 > table containing the names of the loaded packages and their actual paths.
 >
-> `package.modpath` contains the names of the packages loaded by `require`, `dofile`, `loadfile` and `import`.
+> `package.modpath` contains the names of the packages loaded by `require`, `dofile`, `loadfile`, `import`
+> and `toml.parse`.
+
+```lua
+package.track(name, [path])     -- package.modpath[name] = path or name
+```
+> add `name` to `package.modpath`.
 @@@]]
 
 package.modpath = F{}
+
+function package.track(name, path)
+    package.modpath[name] = path or name
+end
 
 local function wrap_searcher(searcher)
     return function(modname)
         local loader, path = searcher(modname)
         if type(loader) == "function" then
-            package.modpath[modname] = path
+            package.track(modname, path)
         end
         return loader, path
     end
@@ -64,7 +74,7 @@ end
 local function wrap(func)
     return function(filename, ...)
         if filename ~= nil then
-            package.modpath[filename] = filename
+            package.track(filename)
         end
         return func(filename, ...)
     end
@@ -72,3 +82,14 @@ end
 
 dofile = wrap(dofile)
 loadfile = wrap(loadfile)
+
+local toml = require "toml"
+local _toml_parse = toml.parse
+
+---@diagnostic disable-next-line: duplicate-set-field
+toml.parse = function(filename, options)
+    if not options or not options.load_from_string then
+        package.track(filename)
+    end
+    return _toml_parse(filename, options)
+end

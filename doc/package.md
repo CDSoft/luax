@@ -11,4 +11,10 @@ package.modpath      -- { module_name = module_path }
 > paths.
 >
 > `package.modpath` contains the names of the packages loaded by
-> `require`, `dofile`, `loadfile` and `import`.
+> `require`, `dofile`, `loadfile`, `import` and `toml.parse`.
+
+``` lua
+package.track(name, [path])     -- package.modpath[name] = path or name
+```
+
+> add `name` to `package.modpath`.
