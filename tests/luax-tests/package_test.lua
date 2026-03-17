@@ -64,6 +64,7 @@ return function()
         socket_test     = "tests/luax-tests/socket_test.lua",
         sys_test        = "tests/luax-tests/sys_test.lua",
         tar_test        = "tests/luax-tests/tar_test.lua",
+        toml_test       = "tests/luax-tests/toml_test.lua",
         test            = "tests/luax-tests/test.lua",
         test_test       = "tests/luax-tests/test_test.lua",
         wget_test       = "tests/luax-tests/wget_test.lua",

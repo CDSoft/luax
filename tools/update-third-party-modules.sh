@@ -41,6 +41,7 @@ update_all()
     update_linenoise    master
     #update_json         master
     update_dkjson       2.8
+    update_toml         1.0.0
 }
 
 found()
@@ -450,6 +451,23 @@ index 7a86724..076f679 100644
            local k = order[i]
 EOF
     rm -f ext/lua/json/json.lua.orig
+}
+
+update_toml()
+{
+    local TOML_REPO=FourierTransformer/tinytoml
+    local TOML_VERSION="$1"
+    local TOML_ARCHIVE="toml-$TOML_VERSION.zip"
+    local TOML_URL="https://github.com/$TOML_REPO/archive/refs/tags/$TOML_VERSION.zip"
+
+    mkdir -p "$TMP"
+    download "$TOML_URL" "$TMP/$TOML_ARCHIVE"
+
+    rm -rf ext/lua/toml
+    mkdir -p ext/lua/toml
+    unzip -j "$TMP/$TOML_ARCHIVE" '*/tinytoml.lua' '*/LICENSE' -d ext/lua/toml
+
+    mv ext/lua/toml/tinytoml.lua ext/lua/toml/toml.lua
 }
 
 update_all

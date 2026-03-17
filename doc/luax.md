@@ -434,6 +434,7 @@ Some modules are heavily inspired by
 - [linenoise](linenoise.md): A small, portable GNU readline replacement
   with UTF-8 support
 - [json](json.md): JSON Module for Lua
+- [toml](toml.md): a pure Lua TOML parser
 
 ## Shared libraries
 
@@ -525,3 +526,6 @@ The script `lib/libluax.lua` can be reused in pure Lua programs:
 - **[CBOR](https://www.zash.se/lua-cbor.html)**: pure Lua implementation
   of the CBOR
   ([License](https://code.zash.se/lua-cbor/file/tip/COPYING))
+- **[tinytoml](https://github.com/FourierTransformer/tinytoml)**: a pure
+  Lua TOML parser ([MIT
+  License](https://github.com/FourierTransformer/tinytoml?tab=MIT-1-ov-file#readme))

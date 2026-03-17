@@ -28,7 +28,8 @@
     "ext/lua/argparse",
     "ext/lua/cbor",
     "ext/lua/json",
-    "ext/lua/serpent"
+    "ext/lua/serpent",
+    "ext/lua/toml"
   ],
   "workspace.checkThirdParty": false
 }
