@@ -54,7 +54,7 @@ return function()
 
     ]===]
 
-    eq(toml.parse(conf, {load_from_string=true}), {
+    local lua_table = {
         title = "TOML Example",
         owner = { dob="1979-05-27T07:32:00-08:00", name="Tom Preston-Werner" },
         database = {
@@ -67,6 +67,33 @@ return function()
             alpha = { ip="10.0.0.1", role="frontend" },
             beta = { ip="10.0.0.2", role="backend" },
         },
-    })
+    }
+
+    eq(toml.parse(conf, {load_from_string=true}), lua_table)
+
+    eq(toml.encode(lua_table), [===[
+title = "TOML Example"
+
+[database]
+data = [["delta", "phi"], [3.14]]
+enabled = true
+ports = [8000, 8001, 8002]
+
+[database.temp_targets]
+case = 72
+cpu = 79.5
+
+[owner]
+dob = 1979-05-27T07:32:00-08:00
+name = "Tom Preston-Werner"
+
+[servers.alpha]
+ip = "10.0.0.1"
+role = "frontend"
+
+[servers.beta]
+ip = "10.0.0.2"
+role = "backend"
+]===])
 
 end

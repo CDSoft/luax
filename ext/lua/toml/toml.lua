@@ -204,7 +204,7 @@ local function _error(sm, message, anchor)
    error(table.concat(error_message))
 end
 
-
+local F = require "F"
 local _unpack = unpack or table.unpack
 local _tointeger = math.tointeger or tonumber
 
@@ -1450,7 +1450,7 @@ local function encode_element(element, allow_multiline_strings)
          table.insert(encoded_string, "{")
 
          local remove_trailing_comma = false
-         for k, v in pairs(element) do
+         for k, v in F.pairs(element) do
             remove_trailing_comma = true
             table.insert(encoded_string, k)
             table.insert(encoded_string, " = ")
@@ -1487,7 +1487,7 @@ end
 
 local function encoder(input_table, encoded_string, depth, options)
    local printed_table_info = false
-   for k, v in pairs(input_table) do
+   for k, v in F.pairs(input_table) do
       if type(v) ~= "table" or (type(v) == "table" and is_array(v)) then
          if not printed_table_info and #depth > 0 then
             encode_depth(encoded_string, depth)
@@ -1513,7 +1513,7 @@ local function encoder(input_table, encoded_string, depth, options)
          table.insert(encoded_string, "\n")
       end
    end
-   for k, v in pairs(input_table) do
+   for k, v in F.pairs(input_table) do
       if type(v) == "table" and not is_array(v) then
          if next(v) == nil then
             table.insert(depth, escape_key(k))
