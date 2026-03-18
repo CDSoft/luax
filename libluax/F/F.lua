@@ -1466,10 +1466,8 @@ F_pairs = function(t, comp_lt)
     local i = 0
     return function()
         i = i+1
-        if i <= #ks then
-            local k = ks[i]
-            return k, t[k]
-        end
+        local k = ks[i]
+        return k, t[k]
     end
 end
 F.pairs = F_pairs
