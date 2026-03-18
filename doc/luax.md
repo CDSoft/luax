@@ -328,7 +328,8 @@ scripts:
     with "luax env".
     E.g.: eval $(luax env)
 
-    "luax env" can also generate shell variables from a script.
+    "luax env" can also generate shell variables from a script
+    or a TOML file.
     E.g.: eval $(luax env script.lua)
 
 When compiling scripts (options `-t` and `-o`), the scripts shall

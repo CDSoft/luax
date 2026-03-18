@@ -120,7 +120,8 @@ PATH, LUA_PATH and LUA_CPATH can be set in %{italic'.bashrc'} or %{italic'.zshrc
 with "%{italic'luax env'}".
 E.g.: %{italic'eval $(luax env)'}
 
-"%{italic'luax env"'} can also generate shell variables from a script.
+"%{italic'luax env"'} can also generate shell variables from a script
+or a TOML file.
 E.g.: %{italic'eval $(luax env script.lua)'}
 ]===]):trim()
 end
@@ -1133,6 +1134,11 @@ local function cmd_env()
 
     local function user_env(scripts)
         local import = require "import"
+        local toml = require "toml"
+        local function read(name)
+            if name:ext() == ".toml" then return assert(toml.parse(name)) end
+            return assert(import(name))
+        end
         local script = {}
         local function dump(t, p)
             if type(t) == "table" then
@@ -1151,7 +1157,7 @@ local function cmd_env()
                 script[#script+1] = F{"export ", p:upper(), '="', s, '";'}:str()
             end
         end
-        F.foreach(scripts, F.compose{dump, import})
+        F.foreach(scripts, F.compose{dump, read})
         return F.unlines(script)
     end
 
