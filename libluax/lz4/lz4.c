@@ -262,5 +262,7 @@ static const luaL_Reg lz4_module[] =
 LUAMOD_API int luaopen_lz4(lua_State *L)
 {
     luaL_newlib(L, lz4_module);
+    lua_pushstring(L, LZ4_versionString());
+    lua_setfield(L, -2, "version");
     return 1;
 }

@@ -181,6 +181,25 @@ int linenoise_history_load(lua_State *L)
     return 0;
 }
 
+/*@@@
+```lua
+linenoise.version()
+```
+returns the library version (if available).
+@@@*/
+
+static int linenoise_version(lua_State *L)
+{
+#ifdef HAS_LINENOISE
+    init_linenoise();
+    lua_pushstring(L, "Salvatore Sanfilippo");
+    return 1;
+#else
+    (void)L;
+    return 0;
+#endif
+}
+
 static const luaL_Reg linenoiselib[] =
 {
     {"read",        linenoise_read},
@@ -188,6 +207,7 @@ static const luaL_Reg linenoiselib[] =
     {"set_len",     linenoise_history_set_len},
     {"save",        linenoise_history_save},
     {"load",        linenoise_history_load},
+    {"version",     linenoise_version},
     {NULL, NULL}
 };
 

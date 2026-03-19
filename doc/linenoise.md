@@ -36,3 +36,9 @@ linenoise.load(filename)
 ```
 
 loads the history from the file `filename`.
+
+``` lua
+linenoise.version()
+```
+
+returns the library version (if available).

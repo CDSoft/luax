@@ -156,11 +156,62 @@ local function cmd_version()
     local luax_name, luax_version, luax_copyright = luax_config.copyright:match(copyright_pattern)
     local lua_name,  lua_version,  lua_copyright  = luax_config.lua_copyright:match(copyright_pattern)
 
-    local w_name = math.max(#luax_name, #lua_name)
-    local w_version = math.max(#luax_version, #lua_version)
+    local version = F{
+        {luax_name, luax_version, luax_copyright},
+        {lua_name,  lua_version,  lua_copyright},
+    }
 
-    io.stdout:write(F.str{luax_name:ljust(w_name), luax_version:ljust(w_version), luax_copyright}, "\n")
-    io.stdout:write(F.str{lua_name :ljust(w_name), lua_version :ljust(w_version), lua_copyright }, "\n")
+    local function add(soft)
+        if not soft then return end
+        version[#version+1] = {soft[1] or "", soft[2] or "", soft[3] or ""}
+    end
+
+    local function has(mod)
+        return pcall(require, mod)
+    end
+
+    local luaximpl = "Lua implementation"
+    local shellimpl = "Shell implementation"
+    local stub = "minimal Lua stub"
+    local ni = function(s) return {s, "", "not available"} end
+
+    add(pandoc and {"Pandoc", tostring(PANDOC_VERSION)})
+
+    add{}
+
+    package.path = "" -- avoid loading external modules
+
+    add({"mathx", "", require"mathx".version or luaximpl})
+    add({"imath", "", require"imath".version or luaximpl})
+    add({"qmath", "", require"qmath".version or luaximpl})
+    add({"complex", "", require"complex".version or luaximpl})
+
+    add({"argparse", require"argparse".version, ""})
+    add(has"lpeg" and require"lpeg".version:words() or ni"LPeg")
+
+    add({"serpent", require"serpent"._VERSION, require"serpent"._COPYRIGHT})
+    add({"Lua-CBOR", "", "Zash"})
+    add(require"json".version:words())
+    add(require"toml"._VERSION:words())
+
+    add({"lz4", require"lz4".version or "", require"lz4".version and "" or shellimpl})
+    add({"lzip", require"lzip".version or "", require"lzip".version and "" or shellimpl})
+
+    add(has"socket" and require"socket"._VERSION:words() or ni"LuaSocket")
+    add(has"ssl" and {require"ssl"._COPYRIGHT:lines():head():match("^(%S+)%s+(%S+)%s+%-%s+(.*)$")} or ni"LuaSec")
+
+    add({"readline", require"readline".version() or "", require"readline".version() and "" or stub})
+    add({"linenoise", "", require"linenoise".version() or stub})
+
+    local width = version:transpose():map(function(xs)
+        return F.map(tostring, xs):map(F.op.len):maximum()
+    end)
+    io.stdout:write(version
+        : map(function(v)
+            return F(v):mapi(function(i, s) return s:ljust(width[i]) end):str" ":rtrim()
+        end)
+        : unlines()
+    )
 
 end
 

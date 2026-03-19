@@ -71,6 +71,7 @@ typedef struct {
 } HIST_ENTRY;
 
 typedef const char *  *t_readline_name;
+typedef const char *  *t_library_version;
 typedef int           *t_history_base;
 typedef int           *t_history_length;
 typedef char *       (*t_readline)          (const char *);
@@ -83,6 +84,7 @@ typedef HIST_ENTRY * (*t_remove_history)    (int);
 typedef void *       (*t_free_history_entry)(HIST_ENTRY *);
 
 static t_readline_name      rl_readline_name      = NULL;
+static t_library_version    rl_library_version    = NULL;
 static t_history_base       rl_history_base       = NULL;
 static t_history_length     rl_history_length     = NULL;
 static t_readline           rl_readline           = NULL;
@@ -137,6 +139,8 @@ static void load_readline(void)
         dlclose(handle);
         return;
     }
+
+    rl_library_version    = (t_library_version)   dlsym(handle, "rl_library_version");
 
     rl_readline_name      = (t_readline_name)     dlsym(handle, "rl_readline_name");
 
@@ -303,6 +307,23 @@ static int readline_history_load(lua_State *L)
     return 0;
 }
 
+/*@@@
+```lua
+readline.version()
+```
+returns the library version (if available).
+@@@*/
+
+static int readline_version(lua_State *L)
+{
+    load_readline();
+    if (rl_library_version) {
+        lua_pushstring(L, *rl_library_version);
+        return 1;
+    }
+    return 0;
+}
+
 static const luaL_Reg readlinelib[] =
 {
     {"name",        readline_name},
@@ -311,6 +332,7 @@ static const luaL_Reg readlinelib[] =
     {"set_len",     readline_history_set_len},
     {"save",        readline_history_save},
     {"load",        readline_history_load},
+    {"version",     readline_version},
     {NULL, NULL}
 };
 

@@ -203,5 +203,7 @@ static const luaL_Reg lzip_module[] =
 LUAMOD_API int luaopen_lzip(lua_State *L)
 {
     luaL_newlib(L, lzip_module);
+    lua_pushstring(L, LZ_version());
+    lua_setfield(L, -2, "version");
     return 1;
 }
