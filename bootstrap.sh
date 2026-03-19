@@ -129,6 +129,7 @@ then
     echo "Compile $LUA"
     CFLAGS=(
         -pipe
+        -Os
     )
     LDFLAGS=(
         -lm
