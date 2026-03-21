@@ -4597,7 +4597,7 @@ do
 
 local interpolator_mt = {}
 
-function interpolator_mt.__mod(self, pattern)
+function interpolator_mt:__mod(pattern)
     assert(type(pattern)=="string" and #pattern>=3)
     return setmetatable({
         pattern = s_gsub(pattern, "^(.+)(.)(.)$", "%1(%%b%2%3)"),
@@ -4605,29 +4605,32 @@ function interpolator_mt.__mod(self, pattern)
     }, interpolator_mt)
 end
 
-function interpolator_mt.__call(self, s)
-    if type(s) == "string" then
-        return (s_gsub(s, self.pattern, function(x)
-            local y = ((assert(load("return "..s_sub(x, 2, -2), nil, "t", self.env)))())
-            if type(y) == "table" or type(y) == "userdata" then
-                y = tostring(y)
+local function chain(self, new_env)
+    return setmetatable({
+        pattern = self.pattern,
+        env = setmetatable({}, {
+            __index = function(_, k)
+                local v = new_env[k]
+                if v ~= nil then return v end
+                return self.env and self.env[k]
             end
-            return y
-        end))
-    end
-    if type(s) == "table" then
-        local new_env = s
-        return setmetatable({
-            pattern = self.pattern,
-            env = setmetatable({}, {
-                __index = function(_, k)
-                    local v = new_env[k]
-                    if v ~= nil then return v end
-                    return self.env and self.env[k]
-                end
-            })
-        }, interpolator_mt)
-    end
+        })
+    }, interpolator_mt)
+end
+
+local function interpolate(self, s)
+    return (s_gsub(s, self.pattern, function(x)
+        local y = ((assert(load("return "..s_sub(x, 2, -2), nil, "t", self.env)))())
+        if type(y) == "table" or type(y) == "userdata" then
+            y = tostring(y)
+        end
+        return y
+    end))
+end
+
+function interpolator_mt:__call(s)
+    if type(s) == "string" then return interpolate(self, s) end
+    if type(s) == "table" then return chain(self, s) end
     error "An interpolator expects a table or a string"
 end
 
