@@ -95,7 +95,7 @@ return function()
 
     eq({pcall(tomlx.decode, bad_conf)}, {
         false,
-        ".foo.baz.array[3]: foo.bar + baz:1: attempt to perform arithmetic on a table value (global 'baz')",
+        "foo.baz.array[3]: foo.bar + baz:1: attempt to perform arithmetic on a table value (global 'baz')",
     })
 
 end
