@@ -59,7 +59,7 @@ local function chain(env1, env2)
 end
 
 local function root_env(t, options)
-    return chain({__root=t}, options and options.env)
+    return chain({__root=t}, options and options.env or {})
 end
 
 local function join(path, k)
