@@ -47,9 +47,7 @@ local function pattern(options)
 end
 
 local function chain(env1, env2)
-    return setmetatable({
-        __up = env1
-    }, {
+    return setmetatable({}, {
         __index = function(_, k)
             local v = env2[k]
             if v ~= nil then return v end
@@ -58,8 +56,29 @@ local function chain(env1, env2)
     })
 end
 
+local function chain_and_uplink(env1, env2)
+    local env = chain(env1, env2)
+    env.__up = env1
+    return env
+end
+
+--[[@@@
+The default environment contains the global variables (`_G`)
+and some LuaX modules (`crypt`, `F`, `fs`, `sh`).
+@@@]]
+
+local default_env = chain({
+    crypt = require "crypt",
+    F = require "F",
+    fs = require "fs",
+    sh = require "sh",
+}, _G)
+
 local function root_env(t, options)
-    return chain({__root=t}, options and options.env or {})
+    local root = chain(default_env, {__root=t})
+    local env = options and options.env
+    if env then return chain(root, env) end
+    return root
 end
 
 local function join(path, k)
@@ -70,7 +89,7 @@ end
 
 local function process(t, env, pat, path)
     local t2 = {}
-    env = chain(env, t)
+    env = chain_and_uplink(env, t)
     for k, v in pairs(t) do
         if type(v) == "table" then
             local path2 = join(path, k)

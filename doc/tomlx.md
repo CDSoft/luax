@@ -16,6 +16,9 @@ The evaluation environment contains two specific symbols:
 local tomlx = require "tomlx"
 ```
 
+The default environment contains the global variables (`_G`) and some
+LuaX modules (`crypt`, `F`, `fs`, `sh`).
+
 ``` lua
 tomlx.read(filename, [options])
 ```

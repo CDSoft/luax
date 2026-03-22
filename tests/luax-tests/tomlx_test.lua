@@ -21,6 +21,8 @@ https://codeberg.org/cdsoft/luax
 local test = require "test"
 local eq = test.eq
 
+local F = require "F"
+
 return function()
 
     local tomlx = require "tomlx"
@@ -49,6 +51,7 @@ return function()
         made_by = "=__up.owner.name"
         extended_by = "=extension.name"
         title = "=__root.title"
+        hash = "= crypt.hash(__root.title)"
 
         [servers]
 
@@ -59,6 +62,13 @@ return function()
         [servers.beta]
         ip = "10.0.0.2"
         role = "backend"
+
+        [env]
+        default = [
+            "= tostring(crypt)", "= tostring(F)", "= tostring(fs)", "= tostring(sh)",
+            "= tostring(math)", "= tostring(string)", "= tostring(table)",
+        ]
+        var_from_env = "=myvar"
 
     ]===]
 
@@ -76,14 +86,19 @@ return function()
             made_by = "Tom Preston-Werner",
             extended_by = "Christophe Delord",
             title = "TOML(x) Example",
+            hash = ("TOML(x) Example"):hash(),
         },
         servers = {
             alpha = { ip="10.0.0.1", role="frontend" },
             beta = { ip="10.0.0.2", role="backend" },
         },
+        env = {
+            default = F{"crypt", "F", "fs", "sh", "math", "string", "table"}:map(F.compose{tostring, require}),
+            var_from_env = 1337,
+        },
     }
 
-    eq(tomlx.decode(conf, {env=_G}), lua_table)
+    eq(tomlx.decode(conf, {env={myvar=1337}}), lua_table)
 
     local bad_conf = [[
     [foo]
