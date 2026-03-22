@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.14.6" "2026-03-20"
+version "9.14.7" "2026-03-22"
 
 local F = require "F"
 local fs = require "fs"
@@ -917,6 +917,7 @@ rt { luax="libluax/sh/sh.lua",                      lua="libluax/sh/sh.lua"     
 rt { luax="libluax/sys/targets.lua",                lua={"libluax/sys/sys.lua", "libluax/sys/targets.lua"}      }
 rt { luax="libluax/tar/tar.lua",                    lua="libluax/tar/tar.lua"                                   }
 rt { luax="libluax/term/term.lua",                  lua={"libluax/term/term.lua", "libluax/term/_term.lua"}     }
+rt { luax="libluax/tomlx/tomlx.lua",                lua="libluax/tomlx/tomlx.lua"                               }
 rt { luax="libluax/wget/wget.lua",                  lua="libluax/wget/wget.lua"                                 }
 
 rt { luax="libluax/mathx/math_hook.lua",            lua="libluax/mathx/math_hook.lua"                           }

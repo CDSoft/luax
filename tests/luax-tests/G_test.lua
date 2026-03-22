@@ -55,6 +55,7 @@ local luax_packages = F.flatten{
     "sys",
     "term",
     "toml",
+    "tomlx",
 
     -- lpeg is only found in LuaX
     is_luax and {"lpeg", "re"} or {},

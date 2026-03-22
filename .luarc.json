@@ -24,6 +24,7 @@
     "libluax/sys",
     "libluax/tar",
     "libluax/term",
+    "libluax/tomlx",
     "libluax/wget",
     "ext/lua/argparse",
     "ext/lua/cbor",
