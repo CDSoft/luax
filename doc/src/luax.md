@@ -380,7 +380,8 @@ Some modules are heavily inspired by
 - [readline](readline.md): Command line editing functions
 - [linenoise](linenoise.md): A small, portable GNU readline replacement with UTF-8 support
 - [json](json.md): JSON Module for Lua
-- [toml](toml.md): a pure Lua TOML parser
+- [toml](toml.md): a pure Lua TOML parser (tinytoml)
+- [tomlx](tomlx.md): a layer on top of toml with macros
 
 ## Shared libraries
 
