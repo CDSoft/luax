@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.14.10" "2026-03-23"
+version "9.14.11" "2026-03-24"
 
 local F = require "F"
 local fs = require "fs"
@@ -1293,6 +1293,7 @@ local libc = case(sys.os) {
 
 local test_options = {
     "BUILD=$builddir",
+    "TESTDIR=$test",
     optional(ssl)    { "USE_SSL=1" },
 }
 

@@ -22,6 +22,7 @@ local test = require "test"
 local eq = test.eq
 
 local F = require "F"
+local fs = require "fs"
 
 return function()
 
@@ -112,5 +113,24 @@ return function()
         false,
         "foo.baz.array[3]: foo.bar + baz:1: attempt to perform arithmetic on a table value (global 'baz')",
     })
+
+    local tmp = os.getenv "TESTDIR"
+    local schema = tmp/"schema.toml"
+    fs.write(schema, [===[
+        title = "str"
+        date = [ "option", "str" ]
+    ]===])
+    local f1 = tmp/"f1.toml"
+    fs.write(f1, [===[
+        title = "tomlx"
+    ]===])
+    local f2 = tmp/"f2.toml"
+    fs.write(f2, [===[
+        titre = "tomlx"
+        date = "=year"
+    ]===])
+    local options = { env={year=2026} }
+    eq({tomlx.validate(schema, f1, options)}, {true, {}})
+    eq({tomlx.validate(schema, f2, options)}, {false, {"titre: unexpected field", "date: string expected", "title: mandatory field missing"}})
 
 end

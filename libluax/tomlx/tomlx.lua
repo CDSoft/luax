@@ -110,7 +110,6 @@ local function process(t, env, pat, path)
 end
 
 local function input_options(options, load_from_string)
-    options = options or {}
     return F.patch(options or {}, {load_from_string=load_from_string})
 end
 
@@ -167,6 +166,20 @@ tomlx.write(filename, t, [options])
 @@@]]
 function tomlx.write(filename, t, options)
     fs.write(filename, toml.encode(t, options))
+end
+
+--[[@@@
+```lua
+tomlx.validate(schema, filename, [options])
+```
+> returns `true` if `filename` is validated by `schema`. Otherwise it returns `false`
+> and a list of failures.
+>
+> The `schema` file is a TOML file used to validate the TOML file `filename`.
+> Both files are read with `tomlx.read` and the corresponding tables are validated with `F.validate`.
+@@@]]
+function tomlx.validate(schema, filename, options)
+    return F.validate(tomlx.read(schema, options), tomlx.read(filename, options), options)
 end
 
 return tomlx

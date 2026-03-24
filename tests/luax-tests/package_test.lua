@@ -75,6 +75,11 @@ return function()
     -- modules imported by the `import` function
     modpath["tests/luax-tests/to_be_imported-1.lua"] = "tests/luax-tests/to_be_imported-1.lua"
     modpath["tests/luax-tests/to_be_imported-2.lua"] = "tests/luax-tests/to_be_imported-2.lua"
+    -- files read by the tomlx tests
+    local tmp = os.getenv "TESTDIR"
+    modpath[tmp/"f1.toml"] = tmp/"f1.toml"
+    modpath[tmp/"f2.toml"] = tmp/"f2.toml"
+    modpath[tmp/"schema.toml"] = tmp/"schema.toml"
 
     eq(package.modpath, F.merge{modpath, {}})
     require "test_lib/foo"
