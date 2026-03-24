@@ -4681,6 +4681,157 @@ function F.shuffle(xs, prng)
 end
 mt.__index.shuffle = F.shuffle
 
+--[[------------------------------------------------------------------------@@@
+## Schema-based table validation
+
+This function validates the content of a table agains a schema.
+
+A schema is a Lua table with the same structure that the input tables,
+the values being replaced with values of the expected type.
+
+Expected type       Specification                                                       Exemple
+------------------- ------------------------------------------------------------------- -------------------
+Boolean             any boolean                                                         `true`
+Number              any number                                                          `0`
+String              any string                                                          `"str"`
+Array               a table with one element (type of the array items)                  `{ "str" }`
+Structure           a table with keys (names) and values (types)                        `{ x=0, y=0 }`
+Enumerated type     a list with the `"enum"` keyword and the list of values             `{ "enum", "on", "off" }`
+Interval            a list with the `"range"` keyword and the min and max values        `{ "range", -10, 10 }`
+Union               a list with the `"union"` keyword and the list of accepted types    `{ "union", 0, "str" }`
+Option              a list with the `"option"` keyword and the optional type            `{ "option", "str" }`
+Any value           a list with the `"any"` keyword                                     `"any"`
+
+The optional types can be combined with other types. E.g.: `{ "option", "range", -10, 10 }`.
+
+@@@]]
+
+--[[@@@
+```lua
+F.validate(schema, input, [options])
+```
+returns `true` if `input` is validated by `schema`. Otherwise it returns `false`
+and a list of failures.
+@@@]]
+
+function F.validate(schema, input, options)
+
+    options = options or {}
+    local strict = options.strict == nil and true or options.strict
+
+    local function mkpath(path, k)
+        if type(k) == "string" and k:match "^[%w_]+$" then
+            return (path and (path..".") or "")..k
+        end
+        k = ("[%q]"):format(k)
+        return (path or "")..k
+    end
+
+    local function q(x)
+        return ("%q"):format(x)
+    end
+
+    local function walk(t, v, path, errs)
+
+        -- detect missing fields (if not optional)
+        if v == nil then
+            if type(t) ~= "table" or t[1] ~= "option" then
+                errs[#errs+1] = ("%s: mandatory field missing"):format(path)
+            end
+            return
+        end
+
+        if type(t) == "table" and t[1] == "option" then
+            t = F.tail(t)
+            if #t == 1 then t = t[1] end ---@diagnostic disable-line: need-check-nil
+        end
+
+        -- check atomic types (booleans, numbers and strings)
+        if type(t) ~= "table" then
+            if type(v) ~= type(t) then
+                errs[#errs+1] = ("%s: %s expected"):format(path, type(t))
+            end
+            return
+        end
+
+        -- check any type
+        if t[1] == "any" then
+            return
+        end
+
+        -- check ranges
+        if t[1] == "range" then
+            local vmin, vmax = t[2], t[3]
+            if type(vmin) ~= type(vmax) then
+                errs[#errs+1] = ("%s: type mismatch in the range specification [%s, %s]"):format(path, type(vmin), type(vmax))
+            elseif type(v) ~= type(vmin) then
+                errs[#errs+1] = ("%s: %s expected"):format(path, type(vmin))
+            elseif v < vmin then
+                errs[#errs+1] = ("%s: shall be greater than or equal to %s"):format(path, vmin)
+            elseif v > vmax then
+                errs[#errs+1] = ("%s: shall be less than or equal to %s"):format(path, vmax)
+            end
+            return
+        end
+
+        -- check enumerations
+        if t[1] == "enum" then
+            local vs = assert(F.tail(t))
+            for _, vi in pairs(vs) do
+                if v == vi then return end
+            end
+            errs[#errs+1] = ("%s: shall be %s"):format(path, F.str(F.map(q, vs), ", ", " or "))
+            return
+        end
+
+        -- check unions
+        if t[1] == "union" then
+            local ts = assert(F.tail(t))
+            for _, ti in pairs(ts) do
+                local l_errs = {}
+                walk(ti, v, path, l_errs)
+                if #l_errs == 0 then return end
+            end
+            errs[#errs+1] = ("%s: shall be %s"):format(path, F.show(ts))
+            return
+        end
+
+        -- check array
+        if t[1] ~= nil then
+            if type(v) ~= "table" then
+                errs[#errs+1] = ("%s: shall be an array"):format(path)
+                return
+            end
+            for i, vi in ipairs(v) do
+                walk(t[1], vi, mkpath(path, i), errs)
+            end
+            return
+        end
+
+        -- check table
+        if type(v) ~= "table" then
+            errs[#errs+1] = ("%s: shall be a table"):format(path)
+            return
+        end
+        if strict then
+            for ki in F.pairs(v) do
+                if rawget(t, ki) == nil then
+                    errs[#errs+1] = ("%s: unexpected field"):format(mkpath(path, ki))
+                end
+            end
+        end
+        for ki, ti in F.pairs(t) do
+            walk(ti, rawget(v, ki), mkpath(path, ki), errs)
+        end
+
+    end
+
+    local errs = {}
+    walk(schema, input, nil, errs)
+    return #errs == 0, errs
+
+end
+
 -------------------------------------------------------------------------------
 -- module
 -------------------------------------------------------------------------------

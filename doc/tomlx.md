@@ -57,3 +57,14 @@ tomlx.write(filename, t, [options])
 > it the file `filename`. Options are optional and described in the
 > [tinytoml
 > documentation](https://github.com/FourierTransformer/tinytoml?tab=readme-ov-file#encoding-toml).
+
+``` lua
+tomlx.validate(schema, filename, [options])
+```
+
+> returns `true` if `filename` is validated by `schema`. Otherwise it
+> returns `false` and a list of failures.
+>
+> The `schema` file is a TOML file used to validate the TOML file
+> `filename`. Both files are read with `tomlx.read` and the
+> corresponding tables are validated with `F.validate`.

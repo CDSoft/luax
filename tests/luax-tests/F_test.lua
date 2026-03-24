@@ -1927,6 +1927,127 @@ local function random_access()
 end
 
 ---------------------------------------------------------------------
+-- Table validation
+---------------------------------------------------------------------
+
+do
+
+    local schema = {
+        bool = true,
+        num = 0,
+        str = "str",
+        array = { "str" },
+        struct = {
+            bool = true,
+            num = 0,
+            str = "str",
+            array = { 0 },
+            enum = { "enum", 10, 100, 1000 },
+            range = { "range", "a", "z" },
+            union = { "union", "str", { "range", 2, 4 }, true },
+            option = { "option", "range", 10, 20 },
+            any = { "any" },
+        },
+        enum = { "enum", "yes", "no", "maybe" },
+        range = { "range", 3, 8 },
+        union = { "union", "str", { x=1, y=2 } },
+        option = { "option", "str" },
+        any = { "any" },
+    }
+
+    local t = {
+        bool = false,
+        num = 42.5,
+        str = "a",
+        array = { "1", "2", "3" },
+        struct = {
+            bool = false,
+            num = 422,
+            str = "hi",
+            array = { 8, 9, 10 },
+            enum = 10,
+            range = "a",
+            union = "three",
+            option = 10,
+            any = function() end,
+        },
+        enum = "yes",
+        range = 3,
+        union = "yo",
+        option = "hello",
+        any = function() end,
+    }
+
+    -- Test valid tables
+
+                                eq({F.validate(schema, t)}, {true, {}})
+    t.bool = true               eq({F.validate(schema, t)}, {true, {}})
+    t.struct.bool = true        eq({F.validate(schema, t)}, {true, {}})
+    t.enum = "no"               eq({F.validate(schema, t)}, {true, {}})
+    t.enum = "maybe"            eq({F.validate(schema, t)}, {true, {}})
+    t.struct.enum = 100         eq({F.validate(schema, t)}, {true, {}})
+    t.struct.enum = 1000        eq({F.validate(schema, t)}, {true, {}})
+    t.struct.range = "b"        eq({F.validate(schema, t)}, {true, {}})
+    t.struct.range = "y"        eq({F.validate(schema, t)}, {true, {}})
+    t.struct.range = "z"        eq({F.validate(schema, t)}, {true, {}})
+    t.struct.union = 4          eq({F.validate(schema, t)}, {true, {}})
+    t.struct.union = "four"     eq({F.validate(schema, t)}, {true, {}})
+    t.struct.union = true       eq({F.validate(schema, t)}, {true, {}})
+    t.struct.union = false      eq({F.validate(schema, t)}, {true, {}})
+    t.struct.option = 20        eq({F.validate(schema, t)}, {true, {}})
+    t.struct.option = nil       eq({F.validate(schema, t)}, {true, {}})
+    t.range = 8                 eq({F.validate(schema, t)}, {true, {}})
+    t.union = {x=12, y=13}      eq({F.validate(schema, t)}, {true, {}})
+    t.option = nil              eq({F.validate(schema, t)}, {true, {}})
+
+    -- Test invalid tables
+    local e
+    e = F.patch(t, {bool=F.Nil})                    eq({F.validate(schema, e)}, {false, {"bool: mandatory field missing"}})
+    e = F.patch(t, {bool=""})                       eq({F.validate(schema, e)}, {false, {"bool: boolean expected"}})
+    e = F.patch(t, {num=F.Nil})                     eq({F.validate(schema, e)}, {false, {"num: mandatory field missing"}})
+    e = F.patch(t, {num=""})                        eq({F.validate(schema, e)}, {false, {"num: number expected"}})
+    e = F.patch(t, {str=F.Nil})                     eq({F.validate(schema, e)}, {false, {"str: mandatory field missing"}})
+    e = F.patch(t, {str=42})                        eq({F.validate(schema, e)}, {false, {"str: string expected"}})
+    e = F.patch(t, {array=F.Nil})                   eq({F.validate(schema, e)}, {false, {"array: mandatory field missing"}})
+    e = F.patch(t, {array=42})                      eq({F.validate(schema, e)}, {false, {"array: shall be an array"}})
+    e = F.patch(t, {array={"1", 2, "3"}})           eq({F.validate(schema, e)}, {false, {"array[2]: string expected"}})
+    e = F.patch(t, {struct=F.Nil})                  eq({F.validate(schema, e)}, {false, {"struct: mandatory field missing"}})
+    e = F.patch(t, {struct=42})                     eq({F.validate(schema, e)}, {false, {"struct: shall be a table"}})
+    e = F.patch(t, {struct={bool=F.Nil}})           eq({F.validate(schema, e)}, {false, {"struct.bool: mandatory field missing"}})
+    e = F.patch(t, {struct={bool=""}})              eq({F.validate(schema, e)}, {false, {"struct.bool: boolean expected"}})
+    e = F.patch(t, {struct={num=F.Nil}})            eq({F.validate(schema, e)}, {false, {"struct.num: mandatory field missing"}})
+    e = F.patch(t, {struct={num=""}})               eq({F.validate(schema, e)}, {false, {"struct.num: number expected"}})
+    e = F.patch(t, {struct={str=F.Nil}})            eq({F.validate(schema, e)}, {false, {"struct.str: mandatory field missing"}})
+    e = F.patch(t, {struct={str=42}})               eq({F.validate(schema, e)}, {false, {"struct.str: string expected"}})
+    e = F.patch(t, {struct={array=F.Nil}})          eq({F.validate(schema, e)}, {false, {"struct.array: mandatory field missing"}})
+    e = F.patch(t, {struct={array={8, "9", 10 }}})  eq({F.validate(schema, e)}, {false, {"struct.array[2]: number expected"}})
+    e = F.patch(t, {struct={enum=F.Nil}})           eq({F.validate(schema, e)}, {false, {"struct.enum: mandatory field missing"}})
+    e = F.patch(t, {struct={enum=11}})              eq({F.validate(schema, e)}, {false, {"struct.enum: shall be 10, 100 or 1000"}})
+    e = F.patch(t, {struct={range=F.Nil}})          eq({F.validate(schema, e)}, {false, {"struct.range: mandatory field missing"}})
+    e = F.patch(t, {struct={range="`"}})            eq({F.validate(schema, e)}, {false, {"struct.range: shall be greater than or equal to a"}})
+    e = F.patch(t, {struct={range="{"}})            eq({F.validate(schema, e)}, {false, {"struct.range: shall be less than or equal to z"}})
+    e = F.patch(t, {struct={union=F.Nil}})          eq({F.validate(schema, e)}, {false, {"struct.union: mandatory field missing"}})
+    e = F.patch(t, {struct={union=1}})              eq({F.validate(schema, e)}, {false, {"struct.union: shall be {\"str\", {\"range\", 2, 4}, true}"}})
+    e = F.patch(t, {struct={union=5}})              eq({F.validate(schema, e)}, {false, {"struct.union: shall be {\"str\", {\"range\", 2, 4}, true}"}})
+    e = F.patch(t, {struct={union={5}}})            eq({F.validate(schema, e)}, {false, {"struct.union: shall be {\"str\", {\"range\", 2, 4}, true}"}})
+    e = F.patch(t, {struct={option=9}})             eq({F.validate(schema, e)}, {false, {"struct.option: shall be greater than or equal to 10"}})
+    e = F.patch(t, {struct={option=21}})            eq({F.validate(schema, e)}, {false, {"struct.option: shall be less than or equal to 20"}})
+    e = F.patch(t, {struct={option=""}})            eq({F.validate(schema, e)}, {false, {"struct.option: number expected"}})
+    e = F.patch(t, {struct={any=F.Nil}})            eq({F.validate(schema, e)}, {false, {"struct.any: mandatory field missing"}})
+    e = F.patch(t, {enum=F.Nil})                    eq({F.validate(schema, e)}, {false, {"enum: mandatory field missing"}})
+    e = F.patch(t, {enum="why"})                    eq({F.validate(schema, e)}, {false, {"enum: shall be \"yes\", \"no\" or \"maybe\""}})
+    e = F.patch(t, {range=F.Nil})                   eq({F.validate(schema, e)}, {false, {"range: mandatory field missing"}})
+    e = F.patch(t, {range=2})                       eq({F.validate(schema, e)}, {false, {"range: shall be greater than or equal to 3"}})
+    e = F.patch(t, {range=9})                       eq({F.validate(schema, e)}, {false, {"range: shall be less than or equal to 8"}})
+    e = F.patch(t, {range="4"})                     eq({F.validate(schema, e)}, {false, {"range: number expected"}})
+    e = F.patch(t, {union=F.Nil})                   eq({F.validate(schema, e)}, {false, {"union: mandatory field missing"}})
+    e = F.patch(t, {union=4})                       eq({F.validate(schema, e)}, {false, {"union: shall be {\"str\", {x=1, y=2}}"}})
+    e = F.patch(t, {union={y="1"}})                 eq({F.validate(schema, e)}, {false, {"union: shall be {\"str\", {x=1, y=2}}"}})
+    e = F.patch(t, {option={y="1"}})                eq({F.validate(schema, e)}, {false, {"option: string expected"}})
+    e = F.patch(t, {any=F.Nil})                     eq({F.validate(schema, e)}, {false, {"any: mandatory field missing"}})
+end
+
+---------------------------------------------------------------------
 -- run all tests
 ---------------------------------------------------------------------
 
