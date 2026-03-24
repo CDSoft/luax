@@ -1185,9 +1185,9 @@ local function cmd_env()
 
     local function user_env(scripts)
         local import = require "import"
-        local toml = require "toml"
+        local tomlx = require "tomlx"
         local function read(name)
-            if name:ext() == ".toml" then return assert(toml.parse(name)) end
+            if name:ext() == ".toml" then return assert(tomlx.read(name)) end
             return assert(import(name))
         end
         local script = {}
