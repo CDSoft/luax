@@ -177,6 +177,8 @@ tomlx.validate(schema, filename, [options])
 >
 > The `schema` file is a TOML file used to validate the TOML file `filename`.
 > Both files are read with `tomlx.read` and the corresponding tables are validated with `F.validate`.
+>
+> Options (the `option` table) contains options for `tomlx.read` and `F.validate`.
 @@@]]
 function tomlx.validate(schema, filename, options)
     return F.validate(tomlx.read(schema, options), tomlx.read(filename, options), options)
