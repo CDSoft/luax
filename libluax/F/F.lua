@@ -4712,6 +4712,10 @@ F.validate(schema, input, [options])
 ```
 returns `true` if `input` is validated by `schema`. Otherwise it returns `false`
 and a list of failures.
+
+Options             Description                                             Default value
+------------------- ------------------------------------------------------- -------------------------
+`options.strict`    Strict validation (unspecified fields are not allowed)  `true`
 @@@]]
 
 function F.validate(schema, input, options)
