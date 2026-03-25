@@ -4700,7 +4700,7 @@ Enumerated type     a list with the `"enum"` keyword and the list of values     
 Interval            a list with the `"range"` keyword and the min and max values        `{ "range", -10, 10 }`
 Union               a list with the `"union"` keyword and the list of accepted types    `{ "union", 0, "str" }`
 Option              a list with the `"option"` keyword and the optional type            `{ "option", "str" }`
-Any value           a list with the `"any"` keyword                                     `"any"`
+Any value           a list with the `"any"` keyword                                     `{ "any" }`
 
 The optional types can be combined with other types. E.g.: `{ "option", "range", -10, 10 }`.
 
@@ -4736,7 +4736,7 @@ function F.validate(schema, input, options)
         -- detect missing fields (if not optional)
         if v == nil then
             if type(t) ~= "table" or t[1] ~= "option" then
-                errs[#errs+1] = ("%s: mandatory field missing"):format(path)
+                errs[#errs+1] = ("%s: missing field"):format(path)
             end
             return
         end
@@ -4763,13 +4763,11 @@ function F.validate(schema, input, options)
         if t[1] == "range" then
             local vmin, vmax = t[2], t[3]
             if type(vmin) ~= type(vmax) then
-                errs[#errs+1] = ("%s: type mismatch in the range specification [%s, %s]"):format(path, type(vmin), type(vmax))
+                errs[#errs+1] = ("%s: range type mismatch [%s, %s]"):format(path, type(vmin), type(vmax))
             elseif type(v) ~= type(vmin) then
                 errs[#errs+1] = ("%s: %s expected"):format(path, type(vmin))
-            elseif v < vmin then
-                errs[#errs+1] = ("%s: shall be greater than or equal to %s"):format(path, vmin)
-            elseif v > vmax then
-                errs[#errs+1] = ("%s: shall be less than or equal to %s"):format(path, vmax)
+            elseif v < vmin or v > vmax then
+                errs[#errs+1] = ("%s: shall be in [%q, %q]"):format(path, vmin, vmax)
             end
             return
         end

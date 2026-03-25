@@ -1957,7 +1957,7 @@ the values being replaced with values of the expected type.
 | Interval | a list with the `"range"` keyword and the min and max values | `{ "range", -10, 10 }` |
 | Union | a list with the `"union"` keyword and the list of accepted types | `{ "union", 0, "str" }` |
 | Option | a list with the `"option"` keyword and the optional type | `{ "option", "str" }` |
-| Any value | a list with the `"any"` keyword | `"any"` |
+| Any value | a list with the `"any"` keyword | `{ "any" }` |
 
 The optional types can be combined with other types. E.g.:
 `{ "option", "range", -10, 10 }`.

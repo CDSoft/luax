@@ -131,6 +131,6 @@ return function()
     ]===])
     local options = { env={year=2026} }
     eq({tomlx.validate(schema, f1, options)}, {true, {}})
-    eq({tomlx.validate(schema, f2, options)}, {false, {"titre: unexpected field", "date: string expected", "title: mandatory field missing"}})
+    eq({tomlx.validate(schema, f2, options)}, {false, {"titre: unexpected field", "date: string expected", "title: missing field"}})
 
 end
