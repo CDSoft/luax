@@ -32,6 +32,8 @@ local term = require "term"
 ```
 @@@]]
 
+--@LIB
+
 local term = require "_term"
 
 local ESC <const> = '\027'

@@ -37,6 +37,8 @@ local tomlx = require "tomlx"
 ```
 @@@]]
 
+--@LIB
+
 local tomlx = {}
 
 local F = require "F"

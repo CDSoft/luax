@@ -20,6 +20,8 @@ https://codeberg.org/cdsoft/luax
 
 -- Pure Lua implementation of term.c
 
+--@LIB
+
 local term = {}
 
 local sh = require "sh"
