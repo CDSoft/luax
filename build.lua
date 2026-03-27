@@ -1629,6 +1629,7 @@ local gfm = pipe {
         : add "flags" { ypp_config_params },
     build.pandoc_gfm : new "pandoc-gfm-luax"
         : add "flags" {
+            "--to=gfm+emoji+definition_lists",
             "--reference-location=section",
             "--lua-filter doc/src/fix_links.lua",
         }
