@@ -2045,6 +2045,18 @@ do
     e = F.patch(t, {union={y="1"}})                 eq({F.validate(schema, e)}, {false, {"union: shall be {\"str\", {x=1, y=2}}"}})
     e = F.patch(t, {option={y="1"}})                eq({F.validate(schema, e)}, {false, {"option: string expected"}})
     e = F.patch(t, {any=F.Nil})                     eq({F.validate(schema, e)}, {false, {"any: missing field"}})
+
+    -- return type (ok)
+    local ok1, errs1 = F.validate(schema, t)
+    eq(ok1, true)
+    eq(errs1, {})
+    eq(getmetatable(errs1), getmetatable(F{}))
+
+    -- return type (ko)
+    local ok2, errs2 = F.validate(schema, F.patch(t, {str=666}))
+    eq(ok2, false)
+    eq(errs2, {"str: string expected"})
+    eq(getmetatable(errs2), getmetatable(F{}))
 end
 
 ---------------------------------------------------------------------

@@ -4828,7 +4828,7 @@ function F.validate(schema, input, options)
 
     end
 
-    local errs = {}
+    local errs = F{}
     walk(schema, input, nil, errs)
     return #errs == 0, errs
 
