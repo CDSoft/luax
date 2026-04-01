@@ -349,7 +349,7 @@ The `luax` runtime comes with a few builtin modules.
 
 Some modules are heavily inspired by
 [BonaLuna](https://codeberg.org/cdsoft/bonaluna) and
-[lapp](https://codeberg.org/cdsoft/lapp).
+[lapp](https://github.com/CDSoft/lapp).
 
 - [LuaX interactive usage](repl.md): improved Lua REPL
 - [package](package.md): modified Lua package `package`
