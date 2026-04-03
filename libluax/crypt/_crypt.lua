@@ -230,13 +230,13 @@ function crypt.unbase64(s)
     local tokens = {}
     for i = 1, #s, 4 do
         local a, b, c, d = byte(s, i, i+3)
-        local u32 = (base64_rev[a] << (3*6))
+        local u24 = (base64_rev[a] << (3*6))
                   | (base64_rev[b] << (2*6))
                   | (base64_rev[c] << (1*6))
                   | (base64_rev[d] << (0*6))
-        tokens[#tokens+1] = char((u32 >> (2*8)) & 0xFF)
-        tokens[#tokens+1] = char((u32 >> (1*8)) & 0xFF)
-        tokens[#tokens+1] = char((u32 >> (0*8)) & 0xFF)
+        tokens[#tokens+1] = char((u24 >> (2*8)) & 0xFF)
+        tokens[#tokens+1] = char((u24 >> (1*8)) & 0xFF)
+        tokens[#tokens+1] = char((u24 >> (0*8)) & 0xFF)
     end
     local y, z = byte(s, -2, -1)
     return concat(tokens, nil, 1, #tokens - (y==61 and 2 or z==61 and 1 or 0))

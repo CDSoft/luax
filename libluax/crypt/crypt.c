@@ -558,14 +558,14 @@ static void base64_decode(const char *rev, const unsigned char *b64, size_t n_in
     size_t i = 0;
     size_t j = 0;
     while (i + 3 < n_in) {
-        const uint32_t u32 = ((uint32_t)rev[b64[i+0]] << (3*6))
+        const uint32_t u24 = ((uint32_t)rev[b64[i+0]] << (3*6))
                            | ((uint32_t)rev[b64[i+1]] << (2*6))
                            | ((uint32_t)rev[b64[i+2]] << (1*6))
                            | ((uint32_t)rev[b64[i+3]] << (0*6))
                            ;
-        buf[j++] = (char)((u32 >> (2*8)) & 0xFF);
-        buf[j++] = (char)((u32 >> (1*8)) & 0xFF);
-        buf[j++] = (char)((u32 >> (0*8)) & 0xFF);
+        buf[j++] = (char)((u24 >> (2*8)) & 0xFF);
+        buf[j++] = (char)((u24 >> (1*8)) & 0xFF);
+        buf[j++] = (char)((u24 >> (0*8)) & 0xFF);
         i = i + 4;
     }
     if (n_in >= 1 && b64[n_in-1] == '=') j--;
