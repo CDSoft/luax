@@ -830,8 +830,8 @@ var "luax_config_h"   "$tmp/luax_config.h"
 var "luax_config_lua" "$tmp/luax_config.lua"
 
 local ypp = build.ypp : new "ypp-luax"
-    : set "cmd" "$lua tools/luax.lua tools/ypp.luax"
-    : add "implicit_in" "$lua tools/luax.lua tools/ypp.luax"
+    : set "cmd" "$lua tools/miniluax.lua tools/ypp.luax"
+    : add "implicit_in" "$lua tools/miniluax.lua tools/ypp.luax"
 
 local ypp_config = ypp : new "ypp-config"
     : add "flags" { build.ypp_vars(LUAX) }

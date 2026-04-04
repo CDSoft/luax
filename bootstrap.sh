@@ -146,7 +146,7 @@ fi
 # build.ninja
 ######################################################################
 
-BANG_CMD="$LUA tools/luax.lua tools/bang.luax"
+BANG_CMD="$LUA tools/miniluax.lua tools/bang.luax"
 BANG_ARGS=(
     -g "$BANG_CMD"
     -q
