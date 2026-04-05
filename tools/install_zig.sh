@@ -52,21 +52,18 @@ download()
 {
     local OUTPUT="$1"
     echo "Downloading $ZIG_ARCHIVE"
-    if ! found curl
-    then
+    if ! found curl; then
         echo "ERROR: curl not found"
         exit 1
     fi
-    if ! found minisign
-    then
+    if ! found minisign; then
         echo "ERROR: minisign not found"
         exit 1
     fi
     local MIRRORS
     MIRRORS=$(curl -s https://ziglang.org/download/community-mirrors.txt)
     mapfile -t MIRRORS < <(shuf -e "${MIRRORS[@]}")
-    for mirror in "${MIRRORS[@]}"
-    do
+    for mirror in "${MIRRORS[@]}"; do
         local ARCHIVE_URL="$mirror/$ZIG_ARCHIVE?source=$REQUEST_SOURCE"
         local SIGNATURE_URL="$mirror/$ZIG_ARCHIVE.minisig?source=$REQUEST_SOURCE"
         echo "Try mirror: $ARCHIVE_URL"
@@ -76,8 +73,7 @@ download()
         local TRUSTED_COMMENT=$(minisign -V -Q -m "$OUTPUT" -x "$OUTPUT.minisig" -P "$ZIG_KEY")
         #shellcheck disable=SC2155
         local FILE=$(echo "$TRUSTED_COMMENT" | tr "\t" "\n" | grep "^file:")
-        if [ "$FILE" != "file:$(basename "$OUTPUT")" ]
-        then
+        if [ "$FILE" != "file:$(basename "$OUTPUT")" ]; then
             echo "Zig signature verification failed, trying next mirror..."
             continue
         fi
@@ -87,8 +83,7 @@ download()
     exit 1
 }
 
-if ! [ -x "$ZIG" ]
-then
+if ! [ -x "$ZIG" ]; then
     mkdir -p "$(dirname "$ZIG")"
     download "$(dirname "$ZIG")/$ZIG_ARCHIVE"
 

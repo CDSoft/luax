@@ -32,8 +32,7 @@ BUILDDIR=.build
 OUTPUT=build.ninja
 ARGS=()
 
-while [ $# -gt 0 ]
-do
+while [ $# -gt 0 ]; do
     case "$1" in
         gcc)    COMPILER=gcc;           ARGS+=("$1") ;;
         clang)  COMPILER=clang;         ARGS+=("$1") ;;
@@ -79,8 +78,7 @@ OS="$(uname -s)"
 # Ninja
 ######################################################################
 
-if ! found ninja
-then
+if ! found ninja; then
     echo "Install ninja"
     case "$OS" in
         (Linux)
@@ -109,8 +107,7 @@ eval "ZIG=$ZIG_PATH/$ZIG_VERSION/zig" # use eval to expand "~"
 case "$COMPILER" in
     zig)
         COMPILER="$ZIG cc"
-        if ! [ -x "$ZIG" ]
-        then
+        if ! [ -x "$ZIG" ]; then
             tools/install_zig.sh "$ZIG_VERSION" "$ZIG" "$ZIG_KEY" "$REQUEST_SOURCE"
             [ -x "$ZIG" ] || error "zig can not be installed"
         fi
@@ -124,8 +121,7 @@ esac
 # Lua
 ######################################################################
 
-if ! [ -x "$LUA" ]
-then
+if ! [ -x "$LUA" ]; then
     echo "Compile $LUA"
     CFLAGS=(
         -pipe

@@ -54,8 +54,7 @@ download()
     local URL="$1"
     local OUTPUT="$2"
     echo "Downloading $URL"
-    if ! found curl
-    then
+    if ! found curl; then
         echo "ERROR: curl not found"
         exit 1
     fi
