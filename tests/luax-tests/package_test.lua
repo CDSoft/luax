@@ -79,6 +79,7 @@ return function()
     local tmp = os.getenv "TESTDIR"
     modpath[tmp/"f1.toml"] = tmp/"f1.toml"
     modpath[tmp/"f2.toml"] = tmp/"f2.toml"
+    modpath[tmp/"f3.toml"] = tmp/"f3.toml"
     modpath[tmp/"schema.toml"] = tmp/"schema.toml"
 
     eq(package.modpath, F.merge{modpath, {}})

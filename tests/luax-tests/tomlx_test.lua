@@ -102,11 +102,11 @@ return function()
     eq(tomlx.decode(conf, {env={myvar=1337}}), lua_table)
 
     local bad_conf = [[
-    [foo]
-    bar = 42
-    baz = {
-        array = [ 1, 2, "= foo.bar + baz" ],
-    }
+        [foo]
+        bar = 42
+        baz = {
+            array = [ 1, 2, "= foo.bar + baz" ],
+        }
     ]]
 
     eq({pcall(tomlx.decode, bad_conf)}, {
@@ -129,8 +129,18 @@ return function()
         titre = "tomlx"
         date = "=year"
     ]===])
+    local f3 = tmp/"f3.toml"
+    fs.write(f3, [===[
+        title = "tomlx"
+        other = "not specified"
+    ]===])
     local options = { env={year=2026} }
-    eq({tomlx.validate(schema, f1, options)}, {true, {}})
+
+    eq({tomlx.validate(schema, f1, options)}, {true,  {}})
     eq({tomlx.validate(schema, f2, options)}, {false, {"titre: unexpected field", "date: string expected", "title: missing field"}})
+
+    eq({tomlx.validate(schema, f3                )}, {false, {"other: unexpected field"}})
+    eq({tomlx.validate(schema, f3, {strict=true })}, {false, {"other: unexpected field"}})
+    eq({tomlx.validate(schema, f3, {strict=false})}, {true,  {}})
 
 end
