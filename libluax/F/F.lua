@@ -4721,7 +4721,7 @@ Options             Description                                             Defa
 function F.validate(schema, input, options)
 
     options = options or {}
-    local strict = options.strict == nil and true or options.strict
+    local strict = options.strict == nil or options.strict
 
     local function mkpath(path, k)
         if type(k) == "string" and k:match "^[%w_]+$" then
