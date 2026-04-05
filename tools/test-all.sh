@@ -46,16 +46,16 @@ check()
     )
 }
 
-check fast gcc ssl lto strip
-check fast clang ssl lto strip
-check fast zig ssl lto strip cross release
-
-check small gcc
-check small clang
-check small zig
+check debug san
 
 check debug gcc
 check debug clang
 check debug zig
 
-check debug san
+check small gcc
+check small clang
+check small zig
+
+check fast gcc ssl lto strip
+check fast clang ssl lto strip
+check fast zig ssl lto strip cross release

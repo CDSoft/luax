@@ -255,7 +255,7 @@ var "openssl_version" "3.6.1"
 var "openssl_archive" "openssl-${openssl_version}.tar.gz"
 var "openssl_url" "https://github.com/openssl/openssl/releases/download/openssl-${openssl_version}/${openssl_archive}"
 
-var "openssl_mode" ( case(mode) {
+var "openssl_mode" (case(mode) {
     fast  = "release",
     small = "release",
     debug = "debug",
