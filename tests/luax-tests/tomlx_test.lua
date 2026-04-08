@@ -143,4 +143,11 @@ return function()
     eq({tomlx.validate(schema, f3, {strict=true })}, {false, {"other: unexpected field"}})
     eq({tomlx.validate(schema, f3, {strict=false})}, {true,  {}})
 
+    local t_pattern = [===[
+        foo = 21
+        bar = "$foo*2"
+    ]===]
+
+    eq(tomlx.decode(t_pattern, {pattern = "^%$(.*)"}), {foo=21, bar=42})
+
 end

@@ -42,6 +42,7 @@ local tomlx = require "tomlx"
 local tomlx = {}
 
 local F = require "F"
+local fs = require "fs"
 local toml = require "toml"
 
 local function pattern(options)
@@ -127,7 +128,7 @@ tomlx.read(filename, [options])
 @@@]]
 function tomlx.read(filename, options)
     local t = toml.parse(filename, input_options(options, false))
-    return process(t, root_env(t, options), pattern(option))
+    return process(t, root_env(t, options), pattern(options))
 end
 
 --[[@@@
@@ -142,7 +143,7 @@ tomlx.decode(s, [options])
 @@@]]
 function tomlx.decode(s, options)
     local t = toml.parse(s, input_options(options, true))
-    return process(t, root_env(t, options), pattern(option))
+    return process(t, root_env(t, options), pattern(options))
 end
 
 --[[@@@
