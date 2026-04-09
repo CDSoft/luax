@@ -32,6 +32,9 @@ only reliable way to install the exact version you need.
 However, if you do require precompiled binaries, this page offers a
 selection for various platforms: <https://cdelord.fr/pub>.
 
+Note that the `bin` and `lib` directories contain prebuilt LuaX scripts
+to run LuaX scripts with a restricted self-contained runtime.
+
 ## Pricing
 
 LuaX is a free and open source software. But it has a cost. It takes

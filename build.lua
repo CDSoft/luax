@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.14.14" "2026-04-08"
+version "9.15" "2026-04-09"
 
 local F = require "F"
 local fs = require "fs"
@@ -1275,6 +1275,16 @@ acc(binaries) {
 }
 
 --===================================================================
+section "Prebuilt LuaX Lua implementation"
+---------------------------------------------------------------------
+
+local prebuilt = {
+    build.cp "bin/luax.lua"        "$bin/luax.lua",
+    build.cp "bin/luax-pandoc.lua" "$bin/luax-pandoc.lua",
+    build.cp "lib/libluax.lua"     "$lib/libluax.lua",
+}
+
+--===================================================================
 section "Tests"
 ---------------------------------------------------------------------
 
@@ -1733,7 +1743,7 @@ end)()
 section "Shorcuts"
 ---------------------------------------------------------------------
 
-acc(compile) {binaries, libraries, dist}
+acc(compile) {binaries, libraries, dist, prebuilt}
 
 install "bin" {binaries}
 install "lib" {libraries}
