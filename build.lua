@@ -18,7 +18,7 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 ]]
 
-version "9.15" "2026-04-09"
+version "9.15.1" "2026-04-11"
 
 local F = require "F"
 local fs = require "fs"
@@ -955,14 +955,10 @@ local luax_runtime_bundle = build "$tmp/lua_runtime_bundle.c" {
     },
 }
 
-local luax_app = {
-    "$luax_config_lua",
-    "$luax_build_config_lua",
-    ls "luax/**.lua",
-}
+local luax_app = ls "luax/**.lua"
 
 local luax_app_bundle = build "$tmp/lua_app_bundle.c" {
-    "bundle", luax_app,
+    "bundle", "$luax_config_lua", "$luax_build_config_lua", luax_app,
     args = {
         "-e app",
         "-t c",
@@ -1225,7 +1221,7 @@ section "$lib/libluax.lua"
 
 acc(libraries) {
     build "$lib/libluax.lua" {
-        "bundle", "$luax_config_lua", "$luax_build_config_lua", lua_runtime,
+        "bundle", "$luax_config_lua", lua_runtime,
         args = {
             "-e lib",
             "-t lua",
@@ -1258,7 +1254,7 @@ rule "luax-bundle" {
 
 acc(binaries) {
     build "$bin/luax.lua" {
-        "luax-bundle", luax_app,
+        "luax-bundle", "$luax_config_lua", luax_app,
         args = "-t lua",
     },
 }
@@ -1269,7 +1265,7 @@ section "$bin/luax-pandoc.lua"
 
 acc(binaries) {
     build "$bin/luax-pandoc.lua" {
-        "luax-bundle", luax_app,
+        "luax-bundle", "$luax_config_lua", luax_app,
         args = "-t pandoc",
     },
 }

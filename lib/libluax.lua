@@ -1,7 +1,7 @@
 #!/usr/bin/env -S lua --
-_LUAX_VERSION   = '9.15'
-_LUAX_DATE      = '2026-04-09'
-_LUAX_COPYRIGHT = 'LuaX 9.15  Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord'
+_LUAX_VERSION   = '9.15.1'
+_LUAX_DATE      = '2026-04-11'
+_LUAX_COPYRIGHT = 'LuaX 9.15.1  Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$luax:'..path)) end
@@ -30,48 +30,12 @@ https://codeberg.org/cdsoft/luax
 -- @LIB
 
 return {
-    version = "9.15",
-    date = "2026-04-09",
-    copyright = "LuaX 9.15  Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord",
+    version = "9.15.1",
+    date = "2026-04-11",
+    copyright = "LuaX 9.15.1  Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord",
     authors = "Christophe Delord",
     url = "codeberg.org/cdsoft/luax",
     lua_copyright = _LUA_COPYRIGHT or _VERSION,
-}
-]=])
-libs["luax_build_config"] = lib(".build/tmp/luax_build_config.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
--- LuaX build configuration
-
--- @LIB
-
-return {
-    compiler = {
-        name = "zig",
-        version = "0.15.2",
-        full_version = "zig version 0.15.2",
-    },
-    zig = { key="RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U", path="~/.local/opt/zig", path_win="~\\zig" },
-    mode = "small",
-    lto = false,
-    ssl = false,
 }
 ]=])
 libs["F"] = lib("libluax/F/F.lua", [==[--[[

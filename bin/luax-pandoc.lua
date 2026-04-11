@@ -1,7 +1,7 @@
 #!/usr/bin/env -S pandoc lua --
-_LUAX_VERSION   = '9.15'
-_LUAX_DATE      = '2026-04-09'
-_LUAX_COPYRIGHT = 'LuaX 9.15  Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord'
+_LUAX_VERSION   = '9.15.1'
+_LUAX_DATE      = '2026-04-11'
+_LUAX_COPYRIGHT = 'LuaX 9.15.1  Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord'
 local libs = {}
 table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$luax-pandoc:'..path)) end
@@ -14511,48 +14511,12 @@ https://codeberg.org/cdsoft/luax
 -- @LIB
 
 return {
-    version = "9.15",
-    date = "2026-04-09",
-    copyright = "LuaX 9.15  Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord",
+    version = "9.15.1",
+    date = "2026-04-11",
+    copyright = "LuaX 9.15.1  Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord",
     authors = "Christophe Delord",
     url = "codeberg.org/cdsoft/luax",
     lua_copyright = _LUA_COPYRIGHT or _VERSION,
-}
-]=])
-libs["luax_build_config"] = lib(".build/tmp/luax_build_config.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
--- LuaX build configuration
-
--- @LIB
-
-return {
-    compiler = {
-        name = "zig",
-        version = "0.15.2",
-        full_version = "zig version 0.15.2",
-    },
-    zig = { key="RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U", path="~/.local/opt/zig", path_win="~\\zig" },
-    mode = "small",
-    lto = false,
-    ssl = false,
 }
 ]=])
 libs["luax_assets"] = lib("luax/luax_assets.lua", [=[--/usr/bin/env luax
@@ -15828,7 +15792,11 @@ local function cmd_compile()
     local lz4 = require "lz4"
     local lzip = require "lzip"
     local assets = require "luax_assets"
-    local build_config = require "luax_build_config"
+    local has_compiler, build_config = pcall(require, "luax_build_config")
+
+    if not has_compiler then
+        print_error "Compilation not available"
+    end
 
     local magic = "LuaX"
 
@@ -15973,7 +15941,7 @@ local function cmd_compile()
         local exe = files[current_output]
 
         if not fs.write_bin(current_output, exe) then
-            print_error("Can not create "..current_output)
+            print_error("Can not create %s", current_output)
         end
 
         fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
@@ -16007,7 +15975,7 @@ local function cmd_compile()
         local headers = F(assets.headers or {})
         local libs = F(assets.targets and assets.targets[target_definition.name] or {})
         if headers:null() or libs:null() then
-            print_error("Compilation not available")
+            print_error "Compilation not available"
         end
         local function tmp_file(filename, content)
             local name, uncompress = uncompressed_name(filename)
@@ -16202,7 +16170,7 @@ local function cmd_compile()
         -- Extract precompiled LuaX loader
         local loader = assets.loaders and assets.loaders[target_definition.name]
         if not loader then
-            print_error("No "..target_definition.name.." loader")
+            print_error("No %s loader", target_definition.name)
         end
 
         -- Compile the input LuaX scripts
@@ -16222,7 +16190,7 @@ local function cmd_compile()
             return uncompress(bin)
         end)
         if #loader ~= 1 then
-            print_error("Invalid "..target_definition.name.." loader")
+            print_error("Invalid %s loader", target_definition.name)
         end
 
         local header = string.pack("<c4I4", magic, #files[current_output])
@@ -16235,7 +16203,7 @@ local function cmd_compile()
         local exe = loader[1] .. payload
 
         if not fs.write_bin(current_output, exe) then
-            print_error("Can not create "..current_output)
+            print_error("Can not create %s", current_output)
         end
 
         fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
@@ -16258,7 +16226,7 @@ local function cmd_compile()
         end)
 
         if not target_definition then
-            print_error(target..": unknown target")
+            print_error("%s: unknown target", target)
         end
 
         if use_cc then
