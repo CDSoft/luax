@@ -1,0 +1,1 @@
+[test/test-err-unknown_rule_var.lua:3] ERROR: rule doit: unknown variables: foo

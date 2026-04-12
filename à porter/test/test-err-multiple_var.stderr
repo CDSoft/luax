@@ -1,0 +1,1 @@
+[test/test-err-multiple_var.lua:6] ERROR: var foo: multiple definition

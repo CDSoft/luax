@@ -1,28 +1,66 @@
-<img src="doc/luax-banner.svg" style="width:100.0%" />
+#  LuaX-based Development Tools
 
-# Lua eXtended
+<img src="doc/luax/luax-banner.svg" style="width:100.0%" />
 
-`luax` is a Lua interpreter and REPL based on Lua 5.5, augmented with
-some useful packages. `luax` can also produce executable scripts from
-Lua scripts.
+[Lua]: https://www.lua.org
 
-`luax` runs on several platforms with no dependency:
+[LuaX]: doc/luax/README.md
+[Bang]: doc/bang/README.md
+[Ypp]: doc/ypp/README.md
+[Panda]: doc/panda/README.md
+[Upp]: https://codeberg.org/cdsoft/upp
+[Lsvg]: doc/lsvg/README.md
+[Ldc]: https://codeberg.org/cdsoft/ldc
+[Yreq]: https://codeberg.org/cdsoft/yreq
+[tagref]: https://codeberg.org/cdsoft/tagref
+[ninja-builder]: https://codeberg.org/cdsoft/ninja-builder
 
-- Linux (x86_64, aarch64)
-- MacOS (x86_64, aarch64)
-- Windows (x86_64, aarch64)
+[Lcc]: https://gitlab.com/CDSoft/lcc
 
-`luax` can compile scripts from and to any of these platforms. It can
-produce scripts that can run everywhere Lua or LuaX is installed as well
-as standalone executables containing the LuaX runtime and the Lua
-scripts. The target platform can be explicitly specified to
-cross-compile[^1] scripts for a supported platform.
+[FizzBuzz]: https://codeberg.org/cdsoft/FizzBuzz
 
-LuaX is available on Codeberg: <https://codeberg.org/cdsoft/luax>
+[Pandoc]: https://pandoc.org
+[Pandoc Lua filter]: https://pandoc.org/lua-filters.html
+[Pandoc Lua filters]: https://pandoc.org/lua-filters.html
+[Lua filter]: https://pandoc.org/lua-filters.html
+[Lua filters]: https://pandoc.org/lua-filters.html
+[Pandoc filters]: https://pandoc.org/filters.html
+[Typst]: https://typst.app
+[Ninja]: https://ninja-build.org
+[Zig]: https://ziglang.org
+[Zig cc]: https://ziglang.org
+[GraphViz]: https://graphviz.org
+[PlantUML]: https://plantuml.org
+[Asymptote]: https://asy.marris.fr
+[BlockDiag]: http://blockdiag.com
+[Mermaid]: https://mermaid.js.org
+[Octave]: https://octave.org
+[ditaa]: https://github.com/stathissideris/ditaa
 
-[^1]: `luax` uses `zig` to link the LuaX runtime with the Lua scripts.
-    The Lua scripts are actually compiled to Lua bytecode. `luax`
-    produces executables that do not require LuaX to be installed.
+# TL;DR
+
+The LuaX repository now contains some softwares that are closely coupled with LuaX:
+
+- [LuaX]: The LuaX interpreter / (cross) compiler itself.
+- [Bang]: The LuaX build system that enhances Nina with some powerful Lua scripting capabilities.
+- [Ypp]: A generic text preprocessor used to build the LuaX documentation.
+- [Panda]: A preprocessor that works on the document AST, implemented as a Pandoc Lua filter.
+- [lsvg]: An SVG image generator scriptable in LuaX used to generate the LuaX logo.
+
+## Installation
+
+``` sh
+$ git clone https://codeberg.org/cdsoft/luax
+$ cd luax
+$ ./build.lua
+$ ninja install  # install LuaX to ~/.local/bin and ~/.local/lib
+```
+
+or set `$PREFIX` to install LuaX to a custom directory (`$PREFIX/bin`, `$PREFIX/lib`):
+
+``` sh
+$ PREFIX=/path ninja install # install luax to /path/bin
+```
 
 ## Releases
 
@@ -48,491 +86,239 @@ invited to contribute financially to its development.
 
 Feel free to promote LuaX!
 
-## Requirements
-
-- [Ninja](https://ninja-build.org): to compile LuaX using the LuaX Ninja
-  file
-- a decent modern and programmer friendly OS…
-
-The bootstrap script will try to install `ninja` on some known Linux
-distributions (Debian, Fedora and Arch Linux) or on MacOS.
-
-## Compilation
-
-### Quick compilation
+# Introduction
 
-The script `bootstrap.sh` installs `ninja`, `zig` (if required) and
-compiles LuaX. `curl`, `minisign` and `tar` are needed to compile LuaX
-with `zig`.
+Lots of software projects involve various tools, free as well as commercial, to build the software, run the tests, produce the documentation, and more. These tools use different data formats and scripting languages, which makes the projects less scalable and harder to maintain.
 
-Once done, LuaX can be installed with `ninja install`. `git` must be
-installed to clone the LuaX repository but it can also be compiled from
-a source archive without git.
+Sharing data between configuration files, documentations, and test results can then be painful and counter-productive (the necessary glue is often more complex than the tools themselves).
 
-The installation path of Zig is defined in the `build.lua` file. On
-Linux or MacOS, the installation path is defined by the variable
-`ZIG_PATH` (`~` is replaced with `$HOME`). On Windows, the installation
-path is defined by the variable `ZIG_PATH_WIN` (`~` is replaced with
-`%LOCALAPPDATA%`).
-
-``` sh
-$ git clone https://codeberg.org/cdsoft/luax
-$ cd luax
-$ ./bootstrap.sh
-$ ninja install
-```
-
-Or from a source archive (LuaX 8.9.2 or later):
+Usually people script their build systems and processes with languages like Bash, Python, or JavaScript and make them communicate with plain text, YAML, JSON, XML, CSV, INI, or TOML. Every script shall rely on specific (existing or not) libraries to read and write these data formats.
 
-``` sh
-$ curl https://codeberg.org/cdsoft/luax/archive/X.Y.Z.tar.gz -o luax-X.Y.Z.tar.gz
-$ tar xzf luax-X.Y.Z.tar.gz
-$ cd luax
-$ ./bootstrap.sh
-$ ninja install
-```
+This document presents a common and powerful data format and some tools to script the build process of a project and generate documentation.
 
-The latest source archives are available at
-<https://codeberg.org/cdsoft/luax/tags>.
+To sum up, the suggested solution is:
 
-Contributions on non supported platforms are welcome.
+- a **single data format** ([Lua] tables)
+- and a **reduced set of highly configurable tools**
 
-### Compilation options
+For a practical demonstration of these tools working together, see the [FizzBuzz] example project.
 
-| Option | Description |
-|:---|:---|
-| `bang -- fast` | Optimize for speed |
-| `bang -- small` | Optimize for size (default) |
-| `bang -- debug` | Debug symbols kept, not optimized |
-| `bang -- san` | Compile with ASan and UBSan (implies clang) and enable `LUA_USE_APICHECK` |
-| `bang -- lax` | Disable strict compilation options |
-| `bang -- strip` | Remove debug information from precompiled bytecode |
-| `bang -- lto` | Enable LTO optimizations |
-| `bang -- nolto` | Disable LTO optimizations (default) |
-| `bang -- ssl` | Add SSL support to LuaSocket via LuaSec and OpenSSL |
-| `bang -- nossl` | No SSL support via LuaSec and OpenSSL (default) |
-| `bang -- cross` | Generate cross-compilers (implies compilation with zig) |
-| `bang -- nocross` | Do not generate cross-compilers (default) |
-| `bang -- gcc` | Compile LuaX with gcc (no cross-compilation) (default) |
-| `bang -- clang` | Compile LuaX with clang (no cross-compilation) |
-| `bang -- zig` | Compile LuaX with Zig |
+# Core LuaX-based Tools
 
-`bang` must be run before `ninja` to change the compilation options.
+## LuaX
 
-`lua tools/bang.luax` can be used instead of
-[bang](https://codeberg.org/cdsoft/bang) if it is not installed.
+*Source: <https://codeberg.org/cdsoft/luax>*
 
-The default compilation options are `small`, `notlo`, `nossl`, `nocross`
-and `gcc`.
+[LuaX] is an extended [Lua] interpreter and REPL based on Lua 5.4, augmented with a comprehensive collection of useful modules. It serves as the foundation for the entire ecosystem presented in this document, providing both a powerful runtime environment and a compilation system for creating standalone executables.
 
-Zig is downloaded by the ninja file or `bootstrap.sh`. gcc and clang
-must be already installed.
+**Key features:**
 
-These options can also be given to the bootstrap script. E.g.:
-`./bootstrap.sh fast lto strip`.
+- **Extended [Lua] runtime** with 20+ built-in modules covering file system operations, shell execution, cryptography, compression, networking, and mathematical computations
+- **Cross-platform compilation** supporting Linux, macOS, and Windows (both x86_64 and aarch64)
+- **Standalone executable generation** from [Lua] scripts with no external dependencies
+- **Multiple compilation targets** including native executables, [Lua] bytecode, and [Pandoc]-compatible scripts
+- **Pure [Lua] compatibility** through shared libraries and pure [Lua] implementations of core modules
 
-`bootstrap.sh` also support options to choose a different build
-directory:
+The genius of [Lua] lies in its use of **Lua tables as the universal data format**. Unlike traditional build systems that juggle multiple configuration formats (YAML, JSON, XML, INI), LuaX enables all tools in the ecosystem to share data seamlessly through [Lua]'s native data structures. This eliminates the need for format conversion glue code and makes the entire toolchain more maintainable.
 
-| Option | Description |
-|:---|:---|
-| `-b dir` | Compile LuaX in the directory `dir` instead of the default one (`.build`) |
-| `-o dir/file.ninja` | Generate the ninja file in `dir/file.ninja` instead of the default one (`build.ninja`) |
+**Integration benefits:** [LuaX] provides the common runtime and data format that allows all other tools in this list to work together harmoniously. Scripts can share configuration data, build rules, and processing results through standard [Lua] tables, creating a cohesive development environment.
 
-### Optional features
+**Alternatives:** While Python, Node.js, or shell scripts are common choices for build tooling, they require additional libraries to handle different data formats and often suffer from dependency management issues. [LuaX] provides a self-contained solution with a consistent data model across all tools. Compared to language-specific ecosystems like npm or pip, [LuaX] offers better reproducibility and fewer version conflicts.
 
-| Option | Description                                                       |
-|:-------|:------------------------------------------------------------------|
-| `ssl`  | Add the HTTPS/SSL support to LuaSocket (LuaSec + OpenSSL) to LuaX |
+## Bang
 
-OpenSSL is not included in LuaX source. It is downloaded and recompiled
-when needed. Hence an Internet connection is required to compile LuaX
-with the `ssl` option.
+*Source: <https://codeberg.org/cdsoft/luax>*
 
-Example:
+[Bang] (Bang Automates Ninja Generation) is a [Ninja] build file generator scriptable in [LuaX]. It serves as the orchestrator of the entire build process, transforming [LuaX]-based build descriptions into high-performance [Ninja] build files.
 
-``` sh
-$ git clone https://codeberg.org/cdsoft/luax
-$ cd luax
-$ ./bootstrap.sh ssl
-$ ninja install
-```
+**Key features:**
 
-These options are disabled by default.
+- **[LuaX]-scriptable build system** that generates optimized [Ninja] files from readable [LuaX] build scripts
+- **High-level abstractions** for common build tasks including C/C++ compilation, cross-compilation, file processing, and archive creation
+- **Integrated toolchain support** with built-in, extensible modules for C compilers (gcc, clang, [zig cc]), [LuaX] compilation, and various document processors
+- **Advanced build features** including dependency tracking, incremental builds, parallel execution, and cross-platform support
+- **Extensible builder system** with predefined builders for [pandoc], [graphviz], [plantuml], and other common tools
 
-Note that LuaSec can also be installed apart from Luax (e.g. with
-LuaRocks).
+[Bang] transforms complex build processes into simple, maintainable [LuaX] scripts. Instead of wrestling with Make's cryptic syntax or CMake's verbose configuration, developers write intuitive [Lua] code that leverages the same data structures used throughout the ecosystem. Build rules, file lists, and configuration data all share the same [Lua] table format, enabling seamless integration with other [LuaX] tools.
 
-### Compilation in debug mode
+**Integration benefits:** [Bang] naturally interfaces with preprocessors like [Ypp] and [Panda] through its builder system, processes documentation with [Pandoc] integration, and can orchestrate complex workflows involving multiple [LuaX] tools. All configuration and build data remains in [Lua] format, eliminating conversion overhead and maintaining consistency across the toolchain.
 
-LuaX can be compiled in debug mode (less optimization, debug symbols
-kept in the binaries). With the `san` option, the tests are executed
-with [ASan](https://clang.llvm.org/docs/AddressSanitizer.html) and
-[UBSan](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html).
-They run slower but this helps finding tricky bugs.
+**Alternatives:** Compared to Make, [Bang] offers better dependency tracking and parallel execution through [Ninja]. Compared to CMake or Meson, [Bang] provides simpler syntax and better integration with [LuaX]-based tools. Unlike Bazel or Buck, [Bang] maintains simplicity while offering powerful abstractions. The combination of [LuaX] scripting with [Ninja]'s performance creates a build system that's both approachable and highly efficient.
 
-``` sh
-$ git clone https://codeberg.org/cdsoft/luax
-$ cd luax
-$ ./bootstrap.sh debug san    # generate build.ninja in debug mode with sanitizers
-$ ninja test                  # run tests on the host
-```
+## Ypp
 
-## Cross-compilation
+*Source: <https://codeberg.org/cdsoft/luax>*
 
-`luax` can compile scripts and link them to precompiled libraries for
-all supported targets.
+[Ypp] (Yet a PreProcessor) is a minimalist and generic text preprocessor using [LuaX] macros. It represents the evolution of traditional text preprocessing, merging the capabilities of [UPP] (Universal PreProcessor) and [Panda] while extending beyond [Pandoc] to work with modern tools like [Pandoc] and [Typst].
 
-There are two compilation methods:
+**Key features:**
 
-- Lua payload (bytecode) appended to a precompiled LuaX loader (default
-  method)
-- Lua payload in a C source compiled and linked with LuaX libraries.
-  This method requires a C compiler and is enabled by the `-c` option.
+- **Full [LuaX] interpreter integration** enabling complex preprocessing logic with access to all [LuaX] modules
+- **Rich macro system** supporting variable expansion, conditional blocks, file inclusion, and script execution
+- **Diagram generation** with built-in support for [Graphviz], [PlantUML], [Asymptote], [blockdiag], [mermaid], [Octave], and [lsvg]
+- **Document format conversion** through [Pandoc] integration with header level shifting and format transformation
+- **Documentation extraction** from source code comments with customizable patterns
+- **Incremental file generation** with dependency tracking
 
-E.g.: to produce an executable containing the LuaX runtime for the
-current host and `hello.lua`:
+[Ypp] transforms static text files into dynamic documents by embedding [Lua] expressions directly in the source. Instead of learning domain-specific templating languages, users leverage the same [Lua] syntax used throughout the ecosystem. This creates unprecedented flexibility—from simple variable substitution to complex document generation involving data processing, external script execution, and automated diagram creation.
 
-``` sh
-$ luax compile -t native -o hello hello.lua
-```
+**Integration benefits:** [Ypp] seamlessly interfaces with other [LuaX] tools through shared [Lua] data structures. Build configurations from Bang can be used to generate documentation, processed data from [LuaX] scripts can be embedded in documents, and generated content can be further processed by [Panda] or converted by [Pandoc]. The common [Lua] runtime eliminates the impedance mismatch typically found between preprocessing and processing tools.
 
-It seems on some platforms (e.g. MacOS) reading the payload in the
-executable file while being executed does not work. In this case, the
-payload can be added to be binary with the `-c` option. It requires a C
-compiler but should work better on MacOS.
-
-``` sh
-$ luax compile -c -t native -o hello hello.lua
-```
-
-E.g.: to produce an executable containing the LuaX runtime for
-`linux-x86_64-musl` and `hello.lua`:
-
-``` sh
-$ luax compile -t linux-x86_64-musl -o hello hello.lua
-```
-
-E.g.: to produce an executable with the compiled Lua bytecode with no
-debug information:
-
-``` sh
-$ luax compile -s -t linux-x86_64-musl -o hello hello.lua
-```
-
-`luax compile` can compile Lua scripts to Lua bytecode. If scripts are
-large they will start quickly but will run as fast as the original Lua
-scripts.
-
-## Installation
-
-``` sh
-$ ninja install                 # install luax to ~/.local/bin and ~/.local/lib
-$ PREFIX=/usr ninja install     # install luax to /usr/bin and /usr/lib
-```
-
-`luax` is a single autonomous executable. It does not need to be
-installed and can be copied anywhere you want.
-
-### LuaX artifacts
-
-`ninja install` installs:
-
-- `$PREFIX/bin/luax`: LuaX binary
-- `$PREFIX/bin/luax.lua`: a pure Lua REPL reimplementing some LuaX
-  libraries, usable in any Lua 5.4 or 5.5 interpreter (e.g.: lua, pandoc
-  lua, …)
-- `$PREFIX/bin/luax-pandoc.lua`: LuaX run in a Pandoc Lua interpreter
-- `$PREFIX/lib/libluax.so`: Linux LuaX shared libraries
-- `$PREFIX/lib/libluax.dylib`: MacOS LuaX shared libraries
-- `$PREFIX/lib/libluax.dll`: Windows LuaX shared libraries
-- `$PREFIX/lib/libluax.lua`: a pure Lua reimplementation of some LuaX
-  libraries, usable in any Lua 5.4 or 5.5 interpreter.
-- `$PREFIX/lib/libluax.lar`: a compressed archive containing the
-  precompiled LuaX runtimes for all supported platforms (if the
-  cross-compilation is enabled).
-
-### Post installation command
-
-The `postinstall` command can optionally be executed after LuaX is
-installed or updated.
-
-It checks that all required files are actually installed and removes
-obsolete files if any.
-
-``` sh
-$ path/to/luax postinstall [-f]
-```
-
-The `-f` option forces the removal of obsolete files without
-confirmation.
-
-## Usage
-
-`luax` is very similar to `lua` and adds more options to compile
-scripts:
-
-    usage: luax [cmd] [options]
-
-    Commands:
-      "help"    (or "-h")   Show this help
-      "version" (or "-v")   Show LuaX version
-      "run"     (or none)   Run scripts
-      "compile" (or "c")    Compile scripts
-      "env"                 Set LuaX environment variables
-      "postinstall"         Post install updates
-
-    "run" options:
-      -e stat         execute string 'stat'
-      -i              enter interactive mode after executing 'script'
-      -l name         require library 'name' into global 'name'
-      -l g=name       require library 'name' into global 'g'
-      -l _=name       require library 'name' (no global variable)
-      -v              show version information
-      -W              turn warnings on
-      --              stop handling options
-      -               stop handling options and execute stdin
-      script [args]   script to execute
-
-    "compile" options:
-      -t target       name of the targetted platform
-      -t list         list available targets
-      -o file         name the executable file to create
-      -c              use a C compiler instead of the loader
-      -b              compile to Lua bytecode
-      -s              emit bytecode without debug information
-      -z              compress with lzip
-      -k key          script encryption key
-      -q              quiet compilation (error messages only)
-      scripts         scripts to compile
-
-    "postinstall" options:
-      -f              do not ask for confirmations
-
-    Environment variables:
-
-      LUA_INIT_5_5, LUA_INIT
-                    code executed before handling command line
-                    options and scripts (not in compilation
-                    mode). When LUA_INIT_5_5 is defined,
-                    LUA_INIT is ignored.
-
-      PATH          PATH shall contain the bin directory where
-                    LuaX is installed
-
-      LUA_PATH      LUA_PATH shall point to the lib directory
-                    where the Lua implementation of LuaX
-                    libraries are installed
-
-      LUA_CPATH     LUA_CPATH shall point to the lib directory
-                    where LuaX shared libraries are installed
-
-    PATH, LUA_PATH and LUA_CPATH can be set in .bashrc or .zshrc
-    with "luax env".
-    E.g.: eval $(luax env)
-
-    "luax env" can also generate shell variables from a script
-    or a TOML file.
-    E.g.: eval $(luax env script.lua)
-
-When compiling scripts (options `-t` and `-o`), the scripts shall
-contain tags (e.g. in comments) showing how the script is used by LuaX:
-
-- `--@MAIN`: main script (must be unique)
-- `--@LOAD`: library that is `require`’d before the main script is run
-  and stored in a global variable
-- `--@LOAD=<global variable name>`: as `--@LOAD` but the module is
-  stored in a global variable with the given name
-- `--@LIB`: library that must be explicitly `require`’d by the main
-  script
-- `--@LIB=<new module name>`: library that is `require`’d with
-  `<new module name>` instead of the source filename.
-
-Scripts without tags are classified using a simplistic heuristic:
-
-- if the last non empty line starts with `return` then it is a library
-  (as if it contained a `@LIB` tag)
-- otherwise it is the main script (as if it contained the `@MAIN` tag).
-
-This heuristic should work for most of the Lua scripts but explicit tags
-are recommended.
-
-LuaX can also embed files that are not Lua scripts. These files are
-embedded as Lua modules that return the file content as a string. In
-this case, the module name is the file name.
-
-**Note for Windows users**: since Windows does not support shebangs, a
-script `script` shall be explicitly launched with `luax` (e.g.:
-`luax script`). If `script` is not found, it is searched in the
-installation directory of `luax` or in `$PATH`.
-
-### Examples
-
-``` bash
-# Compilation (standalone executable script for LuaX)
-$ luax compile -o executable main.lua lib1.lua lib2.lua
-$ ./executable      # equivalent to luax main.lua
-
-# Compilation for Lua
-$ luax compile -o executable -t lua main.lua lib1.lua lib2.lua
-$ ./executable      # equivalent to lua main.lua
-
-# Compilation for Pandoc Lua
-$ luax compile -o executable -t pandoc main.lua lib1.lua lib2.lua
-$ ./executable      # equivalent to pandoc lua main.lua
-
-# Available targets
-$ luax compile -t list
-Target                Interpreter / LuaX archive
---------------------- -------------------------
-luax                  ~/.local/bin/luax
-lua                   ~/.local/bin/lua
-pandoc                ~/.local/bin/pandoc
-native                ~/.local/lib/libluax.lar
-linux-x86_64          ~/.local/lib/libluax.lar
-linux-x86_64-musl     ~/.local/lib/libluax.lar
-linux-aarch64         ~/.local/lib/libluax.lar
-linux-aarch64-musl    ~/.local/lib/libluax.lar
-macos-x86_64          ~/.local/lib/libluax.lar
-macos-aarch64         ~/.local/lib/libluax.lar
-windows-x86_64        ~/.local/lib/libluax.lar
-```
-
-## Built-in modules
-
-The `luax` runtime comes with a few builtin modules.
-
-Some modules are heavily inspired by
-[BonaLuna](https://codeberg.org/cdsoft/bonaluna) and
-[lapp](https://github.com/CDSoft/lapp).
-
-- [LuaX interactive usage](doc/repl.md): improved Lua REPL
-- [package](doc/package.md): modified Lua package `package`
-- [debug](doc/debug.md): modified Lua package `debug`
-- [import](doc/import.md): import Lua scripts to user table instead of
-  `_G`
-- [F](doc/F.md): functional programming inspired functions
-- [fs](doc/fs.md): file system management
-- [sh](doc/sh.md): shell command execution
-- [mathx](doc/mathx.md): complete math library for Lua
-- [imath](doc/imath.md): arbitrary precision integer and rational
-  arithmetic library
-- [qmath](doc/qmath.md): rational number library
-- [complex](doc/complex.md): math library for complex numbers based on
-  C99
-- [ps](doc/ps.md): Process management module
-- [sys](doc/sys.md): System module
-- [term](doc/term.md): Terminal manipulation module
-- [crypt](doc/crypt.md): cryptography module
-- [lz4](doc/lz4.md): Extremely Fast Compression algorithm
-- [lzip](doc/lzip.md): A compression library for the lzip format
-- [tar](doc/tar.md): A minimalistic tar archiving library
-- [lpeg](doc/lpeg.md): Parsing Expression Grammars For Lua
-- [luasocket](doc/luasocket.md): Network support for the Lua language
-- [luasec](doc/luasec.md): add secure connections to luasocket
-- [curl](doc/curl.md), [wget](doc/wget.md): simple curl and wget command
-  line interfaces
-- [argparse](doc/argparse.md): Feature-rich command line parser for Lua
-- [serpent](doc/serpent.md): Lua serializer and pretty printer
-- [cbor](doc/cbor.md): pure Lua implementation of the CBOR
-- [lar](doc/lar.md): Simple archive format for Lua values
-- [readline](doc/readline.md): Command line editing functions
-- [linenoise](doc/linenoise.md): A small, portable GNU readline
-  replacement with UTF-8 support
-- [json](doc/json.md): JSON Module for Lua
-- [toml](doc/toml.md): a pure Lua TOML parser (tinytoml)
-- [tomlx](doc/tomlx.md): a layer on top of toml with macros
-
-## Shared libraries
-
-LuaX is also available as a shared library. This shared library is a Lua
-module that can be loaded with `require`. It provides the same modules
-than the LuaX executable and can be used by a regular Lua interpreter
-(e.g.: lua, pandoc, …).
-
-E.g.:
-
-    $ lua -l libluax
-    Lua 5.4.8  Copyright (C) 1994-2025 Lua.org, PUC-Rio
-    > F = require "F"
-    > F.range(100):sum()
-    5050
-    > F.show({x=1, y=2})
-    {x=1, y=2}
-    > F.show({x=1, y=2}, {indent=4})
-    {
-        x = 1,
-        y = 2,
-    }
-
-## Pure Lua modules
-
-LuaX modules also provide pure Lua implementations (no LuaX dependency).
-The script `lib/libluax.lua` can be reused in pure Lua programs:
-
-- [luax.lua](doc/luax.lua.md): LuaX modules reimplemented in pure Lua
-  (except LuaSocket and lpeg)
-
-## License
-
-    luax is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    luax is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-    For further information about luax you can visit
-    https://codeberg.org/cdsoft/luax
-
-`luax` uses other third party softwares:
-
-- **[Zig](https://ziglang.org/)**: General-purpose programming language
-  and toolchain for maintaining robust, optimal, and reusable software.
-  ([MIT license](https://github.com/ziglang/zig/blob/master/LICENSE))
-- **[Lua 5.5](http://www.lua.org)**: Copyright (C) 1994-2025 Lua.org,
-  PUC-Rio ([MIT license](http://www.lua.org/license.html))
-- **[Lpeg](http://www.inf.puc-rio.br/~roberto/lpeg/)**: Parsing
-  Expression Grammars For Lua ([MIT
-  license](http://www.lua.org/license.html))
-- **[luasocket](https://github.com/diegonehab/luasocket)**: Network
-  support for the Lua language ([LuaSocket 3.0
-  license](https://github.com/diegonehab/luasocket/blob/master/LICENSE))
-- **[luasec](https://github.com/lunarmodules/luasec)**: integrates with
-  LuaSocket to make it easy to add secure connections to any Lua
-  applications or scripts. ([LuaSec
-  license](https://github.com/lunarmodules/luasec/blob/master/LICENSE))
-- **[OpenSSL](https://www.openssl.org/)**: robust, commercial-grade,
-  full-featured toolkit for general-purpose cryptography and secure
-  communication ([Apache License
-  2.0](https://github.com/openssl/openssl/blob/master/LICENSE.txt))
-- **[serpent](https://github.com/pkulchenko/serpent)**: Lua serializer
-  and pretty printer. ([MIT
-  license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))
-- **[LZ4](https://github.com/lz4/lz4)**: Extremely Fast Compression
-  algorithm ([License](https://github.com/lz4/lz4/blob/dev/lib/LICENSE))
-- **[lzip](https://www.nongnu.org/lzip/)**: A compression library for
-  the lzip format ([License](http://www.gnu.org/licenses/gpl-2.0.html))
-- **[Argparse](https://github.com/mpeterv/argparse)**: a feature-rich
-  command line parser for Lua ([MIT
-  license](https://github.com/mpeterv/argparse/blob/master/LICENSE))
-- **[readline](https://tiswww.case.edu/php/chet/readline/rltop.html)**:
-  Command line editing functions [GPLv3
-  License](https://www.gnu.org/licenses/gpl-3.0.html)
-- **[Linenoise](https://github.com/antirez/linenoise)**: A minimal,
-  zero-config, BSD licensed, readline replacement ([BSD
-  license](https://github.com/antirez/linenoise/blob/master/LICENSE))
-- **[dkjson.lua](http://dkolf.de/dkjson-lua/)**: JSON Module for Lua
-  ([MIT license](http://www.lua.org/license.html))
-- **[CBOR](https://www.zash.se/lua-cbor.html)**: pure Lua implementation
-  of the CBOR
-  ([License](https://code.zash.se/lua-cbor/file/tip/COPYING))
-- **[tinytoml](https://github.com/FourierTransformer/tinytoml)**: a pure
-  Lua TOML parser ([MIT
-  License](https://github.com/FourierTransformer/tinytoml?tab=MIT-1-ov-file#readme))
+**Alternatives:** Compared to traditional preprocessors like M4 or CPP, [Ypp] offers a modern, readable syntax with powerful built-in capabilities. Unlike template engines like Jinja2 or Mustache, [Ypp] provides full programming language capabilities rather than limited logic constructs. Compared to documentation generators like Sphinx or GitBook, [Ypp] offers more flexibility and direct integration with the build process while maintaining simplicity.
+
+## Panda
+
+*Source: <https://codeberg.org/cdsoft/luax>*
+
+[Panda] is a powerful [Pandoc Lua filter] that operates on [Pandoc]'s internal AST (Abstract Syntax Tree), providing advanced document processing capabilities within the [Pandoc] ecosystem. It represents a specialized approach to document processing, working directly with structured document representations rather than raw text.
+
+**Key features:**
+
+- **AST-based processing** working directly on [Pandoc]'s internal document structure for reliable transformations
+- **Advanced templating** with variable expansion, conditional blocks, and [LuaX] scripting integration
+- **Intelligent file inclusion** supporting multiple formats with automatic parsing and header level adjustment
+- **Script execution and diagram generation** with built-in support for [Graphviz], [PlantUML], [ditaa], [Asymptote], [blockdiag], [mermaid], and more
+- **Documentation extraction** from source code with customizable delimiters and formatting options
+- **Dependency tracking** with automatic generation of Makefile-compatible dependency files
+
+[Panda] bridges the gap between simple text processing and sophisticated document generation. Unlike text-based preprocessors, [Panda] understands document structure and can perform intelligent transformations that respect the semantic meaning of content. This enables complex operations like conditional content inclusion, format-aware file embedding, and automatic diagram generation while maintaining document integrity.
+
+**Integration benefits:** [Panda] complements [Ypp] by providing [Pandoc]-specific processing capabilities. While [Ypp] handles generic text preprocessing, [Panda] specializes in document structure manipulation. Both tools share the same [Lua] runtime and can access [LuaX] modules, ensuring consistent data handling. Documents can be preprocessed with [Ypp] and then processed with [Panda] for final formatting, creating a powerful two-stage processing pipeline.
+
+**Alternatives:** Compared to basic [Pandoc filters], [Panda] provides a comprehensive suite of document processing features in a single tool. Unlike template engines that work on plain text, [Panda] operates on structured documents, preventing malformed output. Compared to custom Python or Haskell [Pandoc filters], [Panda] offers easier maintenance through [Lua]'s simplicity. The AST-based approach provides more reliability than regex-based text processors like sed or awk.
+
+## Lsvg
+
+*Source: <https://codeberg.org/cdsoft/luax>*
+
+[Lsvg] is a [LuaX] scriptable SVG image generator that enables programmatic creation of vector graphics through [Lua] code. It provides a pure [Lua] library for SVG generation, making it an ideal tool for creating diagrams, charts, and illustrations directly from data or algorithms.
+
+**Key features:**
+
+- **Pure [Lua] SVG generation** with a comprehensive library covering all major SVG elements and attributes
+- **Programmatic image creation** enabling data-driven graphics, algorithmic art, and dynamic diagram generation
+- **Multiple output formats** supporting SVG natively, with PNG, JPEG, and PDF conversion through ImageMagick integration
+- **[LuaX] integration** providing access to all [LuaX] modules for data processing, mathematical computations, and file operations
+- **Build system integration** with dependency tracking for automatic image regeneration when source scripts change
+
+[Lsvg] transforms the traditionally manual process of graphic design into a programmable workflow. Instead of using complex GUI tools or wrestling with verbose SVG markup, developers can generate precise graphics using familiar [Lua] syntax. This approach excels for creating technical diagrams, data visualizations, and any graphics that need to be generated dynamically or maintained alongside code.
+
+**Integration benefits:** [Lsvg] integrates seamlessly with the [LuaX] ecosystem, sharing data structures and processing capabilities with other tools. Build configurations from [Bang] can include [Lsvg] scripts, [Ypp] can embed [Lsvg]-generated diagrams using the `@q"@"image.lsvg` macro, and [Panda] can render [Lsvg] code blocks directly. The shared [Lua] runtime ensures consistent data handling and eliminates format conversion overhead.
+
+**Alternatives:** Compared to traditional vector graphics editors like Inkscape or Illustrator, [Lsvg] offers version control friendliness and reproducible results. Unlike libraries like D3.js or matplotlib, [Lsvg] provides simpler syntax and better integration with [Lua]-based workflows. Compared to other programmatic SVG generators like Python's svgwrite or JavaScript's Fabric.js, [Lsvg] benefits from [Lua]'s lightweight syntax and the rich [LuaX] module ecosystem for mathematical and data processing operations.
+
+# More LuaX-based Tools
+
+## Ldc
+
+*Source: <https://codeberg.org/cdsoft/ldc>*
+
+[Ldc] (Lua Data Compiler) is a cross-language code generator that parses [LuaX] scripts containing data definitions and produces equivalent source code in multiple target languages. It bridges the gap between [Lua]-based configuration and multi-language development environments.
+
+**Key features:**
+
+- **Multi-language code generation** supporting C, Haskell, Asymptote, reStructuredText, Shell, and YAML backends
+- **Intelligent type inference** automatically determining appropriate types for scalars, structures, and arrays in target languages
+- **Custom type system** allowing users to define specialized types with custom patterns for each backend
+- **Immutable design** ensuring better modularity and reusability compared to its predecessor [lcc]
+- **Configuration-driven approach** using pure [LuaX] scripts as the single source of truth for multi-language constants and data structures
+
+[Ldc] solves the common problem of maintaining synchronized constants and data structures across multiple programming languages. Instead of manually duplicating definitions in C headers, Haskell modules, and shell scripts, developers maintain a single [LuaX] configuration file that generates consistent code for all target languages. This eliminates synchronization errors and reduces maintenance overhead in polyglot projects.
+
+**Integration benefits:** [Ldc] leverages the same [LuaX] data structures used throughout the [LuaX] ecosystem, enabling seamless integration with build systems and documentation tools. Configuration data from [Bang] can be processed by [Ldc] to generate language-specific constants, while [Ypp] and [Panda] can embed generated code or include it in documentation. The shared [Lua] runtime ensures data consistency across the entire toolchain.
+
+**Alternatives:** Compared to language-specific code generators like Protocol Buffers or Apache Avro, [Ldc] offers simpler configuration syntax using native [Lua] tables. Unlike template-based approaches like Jinja2 or M4, [Ldc] provides intelligent type inference and language-specific optimizations. Compared to maintaining separate constant files for each language, [Ldc] guarantees consistency and significantly reduces maintenance effort while providing better tooling integration through its [LuaX] foundation.
+
+## Yreq
+
+*Source: <https://codeberg.org/cdsoft/yreq>*
+
+[Yreq] is a minimalistic requirement management tool implemented as a [Ypp] plugin. It enables traceability and coverage analysis in technical documentation by establishing relationships between requirements, implementations, and tests through a tag-and-reference system.
+
+**Key features:**
+
+- **Tag-based requirement tracking** using customizable nouns (spec, code, test) and verbs (implements, tests, refines) to describe relationships
+- **Automatic coverage matrix generation** showing upstream and downstream relationships between all requirements
+- **Traceability analysis** enabling verification that specifications are implemented and tested
+- **[Ypp] integration** leveraging the preprocessing capabilities for dynamic requirement documentation
+- **Hyperlink generation** creating navigable connections between related requirements within documents
+
+[Yreq] addresses the critical challenge of maintaining traceability in complex projects where requirements, design, implementation, and testing must remain synchronized. Traditional requirement management tools are often heavyweight and disconnected from the development workflow. [Yreq] embeds requirement tracking directly into the documentation using the same [LuaX]-based ecosystem, ensuring requirements remain close to the code and automatically updated.
+
+**Integration benefits:** [Yreq] leverages [Ypp]'s preprocessing capabilities to create dynamic, interconnected documentation. Requirements can reference data from Bang build configurations, include code snippets processed by other [LuaX] tools, and generate coverage reports that reflect the actual state of the project. The shared [LuaX] runtime ensures consistency between build logic, documentation, and requirement tracking.
+
+**Alternatives:** Compared to heavyweight tools like IBM DOORS or PTC Integrity, [Yreq] offers lightweight integration with development workflows and version control systems. Unlike documentation-only approaches such as wiki-based requirement tracking, [Yreq] provides automated relationship validation and coverage analysis. Compared to code annotation systems like Doxygen comments, [Yreq] offers bidirectional traceability and cross-document relationship mapping. The integration with [Ypp] provides more sophistication than simple tagging systems while maintaining simplicity and maintainability.
+
+## Tagref
+
+*Source: <https://codeberg.org/cdsoft/tagref>*
+
+[Tagref] is a cross-reference maintenance tool for codebases, reimplemented in [LuaX] from the original Rust version. It helps maintain consistency in code documentation by ensuring that cross-references between different parts of a codebase remain valid as the code evolves.
+
+**Key features:**
+
+- **Tag-based cross-referencing** allowing developers to create stable references to code sections using `[tag:name]` and `[ref:name]` annotations in comments
+- **Multi-language support** working with any programming language through comment-based annotations
+- **Git integration** respecting `.gitignore` files and working seamlessly with version control workflows
+- **Reference validation** ensuring that all references point to existing tags and that all tags are unique
+- **CI-friendly design** providing fast validation suitable for automated continuous integration checks
+
+[Tagref] addresses the brittleness of traditional code cross-references that rely on file paths and line numbers. When code evolves, line numbers shift and files get renamed, breaking these references. [Tagref]'s tag-based system creates stable anchors that can be referenced from anywhere in the codebase, with automatic validation to prevent broken references.
+
+**Integration benefits**: [Tagref] is simple to use and easy to integrate into [Bang]-managed build systems. It can be seamlessly added to build pipelines as a validation step, ensuring code cross-references remain consistent throughout the development process. The tool's straightforward command-line interface makes it ideal for automated CI/CD workflows alongside other [LuaX] ecosystem tools.
+
+**Alternatives:** Compared to the original Rust implementation, this [LuaX] version offers better integration with [Lua]-based development workflows, though it may be slower for very large codebases. Unlike documentation tools like Doxygen that require specific comment formats, [Tagref] works with any comment style in any language. Compared to manual cross-reference maintenance or commit-based references, [Tagref] provides automated validation and eliminates the maintenance burden of keeping references current.
+
+# Complementary Tools
+
+## Pandoc
+
+*Source: <https://pandoc.org>*
+
+[Pandoc] is a universal document converter that can transform documents between numerous formats. It supports [Lua filters], making it an excellent companion to [LuaX]-based tools for document processing workflows. The [Lua] scripting capability allows for seamless integration with the ecosystem presented here.
+
+**Key features:**
+
+- Universal document conversion between 40+ formats
+- [Lua filter] system for custom transformations
+- Extensible through [Lua] scripting
+- Command-line interface perfect for automated workflows
+
+**Integration with [LuaX] tools:** [Pandoc]'s [Lua filters] can be easily extended with [LuaX] libraries, and preprocessors like [Ypp] or [Panda] can generate content that [Pandoc] then converts to final formats.
+
+**Alternatives:** While tools like Sphinx, GitBook, or Asciidoctor exist, [Pandoc]'s [Lua] integration and format versatility make it uniquely suitable for [Lua]-based workflows.
+
+## Typst
+
+*Source: <https://typst.app>*
+
+[Typst] is a modern typesetting system designed as an alternative to LaTeX. While not [Lua]-based itself, it integrates well with [LuaX] preprocessing tools and offers a more approachable syntax for document creation.
+
+**Key features**
+
+- Modern, clean syntax for document typesetting
+- Fast compilation and real-time preview
+- Programmable with its own scripting language
+- Web-based and local tooling available
+
+**Integration with [LuaX] tools:** Preprocessors like [Ypp] or [Panda] can generate [Typst] source files, allowing for dynamic document generation using [LuaX] scripting while leveraging [Typst]'s superior typesetting capabilities.
+
+**Alternatives:** Compared to LaTeX, [Typst] offers faster compilation and cleaner syntax. Compared to Markdown-based solutions, it provides more sophisticated typesetting control.
+
+## Ninja
+
+*Source: <https://ninja-build.org> (Ninja cross-compilation: <https://codeberg.org/cdsoft/ninja-builder>)*
+
+[Ninja] is a small build system focused on speed. It's designed to have its input files generated by higher-level build systems rather than being hand-authored.
+
+**Key features:**
+
+- Extremely fast build execution
+- Simple, generated build file format
+- Minimal dependencies and overhead
+- Excellent incremental build support
+
+**Integration with [LuaX] tools:** Build generators like [Bang] can produce [Ninja] build files, creating a powerful combination where [LuaX] scripts define the build logic and [Ninja] executes it efficiently. The [ninja-builder] project simplifies cross-compilation scenarios.
+
+**Alternatives:** Compared to Make, [Ninja] is faster and more reliable for large projects. Compared to CMake or Meson, it's lower-level but more predictable and faster when paired with appropriate generators.
+

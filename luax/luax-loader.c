@@ -19,7 +19,7 @@
 
 #include "libluax.h"
 
-#include "crypt/fnv1a_32.h"
+#include "fnv1a_32.h"
 #include "endianness.h"
 
 #include <stdint.h>
