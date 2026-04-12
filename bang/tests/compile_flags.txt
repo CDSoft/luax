@@ -1,0 +1,4 @@
+-O3
+-I.build
+-I.build/inc
+-DBAZ='baz is FOO and bar is FOO'

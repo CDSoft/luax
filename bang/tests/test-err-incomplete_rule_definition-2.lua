@@ -1,0 +1,4 @@
+generator(false)
+
+rule "doit" {
+}

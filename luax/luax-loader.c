@@ -19,7 +19,7 @@
 
 #include "libluax.h"
 
-#include "crypt/fnv1a_32.h"
+#include "fnv1a_32.h"
 #include "endianness.h"
 
 #include <stdint.h>
@@ -29,11 +29,30 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-typedef struct {
+/* A loader can be added 1 payload containing the LuaX runtime and the application.
+ * It could contain more in the future
+ * (e.g. the loader could contain the LuaX library in the first payload).
+ */
+#define MAX_PAYLOADS 1
+
+struct t_header {
     uint8_t magic[4];
     uint32_t size;
     uint32_t hash;
-} t_header;
+};
+
+struct t_payload {
+    struct t_header header;
+    char *payload;
+};
+
+static void check(const char *name, bool condition)
+{
+    if (!condition) {
+        perror(name);
+        exit(EXIT_FAILURE);
+    }
+}
 
 #if defined(_WIN32)
 
@@ -69,10 +88,7 @@ static char *get_exe(void)
 {
     char path[PATH_MAX];
     const ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
-    if (len < 0) {
-        perror("readlink");
-        exit(EXIT_FAILURE);
-    }
+    check("readlink", len >= 0);
     path[len] = '\0';
     return strdup(path);
 }
@@ -81,54 +97,24 @@ static char *get_exe(void)
 #error "Target not supported"
 #endif
 
-static FILE *open_exe(const char *exe)
+static bool read_header(FILE *f, size_t offset, struct t_header *header)
 {
-    FILE *f = fopen(exe, "rb");
-    if (f == NULL) {
-        perror("fopen");
-        exit(EXIT_FAILURE);
-    }
-    return f;
-}
-
-static t_header read_header(FILE *f, const char *exe)
-{
-    t_header header;
-    if (fseek(f, -(long)sizeof(t_header), SEEK_END) != 0) {
-        perror("fseek");
-        exit(EXIT_FAILURE);
-    }
-    if (fread(&header, sizeof(header), 1, f) != 1) {
-        perror("fread");
-        exit(EXIT_FAILURE);
-    }
+    check("fseek", fseek(f, -(long)(offset + sizeof(struct t_header)), SEEK_END) == 0);
+    check("fread", fread(header, sizeof(struct t_header), 1, f) == 1);
     t_fnv1a_32 hash;
     fnv1a_32_init(&hash);
-    fnv1a_32_update(&hash, &header, sizeof(header)-sizeof(header.hash));
-    header.size  = le32toh(header.size);
-    header.hash  = le32toh(header.hash);
-    if (fnv1a_32_cmp(&hash, &header.hash) != 0) {
-        fprintf(stderr, "%s: invalid LuaX payload\n", exe);
-        exit(EXIT_FAILURE);
-    }
-    return header;
+    fnv1a_32_update(&hash, header, sizeof(struct t_header)-sizeof(header->hash));
+    header->size = le32toh(header->size);
+    header->hash = le32toh(header->hash);
+    return fnv1a_32_cmp(&hash, &header->hash) == 0;
 }
 
-static char *read_payload(FILE *f, t_header header)
+static char *read_payload(FILE *f, size_t offset, struct t_header *header)
 {
-    char *payload = (char*)malloc(header.size);
-    if (payload == NULL) {
-        perror("malloc");
-        exit(EXIT_FAILURE);
-    }
-    if (fseek(f, -((long)header.size + (long)sizeof(t_header)), SEEK_END) != 0) {
-        perror("fseek");
-        exit(EXIT_FAILURE);
-    }
-    if (fread(payload, header.size, 1, f) != 1) {
-        perror("fread");
-        exit(EXIT_FAILURE);
-    }
+    char *payload = (char*)malloc(header->size);
+    check("malloc", payload != NULL);
+    check("fseek", fseek(f, -(long)(offset + header->size + sizeof(struct t_header)), SEEK_END) == 0);
+    check("fread", fread(payload, header->size, 1, f) == 1);
     return payload;
 }
 
@@ -169,27 +155,47 @@ int main(int argc, const char *argv[])
 
     createargtable(L, argv, argc);
 
-    /* read the payload in the current executable */
+    struct t_payload payloads[MAX_PAYLOADS] = {0};
+    size_t offset = 0;
+    size_t nb_payloads = 0;
+
+    /* search for the payloads at the end of the executable */
     char *exe = get_exe();
-    FILE *f = open_exe(exe);
-    const t_header header = read_header(f, exe);
-    char *payload = read_payload(f, header);
+    FILE *f = fopen(exe, "rb");
+    check("fopen", f != NULL);
+    while (nb_payloads < MAX_PAYLOADS) {
+        if (!read_header(f, offset, &payloads[nb_payloads].header)) { break; }
+        payloads[nb_payloads].payload = read_payload(f, offset, &payloads[nb_payloads].header);
+        offset += payloads[nb_payloads].header.size;
+        nb_payloads++;
+    }
     fclose(f);
 
-    /* compile and run the payload */
-    if (luaL_loadbuffer(L, payload, header.size, exe) != LUA_OK) {
-        fprintf(stderr, "%s\n", lua_tostring(L, -1));
+    /* compile and run the payloads */
+    if (nb_payloads == 0) {
+        fprintf(stderr, "%s: no LuaX payload found\n", exe);
         exit(EXIT_FAILURE);
     }
+    while (nb_payloads > 0) {
+        nb_payloads--;
+        if (luaL_loadbuffer(L, payloads[nb_payloads].payload, payloads[nb_payloads].header.size, exe) != LUA_OK) {
+            fprintf(stderr, "%s\n", lua_tostring(L, -1));
+            exit(EXIT_FAILURE);
+        }
+        free(payloads[nb_payloads].payload);
+        const int base = lua_gettop(L);
+        lua_pushcfunction(L, traceback);
+        lua_insert(L, base);
+        const int status = lua_pcall(L, 0, 0, base);
+        lua_remove(L, base);
+        if (status != LUA_OK) {
+            exit(EXIT_FAILURE);
+        }
+    }
+
     free(exe);
-    free(payload);
-    const int base = lua_gettop(L);
-    lua_pushcfunction(L, traceback);
-    lua_insert(L, base);
-    const int status = lua_pcall(L, 0, 0, base);
-    lua_remove(L, base);
 
     lua_close(L);
 
-    exit(status==LUA_OK ? EXIT_SUCCESS : EXIT_FAILURE);
+    exit(EXIT_SUCCESS);
 }

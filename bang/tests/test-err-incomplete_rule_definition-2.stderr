@@ -1,0 +1,1 @@
+[bang/tests/test-err-incomplete_rule_definition-2.lua:3] ERROR: rule doit: expected 'command' attribute

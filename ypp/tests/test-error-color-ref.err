@@ -1,0 +1,30 @@
+[36mypp/tests/test.lua:29:[0m [31merror:[0m attempt to index a nil value (global 'x')
+
+[36mypp/tests/test.lua:29:[0m
+  24 |  
+  25 |  -- buggy function to test error messages
+  26 |  function bar()
+  27 |      local t = {}
+  28 |      for i = 1, 10 do
+[31m  29 =>         t[i] = x[i][0m
+  30 |      end
+  31 |      return t
+  32 |  end
+
+[36m[string "..."]:11:[0m
+   6 |      -- quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+   7 |  
+   8 |      -- only a context of 5 lines shall be printed in error messages
+   9 |      function foo()
+  10 |          -- call bar from test.lua that should raise a runtime error
+[31m  11 =>         bar()[0m
+  12 |      end
+  13 |  
+  14 |      -- Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+  15 |      -- sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+  16 |      -- Ut enim ad minim veniam,
+
+[36m[string "..."]:3:[0m
+   1 |  
+   2 |      -- call foo from another chunk
+[31m   3 =>     foo()[0m

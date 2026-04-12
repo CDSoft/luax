@@ -1,7 +1,5 @@
-.build*
-.bootstrap
-.zig
-zig-cache
-build.ninja
-compile_flags.txt
-tmp
+/.build*
+/.cache
+/build.ninja
+/compile_flags.txt
+/tmp/

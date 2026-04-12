@@ -1,0 +1,111 @@
+--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+---------------------------------------------------------------------
+-- arg is built by the runtime
+---------------------------------------------------------------------
+
+local test = require "test"
+local eq = test.eq
+
+local sys = require "sys"
+local fs = require "fs"
+
+local pandoc = _ENV.pandoc
+
+return function()
+    local test_num = tonumber(os.getenv "TEST_NUM")
+    local BUILD = os.getenv "BUILD"
+
+    if test_num == 1 then
+        if os.getenv "IS_COMPILED" == "true" then
+            eq(arg, {
+                [0] = os.getenv "EXE_NAME",
+                "Lua", "is", "great"
+            })
+            assert(sys.libc == os.getenv"LIBC")
+            assert(not pandoc)
+        else
+            eq(arg, {
+                [-2] = "luax",
+                [-1] = "--",
+                [0] = BUILD/"tests/luax/test-luax",
+                "Lua", "is", "great"
+            })
+            eq(fs.findpath(arg[-2]), BUILD/"bin/luax")
+            assert(sys.libc == "gnu")
+            assert(not pandoc)
+        end
+
+    elseif test_num == 2 then
+        eq(arg, {
+            [-3] = BUILD/"bin/lua",
+            [-2] = "-l", [-1] = "libluax",
+            [0] = "luax/tests/luax-tests/main.lua",
+            "Lua", "is", "great"
+        })
+        assert(sys.libc == "gnu")
+        assert(not pandoc)
+
+    elseif test_num == 3 then
+        eq(arg, {
+            [-3] = BUILD/"bin/lua",
+            [-2] = "-l", [-1] = "libluax",
+            [0] = "luax/tests/luax-tests/main.lua",
+            "Lua", "is", "great"
+        })
+        assert(sys.libc == "lua")
+        assert(not pandoc)
+
+    elseif test_num == 4 then
+        eq(arg, {
+            [-2] = "lua",
+            [-1] = BUILD/"bin/luax.lua",
+            [0] = "luax/tests/luax-tests/main.lua",
+            "Lua", "is", "great"
+        })
+        eq(fs.findpath(arg[-2]), BUILD/"bin/lua")
+        assert(sys.libc == "lua")
+        assert(not pandoc)
+
+    elseif test_num == 5 then
+        eq(arg, {
+            [-3] = "pandoc lua",
+            [-2] = "-l", [-1] = "libluax",
+            [0] = "luax/tests/luax-tests/main.lua",
+            "Lua", "is", "great"
+        })
+        assert(sys.libc == "lua")
+        assert(pandoc)
+
+    elseif test_num == 6 then
+        eq(arg, {
+            [-3] = "pandoc lua",
+            [-2] = "-l", [-1] = "libluax",
+            [0] = "luax/tests/luax-tests/main.lua",
+            "Lua", "is", "great"
+        })
+        assert(sys.libc == "gnu")
+        assert(pandoc)
+
+    else
+        error("Invalid test number: "..test_num)
+    end
+end

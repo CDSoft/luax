@@ -20,10 +20,10 @@
 
 set -e
 
-ZIG_VERSION="$1"
-ZIG="$2"
-ZIG_KEY="$3"
-REQUEST_SOURCE="$4"
+ZIG="$1"
+ZIG_VERSION="0.15.2"
+ZIG_KEY="RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U"
+REQUEST_SOURCE="codeberg.org-cdsoft-luax"
 
 ARCH="$(uname -m)"
 case "$ARCH" in
@@ -37,29 +37,15 @@ esac
 case "$(uname -s)" in
     (Linux)  OS=linux;   EXT=.tar.xz ;;
     (Darwin) OS=macos;   EXT=.tar.xz ;;
-    (MINGW*) OS=windows; EXT=.zip ;;
-    (*)      OS=unknown ;;
+    (*)      echo "Unsupported OS, can not install Zig"; exit 1 ;;
 esac
 
 ZIG_ARCHIVE=zig-$ARCH-$OS-$ZIG_VERSION$EXT
-
-found()
-{
-    hash "$@" 2>/dev/null
-}
 
 download()
 {
     local OUTPUT="$1"
     echo "Downloading $ZIG_ARCHIVE"
-    if ! found curl; then
-        echo "ERROR: curl not found"
-        exit 1
-    fi
-    if ! found minisign; then
-        echo "ERROR: minisign not found"
-        exit 1
-    fi
     local MIRRORS
     MIRRORS=$(curl -s https://ziglang.org/download/community-mirrors.txt)
     mapfile -t MIRRORS < <(shuf -e "${MIRRORS[@]}")
@@ -86,10 +72,7 @@ download()
 if ! [ -x "$ZIG" ]; then
     mkdir -p "$(dirname "$ZIG")"
     download "$(dirname "$ZIG")/$ZIG_ARCHIVE"
-
-    tar xJf "$(dirname "$ZIG")/$ZIG_ARCHIVE" -C "$(dirname "$ZIG")" --strip-components 1
-    rm "$(dirname "$ZIG")/$ZIG_ARCHIVE"
-    rm "$(dirname "$ZIG")/$ZIG_ARCHIVE.minisig"
+    tar xaf "$(dirname "$ZIG")/$ZIG_ARCHIVE" -C "$(dirname "$ZIG")" --strip-components 1
 fi
 
 touch "$ZIG"

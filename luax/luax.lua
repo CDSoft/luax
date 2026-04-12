@@ -21,6 +21,7 @@ https://codeberg.org/cdsoft/luax
 --@MAIN
 
 local F = require "F"
+local fs = require "fs"
 local term = require "term"
 
 -------------------------------------------------------------------------------
@@ -34,13 +35,17 @@ end
 local function print_welcome()
 
     local sys = require "sys"
+    local version = require "luax-version"
 
-    local I = (F.I % "%%{}")(_G){sys=sys}
+    local I = (F.I % "%%{}")(_G){
+        sys = sys,
+        version = version,
+    }
 
     local welcome = I[===[
- _               __  __  |  https://codeberg.org/cdsoft/luax
+ _               __  __  |  https://%{version.url}
 | |   _   _  __ _\ \/ /  |
-| |  | | | |/ _` |\  /   |  Version %{_LUAX_VERSION} (%{_LUAX_DATE})
+| |  | | | |/ _` |\  /   |  Version %{version.version}
 | |__| |_| | (_| |/  \   |  Powered by %{_VERSION}
 |_____\__,_|\__,_/_/\_\  |%{PANDOC_VERSION and "  and Pandoc "..tostring(PANDOC_VERSION) or ""}
                          |  %{sys.os:cap()} %{sys.arch} %{sys.libc}
@@ -56,7 +61,7 @@ end
 
 local function usage()
     colorize(1)
-    local I = (F.I % "%%{}") (require "luax_config") (term.color) {
+    local I = (F.I % "%%{}") (term.color) {
         arg = arg,
         lua_init = { "LUA_INIT_".._VERSION:words()[2]:gsub("%.", "_"), "LUA_INIT" },
     }
@@ -87,10 +92,8 @@ usage: %{arg[0]:basename()} [cmd] [options]
   -t target       name of the targetted platform
   -t list         list available targets
   -o file         name the executable file to create
-  -c              use a C compiler instead of the loader
   -b              compile to Lua bytecode
   -s              emit bytecode without debug information
-  -z              compress with lzip
   -k key          script encryption key
   -q              quiet compilation (error messages only)
   scripts         scripts to compile
@@ -113,10 +116,7 @@ usage: %{arg[0]:basename()} [cmd] [options]
                 where the Lua implementation of LuaX
                 libraries are installed
 
-  LUA_CPATH     LUA_CPATH shall point to the lib directory
-                where LuaX shared libraries are installed
-
-PATH, LUA_PATH and LUA_CPATH can be set in %{italic'.bashrc'} or %{italic'.zshrc'}
+PATH and LUA_PATH can be set in %{italic'.bashrc'} or %{italic'.zshrc'}
 with "%{italic'luax env'}".
 E.g.: %{italic'eval $(luax env)'}
 
@@ -150,68 +150,8 @@ end
 
 local function cmd_version()
 
-    local luax_config = require "luax_config"
-
-    local copyright_pattern = "(%S+%s+)(%S+%s*)(.*)"
-    local luax_name, luax_version, luax_copyright = luax_config.copyright:match(copyright_pattern)
-    local lua_name,  lua_version,  lua_copyright  = luax_config.lua_copyright:match(copyright_pattern)
-
-    local version = F{
-        {luax_name, luax_version, luax_copyright},
-        {lua_name,  lua_version,  lua_copyright},
-    }
-
-    local function add(soft)
-        if not soft then return end
-        version[#version+1] = {soft[1] or "", soft[2] or "", soft[3] or ""}
-    end
-
-    local function has(mod)
-        return pcall(require, mod)
-    end
-
-    local luaximpl = "Lua implementation"
-    local shellimpl = "Shell implementation"
-    local stub = "minimal Lua stub"
-    local ni = function(s) return {s, "", "not available"} end
-
-    add(pandoc and {"Pandoc", tostring(PANDOC_VERSION)})
-
-    add{}
-
-    package.path = "" -- avoid loading external modules
-
-    add({"mathx", "", require"mathx".version or luaximpl})
-    add({"imath", "", require"imath".version or luaximpl})
-    add({"qmath", "", require"qmath".version or luaximpl})
-    add({"complex", "", require"complex".version or luaximpl})
-
-    add({"argparse", require"argparse".version, ""})
-    add(has"lpeg" and require"lpeg".version:words() or ni"LPeg")
-
-    add({"serpent", require"serpent"._VERSION, require"serpent"._COPYRIGHT})
-    add({"Lua-CBOR", "", "Zash"})
-    add(require"json".version:words())
-    add(require"toml"._VERSION:words())
-
-    add({"lz4", require"lz4".version or "", require"lz4".version and "" or shellimpl})
-    add({"lzip", require"lzip".version or "", require"lzip".version and "" or shellimpl})
-
-    add(has"socket" and require"socket"._VERSION:words() or ni"LuaSocket")
-    add(has"ssl" and {require"ssl"._COPYRIGHT:lines():head():match("^(%S+)%s+(%S+)%s+%-%s+(.*)$")} or ni"LuaSec")
-
-    add({"readline", require"readline".version() or "", require"readline".version() and "" or stub})
-    add({"linenoise", "", require"linenoise".version() or stub})
-
-    local width = version:transpose():map(function(xs)
-        return F.map(tostring, xs):map(F.op.len):maximum()
-    end)
-    io.stdout:write(version
-        : map(function(v)
-            return F(v):mapi(function(i, s) return s:ljust(width[i]) end):str" ":rtrim()
-        end)
-        : unlines()
-    )
+    local luax_version = require "luax-version"
+    io.stdout:write(tostring(luax_version), "  ", luax_version.copyright, "\n")
 
 end
 
@@ -219,13 +159,17 @@ end
 -- Run command
 -------------------------------------------------------------------------------
 
+local function comment_shebang(script)
+    return script
+        : gsub("^#!.-\n(\x1b)", "%1")   -- remove the whole shebang of compiled scripts
+        : gsub("^#!", "--")             -- comment the shebang before loading the script
+end
+
 local function wrong_arg(a)
     print_error("unrecognized option '%s'", a)
 end
 
 local function cmd_run()
-
-    local bundle = require "luax_bundle"
 
     local function msgtostr(msg)
         if type(msg) == "string" then return msg end
@@ -251,7 +195,6 @@ local function cmd_run()
         end)
         io.stderr:write(trace:take(pos):unlines())
     end
-
 
     -- Read options
 
@@ -284,10 +227,10 @@ The LuaX REPL can be run in various environments:
 $ luax
 ```
 
-### Shared library usable with a standard Lua interpreter
+### Lua library usable with a standard Lua interpreter
 
 ``` sh
-$ lua -l luax
+$ lua -l libluax
 ```
 
 ## Reduced version for plain Lua interpreters
@@ -563,7 +506,6 @@ prints `show(x)`
 
     local function run_interpreter()
 
-        local fs = require "fs"
         local sys = require "sys"
 
         -- scripts
@@ -572,7 +514,7 @@ prints `show(x)`
             local script = args[1]
             local show, chunk, msg
             if script == "-" then
-                chunk, msg = load(bundle.comment_shebang(io.stdin:read "*a"))
+                chunk, msg = load(comment_shebang(io.stdin:read "*a"))
             else
                 local function findscript(name)
                     local candidates = F.nub({".", fs.dirname(arg[-1])} .. os.getenv"PATH":split(fs.path_sep))
@@ -590,7 +532,7 @@ prints `show(x)`
                     os.exit(1)
                 end
                 local real_script = findscript(script)
-                chunk, msg = load(bundle.comment_shebang(assert(fs.read_bin(real_script))), "@"..real_script)
+                chunk, msg = load(comment_shebang(assert(fs.read_bin(real_script))), "@"..real_script)
             end
             if not chunk then
                 colorize(2)
@@ -674,22 +616,30 @@ end
 -- Compile command
 -------------------------------------------------------------------------------
 
-local function cmd_compile()
+local function find_exe(name)
 
-    local fs = require "fs"
-    local sh = require "sh"
     local sys = require "sys"
 
-    local bundle = require "luax_bundle"
-    local targets = require "targets"
-    local lz4 = require "lz4"
-    local lzip = require "lzip"
-    local assets = require "luax_assets"
-    local has_compiler, build_config = pcall(require, "luax_build_config")
-
-    if not has_compiler then
-        print_error "Compilation not available"
+    local exe = fs.is_file(name) and name
+            or (sys.exe ~= "" and fs.is_file(name..sys.exe) and name..sys.exe)
+            or fs.findpath(name)
+            or (sys.exe ~= "" and fs.findpath(name..sys.exe))
+    if not exe then
+        print_error("%s: not found", name)
     end
+    return exe
+end
+
+local function cmd_compile()
+
+    local crypt = require "crypt"
+    local sys = require "sys"
+    local targets = require "luax-targets"
+
+    local format = string.format
+    local byte = string.byte
+    local char = string.char
+    local sub = string.sub
 
     local magic = "LuaX"
 
@@ -699,9 +649,281 @@ local function cmd_compile()
         { name="pandoc", add_luax_runtime=true  },
     }
 
+    local function last_line(s)
+        return s
+        : lines()
+        : drop_while_end(F.compose{string.null, string.trim})
+        : last() or ""
+    end
+
+    local function mlstr(s)
+        local n = (s:matches"](=*)]":map(F.op.len):maximum() or -1) + 1
+        local eqs = ("="):rep(n)
+        return F.str{"[", eqs, "[", s, "]", eqs, "]"}
+    end
+
+    local esc = {
+        ["'"]  = "\\'",     -- ' must be escaped as it is embeded in single quoted strings
+        ["\\"] = "\\\\",    -- \ must be escaped to avoid confusion with escaped chars
+    }
+    F.flatten{
+        F.range(0, 31),     -- non printable control chars
+        F.range(48, 57),    -- 0..9 must be escaped to avoid confusion decimal escape codes
+        F.range(128, 255)   -- non 7-bit ASCII codes are also not printable
+    }
+    : foreach(function(b) esc[char(b)] = format("\\%d", b) end)
+
+    local function escape(s)
+        return format("'%s'", s:gsub(".", esc))
+    end
+
+    local function qstr(s)
+        if s:match "^[%g%s]*$" then
+            -- printable string => use multiline Lua strings
+            return mlstr(s)
+        else
+            -- non printable string => escape non printable chars
+            return escape(s)
+        end
+    end
+
+    local function find_main(scripts)
+        local explicit_main = F{}
+        local implicit_main = F{}
+        for i = 1, #scripts do
+            local script = scripts[i]
+            if script.is_main then
+                explicit_main[#explicit_main+1] = script
+            elseif not script.is_lib and not script.is_load and not script.maybe_lib then
+                implicit_main[#implicit_main+1] = script
+            end
+        end
+        local main_script = nil
+        if #explicit_main > 1 then
+            error("Too many main scripts: "..explicit_main:map(F.partial(F.nth, "path")):str", ")
+        elseif #explicit_main == 1 then
+            main_script = explicit_main[1]
+        elseif #implicit_main > 1 then
+            error("Too many main scripts: "..implicit_main:map(F.partial(F.nth, "path")):str", ")
+        elseif #implicit_main == 1 then
+            main_script = implicit_main[1]
+        end
+        return main_script, scripts:filter(function(script) return script ~= main_script end)
+    end
+
+    local function make_key(input, opt)
+        local function chunks_of_chars(n, s)
+            local chunks = F{}
+            for i = 1, #s, n do
+                chunks[#chunks+1] = sub(s, i, i+n-1)
+            end
+            return chunks
+        end
+        local kmin <const>, kmax <const> = 8, 256
+        local mmin <const>, mmax <const> = 256, 64*1024
+        local key_size = F.floor(kmin + (#input-mmin)*((kmax-kmin)/(mmax-mmin)))
+        key_size = F.max(kmin, F.min(kmax, key_size))
+        return chunks_of_chars(key_size, input:arc4(opt.key)) : fold1(crypt.arc4)
+    end
+
+    local function compact(s)
+        return s
+            : lines()
+            : map(string.trim)
+            : filter(function(l) return #l>0 end)
+            : str";"
+    end
+
+    local function bytecode(code, opt, names)
+        if opt.bytecode then
+            code = assert(string.dump(assert(load(code, "@$"..F(names):str":")), opt.strip))
+        end
+        return code
+    end
+
+    local function obfuscate_lua(code, opt, names)
+        code = bytecode(code, opt, names)
+        if opt.key then
+            -- Encrypt code by xoring bytes with pseudo random values
+            local key = make_key(code, opt)
+            local a <const>, c <const> = 6364136223846793005, 1
+            local seed = tonumber(key:hash(), 16)
+            local r = seed
+            local xs = {}
+            for i = 1, #code do
+                local b = byte(code, i)
+                r = r*a + c
+                xs[i] = char(b ~ ((r>>33) & 0xff))
+            end
+            code = compact(F.I { a=a, c=c, b=escape(table.concat(xs)), seed=seed } [===[
+                local b,a,c,r,x,bt,ch,l,tc=$(b),$(a),$(c),$(("0x%x"):format(seed)),{},string.byte,string.char,load,table.concat
+                for i=1,#b do r=r*a+c x[i]=ch(bt(b,i)~((r>>33)&0xff))end
+                return l(tc(x))()
+            ]===])
+            code = bytecode(code, opt, F.take(1, names))
+        end
+        return code
+    end
+
+    local function obfuscate_luax(code, opt, names)
+
+        code = bytecode(code, opt, names)
+
+        if opt.key then
+            local key = make_key(code, opt)
+            code = compact(F.I { b=escape(code:arc4(key)), k=escape(key) } [===[
+                return load(require"_crypt".unarc4($(b), $(k)))()
+            ]===])
+            code = bytecode(code, opt, F.take(1, names))
+        end
+
+        return code
+    end
+
+    local known_modules = {}
+
+    local function ensure_unique_module(script)
+        local name = script.lib_name
+        if known_modules[name] then
+            error(name..": duplicate module")
+        end
+        known_modules[name] = true
+    end
+
+    local function bundle(opt)
+
+        opt.bytecode = opt.bytecode or opt.strip -- strip implies bytecode
+
+        local scripts = F{}
+
+        local function load_script(script, prefix, patch)
+            local len_prefix = prefix and #prefix+2 or 1
+            local content = assert(fs.read_bin(script))
+            local ext = fs.ext(script)
+            local module
+            if ext == ".lua" then
+                module = F {
+                    path      = script:sub(len_prefix),
+                    content   = comment_shebang(content),
+                    is_main   = content:match("@".."MAIN"),
+                    is_lib    = content:match("@".."LIB"),
+                    lib_name  = content:match("@".."LIB=([%w%._%-]+)") or script:basename():splitext(),
+                    is_load   = content:match("@".."LOAD"),
+                    load_name = content:match("@".."LOAD=([%w%._%-]+)"),
+                    maybe_lib = last_line(content):match "^%s*return",
+                }
+            else
+                -- file embeded as a Lua module returning the content of the file
+                if content:match"^[%g%s]*$" and #content:lines() <= 1 then content = content:trim() end
+                local safe_content = qstr(content)
+                module = F {
+                    path      = script:sub(len_prefix),
+                    content   = "return "..safe_content,
+                    is_main   = false,
+                    is_lib    = true,
+                    lib_name  = script:basename(),
+                    is_load   = false,
+                    load_name = false,
+                    maybe_lib = false,
+                }
+            end
+            if patch then module = module:patch(patch) end
+            scripts[#scripts+1] = module
+        end
+
+        if opt.add_luax_runtime then
+            local prefix = find_exe(arg[0]):realpath():dirname():dirname()
+            fs.ls(prefix/"lib/luax/*.lua") : foreach(function(script)
+                load_script(script, prefix, { is_main=false })
+            end)
+            if opt.add_ext_runtime then
+                fs.ls(prefix/"lib/luax/ext/*.lua") : foreach(function(script)
+                    load_script(script, prefix, { is_main=false })
+                end)
+            end
+        end
+
+        F.foreach(opt.scripts, load_script)
+
+        if not opt.output then
+            return F{}
+        end
+
+        if opt.target:match "^lua" or opt.target == "pandoc" then
+            local product_name = opt.product_name or opt.output:basename():splitext()
+            local preloads = {}
+            local loads = {}
+            local run_main = {}
+            local interpreter = {
+                lua    = "lua",
+                pandoc = "pandoc lua",
+                luax   = "luax",
+            }
+            local shebang = interpreter[opt.target] and "#!/usr/bin/env -S "..interpreter[opt.target].." --" or {}
+            local out = F{
+                opt.strip and {
+                    "local function lib(src) return assert(load(src)) end",
+                } or {
+                    ("local function lib(path, src) return assert(load(src, '@$%s:'..path)) end"):format(product_name)
+                },
+                preloads,
+                loads,
+                run_main,
+            }
+            local function compile(script)
+                -- check script compilation (with the actual file path in error messages)
+                assert(load(script.content, ("@%s"):format(script.path)))
+                if opt.bytecode then
+                    -- compile the script with file path containing the product name
+                    return qstr(bytecode(script.content, opt, {product_name, script.path}))
+                else
+                    return mlstr(script.content)
+                end
+            end
+            local main_script, libs = find_main(scripts)
+            for i = 1, #libs do
+                local script = libs[i]
+                local name = script.lib_name
+                ensure_unique_module(script)
+                if opt.strip then
+                    preloads[#preloads+1] = ("package.preload[%q] = lib(%s)"):format(name, compile(script))
+                else
+                    preloads[#preloads+1] = ("package.preload[%q] = lib(%q, %s)"):format(name, script.path, compile(script))
+                end
+            end
+            for i = 1, #libs do
+                local script = libs[i]
+                if script.is_load then
+                    local lib_name  = script.lib_name
+                    local load_name = script.load_name or lib_name
+                    if load_name == "_" then
+                        loads[#loads+1] = ("require %q"):format(lib_name)
+                    else
+                        loads[#loads+1] = ("_ENV[%q] = require %q"):format(load_name, lib_name)
+                    end
+                end
+            end
+            if main_script then
+                local script = main_script
+                if opt.strip then
+                    run_main[#run_main+1] = ("return lib(%s)()"):format(compile(script))
+                else
+                    run_main[#run_main+1] = ("return lib(%q, %s)()"):format(script.path, compile(script))
+                end
+            end
+            local obfuscate = opt.target:match "^luax" and obfuscate_luax or obfuscate_lua
+            out = obfuscate(out:flatten():unlines(), F(opt):patch{strip=true}, {product_name})
+            return F{
+                [opt.output] = F{shebang, out}:flatten():unlines(),
+            }
+        end
+
+        error(tostring(opt.target)..": unknown target")
+    end
+
     local function print_targets()
         colorize(1)
-        print((term.color.green"%-22s%-25s"):format("Target", "Interpreter / LuaX archive"))
+        print((term.color.green"%-22s%-25s"):format("Target", "Interpreter / LuaX loader"))
         print((term.color.green"%-22s%-25s"):format(("-"):rep(21), ("-"):rep(25)))
         local home = os.getenv(F.case(sys.os) {
             windows = "LOCALAPPDATA",
@@ -715,22 +937,21 @@ local function cmd_compile()
                 path and path:gsub("^"..home, "~") or name,
                 path and "" or term.color.red" [NOT FOUND]"))
         end)
-        if assets.path and assets.targets then
-            local luax_lar = assets.path:gsub("^"..home, "~")
-            if assets.targets[sys.name] then
-                print(("%-22s%s"):format("native", luax_lar))
-            end
-            targets:foreach(function(target)
-                if assets.targets[target.name] then
-                    print(("%-22s%s"):format(target.name, luax_lar))
-                end
-            end)
-        end
+        local prefix = ("luax"..sys.exe):findpath():dirname():dirname()
+        local native = prefix/"lib/luax/luax-loader-"..sys.name..sys.exe
+        print(("%-22s%s%s"):format(
+            "native",
+            native and native:gsub("^"..home, "~") or native,
+            fs.is_file(native) and "" or term.color.red" [NOT FOUND]"))
+        targets:foreach(function(target)
+            local loader = prefix/"lib/luax/luax-loader-"..target.name..target.exe
+            print(("%-22s%s%s"):format(
+                target.name,
+                loader and loader:gsub("^"..home, "~") or loader,
+                fs.is_file(loader) and "" or term.color.red" [NOT FOUND]"))
+        end)
         print("")
-        print((term.color.green"Lua compiler: %s (LuaX %s)"):format(_VERSION, _LUAX_VERSION))
-        if assets.path and assets.targets then
-            print((term.color.green"C compiler  : %s"):format(build_config.compiler.full_version))
-        end
+        print((term.color.green"Lua compiler: %s (LuaX %s)"):format(_VERSION, require "luax-version".version))
     end
 
     -- Read options
@@ -739,10 +960,8 @@ local function cmd_compile()
     local output = nil
     local target = nil
     local quiet = false
-    local use_cc = false
     local bytecode = nil
     local strip = nil
-    local compression = false
     local key = nil
 
     do
@@ -759,15 +978,11 @@ local function cmd_compile()
                 if target then wrong_arg(a) end
                 target = arg[i]
                 if target == "list" then print_targets() os.exit() end
-            elseif a == '-c' then
-                use_cc = true
             elseif a == '-b' then
                 bytecode = true
             elseif a == '-s' then
                 bytecode = true
                 strip = true
-            elseif a == '-z' then
-                compression = true
             elseif a == '-k' then
                 i = i+1
                 if key then wrong_arg(a) end
@@ -820,15 +1035,15 @@ local function cmd_compile()
         log("target", "%s", interpreter.name)
         log("output", "%s", current_output)
 
-        local files = bundle.bundle {
+        local files = bundle {
             scripts = scripts,
             add_luax_runtime = interpreter.add_luax_runtime,
+            add_ext_runtime = false,
             add_shebang = interpreter.add_shebang,
             output = current_output,
             target = interpreter.name,
             bytecode = bytecode,
             strip = strip,
-            compression = compression,
             key = key,
         }
         local exe = files[current_output]
@@ -842,215 +1057,6 @@ local function cmd_compile()
         print_size(current_output)
     end
 
-    local function uncompressed_name(name)
-        local uncompressed, ext = name:splitext()
-        return F.case(ext) {
-            [".lz4"] = function() return uncompressed, lz4.unlz4 end,
-            [".lz"]  = function() return uncompressed, lzip.unlzip end,
-            [F.Nil]  = function() return name, F.id end,
-        }()
-    end
-
-    local function assert_sh(ok, _, code)
-        assert(ok and code==0)
-    end
-
-    -- Compile LuaX scripts with LuaX and Zig, gcc or clang
-    local function compile_native(tmp, current_output, target_definition)
-        if current_output:ext():lower() ~= target_definition.exe then
-            current_output = current_output..target_definition.exe
-        end
-        if not quiet then print() end
-        log("target", "%s", target_definition.name)
-        log("output", "%s", current_output)
-
-        -- Extract precompiled LuaX libraries
-        local headers = F(assets.headers or {})
-        local libs = F(assets.targets and assets.targets[target_definition.name] or {})
-        if headers:null() or libs:null() then
-            print_error "Compilation not available"
-        end
-        local function tmp_file(filename, content)
-            local name, uncompress = uncompressed_name(filename)
-            fs.write_bin(tmp/name:basename(), uncompress(content))
-        end
-        headers:foreachk(tmp_file)
-        libs:foreachk(tmp_file)
-        local rank = {
-            ["luax.o"]      = 1,
-            ["libluax.o"]   = 2,
-            ["libluax.a"]   = 3,
-            ["liblua.a"]    = 4,
-            ["libssl.a"]    = 5,
-            ["libcrypto.a"] = 6,
-        }
-        local libnames = libs:keys(function(a, b)
-            local rank_a = assert(rank[uncompressed_name(a)], a..": unknown library")
-            local rank_b = assert(rank[uncompressed_name(b)], b..": unknown library")
-            return rank_a < rank_b
-        end)
-        : map(function(name)
-            return tmp/uncompressed_name(name):basename()
-        end)
-
-        -- Compile the input LuaX scripts
-        local app_bundle_c = "app_bundle.c"
-        local app_bundle = assert(bundle.bundle {
-            scripts = scripts,
-            output = tmp/app_bundle_c,
-            target = "c",
-            entry = "app",
-            product_name = current_output:basename():splitext(),
-            bytecode = bytecode or "-b", -- defaults to bytecode compilation for native builds
-            strip = strip,
-            compression = compression,
-            key = key,
-        })
-        app_bundle : foreachk(fs.write_bin)
-
-        local tmp_output = tmp/current_output:basename()
-
-        local function optional(flag)
-            return flag and F.id or F.const{}
-        end
-
-        local flto = F.case(build_config.compiler.name) {
-            zig   = "-flto=thin",
-            gcc   = "-flto=auto",
-            clang = "-flto=thin",
-        }
-
-        local cflags = {
-            F.case( build_config.compiler.name) {
-                gcc   = {},
-                clang = {},
-                zig   = {"cc", "-target", F{target_definition.arch, target_definition.os, target_definition.libc}:str"-"},
-            },
-            "-std=gnu2x",
-            F.case(build_config.mode) {
-                fast  = "-O3",
-                small = "-Os",
-                debug = { "-g", "-Og" },
-            },
-            "-pipe",
-            "-I"..tmp,
-            "-fPIC",
-            optional(build_config.lto)(F.case(target_definition.os) {
-                linux   = flto,
-                macos   = {},
-                windows = flto,
-            }),
-            F.case(build_config.compiler.name) {
-                gcc   = "-Wstringop-overflow=0",
-                clang = {},
-                zig   = {},
-            },
-        }
-        local ldflags = {
-            F.case(build_config.mode) {
-                fast  = "-s",
-                small = "-s",
-                debug = {},
-            },
-            "-lm",
-            F.case(target_definition.os) {
-                linux   = {},
-                macos   = {},
-                windows = {
-                    "-lshlwapi",
-                    "-lws2_32",
-                    optional(build_config.ssl) "-lcrypt32",
-                }
-            },
-            F.case(target_definition.libc) {
-                gnu  = "-rdynamic",
-                musl = {},
-                none = "-rdynamic",
-            },
-        }
-
-        local compiler = build_config.compiler.name
-
-        if compiler == "zig" then
-
-            -- Zig configuration
-            local zig_version = build_config.compiler.version
-            local zig_path = F.case(sys.os) {
-                windows = build_config.zig.path_win:gsub("^~", os.getenv"LOCALAPPDATA" or "~"),
-                [F.Nil] = build_config.zig.path:gsub("^~", os.getenv"HOME" or "~"),
-            }/zig_version
-            local zig_key = build_config.zig.key;
-
-            local zig = zig_path/"zig"..sys.exe
-
-            -- Install Zig (to cross compile and link C sources)
-            if not zig:is_file() then
-                local luax_config = require "luax_config"
-                log("Zig", "download and install Zig to %s", zig_path)
-                local curl = require "curl"
-                local ext = F.case(sys.os) { windows=".zip", [F.Nil]=".tar.xz" }
-                local archive
-                local mirrors = curl "https://ziglang.org/download/community-mirrors.txt" : lines() : shuffle()
-                for _, mirror in ipairs(mirrors) do
-                    local url = string.format("%s/zig-%s-%s-%s%s", mirror, sys.arch, sys.os, zig_version, ext)
-                    local source = "?source="..(luax_config.url : gsub("/", "-"))
-                    archive = url:basename()
-                    log("curl", "%s", url..source)
-                    local curl_ok = curl.request {
-                        "-fSL",
-                        (quiet or not term.isatty(io.stdout)) and "-s" or "-#",
-                        url..source,
-                        "-o", tmp/archive,
-                    }
-                    if curl_ok then
-                        log("curl", "%s", url..".minisig"..source)
-                        curl_ok = curl.request {
-                            "-fSL",
-                            (quiet or not term.isatty(io.stdout)) and "-s" or "-#",
-                            url..".minisig"..source,
-                            "-o", tmp/archive..".minisig",
-                        }
-                        if curl_ok then
-                            local trusted_comment = sh.read {
-                                "minisign", "-V", "-Q",
-                                "-m", tmp/archive,
-                                "-x", tmp/archive..".minisig",
-                                "-P", zig_key
-                            } or ""
-                            local file = trusted_comment : split "\t" : map(function(field)
-                                return field:match "^file:(.*)$"
-                            end) : head()
-                            if file ~= archive then
-                                colorize(2)
-                                io.stderr:write(term.color.red(mirror/archive..".minisig: signature verification failed"), "\n")
-                            else
-                                break -- valid archive
-                            end
-                        end
-                    end
-                    archive = nil -- archive not found or not valid, try another mirror
-                end
-                if archive then
-                    fs.mkdirs(zig_path)
-                    assert_sh(sh.run("tar -xJf", tmp/archive, "-C", zig_path, "--strip-components", 1))
-                end
-                if not zig:is_file() then
-                    print_error("Unable to install Zig to %s", zig_path)
-                end
-            end
-
-            compiler = zig
-
-        end
-
-        -- Compile and link the generated source
-        assert_sh(sh.run(compiler, cflags, libnames, tmp/app_bundle_c, ldflags, "-o", tmp_output))
-
-        assert(fs.copy(tmp_output, current_output))
-
-        print_size(current_output)
-    end
-
     -- Compile LuaX scripts with LuaX and prepend a precompiled loader
     local function compile_loader(current_output, target_definition)
         if current_output:ext():lower() ~= target_definition.exe then
@@ -1060,31 +1066,25 @@ local function cmd_compile()
         log("target", "%s", target_definition.name)
         log("output", "%s", current_output)
 
-        -- Extract precompiled LuaX loader
-        local loader = assets.loaders and assets.loaders[target_definition.name]
-        if not loader then
-            print_error("No %s loader", target_definition.name)
+        -- Find the precompiled LuaX loader
+        local prefix = find_exe(arg[0]):realpath():dirname():dirname()
+        local loader = prefix/"lib/luax/luax-loader-"..target_definition.name..target_definition.exe
+        if not fs.is_file(loader) then
+            print_error("%s: no %s loader", prefix, target_definition.name)
         end
 
         -- Compile the input LuaX scripts
-        local files = assert(bundle.bundle {
+        local files = assert(bundle {
             scripts = scripts,
+            add_luax_runtime = true,
+            add_ext_runtime = true,
             output = current_output,
             target = "luax-loader",
             add_shebang = false,
             bytecode = bytecode or "-b",
             strip = strip,
-            compression = compression,
             key = key,
         })
-
-        loader = F(loader) : mapk2a(function(k, bin)
-            local _, uncompress = uncompressed_name(k)
-            return uncompress(bin)
-        end)
-        if #loader ~= 1 then
-            print_error("Invalid %s loader", target_definition.name)
-        end
 
         local header = string.pack("<c4I4", magic, #files[current_output])
         local payload = F.str {
@@ -1093,7 +1093,7 @@ local function cmd_compile()
             header:hash32():unhex(),
         }
 
-        local exe = loader[1] .. payload
+        local exe = assert(fs.read_bin(loader)) .. payload
 
         if not fs.write_bin(current_output, exe) then
             print_error("Can not create %s", current_output)
@@ -1122,13 +1122,7 @@ local function cmd_compile()
             print_error("%s: unknown target", target)
         end
 
-        if use_cc then
-            fs.with_tmpdir(function(tmp)
-                compile_native(tmp, output, target_definition)
-            end)
-        else
-            compile_loader(output, target_definition)
-        end
+        compile_loader(output, target_definition)
 
     end
 
@@ -1138,25 +1132,7 @@ end
 -- Env command
 -------------------------------------------------------------------------------
 
-local function find_exe(name)
-
-    local fs = require "fs"
-    local sys = require "sys"
-
-    local exe = fs.is_file(name) and name
-            or (sys.exe ~= "" and fs.is_file(name..sys.exe) and name..sys.exe)
-            or fs.findpath(name)
-            or (sys.exe ~= "" and fs.findpath(name..sys.exe))
-    if not exe then
-        print_error("%s: not found", name)
-    end
-    return exe
-end
-
 local function cmd_env()
-
-    local fs = require "fs"
-    local sys = require "sys"
 
     local function luax_env(luax)
 
@@ -1164,7 +1140,6 @@ local function cmd_env()
         local bin = assert(exe):dirname():realpath()
         local prefix = bin:dirname()
         local lib_lua = prefix / "lib" / "?.lua"
-        local lib_so = prefix / "lib" / "?"..sys.so
 
         local function update(lua_var, var_name, separator, new_path)
             return F{
@@ -1183,7 +1158,6 @@ local function cmd_env()
         return F.unlines {
             update("",            "PATH",      fs.path_sep,  bin),
             update(package.path,  "LUA_PATH",  lua_path_sep, lib_lua),
-            update(package.cpath, "LUA_CPATH", lua_path_sep, lib_so),
         }
     end
 
@@ -1230,9 +1204,9 @@ end
 
 local function cmd_postinstall()
 
-    local fs = require "fs"
     local sys = require "sys"
     local readline = require "readline"
+    local version = require "luax-version"
 
     local found = term.color.green "✔"
     local not_found = term.color.red "✖"
@@ -1241,13 +1215,23 @@ local function cmd_postinstall()
     colorize(1)
 
     local expected_files = F.flatten {
-        (sys.libc=="gnu" or sys.libc=="musl") and "bin"/"luax"..sys.exe or {},
+        (sys.libc=="gnu" or sys.libc=="musl") and {
+            "bin"/"luax"..sys.exe,
+            "bin"/"bang"..sys.exe,
+            "bin"/"lsvg"..sys.exe,
+            "bin"/"ypp"..sys.exe,
+        } or {},
         "bin"/"luax.lua",
         "bin"/"luax-pandoc.lua",
-        sys.libc=="gnu" and "lib"/"libluax"..sys.so or {},
-        "lib"/"libluax.lar",
+        "bin"/"bang.lua",
+        "bin"/"lsvg.lua",
+        "bin"/"ypp.lua",
+        "bin"/"ypp-pandoc.lua",
         "lib"/"libluax.lua",
+        require "luax-libs.txt" : lines(),
+        require "luax-targets" : map(function(target) return "lib/luax/luax-loader-"..target.name..target.exe end),
     }
+    local expected_dirs = expected_files : map(fs.dirname) : nub()
 
     local force = false
     local interactive = term.isatty(0) and term.isatty(1)
@@ -1270,8 +1254,12 @@ local function cmd_postinstall()
     local bin = prefix/"bin"
     local lib = prefix/"lib"
     local new_files = expected_files : map(function(file) return prefix/file end)
+    local new_dirs = expected_dirs : map(function(dir) return prefix/dir end)
 
-    local copyright = F{ _LUAX_COPYRIGHT : match "^(%S+%s+%S+)%s+(%S+%s+%S+%s+%S+)%s+(%S+),%s*(.+)" }
+    local copyright = F.flatten{
+        tostring(version),
+        version.copyright : match "(Copyright.-%d+%-%d+)%s+(.-),%s+(.*)",
+    }
     copyright[#copyright+1] = ("="):rep(copyright:map(F.op.len):maximum())
     print(copyright : map(term.color.green) : unlines())
 
@@ -1297,19 +1285,21 @@ local function cmd_postinstall()
 
     -- Search for obsolete files
 
-    local obsolete_files = (fs.ls(bin) .. fs.ls(lib))
+    local obsolete_files = (fs.ls(bin/"**") .. fs.ls(lib/"**"))
         : filter(function(file) return file:basename():match "luax" end)
-        : filter(function(file) return new_files:not_elem(file) end)
+        : filter(function(file) return new_files:not_elem(file) and new_dirs:not_elem(file) end)
 
     if #obsolete_files > 0 then
         print("")
         obsolete_files : foreach(function(file)
+            local rm = fs.is_dir(file) and fs.rmdir or fs.is_file(file) and fs.remove
+            if not rm then return end -- may have been removed by a previous rmdir
             if force then
                 print(string.format("%s remove %s", recycle, term.color.yellow(file)))
-                assert(fs.remove(file))
+                assert(rm(file))
             elseif interactive then
-                if confirm("%s remove obsolete LuaX file '%s'", recycle, term.color.yellow(file)) then
-                    assert(fs.remove(file))
+                if confirm("%s remove obsolete LuaX %s '%s'", recycle, fs.is_dir(file) and "directory" or "file" ,term.color.yellow(file)) then
+                    assert(rm(file))
                 end
             else
                 print(string.format("%s %s is obsolete", recycle, term.color.yellow(file)))

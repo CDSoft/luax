@@ -1,0 +1,11 @@
+[36m[string "..."]:7:[0m [31merror:[0m 'end' expected (to close 'if' at line 6) near 'return'
+
+[36m[string "..."]:7:[0m
+   2 |  
+   3 |      -- this chunk contains a syntax error that shall be clearly localized by ypp
+   4 |  
+   5 |      function fib(n)
+   6 |          if n <= 1 then return n
+[31m   7 =>         return fib(n-1) + fib-n-2)[0m
+   8 |      end
+   9 |  

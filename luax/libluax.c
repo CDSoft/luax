@@ -25,78 +25,40 @@
 
 #include "lauxlib.h"
 
-#include "version/version.h"
-
-#include "complex/complex.h"
-#include "crypt/crypt.h"
-#include "fs/fs.h"
-#include "imath/imath.h"
-#include "readline/readline.h"
-#include "linenoise/linenoise.h"
-#include "lpeg/lpeg.h"
-#include "lz4/lz4.h"
-#include "lzip/lzip.h"
-#include "mathx/mathx.h"
-#include "ps/ps.h"
-#include "qmath/qmath.h"
-#include "socket/luasocket.h"
-#ifdef LUAX_USE_SSL
-#include "sec/luasec.h"
-#endif
-#include "sys/sys.h"
-#include "term/term.h"
+#include "complex.h"
+#include "crypt.h"
+#include "fs.h"
+#include "imath.h"
+#include "readline.h"
+#include "linenoise.h"
+#include "lpeg.h"
+#include "mathx.h"
+#include "ps.h"
+#include "qmath.h"
+#include "sys.h"
+#include "term.h"
 
 static const luaL_Reg lrun_libs[] = {
-    {"complex",     luaopen_complex},
+    {"_complex",    luaopen_complex},
     {"_crypt",      luaopen_crypt},
     {"_fs",         luaopen_fs},
-    {"imath",       luaopen_imath},
-    {"readline",    luaopen_readline},
-    {"linenoise",   luaopen_linenoise},
+    {"_imath",      luaopen_imath},
+    {"_readline",   luaopen_readline},
+    {"_linenoise",  luaopen_linenoise},
     {"lpeg",        luaopen_lpeg},
-    {"_lz4",        luaopen_lz4},
-    {"_lzip",       luaopen_lzip},
-    {"mathx",       luaopen_mathx},
-    {"ps",          luaopen_ps},
+    {"_mathx",      luaopen_mathx},
+    {"_ps",         luaopen_ps},
     {"_qmath",      luaopen_qmath},
-    {"socket",      luaopen_luasocket},
-#ifdef LUAX_USE_SSL
-    {"ssl",         luaopen_luasec},
-#endif
-    {"sys",         luaopen_sys},
+    {"_sys",        luaopen_sys},
     {"_term",       luaopen_term},
     {NULL, NULL},
 };
 
-static const char *arg0(lua_State *L)
-{
-    const int type = lua_getglobal(L, "arg");
-    if (type == LUA_TTABLE) {
-        lua_rawgeti(L, -1, 0);
-    } else {
-        lua_pushstring(L, "<LuaX>");
-    }
-    return luaL_checkstring(L, -1);
-}
-
-__attribute__((noreturn))
-static void error(const char *what, const char *message)
-{
-    fprintf(stderr, "%s: %s\n", what, message);
-    exit(EXIT_FAILURE);
-}
-
 LUAMOD_API int luaopen_libluax(lua_State *L)
 {
-    set_version(L);
     for (const luaL_Reg *lib = lrun_libs; lib->func != NULL; lib++) {
         luaL_requiref(L, lib->name, lib->func, 0);
         lua_pop(L, 1);
-    }
-
-    extern int run_lib(lua_State *);
-    if (run_lib(L) != LUA_OK) {
-        error(arg0(L), "can not initialize the LuaX runtime\n");
     }
 
     return 1;

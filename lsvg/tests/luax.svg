@@ -1,0 +1,13 @@
+<svg font-family="Liberation Sans" font-size="312" height="1024" text-anchor="middle" version="1.1" width="1024" xmlns="http://www.w3.org/2000/svg">
+<g fill="white" transform="translate(512, 512)">
+<circle r="497" stroke="grey" stroke-dasharray="50" stroke-width="15" transform="rotate(-5)"/>
+<circle fill="blue" r="364"/>
+<text x="0" y="195">Lua</text>
+<g font-size="156" font-weight="bold">
+<circle cx="382.54" cy="-382.54" fill="blue" r="113"/>
+<text x="382.54" y="-324.04">X</text>
+<circle cx="132.23" cy="-132.23" r="113"/>
+<text fill="blue" x="132.23" y="-73.73">X</text>
+</g>
+</g>
+</svg>

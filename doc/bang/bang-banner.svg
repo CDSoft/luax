@@ -1,0 +1,56 @@
+<svg font-family="Liberation Sans Bold" font-size="48" height="192" text-anchor="middle" version="1.1" width="1024" xmlns="http://www.w3.org/2000/svg">
+<!--
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+-->
+        <defs>
+            <linearGradient id="PlanetGradient" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="lightgrey"/>
+                <stop offset="15%" stop-color="cyan"/>
+                <stop offset="30%" stop-color="orange"/>
+                <stop offset="70%" stop-color="green"/>
+                <stop offset="85%" stop-color="blue"/>
+                <stop offset="100%" stop-color="lightgrey"/>
+            </linearGradient>
+            <linearGradient id="MoonGradient" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="darkgrey"/>
+                <stop offset="50%" stop-color="lightgrey"/>
+                <stop offset="100%" stop-color="darkgrey"/>
+            </linearGradient>
+            <linearGradient id="TopRingGradient" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="black" stop-opacity="0"/>
+                <stop offset="49%" stop-color="grey" stop-opacity="0"/>
+                <stop offset="50%" stop-color="grey" stop-opacity="1"/>
+                <stop offset="100%" stop-color="darkgrey" stop-opacity="1"/>
+            </linearGradient>
+            <linearGradient id="BottomRingGradient" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="black" stop-opacity="1"/>
+                <stop offset="50%" stop-color="grey" stop-opacity="1"/>
+                <stop offset="51%" stop-color="grey" stop-opacity="0"/>
+                <stop offset="100%" stop-color="darkgrey" stop-opacity="0"/>
+            </linearGradient>
+        </defs>
+    <g transform="translate(512, 96) rotate(15)">
+<circle cx="57.28" cy="-57.28" fill="url(#MoonGradient)" r="22.5"/>
+<ellipse fill-opacity="0" rx="90" ry="29.7" stroke="url(#BottomRingGradient)" stroke-width="15"/>
+<circle fill="url(#PlanetGradient)" r="72"/>
+<ellipse fill-opacity="0" rx="90" ry="29.7" stroke="url(#TopRingGradient)" stroke-width="15"/>
+<text dx="0" dy="12.0" fill="black" stroke="black" stroke-width="1.5">Bang</text>
+<text dx="-3.0" dy="9.0" fill="SeaShell">Bang</text>
+</g>
+</svg>

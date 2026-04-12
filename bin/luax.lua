@@ -1,11 +1,6 @@
 #!/usr/bin/env -S lua --
-_LUAX_VERSION   = '9.15.1'
-_LUAX_DATE      = '2026-04-11'
-_LUAX_COPYRIGHT = 'LuaX 9.15.1  Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord'
-local libs = {}
-table.insert(package.searchers, 2, function(name) return libs[name] end)
 local function lib(path, src) return assert(load(src, '@$luax:'..path)) end
-libs["F"] = lib("libluax/F/F.lua", [==[--[[
+package.preload["F"] = lib("lib/luax/F.lua", [==[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -4855,4500 +4850,7 @@ return setmetatable(F, {
     end,
 })
 ]==])
-libs["complex"] = lib("libluax/complex/complex.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-local complex = {}
-
--- see https://github.com/krakow10/Complex-Number-Library/blob/master/Lua/Complex.lua
-
-local mathx = require "mathx"
-
-local e <const> = math.exp(1)
-local pi <const> = math.pi
-local abs = math.abs
-local exp = math.exp
-local log = math.log
-local cos = math.cos
-local sin = math.sin
-local cosh = mathx.cosh
-local sinh = mathx.sinh
-local atan2 = math.atan
-
-local mt = {__index={}}
-
----@diagnostic disable:unused-vararg
-local function ni(f) return function(...) error(f.." not implemented") end end
-
-local forget <const> = 1e-14
-
-local function new(x, y)
-    if forget then
-        if x and abs(x) <= forget then x = 0 end
-        if y and abs(y) <= forget then y = 0 end
-    end
-    return setmetatable({x=x or 0, y=y or 0}, mt)
-end
-
-local i = new(0, 1)
-
-local function _z(z)
-    if type(z) == "table" and getmetatable(z) == mt then return z end
-    return new(tonumber(z), 0)
-end
-
-function mt.__index.real(z) return z.x end
-
-function mt.__index.imag(z) return z.y end
-
-local function rect(r, phi)
-    return new(r*cos(phi), r*sin(phi))
-end
-
-local function arg(z)
-    return atan2(z.y, z.x)
-end
-
-local function ln(z)
-    return new(log(z.x^2+z.y^2)/2, atan2(z.y, z.x))
-end
-
-function mt.__index.conj(z)
-    return new(z.x, -z.y)
-end
-
-function mt.__add(z1, z2)
-    z1 = _z(z1)
-    z2 = _z(z2)
-    return new(z1.x+z2.x, z1.y+z2.y)
-end
-
-function mt.__sub(z1, z2)
-    z1 = _z(z1)
-    z2 = _z(z2)
-    return new(z1.x-z2.x, z1.y-z2.y)
-end
-
-function mt.__mul(z1, z2)
-    z1 = _z(z1)
-    z2 = _z(z2)
-    return new(z1.x*z2.x-z1.y*z2.y, z1.x*z2.y+z2.x*z1.y)
-end
-
-function mt.__div(z1, z2)
-    z1 = _z(z1)
-    z2 = _z(z2)
-    local d = z2.x^2 + z2.y^2
-    return new((z1.x*z2.x+z1.y*z2.y)/d, (z2.x*z1.y-z1.x*z2.y)/d)
-end
-
-function mt.__pow(z1, z2)
-    z1 = _z(z1)
-    z2 = _z(z2)
-    local z1sq = z1.x^2 + z1.y^2
-    if z1sq == 0 then
-        if z2.x == 0 and z2.y == 0 then return 1 end
-        return 0
-    end
-    local phi = arg(z1)
-    return rect(z1sq^(z2.x/2)*exp(-z2.y*phi), z2.y*log(z1sq)/2+z2.x*phi)
-end
-
-function mt.__unm(z)
-    return new(-z.x, -z.y)
-end
-
-function mt.__eq(z1, z2)
-    z1 = _z(z1)
-    z2 = _z(z2)
-    return z1.x == z2.x and z1.y == z2.y
-end
-
-function mt.__tostring(z)
-    if z.y == 0 then return tostring(z.x) end
-    if z.x == 0 then
-        if z.y == 1 then return "i" end
-        if z.y == -1 then return "-i" end
-        return z.y.."i"
-    end
-    if z.y == 1 then return z.x.."+i" end
-    if z.y == -1 then return z.x.."-i" end
-    if z.y < 0 then return z.x..z.y.."i" end
-    return z.x.."+"..z.y.."i"
-end
-
-function mt.__index.abs(z)
-    return (z.x^2+z.y^2)^0.5
-end
-
-mt.__index.arg = arg
-
-function mt.__index.exp(z)
-    return e^z
-end
-
-function mt.__index.sqrt(z)
-    return z^0.5
-end
-
-function mt.__index.sin(z)
-    return new(sin(z.x)*cosh(z.y), cos(z.x)*sinh(z.y))
-end
-
-function mt.__index.cos(z)
-    return new(cos(z.x)*cosh(z.y), -sin(z.x)*sinh(z.y))
-end
-
-function mt.__index.tan(z)
-    z = 2*z
-    local div = cos(z.x) + cosh(z.y)
-    return new(sin(z.x)/div, sinh(z.y)/div)
-end
-
-function mt.__index.sinh(z)
-    return new(cos(z.y)*sinh(z.x), sin(z.y)*cosh(z.x))
-end
-
-function mt.__index.cosh(z)
-    return new(cos(z.y)*cosh(z.x), sin(z.y)*sinh(z.x))
-end
-
-function mt.__index.tanh(z)
-    z = 2*z
-    local div = cos(z.y) + cosh(z.x)
-    return new(sinh(z.x)/div, sin(z.y)/div)
-end
-
-function mt.__index.asin(z)
-    return -i*ln(i*z+(1-z^2)^0.5)
-end
-
-function mt.__index.acos(z)
-    return pi/2 + i*ln(i*z+(1-z^2)^0.5)
-end
-
-function mt.__index.atan(z)
-    local z3, z4 = new(1-z.y, z.x), new(1+z.x^2-z.y^2, 2*z.x*z.y)
-    return new(arg(z3/z4^0.5), -log(z3:abs()/z4:abs()^0.5))
-end
-
-function mt.__index.asinh(z)
-    return ln(z+(1+z^2)^0.5)
-end
-
-function mt.__index.acosh(z)
-    return 2*ln((z-1)^0.5+(z+1)^0.5)-log(2)
-end
-
-function mt.__index.atanh(z)
-    return (ln(1+z)-ln(1-z))/2
-end
-
-mt.__index.log = ln
-
-mt.__index.proj = ni "proj"
-
-complex = {
-    new = new,
-    I = i,
-    real = function(z) return _z(z):real() end,
-    imag = function(z) return _z(z):imag() end,
-    abs = function(z) return _z(z):abs() end,
-    arg = function(z) return _z(z):arg() end,
-    exp = function(z) return _z(z):exp() end,
-    sqrt = function(z) return _z(z):sqrt() end,
-    sin = function(z) return _z(z):sin() end,
-    cos = function(z) return _z(z):cos() end,
-    tan = function(z) return _z(z):tan() end,
-    sinh = function(z) return _z(z):sinh() end,
-    cosh = function(z) return _z(z):cosh() end,
-    tanh = function(z) return _z(z):tanh() end,
-    asin = function(z) return _z(z):asin() end,
-    acos = function(z) return _z(z):acos() end,
-    atan = function(z) return _z(z):atan() end,
-    asinh = function(z) return _z(z):asinh() end,
-    acosh = function(z) return _z(z):acosh() end,
-    atanh = function(z) return _z(z):atanh() end,
-    pow = function(z, z2) return _z(z) ^ z2 end,
-    log = function(z) return _z(z):log() end,
-    proj = function(z) return _z(z):proj() end,
-    conj = function(z) return _z(z):conj() end,
-    tostring = function(z) return _z(z):tostring() end,
-}
-
-return complex
-]=])
-libs["crypt"] = lib("libluax/crypt/crypt.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
--- Load crypt.lua to add new methods to strings
---@LOAD=_
-
-local crypt = require "_crypt"
-
-local F = require "F"
-
---[[------------------------------------------------------------------------@@@
-## Random array access
-
-@@@]]
-
---[[@@@
-```lua
-prng:choose(xs)
-crypt.choose(xs)    -- using the global PRNG
-```
-returns a random item from `xs`
-@@@]]
-
-local prng_mt = getmetatable(crypt.prng())
-
-function prng_mt.__index:choose(xs)
-    return xs[self:int(1, #xs)]
-end
-
-function crypt.choose(xs)
-    return xs[crypt.int(1, #xs)]
-end
-
---[[@@@
-```lua
-prng:shuffle(xs)
-crypt.shuffle(xs)    -- using the global PRNG
-```
-returns a shuffled copy of `xs`
-@@@]]
-
-function prng_mt.__index:shuffle(xs)
-    local ys = F.clone(xs)
-    for i = 1, #ys-1 do
-        local j = self:int(i, #ys)
-        ys[i], ys[j] = ys[j], ys[i]
-    end
-    return ys
-end
-
-function crypt.shuffle(xs)
-    local ys = F.clone(xs)
-    for i = 1, #ys-1 do
-        local j = crypt.int(i, #ys)
-        ys[i], ys[j] = ys[j], ys[i]
-    end
-    return ys
-end
-
---[[------------------------------------------------------------------------@@@
-## String methods
-
-Some functions of the `crypt` package are added to the string module:
-
-@@@]]
-
---[[@@@
-```lua
-s:hex()             == crypt.hex(s)
-s:unhex()           == crypt.unhex(s)
-s:base64()          == crypt.base64(s)
-s:unbase64()        == crypt.unbase64(s)
-s:base64url()       == crypt.base64url(s)
-s:unbase64url()     == crypt.unbase64url(s)
-s:crc32()           == crypt.crc32(s)
-s:crc64()           == crypt.crc64(s)
-s:arc4(key, drop)   == crypt.arc4(s, key, drop)
-s:unarc4(key, drop) == crypt.unarc4(s, key, drop)
-s:hash()            == crypt.hash(s)
-s:hash32()          == crypt.hash32(s)
-s:hash64()          == crypt.hash64(s)
-s:hash128()         == crypt.hash128(s)
-```
-@@@]]
-
-string.hex          = crypt.hex
-string.unhex        = crypt.unhex
-string.base64       = crypt.base64
-string.unbase64     = crypt.unbase64
-string.base64url    = crypt.base64url
-string.unbase64url  = crypt.unbase64url
-string.arc4         = crypt.arc4
-string.unarc4       = crypt.unarc4
-string.hash         = crypt.hash
-string.hash32       = crypt.hash32
-string.hash64       = crypt.hash64
-string.hash128      = crypt.hash128
-string.crc32        = crypt.crc32
-string.crc64        = crypt.crc64
-
-return crypt
-]=])
-libs["_crypt"] = lib("libluax/crypt/_crypt.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
--- Pure Lua implementation of crypt.c
-
-local crypt = {}
-
-local floor = math.floor
-
-local byte = string.byte
-local char = string.char
-local format = string.format
-local gsub = string.gsub
-local pack = string.pack
-
-local concat = table.concat
-local tunpack = table.unpack
-
-local tonumber = tonumber
-
--- FNV-1a
-local fnv1a_32_init = 0x811c9dc5
-local fnv1a_32_prime = 1<<24 | 1<<8 | 0x93
-local function fnv1a_32(hash, bs)
-    for i=1,#bs do
-        hash = (hash ~ byte(bs, i)) * fnv1a_32_prime
-    end
-    return hash & 0xFFFFFFFF
-end
-
-local fnv1a_64_init = 0xcbf29ce484222325
-local fnv1a_64_prime = 1<<40 | 1<<8 | 0xb3
-local function fnv1a_64(hash, bs)
-    for i=1,#bs do
-        hash = (hash ~ byte(bs, i)) * fnv1a_64_prime
-    end
-    return hash & 0xFFFFFFFFFFFFFFFF
-end
-
-local fnv1a_128_init = {0x6c62272e, 0x07bb0142, 0x62b82175, 0x6295c58d}
-local fnv1a_128_prime_b, fnv1a_128_prime_d = 1<<(88-2*32), 1<<8 | 0x3b
-local function fnv1a_128(hash, bs)
-    local a, b, c, d = tunpack(hash)
-    for i=1,#bs do
-        d = d ~ byte(bs, i)
-        local c0, d0 = c, d
-        local carry
-        d =         d0*fnv1a_128_prime_d                            d, carry = d & 0xFFFFFFFF, d >> 32
-        c = carry + c0*fnv1a_128_prime_d                            c, carry = c & 0xFFFFFFFF, c >> 32
-        b = carry + b *fnv1a_128_prime_d + d0*fnv1a_128_prime_b     b, carry = b & 0xFFFFFFFF, b >> 32
-        a = carry + a *fnv1a_128_prime_d + c0*fnv1a_128_prime_b
-    end
-    return a&0xFFFFFFFF, b, c, d
-end
-
--- Random number generator
-
-local prng_mt = {__index={}}
-
-local entropy do
-    local hash = fnv1a_64_init
-    entropy = function(ptr)
-        hash = fnv1a_64(hash, pack("<I8I8I8I8",
-            os.time(),
-            floor(os.clock()*1000000),
-            tonumber(format("%p", ptr)),
-            tonumber(format("%p", {}))
-        ))
-        return hash
-    end
-end
-
-local PCG_RAND_MAX <const> = 0xFFFFFFFF
-
-crypt.RAND_MAX = PCG_RAND_MAX
-
-local default_pcg_state <const> = 0x4d595df4d0f33173
-local pcg_multiplier <const> = 6364136223846793005
-local default_pcg_increment <const> = 1442695040888963407
-
-function crypt.prng(seed, incr)
-    local self = setmetatable({}, prng_mt)
-    return self:seed(seed, incr)
-end
-
-function prng_mt.__index:seed(seed, incr)
-    if seed == -1 then seed = default_pcg_state end
-    if incr == -1 then incr = default_pcg_increment end
-    self.state = seed or entropy(self)
-    self.increment = incr or entropy({})
-    self.state = pcg_multiplier*self.state + self.increment
-    self.state = pcg_multiplier*self.state + self.increment
-    return self
-end
-
-function prng_mt.__index:clone()
-    local clone = {
-        state = self.state,
-        increment = self.increment,
-    }
-    return setmetatable(clone, prng_mt)
-end
-
-local function xsh_rr(state)
-    local xorshifted = (((state >> 18) ~ state) >> 27) & 0xFFFFFFFF
-    local rot = state >> 59
-    return ((xorshifted >> rot) | (xorshifted << ((-rot) & 31))) & 0xFFFFFFFF
-end
-
-local function pcg_int(self, a, b)
-    local oldstate = self.state
-    self.state = pcg_multiplier*oldstate + self.increment
-    local r = xsh_rr(oldstate)
-
-    if not a then return r end
-    if not b then return r % a + 1 end
-    return r % (b-a+1) + a
-end
-prng_mt.__index.int = pcg_int
-
-local function pcg_float(self, a, b)
-    local r = pcg_int(self) / (PCG_RAND_MAX+1)
-    if not a then return r end
-    if not b then return r * a end
-    return r*(b-a) + a
-end
-prng_mt.__index.float = pcg_float
-
-local function pcg_str(self, n)
-    local bs = {}
-    for i = 1, n, 4 do
-        local r = pcg_int(self)
-        bs[i  ] = char((r>>(0*8))&0xff)
-        bs[i+1] = char((r>>(1*8))&0xff)
-        bs[i+2] = char((r>>(2*8))&0xff)
-        bs[i+3] = char((r>>(3*8))     )
-    end
-    return concat(bs, nil, 1, n)
-end
-prng_mt.__index.str = pcg_str
-
--- global random number generator
-local _rng = crypt.prng()
-
-function crypt.seed(seed, incr) return _rng:seed(seed, incr) end
-
-function crypt.int(a, b) return _rng:int(a, b) end
-
-function crypt.float(a, b) return _rng:float(a, b) end
-
-function crypt.str(n) return _rng:str(n) end
-
--- Hexadecimal encoding
-
-function crypt.hex(s)
-    return (gsub(s, '.', function(c) return format("%02x", byte(c)) end))
-end
-
-function crypt.unhex(s)
-    return (gsub(s, '..', function(h) return char(tonumber(h, 16)) end))
-end
-
--- Base64 encoding
-
--- see <https://en.wikipedia.org/wiki/Base64>
-
-local base64_map = { [0] =
-   'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-   'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
-   '0','1','2','3','4','5','6','7','8','9',
-   '+','/',
-}
-
-local base64_rev = {}
-for i, c in pairs(base64_map) do base64_rev[byte(c)] = i end
-base64_rev[byte'='] = 0
-
-function crypt.base64(s)
-    local tokens = {}
-    local remainder = #s % 3
-    for i = 1, #s-remainder, 3 do
-        local a, b, c = byte(s, i, i+2)
-        local u24 = (a << 16) | (b << 8) | c
-        tokens[#tokens+1] = base64_map[(u24 >> (3*6)) & 0x3F]
-        tokens[#tokens+1] = base64_map[(u24 >> (2*6)) & 0x3F]
-        tokens[#tokens+1] = base64_map[(u24 >> (1*6)) & 0x3F]
-        tokens[#tokens+1] = base64_map[(u24 >> (0*6)) & 0x3F]
-    end
-    if remainder == 1 then
-        local a = byte(s, -1)
-        local u24 = (a << 16)
-        tokens[#tokens+1] = base64_map[(u24 >> (3*6)) & 0x3F]
-        tokens[#tokens+1] = base64_map[(u24 >> (2*6)) & 0x3F]
-        tokens[#tokens+1] = "=="
-    elseif remainder == 2 then
-        local a, b = byte(s, -2, -1)
-        local u24 = (a << 16) | (b << 8)
-        tokens[#tokens+1] = base64_map[(u24 >> (3*6)) & 0x3F]
-        tokens[#tokens+1] = base64_map[(u24 >> (2*6)) & 0x3F]
-        tokens[#tokens+1] = base64_map[(u24 >> (1*6)) & 0x3F]
-        tokens[#tokens+1] = "="
-    end
-    return concat(tokens)
-end
-
-function crypt.base64url(s)
-    return (crypt.base64(s):gsub("+", "-"):gsub("/", "_"))
-end
-
-function crypt.unbase64(s)
-    local tokens = {}
-    for i = 1, #s, 4 do
-        local a, b, c, d = byte(s, i, i+3)
-        local u24 = (base64_rev[a] << (3*6))
-                  | (base64_rev[b] << (2*6))
-                  | (base64_rev[c] << (1*6))
-                  | (base64_rev[d] << (0*6))
-        tokens[#tokens+1] = char((u24 >> (2*8)) & 0xFF)
-        tokens[#tokens+1] = char((u24 >> (1*8)) & 0xFF)
-        tokens[#tokens+1] = char((u24 >> (0*8)) & 0xFF)
-    end
-    local y, z = byte(s, -2, -1)
-    return concat(tokens, nil, 1, #tokens - (y==61 and 2 or z==61 and 1 or 0))
-end
-
-function crypt.unbase64url(s)
-    return crypt.unbase64(s:gsub("-", "+"):gsub("_", "/"))
-end
-
--- CRC32 hash
-
-local crc32_table = { [0]=
-    0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
-    0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988, 0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91,
-    0x1db71064, 0x6ab020f2, 0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,
-    0x136c9856, 0x646ba8c0, 0xfd62f97a, 0x8a65c9ec, 0x14015c4f, 0x63066cd9, 0xfa0f3d63, 0x8d080df5,
-    0x3b6e20c8, 0x4c69105e, 0xd56041e4, 0xa2677172, 0x3c03e4d1, 0x4b04d447, 0xd20d85fd, 0xa50ab56b,
-    0x35b5a8fa, 0x42b2986c, 0xdbbbc9d6, 0xacbcf940, 0x32d86ce3, 0x45df5c75, 0xdcd60dcf, 0xabd13d59,
-    0x26d930ac, 0x51de003a, 0xc8d75180, 0xbfd06116, 0x21b4f4b5, 0x56b3c423, 0xcfba9599, 0xb8bda50f,
-    0x2802b89e, 0x5f058808, 0xc60cd9b2, 0xb10be924, 0x2f6f7c87, 0x58684c11, 0xc1611dab, 0xb6662d3d,
-    0x76dc4190, 0x01db7106, 0x98d220bc, 0xefd5102a, 0x71b18589, 0x06b6b51f, 0x9fbfe4a5, 0xe8b8d433,
-    0x7807c9a2, 0x0f00f934, 0x9609a88e, 0xe10e9818, 0x7f6a0dbb, 0x086d3d2d, 0x91646c97, 0xe6635c01,
-    0x6b6b51f4, 0x1c6c6162, 0x856530d8, 0xf262004e, 0x6c0695ed, 0x1b01a57b, 0x8208f4c1, 0xf50fc457,
-    0x65b0d9c6, 0x12b7e950, 0x8bbeb8ea, 0xfcb9887c, 0x62dd1ddf, 0x15da2d49, 0x8cd37cf3, 0xfbd44c65,
-    0x4db26158, 0x3ab551ce, 0xa3bc0074, 0xd4bb30e2, 0x4adfa541, 0x3dd895d7, 0xa4d1c46d, 0xd3d6f4fb,
-    0x4369e96a, 0x346ed9fc, 0xad678846, 0xda60b8d0, 0x44042d73, 0x33031de5, 0xaa0a4c5f, 0xdd0d7cc9,
-    0x5005713c, 0x270241aa, 0xbe0b1010, 0xc90c2086, 0x5768b525, 0x206f85b3, 0xb966d409, 0xce61e49f,
-    0x5edef90e, 0x29d9c998, 0xb0d09822, 0xc7d7a8b4, 0x59b33d17, 0x2eb40d81, 0xb7bd5c3b, 0xc0ba6cad,
-    0xedb88320, 0x9abfb3b6, 0x03b6e20c, 0x74b1d29a, 0xead54739, 0x9dd277af, 0x04db2615, 0x73dc1683,
-    0xe3630b12, 0x94643b84, 0x0d6d6a3e, 0x7a6a5aa8, 0xe40ecf0b, 0x9309ff9d, 0x0a00ae27, 0x7d079eb1,
-    0xf00f9344, 0x8708a3d2, 0x1e01f268, 0x6906c2fe, 0xf762575d, 0x806567cb, 0x196c3671, 0x6e6b06e7,
-    0xfed41b76, 0x89d32be0, 0x10da7a5a, 0x67dd4acc, 0xf9b9df6f, 0x8ebeeff9, 0x17b7be43, 0x60b08ed5,
-    0xd6d6a3e8, 0xa1d1937e, 0x38d8c2c4, 0x4fdff252, 0xd1bb67f1, 0xa6bc5767, 0x3fb506dd, 0x48b2364b,
-    0xd80d2bda, 0xaf0a1b4c, 0x36034af6, 0x41047a60, 0xdf60efc3, 0xa867df55, 0x316e8eef, 0x4669be79,
-    0xcb61b38c, 0xbc66831a, 0x256fd2a0, 0x5268e236, 0xcc0c7795, 0xbb0b4703, 0x220216b9, 0x5505262f,
-    0xc5ba3bbe, 0xb2bd0b28, 0x2bb45a92, 0x5cb36a04, 0xc2d7ffa7, 0xb5d0cf31, 0x2cd99e8b, 0x5bdeae1d,
-    0x9b64c2b0, 0xec63f226, 0x756aa39c, 0x026d930a, 0x9c0906a9, 0xeb0e363f, 0x72076785, 0x05005713,
-    0x95bf4a82, 0xe2b87a14, 0x7bb12bae, 0x0cb61b38, 0x92d28e9b, 0xe5d5be0d, 0x7cdcefb7, 0x0bdbdf21,
-    0x86d3d2d4, 0xf1d4e242, 0x68ddb3f8, 0x1fda836e, 0x81be16cd, 0xf6b9265b, 0x6fb077e1, 0x18b74777,
-    0x88085ae6, 0xff0f6a70, 0x66063bca, 0x11010b5c, 0x8f659eff, 0xf862ae69, 0x616bffd3, 0x166ccf45,
-    0xa00ae278, 0xd70dd2ee, 0x4e048354, 0x3903b3c2, 0xa7672661, 0xd06016f7, 0x4969474d, 0x3e6e77db,
-    0xaed16a4a, 0xd9d65adc, 0x40df0b66, 0x37d83bf0, 0xa9bcae53, 0xdebb9ec5, 0x47b2cf7f, 0x30b5ffe9,
-    0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693, 0x54de5729, 0x23d967bf,
-    0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
-}
-
-function crypt.crc32(s)
-    local crc = 0xFFFFFFFF
-    for i = 1, #s do
-        crc = (crc>>8) ~ crc32_table[(crc~byte(s, i))&0xFF]
-    end
-    return crc ~ 0xFFFFFFFF
-end
-
--- CRC64 hash
-
-local crc64_table = { [0]=
-    0x0000000000000000, 0xb32e4cbe03a75f6f, 0xf4843657a840a05b, 0x47aa7ae9abe7ff34,
-    0x7bd0c384ff8f5e33, 0xc8fe8f3afc28015c, 0x8f54f5d357cffe68, 0x3c7ab96d5468a107,
-    0xf7a18709ff1ebc66, 0x448fcbb7fcb9e309, 0x0325b15e575e1c3d, 0xb00bfde054f94352,
-    0x8c71448d0091e255, 0x3f5f08330336bd3a, 0x78f572daa8d1420e, 0xcbdb3e64ab761d61,
-    0x7d9ba13851336649, 0xceb5ed8652943926, 0x891f976ff973c612, 0x3a31dbd1fad4997d,
-    0x064b62bcaebc387a, 0xb5652e02ad1b6715, 0xf2cf54eb06fc9821, 0x41e11855055bc74e,
-    0x8a3a2631ae2dda2f, 0x39146a8fad8a8540, 0x7ebe1066066d7a74, 0xcd905cd805ca251b,
-    0xf1eae5b551a2841c, 0x42c4a90b5205db73, 0x056ed3e2f9e22447, 0xb6409f5cfa457b28,
-    0xfb374270a266cc92, 0x48190ecea1c193fd, 0x0fb374270a266cc9, 0xbc9d3899098133a6,
-    0x80e781f45de992a1, 0x33c9cd4a5e4ecdce, 0x7463b7a3f5a932fa, 0xc74dfb1df60e6d95,
-    0x0c96c5795d7870f4, 0xbfb889c75edf2f9b, 0xf812f32ef538d0af, 0x4b3cbf90f69f8fc0,
-    0x774606fda2f72ec7, 0xc4684a43a15071a8, 0x83c230aa0ab78e9c, 0x30ec7c140910d1f3,
-    0x86ace348f355aadb, 0x3582aff6f0f2f5b4, 0x7228d51f5b150a80, 0xc10699a158b255ef,
-    0xfd7c20cc0cdaf4e8, 0x4e526c720f7dab87, 0x09f8169ba49a54b3, 0xbad65a25a73d0bdc,
-    0x710d64410c4b16bd, 0xc22328ff0fec49d2, 0x85895216a40bb6e6, 0x36a71ea8a7ace989,
-    0x0adda7c5f3c4488e, 0xb9f3eb7bf06317e1, 0xfe5991925b84e8d5, 0x4d77dd2c5823b7ba,
-    0x64b62bcaebc387a1, 0xd7986774e864d8ce, 0x90321d9d438327fa, 0x231c512340247895,
-    0x1f66e84e144cd992, 0xac48a4f017eb86fd, 0xebe2de19bc0c79c9, 0x58cc92a7bfab26a6,
-    0x9317acc314dd3bc7, 0x2039e07d177a64a8, 0x67939a94bc9d9b9c, 0xd4bdd62abf3ac4f3,
-    0xe8c76f47eb5265f4, 0x5be923f9e8f53a9b, 0x1c4359104312c5af, 0xaf6d15ae40b59ac0,
-    0x192d8af2baf0e1e8, 0xaa03c64cb957be87, 0xeda9bca512b041b3, 0x5e87f01b11171edc,
-    0x62fd4976457fbfdb, 0xd1d305c846d8e0b4, 0x96797f21ed3f1f80, 0x2557339fee9840ef,
-    0xee8c0dfb45ee5d8e, 0x5da24145464902e1, 0x1a083bacedaefdd5, 0xa9267712ee09a2ba,
-    0x955cce7fba6103bd, 0x267282c1b9c65cd2, 0x61d8f8281221a3e6, 0xd2f6b4961186fc89,
-    0x9f8169ba49a54b33, 0x2caf25044a02145c, 0x6b055fede1e5eb68, 0xd82b1353e242b407,
-    0xe451aa3eb62a1500, 0x577fe680b58d4a6f, 0x10d59c691e6ab55b, 0xa3fbd0d71dcdea34,
-    0x6820eeb3b6bbf755, 0xdb0ea20db51ca83a, 0x9ca4d8e41efb570e, 0x2f8a945a1d5c0861,
-    0x13f02d374934a966, 0xa0de61894a93f609, 0xe7741b60e174093d, 0x545a57dee2d35652,
-    0xe21ac88218962d7a, 0x5134843c1b317215, 0x169efed5b0d68d21, 0xa5b0b26bb371d24e,
-    0x99ca0b06e7197349, 0x2ae447b8e4be2c26, 0x6d4e3d514f59d312, 0xde6071ef4cfe8c7d,
-    0x15bb4f8be788911c, 0xa6950335e42fce73, 0xe13f79dc4fc83147, 0x521135624c6f6e28,
-    0x6e6b8c0f1807cf2f, 0xdd45c0b11ba09040, 0x9aefba58b0476f74, 0x29c1f6e6b3e0301b,
-    0xc96c5795d7870f42, 0x7a421b2bd420502d, 0x3de861c27fc7af19, 0x8ec62d7c7c60f076,
-    0xb2bc941128085171, 0x0192d8af2baf0e1e, 0x4638a2468048f12a, 0xf516eef883efae45,
-    0x3ecdd09c2899b324, 0x8de39c222b3eec4b, 0xca49e6cb80d9137f, 0x7967aa75837e4c10,
-    0x451d1318d716ed17, 0xf6335fa6d4b1b278, 0xb199254f7f564d4c, 0x02b769f17cf11223,
-    0xb4f7f6ad86b4690b, 0x07d9ba1385133664, 0x4073c0fa2ef4c950, 0xf35d8c442d53963f,
-    0xcf273529793b3738, 0x7c0979977a9c6857, 0x3ba3037ed17b9763, 0x888d4fc0d2dcc80c,
-    0x435671a479aad56d, 0xf0783d1a7a0d8a02, 0xb7d247f3d1ea7536, 0x04fc0b4dd24d2a59,
-    0x3886b22086258b5e, 0x8ba8fe9e8582d431, 0xcc0284772e652b05, 0x7f2cc8c92dc2746a,
-    0x325b15e575e1c3d0, 0x8175595b76469cbf, 0xc6df23b2dda1638b, 0x75f16f0cde063ce4,
-    0x498bd6618a6e9de3, 0xfaa59adf89c9c28c, 0xbd0fe036222e3db8, 0x0e21ac88218962d7,
-    0xc5fa92ec8aff7fb6, 0x76d4de52895820d9, 0x317ea4bb22bfdfed, 0x8250e80521188082,
-    0xbe2a516875702185, 0x0d041dd676d77eea, 0x4aae673fdd3081de, 0xf9802b81de97deb1,
-    0x4fc0b4dd24d2a599, 0xfceef8632775faf6, 0xbb44828a8c9205c2, 0x086ace348f355aad,
-    0x34107759db5dfbaa, 0x873e3be7d8faa4c5, 0xc094410e731d5bf1, 0x73ba0db070ba049e,
-    0xb86133d4dbcc19ff, 0x0b4f7f6ad86b4690, 0x4ce50583738cb9a4, 0xffcb493d702be6cb,
-    0xc3b1f050244347cc, 0x709fbcee27e418a3, 0x3735c6078c03e797, 0x841b8ab98fa4b8f8,
-    0xadda7c5f3c4488e3, 0x1ef430e13fe3d78c, 0x595e4a08940428b8, 0xea7006b697a377d7,
-    0xd60abfdbc3cbd6d0, 0x6524f365c06c89bf, 0x228e898c6b8b768b, 0x91a0c532682c29e4,
-    0x5a7bfb56c35a3485, 0xe955b7e8c0fd6bea, 0xaeffcd016b1a94de, 0x1dd181bf68bdcbb1,
-    0x21ab38d23cd56ab6, 0x9285746c3f7235d9, 0xd52f0e859495caed, 0x6601423b97329582,
-    0xd041dd676d77eeaa, 0x636f91d96ed0b1c5, 0x24c5eb30c5374ef1, 0x97eba78ec690119e,
-    0xab911ee392f8b099, 0x18bf525d915feff6, 0x5f1528b43ab810c2, 0xec3b640a391f4fad,
-    0x27e05a6e926952cc, 0x94ce16d091ce0da3, 0xd3646c393a29f297, 0x604a2087398eadf8,
-    0x5c3099ea6de60cff, 0xef1ed5546e415390, 0xa8b4afbdc5a6aca4, 0x1b9ae303c601f3cb,
-    0x56ed3e2f9e224471, 0xe5c372919d851b1e, 0xa26908783662e42a, 0x114744c635c5bb45,
-    0x2d3dfdab61ad1a42, 0x9e13b115620a452d, 0xd9b9cbfcc9edba19, 0x6a978742ca4ae576,
-    0xa14cb926613cf817, 0x1262f598629ba778, 0x55c88f71c97c584c, 0xe6e6c3cfcadb0723,
-    0xda9c7aa29eb3a624, 0x69b2361c9d14f94b, 0x2e184cf536f3067f, 0x9d36004b35545910,
-    0x2b769f17cf112238, 0x9858d3a9ccb67d57, 0xdff2a94067518263, 0x6cdce5fe64f6dd0c,
-    0x50a65c93309e7c0b, 0xe388102d33392364, 0xa4226ac498dedc50, 0x170c267a9b79833f,
-    0xdcd7181e300f9e5e, 0x6ff954a033a8c131, 0x28532e49984f3e05, 0x9b7d62f79be8616a,
-    0xa707db9acf80c06d, 0x14299724cc279f02, 0x5383edcd67c06036, 0xe0ada17364673f59
-}
-
-function crypt.crc64(s)
-    local crc = 0xFFFFFFFFFFFFFFFF
-    for i = 1, #s do
-        crc = (crc>>8) ~ crc64_table[(crc~byte(s, i))&0xFF]
-    end
-    return crc ~ 0xFFFFFFFFFFFFFFFF
-end
-
--- ARC4 encryption
-
-function crypt.arc4(input, key, drop)
-    assert(type(key) == "string", "arc4 key shall be a string")
-    drop = drop or 768
-    local S = {}
-    for i = 0, 255 do S[i] = i end
-    local j = 0
-    if #key > 0 then
-        for i = 0, 255 do
-            j = (j + S[i] + byte(key, i%#key+1)) % 256
-            S[i], S[j] = S[j], S[i]
-        end
-    end
-    local i = 0
-    j = 0
-    for _ = 1, drop do
-        i = (i + 1) % 256
-        j = (j + S[i]) % 256
-        S[i], S[j] = S[j], S[i]
-    end
-    local output = {}
-    for k = 1, #input do
-        i = (i + 1) % 256
-        j = (j + S[i]) % 256
-        S[i], S[j] = S[j], S[i]
-        output[k] = char(byte(input, k) ~ S[(S[i] + S[j]) % 256])
-    end
-    return concat(output)
-end
-
-crypt.unarc4 = crypt.arc4
-
-function crypt.hash32(s) return ("<I4"):pack(fnv1a_32(fnv1a_32_init, s)):hex() end
-
-function crypt.hash64(s) return ("<I8"):pack(fnv1a_64(fnv1a_64_init, s)):hex() end
-
-function crypt.hash128(s)
-    local a, b, c, d = fnv1a_128(fnv1a_128_init, s)
-    return ("<I4I4I4I4"):pack(d, c, b, a):hex()
-end
-
-crypt.hash = crypt.hash64
-
-return crypt
-]=])
-libs["curl"] = lib("libluax/curl/curl.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
---[[------------------------------------------------------------------------@@@
-# Simple curl interface
-
-```lua
-local curl = require "curl"
-```
-
-`curl` provides functions to execute curl.
-curl must be installed separately.
-
-@@@]]
-
-local M = {}
-
-local sh = require "sh"
-
-local errs = {
-    [  0] = "Success. The operation completed successfully according to the instructions.",
-    [  1] = "Unsupported protocol. This build of curl has no support for this protocol.",
-    [  2] = "Failed to initialize.",
-    [  3] = "URL malformed. The syntax was not correct.",
-    [  4] = "A feature or option that was needed to perform the desired request was not enabled or was explicitly disabled at build-time. To make curl able to do this, you probably need another build of libcurl.",
-    [  5] = "Could not resolve proxy. The given proxy host could not be resolved.",
-    [  6] = "Could not resolve host. The given remote host could not be resolved.",
-    [  7] = "Failed to connect to host.",
-    [  8] = "Weird server reply. The server sent data curl could not parse.",
-    [  9] = "FTP access denied. The server denied login or denied access to the particular resource or directory you wanted to reach. Most often you tried to change to a directory that does not exist on the server.",
-    [ 10] = "FTP accept failed. While waiting for the server to connect back when an active FTP session is used, an error code was sent over the control connection or similar.",
-    [ 11] = "FTP weird PASS reply. Curl could not parse the reply sent to the PASS request.",
-    [ 12] = "During an active FTP session while waiting for the server to connect back to curl, the timeout expired.",
-    [ 13] = "FTP weird PASV reply, Curl could not parse the reply sent to the PASV request.",
-    [ 14] = "FTP weird 227 format. Curl could not parse the 227-line the server sent.",
-    [ 15] = "FTP cannot use host. Could not resolve the host IP we got in the 227-line.",
-    [ 16] = "HTTP/2 error. A problem was detected in the HTTP2 framing layer. This is somewhat generic and can be one out of several problems, see the error message for details.",
-    [ 17] = "FTP could not set binary. Could not change transfer method to binary.",
-    [ 18] = "Partial file. Only a part of the file was transferred.",
-    [ 19] = "FTP could not download/access the given file, the RETR (or similar) command failed.",
-    [ 21] = "FTP quote error. A quote command returned error from the server.",
-    [ 22] = "HTTP page not retrieved. The requested URL was not found or returned another error with the HTTP error code being 400 or above. This return code only appears if -f, --fail is used.",
-    [ 23] = "Write error. Curl could not write data to a local filesystem or similar.",
-    [ 25] = "Failed starting the upload. For FTP, the server typically denied the STOR command.",
-    [ 26] = "Read error. Various reading problems.",
-    [ 27] = "Out of memory. A memory allocation request failed.",
-    [ 28] = "Operation timeout. The specified time-out period was reached according to the conditions.",
-    [ 30] = "FTP PORT failed. The PORT command failed. Not all FTP servers support the PORT command, try doing a transfer using PASV instead.",
-    [ 31] = "FTP could not use REST. The REST command failed. This command is used for resumed FTP transfers.",
-    [ 33] = "HTTP range error. The range \"command\" did not work.",
-    [ 34] = "HTTP post error. Internal post-request generation error.",
-    [ 35] = "SSL connect error. The SSL handshaking failed.",
-    [ 36] = "Bad download resume. Could not continue an earlier aborted download.",
-    [ 37] = "FILE could not read file. Failed to open the file. Permissions?",
-    [ 38] = "LDAP cannot bind. LDAP bind operation failed.",
-    [ 39] = "LDAP search failed.",
-    [ 41] = "Function not found. A required LDAP function was not found.",
-    [ 42] = "Aborted by callback. An application told curl to abort the operation.",
-    [ 43] = "Internal error. A function was called with a bad parameter.",
-    [ 45] = "Interface error. A specified outgoing interface could not be used.",
-    [ 47] = "Too many redirects. When following redirects, curl hit the maximum amount.",
-    [ 48] = "Unknown option specified to libcurl. This indicates that you passed a weird option to curl that was passed on to libcurl and rejected. Read up in the manual!",
-    [ 49] = "Malformed telnet option.",
-    [ 52] = "The server did not reply anything, which here is considered an error.",
-    [ 53] = "SSL crypto engine not found.",
-    [ 54] = "Cannot set SSL crypto engine as default.",
-    [ 55] = "Failed sending network data.",
-    [ 56] = "Failure in receiving network data.",
-    [ 58] = "Problem with the local certificate.",
-    [ 59] = "Could not use specified SSL cipher.",
-    [ 60] = "Peer certificate cannot be authenticated with known CA certificates.",
-    [ 61] = "Unrecognized transfer encoding.",
-    [ 63] = "Maximum file size exceeded.",
-    [ 64] = "Requested FTP SSL level failed.",
-    [ 65] = "Sending the data requires a rewind that failed.",
-    [ 66] = "Failed to initialize SSL Engine.",
-    [ 67] = "The username, password, or similar was not accepted and curl failed to log in.",
-    [ 68] = "File not found on TFTP server.",
-    [ 69] = "Permission problem on TFTP server.",
-    [ 70] = "Out of disk space on TFTP server.",
-    [ 71] = "Illegal TFTP operation.",
-    [ 72] = "Unknown TFTP transfer ID.",
-    [ 73] = "File already exists (TFTP).",
-    [ 74] = "No such user (TFTP).",
-    [ 77] = "Problem reading the SSL CA cert (path? access rights?).",
-    [ 78] = "The resource referenced in the URL does not exist.",
-    [ 79] = "An unspecified error occurred during the SSH session.",
-    [ 80] = "Failed to shut down the SSL connection.",
-    [ 82] = "Could not load CRL file, missing or wrong format.",
-    [ 83] = "Issuer check failed.",
-    [ 84] = "The FTP PRET command failed.",
-    [ 85] = "Mismatch of RTSP CSeq numbers.",
-    [ 86] = "Mismatch of RTSP Session Identifiers.",
-    [ 87] = "Unable to parse FTP file list.",
-    [ 88] = "FTP chunk callback reported error.",
-    [ 89] = "No connection available, the session is queued.",
-    [ 90] = "SSL public key does not matched pinned public key.",
-    [ 91] = "Invalid SSL certificate status.",
-    [ 92] = "Stream error in HTTP/2 framing layer.",
-    [ 93] = "An API function was called from inside a callback.",
-    [ 94] = "An authentication function returned an error.",
-    [ 95] = "A problem was detected in the HTTP/3 layer. This is somewhat generic and can be one out of several problems, see the error message for details.",
-    [ 96] = "QUIC connection error. This error may be caused by an SSL library error. QUIC is the protocol used for HTTP/3 transfers.",
-    [ 97] = "Proxy handshake error.",
-    [ 98] = "A client-side certificate is required to complete the TLS handshake.",
-    [ 99] = "Poll or select returned fatal error.",
-    [100] = "A value or data field grew larger than allowed.",
-
-    -- This error is returned by the shell, not curl
-    [127] = "curl: command not found",
-}
-
-local default_curl_options = {
-    "--silent",
-    "--show-error",
-    "--location", -- follow redirections
-}
-
-local function curl(...)
-    local res, _, err = sh("curl", ...)
-    if not res then return nil, errs[tonumber(err)] or "curl: unknown error", err end
-    return res
-end
-
-M.request = curl
-
---[[@@@
-```lua
-curl.request(...)
-```
-> Execute `curl` with arguments `...` and returns the output of `curl` (`stdout`).
-> Arguments can be a nested list (it will be flattened).
-> In case of error, `curl` returns `nil`, an error message and an error code
-> (see [curl man page](https://curl.se/docs/manpage.html)).
-
-```lua
-curl(...)
-```
-> Like `curl.request(...)` with some default options:
->
-> - `--silent`: silent mode
-> - `--show-error`: show an error message if it fails
-> - `--location`: follow redirections
-
-@@@]]
-
-return setmetatable(M, {
-    __call = function(_, ...) return curl(default_curl_options, ...) end,
-})
-]=])
-libs["fs"] = lib("libluax/fs/fs.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---[[------------------------------------------------------------------------@@@
-## Additional functions (Lua)
-@@@]]
-
--- Load fs.lua to add new methods to strings
---@LOAD=_
-
-local fs = require "_fs"
-
-local F = require "F"
-local sys = require "sys"
-
-local __PANDOC__, pandoc  = _ENV.PANDOC_VERSION ~= nil, _ENV.pandoc
-
---[[@@@
-```lua
-fs.join(...)
-```
-return a path name made of several path components
-(separated by `fs.sep`).
-If a component is absolute, the previous components are removed.
-@@@]]
-
-function fs.join(...)
-    if __PANDOC__ then return pandoc.path.join(F.flatten{...}) end
-    local function add_path(ps, p)
-        if p:match("^"..fs.sep) then return F{p} end
-        ps[#ps+1] = p
-        return ps
-    end
-    return F{...}
-        :flatten()
-        :fold(add_path, F{})
-        :str(fs.sep)
-end
-
---[[@@@
-```lua
-fs.splitpath(path)
-```
-return a list of path components.
-@@@]]
-
-function fs.splitpath(path)
-    if path == "" then return F{} end
-    local components = path:split "[/\\]+"
-    if components[1] == "" then components[1] = fs.sep end
-    return components
-end
-
---[[@@@
-```lua
-fs.findpath(name)
-```
-returns the full path of `name` if `name` is found in `$PATH` or `nil`.
-@@@]]
-
-function fs.findpath(name)
-    local function exists_in(path) return fs.is_file(fs.join(path, name)) end
-    local path = os.getenv("PATH")
-        :split(fs.path_sep)
-        :find(exists_in)
-    if path then return fs.join(path, name) end
-    return nil, name..": not found in $PATH"
-end
-
---[[@@@
-```lua
-fs.rmdir(path)
-```
-deletes the directory `path` and its content recursively.
-@@@]]
-
-function fs.rmdir(path)
-    if __PANDOC__ then
-        pandoc.system.remove_directory(path, true)
-        return true
-    end
-    fs.walk(path, {reverse=true}):foreach(fs.rm)
-    return fs.rm(path)
-end
-
---[[@@@
-```lua
-fs.walk([path], [{reverse=true|false, links=true|false, cross=true|false}])
-```
-returns a list listing directory and
-file names in `path` and its subdirectories (the default path is the current
-directory).
-
-Options:
-
-- `stat`: returns the list of stat results instead of just filenames
-- `reverse`: the list is built in a reverse order
-  (suitable for recursive directory removal)
-- `cross`: walk across several devices
-- `func`: function applied to the current file or directory.
-  `func` takes two parameters (path of the file or directory and the stat object returned by `fs.stat`)
-  and returns a boolean (to continue or not walking recursively through the subdirectories)
-  and the value to add to the list.
-@@@]]
-
-function fs.walk(path, options)
-    options = options or {}
-    local return_stat = options.stat
-    local reverse = options.reverse
-    local cross_device = options.cross
-    local func = options.func
-              or return_stat and function(_, stat) return true, stat end
-              or function(name, _) return true, name end
-    local dirs = {path or "."}
-    local acc_files = {}
-    local acc_dirs = {}
-    local seen = {}
-    local dev0 = nil
-    local function already_seen(name)
-        local inode = fs.inode(name)
-        if not inode then return true end
-        dev0 = dev0 or inode.dev
-        if dev0 ~= inode.dev and not cross_device then
-            return true
-        end
-        if not seen[inode.dev] then
-            seen[inode.dev] = {[inode]=true}
-            return false
-        end
-        if not seen[inode.dev][inode.ino] then
-            seen[inode.dev][inode.ino] = true
-            return false
-        end
-        return true
-    end
-    while #dirs > 0 do
-        local dir = table.remove(dirs)
-        if not already_seen(dir) then
-            local names = fs.dir(dir)
-            if names then
-                table.sort(names)
-                for i = 1, #names do
-                    local name = dir..fs.sep..names[i]
-                    local stat = fs.stat(name)
-                    if stat then
-                        if stat.type == "directory" then
-                            local continue, obj = func(name, stat)
-                            if continue then
-                                dirs[#dirs+1] = name
-                            end
-                            if obj then
-                                if reverse then table.insert(acc_dirs, 1, obj)
-                                else acc_dirs[#acc_dirs+1] = obj
-                                end
-                            end
-                        else
-                            local _, obj = func(name, stat)
-                            if obj then
-                                acc_files[#acc_files+1] = obj
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return F.concat(reverse and {acc_files, acc_dirs} or {acc_dirs, acc_files})
-end
-
---[[@@@
-```lua
-fs.with_tmpfile(f)
-```
-calls `f(tmp)` where `tmp` is the name of a temporary file.
-@@@]]
-
-function fs.with_tmpfile(f)
-    if __PANDOC__ then
-        return pandoc.system.with_temporary_directory("luax", function(tmpdir)
-            return f(tmpdir/"tmpfile")
-        end)
-    end
-    local tmp = fs.tmpfile()
-    local ret = {f(tmp)}
-    fs.rm(tmp)
-    return table.unpack(ret)
-end
-
---[[@@@
-```lua
-fs.with_tmpdir(f)
-```
-calls `f(tmp)` where `tmp` is the name of a temporary directory.
-@@@]]
-
-function fs.with_tmpdir(f)
-    if __PANDOC__ then
-        return pandoc.system.with_temporary_directory("luax", f)
-    end
-    local tmp = fs.tmpdir()
-    local ret = {f(tmp)}
-    fs.rmdir(tmp)
-    return table.unpack(ret)
-end
-
---[[@@@
-```lua
-fs.with_dir(path, f)
-```
-changes the current working directory to `path` and calls `f()`.
-@@@]]
-
-function fs.with_dir(path, f)
-    if __PANDOC__ then
-        return pandoc.system.with_working_directory(path, f)
-    end
-    if fs.chdir then
-        local old = fs.getcwd()
-        fs.chdir(path)
-        local ret = {f(path)}
-        fs.chdir(old)
-        return table.unpack(ret)
-    end
-    error "fs.with_dir not implemented"
-end
-
---[[@@@
-```lua
-fs.expand(path, [vars])
-```
-returns the expanded path
-where `"~"` at the beginning of the path is replaced by the home directory of the current user
-and `$XXX` or `${XXX}` is replaced by the environment variable `XXX`.
-Variable values can also be taken from the optional `vars` table.
-@@@]]
-
-local function expanduser(path)
-    local home = os.getenv(sys.os == "windows" and "USERPROFILE" or "HOME")
-    if path == "~" then return home end
-    local local_path = path:match "^~([/\\].*)"
-    if local_path then return home..local_path end
-    return path
-end
-
-local function expandvars(path, vars)
-    vars = vars or {}
-    local function expand(var) return os.getenv(var) or vars[var] or var end
-    path = path : gsub("${([%w_]+)}", expand) : gsub("$([%w_]+)", expand)
-    return path
-end
-
-function fs.expand(path, vars)
-    return expandvars(expanduser(path), vars)
-end
-
---[[@@@
-```lua
-fs.read(filename)
-```
-returns the content of the text file `filename`.
-@@@]]
-
-function fs.read(name)
-    local f<close>, oerr = io.open(name, "r")
-    if not f then return f, oerr end
-    return f:read("a")
-end
-
---[[@@@
-```lua
-fs.write(filename, ...)
-```
-write `...` to the text file `filename`.
-@@@]]
-
-function fs.write(name, ...)
-    local content = F{...}:flatten():str()
-    local f<close>, oerr = io.open(name, "w")
-    if not f then return f, oerr end
-    return f:write(content)
-end
-
---[[@@@
-```lua
-fs.read_bin(filename)
-```
-returns the content of the binary file `filename`.
-@@@]]
-
-function fs.read_bin(name)
-    local f<close>, oerr = io.open(name, "rb")
-    if not f then return f, oerr end
-    return f:read("a")
-end
-
---[[@@@
-```lua
-fs.write_bin(filename, ...)
-```
-write `...` to the binary file `filename`.
-@@@]]
-
-function fs.write_bin(name, ...)
-    local content = F{...}:flatten():str()
-    local f<close>, oerr = io.open(name, "wb")
-    if not f then return f, oerr end
-    return f:write(content)
-end
-
---[[------------------------------------------------------------------------@@@
-## String methods
-
-Some functions of the `fs` package are added to the string module:
-
-@@@]]
-
---[[@@@
-```lua
-path:stat()             == fs.stat(path)
-path:inode()            == fs.inode(path)
-path:basename()         == fs.basename(path)
-path:dirname()          == fs.dirname(path)
-path:splitext()         == fs.splitext(path)
-path:ext()              == fs.ext(path)
-path:chext()            == fs.chext(path)
-path:realpath()         == fs.realpath(path)
-path:readlink()         == fs.readlink(path)
-path:absname()          == fs.absname(path)
-path1 / path2           == fs.join(path1, path2)
-path:is_file()          == fs.is_file(path)
-path:is_dir()           == fs.is_dir(path)
-path:findpath()         == fs.findpath(path)
-```
-@@@]]
-
-string.stat             = fs.stat
-string.inode            = fs.inode
-string.basename         = fs.basename
-string.dirname          = fs.dirname
-string.splitext         = fs.splitext
-string.ext              = fs.ext
-string.chext            = fs.chext
-string.splitpath        = fs.splitpath
-string.realpath         = fs.realpath
-string.readlink         = fs.readlink
-string.absname          = fs.absname
-string.is_file          = fs.is_file
-string.is_dir           = fs.is_dir
-string.findpath         = fs.findpath
-
-getmetatable("").__div  = fs.join
-
-return fs
-]=])
-libs["_fs"] = lib("libluax/fs/_fs.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---[[------------------------------------------------------------------------@@@
-## Additional functions (Lua)
-@@@]]
-
---@LIB
-
-local F = require "F"
-local sys = require "sys"
-
--- Pure Lua / Pandoc Lua implementation of fs.c
-
-local __PANDOC__, pandoc  = _ENV.PANDOC_VERSION ~= nil, _ENV.pandoc
-local __WINDOWS__ = sys.os == "windows"
-local __MACOS__   = sys.os == "macos"
-
-local fs = {}
-
-local sh = require "sh"
-
-if __PANDOC__ then
-    fs.sep = pandoc.path.separator
-    fs.path_sep = pandoc.path.search_path_separator
-else
-    fs.sep = package.config:match("^([^\n]-)\n")
-    fs.path_sep = fs.sep == '\\' and ";" or ":"
-end
-
-local function safe_sh(...)
-    local out, msg = sh.read(...)
-    if not out then error(msg) end
-    return out
-end
-
-function fs.getcwd()
-    if __PANDOC__ then return pandoc.system.get_working_directory() end
-    if __WINDOWS__ then return safe_sh "cd" : trim() end
-    return safe_sh "pwd" : trim()
-end
-
-function fs.dir(path)
-    if __PANDOC__ then return F(pandoc.system.list_directory(path)) end
-    if __WINDOWS__ then return safe_sh("dir /b", path) : lines() : sort() end
-    return safe_sh("ls", path) : lines() : sort()
-end
-
-fs.remove = os.remove
-
-fs.rename = os.rename
-
-function fs.copy(source_name, target_name)
-    local from<close>, err_from = io.open(source_name, "rb")
-    if not from then return from, err_from end
-    local to<close>, err_to = io.open(target_name, "wb")
-    if not to then return to, err_to end
-    while true do
-        local block = from:read(8*1024)
-        if not block then break end
-        local ok, err = to:write(block)
-        if not ok then
-            return ok, err
-        end
-    end
-    return true
-end
-
-function fs.symlink(target, linkpath)
-    if __WINDOWS__ then return nil, "symlink not implemented" end
-    return sh.run("ln -s", target, linkpath)
-end
-
-function fs.mkdir(path)
-    if __PANDOC__ then return pandoc.system.make_directory(path) end
-    return sh.run("mkdir", path)
-end
-
-local S_IFMT  <const> = 0xF << 12
-local S_IFDIR <const> = 1 << 14
-local S_IFREG <const> = 1 << 15
-local S_IFLNK <const> = (1 << 13) | (1 << 15)
-
-local S_IRUSR <const> = 1 << 8
-local S_IWUSR <const> = 1 << 7
-local S_IXUSR <const> = 1 << 6
-local S_IRGRP <const> = 1 << 5
-local S_IWGRP <const> = 1 << 4
-local S_IXGRP <const> = 1 << 3
-local S_IROTH <const> = 1 << 2
-local S_IWOTH <const> = 1 << 1
-local S_IXOTH <const> = 1 << 0
-
-local S_IRALL <const> = 1 << 8 | 1 << 5 | 1 << 2
-local S_IWALL <const> = 1 << 7 | 1 << 4 | 1 << 1
-local S_IXALL <const> = 1 << 6 | 1 << 3 | 1 << 0
-
-fs.uR = S_IRUSR
-fs.uW = S_IWUSR
-fs.uX = S_IXUSR
-fs.aR = S_IRALL
-fs.aW = S_IWALL
-fs.aX = S_IXALL
-fs.gR = S_IRGRP
-fs.gW = S_IWGRP
-fs.gX = S_IXGRP
-fs.oR = S_IROTH
-fs.oW = S_IWOTH
-fs.oX = S_IXOTH
-
-local function stat(name, follow)
-    local size, mtime, atime, ctime, mode
-    if __MACOS__ then
-        local st = sh.read("LC_ALL=C", "stat", follow, "-r", name, "2>/dev/null")
-        if not st then return nil, "cannot stat "..name end
-        local _, mode_str
-        _, _, mode_str, _, _, _, _, size, atime, mtime, _, ctime, _, _, _ = st:words():unpack()
-        mode = tonumber(mode_str, 8)
-    else
-        local st = sh.read("LC_ALL=C", "stat", follow, "-c '%s;%Y;%X;%W;%f'", name, "2>/dev/null")
-        if not st then return nil, "cannot stat "..name end
-        local mode_str
-        size, mtime, atime, ctime, mode_str = st:trim():split ";":unpack()
-        mode = tonumber(mode_str, 16)
-    end
-    return F{
-        name = name,
-        size = tonumber(size),
-        mtime = tonumber(mtime),
-        atime = tonumber(atime),
-        ctime = tonumber(ctime),
-        mode = mode,
-        type = (mode & S_IFMT) == S_IFLNK and "link"
-            or (mode & S_IFMT) == S_IFDIR and "directory"
-            or (mode & S_IFMT) == S_IFREG and "file"
-            or "unknown",
-        uR = (mode & S_IRUSR) ~= 0,
-        uW = (mode & S_IWUSR) ~= 0,
-        uX = (mode & S_IXUSR) ~= 0,
-        gR = (mode & S_IRGRP) ~= 0,
-        gW = (mode & S_IWGRP) ~= 0,
-        gX = (mode & S_IXGRP) ~= 0,
-        oR = (mode & S_IROTH) ~= 0,
-        oW = (mode & S_IWOTH) ~= 0,
-        oX = (mode & S_IXOTH) ~= 0,
-        aR = (mode & (S_IRUSR|S_IRGRP|S_IROTH)) ~= 0,
-        aW = (mode & (S_IWUSR|S_IWGRP|S_IWOTH)) ~= 0,
-        aX = (mode & (S_IXUSR|S_IXGRP|S_IXOTH)) ~= 0,
-    }
-end
-
-function fs.stat(name)
-    return stat(name, "-L")
-end
-
-function fs.lstat(name)
-    return stat(name, {})
-end
-
-function fs.inode(name)
-    local dev, ino
-    if __MACOS__ then
-        local st = sh.read("LC_ALL=C", "stat", "-L", "-r", name, "2>/dev/null")
-        if not st then return nil, "cannot stat "..name end
-        dev, ino = st:words():unpack()
-    else
-        local st = sh.read("LC_ALL=C", "stat", "-L", "-c '%d;%i'", name, "2>/dev/null")
-        if not st then return nil, "cannot stat "..name end
-        dev, ino = st:trim():split ";":unpack()
-    end
-    return F{
-        ino = tonumber(ino),
-        dev = tonumber(dev),
-    }
-end
-
-local pattern_cache = {}
-
-function fs.fnmatch(pattern, name)
-    local lua_pattern = pattern_cache[pattern]
-    if not lua_pattern then
-        lua_pattern = pattern
-            : gsub("%.", "%%.")
-            : gsub("%*", ".*")
-        lua_pattern = "^"..lua_pattern.."$"
-        pattern_cache[pattern] = lua_pattern
-    end
-    return name:match(lua_pattern) and true or false
-end
-
-function fs.chmod(name, ...)
-    local mode = {...}
-    if type(mode[1]) == "string" then
-        return sh.run("chmod", "--reference="..mode[1], name, "2>/dev/null")
-    else
-        return sh.run("chmod", ("%o"):format(F(mode):fold(F.op.bor, 0)), name)
-    end
-end
-
-function fs.touch(name, opt)
-    if opt == nil then
-        return sh.run("touch", name, "2>/dev/null")
-    elseif type(opt) == "number" then
-        return sh.run("touch", "-d", '"'..os.date("%c", opt)..'"', name, "2>/dev/null")
-    elseif type(opt) == "string" then
-        return sh.run("touch", "--reference="..opt, name, "2>/dev/null")
-    else
-        error "bad argument #2 to touch (none, nil, number or string expected)"
-    end
-end
-
-function fs.basename(path)
-    if __PANDOC__ then return pandoc.path.filename(path) end
-    return (path:gsub(".*[/\\]", ""))
-end
-
-function fs.dirname(path)
-    if __PANDOC__ then return pandoc.path.directory(path) end
-    local dir, n = path:gsub("[/\\][^/\\]*$", "")
-    return n > 0 and dir or "."
-end
-
-function fs.splitext(path)
-    if __PANDOC__ then
-        if fs.basename(path):match "^%." then return path, "" end
-        return pandoc.path.split_extension(path)
-    end
-    local name, ext = path:match("^(.*)(%.[^/\\]-)$")
-    if name and ext and #name > 0 and not name:has_suffix(fs.sep) then return name, ext end
-    return path, ""
-end
-
-function fs.ext(path)
-    local _, ext = fs.splitext(path)
-    return ext
-end
-
-function fs.chext(path, new_ext)
-    return fs.splitext(path) .. new_ext
-end
-
-function fs.realpath(path)
-    if __PANDOC__ then return pandoc.path.normalize(path) end
-    return safe_sh("realpath", path) : trim()
-end
-
-function fs.readlink(path)
-    return safe_sh("readlink", path) : trim()
-end
-
-function fs.absname(path)
-    if path:match "^[/\\]" or path:match "^.:" then return path end
-    return fs.getcwd()..fs.sep..path
-end
-
-function fs.mkdirs(path)
-    if __PANDOC__ then return pandoc.system.make_directory(path, true) end
-    if __WINDOWS__ then return sh.run("mkdir", path) end
-    return sh.run("mkdir", "-p", path)
-end
-
-function fs.ls(dir, dotted) ---@diagnostic disable-line: unused-local (hidden files not supported in the Lua implementation)
-    dir = dir or "."
-    local base = dir:basename()
-    local path = dir:dirname()
-    local recursive = base:match"%*%*"
-    local pattern = base:match"%*" and base:gsub("%*+", "*")
-
-    local useless_path_prefix = "^%."..fs.sep
-    local function clean_path(fullpath)
-        return fullpath:gsub(useless_path_prefix, "")
-    end
-
-    if __WINDOWS__ then
-
-        local files
-        if recursive then
-            files = sh("dir /b /s", path/pattern)
-        elseif pattern then
-            files = sh("dir /b", path/pattern)
-        else
-            files = sh("dir /b", dir)
-        end
-        return files
-            : lines()
-            : map(clean_path)
-            : sort()
-    end
-
-    local files
-    if recursive then
-        files = sh("find", path, ("-name %q"):format(pattern))
-            : lines()
-            : filter(F.partial(F.op.ne, path))
-    elseif pattern then
-        files = sh("ls -d", path/pattern)
-            : lines()
-    else
-        files = sh("ls", dir)
-            : lines()
-            : map(F.partial(fs.join, dir))
-    end
-    return files
-        : map(clean_path)
-        : sort()
-end
-
-function fs.is_file(name)
-    local st = fs.stat(name)
-    return st ~= nil and st.type == "file"
-end
-
-function fs.is_dir(name)
-    local st = fs.stat(name)
-    return st ~= nil and st.type == "directory"
-end
-
-function fs.is_link(name)
-    local st = fs.lstat(name)
-    return st ~= nil and st.type == "link"
-end
-
-fs.rm = fs.remove
-fs.mv = fs.rename
-
-fs.tmpfile = os.tmpname
-
-function fs.tmpdir()
-    local tmp = os.tmpname()
-    fs.rm(tmp)
-    fs.mkdir(tmp)
-    return tmp
-end
-
-return fs
-]=])
-libs["imath"] = lib("libluax/imath/imath.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
--- Pure Lua implementation of imath.c
-
-local imath = {}
-local mt = {__index={}}
-
----@diagnostic disable:unused-vararg
-local function ni(f) return function(...) error(f.." not implemented") end end
-
-local floor = math.floor
-local ceil = math.ceil
-local sqrt = math.sqrt
-local log = math.log
-local max = math.max
-
-local RADIX <const> = 10000000
-local RADIX_LEN <const> = floor(log(RADIX, 10))
-
-assert(RADIX^2 < 2^53, "RADIX^2 shall be storable on a Lua number")
-
-local int_add, int_sub, int_mul, int_divmod, int_abs
-
-local function int_trim(a)
-    for i = #a, 1, -1 do
-        if a[i] and a[i] ~= 0 then break end
-        a[i] = nil
-    end
-    if #a == 0 then a.sign = 1 end
-end
-
-local function int(n, base)
-    n = n or 0
-    if type(n) == "table" then return n end
-    if type(n) == "number" then
-        if math.type(n) == "float" then
-            n = ("%.0f"):format(floor(n))
-        else
-            n = ("%d"):format(n)
-        end
-    end
-    assert(type(n) == "string")
-    n = n:gsub("[ _]", "")
-    local sign = 1
-    local d = 1 -- current digit index
-    if n:sub(d, d) == "+" then d = d+1
-    elseif n:sub(d, d) == "-" then sign = -1; d = d+1
-    end
-    if n:sub(d, d+1) == "0x" then d = d+2; base = 16
-    elseif n:sub(d, d+1) == "0o" then d = d+2; base = 8
-    elseif n:sub(d, d+1) == "0b" then d = d+2; base = 2
-    else base = base or 10
-    end
-    local self = {sign=1}
-    if base == 10 then
-        for i = #n, d, -RADIX_LEN do
-            local digit = n:sub(max(d, i-RADIX_LEN+1), i)
-            self[#self+1] = tonumber(digit)
-        end
-    else
-        local bn_base = {sign=1, base}
-        local bn_shift = {sign=1, 1}
-        local bn_digit = {sign=1, 0}
-        for i = #n, d, -1 do
-            bn_digit[1] = tonumber(n:sub(i, i), base)
-            self = int_add(self, int_mul(bn_digit, bn_shift))
-            bn_shift = int_mul(bn_shift, bn_base)
-        end
-    end
-    self.sign = sign
-    int_trim(self)
-    return setmetatable(self, mt)
-end
-
-local int_zero <const> = int(0)
-local int_one <const> = int(1)
-local int_two <const> = int(2)
-
-local function int_copy(n)
-    local c = {sign=n.sign}
-    for i = 1, #n do
-        c[i] = n[i]
-    end
-    return setmetatable(c, mt)
-end
-
-local function int_tonumber(n)
-    local s = n.sign < 0 and "-0" or "0"
-    local fmt = ("%%0%dd"):format(RADIX_LEN)
-    for i = #n, 1, -1 do
-        s = s..fmt:format(n[i])
-    end
-    return tonumber(s..".")
-end
-
-local function int_tostring(n, base)
-    base = base or 10
-    local s = ""
-    local sign = n.sign
-    if base == 10 then
-        local fmt = ("%%0%dd"):format(RADIX_LEN)
-        for i = 1, #n do
-            s = fmt:format(n[i]) .. s
-        end
-        s = s:gsub("^[_0]+", "")
-        if s == "" then s = "0" end
-    else
-        local bn_base = int(base)
-        local absn = int_abs(n)
-        while #absn > 0 do
-            local d
-            absn, d = int_divmod(absn, bn_base)
-            d = int_tonumber(d)
-            s = ("0123456789ABCDEF"):sub(d+1, d+1) .. s
-        end
-        s = s:gsub("^0+", "")
-        if s == "" then s = "0" end
-    end
-    if sign < 0 then s = "-" .. s end
-    return s
-end
-
-local function int_iszero(a)
-    return #a == 0
-end
-
-local function int_isone(a)
-    return #a == 1 and a[1] == 1 and a.sign == 1
-end
-
-local function int_cmp(a, b)
-    if #a == 0 and #b == 0 then return 0 end -- 0 == -0
-    if a.sign > b.sign then return 1 end
-    if a.sign < b.sign then return -1 end
-    if #a > #b then return a.sign end
-    if #a < #b then return -a.sign end
-    for i = #a, 1, -1 do
-        if a[i] > b[i] then return a.sign end
-        if a[i] < b[i] then return -a.sign end
-    end
-    return 0
-end
-
-local function int_abscmp(a, b)
-    if #a > #b then return 1 end
-    if #a < #b then return -1 end
-    for i = #a, 1, -1 do
-        if a[i] > b[i] then return 1 end
-        if a[i] < b[i] then return -1 end
-    end
-    return 0
-end
-
-local function int_neg(a)
-    local b = int_copy(a)
-    b.sign = -a.sign
-    return b
-end
-
-int_add = function(a, b)
-    if a.sign == b.sign then            -- a+b = a+b, (-a)+(-b) = -(a+b)
-        local c = int()
-        c.sign = a.sign
-        local carry = 0
-        for i = 1, max(#a, #b) + 1 do -- +1 for the last carry
-            c[i] = carry + (a[i] or 0) + (b[i] or 0)
-            if c[i] >= RADIX then
-                c[i] = c[i] - RADIX
-                carry = 1
-            else
-                carry = 0
-            end
-        end
-        int_trim(c)
-        return c
-    else
-        return int_sub(a, int_neg(b))
-    end
-end
-
-int_sub = function(a, b)
-    if a.sign == b.sign then
-        local A, B
-        local cmp = int_abscmp(a, b)
-        if cmp >= 0 then A = a; B = b; else A = b; B = a; end
-        local c = int()
-        local carry = 0
-        for i = 1, #A do
-            c[i] = A[i] - (B[i] or 0) - carry
-            if c[i] < 0 then
-                c[i] = c[i] + RADIX
-                carry = 1
-            else
-                carry = 0
-            end
-        end
-        assert(carry == 0) -- should be true if |A| >= |B|
-        c.sign = (cmp >= 0) and a.sign or -a.sign
-        int_trim(c)
-        return c
-    else
-        local c = int_add(a, int_neg(b))
-        c.sign = a.sign
-        return c
-    end
-end
-
-int_mul = function(a, b)
-    local c = int()
-    for i = 1, #a do
-        local carry = 0
-        for j = 1, #b do
-            carry = (c[i+j-1] or 0) + a[i]*b[j] + carry
-            c[i+j-1] = carry % RADIX
-            carry = math.floor(carry / RADIX)
-        end
-        if carry ~= 0 then
-            c[i + #b] = carry
-        end
-    end
-    int_trim(c)
-    c.sign = a.sign * b.sign
-    return c
-end
-
-local function int_absdiv2(a)
-    local c = int()
-    local carry = 0
-    for i = 1, #a do
-        c[i] = 0
-    end
-    for i = #a, 1, -1 do
-        c[i] = floor(carry + a[i] / 2)
-        if a[i] % 2 ~= 0 then
-            carry = RADIX // 2
-        else
-            carry = 0
-        end
-    end
-    c.sign = a.sign
-    int_trim(c)
-    return c, (a[1] or 0) % 2
-end
-
-int_divmod = function(a, b)
-    -- euclidian division using dichotomie
-    -- searching q and r such that a = q*b + r and |r| < |b|
-    assert(not int_iszero(b), "Division by zero")
-    if int_iszero(a) then return int_zero, int_zero end
-    if int_isone(b) then return a, int_zero end
-    if b.sign < 0 then a = int_neg(a); b = int_neg(b) end
-    local qmin = int_neg(a)
-    local qmax = a
-    if int_cmp(qmax, qmin) < 0 then qmin, qmax = qmax, qmin end
-    local rmin = int_sub(a, int_mul(qmin, b))
-    if rmin.sign > 0 and int_cmp(rmin, b) < 0 then return qmin, rmin end
-    local rmax = int_sub(a, int_mul(qmax, b))
-    if rmax.sign > 0 and int_cmp(rmax, b) < 0 then return qmax, rmax end
-    assert(rmin.sign ~= rmax.sign)
-    local q = int_absdiv2(int_add(qmin, qmax))
-    local r = int_sub(a, int_mul(q, b))
-    while r.sign < 0 or int_cmp(r, b) >= 0 do
-        if r.sign == rmin.sign then
-            qmin, qmax = q, qmax
-            rmin, rmax = r, rmax
-        else
-            qmin, qmax = qmin, q
-            rmin, rmax = rmin, r
-        end
-        q = int_absdiv2(int_add(qmin, qmax))
-        r = int_sub(a, int_mul(q, b))
-    end
-    return q, r
-end
-
-local function int_sqrt(a)
-    assert(a.sign >= 0, "Square root of a negative number")
-    if int_iszero(a) then return int_zero end
-    local b = int()
-    local c = int()
-    for i = #a//2+1, #a do b[#b+1] = ceil(sqrt(a[i])) end
-    while b ~= c do
-        c = b
-        local q, _ = int_divmod(a, b)
-        b = int_absdiv2(int_add(b, q))
-        --if b^2 <= a and (b+1)^2 > a then break end
-    end
-    assert(b^2 <= a and (b+1)^2 > a)
-    return b
-end
-
-local function int_pow(a, b)
-    assert(b.sign > 0)
-    if #b == 0 then return int_one end
-    if #b == 1 and b[1] == 1 then return a end
-    if #b == 1 and b[1] == 2 then return int_mul(a, a) end
-    local c
-    local q, r = int_absdiv2(b)
-    c = int_pow(a, q)
-    c = int_mul(c, c)
-    if r == 1 then c = int_mul(c, a) end
-    return c
-end
-
-int_abs = function(a)
-    local b = int_copy(a)
-    b.sign = 1
-    return b
-end
-
-local function int_gcd(a, b)
-    a = int_abs(a)
-    b = int_abs(b)
-    while true do
-        local _
-        local order = int_cmp(a, b)
-        if order == 0 then return a end
-        if order > 0 then
-            _, a = int_divmod(a, b)
-            if int_iszero(a) then return b end
-        else
-            _, b = int_divmod(b, a)
-            if int_iszero(b) then return a end
-        end
-    end
-end
-
-local function int_lcm(a, b)
-    a = int_abs(a)
-    b = int_abs(b)
-    return int_mul((int_divmod(a, int_gcd(a, b))), b)
-end
-
-local function int_iseven(a)
-    return #a == 0 or a[1]%2 == 0
-end
-
-local function int_isodd(a)
-    return #a > 0 and a[1]%2 == 1
-end
-
-local int_shift_left, int_shift_right
-
-int_shift_left = function(a, b)
-    if int_iszero(b) then return a end
-    if b.sign > 0 then
-        return int_mul(a, int_two^b)
-    else
-        return int_shift_right(a, int_neg(b))
-    end
-end
-
-int_shift_right = function(a, b)
-    if int_iszero(b) then return a end
-    if b.sign < 0 then
-        return int_shift_left(a, int_neg(b))
-    else
-        return (int_divmod(a, int_two^b))
-    end
-end
-
-mt.__add = function(a, b) return int_add(int(a), int(b)) end
-mt.__div = function(a, b) local q, _ = int_divmod(int(a), int(b)); return q end
-mt.__eq = function(a, b) return int_cmp(int(a), int(b)) == 0 end
-mt.__idiv = mt.__div
-mt.__le = function(a, b) return int_cmp(int(a), int(b)) <= 0 end
-mt.__lt = function(a, b) return int_cmp(int(a), int(b)) < 0 end
-mt.__mod = function(a, b) local _, r = int_divmod(int(a), int(b)); return r end
-mt.__mul = function(a, b) return int_mul(int(a), int(b)) end
-mt.__pow = function(a, b) return int_pow(int(a), int(b)) end
-mt.__shl = function(a, b) return int_shift_left(int(a), int(b)) end
-mt.__shr = function(a, b) return int_shift_right(int(a), int(b)) end
-mt.__sub = function(a, b) return int_sub(int(a), int(b)) end
-mt.__tostring = function(a, base) return int_tostring(a, base) end
-mt.__unm = function(a) return int_neg(a) end
-
-mt.__index.add = mt.__add
-mt.__index.bits = ni "bits"
-mt.__index.compare = function(a, b) return int_cmp(int(a), int(b)) end
-mt.__index.div = mt.__div
-mt.__index.egcd = ni "egcd"
-mt.__index.gcd = function(a, b) return int_gcd(int(a), int(b)) end
-mt.__index.invmod = ni "invmod"
-mt.__index.iseven = int_iseven
-mt.__index.isodd = int_isodd
-mt.__index.iszero = int_iszero
-mt.__index.isone = int_isone
-mt.__index.lcm = function(a, b) return int_lcm(int(a), int(b)) end
-mt.__index.mod = mt.__mod
-mt.__index.mul = mt.__mul
-mt.__index.neg = mt.__unm
-mt.__index.pow = mt.__pow
-mt.__index.powmod = ni "powmod"
-mt.__index.quotrem = function(a, b) return int_divmod(int(a), int(b)) end
-mt.__index.root = ni "root"
-mt.__index.shift = mt.__index.shl
-mt.__index.sqr = function(a) return int_mul(a, a) end
-mt.__index.sqrt = int_sqrt
-mt.__index.sub = mt.__sub
-mt.__index.abs = function(a) return int_abs(a) end
-mt.__index.tonumber = int_tonumber
-mt.__index.tostring = mt.__tostring
-mt.__index.totext = ni "totext"
-
-imath.abs = function(a) return int(a):abs() end
-imath.add = function(a, b) return int(a) + int(b) end
-imath.bits = function(a) return int(a):bits() end
-imath.compare = function(a, b) return int(a):compare(int(b)) end
-imath.div = function(a, b) return int(a) / int(b) end
-imath.egcd = function(a, b) return int(a):egcd(int(b)) end
-imath.gcd = function(a, b) return int(a):gcd(int(b)) end
-imath.invmod = function(a, b) return int(a):invmod(int(b)) end
-imath.iseven = function(a) return int(a):iseven() end
-imath.isodd = function(a) return int(a):isodd() end
-imath.iszero = function(a) return int(a):iszero() end
-imath.isone = function(a) return int(a):isone() end
-imath.lcm = function(a, b) return int(a):lcm(int(b)) end
-imath.mod = function(a, b) return int(a) % int(b) end
-imath.mul = function(a, b) return int(a) * int(b) end
-imath.neg = function(a) return -int(a) end
-imath.new = int
-imath.pow = function(a, b) return int(a) ^ b end
-imath.powmod = function(a, b) return int(a):powmod(int(b)) end
-imath.quotrem = function(a, b) return int(a):quotrem(int(b)) end
-imath.root = function(a) return int(a):root() end
-imath.shift = function(a, b) return int(a) << b end
-imath.sqr = function(a) return int(a):sqr() end
-imath.sqrt = function(a) return int(a):sqrt() end
-imath.sub = function(a, b) return int(a) - int(b) end
-imath.text = ni "text"
-imath.tonumber = function(a) return int(a):tonumber() end
-imath.tostring = function(a) return int(a):tostring() end
-imath.totext = function(a) return int(a):totext() end
-
-return imath
-]=])
-libs["import"] = lib("libluax/import/import.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
---[[------------------------------------------------------------------------@@@
-# import: import Lua scripts into tables
-
-```lua
-local import = require "import"
-```
-
-The import module can be used to manage simple configuration files,
-configuration parameters being global variables defined in the configuration file.
-
-```lua
-local conf = import("myconf.lua", [env])
-```
-Evaluates `"myconf.lua"` in a new table and returns this table.
-All files are tracked in `package.modpath`.
-
-The execution environment inherits from `env` (or `_ENV` if `env` is not defined).
-@@@]]
-
-return function(fname, env)
-    local mod = setmetatable({}, {__index = env or _ENV})
-    assert(loadfile(fname, "t", mod))()
-    return mod
-end
-]=])
-libs["linenoise"] = lib("libluax/linenoise/linenoise.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
--- Pure Lua implementation of linenoise.c
-
-local F = require "F"
-local term = require "term"
-
-return setmetatable({
-    read = term.prompt,
-}, {
-    __index = F.const(F.const()),
-})
-]=])
-libs["readline"] = lib("libluax/readline/readline.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
--- Pure Lua implementation of readline.c
-
-local F = require "F"
-local term = require "term"
-
-return setmetatable({
-    read = term.prompt,
-}, {
-    __index = F.const(F.const()),
-})
-]=])
-libs["lar"] = lib("libluax/lar/lar.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
-local F = require "F"
-local cbor = require "cbor"
-local crypt = require "crypt"
-local lz4 = require "lz4"
-local lzip = require "lzip"
-
---[[------------------------------------------------------------------------@@@
-## Lua Archive
-@@@]]
-
---[[@@@
-```lua
-local lar = require "lar"
-```
-
-`lar` is a simple archive format for Lua values (e.g. Lua tables).
-It contains a Lua value:
-
-- serialized with `cbor`
-- compressed with `lz4` or `lzip`
-- encrypted with `arc4`
-
-The Lua value is only encrypted if a key is provided.
-@@@]]
-local lar = {}
-
-local MAGIC = "!<LuaX archive>"
-
-local RAW  <const> = 0
-local LZ4  <const> = 1
-local LZIP <const> = 2
-
-local compression_options = {
-    { algo=nil,    flag=RAW,  compress=F.id,      decompress=F.id   },
-    { algo="lz4",  flag=LZ4,  compress=lz4.lz4,   decompress=lz4.unlz4  },
-    { algo="lzip", flag=LZIP, compress=lzip.lzip, decompress=lzip.unlzip },
-}
-
-local function find_options(x)
-    for i = 1, #compression_options do
-        local opt = compression_options[i]
-        if x==opt.algo or x==opt.flag then return opt end
-    end
-    return compression_options[1]
-end
-
---[[@@@
-```lua
-lar.lar(lua_value, [opt])
-```
-Returns a string with `lua_value` serialized, compressed and encrypted.
-
-Options:
-
-- `opt.compress`: compression algorithm (`"lzip"` by default):
-
-    - `"none"`: no compression
-    - `"lz4"`: compression with LZ4 (default compression level)
-    - `"lz4-#"`: compression with LZ4 (compression level `#` with `#` between 0 and 12)
-    - `"lzip"`: compression with lzip (default compression level)
-    - `"lzip-#"`: compression with lzip (compression level `#` with `#` between 0 and 9)
-
-- `opt.key`: encryption key (no encryption by default)
-@@@]]
-
-function lar.lar(lua_value, lar_opt)
-    lar_opt = lar_opt or {}
-    local algo, level = (lar_opt.compress or "lzip"):split"%-":unpack()
-    local compress_opt = find_options(algo)
-
-    local payload = cbor.encode(lua_value, {pairs=F.pairs})
-    payload = assert(compress_opt.compress(payload, tonumber(level)))
-    if lar_opt.key then payload = crypt.arc4(payload, lar_opt.key) end
-
-    return string.pack("<zBs4", MAGIC, compress_opt.flag, payload)
-end
-
---[[@@@
-```lua
-lar.unlar(archive, [opt])
-```
-Returns the Lua value contained in a serialized, compressed and encrypted string.
-
-Options:
-
-- `opt.key`: encryption key (no encryption by default)
-@@@]]
-
-function lar.unlar(archive, opt)
-    opt = opt or {}
-
-    if type(archive)~="string" then
-        error("bad argument #1 to 'unlar' (string expected, got "..type(archive)..")")
-    end
-    local ok, magic, compress_flag, payload = pcall(string.unpack, "<zBs4", archive)
-    assert(ok and magic==MAGIC, "not a LuaX archive")
-
-    if opt.key then payload = crypt.unarc4(payload, opt.key) end
-    local compress_opt = find_options(compress_flag)
-    payload = assert(compress_opt.decompress(payload))
-
-    return cbor.decode(payload)
-end
-
-return lar
-]=])
-libs["lz4"] = lib("libluax/lz4/lz4.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
--- Load lz4.lua to add new methods to strings
---@LOAD=_
-
---[[------------------------------------------------------------------------@@@
-## String methods
-
-The `lz4` functions are also available as `string` methods:
-@@@]]
-
-local lz4 = require "_lz4"
-
---[[@@@
-```lua
-s:lz4()         == lz4.lz4(s)
-s:unlz4()       == lz4.unlz4(s)
-```
-@@@]]
-
-string.lz4      = lz4.lz4
-string.unlz4    = lz4.unlz4
-
-return lz4
-]=])
-libs["_lz4"] = lib("libluax/lz4/_lz4.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
--- Pure Lua implementation of lz4.lua
-
-local lz4 = {}
-
-local fs = require "fs"
-local sh = require "sh"
-
-function lz4.lz4(s, level)
-    return fs.with_tmpfile(function(tmp)
-        local n = #s
-        assert(sh.write(
-            "lz4 -q -z",
-               n <=   64*1024 and "-B4"
-            or n <=  256*1024 and "-B5"
-            or n <= 1024*1024 and "-B6"
-            or                    "-B7",
-            "-"..(level or 9),
-            "-BD --frame-crc -f -", tmp)(s))
-        return assert(fs.read_bin(tmp))
-    end)
-end
-
-function lz4.unlz4(s)
-    return fs.with_tmpfile(function(tmp)
-        assert(sh.write("lz4 -q -d -f -", tmp)(s))
-        return assert(fs.read_bin(tmp))
-    end)
-end
-
-return lz4
-]=])
-libs["lzip"] = lib("libluax/lzip/lzip.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
--- Load lzip.lua to add new methods to strings
---@LOAD=_
-
---[[------------------------------------------------------------------------@@@
-## String methods
-
-The `lzip` functions are also available as `string` methods:
-@@@]]
-
-local lzip = require "_lzip"
-
---[[@@@
-```lua
-s:lzip()        == lzip.lzip(s)
-s:unlzip()      == lzip.unlzip(s)
-```
-@@@]]
-
-string.lzip     = lzip.lzip
-string.unlzip   = lzip.unlzip
-
-return lzip
-]=])
-libs["_lzip"] = lib("libluax/lzip/_lzip.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
--- Pure Lua implementation of lzip.lua
-
-local lzip = {}
-
-local fs = require "fs"
-local sh = require "sh"
-
-function lzip.lzip(s, level)
-    return fs.with_tmpdir(function(tmp)
-        local input = tmp/"data"
-        local output = tmp/"data.lz"
-        assert(fs.write_bin(input, s))
-        assert(sh.run(
-            "lzip -q",
-            "-"..(level or 6),
-            input,
-            "-o", output))
-        return assert(fs.read_bin(output))
-    end)
-end
-
-function lzip.unlzip(s)
-    return fs.with_tmpdir(function(tmp)
-        local input = tmp/"data.lz"
-        local output = tmp/"data"
-        assert(fs.write_bin(input, s))
-        assert(sh.run("lzip -q -d", input, "-o", output))
-        return assert(fs.read_bin(output))
-    end)
-end
-
-return lzip
-]=])
-libs["mathx"] = lib("libluax/mathx/mathx.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
--- Pure Lua implementation of mathx.c
-
-local mathx = {}
-
-local exp = math.exp
-local log = math.log
-local log2 = function(x) return log(x, 2) end
-local abs = math.abs
-local max = math.max
-local floor = math.floor
-local ceil = math.ceil
-local modf = math.modf
-
-local pack = string.pack
-local unpack = string.unpack
-
-local inf <const> = 1/0
-
----@diagnostic disable:unused-vararg
-local function ni(f) return function(...) error(f.." not implemented") end end
-
-local function sign(x) return x < 0 and -1 or 1 end
-
-mathx.fabs = math.abs
-mathx.acos = math.acos
-mathx.acosh = function(x) return log(x + (x^2-1)^0.5) end
-mathx.asin = math.asin
-mathx.asinh = function(x) return log(x + (x^2+1)^0.5) end
-mathx.atan = math.atan
-mathx.atan2 = math.atan
-mathx.atanh = function(x) return 0.5*log((1+x)/(1-x)) end
-mathx.cbrt = function(x) return x < 0 and -(-x)^(1/3) or x^(1/3) end
-mathx.ceil = math.ceil
-mathx.copysign = function(x, y) return abs(x) * sign(y) end
-mathx.cos = math.cos
-mathx.cosh = function(x) return (exp(x)+exp(-x))/2 end
-mathx.deg = math.deg
-mathx.erf = ni "erf"
-mathx.erfc = ni "erfc"
-mathx.exp = math.exp
-mathx.exp2 = function(x) return 2^x end
-mathx.expm1 = function(x) return exp(x)-1 end
-mathx.fdim = function(x, y) return max(x-y, 0) end
-mathx.floor = math.floor
-mathx.fma = function(x, y, z) return x*y + z end
-mathx.fmax = math.max
-mathx.fmin = math.min
-mathx.fmod = math.fmod
-mathx.frexp = function(x)
-    if x == 0 then return 0, 0 end
-    local ax = abs(x)
-    local e = ceil(log2(ax))
-    local m = ax / (2^e)
-    if m == 1 then m, e = m/2, e+1 end
-    return m*sign(x), e
-end
-mathx.gamma = ni "gamma"
-mathx.hypot = function(x, y)
-    if x == 0 and y == 0 then return 0.0 end
-    local ax, ay = abs(x), abs(y)
-    if ax > ay then return ax * (1+(y/x)^2)^0.5 end
-    return ay * (1+(x/y)^2)^0.5
-end
-mathx.isfinite = function(x) return abs(x) < inf end
-mathx.isinf = function(x) return abs(x) == inf end
-mathx.isnan = function(x) return x ~= x end
-mathx.isnormal = ni "isnormal"
-mathx.ldexp = function(x, e) return x*2^e end
-mathx.lgamma = ni "lgamma"
-mathx.log = math.log
-mathx.log10 = function(x) return log(x, 10) end
-mathx.log1p = function(x) return log(1+x) end
-mathx.log2 = function(x) return log(x, 2) end
-mathx.logb = ni "logb"
-mathx.modf = math.modf
-mathx.nearbyint = function(x)
-    local m = modf(x)
-    if m%2 == 0 then
-        return x < 0 and floor(x+0.5) or ceil(x-0.5)
-    else
-        return x >= 0 and floor(x+0.5) or ceil(x-0.5)
-    end
-end
-mathx.nextafter = function(x, y)
-    if x == y then return x end
-    if x == 0 then
-        if y > 0 then return 0x0.0000000000001p-1022 end
-        if y < 0 then return -0x0.0000000000001p-1022 end
-    end
-    local i = unpack("i8", pack("d", x))
-    i = i + (  y > x and x < 0 and -1
-            or y < x and x < 0 and 1
-            or y > x and x > 0 and 1
-            or y < x and x > 0 and -1
-            )
-    return unpack("d", pack("i8", i))
-end
-mathx.pow = function(x, y) return x^y end
-mathx.rad = math.rad
-mathx.round = function(x) return x >= 0 and floor(x+0.5) or ceil(x-0.5) end
-mathx.scalbn = ni "scalbn"
-mathx.sin = math.sin
-mathx.sinh = function(x) return (exp(x)-exp(-x))/2 end
-mathx.sqrt = math.sqrt
-mathx.tan = math.tan
-mathx.tanh = function(x) return (exp(x)-exp(-x))/(exp(x)+exp(-x)) end
-mathx.trunc = function(x) return x >= 0 and floor(x) or ceil(x) end
-
-mathx.inf = inf
-mathx.nan = math.abs(0/0)
-mathx.pi = math.pi
-
-return mathx
-]=])
-libs["ps"] = lib("libluax/ps/ps.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
--- Pure Lua implementation of ps.c
-
-local ps = {}
-
-function ps.sleep(n)
-    io.popen("sleep "..tostring(n)):close()
-end
-
-ps.time = os.time
-
-ps.clock = os.clock
-
-function ps.profile(func)
-    local clock = ps.clock
-    local ok, dt = pcall(function()
-        local t0 = clock()
-        func()
-        local t1 = clock()
-        return t1 - t0
-    end)
-    if ok then
-        return dt
-    else
-        return ok, dt
-    end
-
-end
-
-return ps
-]=])
-libs["qmath"] = lib("libluax/qmath/qmath.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-local qmath = require "_qmath"
-
---[[@@@
-## qmath additional functions
-@@@]]
-
---[[@@@
-```lua
-q = qmath.torat(x, [eps])
-```
-approximates a floating point number `x` with a rational value.
-The rational number `q` is an approximation of `x` such that $|q - x| < eps$.
-The default `eps` value is $10^{-6}$.
-@@@]]
-
-local rat = qmath.new
-local abs = math.abs
-local modf = math.modf
-
-local function frac(a)
-    local q = rat(a[#a])
-    for i = #a-1, 1, -1 do
-        q = a[i] + 1/q
-    end
-    return q
-end
-
-function qmath.torat(x, eps)
-    eps = eps or 1e-6
-    local x0 = x
-    local a = {}
-    a[1], x = modf(x)
-    local q = frac(a)
-    while abs(x0 - q:tonumber()) > eps and #a < 64 do
-        a[#a+1], x = modf(1/x)
-        q = frac(a)
-    end
-    return q
-end
-
-return qmath
-]=])
-libs["_qmath"] = lib("libluax/qmath/_qmath.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
--- Pure Lua implementation of qmath.c
-
-local qmath = {}
-local mt = {__index={}}
-
-local imath = require "imath"
-local Z = imath.new
-local gcd = imath.gcd
-
-local function rat(num, den)
-    if not den then
-        if type(num) == "table" and num.num and num.den then return num end
-        den = 1
-    end
-    num, den = Z(num), Z(den)
-    assert(den ~= 0, "(qmath) result undefined")
-    if den < 0 then num, den = -num, -den end
-    if num:iszero() then
-        den = Z(1)
-    else
-        local d = gcd(num, den)
-        num, den = num/d, den/d
-    end
-    return setmetatable({num=num, den=den}, mt)
-end
-
-local rat_zero <const> = rat(0)
-local rat_one <const> = rat(1)
-
-local function rat_tostring(r)
-    if r.den:isone() then return tostring(r.num) end
-    return ("%s/%s"):format(r.num, r.den)
-end
-
-local function compare(a, b)
-    return (a.num*b.den):compare(b.num*a.den)
-end
-
-mt.__add = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den + b.num*a.den, a.den*b.den) end
-mt.__div = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den, a.den*b.num) end
-mt.__eq = function(a, b) a, b = rat(a), rat(b); return compare(a, b) == 0 end
-mt.__le = function(a, b) a, b = rat(a), rat(b); return compare(a, b) <= 0 end
-mt.__lt = function(a, b) a, b = rat(a), rat(b); return compare(a, b) < 0 end
-mt.__mul = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.num, a.den*b.den) end
-mt.__pow = function(a, b)
-    if type(b) == "number" and math.type(b) == "float" then
-        error("bad argument #2 to 'pow' (number has no integer representation)")
-    end
-    if b == 0 then return rat_one end
-    if a == 0 then return rat_zero end
-    if a == 1 then return rat_one end
-    if b < 0 then
-        b = -b
-        return rat(a.den^b, a.num^b)
-    end
-    return rat(a.num^b, a.den^b)
-end
-mt.__sub = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den - b.num*a.den, a.den*b.den) end
-mt.__tostring = rat_tostring
-mt.__unm = function(a) return rat(-a.num, a.den) end
-mt.__index.abs = function(a) return rat(a.num:abs(), a.den) end
-mt.__index.add = mt.__add
-mt.__index.compare = function(a, b) return compare(rat(a), rat(b)) end
-mt.__index.denom = function(a) return rat(a.den) end
-mt.__index.div = mt.__div
-mt.__index.int = function(a) return rat(a.num / a.den) end
-mt.__index.inv = function(a) return rat(a.den, a.num) end
-mt.__index.isinteger = function(a) return a.den:isone() end
-mt.__index.iszero = function(a) return a.num:iszero() end
-mt.__index.mul = mt.__mul
-mt.__index.neg = mt.__unm
-mt.__index.numer = function(a) return rat(a.num) end
-mt.__index.pow = mt.__pow
-mt.__index.sign = function(a) return compare(a, rat_zero) end
-mt.__index.sub = mt.__sub
-mt.__index.todecimal = function(a) return tostring(a.num // a.den) end
-mt.__index.tonumber = function(a) return a.num:tonumber()/a.den:tonumber() end
-
-qmath.abs = function(a) return rat(a):abs() end
-qmath.add = function(a, b) return rat(a) + rat(b) end
-qmath.compare = function(a, b) return rat(a):compare(rat(b)) end
-qmath.denom = function(a) return rat(a):denom() end
-qmath.div = function(a, b) return rat(a) / rat(b) end
-qmath.int = function(a) return rat(a):int() end
-qmath.inv = function(a) return rat(a):inv() end
-qmath.isinteger = function(a) return rat(a):isinteger() end
-qmath.iszero = function(a) return rat(a):iszero() end
-qmath.mul = function(a, b) return rat(a) * rat(b) end
-qmath.neg = function(a) return -rat(a) end
-qmath.new = rat
-qmath.numer = function(a) return rat(a):numer() end
-qmath.pow = function(a, b) return rat(a) ^ b end
-qmath.sign = function(a) return rat(a):sign() end
-qmath.sub = function(a, b) return rat(a) - rat(b) end
-qmath.todecimal = function(a) return rat(a):todecimal() end
-qmath.tonumber = function(a) return rat(a):tonumber() end
-qmath.tostring = mt.__tostring
-
-return qmath
-]=])
-libs["sh"] = lib("libluax/sh/sh.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
---[[------------------------------------------------------------------------@@@
-## Shell
-@@@]]
-
---[[@@@
-```lua
-local sh = require "sh"
-```
-@@@]]
-local sh = {}
-
-local F = require "F"
-local sys = require "sys"
-
-local __WINDOWS__ = sys.os == "windows"
-
---[[@@@
-```lua
-sh.run(...)
-```
-Runs the command `...` with `os.execute`.
-@@@]]
-
-function sh.run(...)
-    local cmd = F.flatten{...}:unwords()
-    return os.execute(cmd)
-end
-
---[[@@@
-```lua
-sh.read(...)
-```
-Runs the command `...` with `io.popen`.
-When `sh.read` succeeds, it returns the content of stdout.
-Otherwise it returns the error identified by `io.popen`.
-@@@]]
-
-function sh.read(...)
-    local cmd = F.flatten{...}:unwords()
-    local p, popen_err = io.popen(cmd, "r")
-    if not p then return p, popen_err end
-    local out = p:read("a")
-    local ok, exit, ret = p:close()
-    if ok then
-        return out
-    else
-        return ok, exit, ret
-    end
-end
-
---[[@@@
-```lua
-sh.write(...)(data)
-```
-Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
-`sh.write` returns the same values returned by `os.execute`.
-@@@]]
-
-function sh.write(...)
-    local cmd = F.flatten{...}:unwords()
-    return function(data)
-        if type(data) ~= "string" then
-            return nil, "bad argument #1 to 'write' (string expected, got "..type(data)..")"
-        end
-        local p, popen_err = io.popen(cmd, "w")
-        if not p then return p, popen_err end
-        p:write(data)
-        return p:close()
-    end
-end
-
---[[@@@
-```lua
-sh.pipe(...)(data)
-```
-Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
-When `sh.pipe` succeeds, it returns the content of stdout.
-Otherwise it returns the error identified by `io.popen`.
-@@@]]
-
-function sh.pipe(...)
-    local cmd = F.flatten{...}
-    local cat = __WINDOWS__ and "type" or "cat"
-    return function(data)
-        local fs = require "fs"
-        if type(data) ~= "string" then
-            return nil, "bad argument #1 to 'write' (string expected, got "..type(data)..")"
-        end
-        return fs.with_tmpfile(function(tmp)
-            fs.write_bin(tmp, data)
-            return sh.read(cat, tmp, " | ", cmd)
-        end)
-    end
-end
-
---[[@@@
-``` lua
-sh(...)
-```
-`sh` can be called as a function. `sh(...)` is a shortcut to `sh.read(...)`.
-@@@]]
-setmetatable(sh, {
-    __call = function(_, ...) return sh.read(...) end,
-})
-
-return sh
-]=])
-libs["sys"] = lib("libluax/sys/sys.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
--- Pure Lua implementation of sys.c
-
-local sys = {
-    libc = "lua",
-}
-
-local targets = require "targets"
-
-local kernel, machine
-
-if package.config:sub(1, 1) == "/" then
-    -- Search for a Linux-like target
-    kernel, machine = io.popen("uname -s -m", "r") : read "a" : match "(%S+)%s+(%S+)"
-else
-    -- Search for a Windows target
-    kernel, machine = os.getenv "OS", os.getenv "PROCESSOR_ARCHITECTURE"
-end
-
-local target
-for i = 1, #targets do
-    if targets[i].kernel==kernel and targets[i].machine==machine then
-        target = targets[i]
-        break
-    end
-end
-
-if not target then
-    io.stderr:write("ERROR: Unknown architecture\n",
-        "Please report the bug with this information:\n",
-        "    config  = "..package.config:lines():head().."\n",
-        "    kernel  = "..tostring(kernel).."\n",
-        "    machine = "..tostring(machine).."\n",
-        ">> https://codeberg.org/cdsoft/luax/issues <<\n"
-    )
-    os.exit(1)
-end
-
-sys.name = target.name
-sys.os = target.os
-sys.arch = target.arch
-sys.exe = target.exe
-sys.so = target.so
-
-return sys
-]=])
-libs["targets"] = lib("libluax/sys/targets.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
-local F = require "F"
-
---[[ Target definitions:
-
-Field       Description                         Value
------------ ----------------------------------- -------------------------------------------------------------
-name        LuaX target name                    "OS"-"ARCH"[-musl]
-machine     architecture name                   uname -m on Linux/MacOS, %PROCESSOR_ARCHITECTURE% on Windows
-kernel      OS kernel                           uname -s on Linux/MacOS, %OS% on Windows
-os          OS name known by LuaX               linux, macos, windows
-arch        architecture name known by LuaX     x86_64, aarch64
-libc        C library name                      gnu, musl, none
-exe         executable file extension           .exe on Windows
-so          shared library file extension       .so, .dylib, .dll
-
---]]
-
-return F{
-    {name="linux-x86_64",       machine="x86_64",  kernel="Linux",      os="linux",   arch="x86_64",  libc="gnu",   exe="",     so=".so"   },
-    {name="linux-x86_64-musl",  machine="x86_64",  kernel="Linux",      os="linux",   arch="x86_64",  libc="musl",  exe="",     so=".so"   },
-    {name="linux-aarch64",      machine="aarch64", kernel="Linux",      os="linux",   arch="aarch64", libc="gnu",   exe="",     so=".so"   },
-    {name="linux-aarch64-musl", machine="aarch64", kernel="Linux",      os="linux",   arch="aarch64", libc="musl",  exe="",     so=".so"   },
-    {name="macos-x86_64",       machine="x86_64",  kernel="Darwin",     os="macos",   arch="x86_64",  libc="none",  exe="",     so=".dylib"},
-    {name="macos-aarch64",      machine="arm64",   kernel="Darwin",     os="macos",   arch="aarch64", libc="none",  exe="",     so=".dylib"},
-    {name="windows-x86_64",     machine="AMD64",   kernel="Windows_NT", os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll"  },
-    {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
-}
-]=])
-libs["tar"] = lib("libluax/tar/tar.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
---[[------------------------------------------------------------------------@@@
-# Minimal tar file support
-
-```lua
-local tar = require "tar"
-```
-
-The `tar` module can read and write tar archives.
-Only files, directories and symbolic links are supported.
-@@@]]
-
--- https://fr.wikipedia.org/wiki/Tar_%28informatique%29
-
-local tar = {}
-
-local F = require "F"
-local fs = require "fs"
-local sys = require "sys"
-
-local __WINDOWS__ = sys.os == "windows"
-
-local format = string.format
-local pack   = string.pack
-local unpack = string.unpack
-local rep    = string.rep
-local bytes  = string.bytes
-local sum    = F.sum
-
-local function pad(size)
-    return (512 - size%512) % 512
-end
-
-local file_type = F{
-    file = "0",
-    link = "2",
-    directory = "5",
-}
-
-local rev_file_type = file_type:mapk2a(function(k, v) return {v, k} end):from_list()
-rev_file_type["\0"] = rev_file_type["0"]
-
-local default_mode = {
-    file = tonumber("644", 8),
-    link = tonumber("777", 8),
-    directory = tonumber("755", 8),
-}
-
-local Discarded = {}
-
-local function path_components(path)
-    local function is_sep(d) return d==fs.sep or d=="." or d==" " end
-    return fs.splitpath(path):drop_while(is_sep):drop_while_end(is_sep)
-end
-
-local function clean_path(path)
-    return fs.join(path_components(path))
-end
-
-local function header(st, xform)
-    local name = xform(clean_path(st.name))
-    if name == nil then return Discarded end
-    if #name > 100 then return nil, name..": filename too long" end
-    if st.type=="file" and st.size >= 8*1024^3 then return nil, st.name..": file too big" end
-    local ftype = file_type[st.type]
-    if not ftype then return nil, st.name..": wrong file type" end
-    if st.type=="link" and not st.link then return nil, st.name..": missing link name" end
-    if st.link and #st.link > 100 then return nil, st.link..": filename too long" end
-    local header1 = pack("c100c8c8c8c12c12",
-        name,
-        format("%07o", st.mode or default_mode[st.type] or "0"),
-        "",
-        "",
-        format("%011o", st.size or 0),
-        format("%011o", st.mtime)
-    )
-    local header2 = pack("c1c100c6c2c32c32c8c8c155c12",
-        ftype,
-        st.link or "",
-        "", "", "", "", "", "", "", ""
-    )
-    local checksum = format("%07o", sum(bytes(header1)) + sum(bytes(header2)) + 32*8)
-    return header1..pack("c8", checksum)..header2
-end
-
-local function end_of_archive()
-    return pack("c1024", "")
-end
-
-local function parse(archive, i)
-    local name, mode, _, _, size, mtime, checksum, ftype, link = unpack("c100c8c8c8c12c12c8c1c100", archive, i)
-    if not checksum then return nil, "Corrupted archive" end
-    local function cut(s) return s:match "^[^\0]*" end
-    if sum(bytes(archive:sub(i, i+148-1))) + sum(bytes(archive:sub(i+156, i+512-1))) + 32*8 ~= tonumber(cut(checksum), 8) then
-        return nil, "Wrong checksum"
-    end
-    ftype = rev_file_type[ftype]
-    if not ftype then return nil, cut(name)..": wrong file type" end
-    return {
-        name = cut(name),
-        mode = tonumber(cut(mode), 8),
-        size = tonumber(cut(size), 8),
-        mtime = tonumber(cut(mtime), 8),
-        type = ftype,
-        link = ftype=="link" and cut(link) or nil,
-    }
-end
-
---[[@@@
-```lua
-tar.tar(files, [xform])
-```
-> returns a string that can be saved as a tar file.
-> `files` is a list of file names or `stat` like structures.
-> `stat` structures shall contain these fields:
->
-> - `name`: file name
-> - `mtime`: last modification time
-> - `content`: file content (the default value is the actual content of the file `name`).
->
-> **Note**: these structures can also be produced by `fs.stat`.
->
-> `xform` is an optional function used to transform filenames in the archive.
-@@@]]
-
-function tar.tar(files, xform)
-    xform = xform or F.id
-    local chunks = F{}
-
-    local already_done = {}
-    local function done(name)
-        if already_done[name] then return true end
-        already_done[name] = true
-        return false
-    end
-
-    local function add_dir(path, st0)
-        if done(path) then return true end
-        if path:dirname() == path then return true end
-        local ok, err = add_dir(path:dirname(), st0)
-        if not ok then return nil, err end
-        local st = F.merge{st0, { name=path, mode=tonumber("755", 8), size=0, type="directory" }}
-        local hd
-        hd, err = header(st, F.id)
-        if not hd then return nil, err end
-        chunks[#chunks+1] = hd
-        return true
-    end
-
-    local function add_file(st)
-        local xformed_name = xform(st.name)
-        if xformed_name == nil then return true end
-        if done(xformed_name) then return true end
-        local ok, err = add_dir(xformed_name:dirname(), st)
-        if not ok then return nil, err end
-        local hd
-        hd, err = header(st, xform)
-        if hd == Discarded then return true end
-        if not hd then return nil, err end
-        chunks[#chunks+1] = hd
-        chunks[#chunks+1] = st.content
-        chunks[#chunks+1] = rep("\0", pad(#st.content))
-        return true
-    end
-
-    local function add_link(st)
-        local xformed_name = xform(st.name)
-        if xformed_name == nil then return true end
-        if done(xformed_name) then return true end
-        local ok, err = add_dir(xformed_name:dirname(), st)
-        if not ok then return nil, err end
-        local hd
-        hd, err = header(st, xform)
-        if hd == Discarded then return true end
-        if not hd then return nil, err end
-        chunks[#chunks+1] = hd
-        return true
-    end
-
-    local function add_real_dir(path)
-        if done(path) then return true end
-        if path:dirname() == path then return true end
-        local ok, err = add_real_dir(path:dirname())
-        if not ok then return nil, err end
-        local st
-        st, err = fs.stat(path)
-        if not st then return nil, err end
-        local hd
-        hd, err = header(st, xform)
-        if hd == Discarded then return true end
-        if not hd then return nil, err end
-        chunks[#chunks+1] = hd
-        return true
-    end
-
-    local function add_real_file(st)
-        local xformed_name = xform(st.name)
-        if xformed_name == nil then return true end
-        if done(xformed_name) then return true end
-        local ok, err = add_real_dir(st.name:dirname())
-        if not ok then return nil, err end
-        local hd
-        hd, err = header(st, xform)
-        if hd == Discarded then return true end
-        if not hd then return nil, err end
-        local content
-        content, err = fs.read_bin(st.name)
-        if not content then return nil, err end
-        chunks[#chunks+1] = hd
-        chunks[#chunks+1] = content
-        chunks[#chunks+1] = rep("\0", pad(#content))
-        return true
-    end
-
-    local function add_real_link(st)
-        local xformed_name = xform(st.name)
-        if xformed_name == nil then return true end
-        if done(xformed_name) then return true end
-        local linkst, sterr = fs.stat(st.name)
-        if not linkst then return nil, sterr end
-        local ok, err = add_real_dir(st.name:dirname())
-        if not ok then return nil, err end
-        local hd
-        st.link = linkst.name
-        hd, err = header(st, xform)
-        if hd == Discarded then return true end
-        if not hd then return nil, err end
-        chunks[#chunks+1] = hd
-        return true
-    end
-
-    for _, file in ipairs(files) do
-
-        if type(file) == "string" then
-            local st, err = fs.stat(file)
-            if not st then return nil, err end
-            if st.type == "file" then
-                add_real_file(st)
-            elseif st.type == "link" then
-                add_real_link(st)
-            elseif st.type == "directory" then
-                add_real_dir(st.name)
-                for _, name in ipairs(fs.ls(st.name/"**")) do
-                    local childst, childerr = fs.stat(name)
-                    if not childst then return nil, childerr end
-                    if childst.type == "directory" then
-                        add_real_dir(childst.name)
-                    elseif childst.type == "file" then
-                        add_real_file(childst)
-                    end
-                end
-            end
-
-        elseif type(file) == "table" then
-            local st0 = nil
-            local err
-            local st = {
-                name = file.name,
-                type = "file",
-            }
-            if file.content then
-                st.content = file.content
-                st.size = #file.content
-            elseif file.link then
-                st.type = "link"
-                st.link = file.link
-            else
-                if __WINDOWS__ then
-                    st0, err = fs.stat(file.name)
-                else
-                    st0, err = fs.lstat(file.name)
-                end
-                if not st0 then return nil, err end
-                if st0.type == "link" then
-                    local linkst, linkerr = fs.stat(file.name)
-                    if not linkst then return nil, linkerr end
-                    st.type = "link"
-                    st.link = linkst.name
-                else
-                    local content
-                    content, err = fs.read_bin(file.name)
-                    if not content then return nil, err end
-                    st.size = st0.size
-                    st.content = content
-                end
-            end
-            if file.mtime then
-                st.mtime = file.mtime
-            else
-                st.mtime = st0 and st0.mtime or os.time()
-            end
-            local ok
-            if st.type == "link" then
-                ok, err = add_link(st)
-            else
-                ok, err = add_file(st)
-            end
-            if not ok then return nil, err end
-
-        end
-
-    end
-
-    chunks[#chunks+1] = end_of_archive()
-    return chunks:str()
-
-end
-
---[[@@@
-```lua
-tar.untar(archive, [xform])
-```
-> returns a list of files (`stat` like structures with a `content` field).
->
-> `xform` is an optional function used to transform filenames in the archive.
-@@@]]
-
-function tar.untar(archive, xform)
-    xform = xform or F.id
-    if #archive % 512 ~= 0 then return nil, "Corrupted archive" end
-    local eof = end_of_archive()
-    local files = F{}
-    local i = 1
-    while i <= #archive do
-        if archive:byte(i, i) == 0 then
-            if archive:sub(i, i+#eof-1):is_prefix_of(eof) then break end
-            return nil, "Corrupted archive"
-        end
-        local st, err = parse(archive, i)
-        if not st then return nil, err end
-        if st.type == "file" then
-            st.content = archive:sub(i+512, i+512+st.size-1)
-            i = i + 512 + st.size + pad(st.size)
-        elseif st.type == "link" or st.type == "directory" then
-            i = i + 512
-        else
-            return nil, st.type..": file type not supported"
-        end
-        st.name = xform(st.name)
-        if st.name ~= nil then
-            files[#files+1] = st
-        end
-    end
-    return files
-end
-
---[[@@@
-```lua
-tar.chain(xforms)
-```
-> returns a filename transformation function that applies all functions from `funcs`.
-@@@]]
-
-function tar.chain(funcs)
-    return function(x)
-        for _, f in ipairs(funcs) do
-            x = f(clean_path(x))
-            if x == nil then return nil end
-        end
-        return clean_path(x)
-    end
-end
-
---[[@@@
-```lua
-tar.strip(x)
-```
-> returns a transformation function that removes part of the beginning of a filename.
-> If `x` is a number, the function removes `x` path components in the filename.
-> If `x` is a string, the function removes `x` at the beginning of the filename.
-@@@]]
-
-function tar.strip(x)
-    if type(x) == "number" then
-        return function(path)
-            local dirs = path_components(path:dirname())
-            if x > #dirs then return nil end
-            return clean_path(fs.join(dirs:drop(x))/path:basename())
-        end
-    else
-        local prefix = clean_path(x)
-        return function(path)
-            path = clean_path(path)
-            if path:has_prefix(prefix) then
-                return clean_path(path:sub(#prefix+1))
-            else
-                return path
-            end
-        end
-    end
-end
-
---[[@@@
-```lua
-tar.add(p)
-```
-> returns a transformation function that adds `p` at the beginning of a filename.
-@@@]]
-
-function tar.add(p)
-    local prefix = path_components(p)
-    return function(path)
-        local components = path_components(path)
-        return clean_path(fs.join(prefix..components))
-    end
-end
-
---[[@@@
-```lua
-tar.xform(x, y)
-```
-> returns a transformation function that chains `tar.strip(x)` and `tar.add(y)`.
-@@@]]
-
-function tar.xform(x, y)
-    return tar.chain { tar.strip(x), tar.add(y) }
-end
-
-return tar
-]=])
-libs["term"] = lib("libluax/term/term.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---[[------------------------------------------------------------------------@@@
-# Terminal
-
-`term` provides some functions to deal with the terminal in a quite portable way.
-It is heavily inspired by:
-
-- [lua-term](https://github.com/hoelzro/lua-term/): Terminal operations for Lua
-- [nocurses](https://github.com/osch/lua-nocurses/): A terminal screen manipulation library
-
-```lua
-local term = require "term"
-```
-@@@]]
-
---@LIB
-
-local term = require "_term"
-
-local ESC <const> = '\027'
-local CSI <const> = ESC..'['
-
---[[------------------------------------------------------------------------@@@
-## Colors
-
-The table `term.color` contain objects that can be used to build
-colorized strings with ANSI sequences.
-
-An object `term.color.X` can be used:
-
-- as a string
-- as a function
-- in combination with other color attributes
-
-``` lua
--- change colors in a string
-" ... " .. term.color.X .. " ... "
-
--- change colors for a string and reset colors at the end of the string
-term.color.X("...")
-
--- build a complex color with attributes
-local c = term.color.red + term.color.italic + term.color.oncyan
-```
-
-The user can disable the color support (e.g. when not running on a terminal):
-
-``` lua
-if not term.isatty(io.stdout) then
-    term.color.disable()
-end
-```
-@@@]]
-
-local color_mt, color_reset
-local color_enable = true
-color_mt = {
-    __tostring = function(self) return color_enable and self.value or ""end,
-    __concat = function(self, other) return tostring(self)..tostring(other) end,
-    __call = function(self, s) return color_enable and self..s..color_reset or s end,
-    __add = function(self, other) return setmetatable({value=self.value..other}, color_mt) end,
-}
-local function color(value) return setmetatable({value=CSI..tostring(value).."m"}, color_mt) end
-local function enable(en) color_enable = en==nil or en end
-local function disable() color_enable = false end
---                                @@@`term.color` field     Description                         @@@
---                                @@@---------------------- ------------------------------------@@@
-term.color = {
-    -- attributes               --@@@*Attributes*                                               @@@
-    reset       = color(0),     --@@@`reset`                reset the colors                    @@@
-    clear       = color(0),     --@@@`clear`                same as reset                       @@@
-    default     = color(0),     --@@@`default`              same as reset                       @@@
-    bright      = color(1),     --@@@`bright`               bold or more intense                @@@
-    bold        = color(1),     --@@@`bold`                 same as bold                        @@@
-    dim         = color(2),     --@@@`dim`                  thiner or less intense              @@@
-    italic      = color(3),     --@@@`italic`               italic (sometimes inverse or blink) @@@
-    underline   = color(4),     --@@@`underline`            underlined                          @@@
-    blink       = color(5),     --@@@`blink`                slow blinking (less than 150 bpm)   @@@
-    fast        = color(6),     --@@@`fast`                 fast blinking (more than 150 bpm)   @@@
-    reverse     = color(7),     --@@@`reverse`              swap foreground and background      @@@
-    hidden      = color(8),     --@@@`hidden`               hidden text                         @@@
-    strike      = color(9),     --@@@`strike`               strike or crossed-out               @@@
-    -- foreground               --@@@*Foreground colors*                                        @@@
-    black       = color(30),    --@@@`black`                black foreground                    @@@
-    red         = color(31),    --@@@`red`                  red foreground                      @@@
-    green       = color(32),    --@@@`green`                green foreground                    @@@
-    yellow      = color(33),    --@@@`yellow`               yellow foreground                   @@@
-    blue        = color(34),    --@@@`blue`                 blue foreground                     @@@
-    magenta     = color(35),    --@@@`magenta`              magenta foreground                  @@@
-    cyan        = color(36),    --@@@`cyan`                 cyan foreground                     @@@
-    white       = color(37),    --@@@`white`                white foreground                    @@@
-    -- background               --@@@*Background colors*                                        @@@
-    onblack     = color(40),    --@@@`onblack`              black background                    @@@
-    onred       = color(41),    --@@@`onred`                red background                      @@@
-    ongreen     = color(42),    --@@@`ongreen`              green background                    @@@
-    onyellow    = color(43),    --@@@`onyellow`             yellow background                   @@@
-    onblue      = color(44),    --@@@`onblue`               blue background                     @@@
-    onmagenta   = color(45),    --@@@`onmagenta`            magenta background                  @@@
-    oncyan      = color(46),    --@@@`oncyan`               cyan background                     @@@
-    onwhite     = color(47),    --@@@`onwhite`              white background                    @@@
-    -- enable/disable           --@@@*Control functions*                                        @@@
-    enable      = enable,       --@@@`enable(b)`            enable colors if `b` is `true` or `nil` (default) @@@
-    disable     = disable,      --@@@`disable`              disable colors                      @@@
-}
-
-color_reset = term.color.reset
-
---[[------------------------------------------------------------------------@@@
-## Cursor
-
-The table `term.cursor` contains functions to change the shape of the cursor:
-
-``` lua
--- turns the cursor into a blinking vertical thin bar
-term.cursor.bar_blink()
-```
-
-@@@]]
-
-local function cursor(shape)
-    shape = CSI..shape..' q'
-    return function()
-        io.stdout:write(shape)
-    end
-end
-
---                                  @@@`term.cursor` field      Description                         @@@
---                                  @@@------------------------ ------------------------------------@@@
-term.cursor = {
-    reset           = cursor(0),  --@@@`reset`                  reset to the initial shape          @@@
-    block_blink     = cursor(1),  --@@@`block_blink`            blinking block cursor               @@@
-    block           = cursor(2),  --@@@`block`                  fixed block cursor                  @@@
-    underline_blink = cursor(3),  --@@@`underline_blink`        blinking underline cursor           @@@
-    underline       = cursor(4),  --@@@`underline`              fixed underline cursor              @@@
-    bar_blink       = cursor(5),  --@@@`bar_blink`              blinking bar cursor                 @@@
-    bar             = cursor(6),  --@@@`bar`                    fixed bar cursor                    @@@
-}
-
---[[------------------------------------------------------------------------@@@
-## Terminal
-
-@@@]]
-
-local function f(fmt)
-    return function(h, ...)
-        if io.type(h) == "file" then
-            return h:write(fmt:format(...))
-        else
-            return io.stdout:write(fmt:format(h, ...))
-        end
-    end
-end
-
---[[@@@
-``` lua
-term.reset()
-```
-resets the colors and the cursor shape.
-@@@]]
-term.reset    = f(color_reset..     -- reset colors
-                  CSI.."0 q"..      -- reset cursor shape
-                  CSI..'?25h'       -- restore cursor
-                 )
-
---[[@@@
-``` lua
-term.clear()
-term.clearline()
-term.cleareol()
-term.clearend()
-```
-clears the terminal, the current line, the end of the current line or from the cursor to the end of the terminal.
-@@@]]
-term.clear       = f(CSI..'1;1H'..CSI..'2J')
-term.clearline   = f(CSI..'2K'..CSI..'E')
-term.cleareol    = f(CSI..'K')
-term.clearend    = f(CSI..'J')
-
---[[@@@
-``` lua
-term.pos(row, col)
-```
-moves the cursor to the line `row` and the column `col`.
-@@@]]
-term.pos         = f(CSI..'%d;%dH')
-
---[[@@@
-``` lua
-term.save_pos()
-term.restore_pos()
-```
-saves and restores the position of the cursor.
-@@@]]
-term.save_pos    = f(CSI..'s')
-term.restore_pos = f(CSI..'u')
-
---[[@@@
-``` lua
-term.up([n])
-term.down([n])
-term.right([n])
-term.left([n])
-```
-moves the cursor by `n` characters up, down, right or left.
-@@@]]
-term.up          = f(CSI..'%d;A')
-term.down        = f(CSI..'%d;B')
-term.right       = f(CSI..'%d;C')
-term.left        = f(CSI..'%d;D')
-
---[[------------------------------------------------------------------------@@@
-## Prompt
-
-The prompt function is a basic prompt implementation
-to display a prompt and get user inputs.
-
-The use of [rlwrap](https://github.com/hanslub42/rlwrap)
-is highly recommended for a better user experience on Linux.
-@@@]]
-
---[[@@@
-```lua
-s = term.prompt(p)
-```
-prints `p` and waits for a user input
-@@@]]
-
-function term.prompt(p)
-    if p and term.isatty(io.stdin) then
-        io.stdout:write(p)
-        io.stdout:flush()
-    end
-    return io.stdin:read "l"
-end
-
-return term
-]=])
-libs["_term"] = lib("libluax/term/_term.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
--- Pure Lua implementation of term.c
-
---@LIB
-
-local term = {}
-
-local sh = require "sh"
-
-local function file_descriptor(fd, def)
-    if fd == nil then return def end
-    if fd == io.stdin then return 0 end
-    if fd == io.stdout then return 1 end
-    if fd == io.stderr then return 2 end
-    return fd
-end
-
-local _isatty = {}
-
-function term.isatty(fd)
-    fd = file_descriptor(fd, 0)
-    _isatty[fd] = _isatty[fd] or sh.run("test -t", fd)~=nil
-    return _isatty[fd]
-end
-
-function term.size()
-    local size = sh.read("tput lines cols")
-    if size then
-        local rows, cols = size : words() : map(tonumber) : unpack()
-        return { rows=rows, cols=cols }
-    end
-end
-
-return term
-]=])
-libs["tomlx"] = lib("libluax/tomlx/tomlx.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---[[------------------------------------------------------------------------@@@
-# tomlx
-
-`tomlx` is a layer on top of `toml` ([tinytoml](https://github.com/FourierTransformer/tinytoml)).
-
-It uses Lua as a macro language to transform values.
-Macros are string values starting with `=`.
-The expression following `=` is a Lua expression which value replaces the macro in the table.
-
-The evaluation environment contains two specific symbols:
-
-- `__up`: environment one level above the current level
-- `__root`: root level of the environment levels
-
-```lua
-local tomlx = require "tomlx"
-```
-@@@]]
-
---@LIB
-
-local tomlx = {}
-
-local F = require "F"
-local fs = require "fs"
-local toml = require "toml"
-
-local function pattern(options)
-    return options and options.pattern or "^=%s*(.-)%s*$"
-end
-
-local function chain(env1, env2)
-    return setmetatable({}, {
-        __index = function(_, k)
-            local v = env2[k]
-            if v ~= nil then return v end
-            return env1 and env1[k]
-        end
-    })
-end
-
-local function chain_and_uplink(env1, env2)
-    local env = chain(env1, env2)
-    env.__up = env1
-    return env
-end
-
---[[@@@
-The default environment contains the global variables (`_G`)
-and some LuaX modules (`crypt`, `F`, `fs`, `sh`).
-@@@]]
-
-local default_env = chain({
-    crypt = require "crypt",
-    F = require "F",
-    fs = require "fs",
-    sh = require "sh",
-}, _G)
-
-local function root_env(t, options)
-    local root = chain(default_env, {__root=t})
-    local env = options and options.env
-    if env then return chain(root, env) end
-    return root
-end
-
-local function join(path, k)
-    if type(k) == "number" then return path.."["..k.."]" end
-    if path then return path.."."..k end
-    return k
-end
-
-local function process(t, env, pat, path)
-    local t2 = {}
-    env = chain_and_uplink(env, t)
-    for k, v in pairs(t) do
-        if type(v) == "table" then
-            local path2 = join(path, k)
-            rawset(t2, k, process(v, env, pat, path2))
-        elseif type(v) == "string" then
-            local expr = v:match(pat)
-            if expr then
-                local path2 = join(path, k)
-                rawset(t2, k, assert(load("return "..expr, "@"..path2..": "..expr, "t", env))())
-            else
-                rawset(t2, k, v)
-            end
-        else
-            rawset(t2, k, v)
-        end
-    end
-    return t2
-end
-
-local function input_options(options, load_from_string)
-    return F.patch(options or {}, {load_from_string=load_from_string})
-end
-
---[[@@@
-```lua
-tomlx.read(filename, [options])
-```
-> calls `toml.parse` to parse a TOML file.
-> Options are optional
-> and described in the [tinytoml documentation](https://github.com/FourierTransformer/tinytoml?tab=readme-ov-file#parsing-toml).
-> tomlx adds the env option (`options.env`) to define the initial evaluation environment.
-> The table returned by `tinytoml` is then processed to evaluate `tomlx` macros.
-@@@]]
-function tomlx.read(filename, options)
-    local t = toml.parse(filename, input_options(options, false))
-    return process(t, root_env(t, options), pattern(options))
-end
-
---[[@@@
-```lua
-tomlx.decode(s, [options])
-```
-> calls `toml.parse` to parse a TOML string.
-> Options are optional
-> and described in the [tinytoml documentation](https://github.com/FourierTransformer/tinytoml?tab=readme-ov-file#parsing-toml).
-> tomlx adds the env option (`options.env`) to define the initial evaluation environment.
-> The table returned by `tinytoml` is then processed to evaluate `tomlx` macros.
-@@@]]
-function tomlx.decode(s, options)
-    local t = toml.parse(s, input_options(options, true))
-    return process(t, root_env(t, options), pattern(options))
-end
-
---[[@@@
-```lua
-tomlx.encode(s, [options])
-```
-> calls `toml.encode` to encode a Lua table into a TOML string.
-> Options are optional
-> and described in the [tinytoml documentation](https://github.com/FourierTransformer/tinytoml?tab=readme-ov-file#encoding-toml).
-@@@]]
-function tomlx.encode(t, options)
-    return toml.encode(t, options)
-end
-
---[[@@@
-```lua
-tomlx.write(filename, t, [options])
-```
-> calls `toml.encode` to encode a Lua table into a TOML string
-> and save it the file `filename`.
-> Options are optional
-> and described in the [tinytoml documentation](https://github.com/FourierTransformer/tinytoml?tab=readme-ov-file#encoding-toml).
-@@@]]
-function tomlx.write(filename, t, options)
-    fs.write(filename, toml.encode(t, options))
-end
-
---[[@@@
-```lua
-tomlx.validate(schema, filename, [options])
-```
-> returns `true` if `filename` is validated by `schema`. Otherwise it returns `false`
-> and a list of failures.
->
-> The `schema` file is a TOML file used to validate the TOML file `filename`.
-> Both files are read with `tomlx.read` and the corresponding tables are validated with `F.validate`.
->
-> Options (the `option` table) contains options for `tomlx.read` and `F.validate`.
-@@@]]
-function tomlx.validate(schema, filename, options)
-    return F.validate(tomlx.read(schema, options), tomlx.read(filename, options), options)
-end
-
-return tomlx
-]=])
-libs["wget"] = lib("libluax/wget/wget.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LIB
-
---[[------------------------------------------------------------------------@@@
-# Simple wget interface
-
-```lua
-local wget = require "wget"
-```
-
-`wget` provides functions to execute wget.
-wget must be installed separately.
-
-@@@]]
-
-local M = {}
-
-local sh = require "sh"
-
-local errs = {
-    [ 0] = "No problems occurred.",
-    [ 1] = "Generic error code.",
-    [ 2] = "Parse error. For instance, when parsing command-line options, the .wget2rc or .netrc...",
-    [ 3] = "File I/O error.",
-    [ 4] = "Network failure.",
-    [ 5] = "SSL verification failure.",
-    [ 6] = "Username/password authentication failure.",
-    [ 7] = "Protocol errors.",
-    [ 8] = "Server issued an error response.",
-    [ 9] = "Public key missing from keyring.",
-    [10] = "A Signature verification failed.",
-
-    -- This error is returned by the shell, not wget
-    [127] = "wget: command not found",
-}
-
-local default_wget_options = {
-    "--quiet",
-}
-
-local function wget(...)
-    local res, _, err = sh("wget", ...)
-    if not res then return nil, errs[tonumber(err)] or "wget: unknown error", err end
-    return res
-end
-
-M.request = wget
-
---[[@@@
-```lua
-wget.request(...)
-```
-> Execute `wget` with arguments `...` and returns the output of `wget` (`stdout`).
-> Arguments can be a nested list (it will be flattened).
-> In case of error, `wget` returns `nil`, an error message and an error code
-> (see [wget man page](https://www.gnu.org/software/wget/manual/html_node/Exit-Status.html)).
-
-```lua
-wget(...)
-```
-> Like `wget.request(...)` with some default options:
->
-> - `--quiet`: quiet mode
-
-@@@]]
-
-return setmetatable(M, {
-    __call = function(_, ...) return wget(default_wget_options, ...) end,
-})
-]=])
-libs["math_hook"] = lib("libluax/mathx/math_hook.lua", [==[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LOAD=_
-
--- This module adds mathx functions to the math module.
-
---[=[-----------------------------------------------------------------------@@@
-# math
-
-The standard Lua package `math` is enhanced with the `mathx` functions.
-@@@]=]
-
-local mathx = require "mathx"
-
-for n, f in pairs(mathx) do
-    local t = type(f)
-    if math[n] == nil and (t == "function" or t == "number") then
-        math[n] = f
-    end
-end
-]==])
-libs["package_hook"] = lib("libluax/package/package_hook.lua", [==[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LOAD=_
-
-local F = require "F"
-local sys = require "sys"
-
--- inspired by https://stackoverflow.com/questions/60283272/how-to-get-the-exact-path-to-the-script-that-was-loaded-in-lua
-
--- This module wraps package searchers in a function that tracks package paths.
--- The paths are stored in package.modpath, which can be used to generate dependency files
--- for [ypp](https://codeberg.org/cdsoft/ypp) or [panda](https://codeberg.org/cdsoft/panda).
-
---[=[-----------------------------------------------------------------------@@@
-# package
-
-The standard Lua package `package` is added some information about packages loaded by LuaX.
-@@@]=]
-
---[[@@@
-```lua
-package.modpath      -- { module_name = module_path }
-```
-> table containing the names of the loaded packages and their actual paths.
->
-> `package.modpath` contains the names of the packages loaded by `require`, `dofile`, `loadfile`, `import`
-> and `toml.parse`.
-
-```lua
-package.track(name, [path])     -- package.modpath[name] = path or name
-```
-> add `name` to `package.modpath`.
-@@@]]
-
-package.modpath = F{}
-
-function package.track(name, path)
-    package.modpath[name] = path or name
-end
-
-local function wrap_searcher(searcher)
-    return function(modname)
-        local loader, path = searcher(modname)
-        if type(loader) == "function" then
-            package.track(modname, path)
-        end
-        return loader, path
-    end
-end
-
-local first_external_searcher = sys.libc=="lua" and 3 or 2
-for i = first_external_searcher, #package.searchers do
-    package.searchers[i] = wrap_searcher(package.searchers[i])
-end
-
-local function wrap(func)
-    return function(filename, ...)
-        if filename ~= nil then
-            package.track(filename)
-        end
-        return func(filename, ...)
-    end
-end
-
-dofile = wrap(dofile)
-loadfile = wrap(loadfile)
-
-local toml = require "toml"
-local _toml_parse = toml.parse
-
----@diagnostic disable-next-line: duplicate-set-field
-toml.parse = function(filename, options)
-    if not options or not options.load_from_string then
-        package.track(filename)
-    end
-    return _toml_parse(filename, options)
-end
-]==])
-libs["debug_hook"] = lib("libluax/debug/debug_hook.lua", [==[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---@LOAD=_
-
-local F = require "F"
-
--- This module adds some functions to the debug package.
-
---[=[-----------------------------------------------------------------------@@@
-# debug
-
-The standard Lua package `debug` is added some functions to help debugging.
-@@@]=]
-
---[[@@@
-```lua
-debug.locals(level)
-```
-> table containing the local variables at a given level `level`.
-  The default level is the caller level (1).
-  If `level` is a function, `locals` returns the names of the function parameters.
-@@@]]
-
-function debug.locals(level)
-    local vars = F{}
-    if type(level) == "function" then
-        local i = 1
-        while true do
-            local name = debug.getlocal(level, i)
-            if name==nil then break end
-            if not name:match "^%(" then
-                vars[#vars+1] = name
-            end
-            i = i+1
-        end
-    else
-        level = (level or 1) + 1
-        local i = 1
-        while true do
-            local name, val = debug.getlocal(level, i)
-            if name==nil then break end
-            if not name:match "^%(" then
-                vars[name] = val
-            end
-            i = i+1
-        end
-    end
-    return vars
-end
-]==])
-libs["strict"] = lib("libluax/strict/strict.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
---[[------------------------------------------------------------------------@@@
-# strict: checks uses of undeclared global variables
-
-The `strict` module checks uses of undeclared global variables.
-All global variables must be 'declared' through a regular assignment
-(even assigning nil will do) in a main chunk before being used
-anywhere or assigned to inside a function.
-
-```lua
-require "strict"
-```
-
-This module is `strict.lua` <from https://www.lua.org/extras/>
-adpated for LuaX.
-
-This module not loaded by default since some global variables are tested when LuaX start but may not be defined.
-@@@]]
-
---@LIB
-
--- strict.lua
--- checks uses of undeclared global variables
--- All global variables must be 'declared' through a regular assignment
--- (even assigning nil will do) in a main chunk before being used
--- anywhere or assigned to inside a function.
--- distributed under the Lua license: http://www.lua.org/license.html
-
-local getinfo, error, rawset, rawget = debug.getinfo, error, rawset, rawget
-
-local mt = getmetatable(_G)
-if mt == nil then
-  mt = {}
-  setmetatable(_G, mt)
-end
-
-mt.__declared = {}
-
-local function what ()
-  local d = getinfo(3, "S")
-  return d and d.what or "C"
-end
-
-mt.__newindex = function (t, n, v)
-  if not mt.__declared[n] then
-    local w = what()
-    if w ~= "main" and w ~= "C" then
-      error("assign to undeclared variable '"..n.."'", 2)
-    end
-    mt.__declared[n] = true
-  end
-  rawset(t, n, v)
-end
-
-mt.__index = function (t, n)
-  if not mt.__declared[n] and what() ~= "C" then
-    error("variable '"..n.."' is not declared", 2)
-  end
-  return rawget(t, n)
-end
-]=])
-libs["argparse"] = lib("ext/lua/argparse/argparse.lua", [==[-- The MIT License (MIT)
+package.preload["argparse"] = lib("lib/luax/argparse.lua", [==[-- The MIT License (MIT)
 
 -- Copyright (c) 2013 - 2018 Peter Melnichenko
 --                      2019 Paul Ouellette
@@ -11445,7 +6947,7 @@ end})
 
 return argparse
 ]==])
-libs["cbor"] = lib("ext/lua/cbor/cbor.lua", [[-- Concise Binary Object Representation (CBOR)
+package.preload["cbor"] = lib("lib/luax/cbor.lua", [[-- Concise Binary Object Representation (CBOR)
 -- RFC 7049
 
 local function softreq(pkg, field)
@@ -12037,7 +7539,2136 @@ return {
 };
 --@LIB
 ]])
-libs["json"] = lib("ext/lua/json/json.lua", [===[-- Module options:
+package.preload["complex"] = lib("lib/luax/complex.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LIB
+local has_complex, complex = pcall(require, "_complex")
+
+if not has_complex then
+
+    -- see https://github.com/krakow10/Complex-Number-Library/blob/master/Lua/Complex.lua
+
+    local mathx = require "mathx"
+
+    local e <const> = math.exp(1)
+    local pi <const> = math.pi
+    local abs = math.abs
+    local exp = math.exp
+    local log = math.log
+    local cos = math.cos
+    local sin = math.sin
+    local cosh = mathx.cosh
+    local sinh = mathx.sinh
+    local atan2 = math.atan
+
+    local mt = {__index={}}
+
+    ---@diagnostic disable:unused-vararg
+    local function ni(f) return function(...) error(f.." not implemented") end end
+
+    local forget <const> = 1e-14
+
+    local function new(x, y)
+        if forget then
+            if x and abs(x) <= forget then x = 0 end
+            if y and abs(y) <= forget then y = 0 end
+        end
+        return setmetatable({x=x or 0, y=y or 0}, mt)
+    end
+
+    local i = new(0, 1)
+
+    local function _z(z)
+        if type(z) == "table" and getmetatable(z) == mt then return z end
+        return new(tonumber(z), 0)
+    end
+
+    function mt.__index.real(z) return z.x end
+
+    function mt.__index.imag(z) return z.y end
+
+    local function rect(r, phi)
+        return new(r*cos(phi), r*sin(phi))
+    end
+
+    local function arg(z)
+        return atan2(z.y, z.x)
+    end
+
+    local function ln(z)
+        return new(log(z.x^2+z.y^2)/2, atan2(z.y, z.x))
+    end
+
+    function mt.__index.conj(z)
+        return new(z.x, -z.y)
+    end
+
+    function mt.__add(z1, z2)
+        z1 = _z(z1)
+        z2 = _z(z2)
+        return new(z1.x+z2.x, z1.y+z2.y)
+    end
+
+    function mt.__sub(z1, z2)
+        z1 = _z(z1)
+        z2 = _z(z2)
+        return new(z1.x-z2.x, z1.y-z2.y)
+    end
+
+    function mt.__mul(z1, z2)
+        z1 = _z(z1)
+        z2 = _z(z2)
+        return new(z1.x*z2.x-z1.y*z2.y, z1.x*z2.y+z2.x*z1.y)
+    end
+
+    function mt.__div(z1, z2)
+        z1 = _z(z1)
+        z2 = _z(z2)
+        local d = z2.x^2 + z2.y^2
+        return new((z1.x*z2.x+z1.y*z2.y)/d, (z2.x*z1.y-z1.x*z2.y)/d)
+    end
+
+    function mt.__pow(z1, z2)
+        z1 = _z(z1)
+        z2 = _z(z2)
+        local z1sq = z1.x^2 + z1.y^2
+        if z1sq == 0 then
+            if z2.x == 0 and z2.y == 0 then return 1 end
+            return 0
+        end
+        local phi = arg(z1)
+        return rect(z1sq^(z2.x/2)*exp(-z2.y*phi), z2.y*log(z1sq)/2+z2.x*phi)
+    end
+
+    function mt.__unm(z)
+        return new(-z.x, -z.y)
+    end
+
+    function mt.__eq(z1, z2)
+        z1 = _z(z1)
+        z2 = _z(z2)
+        return z1.x == z2.x and z1.y == z2.y
+    end
+
+    function mt.__tostring(z)
+        if z.y == 0 then return tostring(z.x) end
+        if z.x == 0 then
+            if z.y == 1 then return "i" end
+            if z.y == -1 then return "-i" end
+            return z.y.."i"
+        end
+        if z.y == 1 then return z.x.."+i" end
+        if z.y == -1 then return z.x.."-i" end
+        if z.y < 0 then return z.x..z.y.."i" end
+        return z.x.."+"..z.y.."i"
+    end
+
+    function mt.__index.abs(z)
+        return (z.x^2+z.y^2)^0.5
+    end
+
+    mt.__index.arg = arg
+
+    function mt.__index.exp(z)
+        return e^z
+    end
+
+    function mt.__index.sqrt(z)
+        return z^0.5
+    end
+
+    function mt.__index.sin(z)
+        return new(sin(z.x)*cosh(z.y), cos(z.x)*sinh(z.y))
+    end
+
+    function mt.__index.cos(z)
+        return new(cos(z.x)*cosh(z.y), -sin(z.x)*sinh(z.y))
+    end
+
+    function mt.__index.tan(z)
+        z = 2*z
+        local div = cos(z.x) + cosh(z.y)
+        return new(sin(z.x)/div, sinh(z.y)/div)
+    end
+
+    function mt.__index.sinh(z)
+        return new(cos(z.y)*sinh(z.x), sin(z.y)*cosh(z.x))
+    end
+
+    function mt.__index.cosh(z)
+        return new(cos(z.y)*cosh(z.x), sin(z.y)*sinh(z.x))
+    end
+
+    function mt.__index.tanh(z)
+        z = 2*z
+        local div = cos(z.y) + cosh(z.x)
+        return new(sinh(z.x)/div, sin(z.y)/div)
+    end
+
+    function mt.__index.asin(z)
+        return -i*ln(i*z+(1-z^2)^0.5)
+    end
+
+    function mt.__index.acos(z)
+        return pi/2 + i*ln(i*z+(1-z^2)^0.5)
+    end
+
+    function mt.__index.atan(z)
+        local z3, z4 = new(1-z.y, z.x), new(1+z.x^2-z.y^2, 2*z.x*z.y)
+        return new(arg(z3/z4^0.5), -log(z3:abs()/z4:abs()^0.5))
+    end
+
+    function mt.__index.asinh(z)
+        return ln(z+(1+z^2)^0.5)
+    end
+
+    function mt.__index.acosh(z)
+        return 2*ln((z-1)^0.5+(z+1)^0.5)-log(2)
+    end
+
+    function mt.__index.atanh(z)
+        return (ln(1+z)-ln(1-z))/2
+    end
+
+    mt.__index.log = ln
+
+    mt.__index.proj = ni "proj"
+
+    complex = {
+        new = new,
+        I = i,
+        real = function(z) return _z(z):real() end,
+        imag = function(z) return _z(z):imag() end,
+        abs = function(z) return _z(z):abs() end,
+        arg = function(z) return _z(z):arg() end,
+        exp = function(z) return _z(z):exp() end,
+        sqrt = function(z) return _z(z):sqrt() end,
+        sin = function(z) return _z(z):sin() end,
+        cos = function(z) return _z(z):cos() end,
+        tan = function(z) return _z(z):tan() end,
+        sinh = function(z) return _z(z):sinh() end,
+        cosh = function(z) return _z(z):cosh() end,
+        tanh = function(z) return _z(z):tanh() end,
+        asin = function(z) return _z(z):asin() end,
+        acos = function(z) return _z(z):acos() end,
+        atan = function(z) return _z(z):atan() end,
+        asinh = function(z) return _z(z):asinh() end,
+        acosh = function(z) return _z(z):acosh() end,
+        atanh = function(z) return _z(z):atanh() end,
+        pow = function(z, z2) return _z(z) ^ z2 end,
+        log = function(z) return _z(z):log() end,
+        proj = function(z) return _z(z):proj() end,
+        conj = function(z) return _z(z):conj() end,
+        tostring = function(z) return _z(z):tostring() end,
+    }
+
+end
+
+return complex
+]=])
+package.preload["crypt"] = lib("lib/luax/crypt.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+-- Load crypt.lua to add new methods to strings
+--@LOAD=_
+
+local has_crypt, crypt = pcall(require, "_crypt")
+
+local F = require "F"
+
+if not has_crypt then
+
+    crypt = {}
+
+    local floor = math.floor
+
+    local byte = string.byte
+    local char = string.char
+    local format = string.format
+    local gsub = string.gsub
+    local pack = string.pack
+
+    local concat = table.concat
+    local tunpack = table.unpack
+
+    local tonumber = tonumber
+
+    -- FNV-1a
+    local fnv1a_32_init = 0x811c9dc5
+    local fnv1a_32_prime = 1<<24 | 1<<8 | 0x93
+    local function fnv1a_32(hash, bs)
+        for i=1,#bs do
+            hash = (hash ~ byte(bs, i)) * fnv1a_32_prime
+        end
+        return hash & 0xFFFFFFFF
+    end
+
+    local fnv1a_64_init = 0xcbf29ce484222325
+    local fnv1a_64_prime = 1<<40 | 1<<8 | 0xb3
+    local function fnv1a_64(hash, bs)
+        for i=1,#bs do
+            hash = (hash ~ byte(bs, i)) * fnv1a_64_prime
+        end
+        return hash & 0xFFFFFFFFFFFFFFFF
+    end
+
+    local fnv1a_128_init = {0x6c62272e, 0x07bb0142, 0x62b82175, 0x6295c58d}
+    local fnv1a_128_prime_b, fnv1a_128_prime_d = 1<<(88-2*32), 1<<8 | 0x3b
+    local function fnv1a_128(hash, bs)
+        local a, b, c, d = tunpack(hash)
+        for i=1,#bs do
+            d = d ~ byte(bs, i)
+            local c0, d0 = c, d
+            local carry
+            d =         d0*fnv1a_128_prime_d                            d, carry = d & 0xFFFFFFFF, d >> 32
+            c = carry + c0*fnv1a_128_prime_d                            c, carry = c & 0xFFFFFFFF, c >> 32
+            b = carry + b *fnv1a_128_prime_d + d0*fnv1a_128_prime_b     b, carry = b & 0xFFFFFFFF, b >> 32
+            a = carry + a *fnv1a_128_prime_d + c0*fnv1a_128_prime_b
+        end
+        return a&0xFFFFFFFF, b, c, d
+    end
+
+    -- Random number generator
+
+    local prng_mt = {__index={}}
+
+    local entropy do
+        local hash = fnv1a_64_init
+        entropy = function(ptr)
+            hash = fnv1a_64(hash, pack("<I8I8I8I8",
+                os.time(),
+                floor(os.clock()*1000000),
+                tonumber(format("%p", ptr)),
+                tonumber(format("%p", {}))
+            ))
+            return hash
+        end
+    end
+
+    local PCG_RAND_MAX <const> = 0xFFFFFFFF
+
+    crypt.RAND_MAX = PCG_RAND_MAX
+
+    local default_pcg_state <const> = 0x4d595df4d0f33173
+    local pcg_multiplier <const> = 6364136223846793005
+    local default_pcg_increment <const> = 1442695040888963407
+
+    function crypt.prng(seed, incr)
+        local self = setmetatable({}, prng_mt)
+        return self:seed(seed, incr)
+    end
+
+    function prng_mt.__index:seed(seed, incr)
+        if seed == -1 then seed = default_pcg_state end
+        if incr == -1 then incr = default_pcg_increment end
+        self.state = seed or entropy(self)
+        self.increment = incr or entropy({})
+        self.state = pcg_multiplier*self.state + self.increment
+        self.state = pcg_multiplier*self.state + self.increment
+        return self
+    end
+
+    function prng_mt.__index:clone()
+        local clone = {
+            state = self.state,
+            increment = self.increment,
+        }
+        return setmetatable(clone, prng_mt)
+    end
+
+    local function xsh_rr(state)
+        local xorshifted = (((state >> 18) ~ state) >> 27) & 0xFFFFFFFF
+        local rot = state >> 59
+        return ((xorshifted >> rot) | (xorshifted << ((-rot) & 31))) & 0xFFFFFFFF
+    end
+
+    local function pcg_int(self, a, b)
+        local oldstate = self.state
+        self.state = pcg_multiplier*oldstate + self.increment
+        local r = xsh_rr(oldstate)
+
+        if not a then return r end
+        if not b then return r % a + 1 end
+        return r % (b-a+1) + a
+    end
+    prng_mt.__index.int = pcg_int
+
+    local function pcg_float(self, a, b)
+        local r = pcg_int(self) / (PCG_RAND_MAX+1)
+        if not a then return r end
+        if not b then return r * a end
+        return r*(b-a) + a
+    end
+    prng_mt.__index.float = pcg_float
+
+    local function pcg_str(self, n)
+        local bs = {}
+        for i = 1, n, 4 do
+            local r = pcg_int(self)
+            bs[i  ] = char((r>>(0*8))&0xff)
+            bs[i+1] = char((r>>(1*8))&0xff)
+            bs[i+2] = char((r>>(2*8))&0xff)
+            bs[i+3] = char((r>>(3*8))     )
+        end
+        return concat(bs, nil, 1, n)
+    end
+    prng_mt.__index.str = pcg_str
+
+    -- global random number generator
+    local _rng = crypt.prng()
+
+    function crypt.seed(seed, incr) return _rng:seed(seed, incr) end
+
+    function crypt.int(a, b) return _rng:int(a, b) end
+
+    function crypt.float(a, b) return _rng:float(a, b) end
+
+    function crypt.str(n) return _rng:str(n) end
+
+    -- Hexadecimal encoding
+
+    function crypt.hex(s)
+        return (gsub(s, '.', function(c) return format("%02x", byte(c)) end))
+    end
+
+    function crypt.unhex(s)
+        return (gsub(s, '..', function(h) return char(tonumber(h, 16)) end))
+    end
+
+    -- Base64 encoding
+
+    -- see <https://en.wikipedia.org/wiki/Base64>
+
+    local base64_map = { [0] =
+    'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+    'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+    '0','1','2','3','4','5','6','7','8','9',
+    '+','/',
+    }
+
+    local base64_rev = {}
+    for i, c in pairs(base64_map) do base64_rev[byte(c)] = i end
+    base64_rev[byte'='] = 0
+
+    function crypt.base64(s)
+        local tokens = {}
+        local remainder = #s % 3
+        for i = 1, #s-remainder, 3 do
+            local a, b, c = byte(s, i, i+2)
+            local u24 = (a << 16) | (b << 8) | c
+            tokens[#tokens+1] = base64_map[(u24 >> (3*6)) & 0x3F]
+            tokens[#tokens+1] = base64_map[(u24 >> (2*6)) & 0x3F]
+            tokens[#tokens+1] = base64_map[(u24 >> (1*6)) & 0x3F]
+            tokens[#tokens+1] = base64_map[(u24 >> (0*6)) & 0x3F]
+        end
+        if remainder == 1 then
+            local a = byte(s, -1)
+            local u24 = (a << 16)
+            tokens[#tokens+1] = base64_map[(u24 >> (3*6)) & 0x3F]
+            tokens[#tokens+1] = base64_map[(u24 >> (2*6)) & 0x3F]
+            tokens[#tokens+1] = "=="
+        elseif remainder == 2 then
+            local a, b = byte(s, -2, -1)
+            local u24 = (a << 16) | (b << 8)
+            tokens[#tokens+1] = base64_map[(u24 >> (3*6)) & 0x3F]
+            tokens[#tokens+1] = base64_map[(u24 >> (2*6)) & 0x3F]
+            tokens[#tokens+1] = base64_map[(u24 >> (1*6)) & 0x3F]
+            tokens[#tokens+1] = "="
+        end
+        return concat(tokens)
+    end
+
+    function crypt.base64url(s)
+        return (crypt.base64(s):gsub("+", "-"):gsub("/", "_"))
+    end
+
+    function crypt.unbase64(s)
+        local tokens = {}
+        for i = 1, #s, 4 do
+            local a, b, c, d = byte(s, i, i+3)
+            local u24 = (base64_rev[a] << (3*6))
+                    | (base64_rev[b] << (2*6))
+                    | (base64_rev[c] << (1*6))
+                    | (base64_rev[d] << (0*6))
+            tokens[#tokens+1] = char((u24 >> (2*8)) & 0xFF)
+            tokens[#tokens+1] = char((u24 >> (1*8)) & 0xFF)
+            tokens[#tokens+1] = char((u24 >> (0*8)) & 0xFF)
+        end
+        local y, z = byte(s, -2, -1)
+        return concat(tokens, nil, 1, #tokens - (y==61 and 2 or z==61 and 1 or 0))
+    end
+
+    function crypt.unbase64url(s)
+        return crypt.unbase64(s:gsub("-", "+"):gsub("_", "/"))
+    end
+
+    -- CRC32 hash
+
+    local crc32_table = { [0]=
+        0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
+        0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988, 0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91,
+        0x1db71064, 0x6ab020f2, 0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,
+        0x136c9856, 0x646ba8c0, 0xfd62f97a, 0x8a65c9ec, 0x14015c4f, 0x63066cd9, 0xfa0f3d63, 0x8d080df5,
+        0x3b6e20c8, 0x4c69105e, 0xd56041e4, 0xa2677172, 0x3c03e4d1, 0x4b04d447, 0xd20d85fd, 0xa50ab56b,
+        0x35b5a8fa, 0x42b2986c, 0xdbbbc9d6, 0xacbcf940, 0x32d86ce3, 0x45df5c75, 0xdcd60dcf, 0xabd13d59,
+        0x26d930ac, 0x51de003a, 0xc8d75180, 0xbfd06116, 0x21b4f4b5, 0x56b3c423, 0xcfba9599, 0xb8bda50f,
+        0x2802b89e, 0x5f058808, 0xc60cd9b2, 0xb10be924, 0x2f6f7c87, 0x58684c11, 0xc1611dab, 0xb6662d3d,
+        0x76dc4190, 0x01db7106, 0x98d220bc, 0xefd5102a, 0x71b18589, 0x06b6b51f, 0x9fbfe4a5, 0xe8b8d433,
+        0x7807c9a2, 0x0f00f934, 0x9609a88e, 0xe10e9818, 0x7f6a0dbb, 0x086d3d2d, 0x91646c97, 0xe6635c01,
+        0x6b6b51f4, 0x1c6c6162, 0x856530d8, 0xf262004e, 0x6c0695ed, 0x1b01a57b, 0x8208f4c1, 0xf50fc457,
+        0x65b0d9c6, 0x12b7e950, 0x8bbeb8ea, 0xfcb9887c, 0x62dd1ddf, 0x15da2d49, 0x8cd37cf3, 0xfbd44c65,
+        0x4db26158, 0x3ab551ce, 0xa3bc0074, 0xd4bb30e2, 0x4adfa541, 0x3dd895d7, 0xa4d1c46d, 0xd3d6f4fb,
+        0x4369e96a, 0x346ed9fc, 0xad678846, 0xda60b8d0, 0x44042d73, 0x33031de5, 0xaa0a4c5f, 0xdd0d7cc9,
+        0x5005713c, 0x270241aa, 0xbe0b1010, 0xc90c2086, 0x5768b525, 0x206f85b3, 0xb966d409, 0xce61e49f,
+        0x5edef90e, 0x29d9c998, 0xb0d09822, 0xc7d7a8b4, 0x59b33d17, 0x2eb40d81, 0xb7bd5c3b, 0xc0ba6cad,
+        0xedb88320, 0x9abfb3b6, 0x03b6e20c, 0x74b1d29a, 0xead54739, 0x9dd277af, 0x04db2615, 0x73dc1683,
+        0xe3630b12, 0x94643b84, 0x0d6d6a3e, 0x7a6a5aa8, 0xe40ecf0b, 0x9309ff9d, 0x0a00ae27, 0x7d079eb1,
+        0xf00f9344, 0x8708a3d2, 0x1e01f268, 0x6906c2fe, 0xf762575d, 0x806567cb, 0x196c3671, 0x6e6b06e7,
+        0xfed41b76, 0x89d32be0, 0x10da7a5a, 0x67dd4acc, 0xf9b9df6f, 0x8ebeeff9, 0x17b7be43, 0x60b08ed5,
+        0xd6d6a3e8, 0xa1d1937e, 0x38d8c2c4, 0x4fdff252, 0xd1bb67f1, 0xa6bc5767, 0x3fb506dd, 0x48b2364b,
+        0xd80d2bda, 0xaf0a1b4c, 0x36034af6, 0x41047a60, 0xdf60efc3, 0xa867df55, 0x316e8eef, 0x4669be79,
+        0xcb61b38c, 0xbc66831a, 0x256fd2a0, 0x5268e236, 0xcc0c7795, 0xbb0b4703, 0x220216b9, 0x5505262f,
+        0xc5ba3bbe, 0xb2bd0b28, 0x2bb45a92, 0x5cb36a04, 0xc2d7ffa7, 0xb5d0cf31, 0x2cd99e8b, 0x5bdeae1d,
+        0x9b64c2b0, 0xec63f226, 0x756aa39c, 0x026d930a, 0x9c0906a9, 0xeb0e363f, 0x72076785, 0x05005713,
+        0x95bf4a82, 0xe2b87a14, 0x7bb12bae, 0x0cb61b38, 0x92d28e9b, 0xe5d5be0d, 0x7cdcefb7, 0x0bdbdf21,
+        0x86d3d2d4, 0xf1d4e242, 0x68ddb3f8, 0x1fda836e, 0x81be16cd, 0xf6b9265b, 0x6fb077e1, 0x18b74777,
+        0x88085ae6, 0xff0f6a70, 0x66063bca, 0x11010b5c, 0x8f659eff, 0xf862ae69, 0x616bffd3, 0x166ccf45,
+        0xa00ae278, 0xd70dd2ee, 0x4e048354, 0x3903b3c2, 0xa7672661, 0xd06016f7, 0x4969474d, 0x3e6e77db,
+        0xaed16a4a, 0xd9d65adc, 0x40df0b66, 0x37d83bf0, 0xa9bcae53, 0xdebb9ec5, 0x47b2cf7f, 0x30b5ffe9,
+        0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693, 0x54de5729, 0x23d967bf,
+        0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
+    }
+
+    function crypt.crc32(s)
+        local crc = 0xFFFFFFFF
+        for i = 1, #s do
+            crc = (crc>>8) ~ crc32_table[(crc~byte(s, i))&0xFF]
+        end
+        return crc ~ 0xFFFFFFFF
+    end
+
+    -- CRC64 hash
+
+    local crc64_table = { [0]=
+        0x0000000000000000, 0xb32e4cbe03a75f6f, 0xf4843657a840a05b, 0x47aa7ae9abe7ff34,
+        0x7bd0c384ff8f5e33, 0xc8fe8f3afc28015c, 0x8f54f5d357cffe68, 0x3c7ab96d5468a107,
+        0xf7a18709ff1ebc66, 0x448fcbb7fcb9e309, 0x0325b15e575e1c3d, 0xb00bfde054f94352,
+        0x8c71448d0091e255, 0x3f5f08330336bd3a, 0x78f572daa8d1420e, 0xcbdb3e64ab761d61,
+        0x7d9ba13851336649, 0xceb5ed8652943926, 0x891f976ff973c612, 0x3a31dbd1fad4997d,
+        0x064b62bcaebc387a, 0xb5652e02ad1b6715, 0xf2cf54eb06fc9821, 0x41e11855055bc74e,
+        0x8a3a2631ae2dda2f, 0x39146a8fad8a8540, 0x7ebe1066066d7a74, 0xcd905cd805ca251b,
+        0xf1eae5b551a2841c, 0x42c4a90b5205db73, 0x056ed3e2f9e22447, 0xb6409f5cfa457b28,
+        0xfb374270a266cc92, 0x48190ecea1c193fd, 0x0fb374270a266cc9, 0xbc9d3899098133a6,
+        0x80e781f45de992a1, 0x33c9cd4a5e4ecdce, 0x7463b7a3f5a932fa, 0xc74dfb1df60e6d95,
+        0x0c96c5795d7870f4, 0xbfb889c75edf2f9b, 0xf812f32ef538d0af, 0x4b3cbf90f69f8fc0,
+        0x774606fda2f72ec7, 0xc4684a43a15071a8, 0x83c230aa0ab78e9c, 0x30ec7c140910d1f3,
+        0x86ace348f355aadb, 0x3582aff6f0f2f5b4, 0x7228d51f5b150a80, 0xc10699a158b255ef,
+        0xfd7c20cc0cdaf4e8, 0x4e526c720f7dab87, 0x09f8169ba49a54b3, 0xbad65a25a73d0bdc,
+        0x710d64410c4b16bd, 0xc22328ff0fec49d2, 0x85895216a40bb6e6, 0x36a71ea8a7ace989,
+        0x0adda7c5f3c4488e, 0xb9f3eb7bf06317e1, 0xfe5991925b84e8d5, 0x4d77dd2c5823b7ba,
+        0x64b62bcaebc387a1, 0xd7986774e864d8ce, 0x90321d9d438327fa, 0x231c512340247895,
+        0x1f66e84e144cd992, 0xac48a4f017eb86fd, 0xebe2de19bc0c79c9, 0x58cc92a7bfab26a6,
+        0x9317acc314dd3bc7, 0x2039e07d177a64a8, 0x67939a94bc9d9b9c, 0xd4bdd62abf3ac4f3,
+        0xe8c76f47eb5265f4, 0x5be923f9e8f53a9b, 0x1c4359104312c5af, 0xaf6d15ae40b59ac0,
+        0x192d8af2baf0e1e8, 0xaa03c64cb957be87, 0xeda9bca512b041b3, 0x5e87f01b11171edc,
+        0x62fd4976457fbfdb, 0xd1d305c846d8e0b4, 0x96797f21ed3f1f80, 0x2557339fee9840ef,
+        0xee8c0dfb45ee5d8e, 0x5da24145464902e1, 0x1a083bacedaefdd5, 0xa9267712ee09a2ba,
+        0x955cce7fba6103bd, 0x267282c1b9c65cd2, 0x61d8f8281221a3e6, 0xd2f6b4961186fc89,
+        0x9f8169ba49a54b33, 0x2caf25044a02145c, 0x6b055fede1e5eb68, 0xd82b1353e242b407,
+        0xe451aa3eb62a1500, 0x577fe680b58d4a6f, 0x10d59c691e6ab55b, 0xa3fbd0d71dcdea34,
+        0x6820eeb3b6bbf755, 0xdb0ea20db51ca83a, 0x9ca4d8e41efb570e, 0x2f8a945a1d5c0861,
+        0x13f02d374934a966, 0xa0de61894a93f609, 0xe7741b60e174093d, 0x545a57dee2d35652,
+        0xe21ac88218962d7a, 0x5134843c1b317215, 0x169efed5b0d68d21, 0xa5b0b26bb371d24e,
+        0x99ca0b06e7197349, 0x2ae447b8e4be2c26, 0x6d4e3d514f59d312, 0xde6071ef4cfe8c7d,
+        0x15bb4f8be788911c, 0xa6950335e42fce73, 0xe13f79dc4fc83147, 0x521135624c6f6e28,
+        0x6e6b8c0f1807cf2f, 0xdd45c0b11ba09040, 0x9aefba58b0476f74, 0x29c1f6e6b3e0301b,
+        0xc96c5795d7870f42, 0x7a421b2bd420502d, 0x3de861c27fc7af19, 0x8ec62d7c7c60f076,
+        0xb2bc941128085171, 0x0192d8af2baf0e1e, 0x4638a2468048f12a, 0xf516eef883efae45,
+        0x3ecdd09c2899b324, 0x8de39c222b3eec4b, 0xca49e6cb80d9137f, 0x7967aa75837e4c10,
+        0x451d1318d716ed17, 0xf6335fa6d4b1b278, 0xb199254f7f564d4c, 0x02b769f17cf11223,
+        0xb4f7f6ad86b4690b, 0x07d9ba1385133664, 0x4073c0fa2ef4c950, 0xf35d8c442d53963f,
+        0xcf273529793b3738, 0x7c0979977a9c6857, 0x3ba3037ed17b9763, 0x888d4fc0d2dcc80c,
+        0x435671a479aad56d, 0xf0783d1a7a0d8a02, 0xb7d247f3d1ea7536, 0x04fc0b4dd24d2a59,
+        0x3886b22086258b5e, 0x8ba8fe9e8582d431, 0xcc0284772e652b05, 0x7f2cc8c92dc2746a,
+        0x325b15e575e1c3d0, 0x8175595b76469cbf, 0xc6df23b2dda1638b, 0x75f16f0cde063ce4,
+        0x498bd6618a6e9de3, 0xfaa59adf89c9c28c, 0xbd0fe036222e3db8, 0x0e21ac88218962d7,
+        0xc5fa92ec8aff7fb6, 0x76d4de52895820d9, 0x317ea4bb22bfdfed, 0x8250e80521188082,
+        0xbe2a516875702185, 0x0d041dd676d77eea, 0x4aae673fdd3081de, 0xf9802b81de97deb1,
+        0x4fc0b4dd24d2a599, 0xfceef8632775faf6, 0xbb44828a8c9205c2, 0x086ace348f355aad,
+        0x34107759db5dfbaa, 0x873e3be7d8faa4c5, 0xc094410e731d5bf1, 0x73ba0db070ba049e,
+        0xb86133d4dbcc19ff, 0x0b4f7f6ad86b4690, 0x4ce50583738cb9a4, 0xffcb493d702be6cb,
+        0xc3b1f050244347cc, 0x709fbcee27e418a3, 0x3735c6078c03e797, 0x841b8ab98fa4b8f8,
+        0xadda7c5f3c4488e3, 0x1ef430e13fe3d78c, 0x595e4a08940428b8, 0xea7006b697a377d7,
+        0xd60abfdbc3cbd6d0, 0x6524f365c06c89bf, 0x228e898c6b8b768b, 0x91a0c532682c29e4,
+        0x5a7bfb56c35a3485, 0xe955b7e8c0fd6bea, 0xaeffcd016b1a94de, 0x1dd181bf68bdcbb1,
+        0x21ab38d23cd56ab6, 0x9285746c3f7235d9, 0xd52f0e859495caed, 0x6601423b97329582,
+        0xd041dd676d77eeaa, 0x636f91d96ed0b1c5, 0x24c5eb30c5374ef1, 0x97eba78ec690119e,
+        0xab911ee392f8b099, 0x18bf525d915feff6, 0x5f1528b43ab810c2, 0xec3b640a391f4fad,
+        0x27e05a6e926952cc, 0x94ce16d091ce0da3, 0xd3646c393a29f297, 0x604a2087398eadf8,
+        0x5c3099ea6de60cff, 0xef1ed5546e415390, 0xa8b4afbdc5a6aca4, 0x1b9ae303c601f3cb,
+        0x56ed3e2f9e224471, 0xe5c372919d851b1e, 0xa26908783662e42a, 0x114744c635c5bb45,
+        0x2d3dfdab61ad1a42, 0x9e13b115620a452d, 0xd9b9cbfcc9edba19, 0x6a978742ca4ae576,
+        0xa14cb926613cf817, 0x1262f598629ba778, 0x55c88f71c97c584c, 0xe6e6c3cfcadb0723,
+        0xda9c7aa29eb3a624, 0x69b2361c9d14f94b, 0x2e184cf536f3067f, 0x9d36004b35545910,
+        0x2b769f17cf112238, 0x9858d3a9ccb67d57, 0xdff2a94067518263, 0x6cdce5fe64f6dd0c,
+        0x50a65c93309e7c0b, 0xe388102d33392364, 0xa4226ac498dedc50, 0x170c267a9b79833f,
+        0xdcd7181e300f9e5e, 0x6ff954a033a8c131, 0x28532e49984f3e05, 0x9b7d62f79be8616a,
+        0xa707db9acf80c06d, 0x14299724cc279f02, 0x5383edcd67c06036, 0xe0ada17364673f59
+    }
+
+    function crypt.crc64(s)
+        local crc = 0xFFFFFFFFFFFFFFFF
+        for i = 1, #s do
+            crc = (crc>>8) ~ crc64_table[(crc~byte(s, i))&0xFF]
+        end
+        return crc ~ 0xFFFFFFFFFFFFFFFF
+    end
+
+    -- ARC4 encryption
+
+    function crypt.arc4(input, key, drop)
+        assert(type(key) == "string", "arc4 key shall be a string")
+        drop = drop or 768
+        local S = {}
+        for i = 0, 255 do S[i] = i end
+        local j = 0
+        if #key > 0 then
+            for i = 0, 255 do
+                j = (j + S[i] + byte(key, i%#key+1)) % 256
+                S[i], S[j] = S[j], S[i]
+            end
+        end
+        local i = 0
+        j = 0
+        for _ = 1, drop do
+            i = (i + 1) % 256
+            j = (j + S[i]) % 256
+            S[i], S[j] = S[j], S[i]
+        end
+        local output = {}
+        for k = 1, #input do
+            i = (i + 1) % 256
+            j = (j + S[i]) % 256
+            S[i], S[j] = S[j], S[i]
+            output[k] = char(byte(input, k) ~ S[(S[i] + S[j]) % 256])
+        end
+        return concat(output)
+    end
+
+    crypt.unarc4 = crypt.arc4
+
+    function crypt.hash32(s) return ("<I4"):pack(fnv1a_32(fnv1a_32_init, s)):hex() end
+
+    function crypt.hash64(s) return ("<I8"):pack(fnv1a_64(fnv1a_64_init, s)):hex() end
+
+    function crypt.hash128(s)
+        local a, b, c, d = fnv1a_128(fnv1a_128_init, s)
+        return ("<I4I4I4I4"):pack(d, c, b, a):hex()
+    end
+
+    crypt.hash = crypt.hash64
+
+end
+
+--[[------------------------------------------------------------------------@@@
+## Random array access
+
+@@@]]
+
+--[[@@@
+```lua
+prng:choose(xs)
+crypt.choose(xs)    -- using the global PRNG
+```
+returns a random item from `xs`
+@@@]]
+
+local prng_mt = getmetatable(crypt.prng())
+
+function prng_mt.__index:choose(xs)
+    return xs[self:int(1, #xs)]
+end
+
+function crypt.choose(xs)
+    return xs[crypt.int(1, #xs)]
+end
+
+--[[@@@
+```lua
+prng:shuffle(xs)
+crypt.shuffle(xs)    -- using the global PRNG
+```
+returns a shuffled copy of `xs`
+@@@]]
+
+function prng_mt.__index:shuffle(xs)
+    local ys = F.clone(xs)
+    for i = 1, #ys-1 do
+        local j = self:int(i, #ys)
+        ys[i], ys[j] = ys[j], ys[i]
+    end
+    return ys
+end
+
+function crypt.shuffle(xs)
+    local ys = F.clone(xs)
+    for i = 1, #ys-1 do
+        local j = crypt.int(i, #ys)
+        ys[i], ys[j] = ys[j], ys[i]
+    end
+    return ys
+end
+
+--[[------------------------------------------------------------------------@@@
+## String methods
+
+Some functions of the `crypt` package are added to the string module:
+
+@@@]]
+
+--[[@@@
+```lua
+s:hex()             == crypt.hex(s)
+s:unhex()           == crypt.unhex(s)
+s:base64()          == crypt.base64(s)
+s:unbase64()        == crypt.unbase64(s)
+s:base64url()       == crypt.base64url(s)
+s:unbase64url()     == crypt.unbase64url(s)
+s:crc32()           == crypt.crc32(s)
+s:crc64()           == crypt.crc64(s)
+s:arc4(key, drop)   == crypt.arc4(s, key, drop)
+s:unarc4(key, drop) == crypt.unarc4(s, key, drop)
+s:hash()            == crypt.hash(s)
+s:hash32()          == crypt.hash32(s)
+s:hash64()          == crypt.hash64(s)
+s:hash128()         == crypt.hash128(s)
+```
+@@@]]
+
+string.hex          = crypt.hex
+string.unhex        = crypt.unhex
+string.base64       = crypt.base64
+string.unbase64     = crypt.unbase64
+string.base64url    = crypt.base64url
+string.unbase64url  = crypt.unbase64url
+string.arc4         = crypt.arc4
+string.unarc4       = crypt.unarc4
+string.hash         = crypt.hash
+string.hash32       = crypt.hash32
+string.hash64       = crypt.hash64
+string.hash128      = crypt.hash128
+string.crc32        = crypt.crc32
+string.crc64        = crypt.crc64
+
+return crypt
+]=])
+package.preload["curl"] = lib("lib/luax/curl.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LIB
+
+--[[------------------------------------------------------------------------@@@
+# Simple curl interface
+
+```lua
+local curl = require "curl"
+```
+
+`curl` provides functions to execute curl.
+curl must be installed separately.
+
+@@@]]
+
+local M = {}
+
+local sh = require "sh"
+
+local errs = {
+    [  0] = "Success. The operation completed successfully according to the instructions.",
+    [  1] = "Unsupported protocol. This build of curl has no support for this protocol.",
+    [  2] = "Failed to initialize.",
+    [  3] = "URL malformed. The syntax was not correct.",
+    [  4] = "A feature or option that was needed to perform the desired request was not enabled or was explicitly disabled at build-time. To make curl able to do this, you probably need another build of libcurl.",
+    [  5] = "Could not resolve proxy. The given proxy host could not be resolved.",
+    [  6] = "Could not resolve host. The given remote host could not be resolved.",
+    [  7] = "Failed to connect to host.",
+    [  8] = "Weird server reply. The server sent data curl could not parse.",
+    [  9] = "FTP access denied. The server denied login or denied access to the particular resource or directory you wanted to reach. Most often you tried to change to a directory that does not exist on the server.",
+    [ 10] = "FTP accept failed. While waiting for the server to connect back when an active FTP session is used, an error code was sent over the control connection or similar.",
+    [ 11] = "FTP weird PASS reply. Curl could not parse the reply sent to the PASS request.",
+    [ 12] = "During an active FTP session while waiting for the server to connect back to curl, the timeout expired.",
+    [ 13] = "FTP weird PASV reply, Curl could not parse the reply sent to the PASV request.",
+    [ 14] = "FTP weird 227 format. Curl could not parse the 227-line the server sent.",
+    [ 15] = "FTP cannot use host. Could not resolve the host IP we got in the 227-line.",
+    [ 16] = "HTTP/2 error. A problem was detected in the HTTP2 framing layer. This is somewhat generic and can be one out of several problems, see the error message for details.",
+    [ 17] = "FTP could not set binary. Could not change transfer method to binary.",
+    [ 18] = "Partial file. Only a part of the file was transferred.",
+    [ 19] = "FTP could not download/access the given file, the RETR (or similar) command failed.",
+    [ 21] = "FTP quote error. A quote command returned error from the server.",
+    [ 22] = "HTTP page not retrieved. The requested URL was not found or returned another error with the HTTP error code being 400 or above. This return code only appears if -f, --fail is used.",
+    [ 23] = "Write error. Curl could not write data to a local filesystem or similar.",
+    [ 25] = "Failed starting the upload. For FTP, the server typically denied the STOR command.",
+    [ 26] = "Read error. Various reading problems.",
+    [ 27] = "Out of memory. A memory allocation request failed.",
+    [ 28] = "Operation timeout. The specified time-out period was reached according to the conditions.",
+    [ 30] = "FTP PORT failed. The PORT command failed. Not all FTP servers support the PORT command, try doing a transfer using PASV instead.",
+    [ 31] = "FTP could not use REST. The REST command failed. This command is used for resumed FTP transfers.",
+    [ 33] = "HTTP range error. The range \"command\" did not work.",
+    [ 34] = "HTTP post error. Internal post-request generation error.",
+    [ 35] = "SSL connect error. The SSL handshaking failed.",
+    [ 36] = "Bad download resume. Could not continue an earlier aborted download.",
+    [ 37] = "FILE could not read file. Failed to open the file. Permissions?",
+    [ 38] = "LDAP cannot bind. LDAP bind operation failed.",
+    [ 39] = "LDAP search failed.",
+    [ 41] = "Function not found. A required LDAP function was not found.",
+    [ 42] = "Aborted by callback. An application told curl to abort the operation.",
+    [ 43] = "Internal error. A function was called with a bad parameter.",
+    [ 45] = "Interface error. A specified outgoing interface could not be used.",
+    [ 47] = "Too many redirects. When following redirects, curl hit the maximum amount.",
+    [ 48] = "Unknown option specified to libcurl. This indicates that you passed a weird option to curl that was passed on to libcurl and rejected. Read up in the manual!",
+    [ 49] = "Malformed telnet option.",
+    [ 52] = "The server did not reply anything, which here is considered an error.",
+    [ 53] = "SSL crypto engine not found.",
+    [ 54] = "Cannot set SSL crypto engine as default.",
+    [ 55] = "Failed sending network data.",
+    [ 56] = "Failure in receiving network data.",
+    [ 58] = "Problem with the local certificate.",
+    [ 59] = "Could not use specified SSL cipher.",
+    [ 60] = "Peer certificate cannot be authenticated with known CA certificates.",
+    [ 61] = "Unrecognized transfer encoding.",
+    [ 63] = "Maximum file size exceeded.",
+    [ 64] = "Requested FTP SSL level failed.",
+    [ 65] = "Sending the data requires a rewind that failed.",
+    [ 66] = "Failed to initialize SSL Engine.",
+    [ 67] = "The username, password, or similar was not accepted and curl failed to log in.",
+    [ 68] = "File not found on TFTP server.",
+    [ 69] = "Permission problem on TFTP server.",
+    [ 70] = "Out of disk space on TFTP server.",
+    [ 71] = "Illegal TFTP operation.",
+    [ 72] = "Unknown TFTP transfer ID.",
+    [ 73] = "File already exists (TFTP).",
+    [ 74] = "No such user (TFTP).",
+    [ 77] = "Problem reading the SSL CA cert (path? access rights?).",
+    [ 78] = "The resource referenced in the URL does not exist.",
+    [ 79] = "An unspecified error occurred during the SSH session.",
+    [ 80] = "Failed to shut down the SSL connection.",
+    [ 82] = "Could not load CRL file, missing or wrong format.",
+    [ 83] = "Issuer check failed.",
+    [ 84] = "The FTP PRET command failed.",
+    [ 85] = "Mismatch of RTSP CSeq numbers.",
+    [ 86] = "Mismatch of RTSP Session Identifiers.",
+    [ 87] = "Unable to parse FTP file list.",
+    [ 88] = "FTP chunk callback reported error.",
+    [ 89] = "No connection available, the session is queued.",
+    [ 90] = "SSL public key does not matched pinned public key.",
+    [ 91] = "Invalid SSL certificate status.",
+    [ 92] = "Stream error in HTTP/2 framing layer.",
+    [ 93] = "An API function was called from inside a callback.",
+    [ 94] = "An authentication function returned an error.",
+    [ 95] = "A problem was detected in the HTTP/3 layer. This is somewhat generic and can be one out of several problems, see the error message for details.",
+    [ 96] = "QUIC connection error. This error may be caused by an SSL library error. QUIC is the protocol used for HTTP/3 transfers.",
+    [ 97] = "Proxy handshake error.",
+    [ 98] = "A client-side certificate is required to complete the TLS handshake.",
+    [ 99] = "Poll or select returned fatal error.",
+    [100] = "A value or data field grew larger than allowed.",
+
+    -- This error is returned by the shell, not curl
+    [127] = "curl: command not found",
+}
+
+local default_curl_options = {
+    "--silent",
+    "--show-error",
+    "--location", -- follow redirections
+}
+
+local function curl(...)
+    local res, _, err = sh("curl", ...)
+    if not res then return nil, errs[tonumber(err)] or "curl: unknown error", err end
+    return res
+end
+
+M.request = curl
+
+--[[@@@
+```lua
+curl.request(...)
+```
+> Execute `curl` with arguments `...` and returns the output of `curl` (`stdout`).
+> Arguments can be a nested list (it will be flattened).
+> In case of error, `curl` returns `nil`, an error message and an error code
+> (see [curl man page](https://curl.se/docs/manpage.html)).
+
+```lua
+curl(...)
+```
+> Like `curl.request(...)` with some default options:
+>
+> - `--silent`: silent mode
+> - `--show-error`: show an error message if it fails
+> - `--location`: follow redirections
+
+@@@]]
+
+return setmetatable(M, {
+    __call = function(_, ...) return curl(default_curl_options, ...) end,
+})
+]=])
+package.preload["fs"] = lib("lib/luax/fs.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--[[------------------------------------------------------------------------@@@
+## Additional functions (Lua)
+@@@]]
+
+-- Load fs.lua to add new methods to strings
+--@LOAD=_
+
+local has_fs, fs = pcall(require, "_fs")
+
+local F = require "F"
+local sys = require "sys"
+
+local __PANDOC__, pandoc  = _ENV.PANDOC_VERSION ~= nil, _ENV.pandoc
+
+if not has_fs then
+
+    fs = {}
+
+    local sh = require "sh"
+
+    local __WINDOWS__ = sys.os == "windows"
+    local __MACOS__   = sys.os == "macos"
+
+    if __PANDOC__ then
+        fs.sep = pandoc.path.separator
+        fs.path_sep = pandoc.path.search_path_separator
+    else
+        fs.sep = package.config:match("^([^\n]-)\n")
+        fs.path_sep = fs.sep == '\\' and ";" or ":"
+    end
+
+    local function safe_sh(...)
+        local out, msg = sh.read(...)
+        if not out then error(msg) end
+        return out
+    end
+
+    function fs.getcwd()
+        if __PANDOC__ then return pandoc.system.get_working_directory() end
+        if __WINDOWS__ then return safe_sh "cd" : trim() end
+        return safe_sh "pwd" : trim()
+    end
+
+    function fs.dir(path)
+        if __PANDOC__ then return F(pandoc.system.list_directory(path)) end
+        if __WINDOWS__ then return safe_sh("dir /b", path) : lines() : sort() end
+        return safe_sh("ls", path) : lines() : sort()
+    end
+
+    fs.remove = os.remove
+
+    fs.rename = os.rename
+
+    function fs.copy(source_name, target_name)
+        local from<close>, err_from = io.open(source_name, "rb")
+        if not from then return from, err_from end
+        local to<close>, err_to = io.open(target_name, "wb")
+        if not to then return to, err_to end
+        while true do
+            local block = from:read(8*1024)
+            if not block then break end
+            local ok, err = to:write(block)
+            if not ok then
+                return ok, err
+            end
+        end
+        return true
+    end
+
+    function fs.symlink(target, linkpath)
+        if __WINDOWS__ then return nil, "symlink not implemented" end
+        return sh.run("ln -s", target, linkpath)
+    end
+
+    function fs.mkdir(path)
+        if __PANDOC__ then return pandoc.system.make_directory(path) end
+        return sh.run("mkdir", path)
+    end
+
+    local S_IFMT  <const> = 0xF << 12
+    local S_IFDIR <const> = 1 << 14
+    local S_IFREG <const> = 1 << 15
+    local S_IFLNK <const> = (1 << 13) | (1 << 15)
+
+    local S_IRUSR <const> = 1 << 8
+    local S_IWUSR <const> = 1 << 7
+    local S_IXUSR <const> = 1 << 6
+    local S_IRGRP <const> = 1 << 5
+    local S_IWGRP <const> = 1 << 4
+    local S_IXGRP <const> = 1 << 3
+    local S_IROTH <const> = 1 << 2
+    local S_IWOTH <const> = 1 << 1
+    local S_IXOTH <const> = 1 << 0
+
+    local S_IRALL <const> = 1 << 8 | 1 << 5 | 1 << 2
+    local S_IWALL <const> = 1 << 7 | 1 << 4 | 1 << 1
+    local S_IXALL <const> = 1 << 6 | 1 << 3 | 1 << 0
+
+    fs.uR = S_IRUSR
+    fs.uW = S_IWUSR
+    fs.uX = S_IXUSR
+    fs.aR = S_IRALL
+    fs.aW = S_IWALL
+    fs.aX = S_IXALL
+    fs.gR = S_IRGRP
+    fs.gW = S_IWGRP
+    fs.gX = S_IXGRP
+    fs.oR = S_IROTH
+    fs.oW = S_IWOTH
+    fs.oX = S_IXOTH
+
+    local function stat(name, follow)
+        local size, mtime, atime, ctime, mode
+        if __MACOS__ then
+            local st = sh.read("LC_ALL=C", "stat", follow, "-r", name, "2>/dev/null")
+            if not st then return nil, "cannot stat "..name end
+            local _, mode_str
+            _, _, mode_str, _, _, _, _, size, atime, mtime, _, ctime, _, _, _ = st:words():unpack()
+            mode = tonumber(mode_str, 8)
+        else
+            local st = sh.read("LC_ALL=C", "stat", follow, "-c '%s;%Y;%X;%W;%f'", name, "2>/dev/null")
+            if not st then return nil, "cannot stat "..name end
+            local mode_str
+            size, mtime, atime, ctime, mode_str = st:trim():split ";":unpack()
+            mode = tonumber(mode_str, 16)
+        end
+        return F{
+            name = name,
+            size = tonumber(size),
+            mtime = tonumber(mtime),
+            atime = tonumber(atime),
+            ctime = tonumber(ctime),
+            mode = mode,
+            type = (mode & S_IFMT) == S_IFLNK and "link"
+                or (mode & S_IFMT) == S_IFDIR and "directory"
+                or (mode & S_IFMT) == S_IFREG and "file"
+                or "unknown",
+            uR = (mode & S_IRUSR) ~= 0,
+            uW = (mode & S_IWUSR) ~= 0,
+            uX = (mode & S_IXUSR) ~= 0,
+            gR = (mode & S_IRGRP) ~= 0,
+            gW = (mode & S_IWGRP) ~= 0,
+            gX = (mode & S_IXGRP) ~= 0,
+            oR = (mode & S_IROTH) ~= 0,
+            oW = (mode & S_IWOTH) ~= 0,
+            oX = (mode & S_IXOTH) ~= 0,
+            aR = (mode & (S_IRUSR|S_IRGRP|S_IROTH)) ~= 0,
+            aW = (mode & (S_IWUSR|S_IWGRP|S_IWOTH)) ~= 0,
+            aX = (mode & (S_IXUSR|S_IXGRP|S_IXOTH)) ~= 0,
+        }
+    end
+
+    function fs.stat(name)
+        return stat(name, "-L")
+    end
+
+    function fs.lstat(name)
+        return stat(name, {})
+    end
+
+    function fs.inode(name)
+        local dev, ino
+        if __MACOS__ then
+            local st = sh.read("LC_ALL=C", "stat", "-L", "-r", name, "2>/dev/null")
+            if not st then return nil, "cannot stat "..name end
+            dev, ino = st:words():unpack()
+        else
+            local st = sh.read("LC_ALL=C", "stat", "-L", "-c '%d;%i'", name, "2>/dev/null")
+            if not st then return nil, "cannot stat "..name end
+            dev, ino = st:trim():split ";":unpack()
+        end
+        return F{
+            ino = tonumber(ino),
+            dev = tonumber(dev),
+        }
+    end
+
+    local pattern_cache = {}
+
+    function fs.fnmatch(pattern, name)
+        local lua_pattern = pattern_cache[pattern]
+        if not lua_pattern then
+            lua_pattern = pattern
+                : gsub("%.", "%%.")
+                : gsub("%*", ".*")
+            lua_pattern = "^"..lua_pattern.."$"
+            pattern_cache[pattern] = lua_pattern
+        end
+        return name:match(lua_pattern) and true or false
+    end
+
+    function fs.chmod(name, ...)
+        local mode = {...}
+        if type(mode[1]) == "string" then
+            return sh.run("chmod", "--reference="..mode[1], name, "2>/dev/null")
+        else
+            return sh.run("chmod", ("%o"):format(F(mode):fold(F.op.bor, 0)), name)
+        end
+    end
+
+    function fs.touch(name, opt)
+        if opt == nil then
+            return sh.run("touch", name, "2>/dev/null")
+        elseif type(opt) == "number" then
+            return sh.run("touch", "-d", '"'..os.date("%c", opt)..'"', name, "2>/dev/null")
+        elseif type(opt) == "string" then
+            return sh.run("touch", "--reference="..opt, name, "2>/dev/null")
+        else
+            error "bad argument #2 to touch (none, nil, number or string expected)"
+        end
+    end
+
+    function fs.basename(path)
+        if __PANDOC__ then return pandoc.path.filename(path) end
+        return (path:gsub(".*[/\\]", ""))
+    end
+
+    function fs.dirname(path)
+        if __PANDOC__ then return pandoc.path.directory(path) end
+        local dir, n = path:gsub("[/\\][^/\\]*$", "")
+        return n > 0 and dir or "."
+    end
+
+    function fs.splitext(path)
+        if __PANDOC__ then
+            if fs.basename(path):match "^%." then return path, "" end
+            return pandoc.path.split_extension(path)
+        end
+        local name, ext = path:match("^(.*)(%.[^/\\]-)$")
+        if name and ext and #name > 0 and not name:has_suffix(fs.sep) then return name, ext end
+        return path, ""
+    end
+
+    function fs.ext(path)
+        local _, ext = fs.splitext(path)
+        return ext
+    end
+
+    function fs.chext(path, new_ext)
+        return fs.splitext(path) .. new_ext
+    end
+
+    function fs.realpath(path)
+        if __PANDOC__ then return pandoc.path.normalize(path) end
+        return safe_sh("realpath", path) : trim()
+    end
+
+    function fs.readlink(path)
+        return safe_sh("readlink", path) : trim()
+    end
+
+    function fs.absname(path)
+        if path:match "^[/\\]" or path:match "^.:" then return path end
+        return fs.getcwd()..fs.sep..path
+    end
+
+    function fs.mkdirs(path)
+        if __PANDOC__ then return pandoc.system.make_directory(path, true) end
+        if __WINDOWS__ then return sh.run("mkdir", path) end
+        return sh.run("mkdir", "-p", path)
+    end
+
+    function fs.ls(dir, dotted) ---@diagnostic disable-line: unused-local (hidden files not supported in the Lua implementation)
+        dir = dir or "."
+        local base = dir:basename()
+        local path = dir:dirname()
+        local recursive = base:match"%*%*"
+        local pattern = base:match"%*" and base:gsub("%*+", "*")
+
+        local useless_path_prefix = "^%."..fs.sep
+        local function clean_path(fullpath)
+            return fullpath:gsub(useless_path_prefix, "")
+        end
+
+        if __WINDOWS__ then
+
+            local files
+            if recursive then
+                files = sh("dir /b /s", path/pattern)
+            elseif pattern then
+                files = sh("dir /b", path/pattern)
+            else
+                files = sh("dir /b", dir)
+            end
+            return files
+                : lines()
+                : map(clean_path)
+                : sort()
+        end
+
+        local files
+        if recursive then
+            files = sh("find", path, ("-name %q"):format(pattern))
+                : lines()
+                : filter(F.partial(F.op.ne, path))
+        elseif pattern then
+            files = sh("ls -d", path/pattern)
+                : lines()
+        else
+            files = sh("ls", dir)
+                : lines()
+                : map(F.partial(fs.join, dir))
+        end
+        return files
+            : map(clean_path)
+            : sort()
+    end
+
+    function fs.is_file(name)
+        local st = fs.stat(name)
+        return st ~= nil and st.type == "file"
+    end
+
+    function fs.is_dir(name)
+        local st = fs.stat(name)
+        return st ~= nil and st.type == "directory"
+    end
+
+    function fs.is_link(name)
+        local st = fs.lstat(name)
+        return st ~= nil and st.type == "link"
+    end
+
+    fs.rm = fs.remove
+    fs.mv = fs.rename
+
+    fs.tmpfile = os.tmpname
+
+    function fs.tmpdir()
+        local tmp = os.tmpname()
+        fs.rm(tmp)
+        fs.mkdir(tmp)
+        return tmp
+    end
+
+end
+
+--[[@@@
+```lua
+fs.join(...)
+```
+return a path name made of several path components
+(separated by `fs.sep`).
+If a component is absolute, the previous components are removed.
+@@@]]
+
+function fs.join(...)
+    if __PANDOC__ then return pandoc.path.join(F.flatten{...}) end
+    local function add_path(ps, p)
+        if p:match("^"..fs.sep) then return F{p} end
+        ps[#ps+1] = p
+        return ps
+    end
+    return F{...}
+        :flatten()
+        :fold(add_path, F{})
+        :str(fs.sep)
+end
+
+--[[@@@
+```lua
+fs.splitpath(path)
+```
+return a list of path components.
+@@@]]
+
+function fs.splitpath(path)
+    if path == "" then return F{} end
+    local components = path:split "[/\\]+"
+    if components[1] == "" then components[1] = fs.sep end
+    return components
+end
+
+--[[@@@
+```lua
+fs.findpath(name)
+```
+returns the full path of `name` if `name` is found in `$PATH` or `nil`.
+@@@]]
+
+function fs.findpath(name)
+    local function exists_in(path) return fs.is_file(fs.join(path, name)) end
+    local path = os.getenv("PATH")
+        :split(fs.path_sep)
+        :find(exists_in)
+    if path then return fs.join(path, name) end
+    return nil, name..": not found in $PATH"
+end
+
+--[[@@@
+```lua
+fs.rmdir(path)
+```
+deletes the directory `path` and its content recursively.
+@@@]]
+
+function fs.rmdir(path)
+    if __PANDOC__ then
+        pandoc.system.remove_directory(path, true)
+        return true
+    end
+    fs.walk(path, {reverse=true}):foreach(fs.rm)
+    return fs.rm(path)
+end
+
+--[[@@@
+```lua
+fs.walk([path], [{reverse=true|false, links=true|false, cross=true|false}])
+```
+returns a list listing directory and
+file names in `path` and its subdirectories (the default path is the current
+directory).
+
+Options:
+
+- `stat`: returns the list of stat results instead of just filenames
+- `reverse`: the list is built in a reverse order
+  (suitable for recursive directory removal)
+- `cross`: walk across several devices
+- `func`: function applied to the current file or directory.
+  `func` takes two parameters (path of the file or directory and the stat object returned by `fs.stat`)
+  and returns a boolean (to continue or not walking recursively through the subdirectories)
+  and the value to add to the list.
+@@@]]
+
+function fs.walk(path, options)
+    options = options or {}
+    local return_stat = options.stat
+    local reverse = options.reverse
+    local cross_device = options.cross
+    local func = options.func
+              or return_stat and function(_, stat) return true, stat end
+              or function(name, _) return true, name end
+    local dirs = {path or "."}
+    local acc_files = {}
+    local acc_dirs = {}
+    local seen = {}
+    local dev0 = nil
+    local function already_seen(name)
+        local inode = fs.inode(name)
+        if not inode then return true end
+        dev0 = dev0 or inode.dev
+        if dev0 ~= inode.dev and not cross_device then
+            return true
+        end
+        if not seen[inode.dev] then
+            seen[inode.dev] = {[inode]=true}
+            return false
+        end
+        if not seen[inode.dev][inode.ino] then
+            seen[inode.dev][inode.ino] = true
+            return false
+        end
+        return true
+    end
+    while #dirs > 0 do
+        local dir = table.remove(dirs)
+        if not already_seen(dir) then
+            local names = fs.dir(dir)
+            if names then
+                table.sort(names)
+                for i = 1, #names do
+                    local name = dir..fs.sep..names[i]
+                    local stat = fs.stat(name)
+                    if stat then
+                        if stat.type == "directory" then
+                            local continue, obj = func(name, stat)
+                            if continue then
+                                dirs[#dirs+1] = name
+                            end
+                            if obj then
+                                if reverse then table.insert(acc_dirs, 1, obj)
+                                else acc_dirs[#acc_dirs+1] = obj
+                                end
+                            end
+                        else
+                            local _, obj = func(name, stat)
+                            if obj then
+                                acc_files[#acc_files+1] = obj
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return F.concat(reverse and {acc_files, acc_dirs} or {acc_dirs, acc_files})
+end
+
+--[[@@@
+```lua
+fs.with_tmpfile(f)
+```
+calls `f(tmp)` where `tmp` is the name of a temporary file.
+@@@]]
+
+function fs.with_tmpfile(f)
+    if __PANDOC__ then
+        return pandoc.system.with_temporary_directory("luax", function(tmpdir)
+            return f(tmpdir/"tmpfile")
+        end)
+    end
+    local tmp = fs.tmpfile()
+    local ret = {f(tmp)}
+    fs.rm(tmp)
+    return table.unpack(ret)
+end
+
+--[[@@@
+```lua
+fs.with_tmpdir(f)
+```
+calls `f(tmp)` where `tmp` is the name of a temporary directory.
+@@@]]
+
+function fs.with_tmpdir(f)
+    if __PANDOC__ then
+        return pandoc.system.with_temporary_directory("luax", f)
+    end
+    local tmp = fs.tmpdir()
+    local ret = {f(tmp)}
+    fs.rmdir(tmp)
+    return table.unpack(ret)
+end
+
+--[[@@@
+```lua
+fs.with_dir(path, f)
+```
+changes the current working directory to `path` and calls `f()`.
+@@@]]
+
+function fs.with_dir(path, f)
+    if __PANDOC__ then
+        return pandoc.system.with_working_directory(path, f)
+    end
+    if fs.chdir then
+        local old = fs.getcwd()
+        fs.chdir(path)
+        local ret = {f(path)}
+        fs.chdir(old)
+        return table.unpack(ret)
+    end
+    error "fs.with_dir not implemented"
+end
+
+--[[@@@
+```lua
+fs.expand(path, [vars])
+```
+returns the expanded path
+where `"~"` at the beginning of the path is replaced by the home directory of the current user
+and `$XXX` or `${XXX}` is replaced by the environment variable `XXX`.
+Variable values can also be taken from the optional `vars` table.
+@@@]]
+
+local function expanduser(path)
+    local home = os.getenv(sys.os == "windows" and "USERPROFILE" or "HOME")
+    if path == "~" then return home end
+    local local_path = path:match "^~([/\\].*)"
+    if local_path then return home..local_path end
+    return path
+end
+
+local function expandvars(path, vars)
+    vars = vars or {}
+    local function expand(var) return os.getenv(var) or vars[var] or var end
+    path = path : gsub("${([%w_]+)}", expand) : gsub("$([%w_]+)", expand)
+    return path
+end
+
+function fs.expand(path, vars)
+    return expandvars(expanduser(path), vars)
+end
+
+--[[@@@
+```lua
+fs.read(filename)
+```
+returns the content of the text file `filename`.
+@@@]]
+
+function fs.read(name)
+    local f<close>, oerr = io.open(name, "r")
+    if not f then return f, oerr end
+    return f:read("a")
+end
+
+--[[@@@
+```lua
+fs.write(filename, ...)
+```
+write `...` to the text file `filename`.
+@@@]]
+
+function fs.write(name, ...)
+    local content = F{...}:flatten():str()
+    local f<close>, oerr = io.open(name, "w")
+    if not f then return f, oerr end
+    return f:write(content)
+end
+
+--[[@@@
+```lua
+fs.read_bin(filename)
+```
+returns the content of the binary file `filename`.
+@@@]]
+
+function fs.read_bin(name)
+    local f<close>, oerr = io.open(name, "rb")
+    if not f then return f, oerr end
+    return f:read("a")
+end
+
+--[[@@@
+```lua
+fs.write_bin(filename, ...)
+```
+write `...` to the binary file `filename`.
+@@@]]
+
+function fs.write_bin(name, ...)
+    local content = F{...}:flatten():str()
+    local f<close>, oerr = io.open(name, "wb")
+    if not f then return f, oerr end
+    return f:write(content)
+end
+
+--[[------------------------------------------------------------------------@@@
+## String methods
+
+Some functions of the `fs` package are added to the string module:
+
+@@@]]
+
+--[[@@@
+```lua
+path:stat()             == fs.stat(path)
+path:inode()            == fs.inode(path)
+path:basename()         == fs.basename(path)
+path:dirname()          == fs.dirname(path)
+path:splitext()         == fs.splitext(path)
+path:ext()              == fs.ext(path)
+path:chext()            == fs.chext(path)
+path:realpath()         == fs.realpath(path)
+path:readlink()         == fs.readlink(path)
+path:absname()          == fs.absname(path)
+path1 / path2           == fs.join(path1, path2)
+path:is_file()          == fs.is_file(path)
+path:is_dir()           == fs.is_dir(path)
+path:findpath()         == fs.findpath(path)
+```
+@@@]]
+
+string.stat             = fs.stat
+string.inode            = fs.inode
+string.basename         = fs.basename
+string.dirname          = fs.dirname
+string.splitext         = fs.splitext
+string.ext              = fs.ext
+string.chext            = fs.chext
+string.splitpath        = fs.splitpath
+string.realpath         = fs.realpath
+string.readlink         = fs.readlink
+string.absname          = fs.absname
+string.is_file          = fs.is_file
+string.is_dir           = fs.is_dir
+string.findpath         = fs.findpath
+
+getmetatable("").__div  = fs.join
+
+return fs
+]=])
+package.preload["imath"] = lib("lib/luax/imath.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LIB
+
+local has_imath, imath = pcall(require, "_imath")
+
+if not has_imath then
+
+    imath = {}
+
+    local mt = {__index={}}
+
+    ---@diagnostic disable:unused-vararg
+    local function ni(f) return function(...) error(f.." not implemented") end end
+
+    local floor = math.floor
+    local ceil = math.ceil
+    local sqrt = math.sqrt
+    local log = math.log
+    local max = math.max
+
+    local RADIX <const> = 10000000
+    local RADIX_LEN <const> = floor(log(RADIX, 10))
+
+    assert(RADIX^2 < 2^53, "RADIX^2 shall be storable on a Lua number")
+
+    local int_add, int_sub, int_mul, int_divmod, int_abs
+
+    local function int_trim(a)
+        for i = #a, 1, -1 do
+            if a[i] and a[i] ~= 0 then break end
+            a[i] = nil
+        end
+        if #a == 0 then a.sign = 1 end
+    end
+
+    local function int(n, base)
+        n = n or 0
+        if type(n) == "table" then return n end
+        if type(n) == "number" then
+            if math.type(n) == "float" then
+                n = ("%.0f"):format(floor(n))
+            else
+                n = ("%d"):format(n)
+            end
+        end
+        assert(type(n) == "string")
+        n = n:gsub("[ _]", "")
+        local sign = 1
+        local d = 1 -- current digit index
+        if n:sub(d, d) == "+" then d = d+1
+        elseif n:sub(d, d) == "-" then sign = -1; d = d+1
+        end
+        if n:sub(d, d+1) == "0x" then d = d+2; base = 16
+        elseif n:sub(d, d+1) == "0o" then d = d+2; base = 8
+        elseif n:sub(d, d+1) == "0b" then d = d+2; base = 2
+        else base = base or 10
+        end
+        local self = {sign=1}
+        if base == 10 then
+            for i = #n, d, -RADIX_LEN do
+                local digit = n:sub(max(d, i-RADIX_LEN+1), i)
+                self[#self+1] = tonumber(digit)
+            end
+        else
+            local bn_base = {sign=1, base}
+            local bn_shift = {sign=1, 1}
+            local bn_digit = {sign=1, 0}
+            for i = #n, d, -1 do
+                bn_digit[1] = tonumber(n:sub(i, i), base)
+                self = int_add(self, int_mul(bn_digit, bn_shift))
+                bn_shift = int_mul(bn_shift, bn_base)
+            end
+        end
+        self.sign = sign
+        int_trim(self)
+        return setmetatable(self, mt)
+    end
+
+    local int_zero <const> = int(0)
+    local int_one <const> = int(1)
+    local int_two <const> = int(2)
+
+    local function int_copy(n)
+        local c = {sign=n.sign}
+        for i = 1, #n do
+            c[i] = n[i]
+        end
+        return setmetatable(c, mt)
+    end
+
+    local function int_tonumber(n)
+        local s = n.sign < 0 and "-0" or "0"
+        local fmt = ("%%0%dd"):format(RADIX_LEN)
+        for i = #n, 1, -1 do
+            s = s..fmt:format(n[i])
+        end
+        return tonumber(s..".")
+    end
+
+    local function int_tostring(n, base)
+        base = base or 10
+        local s = ""
+        local sign = n.sign
+        if base == 10 then
+            local fmt = ("%%0%dd"):format(RADIX_LEN)
+            for i = 1, #n do
+                s = fmt:format(n[i]) .. s
+            end
+            s = s:gsub("^[_0]+", "")
+            if s == "" then s = "0" end
+        else
+            local bn_base = int(base)
+            local absn = int_abs(n)
+            while #absn > 0 do
+                local d
+                absn, d = int_divmod(absn, bn_base)
+                d = int_tonumber(d)
+                s = ("0123456789ABCDEF"):sub(d+1, d+1) .. s
+            end
+            s = s:gsub("^0+", "")
+            if s == "" then s = "0" end
+        end
+        if sign < 0 then s = "-" .. s end
+        return s
+    end
+
+    local function int_iszero(a)
+        return #a == 0
+    end
+
+    local function int_isone(a)
+        return #a == 1 and a[1] == 1 and a.sign == 1
+    end
+
+    local function int_cmp(a, b)
+        if #a == 0 and #b == 0 then return 0 end -- 0 == -0
+        if a.sign > b.sign then return 1 end
+        if a.sign < b.sign then return -1 end
+        if #a > #b then return a.sign end
+        if #a < #b then return -a.sign end
+        for i = #a, 1, -1 do
+            if a[i] > b[i] then return a.sign end
+            if a[i] < b[i] then return -a.sign end
+        end
+        return 0
+    end
+
+    local function int_abscmp(a, b)
+        if #a > #b then return 1 end
+        if #a < #b then return -1 end
+        for i = #a, 1, -1 do
+            if a[i] > b[i] then return 1 end
+            if a[i] < b[i] then return -1 end
+        end
+        return 0
+    end
+
+    local function int_neg(a)
+        local b = int_copy(a)
+        b.sign = -a.sign
+        return b
+    end
+
+    int_add = function(a, b)
+        if a.sign == b.sign then            -- a+b = a+b, (-a)+(-b) = -(a+b)
+            local c = int()
+            c.sign = a.sign
+            local carry = 0
+            for i = 1, max(#a, #b) + 1 do -- +1 for the last carry
+                c[i] = carry + (a[i] or 0) + (b[i] or 0)
+                if c[i] >= RADIX then
+                    c[i] = c[i] - RADIX
+                    carry = 1
+                else
+                    carry = 0
+                end
+            end
+            int_trim(c)
+            return c
+        else
+            return int_sub(a, int_neg(b))
+        end
+    end
+
+    int_sub = function(a, b)
+        if a.sign == b.sign then
+            local A, B
+            local cmp = int_abscmp(a, b)
+            if cmp >= 0 then A = a; B = b; else A = b; B = a; end
+            local c = int()
+            local carry = 0
+            for i = 1, #A do
+                c[i] = A[i] - (B[i] or 0) - carry
+                if c[i] < 0 then
+                    c[i] = c[i] + RADIX
+                    carry = 1
+                else
+                    carry = 0
+                end
+            end
+            assert(carry == 0) -- should be true if |A| >= |B|
+            c.sign = (cmp >= 0) and a.sign or -a.sign
+            int_trim(c)
+            return c
+        else
+            local c = int_add(a, int_neg(b))
+            c.sign = a.sign
+            return c
+        end
+    end
+
+    int_mul = function(a, b)
+        local c = int()
+        for i = 1, #a do
+            local carry = 0
+            for j = 1, #b do
+                carry = (c[i+j-1] or 0) + a[i]*b[j] + carry
+                c[i+j-1] = carry % RADIX
+                carry = math.floor(carry / RADIX)
+            end
+            if carry ~= 0 then
+                c[i + #b] = carry
+            end
+        end
+        int_trim(c)
+        c.sign = a.sign * b.sign
+        return c
+    end
+
+    local function int_absdiv2(a)
+        local c = int()
+        local carry = 0
+        for i = 1, #a do
+            c[i] = 0
+        end
+        for i = #a, 1, -1 do
+            c[i] = floor(carry + a[i] / 2)
+            if a[i] % 2 ~= 0 then
+                carry = RADIX // 2
+            else
+                carry = 0
+            end
+        end
+        c.sign = a.sign
+        int_trim(c)
+        return c, (a[1] or 0) % 2
+    end
+
+    int_divmod = function(a, b)
+        -- euclidian division using dichotomie
+        -- searching q and r such that a = q*b + r and |r| < |b|
+        assert(not int_iszero(b), "Division by zero")
+        if int_iszero(a) then return int_zero, int_zero end
+        if int_isone(b) then return a, int_zero end
+        if b.sign < 0 then a = int_neg(a); b = int_neg(b) end
+        local qmin = int_neg(a)
+        local qmax = a
+        if int_cmp(qmax, qmin) < 0 then qmin, qmax = qmax, qmin end
+        local rmin = int_sub(a, int_mul(qmin, b))
+        if rmin.sign > 0 and int_cmp(rmin, b) < 0 then return qmin, rmin end
+        local rmax = int_sub(a, int_mul(qmax, b))
+        if rmax.sign > 0 and int_cmp(rmax, b) < 0 then return qmax, rmax end
+        assert(rmin.sign ~= rmax.sign)
+        local q = int_absdiv2(int_add(qmin, qmax))
+        local r = int_sub(a, int_mul(q, b))
+        while r.sign < 0 or int_cmp(r, b) >= 0 do
+            if r.sign == rmin.sign then
+                qmin, qmax = q, qmax
+                rmin, rmax = r, rmax
+            else
+                qmin, qmax = qmin, q
+                rmin, rmax = rmin, r
+            end
+            q = int_absdiv2(int_add(qmin, qmax))
+            r = int_sub(a, int_mul(q, b))
+        end
+        return q, r
+    end
+
+    local function int_sqrt(a)
+        assert(a.sign >= 0, "Square root of a negative number")
+        if int_iszero(a) then return int_zero end
+        local b = int()
+        local c = int()
+        for i = #a//2+1, #a do b[#b+1] = ceil(sqrt(a[i])) end
+        while b ~= c do
+            c = b
+            local q, _ = int_divmod(a, b)
+            b = int_absdiv2(int_add(b, q))
+            --if b^2 <= a and (b+1)^2 > a then break end
+        end
+        assert(b^2 <= a and (b+1)^2 > a)
+        return b
+    end
+
+    local function int_pow(a, b)
+        assert(b.sign > 0)
+        if #b == 0 then return int_one end
+        if #b == 1 and b[1] == 1 then return a end
+        if #b == 1 and b[1] == 2 then return int_mul(a, a) end
+        local c
+        local q, r = int_absdiv2(b)
+        c = int_pow(a, q)
+        c = int_mul(c, c)
+        if r == 1 then c = int_mul(c, a) end
+        return c
+    end
+
+    int_abs = function(a)
+        local b = int_copy(a)
+        b.sign = 1
+        return b
+    end
+
+    local function int_gcd(a, b)
+        a = int_abs(a)
+        b = int_abs(b)
+        while true do
+            local _
+            local order = int_cmp(a, b)
+            if order == 0 then return a end
+            if order > 0 then
+                _, a = int_divmod(a, b)
+                if int_iszero(a) then return b end
+            else
+                _, b = int_divmod(b, a)
+                if int_iszero(b) then return a end
+            end
+        end
+    end
+
+    local function int_lcm(a, b)
+        a = int_abs(a)
+        b = int_abs(b)
+        return int_mul((int_divmod(a, int_gcd(a, b))), b)
+    end
+
+    local function int_iseven(a)
+        return #a == 0 or a[1]%2 == 0
+    end
+
+    local function int_isodd(a)
+        return #a > 0 and a[1]%2 == 1
+    end
+
+    local int_shift_left, int_shift_right
+
+    int_shift_left = function(a, b)
+        if int_iszero(b) then return a end
+        if b.sign > 0 then
+            return int_mul(a, int_two^b)
+        else
+            return int_shift_right(a, int_neg(b))
+        end
+    end
+
+    int_shift_right = function(a, b)
+        if int_iszero(b) then return a end
+        if b.sign < 0 then
+            return int_shift_left(a, int_neg(b))
+        else
+            return (int_divmod(a, int_two^b))
+        end
+    end
+
+    mt.__add = function(a, b) return int_add(int(a), int(b)) end
+    mt.__div = function(a, b) local q, _ = int_divmod(int(a), int(b)); return q end
+    mt.__eq = function(a, b) return int_cmp(int(a), int(b)) == 0 end
+    mt.__idiv = mt.__div
+    mt.__le = function(a, b) return int_cmp(int(a), int(b)) <= 0 end
+    mt.__lt = function(a, b) return int_cmp(int(a), int(b)) < 0 end
+    mt.__mod = function(a, b) local _, r = int_divmod(int(a), int(b)); return r end
+    mt.__mul = function(a, b) return int_mul(int(a), int(b)) end
+    mt.__pow = function(a, b) return int_pow(int(a), int(b)) end
+    mt.__shl = function(a, b) return int_shift_left(int(a), int(b)) end
+    mt.__shr = function(a, b) return int_shift_right(int(a), int(b)) end
+    mt.__sub = function(a, b) return int_sub(int(a), int(b)) end
+    mt.__tostring = function(a, base) return int_tostring(a, base) end
+    mt.__unm = function(a) return int_neg(a) end
+
+    mt.__index.add = mt.__add
+    mt.__index.bits = ni "bits"
+    mt.__index.compare = function(a, b) return int_cmp(int(a), int(b)) end
+    mt.__index.div = mt.__div
+    mt.__index.egcd = ni "egcd"
+    mt.__index.gcd = function(a, b) return int_gcd(int(a), int(b)) end
+    mt.__index.invmod = ni "invmod"
+    mt.__index.iseven = int_iseven
+    mt.__index.isodd = int_isodd
+    mt.__index.iszero = int_iszero
+    mt.__index.isone = int_isone
+    mt.__index.lcm = function(a, b) return int_lcm(int(a), int(b)) end
+    mt.__index.mod = mt.__mod
+    mt.__index.mul = mt.__mul
+    mt.__index.neg = mt.__unm
+    mt.__index.pow = mt.__pow
+    mt.__index.powmod = ni "powmod"
+    mt.__index.quotrem = function(a, b) return int_divmod(int(a), int(b)) end
+    mt.__index.root = ni "root"
+    mt.__index.shift = mt.__index.shl
+    mt.__index.sqr = function(a) return int_mul(a, a) end
+    mt.__index.sqrt = int_sqrt
+    mt.__index.sub = mt.__sub
+    mt.__index.abs = function(a) return int_abs(a) end
+    mt.__index.tonumber = int_tonumber
+    mt.__index.tostring = mt.__tostring
+    mt.__index.totext = ni "totext"
+
+    imath.abs = function(a) return int(a):abs() end
+    imath.add = function(a, b) return int(a) + int(b) end
+    imath.bits = function(a) return int(a):bits() end
+    imath.compare = function(a, b) return int(a):compare(int(b)) end
+    imath.div = function(a, b) return int(a) / int(b) end
+    imath.egcd = function(a, b) return int(a):egcd(int(b)) end
+    imath.gcd = function(a, b) return int(a):gcd(int(b)) end
+    imath.invmod = function(a, b) return int(a):invmod(int(b)) end
+    imath.iseven = function(a) return int(a):iseven() end
+    imath.isodd = function(a) return int(a):isodd() end
+    imath.iszero = function(a) return int(a):iszero() end
+    imath.isone = function(a) return int(a):isone() end
+    imath.lcm = function(a, b) return int(a):lcm(int(b)) end
+    imath.mod = function(a, b) return int(a) % int(b) end
+    imath.mul = function(a, b) return int(a) * int(b) end
+    imath.neg = function(a) return -int(a) end
+    imath.new = int
+    imath.pow = function(a, b) return int(a) ^ b end
+    imath.powmod = function(a, b) return int(a):powmod(int(b)) end
+    imath.quotrem = function(a, b) return int(a):quotrem(int(b)) end
+    imath.root = function(a) return int(a):root() end
+    imath.shift = function(a, b) return int(a) << b end
+    imath.sqr = function(a) return int(a):sqr() end
+    imath.sqrt = function(a) return int(a):sqrt() end
+    imath.sub = function(a, b) return int(a) - int(b) end
+    imath.text = ni "text"
+    imath.tonumber = function(a) return int(a):tonumber() end
+    imath.tostring = function(a) return int(a):tostring() end
+    imath.totext = function(a) return int(a):totext() end
+
+end
+
+return imath
+]=])
+package.preload["import"] = lib("lib/luax/import.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LIB
+
+--[[------------------------------------------------------------------------@@@
+# import: import Lua scripts into tables
+
+```lua
+local import = require "import"
+```
+
+The import module can be used to manage simple configuration files,
+configuration parameters being global variables defined in the configuration file.
+
+```lua
+local conf = import("myconf.lua", [env])
+```
+Evaluates `"myconf.lua"` in a new table and returns this table.
+All files are tracked in `package.modpath`.
+
+The execution environment inherits from `env` (or `_ENV` if `env` is not defined).
+@@@]]
+
+return function(fname, env)
+    local mod = setmetatable({}, {__index = env or _ENV})
+    assert(loadfile(fname, "t", mod))()
+    return mod
+end
+]=])
+package.preload["json"] = lib("lib/luax/json.lua", [===[-- Module options:
 local always_use_lpeg = false
 local register_global_module_table = false
 local global_module_name = 'json'
@@ -12791,7 +10422,675 @@ end
 return json
 
 ]===])
-libs["serpent"] = lib("ext/lua/serpent/serpent.lua", [=[local n, v = "serpent", "0.303" -- (C) 2012-18 Paul Kulchenko; MIT License
+package.preload["linenoise"] = lib("lib/luax/linenoise.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LIB
+
+local has_linenoise, linenoise = pcall(require, "_linenoise")
+
+if not has_linenoise then
+
+    local F = require "F"
+    local term = require "term"
+
+    linenoise = setmetatable({
+        read = term.prompt,
+    }, {
+        __index = F.const(F.const()),
+    })
+
+end
+
+return linenoise
+]=])
+package.preload["luax-debug"] = lib("lib/luax/luax-debug.lua", [==[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LOAD=_
+
+local F = require "F"
+
+-- This module adds some functions to the debug package.
+
+--[=[-----------------------------------------------------------------------@@@
+# debug
+
+The standard Lua package `debug` is added some functions to help debugging.
+@@@]=]
+
+--[[@@@
+```lua
+debug.locals(level)
+```
+> table containing the local variables at a given level `level`.
+  The default level is the caller level (1).
+  If `level` is a function, `locals` returns the names of the function parameters.
+@@@]]
+
+function debug.locals(level)
+    local vars = F{}
+    if type(level) == "function" then
+        local i = 1
+        while true do
+            local name = debug.getlocal(level, i)
+            if name==nil then break end
+            if not name:match "^%(" then
+                vars[#vars+1] = name
+            end
+            i = i+1
+        end
+    else
+        level = (level or 1) + 1
+        local i = 1
+        while true do
+            local name, val = debug.getlocal(level, i)
+            if name==nil then break end
+            if not name:match "^%(" then
+                vars[name] = val
+            end
+            i = i+1
+        end
+    end
+    return vars
+end
+
+return debug
+]==])
+package.preload["luax-package"] = lib("lib/luax/luax-package.lua", [==[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LOAD=_
+
+local F = require "F"
+
+local package  = require "package"
+
+-- inspired by https://stackoverflow.com/questions/60283272/how-to-get-the-exact-path-to-the-script-that-was-loaded-in-lua
+
+-- This module wraps package searchers in a function that tracks package paths.
+-- The paths are stored in package.modpath, which can be used to generate dependency files
+-- for [ypp](https://codeberg.org/cdsoft/luax) or [panda](https://codeberg.org/cdsoft/panda).
+
+--[=[-----------------------------------------------------------------------@@@
+# package
+
+The standard Lua package `package` is added some information about packages loaded by LuaX.
+@@@]=]
+
+--[[@@@
+```lua
+package.modpath      -- { module_name = module_path }
+```
+> table containing the names of the loaded packages and their actual paths.
+>
+> `package.modpath` contains the names of the packages loaded by `require`, `dofile`, `loadfile`, `import`
+> and `toml.parse`.
+
+```lua
+package.track(name, [path])     -- package.modpath[name] = path or name
+```
+> add `name` to `package.modpath`.
+@@@]]
+
+package.modpath = F{}
+
+function package.track(name, path)
+    package.modpath[name] = path or name
+end
+
+local function wrap_searcher(searcher)
+    return function(modname)
+        local loader, path = searcher(modname)
+        if type(loader) == "function" then
+            package.track(modname, path)
+        end
+        return loader, path
+    end
+end
+
+for i = 2, #package.searchers do
+    package.searchers[i] = wrap_searcher(package.searchers[i])
+end
+
+local function wrap(func)
+    return function(filename, ...)
+        if filename ~= nil then
+            package.track(filename)
+        end
+        return func(filename, ...)
+    end
+end
+
+dofile = wrap(dofile)
+loadfile = wrap(loadfile)
+
+local toml = require "toml"
+local _toml_parse = toml.parse
+
+---@diagnostic disable-next-line: duplicate-set-field
+toml.parse = function(filename, options)
+    if not options or not options.load_from_string then
+        package.track(filename)
+    end
+    return _toml_parse(filename, options)
+end
+
+return package
+]==])
+package.preload["luax-targets"] = lib("lib/luax/luax-targets.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LIB
+
+local F = require "F"
+
+--[[ Target definitions:
+
+Field       Description                         Value
+----------- ----------------------------------- -------------------------------------------------------------
+name        LuaX target name                    "OS"-"ARCH"[-musl]
+machine     architecture name                   uname -m on Linux/MacOS, %PROCESSOR_ARCHITECTURE% on Windows
+kernel      OS kernel                           uname -s on Linux/MacOS, %OS% on Windows
+os          OS name known by LuaX               linux, macos, windows
+arch        architecture name known by LuaX     x86_64, aarch64
+libc        C library name                      gnu, musl, none
+exe         executable file extension           .exe on Windows
+so          shared library file extension       .so, .dylib, .dll
+
+--]]
+
+return F{
+    {name="linux-x86_64",       machine="x86_64",  kernel="Linux",      os="linux",   arch="x86_64",  libc="gnu",   exe="",     so=".so"   },
+    {name="linux-x86_64-musl",  machine="x86_64",  kernel="Linux",      os="linux",   arch="x86_64",  libc="musl",  exe="",     so=".so"   },
+    {name="linux-aarch64",      machine="aarch64", kernel="Linux",      os="linux",   arch="aarch64", libc="gnu",   exe="",     so=".so"   },
+    {name="linux-aarch64-musl", machine="aarch64", kernel="Linux",      os="linux",   arch="aarch64", libc="musl",  exe="",     so=".so"   },
+    {name="macos-x86_64",       machine="x86_64",  kernel="Darwin",     os="macos",   arch="x86_64",  libc="none",  exe="",     so=".dylib"},
+    {name="macos-aarch64",      machine="arm64",   kernel="Darwin",     os="macos",   arch="aarch64", libc="none",  exe="",     so=".dylib"},
+    {name="windows-x86_64",     machine="AMD64",   kernel="Windows_NT", os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll"  },
+    {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
+}
+]=])
+package.preload["luax-version"] = lib("lib/luax/luax-version.lua", [[local version = "10.0"
+local year = 2026
+local url = "codeberg.org/cdsoft/luax"
+local author = "Christophe Delord"
+
+--@LIB
+
+return setmetatable({
+    version = version,
+    copyright = ("Copyright (C) 2021-%d %s, %s"):format(year, url, author),
+    url = url,
+    author = author,
+}, {
+    __tostring = function() return "LuaX "..version end,
+})
+]])
+package.preload["mathx"] = lib("lib/luax/mathx.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LIB
+
+local has_mathx, mathx = pcall(require, "_mathx")
+if has_mathx then return mathx end
+
+mathx = {}
+
+local exp = math.exp
+local log = math.log
+local log2 = function(x) return log(x, 2) end
+local abs = math.abs
+local max = math.max
+local floor = math.floor
+local ceil = math.ceil
+local modf = math.modf
+
+local pack = string.pack
+local unpack = string.unpack
+
+local inf <const> = 1/0
+
+---@diagnostic disable:unused-vararg
+local function ni(f) return function(...) error(f.." not implemented") end end
+
+local function sign(x) return x < 0 and -1 or 1 end
+
+mathx.fabs = math.abs
+mathx.acos = math.acos
+mathx.acosh = function(x) return log(x + (x^2-1)^0.5) end
+mathx.asin = math.asin
+mathx.asinh = function(x) return log(x + (x^2+1)^0.5) end
+mathx.atan = math.atan
+mathx.atan2 = math.atan
+mathx.atanh = function(x) return 0.5*log((1+x)/(1-x)) end
+mathx.cbrt = function(x) return x < 0 and -(-x)^(1/3) or x^(1/3) end
+mathx.ceil = math.ceil
+mathx.copysign = function(x, y) return abs(x) * sign(y) end
+mathx.cos = math.cos
+mathx.cosh = function(x) return (exp(x)+exp(-x))/2 end
+mathx.deg = math.deg
+mathx.erf = ni "erf"
+mathx.erfc = ni "erfc"
+mathx.exp = math.exp
+mathx.exp2 = function(x) return 2^x end
+mathx.expm1 = function(x) return exp(x)-1 end
+mathx.fdim = function(x, y) return max(x-y, 0) end
+mathx.floor = math.floor
+mathx.fma = function(x, y, z) return x*y + z end
+mathx.fmax = math.max
+mathx.fmin = math.min
+mathx.fmod = math.fmod
+mathx.frexp = function(x)
+    if x == 0 then return 0, 0 end
+    local ax = abs(x)
+    local e = ceil(log2(ax))
+    local m = ax / (2^e)
+    if m == 1 then m, e = m/2, e+1 end
+    return m*sign(x), e
+end
+mathx.gamma = ni "gamma"
+mathx.hypot = function(x, y)
+    if x == 0 and y == 0 then return 0.0 end
+    local ax, ay = abs(x), abs(y)
+    if ax > ay then return ax * (1+(y/x)^2)^0.5 end
+    return ay * (1+(x/y)^2)^0.5
+end
+mathx.isfinite = function(x) return abs(x) < inf end
+mathx.isinf = function(x) return abs(x) == inf end
+mathx.isnan = function(x) return x ~= x end
+mathx.isnormal = ni "isnormal"
+mathx.ldexp = function(x, e) return x*2^e end
+mathx.lgamma = ni "lgamma"
+mathx.log = math.log
+mathx.log10 = function(x) return log(x, 10) end
+mathx.log1p = function(x) return log(1+x) end
+mathx.log2 = function(x) return log(x, 2) end
+mathx.logb = ni "logb"
+mathx.modf = math.modf
+mathx.nearbyint = function(x)
+    local m = modf(x)
+    if m%2 == 0 then
+        return x < 0 and floor(x+0.5) or ceil(x-0.5)
+    else
+        return x >= 0 and floor(x+0.5) or ceil(x-0.5)
+    end
+end
+mathx.nextafter = function(x, y)
+    if x == y then return x end
+    if x == 0 then
+        if y > 0 then return 0x0.0000000000001p-1022 end
+        if y < 0 then return -0x0.0000000000001p-1022 end
+    end
+    local i = unpack("i8", pack("d", x))
+    i = i + (  y > x and x < 0 and -1
+            or y < x and x < 0 and 1
+            or y > x and x > 0 and 1
+            or y < x and x > 0 and -1
+            )
+    return unpack("d", pack("i8", i))
+end
+mathx.pow = function(x, y) return x^y end
+mathx.rad = math.rad
+mathx.round = function(x) return x >= 0 and floor(x+0.5) or ceil(x-0.5) end
+mathx.scalbn = ni "scalbn"
+mathx.sin = math.sin
+mathx.sinh = function(x) return (exp(x)-exp(-x))/2 end
+mathx.sqrt = math.sqrt
+mathx.tan = math.tan
+mathx.tanh = function(x) return (exp(x)-exp(-x))/(exp(x)+exp(-x)) end
+mathx.trunc = function(x) return x >= 0 and floor(x) or ceil(x) end
+
+mathx.inf = inf
+mathx.nan = math.abs(0/0)
+mathx.pi = math.pi
+
+return mathx
+]=])
+package.preload["ps"] = lib("lib/luax/ps.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LIB
+
+local has_ps, ps = pcall(require, "_ps")
+
+if not has_ps then
+
+    ps = {}
+
+    function ps.sleep(n)
+        io.popen("sleep "..tostring(n)):close()
+    end
+
+    ps.time = os.time
+
+    ps.clock = os.clock
+
+    function ps.profile(func)
+        local clock = ps.clock
+        local ok, dt = pcall(function()
+            local t0 = clock()
+            func()
+            local t1 = clock()
+            return t1 - t0
+        end)
+        if ok then
+            return dt
+        else
+            return ok, dt
+        end
+
+    end
+
+end
+
+return ps
+]=])
+package.preload["qmath"] = lib("lib/luax/qmath.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LIB
+local has_qmath, qmath = pcall(require, "_qmath")
+
+if not has_qmath then
+
+    qmath = {}
+    local mt = {__index={}}
+
+    local imath = require "imath"
+    local Z = imath.new
+    local gcd = imath.gcd
+
+    local function rat(num, den)
+        if not den then
+            if type(num) == "table" and num.num and num.den then return num end
+            den = 1
+        end
+        num, den = Z(num), Z(den)
+        assert(den ~= 0, "(qmath) result undefined")
+        if den < 0 then num, den = -num, -den end
+        if num:iszero() then
+            den = Z(1)
+        else
+            local d = gcd(num, den)
+            num, den = num/d, den/d
+        end
+        return setmetatable({num=num, den=den}, mt)
+    end
+
+    local rat_zero <const> = rat(0)
+    local rat_one <const> = rat(1)
+
+    local function rat_tostring(r)
+        if r.den:isone() then return tostring(r.num) end
+        return ("%s/%s"):format(r.num, r.den)
+    end
+
+    local function compare(a, b)
+        return (a.num*b.den):compare(b.num*a.den)
+    end
+
+    mt.__add = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den + b.num*a.den, a.den*b.den) end
+    mt.__div = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den, a.den*b.num) end
+    mt.__eq = function(a, b) a, b = rat(a), rat(b); return compare(a, b) == 0 end
+    mt.__le = function(a, b) a, b = rat(a), rat(b); return compare(a, b) <= 0 end
+    mt.__lt = function(a, b) a, b = rat(a), rat(b); return compare(a, b) < 0 end
+    mt.__mul = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.num, a.den*b.den) end
+    mt.__pow = function(a, b)
+        if type(b) == "number" and math.type(b) == "float" then
+            error("bad argument #2 to 'pow' (number has no integer representation)")
+        end
+        if b == 0 then return rat_one end
+        if a == 0 then return rat_zero end
+        if a == 1 then return rat_one end
+        if b < 0 then
+            b = -b
+            return rat(a.den^b, a.num^b)
+        end
+        return rat(a.num^b, a.den^b)
+    end
+    mt.__sub = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den - b.num*a.den, a.den*b.den) end
+    mt.__tostring = rat_tostring
+    mt.__unm = function(a) return rat(-a.num, a.den) end
+    mt.__index.abs = function(a) return rat(a.num:abs(), a.den) end
+    mt.__index.add = mt.__add
+    mt.__index.compare = function(a, b) return compare(rat(a), rat(b)) end
+    mt.__index.denom = function(a) return rat(a.den) end
+    mt.__index.div = mt.__div
+    mt.__index.int = function(a) return rat(a.num / a.den) end
+    mt.__index.inv = function(a) return rat(a.den, a.num) end
+    mt.__index.isinteger = function(a) return a.den:isone() end
+    mt.__index.iszero = function(a) return a.num:iszero() end
+    mt.__index.mul = mt.__mul
+    mt.__index.neg = mt.__unm
+    mt.__index.numer = function(a) return rat(a.num) end
+    mt.__index.pow = mt.__pow
+    mt.__index.sign = function(a) return compare(a, rat_zero) end
+    mt.__index.sub = mt.__sub
+    mt.__index.todecimal = function(a) return tostring(a.num // a.den) end
+    mt.__index.tonumber = function(a) return a.num:tonumber()/a.den:tonumber() end
+
+    qmath.abs = function(a) return rat(a):abs() end
+    qmath.add = function(a, b) return rat(a) + rat(b) end
+    qmath.compare = function(a, b) return rat(a):compare(rat(b)) end
+    qmath.denom = function(a) return rat(a):denom() end
+    qmath.div = function(a, b) return rat(a) / rat(b) end
+    qmath.int = function(a) return rat(a):int() end
+    qmath.inv = function(a) return rat(a):inv() end
+    qmath.isinteger = function(a) return rat(a):isinteger() end
+    qmath.iszero = function(a) return rat(a):iszero() end
+    qmath.mul = function(a, b) return rat(a) * rat(b) end
+    qmath.neg = function(a) return -rat(a) end
+    qmath.new = rat
+    qmath.numer = function(a) return rat(a):numer() end
+    qmath.pow = function(a, b) return rat(a) ^ b end
+    qmath.sign = function(a) return rat(a):sign() end
+    qmath.sub = function(a, b) return rat(a) - rat(b) end
+    qmath.todecimal = function(a) return rat(a):todecimal() end
+    qmath.tonumber = function(a) return rat(a):tonumber() end
+    qmath.tostring = mt.__tostring
+
+end
+
+--[[@@@
+## qmath additional functions
+@@@]]
+
+--[[@@@
+```lua
+q = qmath.torat(x, [eps])
+```
+approximates a floating point number `x` with a rational value.
+The rational number `q` is an approximation of `x` such that $|q - x| < eps$.
+The default `eps` value is $10^{-6}$.
+@@@]]
+
+local rat = qmath.new
+local abs = math.abs
+local modf = math.modf
+
+local function frac(a)
+    local q = rat(a[#a])
+    for i = #a-1, 1, -1 do
+        q = a[i] + 1/q
+    end
+    return q
+end
+
+function qmath.torat(x, eps)
+    eps = eps or 1e-6
+    local x0 = x
+    local a = {}
+    a[1], x = modf(x)
+    local q = frac(a)
+    while abs(x0 - q:tonumber()) > eps and #a < 64 do
+        a[#a+1], x = modf(1/x)
+        q = frac(a)
+    end
+    return q
+end
+
+return qmath
+]=])
+package.preload["readline"] = lib("lib/luax/readline.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LIB
+
+local has_readline, readline = pcall(require, "_readline")
+
+if not has_readline then
+
+    local F = require "F"
+    local term = require "term"
+
+    readline = setmetatable({
+        read = term.prompt,
+    }, {
+        __index = F.const(F.const()),
+    })
+
+end
+
+return readline
+]=])
+package.preload["serpent"] = lib("lib/luax/serpent.lua", [=[local n, v = "serpent", "0.303" -- (C) 2012-18 Paul Kulchenko; MIT License
 local c, d = "Paul Kulchenko", "Lua serializer and pretty printer"
 local snum = {[tostring(1/0)]='1/0 --[[math.huge]]',[tostring(-1/0)]='-1/0 --[[-math.huge]]',[tostring(0/0)]='0/0'}
 local badtype = {thread = true, userdata = true, cdata = true}
@@ -12944,7 +11243,1016 @@ return { _NAME = n, _COPYRIGHT = c, _DESCRIPTION = d, _VERSION = v, serialize = 
   block = function(a, opts) return s(a, merge({indent = '  ', sortkeys = true, comment = true}, opts)) end }
 --@LIB
 ]=])
-libs["toml"] = lib("ext/lua/toml/toml.lua", [=[
+package.preload["sh"] = lib("lib/luax/sh.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LIB
+
+--[[------------------------------------------------------------------------@@@
+## Shell
+@@@]]
+
+--[[@@@
+```lua
+local sh = require "sh"
+```
+@@@]]
+local sh = {}
+
+local F = require "F"
+local sys = require "sys"
+
+local __WINDOWS__ = sys.os == "windows"
+
+--[[@@@
+```lua
+sh.run(...)
+```
+Runs the command `...` with `os.execute`.
+@@@]]
+
+function sh.run(...)
+    local cmd = F.flatten{...}:unwords()
+    return os.execute(cmd)
+end
+
+--[[@@@
+```lua
+sh.read(...)
+```
+Runs the command `...` with `io.popen`.
+When `sh.read` succeeds, it returns the content of stdout.
+Otherwise it returns the error identified by `io.popen`.
+@@@]]
+
+function sh.read(...)
+    local cmd = F.flatten{...}:unwords()
+    local p, popen_err = io.popen(cmd, "r")
+    if not p then return p, popen_err end
+    local out = p:read("a")
+    local ok, exit, ret = p:close()
+    if ok then
+        return out
+    else
+        return ok, exit, ret
+    end
+end
+
+--[[@@@
+```lua
+sh.write(...)(data)
+```
+Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
+`sh.write` returns the same values returned by `os.execute`.
+@@@]]
+
+function sh.write(...)
+    local cmd = F.flatten{...}:unwords()
+    return function(data)
+        if type(data) ~= "string" then
+            return nil, "bad argument #1 to 'write' (string expected, got "..type(data)..")"
+        end
+        local p, popen_err = io.popen(cmd, "w")
+        if not p then return p, popen_err end
+        p:write(data)
+        return p:close()
+    end
+end
+
+--[[@@@
+```lua
+sh.pipe(...)(data)
+```
+Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
+When `sh.pipe` succeeds, it returns the content of stdout.
+Otherwise it returns the error identified by `io.popen`.
+@@@]]
+
+function sh.pipe(...)
+    local cmd = F.flatten{...}
+    local cat = __WINDOWS__ and "type" or "cat"
+    return function(data)
+        local fs = require "fs"
+        if type(data) ~= "string" then
+            return nil, "bad argument #1 to 'write' (string expected, got "..type(data)..")"
+        end
+        return fs.with_tmpfile(function(tmp)
+            fs.write_bin(tmp, data)
+            return sh.read(cat, tmp, " | ", cmd)
+        end)
+    end
+end
+
+--[[@@@
+``` lua
+sh(...)
+```
+`sh` can be called as a function. `sh(...)` is a shortcut to `sh.read(...)`.
+@@@]]
+setmetatable(sh, {
+    __call = function(_, ...) return sh.read(...) end,
+})
+
+return sh
+]=])
+package.preload["strict"] = lib("lib/luax/strict.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--[[------------------------------------------------------------------------@@@
+# strict: checks uses of undeclared global variables
+
+The `strict` module checks uses of undeclared global variables.
+All global variables must be 'declared' through a regular assignment
+(even assigning nil will do) in a main chunk before being used
+anywhere or assigned to inside a function.
+
+```lua
+require "strict"
+```
+
+This module is `strict.lua` <from https://www.lua.org/extras/>
+adpated for LuaX.
+
+This module not loaded by default since some global variables are tested when LuaX start but may not be defined.
+@@@]]
+
+--@LIB
+
+-- strict.lua
+-- checks uses of undeclared global variables
+-- All global variables must be 'declared' through a regular assignment
+-- (even assigning nil will do) in a main chunk before being used
+-- anywhere or assigned to inside a function.
+-- distributed under the Lua license: http://www.lua.org/license.html
+
+local getinfo, error, rawset, rawget = debug.getinfo, error, rawset, rawget
+
+local mt = getmetatable(_G)
+if mt == nil then
+  mt = {}
+  setmetatable(_G, mt)
+end
+
+mt.__declared = {}
+
+local function what ()
+  local d = getinfo(3, "S")
+  return d and d.what or "C"
+end
+
+mt.__newindex = function (t, n, v)
+  if not mt.__declared[n] then
+    local w = what()
+    if w ~= "main" and w ~= "C" then
+      error("assign to undeclared variable '"..n.."'", 2)
+    end
+    mt.__declared[n] = true
+  end
+  rawset(t, n, v)
+end
+
+mt.__index = function (t, n)
+  if not mt.__declared[n] and what() ~= "C" then
+    error("variable '"..n.."' is not declared", 2)
+  end
+  return rawget(t, n)
+end
+]=])
+package.preload["sys"] = lib("lib/luax/sys.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LIB
+
+local has_sys, sys = pcall(require, "_sys")
+
+if not has_sys then
+
+    sys = {
+        libc = "lua",
+    }
+
+    local targets = require "luax-targets"
+
+    local kernel, machine
+
+    if package.config:sub(1, 1) == "/" then
+        -- Search for a Linux-like target
+        kernel, machine = io.popen("uname -s -m", "r") : read "a" : match "(%S+)%s+(%S+)"
+    else
+        -- Search for a Windows target
+        kernel, machine = os.getenv "OS", os.getenv "PROCESSOR_ARCHITECTURE"
+    end
+
+    local target
+    for i = 1, #targets do
+        if targets[i].kernel==kernel and targets[i].machine==machine then
+            target = targets[i]
+            break
+        end
+    end
+
+    if not target then
+        io.stderr:write("ERROR: Unknown architecture\n",
+            "Please report the bug with this information:\n",
+            "    config  = "..package.config:lines():head().."\n",
+            "    kernel  = "..tostring(kernel).."\n",
+            "    machine = "..tostring(machine).."\n",
+            ">> https://codeberg.org/cdsoft/luax/issues <<\n"
+        )
+        os.exit(1)
+    end
+
+    sys.name = target.name
+    sys.os = target.os
+    sys.arch = target.arch
+    sys.exe = target.exe
+    sys.so = target.so
+
+end
+
+return sys
+]=])
+package.preload["tar"] = lib("lib/luax/tar.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--@LIB
+
+--[[------------------------------------------------------------------------@@@
+# Minimal tar file support
+
+```lua
+local tar = require "tar"
+```
+
+The `tar` module can read and write tar archives.
+Only files, directories and symbolic links are supported.
+@@@]]
+
+-- https://fr.wikipedia.org/wiki/Tar_%28informatique%29
+
+local tar = {}
+
+local F = require "F"
+local fs = require "fs"
+local sys = require "sys"
+
+local __WINDOWS__ = sys.os == "windows"
+
+local format = string.format
+local pack   = string.pack
+local unpack = string.unpack
+local rep    = string.rep
+local bytes  = string.bytes
+local sum    = F.sum
+
+local function pad(size)
+    return (512 - size%512) % 512
+end
+
+local file_type = F{
+    file = "0",
+    link = "2",
+    directory = "5",
+}
+
+local rev_file_type = file_type:mapk2a(function(k, v) return {v, k} end):from_list()
+rev_file_type["\0"] = rev_file_type["0"]
+
+local default_mode = {
+    file = tonumber("644", 8),
+    link = tonumber("777", 8),
+    directory = tonumber("755", 8),
+}
+
+local Discarded = {}
+
+local function path_components(path)
+    local function is_sep(d) return d==fs.sep or d=="." or d==" " end
+    return fs.splitpath(path):drop_while(is_sep):drop_while_end(is_sep)
+end
+
+local function clean_path(path)
+    return fs.join(path_components(path))
+end
+
+local function header(st, xform)
+    local name = xform(clean_path(st.name))
+    if name == nil then return Discarded end
+    if #name > 100 then return nil, name..": filename too long" end
+    if st.type=="file" and st.size >= 8*1024^3 then return nil, st.name..": file too big" end
+    local ftype = file_type[st.type]
+    if not ftype then return nil, st.name..": wrong file type" end
+    if st.type=="link" and not st.link then return nil, st.name..": missing link name" end
+    if st.link and #st.link > 100 then return nil, st.link..": filename too long" end
+    local header1 = pack("c100c8c8c8c12c12",
+        name,
+        format("%07o", st.mode or default_mode[st.type] or "0"),
+        "",
+        "",
+        format("%011o", st.size or 0),
+        format("%011o", st.mtime)
+    )
+    local header2 = pack("c1c100c6c2c32c32c8c8c155c12",
+        ftype,
+        st.link or "",
+        "", "", "", "", "", "", "", ""
+    )
+    local checksum = format("%07o", sum(bytes(header1)) + sum(bytes(header2)) + 32*8)
+    return header1..pack("c8", checksum)..header2
+end
+
+local function end_of_archive()
+    return pack("c1024", "")
+end
+
+local function parse(archive, i)
+    local name, mode, _, _, size, mtime, checksum, ftype, link = unpack("c100c8c8c8c12c12c8c1c100", archive, i)
+    if not checksum then return nil, "Corrupted archive" end
+    local function cut(s) return s:match "^[^\0]*" end
+    if sum(bytes(archive:sub(i, i+148-1))) + sum(bytes(archive:sub(i+156, i+512-1))) + 32*8 ~= tonumber(cut(checksum), 8) then
+        return nil, "Wrong checksum"
+    end
+    ftype = rev_file_type[ftype]
+    if not ftype then return nil, cut(name)..": wrong file type" end
+    return {
+        name = cut(name),
+        mode = tonumber(cut(mode), 8),
+        size = tonumber(cut(size), 8),
+        mtime = tonumber(cut(mtime), 8),
+        type = ftype,
+        link = ftype=="link" and cut(link) or nil,
+    }
+end
+
+--[[@@@
+```lua
+tar.tar(files, [xform])
+```
+> returns a string that can be saved as a tar file.
+> `files` is a list of file names or `stat` like structures.
+> `stat` structures shall contain these fields:
+>
+> - `name`: file name
+> - `mtime`: last modification time
+> - `content`: file content (the default value is the actual content of the file `name`).
+>
+> **Note**: these structures can also be produced by `fs.stat`.
+>
+> `xform` is an optional function used to transform filenames in the archive.
+@@@]]
+
+function tar.tar(files, xform)
+    xform = xform or F.id
+    local chunks = F{}
+
+    local already_done = {}
+    local function done(name)
+        if already_done[name] then return true end
+        already_done[name] = true
+        return false
+    end
+
+    local function add_dir(path, st0)
+        if done(path) then return true end
+        if path:dirname() == path then return true end
+        local ok, err = add_dir(path:dirname(), st0)
+        if not ok then return nil, err end
+        local st = F.merge{st0, { name=path, mode=tonumber("755", 8), size=0, type="directory" }}
+        local hd
+        hd, err = header(st, F.id)
+        if not hd then return nil, err end
+        chunks[#chunks+1] = hd
+        return true
+    end
+
+    local function add_file(st)
+        local xformed_name = xform(st.name)
+        if xformed_name == nil then return true end
+        if done(xformed_name) then return true end
+        local ok, err = add_dir(xformed_name:dirname(), st)
+        if not ok then return nil, err end
+        local hd
+        hd, err = header(st, xform)
+        if hd == Discarded then return true end
+        if not hd then return nil, err end
+        chunks[#chunks+1] = hd
+        chunks[#chunks+1] = st.content
+        chunks[#chunks+1] = rep("\0", pad(#st.content))
+        return true
+    end
+
+    local function add_link(st)
+        local xformed_name = xform(st.name)
+        if xformed_name == nil then return true end
+        if done(xformed_name) then return true end
+        local ok, err = add_dir(xformed_name:dirname(), st)
+        if not ok then return nil, err end
+        local hd
+        hd, err = header(st, xform)
+        if hd == Discarded then return true end
+        if not hd then return nil, err end
+        chunks[#chunks+1] = hd
+        return true
+    end
+
+    local function add_real_dir(path)
+        if done(path) then return true end
+        if path:dirname() == path then return true end
+        local ok, err = add_real_dir(path:dirname())
+        if not ok then return nil, err end
+        local st
+        st, err = fs.stat(path)
+        if not st then return nil, err end
+        local hd
+        hd, err = header(st, xform)
+        if hd == Discarded then return true end
+        if not hd then return nil, err end
+        chunks[#chunks+1] = hd
+        return true
+    end
+
+    local function add_real_file(st)
+        local xformed_name = xform(st.name)
+        if xformed_name == nil then return true end
+        if done(xformed_name) then return true end
+        local ok, err = add_real_dir(st.name:dirname())
+        if not ok then return nil, err end
+        local hd
+        hd, err = header(st, xform)
+        if hd == Discarded then return true end
+        if not hd then return nil, err end
+        local content
+        content, err = fs.read_bin(st.name)
+        if not content then return nil, err end
+        chunks[#chunks+1] = hd
+        chunks[#chunks+1] = content
+        chunks[#chunks+1] = rep("\0", pad(#content))
+        return true
+    end
+
+    local function add_real_link(st)
+        local xformed_name = xform(st.name)
+        if xformed_name == nil then return true end
+        if done(xformed_name) then return true end
+        local linkst, sterr = fs.stat(st.name)
+        if not linkst then return nil, sterr end
+        local ok, err = add_real_dir(st.name:dirname())
+        if not ok then return nil, err end
+        local hd
+        st.link = linkst.name
+        hd, err = header(st, xform)
+        if hd == Discarded then return true end
+        if not hd then return nil, err end
+        chunks[#chunks+1] = hd
+        return true
+    end
+
+    for _, file in ipairs(files) do
+
+        if type(file) == "string" then
+            local st, err = fs.stat(file)
+            if not st then return nil, err end
+            if st.type == "file" then
+                add_real_file(st)
+            elseif st.type == "link" then
+                add_real_link(st)
+            elseif st.type == "directory" then
+                add_real_dir(st.name)
+                for _, name in ipairs(fs.ls(st.name/"**")) do
+                    local childst, childerr = fs.stat(name)
+                    if not childst then return nil, childerr end
+                    if childst.type == "directory" then
+                        add_real_dir(childst.name)
+                    elseif childst.type == "file" then
+                        add_real_file(childst)
+                    end
+                end
+            end
+
+        elseif type(file) == "table" then
+            local st0 = nil
+            local err
+            local st = {
+                name = file.name,
+                type = "file",
+            }
+            if file.content then
+                st.content = file.content
+                st.size = #file.content
+            elseif file.link then
+                st.type = "link"
+                st.link = file.link
+            else
+                if __WINDOWS__ then
+                    st0, err = fs.stat(file.name)
+                else
+                    st0, err = fs.lstat(file.name)
+                end
+                if not st0 then return nil, err end
+                if st0.type == "link" then
+                    local linkst, linkerr = fs.stat(file.name)
+                    if not linkst then return nil, linkerr end
+                    st.type = "link"
+                    st.link = linkst.name
+                else
+                    local content
+                    content, err = fs.read_bin(file.name)
+                    if not content then return nil, err end
+                    st.size = st0.size
+                    st.content = content
+                end
+            end
+            if file.mtime then
+                st.mtime = file.mtime
+            else
+                st.mtime = st0 and st0.mtime or os.time()
+            end
+            local ok
+            if st.type == "link" then
+                ok, err = add_link(st)
+            else
+                ok, err = add_file(st)
+            end
+            if not ok then return nil, err end
+
+        end
+
+    end
+
+    chunks[#chunks+1] = end_of_archive()
+    return chunks:str()
+
+end
+
+--[[@@@
+```lua
+tar.untar(archive, [xform])
+```
+> returns a list of files (`stat` like structures with a `content` field).
+>
+> `xform` is an optional function used to transform filenames in the archive.
+@@@]]
+
+function tar.untar(archive, xform)
+    xform = xform or F.id
+    if #archive % 512 ~= 0 then return nil, "Corrupted archive" end
+    local eof = end_of_archive()
+    local files = F{}
+    local i = 1
+    while i <= #archive do
+        if archive:byte(i, i) == 0 then
+            if archive:sub(i, i+#eof-1):is_prefix_of(eof) then break end
+            return nil, "Corrupted archive"
+        end
+        local st, err = parse(archive, i)
+        if not st then return nil, err end
+        if st.type == "file" then
+            st.content = archive:sub(i+512, i+512+st.size-1)
+            i = i + 512 + st.size + pad(st.size)
+        elseif st.type == "link" or st.type == "directory" then
+            i = i + 512
+        else
+            return nil, st.type..": file type not supported"
+        end
+        st.name = xform(st.name)
+        if st.name ~= nil then
+            files[#files+1] = st
+        end
+    end
+    return files
+end
+
+--[[@@@
+```lua
+tar.chain(xforms)
+```
+> returns a filename transformation function that applies all functions from `funcs`.
+@@@]]
+
+function tar.chain(funcs)
+    return function(x)
+        for _, f in ipairs(funcs) do
+            x = f(clean_path(x))
+            if x == nil then return nil end
+        end
+        return clean_path(x)
+    end
+end
+
+--[[@@@
+```lua
+tar.strip(x)
+```
+> returns a transformation function that removes part of the beginning of a filename.
+> If `x` is a number, the function removes `x` path components in the filename.
+> If `x` is a string, the function removes `x` at the beginning of the filename.
+@@@]]
+
+function tar.strip(x)
+    if type(x) == "number" then
+        return function(path)
+            local dirs = path_components(path:dirname())
+            if x > #dirs then return nil end
+            return clean_path(fs.join(dirs:drop(x))/path:basename())
+        end
+    else
+        local prefix = clean_path(x)
+        return function(path)
+            path = clean_path(path)
+            if path:has_prefix(prefix) then
+                return clean_path(path:sub(#prefix+1))
+            else
+                return path
+            end
+        end
+    end
+end
+
+--[[@@@
+```lua
+tar.add(p)
+```
+> returns a transformation function that adds `p` at the beginning of a filename.
+@@@]]
+
+function tar.add(p)
+    local prefix = path_components(p)
+    return function(path)
+        local components = path_components(path)
+        return clean_path(fs.join(prefix..components))
+    end
+end
+
+--[[@@@
+```lua
+tar.xform(x, y)
+```
+> returns a transformation function that chains `tar.strip(x)` and `tar.add(y)`.
+@@@]]
+
+function tar.xform(x, y)
+    return tar.chain { tar.strip(x), tar.add(y) }
+end
+
+return tar
+]=])
+package.preload["term"] = lib("lib/luax/term.lua", [=[--[[
+This file is part of luax.
+
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
+
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+--]]
+
+--[[------------------------------------------------------------------------@@@
+# Terminal
+
+`term` provides some functions to deal with the terminal in a quite portable way.
+It is heavily inspired by:
+
+- [lua-term](https://github.com/hoelzro/lua-term/): Terminal operations for Lua
+- [nocurses](https://github.com/osch/lua-nocurses/): A terminal screen manipulation library
+
+```lua
+local term = require "term"
+```
+@@@]]
+
+--@LIB
+
+local has_term, term = pcall(require, "_term")
+
+if not has_term then
+
+    term = {}
+
+    local sh = require "sh"
+
+    local function file_descriptor(fd, def)
+        if fd == nil then return def end
+        if fd == io.stdin then return 0 end
+        if fd == io.stdout then return 1 end
+        if fd == io.stderr then return 2 end
+        return fd
+    end
+
+    local _isatty = {}
+
+    function term.isatty(fd)
+        fd = file_descriptor(fd, 0)
+        _isatty[fd] = _isatty[fd] or sh.run("test -t", fd)~=nil
+        return _isatty[fd]
+    end
+
+    function term.size()
+        local size = sh.read("tput lines cols")
+        if size then
+            local rows, cols = size : words() : map(tonumber) : unpack()
+            return { rows=rows, cols=cols }
+        end
+    end
+
+end
+
+local ESC <const> = '\027'
+local CSI <const> = ESC..'['
+
+--[[------------------------------------------------------------------------@@@
+## Colors
+
+The table `term.color` contain objects that can be used to build
+colorized strings with ANSI sequences.
+
+An object `term.color.X` can be used:
+
+- as a string
+- as a function
+- in combination with other color attributes
+
+``` lua
+-- change colors in a string
+" ... " .. term.color.X .. " ... "
+
+-- change colors for a string and reset colors at the end of the string
+term.color.X("...")
+
+-- build a complex color with attributes
+local c = term.color.red + term.color.italic + term.color.oncyan
+```
+
+The user can disable the color support (e.g. when not running on a terminal):
+
+``` lua
+if not term.isatty(io.stdout) then
+    term.color.disable()
+end
+```
+@@@]]
+
+local color_mt, color_reset
+local color_enable = true
+color_mt = {
+    __tostring = function(self) return color_enable and self.value or ""end,
+    __concat = function(self, other) return tostring(self)..tostring(other) end,
+    __call = function(self, s) return color_enable and self..s..color_reset or s end,
+    __add = function(self, other) return setmetatable({value=self.value..other}, color_mt) end,
+}
+local function color(value) return setmetatable({value=CSI..tostring(value).."m"}, color_mt) end
+local function enable(en) color_enable = en==nil or en end
+local function disable() color_enable = false end
+--                                @@@`term.color` field     Description                         @@@
+--                                @@@---------------------- ------------------------------------@@@
+term.color = {
+    -- attributes               --@@@*Attributes*                                               @@@
+    reset       = color(0),     --@@@`reset`                reset the colors                    @@@
+    clear       = color(0),     --@@@`clear`                same as reset                       @@@
+    default     = color(0),     --@@@`default`              same as reset                       @@@
+    bright      = color(1),     --@@@`bright`               bold or more intense                @@@
+    bold        = color(1),     --@@@`bold`                 same as bold                        @@@
+    dim         = color(2),     --@@@`dim`                  thiner or less intense              @@@
+    italic      = color(3),     --@@@`italic`               italic (sometimes inverse or blink) @@@
+    underline   = color(4),     --@@@`underline`            underlined                          @@@
+    blink       = color(5),     --@@@`blink`                slow blinking (less than 150 bpm)   @@@
+    fast        = color(6),     --@@@`fast`                 fast blinking (more than 150 bpm)   @@@
+    reverse     = color(7),     --@@@`reverse`              swap foreground and background      @@@
+    hidden      = color(8),     --@@@`hidden`               hidden text                         @@@
+    strike      = color(9),     --@@@`strike`               strike or crossed-out               @@@
+    -- foreground               --@@@*Foreground colors*                                        @@@
+    black       = color(30),    --@@@`black`                black foreground                    @@@
+    red         = color(31),    --@@@`red`                  red foreground                      @@@
+    green       = color(32),    --@@@`green`                green foreground                    @@@
+    yellow      = color(33),    --@@@`yellow`               yellow foreground                   @@@
+    blue        = color(34),    --@@@`blue`                 blue foreground                     @@@
+    magenta     = color(35),    --@@@`magenta`              magenta foreground                  @@@
+    cyan        = color(36),    --@@@`cyan`                 cyan foreground                     @@@
+    white       = color(37),    --@@@`white`                white foreground                    @@@
+    -- background               --@@@*Background colors*                                        @@@
+    onblack     = color(40),    --@@@`onblack`              black background                    @@@
+    onred       = color(41),    --@@@`onred`                red background                      @@@
+    ongreen     = color(42),    --@@@`ongreen`              green background                    @@@
+    onyellow    = color(43),    --@@@`onyellow`             yellow background                   @@@
+    onblue      = color(44),    --@@@`onblue`               blue background                     @@@
+    onmagenta   = color(45),    --@@@`onmagenta`            magenta background                  @@@
+    oncyan      = color(46),    --@@@`oncyan`               cyan background                     @@@
+    onwhite     = color(47),    --@@@`onwhite`              white background                    @@@
+    -- enable/disable           --@@@*Control functions*                                        @@@
+    enable      = enable,       --@@@`enable(b)`            enable colors if `b` is `true` or `nil` (default) @@@
+    disable     = disable,      --@@@`disable`              disable colors                      @@@
+}
+
+color_reset = term.color.reset
+
+--[[------------------------------------------------------------------------@@@
+## Cursor
+
+The table `term.cursor` contains functions to change the shape of the cursor:
+
+``` lua
+-- turns the cursor into a blinking vertical thin bar
+term.cursor.bar_blink()
+```
+
+@@@]]
+
+local function cursor(shape)
+    shape = CSI..shape..' q'
+    return function()
+        io.stdout:write(shape)
+    end
+end
+
+--                                  @@@`term.cursor` field      Description                         @@@
+--                                  @@@------------------------ ------------------------------------@@@
+term.cursor = {
+    reset           = cursor(0),  --@@@`reset`                  reset to the initial shape          @@@
+    block_blink     = cursor(1),  --@@@`block_blink`            blinking block cursor               @@@
+    block           = cursor(2),  --@@@`block`                  fixed block cursor                  @@@
+    underline_blink = cursor(3),  --@@@`underline_blink`        blinking underline cursor           @@@
+    underline       = cursor(4),  --@@@`underline`              fixed underline cursor              @@@
+    bar_blink       = cursor(5),  --@@@`bar_blink`              blinking bar cursor                 @@@
+    bar             = cursor(6),  --@@@`bar`                    fixed bar cursor                    @@@
+}
+
+--[[------------------------------------------------------------------------@@@
+## Terminal
+
+@@@]]
+
+local function f(fmt)
+    return function(h, ...)
+        if io.type(h) == "file" then
+            return h:write(fmt:format(...))
+        else
+            return io.stdout:write(fmt:format(h, ...))
+        end
+    end
+end
+
+--[[@@@
+``` lua
+term.reset()
+```
+resets the colors and the cursor shape.
+@@@]]
+term.reset    = f(color_reset..     -- reset colors
+                  CSI.."0 q"..      -- reset cursor shape
+                  CSI..'?25h'       -- restore cursor
+                 )
+
+--[[@@@
+``` lua
+term.clear()
+term.clearline()
+term.cleareol()
+term.clearend()
+```
+clears the terminal, the current line, the end of the current line or from the cursor to the end of the terminal.
+@@@]]
+term.clear       = f(CSI..'1;1H'..CSI..'2J')
+term.clearline   = f(CSI..'2K'..CSI..'E')
+term.cleareol    = f(CSI..'K')
+term.clearend    = f(CSI..'J')
+
+--[[@@@
+``` lua
+term.pos(row, col)
+```
+moves the cursor to the line `row` and the column `col`.
+@@@]]
+term.pos         = f(CSI..'%d;%dH')
+
+--[[@@@
+``` lua
+term.save_pos()
+term.restore_pos()
+```
+saves and restores the position of the cursor.
+@@@]]
+term.save_pos    = f(CSI..'s')
+term.restore_pos = f(CSI..'u')
+
+--[[@@@
+``` lua
+term.up([n])
+term.down([n])
+term.right([n])
+term.left([n])
+```
+moves the cursor by `n` characters up, down, right or left.
+@@@]]
+term.up          = f(CSI..'%d;A')
+term.down        = f(CSI..'%d;B')
+term.right       = f(CSI..'%d;C')
+term.left        = f(CSI..'%d;D')
+
+--[[------------------------------------------------------------------------@@@
+## Prompt
+
+The prompt function is a basic prompt implementation
+to display a prompt and get user inputs.
+
+The use of [rlwrap](https://github.com/hanslub42/rlwrap)
+is highly recommended for a better user experience on Linux.
+@@@]]
+
+--[[@@@
+```lua
+s = term.prompt(p)
+```
+prints `p` and waits for a user input
+@@@]]
+
+function term.prompt(p)
+    if p and term.isatty(io.stdin) then
+        io.stdout:write(p)
+        io.stdout:flush()
+    end
+    return io.stdin:read "l"
+end
+
+return term
+]=])
+package.preload["toml"] = lib("lib/luax/toml.lua", [=[
 
 
 
@@ -14486,41 +13794,7 @@ end
 
 return tinytoml
 ]=])
-libs["luax_config"] = lib(".build/tmp/luax_config.lua", [=[--[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
--- LuaX configuration
-
--- @LIB
-
-return {
-    version = "9.15.1",
-    date = "2026-04-11",
-    copyright = "LuaX 9.15.1  Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord",
-    authors = "Christophe Delord",
-    url = "codeberg.org/cdsoft/luax",
-    lua_copyright = _LUA_COPYRIGHT or _VERSION,
-}
-]=])
-libs["luax_assets"] = lib("luax/luax_assets.lua", [=[--/usr/bin/env luax
---[[
+package.preload["tomlx"] = lib("lib/luax/tomlx.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -14542,569 +13816,209 @@ https://codeberg.org/cdsoft/luax
 
 --@LIB
 
+--[[------------------------------------------------------------------------@@@
+# tomlx
+
+`tomlx` is a layer on top of `toml` ([tinytoml](https://github.com/FourierTransformer/tinytoml)).
+
+It uses Lua as a macro language to transform values.
+Macros are string values starting with `=`.
+The expression following `=` is a Lua expression which value replaces the macro in the table.
+
+The evaluation environment contains two specific symbols:
+
+- `__up`: environment one level above the current level
+- `__root`: root level of the environment levels
+
+```lua
+local tomlx = require "tomlx"
+```
+@@@]]
+
+local tomlx = {}
+
 local F = require "F"
 local fs = require "fs"
-local lar = require "lar"
-local sys = require "sys"
+local toml = require "toml"
 
-local function findpath(name)
-    if sys.os == "windows" and not name:lower():has_suffix(sys.exe:lower()) then
-        name = name..sys.exe
-    end
-    if name:is_file() then return name:realpath() end
-    local full_path = name:findpath()
-    return full_path and full_path:realpath() or name
+local function pattern(options)
+    return options and options.pattern or "^=%s*(.-)%s*$"
 end
 
-local function find_archive()
-
-    local libdir = os.getenv "LUAX_LIB"
-    if libdir then
-        local archive = libdir/"libluax.lar"
-        if archive:is_file() then return archive end
-    end
-
-    local N = F.keys(arg) : minimum()
-
-    for i = 0, N, -1 do
-
-        local path = findpath(arg[i])
-        if path then
-            local archive = path:dirname():dirname()/"lib"/"libluax.lar"
-            if archive:is_file() then return archive end
+local function chain(env1, env2)
+    return setmetatable({}, {
+        __index = function(_, k)
+            local v = env2[k]
+            if v ~= nil then return v end
+            return env1 and env1[k]
         end
-
-    end
-
+    })
 end
 
-local mt = {
-    __index = {
-        error = function() error("The LuaX runtime (lib/libluax.lar) is not installed or is corrupted") end,
-    }
-}
+local function chain_and_uplink(env1, env2)
+    local env = chain(env1, env2)
+    env.__up = env1
+    return env
+end
 
-local archive = find_archive()
-if not archive then return setmetatable({}, mt) end
+--[[@@@
+The default environment contains the global variables (`_G`)
+and some LuaX modules (`crypt`, `F`, `fs`, `sh`).
+@@@]]
 
-local content = assert(fs.read_bin(archive))
-local assets = assert(lar.unlar(content))
+local default_env = chain({
+    crypt = require "crypt",
+    F = require "F",
+    fs = require "fs",
+    sh = require "sh",
+}, _G)
 
-assets.path = archive
+local function root_env(t, options)
+    local root = chain(default_env, {__root=t})
+    local env = options and options.env
+    if env then return chain(root, env) end
+    return root
+end
 
-return setmetatable(assets, mt)
+local function join(path, k)
+    if type(k) == "number" then return path.."["..k.."]" end
+    if path then return path.."."..k end
+    return k
+end
+
+local function process(t, env, pat, path)
+    local t2 = {}
+    env = chain_and_uplink(env, t)
+    for k, v in pairs(t) do
+        if type(v) == "table" then
+            local path2 = join(path, k)
+            rawset(t2, k, process(v, env, pat, path2))
+        elseif type(v) == "string" then
+            local expr = v:match(pat)
+            if expr then
+                local path2 = join(path, k)
+                rawset(t2, k, assert(load("return "..expr, "@"..path2..": "..expr, "t", env))())
+            else
+                rawset(t2, k, v)
+            end
+        else
+            rawset(t2, k, v)
+        end
+    end
+    return t2
+end
+
+local function input_options(options, load_from_string)
+    return F.patch(options or {}, {load_from_string=load_from_string})
+end
+
+--[[@@@
+```lua
+tomlx.read(filename, [options])
+```
+> calls `toml.parse` to parse a TOML file.
+> Options are optional
+> and described in the [tinytoml documentation](https://github.com/FourierTransformer/tinytoml?tab=readme-ov-file#parsing-toml).
+> tomlx adds the env option (`options.env`) to define the initial evaluation environment.
+> The table returned by `tinytoml` is then processed to evaluate `tomlx` macros.
+@@@]]
+function tomlx.read(filename, options)
+    local t = toml.parse(filename, input_options(options, false))
+    return process(t, root_env(t, options), pattern(options))
+end
+
+--[[@@@
+```lua
+tomlx.decode(s, [options])
+```
+> calls `toml.parse` to parse a TOML string.
+> Options are optional
+> and described in the [tinytoml documentation](https://github.com/FourierTransformer/tinytoml?tab=readme-ov-file#parsing-toml).
+> tomlx adds the env option (`options.env`) to define the initial evaluation environment.
+> The table returned by `tinytoml` is then processed to evaluate `tomlx` macros.
+@@@]]
+function tomlx.decode(s, options)
+    local t = toml.parse(s, input_options(options, true))
+    return process(t, root_env(t, options), pattern(options))
+end
+
+--[[@@@
+```lua
+tomlx.encode(s, [options])
+```
+> calls `toml.encode` to encode a Lua table into a TOML string.
+> Options are optional
+> and described in the [tinytoml documentation](https://github.com/FourierTransformer/tinytoml?tab=readme-ov-file#encoding-toml).
+@@@]]
+function tomlx.encode(t, options)
+    return toml.encode(t, options)
+end
+
+--[[@@@
+```lua
+tomlx.write(filename, t, [options])
+```
+> calls `toml.encode` to encode a Lua table into a TOML string
+> and save it the file `filename`.
+> Options are optional
+> and described in the [tinytoml documentation](https://github.com/FourierTransformer/tinytoml?tab=readme-ov-file#encoding-toml).
+@@@]]
+function tomlx.write(filename, t, options)
+    fs.write(filename, toml.encode(t, options))
+end
+
+--[[@@@
+```lua
+tomlx.validate(schema, filename, [options])
+```
+> returns `true` if `filename` is validated by `schema`. Otherwise it returns `false`
+> and a list of failures.
+>
+> The `schema` file is a TOML file used to validate the TOML file `filename`.
+> Both files are read with `tomlx.read` and the corresponding tables are validated with `F.validate`.
+>
+> Options (the `option` table) contains options for `tomlx.read` and `F.validate`.
+@@@]]
+function tomlx.validate(schema, filename, options)
+    return F.validate(tomlx.read(schema, options), tomlx.read(filename, options), options)
+end
+
+return tomlx
 ]=])
-libs["luax_bundle"] = lib("luax/luax_bundle.lua", [====[--/usr/bin/env luax
---[[
-This file is part of luax.
-
-luax is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-luax is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
-
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
---]]
-
--- bundle a set of scripts into a single Lua script that can be added to the runtime
-
-local M = {}
-
-local F = require "F"
-local fs = require "fs"
-local crypt = require "crypt"
-local lar = require "lar"
-
-local format = string.format
-local byte = string.byte
-local char = string.char
-local sub = string.sub
-
-local unpack = table.unpack
-
-local function last_line(s)
-    return s
-    : lines()
-    : drop_while_end(F.compose{string.null, string.trim})
-    : last() or ""
-end
-
-local function to_bool(x)
-    return x and true or nil
-end
-
-local function to_string(x)
-    return x or nil
-end
-
-local function mlstr(s)
-    local n = (s:matches"](=*)]":map(F.op.len):maximum() or -1) + 1
-    local eqs = ("="):rep(n)
-    return F.str{"[", eqs, "[", s, "]", eqs, "]"}
-end
-
-local esc = {
-    ["'"]  = "\\'",     -- ' must be escaped as it is embeded in single quoted strings
-    ["\\"] = "\\\\",    -- \ must be escaped to avoid confusion with escaped chars
-}
-F.flatten{
-    F.range(0, 31),     -- non printable control chars
-    F.range(48, 57),    -- 0..9 must be escaped to avoid confusion decimal escape codes
-    F.range(128, 255)   -- non 7-bit ASCII codes are also not printable
-}
-: foreach(function(b) esc[char(b)] = format("\\%d", b) end)
-
-local function escape(s)
-    return format("'%s'", s:gsub(".", esc))
-end
-
-local function qstr(s)
-    if s:match "^[%g%s]*$" then
-        -- printable string => use multiline Lua strings
-        return mlstr(s)
-    else
-        -- non printable string => escape non printable chars
-        return escape(s)
-    end
-end
-
-function M.comment_shebang(script)
-    return script
-        : gsub("^#!.-\n(\x1b)", "%1")   -- remove the whole shebang of compiled scripts
-        : gsub("^#!", "--")             -- comment the shebang before loading the script
-end
-
-local function find_main(scripts)
-    local explicit_main = F{}
-    local implicit_main = F{}
-    for i = 1, #scripts do
-        local script = scripts[i]
-        if script.is_main then
-            explicit_main[#explicit_main+1] = script
-        elseif not script.is_lib and not script.is_load and not script.maybe_lib then
-            implicit_main[#implicit_main+1] = script
-        end
-    end
-    local main_script = nil
-    if #explicit_main > 1 then
-        error("Too many main scripts: "..explicit_main:map(F.partial(F.nth, "path")):str", ")
-    elseif #explicit_main == 1 then
-        main_script = explicit_main[1]
-    elseif #implicit_main > 1 then
-        error("Too many main scripts: "..implicit_main:map(F.partial(F.nth, "path")):str", ")
-    elseif #implicit_main == 1 then
-        main_script = implicit_main[1]
-    end
-    return main_script, scripts:filter(function(script) return script ~= main_script end)
-end
-
-local function chunks_of(n, xs)
-    local chunks = F{}
-    for i = 1, #xs, n do
-        chunks[#chunks+1] = F{unpack(xs, i, i+n-1)}
-    end
-    return chunks
-end
-
-local function make_key(input, opt)
-    local function chunks_of_chars(n, s)
-        local chunks = F{}
-        for i = 1, #s, n do
-            chunks[#chunks+1] = sub(s, i, i+n-1)
-        end
-        return chunks
-    end
-    local kmin <const>, kmax <const> = 8, 256
-    local mmin <const>, mmax <const> = 256, 64*1024
-    local key_size = F.floor(kmin + (#input-mmin)*((kmax-kmin)/(mmax-mmin)))
-    key_size = F.max(kmin, F.min(kmax, key_size))
-    return chunks_of_chars(key_size, input:arc4(opt.key)) : fold1(crypt.arc4)
-end
-
-local function compact(s)
-    return s
-        : lines()
-        : map(string.trim)
-        : filter(function(l) return #l>0 end)
-        : str";"
-end
-
-local function bytecode(code, opt, names)
-    if opt.bytecode then
-        code = assert(string.dump(assert(load(code, "@$"..F(names):str":")), opt.strip))
-    end
-    return code
-end
-
-local function bytes(s)
-    local N <const> = 512*1024
-    if #s <= N then return s:bytes() end
-    local bs = {}
-    for i = 1, #s, N do
-        bs[#bs+1] = {byte(s, i, i+N-1)}
-    end
-    return F.concat(bs)
-end
-
-local function obfuscate_lua(code, opt, names)
-    code = bytecode(code, opt, names)
-    if opt.key then
-        -- Encrypt code by xoring bytes with pseudo random values
-        local key = make_key(code, opt)
-        local a <const>, c <const> = 6364136223846793005, 1
-        local seed = tonumber(key:hash(), 16)
-        local r = seed
-        local xs = {}
-        for i = 1, #code do
-            local b = byte(code, i)
-            r = r*a + c
-            xs[i] = char(b ~ ((r>>33) & 0xff))
-        end
-        code = compact(F.I { a=a, c=c, b=escape(table.concat(xs)), seed=seed } [===[
-            local b,a,c,r,x,bt,ch,l,tc=$(b),$(a),$(c),$(("0x%x"):format(seed)),{},string.byte,string.char,load,table.concat
-            for i=1,#b do r=r*a+c x[i]=ch(bt(b,i)~((r>>33)&0xff))end
-            return l(tc(x))()
-        ]===])
-        code = bytecode(code, opt, F.take(1, names))
-    end
-    return code
-end
-
-local function compress(code, opt)
-    if not opt.compression and not opt.key then return code, "" end
-    local compressed_code = code:lzip(0) -- level 0 to reduce the memory usage at decompression
-    if #compressed_code > 0.75 * #code then return code, "" end
-    return compressed_code, ":unlzip()"
-end
-
-local function obfuscate_luax(code, opt, names)
-
-    code = bytecode(code, opt, names)
-
-    local uncompress
-    code, uncompress = compress(code, opt)
-
-    if opt.key then
-        local key = make_key(code, opt)
-        code = compact(F.I { b=escape(code:arc4(key)), k=escape(key), uncompress=uncompress } [===[
-            return load(($(b)):unarc4$(k)$(uncompress))()
-        ]===])
-        code = bytecode(code, opt, F.take(1, names))
-    elseif opt.compression then
-        code = compact(F.I { b=escape(code), uncompress=uncompress } [===[
-            return load(($(b))$(uncompress))()
-        ]===])
-        code = bytecode(code, opt, F.take(1, names))
-    end
-
-    return code
-end
-
-local known_modules = {}
-
-local runtime_modules = setmetatable({}, {
-    __index = function(self, k)
-        local assets = require "luax_assets"
-        local luax = assets.lua_runtime and lar.unlar(assets.lua_runtime["libluax.lar"]) or {}
-        for i = 1, #luax do
-            local script = luax[i]
-            self[script.lib_name] = true
-        end
-        return rawget(self, k)
-    end,
-})
-
-local function ensure_unique_module(opt, script)
-    local name = script.lib_name
-    if opt.entry ~= "lib" and not script.dont_check_runtime_unicity then
-        if runtime_modules[name] then
-            error(name..": duplicate module (already defined in the LuaX runtime)")
-        end
-    end
-    if known_modules[name] then
-        error(name..": duplicate module")
-    end
-    known_modules[name] = true
-end
-
-function M.bundle(opt)
-
-    opt.bytecode = opt.bytecode or opt.strip -- strip implies bytecode
-
-    local scripts = F{}
-
-    if opt.add_luax_runtime then
-        local assets = require "luax_assets"
-        local runtime = assets.lua_runtime and assets.lua_runtime["libluax.lar"]
-        if not runtime then assets.error() end
-        runtime = lar.unlar(runtime)
-        for i = 1, #runtime do
-            -- runtime script => ensure_unique_module shall not check it is not part of the runtime!
-            runtime[i].dont_check_runtime_unicity = true
-            scripts[#scripts+1] = runtime[i]
-        end
-    end
-
-    F.foreach(opt.scripts, function(script)
-        local content = assert(fs.read_bin(script))
-        local ext = fs.ext(script)
-        if ext == ".lua" then
-            scripts[#scripts+1] = {
-                path      = script,
-                content   = M.comment_shebang(content),
-                is_main   = to_bool(content:match("@".."MAIN")),
-                is_lib    = to_bool(content:match("@".."LIB")),
-                lib_name  = to_string(content:match("@".."LIB=([%w%._%-]+)")) or script:basename():splitext(),
-                is_load   = to_bool(content:match("@".."LOAD")),
-                load_name = to_string(content:match("@".."LOAD=([%w%._%-]+)")),
-                maybe_lib = to_bool(last_line(content):match "^%s*return"),
-            }
-        else
-            -- file embeded as a Lua module returning the content of the file
-            if content:match"^[%g%s]*$" and #content:lines() <= 1 then content = content:trim() end
-            local safe_content = qstr(content)
-            scripts[#scripts+1] = {
-                path      = script,
-                content   = "return "..safe_content,
-                is_main   = nil,
-                is_lib    = true,
-                lib_name  = script:basename(),
-                is_load   = nil,
-                load_name = nil,
-                maybe_lib = nil,
-            }
-        end
-    end)
-
-    if not opt.output then
-        return F{}
-    end
-
-    if opt.target == "lib" then
-        local lar_opt = {
-            compress = opt.compress or "lzip",
-            key = opt.key,
-        }
-        return F{
-            [opt.output] = lar.lar(scripts, lar_opt),
-        }
-    end
-
-    if opt.target:match "^lua" or opt.target == "pandoc" then
-        local product_name = opt.product_name or opt.output:basename():splitext()
-        local preloads = {}
-        local loads = {}
-        local run_main = {}
-        local config = require "luax_config"
-        local interpreter = {
-            lua    = "lua",
-            pandoc = "pandoc lua",
-            luax   = "luax",
-            ["luax-loader"] = nil, -- no shebang in the appended payload
-        }
-        local shebang = interpreter[opt.target] and "#!/usr/bin/env -S "..interpreter[opt.target].." --" or {}
-        local out = F{
-            opt.target:match "^luax" and {} or {
-                "_LUAX_VERSION   = '"..config.version.."'",
-                "_LUAX_DATE      = '"..config.date.."'",
-                "_LUAX_COPYRIGHT = '"..config.copyright.."'",
-            },
-            "local libs = {}",
-            "table.insert(package.searchers, 2, function(name) return libs[name] end)",
-            opt.strip and {
-                "local function lib(src) return assert(load(src)) end",
-            } or {
-                ("local function lib(path, src) return assert(load(src, '@$%s:'..path)) end"):format(product_name)
-            },
-            preloads,
-            loads,
-            run_main,
-        }
-        local function compile(script)
-            -- check script compilation (with the actual file path in error messages)
-            assert(load(script.content, ("@%s"):format(script.path)))
-            if opt.bytecode then
-                -- compile the script with file path containing the product name
-                return qstr(bytecode(script.content, opt, {product_name, script.path}))
-            else
-                return mlstr(script.content)
-            end
-        end
-        local main_script, libs = find_main(scripts)
-        for i = 1, #libs do
-            local script = libs[i]
-            local name = script.lib_name
-            ensure_unique_module(opt, script)
-            if opt.strip then
-                preloads[#preloads+1] = ("libs[%q] = lib(%s)"):format(name, compile(script))
-            else
-                preloads[#preloads+1] = ("libs[%q] = lib(%q, %s)"):format(name, script.path, compile(script))
-            end
-        end
-        for i = 1, #libs do
-            local script = libs[i]
-            if script.is_load then
-                local lib_name  = script.lib_name
-                local load_name = script.load_name or lib_name
-                if load_name == "_" then
-                    loads[#loads+1] = ("require %q"):format(lib_name)
-                else
-                    loads[#loads+1] = ("_ENV[%q] = require %q"):format(load_name, lib_name)
-                end
-            end
-        end
-        if main_script then
-            local script = main_script
-            if opt.strip then
-                run_main[#run_main+1] = ("return lib(%s)()"):format(compile(script))
-            else
-                run_main[#run_main+1] = ("return lib(%q, %s)()"):format(script.path, compile(script))
-            end
-        end
-        local obfuscate = opt.target:match "^luax" and obfuscate_luax or obfuscate_lua
-        out = obfuscate(out:flatten():unlines(), F(opt):patch{strip=true}, {product_name})
-        return F{
-            [opt.output] = F{shebang, out}:flatten():unlines(),
-        }
-    end
-
-    if opt.target == "c" then
-        local product_name = opt.product_name or opt.output:basename():splitext()
-        local mods = F{}        -- luaopen_xxx functions
-        local preloads = F{}    -- _PRELOAD population
-        local loads = F{}       -- modules preloaded to global variables
-        local traceback = F{}
-        local run_main = F{}    -- main script
-        local out = F{
-            '#include "lua.h"',
-            '#include "lauxlib.h"',
-            '#include "stdlib.h"',
-            "int run_"..opt.entry.."(lua_State *L);",
-            mods,
-            traceback,
-            "int run_"..opt.entry.."(lua_State *L) {",
-            "  luaL_getsubtable(L, LUA_REGISTRYINDEX, \"_PRELOAD\");",
-            preloads,
-            "  lua_pop(L, 1);",
-            loads,
-            run_main,
-            "}",
-        }
-        local function compile(script)
-            -- check script compilation (with the actual file path in error messages)
-            assert(load(script.content, ("@%s"):format(script.path)))
-            return obfuscate_luax(script.content, opt, {product_name, script.path})
-        end
-        local function stripped(prefix, name)
-            return prefix .. (opt.strip and "" or ":"..name)
-        end
-        local main_script, libs = find_main(scripts)
-        for i = 1, #libs do
-            local script = libs[i]
-            local name = script.lib_name
-            ensure_unique_module(opt, script)
-            local func_name = name : gsub("[^%w]", "_")
-            local code = bytes(compile(script))
-            mods[#mods+1] = {
-                "static int luaopen_"..func_name.."(lua_State *L) {",
-                "  static const unsigned char code[] = {",
-                chunks_of(32, code) : map(function(g) return "    "..g:str",".."," end),
-                "  };",
-                "  const int arg = lua_gettop(L);",
-                "  if (luaL_loadbuffer(L, (const char*)code, sizeof(code), \"@$"..stripped(product_name, script.path).."\") != LUA_OK) {",
-                "    fprintf(stderr, \"%s\\n\", lua_tostring(L, -1));",
-                "    exit(EXIT_FAILURE);",
-                "  }",
-                "  lua_insert(L, 1);",
-                "  lua_call(L, arg, 1);",
-                "  return 1;",
-                "}",
-            }
-            preloads[#preloads+1] = {
-                "  lua_pushcfunction(L, luaopen_"..func_name.."); lua_setfield(L, -2, \""..name.."\");",
-            }
-        end
-        for i = 1, #libs do
-            local script = libs[i]
-            if script.is_load then
-                local lib_name  = script.lib_name
-                local load_name = script.load_name or lib_name
-                loads[#loads+1] = {
-                    script.load_name == "_"
-                        and "  lua_getglobal(L, \"require\"); lua_pushstring(L, \""..lib_name.."\"); lua_call(L, 1, 0);"
-                        or  "  lua_getglobal(L, \"require\"); lua_pushstring(L, \""..lib_name.."\"); lua_call(L, 1, 1); lua_setglobal(L, \""..load_name.."\");"
-                }
-            end
-        end
-        if main_script then
-            local script = main_script
-            local code = bytes(compile(script))
-            traceback[1] = {
-                "static int traceback(lua_State *L)",
-                "{",
-                "  const char *msg = lua_tostring(L, 1);",
-                "  if (msg == NULL) {",
-                "    if (luaL_callmeta(L, 1, \"__tostring\") && lua_type(L, -1) == LUA_TSTRING) {",
-                "      msg = lua_tostring(L, -1);",
-                "    } else {",
-                "      msg = lua_pushfstring(L, \"(error object is a %s value)\", luaL_typename(L, 1));",
-                "    }",
-                "  }",
-                "  luaL_traceback(L, L, msg, 1);",
-                "  const char *tb = lua_tostring(L, -1);",
-                "  fprintf(stderr, \"%s\\n\", tb!=NULL ? tb : msg);",
-                "  lua_pop(L, 1);",
-                "  return 0;",
-                "}",
-            }
-            run_main[#run_main+1] = {
-                "  static const unsigned char code[] = {",
-                chunks_of(32, code) : map(function(g) return "    "..g:str",".."," end),
-                "  };",
-                "  if (luaL_loadbuffer(L, (const char*)code, sizeof(code), \"@$"..stripped(product_name, script.path).."\") != LUA_OK) {",
-                "    fprintf(stderr, \"%s\\n\", lua_tostring(L, -1));",
-                "    exit(EXIT_FAILURE);",
-                "  }",
-                "  const int base = lua_gettop(L);",
-                "  lua_pushcfunction(L, traceback);",
-                "  lua_insert(L, base);",
-                "  const int status = lua_pcall(L, 0, 0, base);",
-                "  lua_remove(L, base);",
-                "  return status;",
-            }
-        else
-            run_main[#run_main+1] = {
-                "  return LUA_OK;",
-            }
-        end
-
-        return F{
-            [opt.output] = out:flatten():unlines(),
-        }
-    end
-
-    error(tostring(opt.target)..": unknown target")
-end
-
-return M
-]====])
+package.preload["luax-libs.txt"] = lib(".build/luax-libs.txt", [=[return [[lib/luax/F.lua
+lib/luax/argparse.lua
+lib/luax/cbor.lua
+lib/luax/complex.lua
+lib/luax/crypt.lua
+lib/luax/curl.lua
+lib/luax/fs.lua
+lib/luax/imath.lua
+lib/luax/import.lua
+lib/luax/json.lua
+lib/luax/linenoise.lua
+lib/luax/luax-debug.lua
+lib/luax/luax-package.lua
+lib/luax/luax-targets.lua
+lib/luax/luax-version.lua
+lib/luax/mathx.lua
+lib/luax/ps.lua
+lib/luax/qmath.lua
+lib/luax/readline.lua
+lib/luax/serpent.lua
+lib/luax/sh.lua
+lib/luax/strict.lua
+lib/luax/sys.lua
+lib/luax/tar.lua
+lib/luax/term.lua
+lib/luax/toml.lua
+lib/luax/tomlx.lua
+lib/luax/ext/re.lua
+]]]=])
 require "F"
 require "crypt"
 require "fs"
-require "lz4"
-require "lzip"
-require "math_hook"
-require "package_hook"
-require "debug_hook"
+require "luax-debug"
+require "luax-package"
 return lib("luax/luax.lua", [====[--[[
 This file is part of luax.
 
@@ -15128,6 +14042,7 @@ https://codeberg.org/cdsoft/luax
 --@MAIN
 
 local F = require "F"
+local fs = require "fs"
 local term = require "term"
 
 -------------------------------------------------------------------------------
@@ -15141,13 +14056,17 @@ end
 local function print_welcome()
 
     local sys = require "sys"
+    local version = require "luax-version"
 
-    local I = (F.I % "%%{}")(_G){sys=sys}
+    local I = (F.I % "%%{}")(_G){
+        sys = sys,
+        version = version,
+    }
 
     local welcome = I[===[
- _               __  __  |  https://codeberg.org/cdsoft/luax
+ _               __  __  |  https://%{version.url}
 | |   _   _  __ _\ \/ /  |
-| |  | | | |/ _` |\  /   |  Version %{_LUAX_VERSION} (%{_LUAX_DATE})
+| |  | | | |/ _` |\  /   |  Version %{version.version}
 | |__| |_| | (_| |/  \   |  Powered by %{_VERSION}
 |_____\__,_|\__,_/_/\_\  |%{PANDOC_VERSION and "  and Pandoc "..tostring(PANDOC_VERSION) or ""}
                          |  %{sys.os:cap()} %{sys.arch} %{sys.libc}
@@ -15163,7 +14082,7 @@ end
 
 local function usage()
     colorize(1)
-    local I = (F.I % "%%{}") (require "luax_config") (term.color) {
+    local I = (F.I % "%%{}") (term.color) {
         arg = arg,
         lua_init = { "LUA_INIT_".._VERSION:words()[2]:gsub("%.", "_"), "LUA_INIT" },
     }
@@ -15194,10 +14113,8 @@ usage: %{arg[0]:basename()} [cmd] [options]
   -t target       name of the targetted platform
   -t list         list available targets
   -o file         name the executable file to create
-  -c              use a C compiler instead of the loader
   -b              compile to Lua bytecode
   -s              emit bytecode without debug information
-  -z              compress with lzip
   -k key          script encryption key
   -q              quiet compilation (error messages only)
   scripts         scripts to compile
@@ -15220,10 +14137,7 @@ usage: %{arg[0]:basename()} [cmd] [options]
                 where the Lua implementation of LuaX
                 libraries are installed
 
-  LUA_CPATH     LUA_CPATH shall point to the lib directory
-                where LuaX shared libraries are installed
-
-PATH, LUA_PATH and LUA_CPATH can be set in %{italic'.bashrc'} or %{italic'.zshrc'}
+PATH and LUA_PATH can be set in %{italic'.bashrc'} or %{italic'.zshrc'}
 with "%{italic'luax env'}".
 E.g.: %{italic'eval $(luax env)'}
 
@@ -15257,68 +14171,8 @@ end
 
 local function cmd_version()
 
-    local luax_config = require "luax_config"
-
-    local copyright_pattern = "(%S+%s+)(%S+%s*)(.*)"
-    local luax_name, luax_version, luax_copyright = luax_config.copyright:match(copyright_pattern)
-    local lua_name,  lua_version,  lua_copyright  = luax_config.lua_copyright:match(copyright_pattern)
-
-    local version = F{
-        {luax_name, luax_version, luax_copyright},
-        {lua_name,  lua_version,  lua_copyright},
-    }
-
-    local function add(soft)
-        if not soft then return end
-        version[#version+1] = {soft[1] or "", soft[2] or "", soft[3] or ""}
-    end
-
-    local function has(mod)
-        return pcall(require, mod)
-    end
-
-    local luaximpl = "Lua implementation"
-    local shellimpl = "Shell implementation"
-    local stub = "minimal Lua stub"
-    local ni = function(s) return {s, "", "not available"} end
-
-    add(pandoc and {"Pandoc", tostring(PANDOC_VERSION)})
-
-    add{}
-
-    package.path = "" -- avoid loading external modules
-
-    add({"mathx", "", require"mathx".version or luaximpl})
-    add({"imath", "", require"imath".version or luaximpl})
-    add({"qmath", "", require"qmath".version or luaximpl})
-    add({"complex", "", require"complex".version or luaximpl})
-
-    add({"argparse", require"argparse".version, ""})
-    add(has"lpeg" and require"lpeg".version:words() or ni"LPeg")
-
-    add({"serpent", require"serpent"._VERSION, require"serpent"._COPYRIGHT})
-    add({"Lua-CBOR", "", "Zash"})
-    add(require"json".version:words())
-    add(require"toml"._VERSION:words())
-
-    add({"lz4", require"lz4".version or "", require"lz4".version and "" or shellimpl})
-    add({"lzip", require"lzip".version or "", require"lzip".version and "" or shellimpl})
-
-    add(has"socket" and require"socket"._VERSION:words() or ni"LuaSocket")
-    add(has"ssl" and {require"ssl"._COPYRIGHT:lines():head():match("^(%S+)%s+(%S+)%s+%-%s+(.*)$")} or ni"LuaSec")
-
-    add({"readline", require"readline".version() or "", require"readline".version() and "" or stub})
-    add({"linenoise", "", require"linenoise".version() or stub})
-
-    local width = version:transpose():map(function(xs)
-        return F.map(tostring, xs):map(F.op.len):maximum()
-    end)
-    io.stdout:write(version
-        : map(function(v)
-            return F(v):mapi(function(i, s) return s:ljust(width[i]) end):str" ":rtrim()
-        end)
-        : unlines()
-    )
+    local luax_version = require "luax-version"
+    io.stdout:write(tostring(luax_version), "  ", luax_version.copyright, "\n")
 
 end
 
@@ -15326,13 +14180,17 @@ end
 -- Run command
 -------------------------------------------------------------------------------
 
+local function comment_shebang(script)
+    return script
+        : gsub("^#!.-\n(\x1b)", "%1")   -- remove the whole shebang of compiled scripts
+        : gsub("^#!", "--")             -- comment the shebang before loading the script
+end
+
 local function wrong_arg(a)
     print_error("unrecognized option '%s'", a)
 end
 
 local function cmd_run()
-
-    local bundle = require "luax_bundle"
 
     local function msgtostr(msg)
         if type(msg) == "string" then return msg end
@@ -15358,7 +14216,6 @@ local function cmd_run()
         end)
         io.stderr:write(trace:take(pos):unlines())
     end
-
 
     -- Read options
 
@@ -15391,10 +14248,10 @@ The LuaX REPL can be run in various environments:
 $ luax
 ```
 
-### Shared library usable with a standard Lua interpreter
+### Lua library usable with a standard Lua interpreter
 
 ``` sh
-$ lua -l luax
+$ lua -l libluax
 ```
 
 ## Reduced version for plain Lua interpreters
@@ -15670,7 +14527,6 @@ prints `show(x)`
 
     local function run_interpreter()
 
-        local fs = require "fs"
         local sys = require "sys"
 
         -- scripts
@@ -15679,7 +14535,7 @@ prints `show(x)`
             local script = args[1]
             local show, chunk, msg
             if script == "-" then
-                chunk, msg = load(bundle.comment_shebang(io.stdin:read "*a"))
+                chunk, msg = load(comment_shebang(io.stdin:read "*a"))
             else
                 local function findscript(name)
                     local candidates = F.nub({".", fs.dirname(arg[-1])} .. os.getenv"PATH":split(fs.path_sep))
@@ -15697,7 +14553,7 @@ prints `show(x)`
                     os.exit(1)
                 end
                 local real_script = findscript(script)
-                chunk, msg = load(bundle.comment_shebang(assert(fs.read_bin(real_script))), "@"..real_script)
+                chunk, msg = load(comment_shebang(assert(fs.read_bin(real_script))), "@"..real_script)
             end
             if not chunk then
                 colorize(2)
@@ -15781,22 +14637,30 @@ end
 -- Compile command
 -------------------------------------------------------------------------------
 
-local function cmd_compile()
+local function find_exe(name)
 
-    local fs = require "fs"
-    local sh = require "sh"
     local sys = require "sys"
 
-    local bundle = require "luax_bundle"
-    local targets = require "targets"
-    local lz4 = require "lz4"
-    local lzip = require "lzip"
-    local assets = require "luax_assets"
-    local has_compiler, build_config = pcall(require, "luax_build_config")
-
-    if not has_compiler then
-        print_error "Compilation not available"
+    local exe = fs.is_file(name) and name
+            or (sys.exe ~= "" and fs.is_file(name..sys.exe) and name..sys.exe)
+            or fs.findpath(name)
+            or (sys.exe ~= "" and fs.findpath(name..sys.exe))
+    if not exe then
+        print_error("%s: not found", name)
     end
+    return exe
+end
+
+local function cmd_compile()
+
+    local crypt = require "crypt"
+    local sys = require "sys"
+    local targets = require "luax-targets"
+
+    local format = string.format
+    local byte = string.byte
+    local char = string.char
+    local sub = string.sub
 
     local magic = "LuaX"
 
@@ -15806,9 +14670,281 @@ local function cmd_compile()
         { name="pandoc", add_luax_runtime=true  },
     }
 
+    local function last_line(s)
+        return s
+        : lines()
+        : drop_while_end(F.compose{string.null, string.trim})
+        : last() or ""
+    end
+
+    local function mlstr(s)
+        local n = (s:matches"](=*)]":map(F.op.len):maximum() or -1) + 1
+        local eqs = ("="):rep(n)
+        return F.str{"[", eqs, "[", s, "]", eqs, "]"}
+    end
+
+    local esc = {
+        ["'"]  = "\\'",     -- ' must be escaped as it is embeded in single quoted strings
+        ["\\"] = "\\\\",    -- \ must be escaped to avoid confusion with escaped chars
+    }
+    F.flatten{
+        F.range(0, 31),     -- non printable control chars
+        F.range(48, 57),    -- 0..9 must be escaped to avoid confusion decimal escape codes
+        F.range(128, 255)   -- non 7-bit ASCII codes are also not printable
+    }
+    : foreach(function(b) esc[char(b)] = format("\\%d", b) end)
+
+    local function escape(s)
+        return format("'%s'", s:gsub(".", esc))
+    end
+
+    local function qstr(s)
+        if s:match "^[%g%s]*$" then
+            -- printable string => use multiline Lua strings
+            return mlstr(s)
+        else
+            -- non printable string => escape non printable chars
+            return escape(s)
+        end
+    end
+
+    local function find_main(scripts)
+        local explicit_main = F{}
+        local implicit_main = F{}
+        for i = 1, #scripts do
+            local script = scripts[i]
+            if script.is_main then
+                explicit_main[#explicit_main+1] = script
+            elseif not script.is_lib and not script.is_load and not script.maybe_lib then
+                implicit_main[#implicit_main+1] = script
+            end
+        end
+        local main_script = nil
+        if #explicit_main > 1 then
+            error("Too many main scripts: "..explicit_main:map(F.partial(F.nth, "path")):str", ")
+        elseif #explicit_main == 1 then
+            main_script = explicit_main[1]
+        elseif #implicit_main > 1 then
+            error("Too many main scripts: "..implicit_main:map(F.partial(F.nth, "path")):str", ")
+        elseif #implicit_main == 1 then
+            main_script = implicit_main[1]
+        end
+        return main_script, scripts:filter(function(script) return script ~= main_script end)
+    end
+
+    local function make_key(input, opt)
+        local function chunks_of_chars(n, s)
+            local chunks = F{}
+            for i = 1, #s, n do
+                chunks[#chunks+1] = sub(s, i, i+n-1)
+            end
+            return chunks
+        end
+        local kmin <const>, kmax <const> = 8, 256
+        local mmin <const>, mmax <const> = 256, 64*1024
+        local key_size = F.floor(kmin + (#input-mmin)*((kmax-kmin)/(mmax-mmin)))
+        key_size = F.max(kmin, F.min(kmax, key_size))
+        return chunks_of_chars(key_size, input:arc4(opt.key)) : fold1(crypt.arc4)
+    end
+
+    local function compact(s)
+        return s
+            : lines()
+            : map(string.trim)
+            : filter(function(l) return #l>0 end)
+            : str";"
+    end
+
+    local function bytecode(code, opt, names)
+        if opt.bytecode then
+            code = assert(string.dump(assert(load(code, "@$"..F(names):str":")), opt.strip))
+        end
+        return code
+    end
+
+    local function obfuscate_lua(code, opt, names)
+        code = bytecode(code, opt, names)
+        if opt.key then
+            -- Encrypt code by xoring bytes with pseudo random values
+            local key = make_key(code, opt)
+            local a <const>, c <const> = 6364136223846793005, 1
+            local seed = tonumber(key:hash(), 16)
+            local r = seed
+            local xs = {}
+            for i = 1, #code do
+                local b = byte(code, i)
+                r = r*a + c
+                xs[i] = char(b ~ ((r>>33) & 0xff))
+            end
+            code = compact(F.I { a=a, c=c, b=escape(table.concat(xs)), seed=seed } [===[
+                local b,a,c,r,x,bt,ch,l,tc=$(b),$(a),$(c),$(("0x%x"):format(seed)),{},string.byte,string.char,load,table.concat
+                for i=1,#b do r=r*a+c x[i]=ch(bt(b,i)~((r>>33)&0xff))end
+                return l(tc(x))()
+            ]===])
+            code = bytecode(code, opt, F.take(1, names))
+        end
+        return code
+    end
+
+    local function obfuscate_luax(code, opt, names)
+
+        code = bytecode(code, opt, names)
+
+        if opt.key then
+            local key = make_key(code, opt)
+            code = compact(F.I { b=escape(code:arc4(key)), k=escape(key) } [===[
+                return load(require"_crypt".unarc4($(b), $(k)))()
+            ]===])
+            code = bytecode(code, opt, F.take(1, names))
+        end
+
+        return code
+    end
+
+    local known_modules = {}
+
+    local function ensure_unique_module(script)
+        local name = script.lib_name
+        if known_modules[name] then
+            error(name..": duplicate module")
+        end
+        known_modules[name] = true
+    end
+
+    local function bundle(opt)
+
+        opt.bytecode = opt.bytecode or opt.strip -- strip implies bytecode
+
+        local scripts = F{}
+
+        local function load_script(script, prefix, patch)
+            local len_prefix = prefix and #prefix+2 or 1
+            local content = assert(fs.read_bin(script))
+            local ext = fs.ext(script)
+            local module
+            if ext == ".lua" then
+                module = F {
+                    path      = script:sub(len_prefix),
+                    content   = comment_shebang(content),
+                    is_main   = content:match("@".."MAIN"),
+                    is_lib    = content:match("@".."LIB"),
+                    lib_name  = content:match("@".."LIB=([%w%._%-]+)") or script:basename():splitext(),
+                    is_load   = content:match("@".."LOAD"),
+                    load_name = content:match("@".."LOAD=([%w%._%-]+)"),
+                    maybe_lib = last_line(content):match "^%s*return",
+                }
+            else
+                -- file embeded as a Lua module returning the content of the file
+                if content:match"^[%g%s]*$" and #content:lines() <= 1 then content = content:trim() end
+                local safe_content = qstr(content)
+                module = F {
+                    path      = script:sub(len_prefix),
+                    content   = "return "..safe_content,
+                    is_main   = false,
+                    is_lib    = true,
+                    lib_name  = script:basename(),
+                    is_load   = false,
+                    load_name = false,
+                    maybe_lib = false,
+                }
+            end
+            if patch then module = module:patch(patch) end
+            scripts[#scripts+1] = module
+        end
+
+        if opt.add_luax_runtime then
+            local prefix = find_exe(arg[0]):realpath():dirname():dirname()
+            fs.ls(prefix/"lib/luax/*.lua") : foreach(function(script)
+                load_script(script, prefix, { is_main=false })
+            end)
+            if opt.add_ext_runtime then
+                fs.ls(prefix/"lib/luax/ext/*.lua") : foreach(function(script)
+                    load_script(script, prefix, { is_main=false })
+                end)
+            end
+        end
+
+        F.foreach(opt.scripts, load_script)
+
+        if not opt.output then
+            return F{}
+        end
+
+        if opt.target:match "^lua" or opt.target == "pandoc" then
+            local product_name = opt.product_name or opt.output:basename():splitext()
+            local preloads = {}
+            local loads = {}
+            local run_main = {}
+            local interpreter = {
+                lua    = "lua",
+                pandoc = "pandoc lua",
+                luax   = "luax",
+            }
+            local shebang = interpreter[opt.target] and "#!/usr/bin/env -S "..interpreter[opt.target].." --" or {}
+            local out = F{
+                opt.strip and {
+                    "local function lib(src) return assert(load(src)) end",
+                } or {
+                    ("local function lib(path, src) return assert(load(src, '@$%s:'..path)) end"):format(product_name)
+                },
+                preloads,
+                loads,
+                run_main,
+            }
+            local function compile(script)
+                -- check script compilation (with the actual file path in error messages)
+                assert(load(script.content, ("@%s"):format(script.path)))
+                if opt.bytecode then
+                    -- compile the script with file path containing the product name
+                    return qstr(bytecode(script.content, opt, {product_name, script.path}))
+                else
+                    return mlstr(script.content)
+                end
+            end
+            local main_script, libs = find_main(scripts)
+            for i = 1, #libs do
+                local script = libs[i]
+                local name = script.lib_name
+                ensure_unique_module(script)
+                if opt.strip then
+                    preloads[#preloads+1] = ("package.preload[%q] = lib(%s)"):format(name, compile(script))
+                else
+                    preloads[#preloads+1] = ("package.preload[%q] = lib(%q, %s)"):format(name, script.path, compile(script))
+                end
+            end
+            for i = 1, #libs do
+                local script = libs[i]
+                if script.is_load then
+                    local lib_name  = script.lib_name
+                    local load_name = script.load_name or lib_name
+                    if load_name == "_" then
+                        loads[#loads+1] = ("require %q"):format(lib_name)
+                    else
+                        loads[#loads+1] = ("_ENV[%q] = require %q"):format(load_name, lib_name)
+                    end
+                end
+            end
+            if main_script then
+                local script = main_script
+                if opt.strip then
+                    run_main[#run_main+1] = ("return lib(%s)()"):format(compile(script))
+                else
+                    run_main[#run_main+1] = ("return lib(%q, %s)()"):format(script.path, compile(script))
+                end
+            end
+            local obfuscate = opt.target:match "^luax" and obfuscate_luax or obfuscate_lua
+            out = obfuscate(out:flatten():unlines(), F(opt):patch{strip=true}, {product_name})
+            return F{
+                [opt.output] = F{shebang, out}:flatten():unlines(),
+            }
+        end
+
+        error(tostring(opt.target)..": unknown target")
+    end
+
     local function print_targets()
         colorize(1)
-        print((term.color.green"%-22s%-25s"):format("Target", "Interpreter / LuaX archive"))
+        print((term.color.green"%-22s%-25s"):format("Target", "Interpreter / LuaX loader"))
         print((term.color.green"%-22s%-25s"):format(("-"):rep(21), ("-"):rep(25)))
         local home = os.getenv(F.case(sys.os) {
             windows = "LOCALAPPDATA",
@@ -15822,22 +14958,21 @@ local function cmd_compile()
                 path and path:gsub("^"..home, "~") or name,
                 path and "" or term.color.red" [NOT FOUND]"))
         end)
-        if assets.path and assets.targets then
-            local luax_lar = assets.path:gsub("^"..home, "~")
-            if assets.targets[sys.name] then
-                print(("%-22s%s"):format("native", luax_lar))
-            end
-            targets:foreach(function(target)
-                if assets.targets[target.name] then
-                    print(("%-22s%s"):format(target.name, luax_lar))
-                end
-            end)
-        end
+        local prefix = ("luax"..sys.exe):findpath():dirname():dirname()
+        local native = prefix/"lib/luax/luax-loader-"..sys.name..sys.exe
+        print(("%-22s%s%s"):format(
+            "native",
+            native and native:gsub("^"..home, "~") or native,
+            fs.is_file(native) and "" or term.color.red" [NOT FOUND]"))
+        targets:foreach(function(target)
+            local loader = prefix/"lib/luax/luax-loader-"..target.name..target.exe
+            print(("%-22s%s%s"):format(
+                target.name,
+                loader and loader:gsub("^"..home, "~") or loader,
+                fs.is_file(loader) and "" or term.color.red" [NOT FOUND]"))
+        end)
         print("")
-        print((term.color.green"Lua compiler: %s (LuaX %s)"):format(_VERSION, _LUAX_VERSION))
-        if assets.path and assets.targets then
-            print((term.color.green"C compiler  : %s"):format(build_config.compiler.full_version))
-        end
+        print((term.color.green"Lua compiler: %s (LuaX %s)"):format(_VERSION, require "luax-version".version))
     end
 
     -- Read options
@@ -15846,10 +14981,8 @@ local function cmd_compile()
     local output = nil
     local target = nil
     local quiet = false
-    local use_cc = false
     local bytecode = nil
     local strip = nil
-    local compression = false
     local key = nil
 
     do
@@ -15866,15 +14999,11 @@ local function cmd_compile()
                 if target then wrong_arg(a) end
                 target = arg[i]
                 if target == "list" then print_targets() os.exit() end
-            elseif a == '-c' then
-                use_cc = true
             elseif a == '-b' then
                 bytecode = true
             elseif a == '-s' then
                 bytecode = true
                 strip = true
-            elseif a == '-z' then
-                compression = true
             elseif a == '-k' then
                 i = i+1
                 if key then wrong_arg(a) end
@@ -15927,15 +15056,15 @@ local function cmd_compile()
         log("target", "%s", interpreter.name)
         log("output", "%s", current_output)
 
-        local files = bundle.bundle {
+        local files = bundle {
             scripts = scripts,
             add_luax_runtime = interpreter.add_luax_runtime,
+            add_ext_runtime = false,
             add_shebang = interpreter.add_shebang,
             output = current_output,
             target = interpreter.name,
             bytecode = bytecode,
             strip = strip,
-            compression = compression,
             key = key,
         }
         local exe = files[current_output]
@@ -15949,215 +15078,6 @@ local function cmd_compile()
         print_size(current_output)
     end
 
-    local function uncompressed_name(name)
-        local uncompressed, ext = name:splitext()
-        return F.case(ext) {
-            [".lz4"] = function() return uncompressed, lz4.unlz4 end,
-            [".lz"]  = function() return uncompressed, lzip.unlzip end,
-            [F.Nil]  = function() return name, F.id end,
-        }()
-    end
-
-    local function assert_sh(ok, _, code)
-        assert(ok and code==0)
-    end
-
-    -- Compile LuaX scripts with LuaX and Zig, gcc or clang
-    local function compile_native(tmp, current_output, target_definition)
-        if current_output:ext():lower() ~= target_definition.exe then
-            current_output = current_output..target_definition.exe
-        end
-        if not quiet then print() end
-        log("target", "%s", target_definition.name)
-        log("output", "%s", current_output)
-
-        -- Extract precompiled LuaX libraries
-        local headers = F(assets.headers or {})
-        local libs = F(assets.targets and assets.targets[target_definition.name] or {})
-        if headers:null() or libs:null() then
-            print_error "Compilation not available"
-        end
-        local function tmp_file(filename, content)
-            local name, uncompress = uncompressed_name(filename)
-            fs.write_bin(tmp/name:basename(), uncompress(content))
-        end
-        headers:foreachk(tmp_file)
-        libs:foreachk(tmp_file)
-        local rank = {
-            ["luax.o"]      = 1,
-            ["libluax.o"]   = 2,
-            ["libluax.a"]   = 3,
-            ["liblua.a"]    = 4,
-            ["libssl.a"]    = 5,
-            ["libcrypto.a"] = 6,
-        }
-        local libnames = libs:keys(function(a, b)
-            local rank_a = assert(rank[uncompressed_name(a)], a..": unknown library")
-            local rank_b = assert(rank[uncompressed_name(b)], b..": unknown library")
-            return rank_a < rank_b
-        end)
-        : map(function(name)
-            return tmp/uncompressed_name(name):basename()
-        end)
-
-        -- Compile the input LuaX scripts
-        local app_bundle_c = "app_bundle.c"
-        local app_bundle = assert(bundle.bundle {
-            scripts = scripts,
-            output = tmp/app_bundle_c,
-            target = "c",
-            entry = "app",
-            product_name = current_output:basename():splitext(),
-            bytecode = bytecode or "-b", -- defaults to bytecode compilation for native builds
-            strip = strip,
-            compression = compression,
-            key = key,
-        })
-        app_bundle : foreachk(fs.write_bin)
-
-        local tmp_output = tmp/current_output:basename()
-
-        local function optional(flag)
-            return flag and F.id or F.const{}
-        end
-
-        local flto = F.case(build_config.compiler.name) {
-            zig   = "-flto=thin",
-            gcc   = "-flto=auto",
-            clang = "-flto=thin",
-        }
-
-        local cflags = {
-            F.case( build_config.compiler.name) {
-                gcc   = {},
-                clang = {},
-                zig   = {"cc", "-target", F{target_definition.arch, target_definition.os, target_definition.libc}:str"-"},
-            },
-            "-std=gnu2x",
-            F.case(build_config.mode) {
-                fast  = "-O3",
-                small = "-Os",
-                debug = { "-g", "-Og" },
-            },
-            "-pipe",
-            "-I"..tmp,
-            "-fPIC",
-            optional(build_config.lto)(F.case(target_definition.os) {
-                linux   = flto,
-                macos   = {},
-                windows = flto,
-            }),
-            F.case(build_config.compiler.name) {
-                gcc   = "-Wstringop-overflow=0",
-                clang = {},
-                zig   = {},
-            },
-        }
-        local ldflags = {
-            F.case(build_config.mode) {
-                fast  = "-s",
-                small = "-s",
-                debug = {},
-            },
-            "-lm",
-            F.case(target_definition.os) {
-                linux   = {},
-                macos   = {},
-                windows = {
-                    "-lshlwapi",
-                    "-lws2_32",
-                    optional(build_config.ssl) "-lcrypt32",
-                }
-            },
-            F.case(target_definition.libc) {
-                gnu  = "-rdynamic",
-                musl = {},
-                none = "-rdynamic",
-            },
-        }
-
-        local compiler = build_config.compiler.name
-
-        if compiler == "zig" then
-
-            -- Zig configuration
-            local zig_version = build_config.compiler.version
-            local zig_path = F.case(sys.os) {
-                windows = build_config.zig.path_win:gsub("^~", os.getenv"LOCALAPPDATA" or "~"),
-                [F.Nil] = build_config.zig.path:gsub("^~", os.getenv"HOME" or "~"),
-            }/zig_version
-            local zig_key = build_config.zig.key;
-
-            local zig = zig_path/"zig"..sys.exe
-
-            -- Install Zig (to cross compile and link C sources)
-            if not zig:is_file() then
-                local luax_config = require "luax_config"
-                log("Zig", "download and install Zig to %s", zig_path)
-                local curl = require "curl"
-                local ext = F.case(sys.os) { windows=".zip", [F.Nil]=".tar.xz" }
-                local archive
-                local mirrors = curl "https://ziglang.org/download/community-mirrors.txt" : lines() : shuffle()
-                for _, mirror in ipairs(mirrors) do
-                    local url = string.format("%s/zig-%s-%s-%s%s", mirror, sys.arch, sys.os, zig_version, ext)
-                    local source = "?source="..(luax_config.url : gsub("/", "-"))
-                    archive = url:basename()
-                    log("curl", "%s", url..source)
-                    local curl_ok = curl.request {
-                        "-fSL",
-                        (quiet or not term.isatty(io.stdout)) and "-s" or "-#",
-                        url..source,
-                        "-o", tmp/archive,
-                    }
-                    if curl_ok then
-                        log("curl", "%s", url..".minisig"..source)
-                        curl_ok = curl.request {
-                            "-fSL",
-                            (quiet or not term.isatty(io.stdout)) and "-s" or "-#",
-                            url..".minisig"..source,
-                            "-o", tmp/archive..".minisig",
-                        }
-                        if curl_ok then
-                            local trusted_comment = sh.read {
-                                "minisign", "-V", "-Q",
-                                "-m", tmp/archive,
-                                "-x", tmp/archive..".minisig",
-                                "-P", zig_key
-                            } or ""
-                            local file = trusted_comment : split "\t" : map(function(field)
-                                return field:match "^file:(.*)$"
-                            end) : head()
-                            if file ~= archive then
-                                colorize(2)
-                                io.stderr:write(term.color.red(mirror/archive..".minisig: signature verification failed"), "\n")
-                            else
-                                break -- valid archive
-                            end
-                        end
-                    end
-                    archive = nil -- archive not found or not valid, try another mirror
-                end
-                if archive then
-                    fs.mkdirs(zig_path)
-                    assert_sh(sh.run("tar -xJf", tmp/archive, "-C", zig_path, "--strip-components", 1))
-                end
-                if not zig:is_file() then
-                    print_error("Unable to install Zig to %s", zig_path)
-                end
-            end
-
-            compiler = zig
-
-        end
-
-        -- Compile and link the generated source
-        assert_sh(sh.run(compiler, cflags, libnames, tmp/app_bundle_c, ldflags, "-o", tmp_output))
-
-        assert(fs.copy(tmp_output, current_output))
-
-        print_size(current_output)
-    end
-
     -- Compile LuaX scripts with LuaX and prepend a precompiled loader
     local function compile_loader(current_output, target_definition)
         if current_output:ext():lower() ~= target_definition.exe then
@@ -16167,31 +15087,25 @@ local function cmd_compile()
         log("target", "%s", target_definition.name)
         log("output", "%s", current_output)
 
-        -- Extract precompiled LuaX loader
-        local loader = assets.loaders and assets.loaders[target_definition.name]
-        if not loader then
-            print_error("No %s loader", target_definition.name)
+        -- Find the precompiled LuaX loader
+        local prefix = find_exe(arg[0]):realpath():dirname():dirname()
+        local loader = prefix/"lib/luax/luax-loader-"..target_definition.name..target_definition.exe
+        if not fs.is_file(loader) then
+            print_error("%s: no %s loader", prefix, target_definition.name)
         end
 
         -- Compile the input LuaX scripts
-        local files = assert(bundle.bundle {
+        local files = assert(bundle {
             scripts = scripts,
+            add_luax_runtime = true,
+            add_ext_runtime = true,
             output = current_output,
             target = "luax-loader",
             add_shebang = false,
             bytecode = bytecode or "-b",
             strip = strip,
-            compression = compression,
             key = key,
         })
-
-        loader = F(loader) : mapk2a(function(k, bin)
-            local _, uncompress = uncompressed_name(k)
-            return uncompress(bin)
-        end)
-        if #loader ~= 1 then
-            print_error("Invalid %s loader", target_definition.name)
-        end
 
         local header = string.pack("<c4I4", magic, #files[current_output])
         local payload = F.str {
@@ -16200,7 +15114,7 @@ local function cmd_compile()
             header:hash32():unhex(),
         }
 
-        local exe = loader[1] .. payload
+        local exe = assert(fs.read_bin(loader)) .. payload
 
         if not fs.write_bin(current_output, exe) then
             print_error("Can not create %s", current_output)
@@ -16229,13 +15143,7 @@ local function cmd_compile()
             print_error("%s: unknown target", target)
         end
 
-        if use_cc then
-            fs.with_tmpdir(function(tmp)
-                compile_native(tmp, output, target_definition)
-            end)
-        else
-            compile_loader(output, target_definition)
-        end
+        compile_loader(output, target_definition)
 
     end
 
@@ -16245,25 +15153,7 @@ end
 -- Env command
 -------------------------------------------------------------------------------
 
-local function find_exe(name)
-
-    local fs = require "fs"
-    local sys = require "sys"
-
-    local exe = fs.is_file(name) and name
-            or (sys.exe ~= "" and fs.is_file(name..sys.exe) and name..sys.exe)
-            or fs.findpath(name)
-            or (sys.exe ~= "" and fs.findpath(name..sys.exe))
-    if not exe then
-        print_error("%s: not found", name)
-    end
-    return exe
-end
-
 local function cmd_env()
-
-    local fs = require "fs"
-    local sys = require "sys"
 
     local function luax_env(luax)
 
@@ -16271,7 +15161,6 @@ local function cmd_env()
         local bin = assert(exe):dirname():realpath()
         local prefix = bin:dirname()
         local lib_lua = prefix / "lib" / "?.lua"
-        local lib_so = prefix / "lib" / "?"..sys.so
 
         local function update(lua_var, var_name, separator, new_path)
             return F{
@@ -16290,7 +15179,6 @@ local function cmd_env()
         return F.unlines {
             update("",            "PATH",      fs.path_sep,  bin),
             update(package.path,  "LUA_PATH",  lua_path_sep, lib_lua),
-            update(package.cpath, "LUA_CPATH", lua_path_sep, lib_so),
         }
     end
 
@@ -16337,9 +15225,9 @@ end
 
 local function cmd_postinstall()
 
-    local fs = require "fs"
     local sys = require "sys"
     local readline = require "readline"
+    local version = require "luax-version"
 
     local found = term.color.green "✔"
     local not_found = term.color.red "✖"
@@ -16348,13 +15236,23 @@ local function cmd_postinstall()
     colorize(1)
 
     local expected_files = F.flatten {
-        (sys.libc=="gnu" or sys.libc=="musl") and "bin"/"luax"..sys.exe or {},
+        (sys.libc=="gnu" or sys.libc=="musl") and {
+            "bin"/"luax"..sys.exe,
+            "bin"/"bang"..sys.exe,
+            "bin"/"lsvg"..sys.exe,
+            "bin"/"ypp"..sys.exe,
+        } or {},
         "bin"/"luax.lua",
         "bin"/"luax-pandoc.lua",
-        sys.libc=="gnu" and "lib"/"libluax"..sys.so or {},
-        "lib"/"libluax.lar",
+        "bin"/"bang.lua",
+        "bin"/"lsvg.lua",
+        "bin"/"ypp.lua",
+        "bin"/"ypp-pandoc.lua",
         "lib"/"libluax.lua",
+        require "luax-libs.txt" : lines(),
+        require "luax-targets" : map(function(target) return "lib/luax/luax-loader-"..target.name..target.exe end),
     }
+    local expected_dirs = expected_files : map(fs.dirname) : nub()
 
     local force = false
     local interactive = term.isatty(0) and term.isatty(1)
@@ -16377,8 +15275,12 @@ local function cmd_postinstall()
     local bin = prefix/"bin"
     local lib = prefix/"lib"
     local new_files = expected_files : map(function(file) return prefix/file end)
+    local new_dirs = expected_dirs : map(function(dir) return prefix/dir end)
 
-    local copyright = F{ _LUAX_COPYRIGHT : match "^(%S+%s+%S+)%s+(%S+%s+%S+%s+%S+)%s+(%S+),%s*(.+)" }
+    local copyright = F.flatten{
+        tostring(version),
+        version.copyright : match "(Copyright.-%d+%-%d+)%s+(.-),%s+(.*)",
+    }
     copyright[#copyright+1] = ("="):rep(copyright:map(F.op.len):maximum())
     print(copyright : map(term.color.green) : unlines())
 
@@ -16404,19 +15306,21 @@ local function cmd_postinstall()
 
     -- Search for obsolete files
 
-    local obsolete_files = (fs.ls(bin) .. fs.ls(lib))
+    local obsolete_files = (fs.ls(bin/"**") .. fs.ls(lib/"**"))
         : filter(function(file) return file:basename():match "luax" end)
-        : filter(function(file) return new_files:not_elem(file) end)
+        : filter(function(file) return new_files:not_elem(file) and new_dirs:not_elem(file) end)
 
     if #obsolete_files > 0 then
         print("")
         obsolete_files : foreach(function(file)
+            local rm = fs.is_dir(file) and fs.rmdir or fs.is_file(file) and fs.remove
+            if not rm then return end -- may have been removed by a previous rmdir
             if force then
                 print(string.format("%s remove %s", recycle, term.color.yellow(file)))
-                assert(fs.remove(file))
+                assert(rm(file))
             elseif interactive then
-                if confirm("%s remove obsolete LuaX file '%s'", recycle, term.color.yellow(file)) then
-                    assert(fs.remove(file))
+                if confirm("%s remove obsolete LuaX %s '%s'", recycle, fs.is_dir(file) and "directory" or "file" ,term.color.yellow(file)) then
+                    assert(rm(file))
                 end
             else
                 print(string.format("%s %s is obsolete", recycle, term.color.yellow(file)))

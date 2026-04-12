@@ -1,0 +1,9 @@
+hash: eaeb9f9cc21506d0
+render: dot -Tsvg -o %o.svg %i
+out: .build/tests/ypp/ypp_images/hello
+link: ypp_images/hello
+
+digraph {
+    "Hello" -> "World!"
+}
+
