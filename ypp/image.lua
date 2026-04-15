@@ -272,7 +272,7 @@ local blockdiag = "%exe -a -T%ext -o %o %i"
 local ditaa = "java -jar "..DITAA.." $(ext=='svg' and '--svg' or '') -o -e UTF-8 %i %o"
 local gnuplot = "%exe -e 'set terminal %ext' -e 'set output \"%o\"' -c %i"
 local lsvg = "%exe %i.lua -o %o"
-local octave = { "octave --no-gui %i", 'figure("visible", "off")\n\n%s\nprint %o;' }
+local octave = { "octave --silent --no-gui %i", 'figure("visible", "off")\n\n%s\nprint %o;' }
 
 local function define(t)
     local self = {}

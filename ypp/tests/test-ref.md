@@ -298,7 +298,7 @@ ypp_images/test-asy.svg
 
 ypp_images/test-octave.svg
 
-ypp_images/9b81cc265bda8ae9.svg
+ypp_images/3c127c622c6eeecc.svg
 
 ### Images from an external file
 

@@ -26,28 +26,31 @@ local test = require "test"
 local eq = test.eq
 
 local F = require "F"
-local sys = require "sys"
 
 local is_luax =
     (arg[0] and arg[0]:basename():match"^test%-")
     or (arg[-2] == "-l" and arg[-1]:basename():match"^libluax%-")
 
 local luax_packages = F.flatten{
+    "F",
     "argparse",
     "cbor",
     "complex",
     "crypt",
-    "F",
     "fs",
+    "http",
     "imath",
     "import",
     "json",
-    "readline",
     "linenoise",
+    "luax-debug",
+    "luax-package",
+    "luax-targets",
+    "luax-version",
     "mathx",
-    "package",
     "ps",
     "qmath",
+    "readline",
     "serpent",
     "sh",
     "sys",
@@ -63,11 +66,17 @@ local luax_packages = F.flatten{
 luax_packages:foreach(require)
 
 return function()
+    -- LuaX version
+    local version = require "luax-version"
+    eq(_LUAX_VERSION, tostring(version))
+    eq(_LUAX_VERSION, "LuaX "..version.version)
+
     -- Check that LuaX does not pollute the global environment
     local global_variables = F.keys(_G)
     local expected_global_variables = F.flatten {
         "_G",
         "_VERSION",
+        "_LUAX_VERSION",
         "arg",
         "assert",
         "collectgarbage",

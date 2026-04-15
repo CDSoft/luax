@@ -1,4 +1,10 @@
 #!/usr/bin/env -S lua --
+
+-- Generated with LuaX
+-- Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord
+
+_LUAX_VERSION = "LuaX 10.0.1"
+
 local function lib(path, src) return assert(load(src, '@$luax:'..path)) end
 package.preload["F"] = lib("lib/luax/F.lua", [==[--[[
 This file is part of luax.
@@ -10982,7 +10988,7 @@ return F{
     {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
 }
 ]=])
-package.preload["luax-version"] = lib("lib/luax/luax-version.lua", [[local version = "10.0"
+package.preload["luax-version"] = lib("lib/luax/luax-version.lua", [[local version = "10.0.1"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"
@@ -14960,6 +14966,7 @@ local function cmd_compile()
     local crypt = require "crypt"
     local sys = require "sys"
     local targets = require "luax-targets"
+    local luax_version = require "luax-version"
 
     local format = string.format
     local byte = string.byte
@@ -15186,6 +15193,12 @@ local function cmd_compile()
             }
             local shebang = interpreter[opt.target] and "#!/usr/bin/env -S "..interpreter[opt.target].." --" or {}
             local out = F{
+                "",
+                "-- Generated with LuaX",
+                ("-- %s"):format(luax_version.copyright),
+                "",
+                ("_LUAX_VERSION = %q"):format(tostring(luax_version)),
+                "",
                 opt.strip and {
                     "local function lib(src) return assert(load(src)) end",
                 } or {
@@ -15276,7 +15289,7 @@ local function cmd_compile()
                 fs.is_file(loader) and "" or term.color.red" [NOT FOUND]"))
         end)
         print("")
-        print((term.color.green"Lua compiler: %s (LuaX %s)"):format(_VERSION, require "luax-version".version))
+        print((term.color.green"Lua compiler: %s (%s)"):format(_VERSION, luax_version))
     end
 
     -- Read options

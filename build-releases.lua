@@ -30,5 +30,13 @@ release = {
             name = archive:basename(),
             implicit_in = release,
         }
-    end)
+    end),
+    (function()
+        local archive = archive("lua")
+        return build.tar(archive..".tar.xz") {
+            base = archive:dirname(),
+            name = archive:basename(),
+            implicit_in = release,
+        }
+    end)(),
 }

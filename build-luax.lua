@@ -262,6 +262,9 @@ acc(compile) {
 -------------------------------------------------------------------------------
 
 function archive(target)
+    if target == "lua" then
+        return "$builddir/release"/version.version/"luax-"..version.version.."-"..target
+    end
     return "$builddir/release"/version.version/"luax-"..version.version.."-"..target.name
 end
 
@@ -271,14 +274,14 @@ function cp_to(dest) return function(files)
     end)
 end end
 
-acc(release) {
-    targets : map(function(target)
-        local archive = archive(target)
-        return {
-            cp_to(archive/"bin") {
-                "$builddir/bin/luax.lua",
-                "$builddir/bin/luax-pandoc.lua",
-            },
+local function build_release(target)
+    local archive = archive(target)
+    return {
+        cp_to(archive/"bin") {
+            "$builddir/bin/luax.lua",
+            "$builddir/bin/luax-pandoc.lua",
+        },
+        target ~= "lua" and {
             luax[target.name](archive/"bin/luax") {
                 luax_lua_sources, luax_libs,
                 implicit_in = {
@@ -286,15 +289,20 @@ acc(release) {
                     loaders,
                 },
             },
-            cp_to(archive/"lib") {
-                "$builddir/lib/libluax.lua",
-            },
-            cp_to(archive/"lib/luax") {
-                installed_libs,
-                loaders,
-            },
-        }
-    end)
+        } or {},
+        cp_to(archive/"lib") {
+            "$builddir/lib/libluax.lua",
+        },
+        cp_to(archive/"lib/luax") {
+            installed_libs,
+            target ~= "lua" and loaders or {},
+        },
+    }
+end
+
+acc(release) {
+    targets : map(build_release),
+    build_release "lua",
 }
 
 -------------------------------------------------------------------------------

@@ -203,6 +203,7 @@ local lsvg = new(default_options, "lsvg")
 local octave = new(default_options, "octave")
     : set "cmd" "octave"
     : set "flags" {
+        "--silent",
         "--no-gui",
         "--eval 'figure(\"visible\",\"off\");'",
     }

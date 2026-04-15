@@ -47,18 +47,23 @@ acc(compile) {
 -- Generate the release archives
 -------------------------------------------------------------------------------
 
-acc(release) {
-    targets : map(function(target)
-        local archive = archive(target)
-        return {
-            cp_to(archive/"bin") {
-                "$builddir/bin/bang.lua",
-            },
+local function build_release(target)
+    local archive = archive(target)
+    return {
+        cp_to(archive/"bin") {
+            "$builddir/bin/bang.lua",
+        },
+        target ~= "lua" and {
             luax[target.name](archive/"bin/bang") {
                 bang_sources,
             },
         }
-    end)
+    }
+end
+
+acc(release) {
+    targets : map(build_release),
+    build_release "lua",
 }
 
 -------------------------------------------------------------------------------

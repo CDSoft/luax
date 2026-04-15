@@ -1,4 +1,10 @@
 #!/usr/bin/env -S lua --
+
+-- Generated with LuaX
+-- Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord
+
+_LUAX_VERSION = "LuaX 10.0.1"
+
 local function lib(path, src) return assert(load(src, '@$bang:'..path)) end
 package.preload["F"] = lib("lib/luax/F.lua", [==[--[[
 This file is part of luax.
@@ -10982,7 +10988,7 @@ return F{
     {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
 }
 ]=])
-package.preload["luax-version"] = lib("lib/luax/luax-version.lua", [[local version = "10.0"
+package.preload["luax-version"] = lib("lib/luax/luax-version.lua", [[local version = "10.0.1"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"
@@ -14893,6 +14899,7 @@ local lsvg = new(default_options, "lsvg")
 local octave = new(default_options, "octave")
     : set "cmd" "octave"
     : set "flags" {
+        "--silent",
         "--no-gui",
         "--eval 'figure(\"visible\",\"off\");'",
     }

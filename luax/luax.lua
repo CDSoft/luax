@@ -635,6 +635,7 @@ local function cmd_compile()
     local crypt = require "crypt"
     local sys = require "sys"
     local targets = require "luax-targets"
+    local luax_version = require "luax-version"
 
     local format = string.format
     local byte = string.byte
@@ -861,6 +862,12 @@ local function cmd_compile()
             }
             local shebang = interpreter[opt.target] and "#!/usr/bin/env -S "..interpreter[opt.target].." --" or {}
             local out = F{
+                "",
+                "-- Generated with LuaX",
+                ("-- %s"):format(luax_version.copyright),
+                "",
+                ("_LUAX_VERSION = %q"):format(tostring(luax_version)),
+                "",
                 opt.strip and {
                     "local function lib(src) return assert(load(src)) end",
                 } or {
@@ -951,7 +958,7 @@ local function cmd_compile()
                 fs.is_file(loader) and "" or term.color.red" [NOT FOUND]"))
         end)
         print("")
-        print((term.color.green"Lua compiler: %s (LuaX %s)"):format(_VERSION, require "luax-version".version))
+        print((term.color.green"Lua compiler: %s (%s)"):format(_VERSION, luax_version))
     end
 
     -- Read options

@@ -47,18 +47,23 @@ acc(compile) {
 -- Generate the release archives
 -------------------------------------------------------------------------------
 
-acc(release) {
-    targets : map(function(target)
-        local archive = archive(target)
-        return {
-            cp_to(archive/"bin") {
-                "$builddir/bin/lsvg.lua",
-            },
+local function build_release(target)
+    local archive = archive(target)
+    return {
+        cp_to(archive/"bin") {
+            "$builddir/bin/lsvg.lua",
+        },
+        target ~= "lua" and {
             luax[target.name](archive/"bin/lsvg") {
                 lsvg_sources,
             },
-        }
-    end)
+        } or {},
+    }
+end
+
+acc(release) {
+    targets : map(build_release),
+    build_release "lua",
 }
 
 -------------------------------------------------------------------------------
@@ -69,9 +74,10 @@ rule "lsvg" {
     description = "LSVG $in",
     command = {
         "LUA_PATH=lsvg/tests/?.lua",
-        "$lsvg $in -o $out --MF $depfile -- lsvg demo",
+        "PATH=$cache:$$PATH $lsvg $in -o $out --MF $depfile -- lsvg demo",
     },
     depfile = "$out.d",
+    implicit_in = "$lsvg",
 }
 
 
