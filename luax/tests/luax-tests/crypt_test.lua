@@ -231,6 +231,17 @@ return function()
                 eq(s:hash128(), crypt.hash128(s))
             end
         end
+        do -- sha1
+            eq(crypt.sha1 "", "da39a3ee5e6b4b0d3255bfef95601890afd80709")
+            eq(crypt.sha1 "abc", "a9993e364706816aba3e25717850c26c9cd0d89d")
+            eq(crypt.sha1 "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "84983e441c3bd26ebaae4aa1f95129e5e54670f1")
+            eq(crypt.sha1 "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu", "a49b2446a02c645bf419f995b67091253a04a259")
+            eq(crypt.sha1 "The quick brown fox jumps over the lazy dog", "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12")
+            for _ = 1, N do
+                local s = crypt.str(crypt.int()%1024)
+                eq(s:sha1(), crypt.sha1(s))
+            end
+        end
     end
     do
         local str = {}

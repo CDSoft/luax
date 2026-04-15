@@ -293,4 +293,5 @@ s:hash()            == crypt.hash(s)
 s:hash32()          == crypt.hash32(s)
 s:hash64()          == crypt.hash64(s)
 s:hash128()         == crypt.hash128(s)
+s:sha1()            == crypt.sha1(s)
 ```

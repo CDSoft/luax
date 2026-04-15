@@ -8205,6 +8205,58 @@ if not has_crypt then
 
 end
 
+-- SHA-1
+function crypt.sha1(message)
+
+    local unpack = string.unpack
+
+    local function rotl(w, n) return ((w << n) | (w >> (32 - n))) & 0xFFFFFFFF end
+
+    -- Padding: bit '1' follwed by '0' upto 448 bits (mod 512)
+    local padding, mod = "\x80", (#message + 1) % 64
+    padding = padding .. ("\x00"):rep(56 - mod + (mod > 56 and 64 or 0))
+
+    local bytes = message .. padding .. (">I8"):pack(8*#message)
+
+    local h0 = 0x67452301
+    local h1 = 0xEFCDAB89
+    local h2 = 0x98BADCFE
+    local h3 = 0x10325476
+    local h4 = 0xC3D2E1F0
+
+    -- 512 bit blocks
+    for chunk_start = 1, #bytes, 64 do
+        local w = {}
+        for i = 0, 15 do
+            w[i] = unpack(">I4", bytes, chunk_start + i * 4)
+        end
+        for i = 16, 79 do
+            w[i] = rotl(w[i-3] ~ w[i-8] ~ w[i-14] ~ w[i-16], 1)
+        end
+
+        -- block hash
+        local a, b, c, d, e = h0, h1, h2, h3, h4
+        local function round(i, f, k)
+            a, b, c, d, e = (rotl(a, 5) + f + e + k + w[i]) & 0xFFFFFFFF, a, rotl(b, 30), c, d
+        end
+        for i =  0, 19 do round(i, (b & c) | ((~b) & d),        0x5A827999) end
+        for i = 20, 39 do round(i, b ~ c ~ d,                   0x6ED9EBA1) end
+        for i = 40, 59 do round(i, (b & c) | (b & d) | (c & d), 0x8F1BBCDC) end
+        for i = 60, 79 do round(i, b ~ c ~ d,                   0xCA62C1D6) end
+
+        -- update global hash
+        h0 = (h0 + a) & 0xFFFFFFFF
+        h1 = (h1 + b) & 0xFFFFFFFF
+        h2 = (h2 + c) & 0xFFFFFFFF
+        h3 = (h3 + d) & 0xFFFFFFFF
+        h4 = (h4 + e) & 0xFFFFFFFF
+    end
+
+    -- Final hexa digest
+    return (">I4I4I4I4I4"):pack(h0, h1, h2, h3, h4):hex()
+
+end
+
 --[[------------------------------------------------------------------------@@@
 ## Random array access
 
@@ -8277,6 +8329,7 @@ s:hash()            == crypt.hash(s)
 s:hash32()          == crypt.hash32(s)
 s:hash64()          == crypt.hash64(s)
 s:hash128()         == crypt.hash128(s)
+s:sha1()            == crypt.sha1(s)
 ```
 @@@]]
 
@@ -8292,6 +8345,7 @@ string.hash         = crypt.hash
 string.hash32       = crypt.hash32
 string.hash64       = crypt.hash64
 string.hash128      = crypt.hash128
+string.sha1         = crypt.sha1
 string.crc32        = crypt.crc32
 string.crc64        = crypt.crc64
 
