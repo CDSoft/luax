@@ -42,6 +42,7 @@ return function()
         crypt_test      = "luax/tests/luax-tests/crypt_test.lua",
         debug_test      = "luax/tests/luax-tests/debug_test.lua",
         fs_test         = "luax/tests/luax-tests/fs_test.lua",
+        http_test       = "luax/tests/luax-tests/http_test.lua",
         imath_test      = "luax/tests/luax-tests/imath_test.lua",
         import_test     = "luax/tests/luax-tests/import_test.lua",
         json_test       = "luax/tests/luax-tests/json_test.lua",

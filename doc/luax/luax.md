@@ -332,7 +332,8 @@ The `luax` runtime comes with a few builtin modules.
 - [crypt](crypt.md): cryptography module
 - [tar](tar.md): A minimalistic tar archiving library
 - [lpeg](lpeg.md): Parsing Expression Grammars For Lua
-- [curl](curl.md): simple curl command line interface
+- [curl](curl.md): Simple curl command line interface
+- [http](http.md): Simple HTTP(S) module based on curl
 - [argparse](argparse.md): Feature-rich command line parser for Lua
 - [serpent](serpent.md): Lua serializer and pretty printer
 - [cbor](cbor.md): pure Lua implementation of the CBOR
