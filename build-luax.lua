@@ -77,7 +77,7 @@ local luax_libs = build "$builddir/luax-libs.txt" {
     command = "echo '"..F.flatten {
         libluax_lua_sources:map(function(lib) return "lib/luax"/lib:basename() end),
         libluax_ext_sources:map(function(lib) return "lib/luax/ext"/lib:basename() end),
-    }:unlines():base64().."' | base64 -d > $out;",
+    }:unwords().."' > $out;",
 }
 
 -- Compile using LuaX sources

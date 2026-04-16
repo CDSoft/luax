@@ -3,7 +3,7 @@
 -- Generated with LuaX
 -- Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord
 
-_LUAX_VERSION = "LuaX 10.0.1"
+_LUAX_VERSION = "LuaX 10.0.2"
 
 local function lib(path, src) return assert(load(src, '@$luax-pandoc:'..path)) end
 package.preload["F"] = lib("lib/luax/F.lua", [==[--[[
@@ -10988,7 +10988,7 @@ return F{
     {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
 }
 ]=])
-package.preload["luax-version"] = lib("lib/luax/luax-version.lua", [[local version = "10.0.1"
+package.preload["luax-version"] = lib("lib/luax/luax-version.lua", [[local version = "10.0.2"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"
@@ -14294,36 +14294,7 @@ end
 
 return tomlx
 ]=])
-package.preload["luax-libs.txt"] = lib(".build/luax-libs.txt", [=[return [[lib/luax/F.lua
-lib/luax/argparse.lua
-lib/luax/cbor.lua
-lib/luax/complex.lua
-lib/luax/crypt.lua
-lib/luax/curl.lua
-lib/luax/fs.lua
-lib/luax/http.lua
-lib/luax/imath.lua
-lib/luax/import.lua
-lib/luax/json.lua
-lib/luax/linenoise.lua
-lib/luax/luax-debug.lua
-lib/luax/luax-package.lua
-lib/luax/luax-targets.lua
-lib/luax/luax-version.lua
-lib/luax/mathx.lua
-lib/luax/ps.lua
-lib/luax/qmath.lua
-lib/luax/readline.lua
-lib/luax/serpent.lua
-lib/luax/sh.lua
-lib/luax/strict.lua
-lib/luax/sys.lua
-lib/luax/tar.lua
-lib/luax/term.lua
-lib/luax/toml.lua
-lib/luax/tomlx.lua
-lib/luax/ext/re.lua
-]]]=])
+package.preload["luax-libs.txt"] = lib(".build/luax-libs.txt", [=[return [[lib/luax/F.lua lib/luax/argparse.lua lib/luax/cbor.lua lib/luax/complex.lua lib/luax/crypt.lua lib/luax/curl.lua lib/luax/fs.lua lib/luax/http.lua lib/luax/imath.lua lib/luax/import.lua lib/luax/json.lua lib/luax/linenoise.lua lib/luax/luax-debug.lua lib/luax/luax-package.lua lib/luax/luax-targets.lua lib/luax/luax-version.lua lib/luax/mathx.lua lib/luax/ps.lua lib/luax/qmath.lua lib/luax/readline.lua lib/luax/serpent.lua lib/luax/sh.lua lib/luax/strict.lua lib/luax/sys.lua lib/luax/tar.lua lib/luax/term.lua lib/luax/toml.lua lib/luax/tomlx.lua lib/luax/ext/re.lua]]]=])
 require "F"
 require "crypt"
 require "fs"
@@ -15566,7 +15537,7 @@ local function cmd_postinstall()
         "bin"/"ypp.lua",
         "bin"/"ypp-pandoc.lua",
         "lib"/"libluax.lua",
-        require "luax-libs.txt" : lines(),
+        require "luax-libs.txt" : words(),
         require "luax-targets" : map(function(target) return "lib/luax/luax-loader-"..target.name..target.exe end),
     }
     local expected_dirs = expected_files : map(fs.dirname) : nub()
@@ -15624,7 +15595,7 @@ local function cmd_postinstall()
     -- Search for obsolete files
 
     local obsolete_files = (fs.ls(bin/"**") .. fs.ls(lib/"**"))
-        : filter(function(file) return file:basename():match "luax" end)
+        : filter(function(file) return file:match("luax", #prefix) end)
         : filter(function(file) return new_files:not_elem(file) and new_dirs:not_elem(file) end)
 
     if #obsolete_files > 0 then

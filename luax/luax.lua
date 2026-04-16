@@ -1235,7 +1235,7 @@ local function cmd_postinstall()
         "bin"/"ypp.lua",
         "bin"/"ypp-pandoc.lua",
         "lib"/"libluax.lua",
-        require "luax-libs.txt" : lines(),
+        require "luax-libs.txt" : words(),
         require "luax-targets" : map(function(target) return "lib/luax/luax-loader-"..target.name..target.exe end),
     }
     local expected_dirs = expected_files : map(fs.dirname) : nub()
@@ -1293,7 +1293,7 @@ local function cmd_postinstall()
     -- Search for obsolete files
 
     local obsolete_files = (fs.ls(bin/"**") .. fs.ls(lib/"**"))
-        : filter(function(file) return file:basename():match "luax" end)
+        : filter(function(file) return file:match("luax", #prefix) end)
         : filter(function(file) return new_files:not_elem(file) and new_dirs:not_elem(file) end)
 
     if #obsolete_files > 0 then
