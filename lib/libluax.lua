@@ -3,7 +3,7 @@
 -- Generated with LuaX
 -- Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord
 
-_LUAX_VERSION = "LuaX 10.0.2"
+_LUAX_VERSION = "LuaX 10.1"
 
 local function lib(path, src) return assert(load(src, '@$libluax:'..path)) end
 package.preload["F"] = lib("luax/F.lua", [==[--[[
@@ -10967,7 +10967,7 @@ return F{
     {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
 }
 ]=])
-package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.0.2"
+package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.1"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"

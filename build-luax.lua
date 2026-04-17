@@ -245,7 +245,7 @@ end)
 -- Install the LuaX libraries in $builddir
 -------------------------------------------------------------------------------
 
-local installed_libs = {
+local installed_libs = F.flatten {
     libluax_lua_sources : map(function(name)
         return build.cp("$builddir/lib/luax"/name:basename()) { name }
     end),
@@ -306,8 +306,11 @@ local function build_release(target)
             "$builddir/lib/libluax.lua",
         },
         cp_to(archive/"lib/luax") {
-            installed_libs,
+            installed_libs : filter(function(m) return m:dirname():basename() == "luax" end),
             target ~= "lua" and loaders or {},
+        },
+        cp_to(archive/"lib/luax/ext") {
+            installed_libs : filter(function(m) return m:dirname():basename() == "ext" end),
         },
     }
 end
