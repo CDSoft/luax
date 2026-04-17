@@ -202,7 +202,10 @@ local loaders = F(targets) : map(function(target)
         : add "ldlibs" {
             "-lm",
             case(target.os) {
-                windows = "-lshlwapi",
+                windows = {
+                    "-lshlwapi",
+                    "-lws2_32",
+                },
             },
         }
         : add "implicit_in" { "$zig" }
@@ -222,8 +225,16 @@ local loaders = F(targets) : map(function(target)
         zigcc_ext:static_lib("$builddir/tmp"/target.name/"libext.a") {
             ext_c_sources : difference(
                 target.os == "windows" and {
+                    -- Linux/MacOS only
                     "luax/ext/linenoise/linenoise.c",
-                } or {})
+                    "luax/ext/luasocket/unixdgram.c",
+                    "luax/ext/luasocket/serial.c",
+                    "luax/ext/luasocket/unixstream.c",
+                    "luax/ext/luasocket/usocket.c",
+                } or {
+                    -- Windows onnly
+                    "luax/ext/luasocket/wsocket.c",
+                })
         },
     }
 

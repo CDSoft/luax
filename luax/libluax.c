@@ -35,6 +35,7 @@
 #include "mathx.h"
 #include "ps.h"
 #include "qmath.h"
+#include "luasocket.h"
 #include "sys.h"
 #include "term.h"
 
@@ -49,6 +50,7 @@ static const luaL_Reg lrun_libs[] = {
     {"_mathx",      luaopen_mathx},
     {"_ps",         luaopen_ps},
     {"_qmath",      luaopen_qmath},
+    {"socket",      luaopen_luasocket},
     {"_sys",        luaopen_sys},
     {"_term",       luaopen_term},
     {NULL, NULL},

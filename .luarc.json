@@ -3,7 +3,8 @@
   "runtime.version": "Lua 5.5",
   "workspace.library": [
     "luax",
-    "luax/ext/lpeg"
+    "luax/ext/lpeg",
+    "luax/ext/luasocket"
   ],
   "workspace.checkThirdParty": false
 }

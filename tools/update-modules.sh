@@ -38,6 +38,7 @@ update_all()
     update_linenoise    master
     update_dkjson       2.8
     update_toml         1.0.0
+    update_luasocket    3.1.0
 }
 
 found()
@@ -345,6 +346,27 @@ index ef81455..b26e867 100644
           if next(v) == nil then
              table.insert(depth, escape_key(k))
 EOF
+}
+
+update_luasocket()
+{
+    local LUASOCKET_VERSION="$1"
+    local LUASOCKET_ARCHIVE="luasocket-$LUASOCKET_VERSION.zip"
+    local LUASOCKET_URL="https://github.com/lunarmodules/luasocket/archive/refs/tags/v$LUASOCKET_VERSION.zip"
+
+    download "$LUASOCKET_URL" "$TMP/$LUASOCKET_ARCHIVE"
+
+    rm -rf "$ROOT/luax/ext/luasocket"
+    mkdir -p "$ROOT/luax/ext/luasocket"
+    unzip -o "$TMP/$LUASOCKET_ARCHIVE" -d "$TMP"
+    cp "$TMP/luasocket-$LUASOCKET_VERSION"/src/*.{c,h,lua} "$ROOT/luax/ext/luasocket"
+
+    echo "--@LIB=socket.ftp"     >> "$ROOT/luax/ext/luasocket/ftp.lua"
+    echo "--@LIB=socket.headers" >> "$ROOT/luax/ext/luasocket/headers.lua"
+    echo "--@LIB=socket.http"    >> "$ROOT/luax/ext/luasocket/http.lua"
+    echo "--@LIB=socket.smtp"    >> "$ROOT/luax/ext/luasocket/smtp.lua"
+    echo "--@LIB=socket.tp"      >> "$ROOT/luax/ext/luasocket/tp.lua"
+    echo "--@LIB=socket.url"     >> "$ROOT/luax/ext/luasocket/url.lua"
 }
 
 update_all

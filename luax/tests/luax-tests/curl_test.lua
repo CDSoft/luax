@@ -32,6 +32,8 @@ local server = os.getenv "HTTP_SERVER"
 
 return function()
 
+    -- curl
+
     local curl = require "curl"
 
     if server then
@@ -50,6 +52,31 @@ return function()
         eq(s, nil)
         eq(msg, "Could not resolve host. The given remote host could not be resolved.")
         eq(err, 6)
+    end
+
+    -- curl.http
+
+    local http = curl.http
+
+    if server then
+        local port = os.getenv "HTTP_PORT_RANGE" + 2
+        local httpd<close> = assert(io.popen(server.." "..port))
+        ps.sleep(0.1)
+        local s, msg = assert(http.get("http://localhost:"..port))
+        eq(s, {
+            ok = true,
+            status = 200,
+            status_msg = "OK",
+            headers = {content_type="text/plain"},
+            body = "Hello, World!",
+        })
+        eq(msg, nil)
+    end
+
+    do
+        local s, err = http.get "https://not-in-this-world.com"
+        eq(s, nil)
+        eq(err, "Could not resolve host. The given remote host could not be resolved.")
     end
 
 end

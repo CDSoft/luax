@@ -277,6 +277,7 @@ The `luax` runtime comes with a few builtin modules.
 - [crypt](crypt.md): cryptography module
 - [tar](tar.md): A minimalistic tar archiving library
 - [lpeg](lpeg.md): Parsing Expression Grammars For Lua
+- [luasocket](luasocket.md): Network support for the Lua language
 - [curl](curl.md): Simple curl command line interface
 - [http](http.md): Simple HTTP(S) module based on curl
 - [argparse](argparse.md): Feature-rich command line parser for Lua
@@ -323,6 +324,9 @@ script `lib/libluax.lua` can be reused in pure Lua programs:
   ([MIT license](http://www.lua.org/license.html))
 * **[Lpeg](http://www.inf.puc-rio.br/~roberto/lpeg/)**: Parsing Expression
   Grammars For Lua ([MIT license](http://www.lua.org/license.html))
+- **[luasocket](https://github.com/diegonehab/luasocket)**: Network
+  support for the Lua language ([LuaSocket 3.0
+  license](https://github.com/diegonehab/luasocket/blob/master/LICENSE))
 * **[serpent](https://github.com/pkulchenko/serpent)**: Lua serializer and
   pretty printer. ([MIT
   license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))

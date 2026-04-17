@@ -19,39 +19,45 @@ https://codeberg.org/cdsoft/luax
 --]]
 
 ---------------------------------------------------------------------
--- curl
+-- luasocket
 ---------------------------------------------------------------------
 
 local test = require "test"
 local eq = test.eq
 
+local sys = require "sys"
 local ps = require "ps"
 
 local server = os.getenv "HTTP_SERVER"
 
 return function()
+    if sys.libc == "gnu" then
 
-    local http = require "http"
+        assert(require "socket")
+        assert(require "socket.core")
+        assert(require "socket.ftp")
+        assert(require "socket.headers")
+        local http = assert(require "socket.http")
+        assert(require "socket.smtp")
+        assert(require "socket.tp")
+        assert(require "socket.url")
+        if sys.os == "linux" then
+            assert(require "socket.unix")
+            assert(require "socket.serial")
+        end
+        assert(require "mime")
+        assert(require "mime.core")
+        assert(require "mbox")
+        assert(require "ltn12")
 
-    if server then
-        local port = os.getenv "HTTP_PORT_RANGE" + 2
-        local httpd<close> = assert(io.popen(server.." "..port))
-        ps.sleep(0.1)
-        local s, msg = assert(http.get("http://localhost:"..port))
-        eq(s, {
-            ok = true,
-            status = 200,
-            status_msg = "OK",
-            headers = {content_type="text/plain"},
-            body = "Hello, World!",
-        })
-        eq(msg, nil)
+        if server then
+            local port = os.getenv "HTTP_PORT_RANGE" + 3
+            local httpd<close> = assert(io.popen(server.." "..port))
+            ps.sleep(0.1)
+            local s, code, _ = http.request("http://localhost:"..port)
+            eq(s, "Hello, World!")
+            eq(code, 200)
+        end
+
     end
-
-    do
-        local s, err = http.get "https://not-in-this-world.com"
-        eq(s, nil)
-        eq(err, "Could not resolve host. The given remote host could not be resolved.")
-    end
-
 end
