@@ -46,6 +46,8 @@ local luax_packages = F.flatten{
     "luax-package",
     "luax-targets",
     "luax-version",
+    "lz4",
+    "lzip",
     "mathx",
     "ps",
     "qmath",

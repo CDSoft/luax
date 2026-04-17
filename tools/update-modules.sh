@@ -39,6 +39,8 @@ update_all()
     update_dkjson       2.8
     update_toml         1.0.0
     update_luasocket    3.1.0
+    update_lz4          release
+    update_lzlib        1.16
 }
 
 found()
@@ -367,6 +369,41 @@ update_luasocket()
     echo "--@LIB=socket.smtp"    >> "$ROOT/luax/ext/luasocket/smtp.lua"
     echo "--@LIB=socket.tp"      >> "$ROOT/luax/ext/luasocket/tp.lua"
     echo "--@LIB=socket.url"     >> "$ROOT/luax/ext/luasocket/url.lua"
+}
+
+update_lz4()
+{
+    local LZ4_VERSION="$1"
+    local LZ4_ARCHIVE="lz4-$LZ4_VERSION.zip"
+    local LZ4_URL="https://github.com/lz4/lz4/archive/refs/heads/$LZ4_VERSION.zip"
+
+    download "$LZ4_URL" "$TMP/$LZ4_ARCHIVE"
+
+    rm -rf "$ROOT/luax/ext/lz4"
+    mkdir -p "$ROOT/luax/ext/lz4"
+    unzip -o "$TMP/$LZ4_ARCHIVE" -d "$TMP"
+    cp "$TMP/lz4-release"/lib/*.{c,h} "$ROOT/luax/ext/lz4"
+}
+
+update_lzlib()
+{
+    local LZLIB_VERSION="$1"
+    local LZLIB_ARCHIVE="lzlib-$LZLIB_VERSION.tar.gz"
+    local LZLIB_URL="http://download.savannah.gnu.org/releases/lzip/lzlib/$LZLIB_ARCHIVE"
+
+    download "$LZLIB_URL" "$TMP/$LZLIB_ARCHIVE"
+
+    rm -rf "$ROOT/luax/ext/lzlib"
+    mkdir -p "$ROOT/luax/ext/lzlib" "$ROOT/luax/ext/lzlib/inc"
+    tar -xzf "$TMP/$LZLIB_ARCHIVE" -C "$TMP"
+
+    cp "$TMP/lzlib-$LZLIB_VERSION"/lzlib.{c,h} "$ROOT/luax/ext/lzlib/"
+    cp "$TMP/lzlib-$LZLIB_VERSION"/lzip.h "$ROOT/luax/ext/lzlib/"
+
+    cp "$TMP/lzlib-$LZLIB_VERSION"/cbuffer.c "$ROOT/luax/ext/lzlib/inc"
+    cp "$TMP/lzlib-$LZLIB_VERSION"/decoder.{c,h} "$ROOT/luax/ext/lzlib/inc"
+    cp "$TMP/lzlib-$LZLIB_VERSION"/encoder*.{c,h} "$ROOT/luax/ext/lzlib/inc"
+    cp "$TMP/lzlib-$LZLIB_VERSION"/fast_encoder.{c,h} "$ROOT/luax/ext/lzlib/inc"
 }
 
 update_all

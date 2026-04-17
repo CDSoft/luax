@@ -47,7 +47,7 @@ local libluax_ext_sources = ls "luax/ext/**.lua"
 
 local luax_c_sources = ls "luax/*.c"
 local lua_c_sources = ls "lua/*.c" : difference { "lua/lua.c" }
-local ext_c_sources = ls "luax/ext/**.c"
+local ext_c_sources = ls "luax/ext/**.c" : difference(ls "luax/ext/lzlib/inc/*.c")
 
 -------------------------------------------------------------------------------
 -- LuaX compilers
@@ -129,6 +129,7 @@ local cflags = build.compile_flags {
     "-pipe",
     "-fPIC",
     "-Ilua",
+    "-Iluax/ext/lzlib/inc",
 }
 
 local luax_cflags = build.compile_flags {
@@ -322,7 +323,7 @@ acc(release) {
 
 if bang.output:dirname() == bang.input:dirname() then
     local function dirs(path)
-        return fs.ls(path/"**.lua")
+        return ls(path/"**.lua")
             : map(F.compose{F.prefix"    \"", F.suffix"\",", fs.dirname})
             : nub() : unlines() : rtrim() : gsub(",$", "")
     end

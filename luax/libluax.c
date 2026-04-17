@@ -19,10 +19,6 @@
 
 #include "libluax.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "lauxlib.h"
 
 #include "complex.h"
@@ -32,6 +28,8 @@
 #include "readline.h"
 #include "linenoise.h"
 #include "lpeg.h"
+#include "lz4.h"
+#include "lzip.h"
 #include "mathx.h"
 #include "ps.h"
 #include "qmath.h"
@@ -47,6 +45,8 @@ static const luaL_Reg lrun_libs[] = {
     {"_readline",   luaopen_readline},
     {"_linenoise",  luaopen_linenoise},
     {"lpeg",        luaopen_lpeg},
+    {"_lz4",        luaopen_lz4},
+    {"_lzip",       luaopen_lzip},
     {"_mathx",      luaopen_mathx},
     {"_ps",         luaopen_ps},
     {"_qmath",      luaopen_qmath},

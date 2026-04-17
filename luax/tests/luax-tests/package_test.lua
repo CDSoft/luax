@@ -49,6 +49,8 @@ return function()
         readline_test   = "luax/tests/luax-tests/readline_test.lua",
         linenoise_test  = "luax/tests/luax-tests/linenoise_test.lua",
         lpeg_test       = "luax/tests/luax-tests/lpeg_test.lua",
+        lz4_test        = "luax/tests/luax-tests/lz4_test.lua",
+        lzip_test       = "luax/tests/luax-tests/lzip_test.lua",
         mathx_test      = "luax/tests/luax-tests/mathx_test.lua",
         package_test    = "luax/tests/luax-tests/package_test.lua",
         ps_test         = "luax/tests/luax-tests/ps_test.lua",

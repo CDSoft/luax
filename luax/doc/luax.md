@@ -12,8 +12,7 @@ author: @AUTHORS
 >
 > - Faster build system (no option, cross compilers always generated)
 > - Smaller binaries
-> - No more compression libraries (not so useful for LuaX, easily replaced with command line tools)
-> - No more LuaSocket and OpenSSL libraries (heavy to maintain, easily replaced with the new [`http`](http.md) module, based on `curl`)
+> - No more LuaSec and OpenSSL libraries (heavy to maintain, easily replaced with the HTTP functions of `curl`)
 > - Bang, ypp and lsvg are now part of LuaX (more easily maintained and updated)
 
 # Lua eXtended
@@ -275,11 +274,12 @@ The `luax` runtime comes with a few builtin modules.
 - [sys](sys.md): System module
 - [term](term.md): Terminal manipulation module
 - [crypt](crypt.md): cryptography module
+- [lz4](lz4.md): Extremely Fast Compression algorithm
+- [lzip](lzip.md): A compression library for the lzip format
 - [tar](tar.md): A minimalistic tar archiving library
 - [lpeg](lpeg.md): Parsing Expression Grammars For Lua
 - [luasocket](luasocket.md): Network support for the Lua language
-- [curl](curl.md): Simple curl command line interface
-- [http](http.md): Simple HTTP(S) module based on curl
+- [curl](curl.md): Simple curl command line interface with HTTP functions
 - [argparse](argparse.md): Feature-rich command line parser for Lua
 - [serpent](serpent.md): Lua serializer and pretty printer
 - [cbor](cbor.md): pure Lua implementation of the CBOR
@@ -317,19 +317,23 @@ script `lib/libluax.lua` can be reused in pure Lua programs:
 
 `luax` uses other third party softwares:
 
-* **[Zig](https://ziglang.org/)**: General-purpose programming language and
+- **[Zig](https://ziglang.org/)**: General-purpose programming language and
   toolchain for maintaining robust, optimal, and reusable software. ([MIT
   license](https://github.com/ziglang/zig/blob/master/LICENSE))
-* **[Lua 5.5](http://www.lua.org)**: Copyright (C) 1994-2025 Lua.org, PUC-Rio
+- **[Lua 5.5](http://www.lua.org)**: Copyright (C) 1994-2025 Lua.org, PUC-Rio
   ([MIT license](http://www.lua.org/license.html))
-* **[Lpeg](http://www.inf.puc-rio.br/~roberto/lpeg/)**: Parsing Expression
+- **[Lpeg](http://www.inf.puc-rio.br/~roberto/lpeg/)**: Parsing Expression
   Grammars For Lua ([MIT license](http://www.lua.org/license.html))
 - **[luasocket](https://github.com/diegonehab/luasocket)**: Network
   support for the Lua language ([LuaSocket 3.0
   license](https://github.com/diegonehab/luasocket/blob/master/LICENSE))
-* **[serpent](https://github.com/pkulchenko/serpent)**: Lua serializer and
+- **[serpent](https://github.com/pkulchenko/serpent)**: Lua serializer and
   pretty printer. ([MIT
   license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))
+- **[LZ4](https://github.com/lz4/lz4)**: Extremely Fast Compression algorithm
+  ([License](https://github.com/lz4/lz4/blob/dev/lib/LICENSE))
+- **[lzip](https://www.nongnu.org/lzip/)**: A compression library for the lzip
+  format ([License](http://www.gnu.org/licenses/gpl-2.0.html))
 - **[Argparse](https://github.com/mpeterv/argparse)**: a feature-rich command
   line parser for Lua ([MIT
   license](https://github.com/mpeterv/argparse/blob/master/LICENSE))
@@ -339,9 +343,9 @@ script `lib/libluax.lua` can be reused in pure Lua programs:
 - **[Linenoise](https://github.com/antirez/linenoise)**: A
   minimal, zero-config, BSD licensed, readline replacement ([BSD
   license](https://github.com/antirez/linenoise/blob/master/LICENSE))
-* **[dkjson.lua](http://dkolf.de/dkjson-lua/)**: JSON Module for Lua
+- **[dkjson.lua](http://dkolf.de/dkjson-lua/)**: JSON Module for Lua
   ([MIT license](http://www.lua.org/license.html))
-* **[CBOR](https://www.zash.se/lua-cbor.html)**: pure Lua implementation of the
+- **[CBOR](https://www.zash.se/lua-cbor.html)**: pure Lua implementation of the
   CBOR ([License](https://code.zash.se/lua-cbor/file/tip/COPYING))
-* **[tinytoml](https://github.com/FourierTransformer/tinytoml)**: a pure Lua TOML parser
+- **[tinytoml](https://github.com/FourierTransformer/tinytoml)**: a pure Lua TOML parser
   ([MIT License](https://github.com/FourierTransformer/tinytoml?tab=MIT-1-ov-file#readme))
