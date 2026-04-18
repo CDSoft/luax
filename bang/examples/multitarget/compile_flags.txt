@@ -1,0 +1,5 @@
+-O3
+-Wall
+-Werror
+-Ilib
+-Iarch
