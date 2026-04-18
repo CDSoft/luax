@@ -18,7 +18,17 @@
 * Wait for readable/writable/connected socket with timeout
 \*-------------------------------------------------------------------------*/
 #ifndef SOCKET_SELECT
-#include <sys/poll.h>
+#if defined(__has_include)
+#  if __has_include(<poll.h>)
+#    include <poll.h>
+#  elif __has_include(<sys/poll.h>)
+#    include <sys/poll.h>
+#  else
+#    error "Neither poll.h nor sys/poll.h found"
+#  endif
+#else
+#  include <poll.h>
+#endif
 
 #define WAITFD_R        POLLIN
 #define WAITFD_W        POLLOUT

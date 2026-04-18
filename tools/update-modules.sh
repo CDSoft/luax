@@ -246,6 +246,7 @@ index 2b6cc0b..322f8ef 100644
  			map[i] = k;
  		end
 EOF
+    rm -f "$ROOT/luax/cbor.lua.orig"
 }
 
 update_linenoise()
@@ -348,6 +349,7 @@ index ef81455..b26e867 100644
           if next(v) == nil then
              table.insert(depth, escape_key(k))
 EOF
+    rm -f "$ROOT/luax/toml.lua.orig"
 }
 
 update_luasocket()
@@ -369,6 +371,33 @@ update_luasocket()
     echo "--@LIB=socket.smtp"    >> "$ROOT/luax/ext/luasocket/smtp.lua"
     echo "--@LIB=socket.tp"      >> "$ROOT/luax/ext/luasocket/tp.lua"
     echo "--@LIB=socket.url"     >> "$ROOT/luax/ext/luasocket/url.lua"
+
+    patch -p1 <<EOF
+diff --git a/luax/ext/luasocket/usocket.c b/luax/ext/luasocket/usocket.c
+index 69635da..32e254e 100644
+--- a/luax/ext/luasocket/usocket.c
++++ b/luax/ext/luasocket/usocket.c
+@@ -18,7 +18,17 @@
+ * Wait for readable/writable/connected socket with timeout
+ \*-------------------------------------------------------------------------*/
+ #ifndef SOCKET_SELECT
+-#include <sys/poll.h>
++#if defined(__has_include)
++#  if __has_include(<poll.h>)
++#    include <poll.h>
++#  elif __has_include(<sys/poll.h>)
++#    include <sys/poll.h>
++#  else
++#    error "Neither poll.h nor sys/poll.h found"
++#  endif
++#else
++#  include <poll.h>
++#endif
+
+ #define WAITFD_R        POLLIN
+ #define WAITFD_W        POLLOUTEOF
+EOF
+    rm -f "$ROOT/luax/ext/luasocket/usocket.c.orig"
 }
 
 update_lz4()

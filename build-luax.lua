@@ -233,7 +233,7 @@ local loaders = F(targets) : map(function(target)
                     "luax/ext/luasocket/unixstream.c",
                     "luax/ext/luasocket/usocket.c",
                 } or {
-                    -- Windows onnly
+                    -- Windows only
                     "luax/ext/luasocket/wsocket.c",
                 })
         },
