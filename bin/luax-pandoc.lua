@@ -15279,10 +15279,6 @@ local function cmd_compile()
 
         F.foreach(opt.scripts, load_script)
 
-        if not opt.output then
-            return F{}
-        end
-
         if opt.target:match "^lua" or opt.target == "pandoc" then
             local product_name = opt.product_name or opt.output:basename():splitext()
             local preloads = {}
@@ -15353,8 +15349,10 @@ local function cmd_compile()
             end
             local obfuscate = opt.target:match "^luax" and obfuscate_luax or obfuscate_lua
             out = obfuscate(out:flatten():unlines(), F(opt):patch{strip=true}, {product_name})
+            local is_executable = main_script and not main_script.is_lib
             return F{
-                [opt.output] = F{shebang, out}:flatten():unlines(),
+                output = F{shebang, out}:flatten():unlines(),
+                perms = (is_executable and fs.aX or 0) | fs.aR | fs.uW,
             }
         end
 
@@ -15437,11 +15435,6 @@ local function cmd_compile()
             end
             i = i+1
         end
-
-        if not output then
-            print_error "No output specified"
-        end
-
     end
 
     if not quiet then print_welcome() end
@@ -15486,13 +15479,12 @@ local function cmd_compile()
             strip = strip,
             key = key,
         }
-        local exe = files[current_output]
 
-        if not fs.write_bin(current_output, exe) then
+        if not fs.write_bin(current_output, files.output) then
             print_error("Can not create %s", current_output)
         end
 
-        fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
+        fs.chmod(current_output, files.perms)
 
         print_size(current_output)
     end
@@ -15526,20 +15518,20 @@ local function cmd_compile()
             key = key,
         })
 
-        local header = string.pack("<c4I4", magic, #files[current_output])
-        local payload = F.str {
-            files[current_output],
+        local header = string.pack("<c4I4", magic, #files.output)
+
+        local exe = {
+            assert(fs.read_bin(loader)),
+            files.output,
             header,
             header:hash32():unhex(),
         }
-
-        local exe = assert(fs.read_bin(loader)) .. payload
 
         if not fs.write_bin(current_output, exe) then
             print_error("Can not create %s", current_output)
         end
 
-        fs.chmod(current_output, fs.aX|fs.aR|fs.uW)
+        fs.chmod(current_output, files.perms)
 
         print_size(current_output)
     end
