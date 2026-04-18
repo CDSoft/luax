@@ -168,8 +168,7 @@ It does not need to be installed and can be copied anywhere you want.
 - `$PREFIX/bin/luax-pandoc.lua`: LuaX run in a Pandoc Lua interpreter
 - `$PREFIX/lib/libluax.lua`: a pure Lua reimplementation of some LuaX libraries,
   usable in any Lua 5.4 or 5.5 interpreter.
-- `$PREFIX/lib/luax/*.lua`: standard LuaX library used by the LuaX compiler
-- `$PREFIX/lib/luax/luax-loader-*`: precompiled LuaX runtime used by the LuaX compiler
+- `$PREFIX/lib/libluax.xyz`: standard library and precompiled runtime used by the LuaX compiler
 
 ### Post installation command
 

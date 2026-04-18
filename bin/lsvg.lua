@@ -3,10 +3,10 @@
 -- Generated with LuaX
 -- Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord
 
-_LUAX_VERSION = "LuaX 10.1.1"
+_LUAX_VERSION = "LuaX 10.1.2"
 
 local function lib(path, src) return assert(load(src, '@$lsvg:'..path)) end
-package.preload["F"] = lib("lib/luax/F.lua", [==[--[[
+package.preload["F"] = lib("luax/F.lua", [==[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -4856,7 +4856,7 @@ return setmetatable(F, {
     end,
 })
 ]==])
-package.preload["argparse"] = lib("lib/luax/argparse.lua", [==[-- The MIT License (MIT)
+package.preload["argparse"] = lib("luax/argparse.lua", [==[-- The MIT License (MIT)
 
 -- Copyright (c) 2013 - 2018 Peter Melnichenko
 --                      2019 Paul Ouellette
@@ -6953,7 +6953,7 @@ end})
 
 return argparse
 ]==])
-package.preload["cbor"] = lib("lib/luax/cbor.lua", [[-- Concise Binary Object Representation (CBOR)
+package.preload["cbor"] = lib("luax/cbor.lua", [[-- Concise Binary Object Representation (CBOR)
 -- RFC 7049
 
 local function softreq(pkg, field)
@@ -7545,7 +7545,7 @@ return {
 };
 --@LIB
 ]])
-package.preload["complex"] = lib("lib/luax/complex.lua", [=[--[[
+package.preload["complex"] = lib("luax/complex.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -7790,7 +7790,7 @@ end
 
 return complex
 ]=])
-package.preload["crypt"] = lib("lib/luax/crypt.lua", [=[--[[
+package.preload["crypt"] = lib("luax/crypt.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -8357,7 +8357,7 @@ string.crc64        = crypt.crc64
 
 return crypt
 ]=])
-package.preload["curl"] = lib("lib/luax/curl.lua", [=[--[[
+package.preload["curl"] = lib("luax/curl.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -8754,7 +8754,7 @@ setmetatable(curl.http, { __call = function(self, ...) return self.request(...) 
 
 return curl
 ]=])
-package.preload["fs"] = lib("lib/luax/fs.lua", [=[--[[
+package.preload["fs"] = lib("luax/fs.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -9448,7 +9448,7 @@ getmetatable("").__div  = fs.join
 
 return fs
 ]=])
-package.preload["imath"] = lib("lib/luax/imath.lua", [=[--[[
+package.preload["imath"] = lib("luax/imath.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -9909,7 +9909,7 @@ end
 
 return imath
 ]=])
-package.preload["import"] = lib("lib/luax/import.lua", [=[--[[
+package.preload["import"] = lib("luax/import.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -9956,7 +9956,7 @@ return function(fname, env)
     return mod
 end
 ]=])
-package.preload["json"] = lib("lib/luax/json.lua", [===[-- Module options:
+package.preload["json"] = lib("luax/json.lua", [===[-- Module options:
 local always_use_lpeg = false
 local register_global_module_table = false
 local global_module_name = 'json'
@@ -10710,7 +10710,7 @@ end
 return json
 
 ]===])
-package.preload["linenoise"] = lib("lib/luax/linenoise.lua", [=[--[[
+package.preload["linenoise"] = lib("luax/linenoise.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -10749,7 +10749,7 @@ end
 
 return linenoise
 ]=])
-package.preload["luax-debug"] = lib("lib/luax/luax-debug.lua", [==[--[[
+package.preload["luax-debug"] = lib("luax/luax-debug.lua", [==[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -10819,7 +10819,7 @@ end
 
 return debug
 ]==])
-package.preload["luax-package"] = lib("lib/luax/luax-package.lua", [==[--[[
+package.preload["luax-package"] = lib("luax/luax-package.lua", [==[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -10917,7 +10917,7 @@ end
 
 return package
 ]==])
-package.preload["luax-targets"] = lib("lib/luax/luax-targets.lua", [=[--[[
+package.preload["luax-targets"] = lib("luax/luax-targets.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -10967,7 +10967,7 @@ return F{
     {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
 }
 ]=])
-package.preload["luax-version"] = lib("lib/luax/luax-version.lua", [[local version = "10.1.1"
+package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.1.2"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"
@@ -10983,7 +10983,7 @@ return setmetatable({
     __tostring = function() return "LuaX "..version end,
 })
 ]])
-package.preload["lz4"] = lib("lib/luax/lz4.lua", [=[--[[
+package.preload["lz4"] = lib("luax/lz4.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -11057,7 +11057,7 @@ string.unlz4    = lz4.unlz4
 
 return lz4
 ]=])
-package.preload["lzip"] = lib("lib/luax/lzip.lua", [=[--[[
+package.preload["lzip"] = lib("luax/lzip.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -11133,7 +11133,7 @@ string.unlzip   = lzip.unlzip
 
 return lzip
 ]=])
-package.preload["mathx"] = lib("lib/luax/mathx.lua", [=[--[[
+package.preload["mathx"] = lib("luax/mathx.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -11270,7 +11270,7 @@ mathx.pi = math.pi
 
 return mathx
 ]=])
-package.preload["ps"] = lib("lib/luax/ps.lua", [=[--[[
+package.preload["ps"] = lib("luax/ps.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -11326,7 +11326,7 @@ end
 
 return ps
 ]=])
-package.preload["qmath"] = lib("lib/luax/qmath.lua", [=[--[[
+package.preload["qmath"] = lib("luax/qmath.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -11489,7 +11489,7 @@ end
 
 return qmath
 ]=])
-package.preload["readline"] = lib("lib/luax/readline.lua", [=[--[[
+package.preload["readline"] = lib("luax/readline.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -11528,7 +11528,7 @@ end
 
 return readline
 ]=])
-package.preload["serpent"] = lib("lib/luax/serpent.lua", [=[local n, v = "serpent", "0.303" -- (C) 2012-18 Paul Kulchenko; MIT License
+package.preload["serpent"] = lib("luax/serpent.lua", [=[local n, v = "serpent", "0.303" -- (C) 2012-18 Paul Kulchenko; MIT License
 local c, d = "Paul Kulchenko", "Lua serializer and pretty printer"
 local snum = {[tostring(1/0)]='1/0 --[[math.huge]]',[tostring(-1/0)]='-1/0 --[[-math.huge]]',[tostring(0/0)]='0/0'}
 local badtype = {thread = true, userdata = true, cdata = true}
@@ -11681,7 +11681,7 @@ return { _NAME = n, _COPYRIGHT = c, _DESCRIPTION = d, _VERSION = v, serialize = 
   block = function(a, opts) return s(a, merge({indent = '  ', sortkeys = true, comment = true}, opts)) end }
 --@LIB
 ]=])
-package.preload["sh"] = lib("lib/luax/sh.lua", [=[--[[
+package.preload["sh"] = lib("luax/sh.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -11810,7 +11810,7 @@ setmetatable(sh, {
 
 return sh
 ]=])
-package.preload["strict"] = lib("lib/luax/strict.lua", [=[--[[
+package.preload["strict"] = lib("luax/strict.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -11890,7 +11890,7 @@ mt.__index = function (t, n)
   return rawget(t, n)
 end
 ]=])
-package.preload["sys"] = lib("lib/luax/sys.lua", [=[--[[
+package.preload["sys"] = lib("luax/sys.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -11961,7 +11961,7 @@ end
 
 return sys
 ]=])
-package.preload["tar"] = lib("lib/luax/tar.lua", [=[--[[
+package.preload["tar"] = lib("luax/tar.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -12402,7 +12402,7 @@ end
 
 return tar
 ]=])
-package.preload["term"] = lib("lib/luax/term.lua", [=[--[[
+package.preload["term"] = lib("luax/term.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify
@@ -12690,7 +12690,7 @@ end
 
 return term
 ]=])
-package.preload["toml"] = lib("lib/luax/toml.lua", [=[
+package.preload["toml"] = lib("luax/toml.lua", [=[
 
 
 
@@ -14232,7 +14232,7 @@ end
 
 return tinytoml
 ]=])
-package.preload["tomlx"] = lib("lib/luax/tomlx.lua", [=[--[[
+package.preload["tomlx"] = lib("luax/tomlx.lua", [=[--[[
 This file is part of luax.
 
 luax is free software: you can redistribute it and/or modify

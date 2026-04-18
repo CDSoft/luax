@@ -636,6 +636,7 @@ local function cmd_compile()
     local sys = require "sys"
     local targets = require "luax-targets"
     local luax_version = require "luax-version"
+    local cbor = require "cbor"
 
     local format = string.format
     local byte = string.byte
@@ -687,6 +688,9 @@ local function cmd_compile()
             return escape(s)
         end
     end
+
+    local prefix = find_exe(arg[0]):realpath():dirname():dirname()
+    local libluax_xyz = cbor.decode(assert(fs.read_bin(prefix/"lib/libluax.xyz")))
 
     local function find_main(scripts)
         local explicit_main = F{}
@@ -797,35 +801,34 @@ local function cmd_compile()
 
         local scripts = F{}
 
-        local function load_script(script, prefix, patch)
-            local len_prefix = prefix and #prefix+2 or 1
-            local content = assert(fs.read_bin(script))
+        local function load_script(script, content, patch)
+            content = content or assert(fs.read_bin(script))
             local ext = fs.ext(script)
             local module
             if ext == ".lua" then
                 module = F {
-                    path      = script:sub(len_prefix),
+                    path      = script,
                     content   = comment_shebang(content),
-                    is_main   = content:match("@".."MAIN"),
-                    is_lib    = content:match("@".."LIB"),
+                    is_main   = content:match("@".."MAIN") and true,
+                    is_lib    = content:match("@".."LIB") and true,
                     lib_name  = content:match("@".."LIB=([%w%._%-]+)") or script:basename():splitext(),
-                    is_load   = content:match("@".."LOAD"),
+                    is_load   = content:match("@".."LOAD") and true,
                     load_name = content:match("@".."LOAD=([%w%._%-]+)"),
-                    maybe_lib = last_line(content):match "^%s*return",
+                    maybe_lib = last_line(content):match "^%s*return" and true,
                 }
             else
                 -- file embeded as a Lua module returning the content of the file
                 if content:match"^[%g%s]*$" and #content:lines() <= 1 then content = content:trim() end
                 local safe_content = qstr(content)
                 module = F {
-                    path      = script:sub(len_prefix),
+                    path      = script,
                     content   = "return "..safe_content,
-                    is_main   = false,
+                    is_main   = nil,
                     is_lib    = true,
                     lib_name  = script:basename(),
-                    is_load   = false,
-                    load_name = false,
-                    maybe_lib = false,
+                    is_load   = nil,
+                    load_name = nil,
+                    maybe_lib = nil,
                 }
             end
             if patch then module = module:patch(patch) end
@@ -833,13 +836,12 @@ local function cmd_compile()
         end
 
         if opt.add_luax_runtime then
-            local prefix = find_exe(arg[0]):realpath():dirname():dirname()
-            fs.ls(prefix/"lib/luax/*.lua") : foreach(function(script)
-                load_script(script, prefix, { is_main=false })
+            F.foreachk(libluax_xyz.lua, function(script, content)
+                load_script(script, content, { is_main=false })
             end)
             if opt.add_ext_runtime then
-                fs.ls(prefix/"lib/luax/ext/*.lua") : foreach(function(script)
-                    load_script(script, prefix, { is_main=false })
+                F.foreachk(libluax_xyz.ext, function(script, content)
+                    load_script(script, content, { is_main=false })
                 end)
             end
         end
@@ -942,18 +944,18 @@ local function cmd_compile()
                 path and path:gsub("^"..home, "~") or name,
                 path and "" or term.color.red" [NOT FOUND]"))
         end)
-        local prefix = ("luax"..sys.exe):findpath():dirname():dirname()
-        local native = prefix/"lib/luax/luax-loader-"..sys.name..sys.exe
+        local libluax = prefix/"lib/libluax_xyz"
+        local native = libluax_xyz.loader["luax-loader-"..sys.name..sys.exe]
         print(("%-22s%s%s"):format(
             "native",
-            native and native:gsub("^"..home, "~") or native,
-            fs.is_file(native) and "" or term.color.red" [NOT FOUND]"))
+            libluax:gsub("^"..home, "~"),
+            native and "" or term.color.red" [NOT FOUND]"))
         targets:foreach(function(target)
-            local loader = prefix/"lib/luax/luax-loader-"..target.name..target.exe
+            local loader = libluax_xyz.loader["luax-loader-"..target.name..target.exe]
             print(("%-22s%s%s"):format(
                 target.name,
-                loader and loader:gsub("^"..home, "~") or loader,
-                fs.is_file(loader) and "" or term.color.red" [NOT FOUND]"))
+                libluax:gsub("^"..home, "~"),
+                loader and "" or term.color.red" [NOT FOUND]"))
         end)
         print("")
         print((term.color.green"Lua compiler: %s (%s)"):format(_VERSION, luax_version))
@@ -1066,9 +1068,8 @@ local function cmd_compile()
         log("output", "%s", current_output)
 
         -- Find the precompiled LuaX loader
-        local prefix = find_exe(arg[0]):realpath():dirname():dirname()
-        local loader = prefix/"lib/luax/luax-loader-"..target_definition.name..target_definition.exe
-        if not fs.is_file(loader) then
+        local loader = libluax_xyz.loader["luax-loader-"..target_definition.name..target_definition.exe]
+        if not loader then
             print_error("%s: no %s loader", prefix, target_definition.name)
         end
 
@@ -1088,7 +1089,7 @@ local function cmd_compile()
         local header = string.pack("<c4I4", magic, #files.output)
 
         local exe = {
-            assert(fs.read_bin(loader)),
+            loader,
             files.output,
             header,
             header:hash32():unhex(),
@@ -1227,8 +1228,7 @@ local function cmd_postinstall()
         "bin"/"ypp.lua",
         "bin"/"ypp-pandoc.lua",
         "lib"/"libluax.lua",
-        require "luax-libs.txt" : words(),
-        require "luax-targets" : map(function(target) return "lib/luax/luax-loader-"..target.name..target.exe end),
+        "lib"/"libluax.xyz",
     }
     local expected_dirs = expected_files : map(fs.dirname) : nub()
 

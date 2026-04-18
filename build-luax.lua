@@ -73,46 +73,13 @@ local function new_luax(prog, deps)
     return luax
 end
 
-local luax_libs = build "$builddir/luax-libs.txt" {
-    command = "echo '"..F.flatten {
-        libluax_lua_sources:map(function(lib) return "lib/luax"/lib:basename() end),
-        libluax_ext_sources:map(function(lib) return "lib/luax/ext"/lib:basename() end),
-    }:unwords().."' > $out;",
+rule "packlib" {
+    command = {
+        "export LUA_PATH=luax/?.lua;",
+        "$cache/lua tools/packlib.lua -o $out $in",
+    },
+    implicit_in = "tools/packlib.lua",
 }
-
--- Compile using LuaX sources
-local luax0 = new_luax("export LUA_PATH='$builddir/stage0/lib/luax/?.lua'; $cache/lua $builddir/stage0/bin/luax.lua", {
-    luax_lua_sources : map(function(script)
-        return build.cp("$builddir/stage0/bin"/script:basename()) { script }
-    end),
-    libluax_lua_sources : map(function(lib)
-        return build.cp("$builddir/stage0/lib/luax"/lib:basename()) { lib }
-    end),
-    libluax_ext_sources : map(function(lib)
-        return build.cp("$builddir/stage0/lib/luax/ext"/lib:basename()) { lib }
-    end),
-})
-
--------------------------------------------------------------------------------
--- Generate the pure-Lua LuaX interpreters and library
--------------------------------------------------------------------------------
-
-acc(compile) {
-    luax0.lua    "$builddir/bin/luax.lua"        { luax_lua_sources, luax_libs },
-    luax0.pandoc "$builddir/bin/luax-pandoc.lua" { luax_lua_sources, luax_libs },
-    luax0.luax   "$builddir/lib/libluax.lua"     { libluax_lua_sources },
-
-    -- Add prebuilt scripts to the repository
-    build.cp "bin/luax.lua"        "$builddir/bin/luax.lua",
-    build.cp "bin/luax-pandoc.lua" "$builddir/bin/luax-pandoc.lua",
-    build.cp "lib/libluax.lua"     "$builddir/lib/libluax.lua",
-}
-
--- Compile using LuaX sources installed in $builddir
-local luax1 = new_luax("$cache/lua $builddir/bin/luax.lua")
-
--- Compile using LuaX binaries
-luax = new_luax("$builddir/bin/luax")
 
 -------------------------------------------------------------------------------
 -- Compile the LuaX loaders for all supported targets
@@ -220,7 +187,7 @@ local loaders = F(targets) : map(function(target)
     local zigcc_ext = zigcc : new("cc-ext-"..target.name)
         : add "cflags" { }
 
-    return zigcc_luax:executable("$builddir/lib/luax/luax-loader-"..target.name..target.exe) {
+    return zigcc_luax:executable("$builddir/tmp/luax-loader-"..target.name..target.exe) {
         zigcc_luax:static_lib("$builddir/tmp"/target.name/"libluax.a") { luax_c_sources },
         zigcc_lua:static_lib("$builddir/tmp"/target.name/"liblua.a") { lua_c_sources },
         zigcc_ext:static_lib("$builddir/tmp"/target.name/"libext.a") {
@@ -242,29 +209,47 @@ local loaders = F(targets) : map(function(target)
 end)
 
 -------------------------------------------------------------------------------
--- Install the LuaX libraries in $builddir
+-- Generate the pure-Lua LuaX interpreters and library
 -------------------------------------------------------------------------------
 
-local installed_libs = F.flatten {
-    libluax_lua_sources : map(function(name)
-        return build.cp("$builddir/lib/luax"/name:basename()) { name }
-    end),
-    libluax_ext_sources : map(function(name)
-        return build.cp("$builddir/lib/luax/ext"/name:basename()) { name }
-    end),
+local luax0 = new_luax("export LUA_PATH='luax/?.lua'; $cache/lua $builddir/stage0/bin/luax.lua", {
+    build.cp "$builddir/stage0/bin/luax.lua" "luax/luax.lua",
+    build "$builddir/stage0/lib/libluax.xyz" { "packlib",
+        libluax_lua_sources,
+        libluax_ext_sources,
+        loaders,
+    },
+})
+
+acc(compile) {
+    luax0.lua    "$builddir/bin/luax.lua"        { luax_lua_sources },
+    luax0.pandoc "$builddir/bin/luax-pandoc.lua" { luax_lua_sources },
+    luax0.luax   "$builddir/lib/libluax.lua"     { libluax_lua_sources },
+    build "$builddir/lib/libluax.xyz" { "packlib",
+        libluax_lua_sources,
+        libluax_ext_sources,
+        loaders,
+    },
+
+    -- Add prebuilt scripts to the repository
+    build.cp "bin/luax.lua"        "$builddir/bin/luax.lua",
+    build.cp "bin/luax-pandoc.lua" "$builddir/bin/luax-pandoc.lua",
+    build.cp "lib/libluax.lua"     "$builddir/lib/libluax.lua",
 }
+
+-- Compile using LuaX binaries
+luax = new_luax("$builddir/bin/luax")
 
 -------------------------------------------------------------------------------
 -- Generate the native LuaX interpreter
 -------------------------------------------------------------------------------
 
 acc(compile) {
-    loaders,
-    luax1.native "$builddir/bin/luax" {
-        luax_lua_sources, luax_libs,
+    "$builddir/lib/libluax.xyz",
+    luax0.native "$builddir/bin/luax" {
+        luax_lua_sources,
         implicit_in = {
-            installed_libs,
-            loaders,
+            "$builddir/lib/libluax.xyz",
         },
     },
 }
@@ -295,22 +280,19 @@ local function build_release(target)
         },
         target ~= "lua" and {
             luax[target.name](archive/"bin/luax") {
-                luax_lua_sources, luax_libs,
+                luax_lua_sources,
                 implicit_in = {
-                    installed_libs,
-                    loaders,
+                    "$builddir/lib/libluax.xyz",
                 },
             },
         } or {},
         cp_to(archive/"lib") {
             "$builddir/lib/libluax.lua",
-        },
-        cp_to(archive/"lib/luax") {
-            installed_libs : filter(function(m) return m:dirname():basename() == "luax" end),
-            target ~= "lua" and loaders or {},
-        },
-        cp_to(archive/"lib/luax/ext") {
-            installed_libs : filter(function(m) return m:dirname():basename() == "ext" end),
+            target ~= "lua" and "$builddir/lib/libluax.xyz" or {
+                build "$builddir/tmp/libluax-lua.dat" { "packlib",
+                    libluax_lua_sources,
+                },
+            },
         },
     }
 end
@@ -604,15 +586,7 @@ install "bin" {
     "$builddir/bin/luax-pandoc.lua",
 }
 
-install "lib/luax" {
-    libluax_lua_sources,
-    loaders,
-}
-
-install "lib/luax/ext" {
-    libluax_ext_sources,
-}
-
 install "lib" {
     "$builddir/lib/libluax.lua",
+    "$builddir/lib/libluax.xyz",
 }
