@@ -1,6 +1,10 @@
 <img src="luax-banner.svg" style="width:100.0%" />
 
-> \[!IMPORTANT\] This is an important rework of LuaX.
+------------------------------------------------------------------------
+
+> # 🔴 IMPORTANT
+>
+> This is an important rework of LuaX.
 >
 > Version 10 simplifies and improves several aspects compared to version
 > 9:
@@ -11,6 +15,8 @@
 >   replaced with the HTTP functions of `curl`)
 > - Bang, ypp and lsvg are now part of LuaX (more easily maintained and
 >   updated)
+
+------------------------------------------------------------------------
 
 # Lua eXtended
 

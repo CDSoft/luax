@@ -5,7 +5,10 @@ author: @AUTHORS
 
 ![](luax-banner.svg){width=100%}
 
-> [!IMPORTANT]
+-----
+
+> # 🔴 IMPORTANT
+>
 > This is an important rework of LuaX.
 >
 > Version 10 simplifies and improves several aspects compared to version 9:
@@ -14,6 +17,8 @@ author: @AUTHORS
 > - Smaller binaries
 > - No more LuaSec and OpenSSL libraries (heavy to maintain, easily replaced with the HTTP functions of `curl`)
 > - Bang, ypp and lsvg are now part of LuaX (more easily maintained and updated)
+
+-----
 
 # Lua eXtended
 

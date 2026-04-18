@@ -44,8 +44,7 @@
 >
 > - Faster build system (no option, cross compilers always generated)
 > - Smaller binaries
-> - No more compression libraries (not so useful for LuaX, easily replaced with command line tools)
-> - No more LuaSocket and OpenSSL libraries (heavy to maintain, easily replaced with the new [`http`](luax/http.md) module, based on `curl`)
+> - No more LuaSec and OpenSSL libraries (heavy to maintain, easily replaced with the HTTP functions of `curl`)
 > - Bang, ypp and lsvg are now part of LuaX (more easily maintained and updated)
 
 # TL;DR
