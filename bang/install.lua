@@ -42,7 +42,7 @@ function mt.__index:default_target_needed()
     return not targets:null()
 end
 
-function mt.__index:gen(install_token)
+function mt.__index:gen(install_rule, install_token)
     if targets:null() then
         return
     end
@@ -52,6 +52,24 @@ function mt.__index:gen(install_token)
     help "install" ("install $name in PREFIX or "..prefix)
 
     var "prefix" (prefix)
+
+    local function destdir(target_name)
+        return case(sys.os) {
+            linux   = "$${DESTDIR}$${PREFIX:-$prefix}"/target_name,
+            macos   = "$${DESTDIR}$${PREFIX:-$prefix}"/target_name,
+            windows = "%PREFIX%"/target_name,
+        }
+    end
+
+    rule(install_rule) {
+        description = "INSTALL $in to $destdir",
+        command = case(sys.os) {
+            linux = "mkdir -p $destdir && cp -v --force --preserve=mode,timestamp $in $destdir",
+            macos = "mkdir -p $destdir && cp -v -f -p $in $destdir",
+            windows = "copy $in $destdir",
+        },
+        pool = "console",
+    }
 
     local rule_names = targets
     : sort(function(a, b) return a.name < b.name end)
@@ -68,14 +86,9 @@ function mt.__index:gen(install_token)
                 end),
             "\n",
         }
-        return build(rule_name) { target_group:map(function(target) return target.sources end),
+        return build(rule_name) { "install", target_group:map(function(target) return target.sources end),
             ["$no_default"] = true,
-            description = "INSTALL $in to "..target_name,
-            command = case(sys.os) {
-                linux = { "install -v -D -t", "$${DESTDIR}$${PREFIX:-$prefix}"/target_name, "$in" },
-                macos = { "install", "$in", "$${DESTDIR}$${PREFIX:-$prefix}"/target_name },
-                windows = { "copy", "$in", "%PREFIX%"/target_name },
-            },
+            destdir = destdir(target_name)
         }
     end)
 

@@ -525,7 +525,7 @@ return function(args)
     _G.bang = F.clone(args)
     assert(loadfile(args.input, "t"))()
     atexit.run()
-    install:gen(install_token)
+    install:gen(unique_rule_name("install"), install_token)
     clean:gen()
     help:gen(help_token) -- help shall be generated after clean and install
     generator_rule(args)

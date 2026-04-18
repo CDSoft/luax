@@ -901,17 +901,15 @@ build $builddir/asy.pdf: asymptote.pdf file.asy
 
 prefix = ~/.local/pub/bang_test
 
-rule install-bin
-  description = INSTALL $in to bin
-  command = install -v -D -t $${DESTDIR}$${PREFIX:-$prefix}/bin $in
+rule install
+  description = INSTALL $in to $destdir
+  command = mkdir -p $destdir && cp -v --force --preserve=mode,timestamp $in $destdir
+  pool = console
 
-build install-bin: install-bin foo1.bin foo2.bin foo3.bin
-
-rule install-lib
-  description = INSTALL $in to lib
-  command = install -v -D -t $${DESTDIR}$${PREFIX:-$prefix}/lib $in
-
-build install-lib: install-lib foo1.lib
+build install-bin: install foo1.bin foo2.bin foo3.bin
+  destdir = $${DESTDIR}$${PREFIX:-$prefix}/bin
+build install-lib: install foo1.lib
+  destdir = $${DESTDIR}$${PREFIX:-$prefix}/lib
 build install: phony install-bin install-lib
 
 ######################################################################
