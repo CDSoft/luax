@@ -35,6 +35,8 @@
  */
 #define MAX_PAYLOADS 1
 
+static const char magic[] = "LuaX";
+
 struct t_header {
     uint8_t magic[4];
     uint32_t size;
@@ -101,6 +103,7 @@ static bool read_header(FILE *f, size_t offset, struct t_header *header)
 {
     check("fseek", fseek(f, -(long)(offset + sizeof(struct t_header)), SEEK_END) == 0);
     check("fread", fread(header, sizeof(struct t_header), 1, f) == 1);
+    if (memcmp(header->magic, magic, sizeof(header->magic)) != 0) { return false; }
     t_fnv1a_32 hash;
     fnv1a_32_init(&hash);
     fnv1a_32_update(&hash, header, sizeof(struct t_header)-sizeof(header->hash));
