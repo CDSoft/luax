@@ -166,9 +166,9 @@ curl(...)
 @@@]]
 
 local default_curl_options = {
-    "--silent",
-    "--show-error",
-    "--location", -- follow redirections
+    "-s",   --silent
+    "-S",   --show-error
+    "-L",   --location (follow redirections)
 }
 
 setmetatable(curl, { __call = function(_, ...) return curl.request(default_curl_options, ...) end })
@@ -239,12 +239,14 @@ function curl.http.request(method, url, options)
     headers["User-Agent"] = headers["User-Agent"] or user_agent
 
     local response, error_message = curl.request {
-        "--location", "--silent", "--show-headers",
-        "--request", method:upper(), url,
+        "-L",                           --location
+        "-s",                           --silent
+        "-i",                           --show-headers
+        "-X", method:upper(), url,      --request
         F.mapk2a(function(k, v)
-            return { "--header", q(('%s: %s'):format(k, v)) }
+            return { "-H", q(('%s: %s'):format(k, v)) } --header
         end, headers),
-        body and { "--data", q(body) } or {},
+        body and { "-d", q(body) } or {},               --data
     }
     if not response then return nil, error_message end
 

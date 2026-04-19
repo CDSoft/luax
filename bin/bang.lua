@@ -3,7 +3,7 @@
 -- Generated with LuaX
 -- Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord
 
-_LUAX_VERSION = "LuaX 10.1.2"
+_LUAX_VERSION = "LuaX 10.1.3"
 
 local function lib(path, src) return assert(load(src, '@$bang:'..path)) end
 package.preload["F"] = lib("luax/F.lua", [==[--[[
@@ -8525,9 +8525,9 @@ curl(...)
 @@@]]
 
 local default_curl_options = {
-    "--silent",
-    "--show-error",
-    "--location", -- follow redirections
+    "-s",   --silent
+    "-S",   --show-error
+    "-L",   --location (follow redirections)
 }
 
 setmetatable(curl, { __call = function(_, ...) return curl.request(default_curl_options, ...) end })
@@ -8598,12 +8598,14 @@ function curl.http.request(method, url, options)
     headers["User-Agent"] = headers["User-Agent"] or user_agent
 
     local response, error_message = curl.request {
-        "--location", "--silent", "--show-headers",
-        "--request", method:upper(), url,
+        "-L",                           --location
+        "-s",                           --silent
+        "-i",                           --show-headers
+        "-X", method:upper(), url,      --request
         F.mapk2a(function(k, v)
-            return { "--header", q(('%s: %s'):format(k, v)) }
+            return { "-H", q(('%s: %s'):format(k, v)) } --header
         end, headers),
-        body and { "--data", q(body) } or {},
+        body and { "-d", q(body) } or {},               --data
     }
     if not response then return nil, error_message end
 
@@ -10967,7 +10969,7 @@ return F{
     {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
 }
 ]=])
-package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.1.2"
+package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.1.3"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"
