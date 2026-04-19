@@ -36,9 +36,13 @@ DEPS=(
     minisign
 )
 
+found() {
+    command -v "$1" > /dev/null
+}
+
 DEPS_FOUND=true
 for dep in "${DEPS[@]}"; do
-    hash "$dep" || DEPS_FOUND=false
+    found "$dep" || DEPS_FOUND=false
 done
 
 if ! $DEPS_FOUND; then

@@ -326,6 +326,17 @@ if bang.output:dirname() == bang.input:dirname() then
 end
 
 -------------------------------------------------------------------------------
+-- Native C compiler
+-------------------------------------------------------------------------------
+
+local zigcc = build.zigcc : new("cc-native")
+    : set "cc" { "$zig cc" }
+    : set "ar" { "$zig ar" }
+    : set "so" { "$zig cc" }
+    : set "ld" { "$zig cc" }
+    : add "implicit_in" { "$zig" }
+
+-------------------------------------------------------------------------------
 -- Tests
 -------------------------------------------------------------------------------
 
@@ -357,7 +368,7 @@ local function new_httpd_port_range()
 end
 
 var "httpd" "$builddir/tests/luax/httpd"
-build.cc "$httpd" { "luax/tests/luax-tests/httpd.c" }
+zigcc "$httpd" { "luax/tests/luax-tests/httpd.c" }
 
 local pandoc_version = (sh"pandoc --version" or "0") : match"[%d%.]+" : split"%." : map(tonumber)
 local has_pandoc = F.op.uge(pandoc_version, {3, 1, 12, 3})
