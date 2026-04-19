@@ -44,6 +44,7 @@ for _, file in ipairs(args.files) do
     if file:match "/ext/" and name:ext() == ".lua" then lib.ext["luax/ext"/name] = content
     elseif name:ext() == ".lua"                    then lib.lua["luax"/name] = content
     elseif name:has_prefix "luax-loader-"          then lib.loader[name] = content
+    else error(file..": can not be added to "..args.o)
     end
 
 end
