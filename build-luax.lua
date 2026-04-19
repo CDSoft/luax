@@ -330,10 +330,10 @@ end
 -------------------------------------------------------------------------------
 
 local zigcc = build.zigcc : new("cc-native")
-    : set "cc" { "$zig cc" }
+    : set "cc" { "$zig cc" } : add "cflags" { cflags, luax_cflags }
     : set "ar" { "$zig ar" }
     : set "so" { "$zig cc" }
-    : set "ld" { "$zig cc" }
+    : set "ld" { "$zig cc" } : add "ldflags" { ldflags }
     : add "implicit_in" { "$zig" }
 
 -------------------------------------------------------------------------------
