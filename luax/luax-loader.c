@@ -169,7 +169,7 @@ int main(int argc, const char *argv[])
     while (nb_payloads < MAX_PAYLOADS) {
         if (!read_header(f, offset, &payloads[nb_payloads].header)) { break; }
         payloads[nb_payloads].payload = read_payload(f, offset, &payloads[nb_payloads].header);
-        offset += payloads[nb_payloads].header.size;
+        offset += payloads[nb_payloads].header.size + sizeof(struct t_header);
         nb_payloads++;
     }
     fclose(f);
