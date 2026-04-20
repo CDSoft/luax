@@ -35,8 +35,6 @@ local sys = require "sys"
 local targets = require "luax-targets"
 local version = require "luax-version"
 
-require "crypt"
-
 -------------------------------------------------------------------------------
 -- Sources
 -------------------------------------------------------------------------------

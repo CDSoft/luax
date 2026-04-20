@@ -23,8 +23,6 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/select.h>
 
 #define BUFFER_SIZE 1024
 #define TIMEOUT_SECONDS 5
@@ -35,108 +33,51 @@ static const char* HTTP_RESPONSE =
     "\r\n"
     "Hello, World!";
 
-static int create_server_socket(int port) {
-    int server_fd;
-    struct sockaddr_in address;
-    int opt = 1;
-
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("socket");
-        return -1;
-    }
-
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
-        perror("setsockopt");
-        close(server_fd);
-        return -1;
-    }
-
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(port);
-
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        perror("bind");
-        close(server_fd);
-        return -1;
-    }
-
-    if (listen(server_fd, 1) < 0) {
-        perror("listen");
-        close(server_fd);
-        return -1;
-    }
-
-    return server_fd;
-}
-
-static int wait_for_connection_with_timeout(int server_fd, int timeout_seconds) {
-    fd_set readfds;
-    struct timeval timeout;
-
-    FD_ZERO(&readfds);
-    FD_SET(server_fd, &readfds);
-
-    timeout.tv_sec = timeout_seconds;
-    timeout.tv_usec = 0;
-
-    int result = select(server_fd + 1, &readfds, NULL, NULL, &timeout);
-
-    if (result < 0) {
-        perror("select");
-        return -1;
-    } else if (result == 0) {
-        printf("Timeout.\n");
-        return 0;
-    }
-
-    return 1;
-}
-
-static void handle_request(int client_fd) {
-    char buffer[BUFFER_SIZE] = {0};
-
-    ssize_t bytes_read = read(client_fd, buffer, BUFFER_SIZE - 1);
-    if (bytes_read > 0) {
-        send(client_fd, HTTP_RESPONSE, strlen(HTTP_RESPONSE), 0);
-    } else {
-        perror("read");
-    }
+static void check(const char *name, bool condition) {
+    if (condition) return;
+    perror(name);
+    exit(EXIT_FAILURE);
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
-        return 1;
-    }
-
+    if (argc != 2) { fprintf(stderr, "Usage: %s <port>\n", argv[0]); exit(EXIT_FAILURE); }
     int port = atoi(argv[1]);
-    if (port < 1024 || port > 65535) {
-        fprintf(stderr, "Erreur: Le port doit être entre 1024 et 65535\n");
-        return 1;
-    }
+    if (port < 1024 || port > 65535) { fprintf(stderr, "Erreur: Le port doit être entre 1024 et 65535\n"); exit(EXIT_FAILURE); }
 
-    int server_fd = create_server_socket(port);
-    if (server_fd < 0) {
-        return 1;
-    }
+    /* Create a server socket */
+    int server_fd;
+    struct sockaddr_in address = {
+        .sin_family = AF_INET,
+        .sin_addr.s_addr = INADDR_ANY,
+        .sin_port = htons(port),
+    };
+    int opt = 1;
+    check("socket", (server_fd = socket(AF_INET, SOCK_STREAM, 0)) > 0);
+    check("setsockopt", setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == 0);
+    check("bind", bind(server_fd, (struct sockaddr *)&address, sizeof(address)) == 0);
+    check("listen", listen(server_fd, 1) == 0);
 
-    int connection_result = wait_for_connection_with_timeout(server_fd, TIMEOUT_SECONDS);
+    /* Wait for a connection */
+    fd_set readfds;
+    struct timeval timeout = {
+        .tv_sec = TIMEOUT_SECONDS,
+        .tv_usec = 0,
+    };
+    FD_ZERO(&readfds);
+    FD_SET(server_fd, &readfds);
+    int result = select(server_fd + 1, &readfds, NULL, NULL, &timeout);
+    check("select", result > 0);
 
-    if (connection_result == 1) {
-        struct sockaddr_in client_addr;
-        socklen_t client_len = sizeof(client_addr);
-
-        const int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
-        if (client_fd < 0) {
-            perror("accept");
-        } else {
-            handle_request(client_fd);
-            close(client_fd);
-        }
-    }
+    /* Handle request */
+    struct sockaddr_in client_addr;
+    socklen_t client_len = sizeof(client_addr);
+    const int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
+    check("accept", client_fd >= 0);
+    char buffer[BUFFER_SIZE] = {0};
+    ssize_t bytes_read = read(client_fd, buffer, BUFFER_SIZE - 1);
+    check("read", bytes_read > 0);
+    send(client_fd, HTTP_RESPONSE, strlen(HTTP_RESPONSE), 0);
+    close(client_fd);
 
     close(server_fd);
-
-    return 0;
 }
