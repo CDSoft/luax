@@ -1,8 +1,3 @@
----
-title: Lua eXtended - pure Lua implementation
-author: @AUTHORS
----
-
 # LuaX in Lua
 
 The script `lib/libluax.lua` is a standalone Lua package that reimplements some

@@ -1,8 +1,3 @@
----
-title: Lua eXtended
-author: @AUTHORS
----
-
 # argparse: a feature-rich command line parser for Lua
 
 ```lua

@@ -55,17 +55,17 @@ $ lsvg demo.lua -o demo.svg -- lsvg demo
 ```
 
 This command stores `{"lsvg", "demo"}` in `arg`, executes
-[`demo.lua`](tests/demo.lua) and produces [`demo.svg`](tests/demo.svg):
+[`demo.lua`](../tests/demo.lua) and produces [`demo.svg`](../tests/demo.svg):
 
-> ![demo.svg](tests/demo.svg)
+> ![demo.svg](../tests/demo.svg)
 
 ## Documentation
 
 No documentation yet. Just read the source code...
 
-- [lsvg.lua](lsvg.lua): main lsvg script
-- [svg.lua](svg.lua): Lua SVG library
-- [demo.lua](tests/demo.lua): lsvg example
+- [lsvg.lua](../lsvg.lua): main lsvg script
+- [svg.lua](../svg.lua): Lua SVG library
+- [demo.lua](../tests/demo.lua): lsvg example
 - [SVG specifications](https://www.w3.org/TR/SVG12/): if you're brave enough...
 
 ## License

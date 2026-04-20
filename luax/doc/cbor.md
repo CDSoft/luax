@@ -1,8 +1,3 @@
----
-title: Lua eXtended
-author: @AUTHORS
----
-
 # cbor: pure Lua implementation of the CBOR
 
 ```lua

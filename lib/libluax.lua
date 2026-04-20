@@ -3,7 +3,7 @@
 -- Generated with LuaX
 -- Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord
 
-_LUAX_VERSION = "LuaX 10.1.3"
+_LUAX_VERSION = "LuaX 10.1.4"
 
 local function lib(path, src) return assert(load(src, '@$libluax:'..path)) end
 package.preload["F"] = lib("luax/F.lua", [==[--[[
@@ -4697,18 +4697,18 @@ This function validates the content of a table agains a schema.
 A schema is a Lua table with the same structure that the input tables,
 the values being replaced with values of the expected type.
 
-Expected type       Specification                                                       Exemple
-------------------- ------------------------------------------------------------------- -------------------
-Boolean             any boolean                                                         `true`
-Number              any number                                                          `0`
-String              any string                                                          `"str"`
-Array               a table with one element (type of the array items)                  `{ "str" }`
-Structure           a table with keys (names) and values (types)                        `{ x=0, y=0 }`
-Enumerated type     a list with the `"enum"` keyword and the list of values             `{ "enum", "on", "off" }`
-Interval            a list with the `"range"` keyword and the min and max values        `{ "range", -10, 10 }`
-Union               a list with the `"union"` keyword and the list of accepted types    `{ "union", 0, "str" }`
-Option              a list with the `"option"` keyword and the optional type            `{ "option", "str" }`
-Any value           a list with the `"any"` keyword                                     `{ "any" }`
+| Expected type     | Specification                                                     | Exemple                   |
+| ----------------- | ----------------------------------------------------------------- | ------------------------- |
+| Boolean           | any boolean                                                       | `true`                    |
+| Number            | any number                                                        | `0`                       |
+| String            | any string                                                        | `"str"`                   |
+| Array             | a table with one element (type of the array items)                | `{ "str" }`               |
+| Structure         | a table with keys (names) and values (types)                      | `{ x=0, y=0 }`            |
+| Enumerated type   | a list with the `"enum"` keyword and the list of values           | `{ "enum", "on", "off" }` |
+| Interval          | a list with the `"range"` keyword and the min and max values      | `{ "range", -10, 10 }`    |
+| Union             | a list with the `"union"` keyword and the list of accepted types  | `{ "union", 0, "str" }`   |
+| Option            | a list with the `"option"` keyword and the optional type          | `{ "option", "str" }`     |
+| Any value         | a list with the `"any"` keyword                                   | `{ "any" }`               |
 
 The optional types can be combined with other types. E.g.: `{ "option", "range", -10, 10 }`.
 
@@ -4721,9 +4721,9 @@ F.validate(schema, input, [options])
 returns `true` if `input` is validated by `schema`. Otherwise it returns `false`
 and a list of failures.
 
-Options             Description                                             Default value
-------------------- ------------------------------------------------------- -------------------------
-`options.strict`    Strict validation (unspecified fields are not allowed)  `true`
+| Options           | Description                                               | Default value |
+| ----------------- | --------------------------------------------------------- | ------------- |
+| `options.strict`  | Strict validation (unspecified fields are not allowed)    | `true`        |
 @@@]]
 
 function F.validate(schema, input, options)
@@ -10965,7 +10965,7 @@ return F{
     {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
 }
 ]=])
-package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.1.3"
+package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.1.4"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"
@@ -12516,44 +12516,44 @@ color_mt = {
 local function color(value) return setmetatable({value=CSI..tostring(value).."m"}, color_mt) end
 local function enable(en) color_enable = en==nil or en end
 local function disable() color_enable = false end
---                                @@@`term.color` field     Description                         @@@
---                                @@@---------------------- ------------------------------------@@@
+--                                @@@| `term.color` field     | Description                          |@@@
+--                                @@@| ---------------------- | ------------------------------------ |@@@
 term.color = {
-    -- attributes               --@@@*Attributes*                                               @@@
-    reset       = color(0),     --@@@`reset`                reset the colors                    @@@
-    clear       = color(0),     --@@@`clear`                same as reset                       @@@
-    default     = color(0),     --@@@`default`              same as reset                       @@@
-    bright      = color(1),     --@@@`bright`               bold or more intense                @@@
-    bold        = color(1),     --@@@`bold`                 same as bold                        @@@
-    dim         = color(2),     --@@@`dim`                  thiner or less intense              @@@
-    italic      = color(3),     --@@@`italic`               italic (sometimes inverse or blink) @@@
-    underline   = color(4),     --@@@`underline`            underlined                          @@@
-    blink       = color(5),     --@@@`blink`                slow blinking (less than 150 bpm)   @@@
-    fast        = color(6),     --@@@`fast`                 fast blinking (more than 150 bpm)   @@@
-    reverse     = color(7),     --@@@`reverse`              swap foreground and background      @@@
-    hidden      = color(8),     --@@@`hidden`               hidden text                         @@@
-    strike      = color(9),     --@@@`strike`               strike or crossed-out               @@@
-    -- foreground               --@@@*Foreground colors*                                        @@@
-    black       = color(30),    --@@@`black`                black foreground                    @@@
-    red         = color(31),    --@@@`red`                  red foreground                      @@@
-    green       = color(32),    --@@@`green`                green foreground                    @@@
-    yellow      = color(33),    --@@@`yellow`               yellow foreground                   @@@
-    blue        = color(34),    --@@@`blue`                 blue foreground                     @@@
-    magenta     = color(35),    --@@@`magenta`              magenta foreground                  @@@
-    cyan        = color(36),    --@@@`cyan`                 cyan foreground                     @@@
-    white       = color(37),    --@@@`white`                white foreground                    @@@
-    -- background               --@@@*Background colors*                                        @@@
-    onblack     = color(40),    --@@@`onblack`              black background                    @@@
-    onred       = color(41),    --@@@`onred`                red background                      @@@
-    ongreen     = color(42),    --@@@`ongreen`              green background                    @@@
-    onyellow    = color(43),    --@@@`onyellow`             yellow background                   @@@
-    onblue      = color(44),    --@@@`onblue`               blue background                     @@@
-    onmagenta   = color(45),    --@@@`onmagenta`            magenta background                  @@@
-    oncyan      = color(46),    --@@@`oncyan`               cyan background                     @@@
-    onwhite     = color(47),    --@@@`onwhite`              white background                    @@@
-    -- enable/disable           --@@@*Control functions*                                        @@@
-    enable      = enable,       --@@@`enable(b)`            enable colors if `b` is `true` or `nil` (default) @@@
-    disable     = disable,      --@@@`disable`              disable colors                      @@@
+    -- attributes               --@@@| *Attributes*           |                                      |@@@
+    reset       = color(0),     --@@@| `reset`                | reset the colors                     |@@@
+    clear       = color(0),     --@@@| `clear`                | same as reset                        |@@@
+    default     = color(0),     --@@@| `default`              | same as reset                        |@@@
+    bright      = color(1),     --@@@| `bright`               | bold or more intense                 |@@@
+    bold        = color(1),     --@@@| `bold`                 | same as bold                         |@@@
+    dim         = color(2),     --@@@| `dim`                  | thiner or less intense               |@@@
+    italic      = color(3),     --@@@| `italic`               | italic (sometimes inverse or blink)  |@@@
+    underline   = color(4),     --@@@| `underline`            | underlined                           |@@@
+    blink       = color(5),     --@@@| `blink`                | slow blinking (less than 150 bpm)    |@@@
+    fast        = color(6),     --@@@| `fast`                 | fast blinking (more than 150 bpm)    |@@@
+    reverse     = color(7),     --@@@| `reverse`              | swap foreground and background       |@@@
+    hidden      = color(8),     --@@@| `hidden`               | hidden text                          |@@@
+    strike      = color(9),     --@@@| `strike`               | strike or crossed-out                |@@@
+    -- foreground               --@@@| *Foreground colors*    |                                      |@@@
+    black       = color(30),    --@@@| `black`                | black foreground                     |@@@
+    red         = color(31),    --@@@| `red`                  | red foreground                       |@@@
+    green       = color(32),    --@@@| `green`                | green foreground                     |@@@
+    yellow      = color(33),    --@@@| `yellow`               | yellow foreground                    |@@@
+    blue        = color(34),    --@@@| `blue`                 | blue foreground                      |@@@
+    magenta     = color(35),    --@@@| `magenta`              | magenta foreground                   |@@@
+    cyan        = color(36),    --@@@| `cyan`                 | cyan foreground                      |@@@
+    white       = color(37),    --@@@| `white`                | white foreground                     |@@@
+    -- background               --@@@| *Background colors*    |                                      |@@@
+    onblack     = color(40),    --@@@| `onblack`              | black background                     |@@@
+    onred       = color(41),    --@@@| `onred`                | red background                       |@@@
+    ongreen     = color(42),    --@@@| `ongreen`              | green background                     |@@@
+    onyellow    = color(43),    --@@@| `onyellow`             | yellow background                    |@@@
+    onblue      = color(44),    --@@@| `onblue`               | blue background                      |@@@
+    onmagenta   = color(45),    --@@@| `onmagenta`            | magenta background                   |@@@
+    oncyan      = color(46),    --@@@| `oncyan`               | cyan background                      |@@@
+    onwhite     = color(47),    --@@@| `onwhite`              | white background                     |@@@
+    -- enable/disable           --@@@| *Control functions*    |                                      |@@@
+    enable      = enable,       --@@@| `enable(b)`            | enable colors if `b` is `true` or `nil` (default) |@@@
+    disable     = disable,      --@@@| `disable`              | disable colors                       |@@@
 }
 
 color_reset = term.color.reset
@@ -12577,16 +12577,16 @@ local function cursor(shape)
     end
 end
 
---                                  @@@`term.cursor` field      Description                         @@@
---                                  @@@------------------------ ------------------------------------@@@
+--                                  @@@| `term.cursor` field      | Description                 |@@@
+--                                  @@@| ------------------------ | --------------------------- |@@@
 term.cursor = {
-    reset           = cursor(0),  --@@@`reset`                  reset to the initial shape          @@@
-    block_blink     = cursor(1),  --@@@`block_blink`            blinking block cursor               @@@
-    block           = cursor(2),  --@@@`block`                  fixed block cursor                  @@@
-    underline_blink = cursor(3),  --@@@`underline_blink`        blinking underline cursor           @@@
-    underline       = cursor(4),  --@@@`underline`              fixed underline cursor              @@@
-    bar_blink       = cursor(5),  --@@@`bar_blink`              blinking bar cursor                 @@@
-    bar             = cursor(6),  --@@@`bar`                    fixed bar cursor                    @@@
+    reset           = cursor(0),  --@@@| `reset`                  | reset to the initial shape  |@@@
+    block_blink     = cursor(1),  --@@@| `block_blink`            | blinking block cursor       |@@@
+    block           = cursor(2),  --@@@| `block`                  | fixed block cursor          |@@@
+    underline_blink = cursor(3),  --@@@| `underline_blink`        | blinking underline cursor   |@@@
+    underline       = cursor(4),  --@@@| `underline`              | fixed underline cursor      |@@@
+    bar_blink       = cursor(5),  --@@@| `bar_blink`              | blinking bar cursor         |@@@
+    bar             = cursor(6),  --@@@| `bar`                    | fixed bar cursor            |@@@
 }
 
 --[[------------------------------------------------------------------------@@@

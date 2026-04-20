@@ -116,10 +116,10 @@ acc(test) {
 -------------------------------------------------------------------------------
 
 acc(doc) {
-    build.lsvg.svg "doc/lsvg/lsvg-banner.svg" {"luax/doc/luax-logo.lua", args={1024, 192, "--name lsvg"}},
-    gfm2gfm "doc/lsvg/README.md" { "lsvg/doc/README.md" },
-    build.cp "doc/lsvg/tests/demo.lua" "lsvg/tests/demo.lua",
-    build.cp "doc/lsvg/tests/demo.svg" "lsvg/tests/demo.svg",
+    build.lsvg.svg "lsvg/doc/lsvg-banner.svg" {"luax/doc/luax-logo.lua", args={1024, 192, "--name lsvg"}},
+    ls "lsvg/doc/*.md.in" : map(function(src)
+        return gfm((src:splitext())) { src }
+    end),
 }
 
 -------------------------------------------------------------------------------

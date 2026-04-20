@@ -1,8 +1,3 @@
----
-title: Lua eXtended
-author: @AUTHORS
----
-
 # serpent: Lua serializer and pretty printer
 
 ```lua

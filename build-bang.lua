@@ -240,8 +240,10 @@ acc(test) {
 -------------------------------------------------------------------------------
 
 acc(doc) {
-    build.lsvg.svg "doc/bang/bang-banner.svg" {"luax/doc/luax-logo.lua", args={1024, 192, "--name Bang"}},
-    gfm2gfm "doc/bang/README.md" { "bang/doc/README.md" },
+    build.lsvg.svg "bang/doc/bang-banner.svg" {"luax/doc/luax-logo.lua", args={1024, 192, "--name Bang"}},
+    ls "bang/doc/*.md.in" : map(function(src)
+        return gfm((src:splitext())) { src }
+    end),
 }
 
 -------------------------------------------------------------------------------

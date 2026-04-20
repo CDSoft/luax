@@ -1,8 +1,3 @@
----
-title: Lua eXtended
-author: @AUTHORS
----
-
 # tinytoml: a pure Lua TOML parser
 
 ```lua

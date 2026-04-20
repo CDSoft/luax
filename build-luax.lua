@@ -535,8 +535,6 @@ build.lsvg.svg
     : add "implicit_in" { "$builddir/bin/lsvg" }
     : set "depfile" "$builddir/tmp/$out.d"
 
-local markdown_sources = ls "luax/doc/*.md"
-
 local ypp_config_params = {
     build.ypp_vars {
         LUAX = "$builddir/bin/luax",
@@ -544,46 +542,21 @@ local ypp_config_params = {
     },
 }
 
-gfm = pipe {
-    build.ypp : new "ypp.md"
-        : add "implicit_in" "lib/libluax.lua"
-        : add "flags" { ypp_config_params },
-    build.pandoc_gfm : new "pandoc-gfm-luax"
-        : add "flags" {
-            "--to=gfm+emoji+definition_lists",
-            "--reference-location=section",
-            "--lua-filter luax/doc/fix_links.lua",
-        }
-        : add "implicit_in" { "luax/doc/fix_links.lua" }
+gfm = build.ypp : new "ypp.md"
+    : add "implicit_in" "lib/libluax.lua"
+    : add "flags" { ypp_config_params }
+
+acc(doc) {
+
+    build.lsvg.svg "luax/doc/luax-banner.svg" {"luax/doc/luax-logo.lua", args={1024,  192}},
+    build.lsvg.svg "luax/doc/luax-logo.svg"   {"luax/doc/luax-logo.lua", args={ 256,  256}},
+
+    ls "luax/doc/*.md.in" : map(function(src)
+        return gfm((src:splitext())) { src }
+    end),
+    build.cp "luax/doc/README.md" "luax/doc/luax.md",
+
 }
-
-gfm2gfm = pipe {
-    build.ypp : new "ypp-gfm2gfm.md"
-        : add "implicit_in" "lib/libluax.lua"
-        : add "flags" { ypp_config_params },
-    build.pandoc_gfm : new "pandoc-gfm2gfm-luax"
-        : add "flags" {
-            "--from=gfm",
-            "--to=gfm+emoji+definition_lists",
-            "--reference-location=section",
-            "--lua-filter luax/doc/fix_links.lua",
-        }
-        : add "implicit_in" { "luax/doc/fix_links.lua" }
-}
-
-if has_pandoc then
-    acc(doc) {
-
-        build.lsvg.svg "doc/luax/luax-banner.svg" {"luax/doc/luax-logo.lua", args={1024,  192}},
-        build.lsvg.svg "doc/luax/luax-logo.svg"   {"luax/doc/luax-logo.lua", args={ 256,  256}},
-
-        markdown_sources : map(function(src)
-            return gfm("doc/luax"/src:basename()) { src }
-        end),
-        build.cp "doc/luax/README.md" "doc/luax/luax.md",
-
-    }
-end
 
 -------------------------------------------------------------------------------
 -- Install LuaX

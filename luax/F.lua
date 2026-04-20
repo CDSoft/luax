@@ -4689,18 +4689,18 @@ This function validates the content of a table agains a schema.
 A schema is a Lua table with the same structure that the input tables,
 the values being replaced with values of the expected type.
 
-Expected type       Specification                                                       Exemple
-------------------- ------------------------------------------------------------------- -------------------
-Boolean             any boolean                                                         `true`
-Number              any number                                                          `0`
-String              any string                                                          `"str"`
-Array               a table with one element (type of the array items)                  `{ "str" }`
-Structure           a table with keys (names) and values (types)                        `{ x=0, y=0 }`
-Enumerated type     a list with the `"enum"` keyword and the list of values             `{ "enum", "on", "off" }`
-Interval            a list with the `"range"` keyword and the min and max values        `{ "range", -10, 10 }`
-Union               a list with the `"union"` keyword and the list of accepted types    `{ "union", 0, "str" }`
-Option              a list with the `"option"` keyword and the optional type            `{ "option", "str" }`
-Any value           a list with the `"any"` keyword                                     `{ "any" }`
+| Expected type     | Specification                                                     | Exemple                   |
+| ----------------- | ----------------------------------------------------------------- | ------------------------- |
+| Boolean           | any boolean                                                       | `true`                    |
+| Number            | any number                                                        | `0`                       |
+| String            | any string                                                        | `"str"`                   |
+| Array             | a table with one element (type of the array items)                | `{ "str" }`               |
+| Structure         | a table with keys (names) and values (types)                      | `{ x=0, y=0 }`            |
+| Enumerated type   | a list with the `"enum"` keyword and the list of values           | `{ "enum", "on", "off" }` |
+| Interval          | a list with the `"range"` keyword and the min and max values      | `{ "range", -10, 10 }`    |
+| Union             | a list with the `"union"` keyword and the list of accepted types  | `{ "union", 0, "str" }`   |
+| Option            | a list with the `"option"` keyword and the optional type          | `{ "option", "str" }`     |
+| Any value         | a list with the `"any"` keyword                                   | `{ "any" }`               |
 
 The optional types can be combined with other types. E.g.: `{ "option", "range", -10, 10 }`.
 
@@ -4713,9 +4713,9 @@ F.validate(schema, input, [options])
 returns `true` if `input` is validated by `schema`. Otherwise it returns `false`
 and a list of failures.
 
-Options             Description                                             Default value
-------------------- ------------------------------------------------------- -------------------------
-`options.strict`    Strict validation (unspecified fields are not allowed)  `true`
+| Options           | Description                                               | Default value |
+| ----------------- | --------------------------------------------------------- | ------------- |
+| `options.strict`  | Strict validation (unspecified fields are not allowed)    | `true`        |
 @@@]]
 
 function F.validate(schema, input, options)

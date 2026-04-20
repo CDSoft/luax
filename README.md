@@ -1,12 +1,12 @@
 #  LuaX-based Development Tools
 
-<img src="doc/luax/luax-banner.svg" style="width:100.0%" />
+<img src="luax/doc/luax-banner.svg" style="width:100.0%" />
 
 [Lua]: https://www.lua.org
 
-[LuaX]: doc/luax/README.md
-[Bang]: doc/bang/README.md
-[Ypp]: doc/ypp/README.md
+[LuaX]: https://codeberg.org/cdsoft/luax
+[Bang]: https://codeberg.org/cdsoft/luax
+[Ypp]: https://codeberg.org/cdsoft/luax
 [Panda]: doc/panda/README.md
 [Upp]: https://codeberg.org/cdsoft/upp
 [Lsvg]: doc/lsvg/README.md
@@ -51,10 +51,10 @@
 
 The LuaX repository now contains some softwares that are closely coupled with LuaX:
 
-- [LuaX]: The LuaX interpreter / compiler itself.
-- [Bang]: The LuaX build system that enhances Nina with some powerful Lua scripting capabilities.
-- [Ypp]: A generic text preprocessor used to build the LuaX documentation.
-- [lsvg]: An SVG image generator scriptable in LuaX used to generate the LuaX logo.
+- [LuaX](luax/doc/README.md): The LuaX interpreter / compiler itself.
+- [Bang](bang/doc/README.md): The LuaX build system that enhances Nina with some powerful Lua scripting capabilities.
+- [Ypp](ypp/doc/README.md): A generic text preprocessor used to build the LuaX documentation.
+- [lsvg](lsvg/doc/README.md): An SVG image generator scriptable in LuaX used to generate the LuaX logo.
 
 ## Installation
 

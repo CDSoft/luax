@@ -124,7 +124,7 @@ digraph {
 
 is rendered as
 
-@@image.set_meta_path(BUILD/"tmp/doc/ypp")
+@@image.set_meta_path(BUILD/"tmp/ypp/doc")
 ![ypp image generation example](img/@image.dot {name="image"} [===[
 digraph {
     rankdir=LR;
