@@ -302,23 +302,19 @@ if not has_fs then
             else
                 files = sh("dir /b", dir)
             end
-            return files
-                : lines()
+            return (files or "") : lines()
                 : map(clean_path)
                 : sort()
         end
 
         local files
         if recursive then
-            files = sh("find", path, ("-name %q"):format(pattern))
-                : lines()
+            files = (sh("find", path, ("-name %q"):format(pattern), "2>/dev/null") or "") : lines()
                 : filter(F.partial(F.op.ne, path))
         elseif pattern then
-            files = sh("ls -d", path/pattern)
-                : lines()
+            files = (sh("ls -d", path/pattern, "2>/dev/null") or "") : lines()
         else
-            files = sh("ls", dir)
-                : lines()
+            files = (sh("ls", dir, "2>/dev/null") or "") : lines()
                 : map(F.partial(fs.join, dir))
         end
         return files
