@@ -22,6 +22,10 @@ https://codeberg.org/cdsoft/luax
 local F = require "F"
 local fs = require "fs"
 local cbor = require "cbor"
+local crypt = require "crypt"
+local version = require "luax-version"
+
+local salt = tostring(version)
 
 local args = (function()
     local parser = require "argparse"() : name "packlib"
@@ -49,4 +53,6 @@ for _, file in ipairs(args.files) do
 
 end
 
-assert(fs.write_bin(args.o, cbor.encode(lib, {pairs=F.pairs})))
+local data = cbor.encode(lib, {pairs=F.pairs})
+
+assert(fs.write_bin(args.o, data, crypt.hash64(salt..data):unhex()))

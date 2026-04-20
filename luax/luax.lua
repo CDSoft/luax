@@ -690,7 +690,14 @@ local function cmd_compile()
     end
 
     local prefix = find_exe(arg[0]):realpath():dirname():dirname()
-    local libluax_xyz = cbor.decode(assert(fs.read_bin(prefix/"lib/libluax.xyz")))
+    local libluax_xyz = (function()
+        local salt = tostring(luax_version)
+        local data = assert(fs.read_bin(prefix/"lib/libluax.xyz"))
+        if data:sub(#data-7) ~= (salt..data:sub(1, #data-8)):hash64():unhex() then
+            print_error("%s: corrupted file", prefix/"lib/libluax.xyz")
+        end
+        return cbor.decode(data:sub(1, -9))
+    end)()
 
     local function find_main(scripts)
         local explicit_main = F{}
