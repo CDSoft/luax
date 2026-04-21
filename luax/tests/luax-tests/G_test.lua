@@ -41,6 +41,7 @@ local luax_packages = F.flatten{
     "imath",
     "import",
     "json",
+    "lar",
     "linenoise",
     "luax-debug",
     "luax-package",

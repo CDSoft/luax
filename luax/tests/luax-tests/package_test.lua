@@ -45,6 +45,7 @@ return function()
         imath_test      = "luax/tests/luax-tests/imath_test.lua",
         import_test     = "luax/tests/luax-tests/import_test.lua",
         json_test       = "luax/tests/luax-tests/json_test.lua",
+        lar_test        = "luax/tests/luax-tests/lar_test.lua",
         lib             = "luax/tests/luax-tests/lib.lua",
         readline_test   = "luax/tests/luax-tests/readline_test.lua",
         linenoise_test  = "luax/tests/luax-tests/linenoise_test.lua",
