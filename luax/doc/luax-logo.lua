@@ -41,9 +41,11 @@ local fh = h/4
 img {
     width = w,
     height = h,
+    viewBox = { width=w, height=h },
     font_size = fh,
     text_anchor = "middle",
-    font_family = "Liberation Sans Bold",
+    font_family = "Arial, Liberation Sans, sans-serif",
+    font_weight = "bold",
     transparent = "white",
 }
 
