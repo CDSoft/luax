@@ -69,6 +69,13 @@ static void init_linenoise(void)
 #endif
 }
 
+/* empty stub for readline.name, in case linenoise is used as a readline fallback */
+static int linenoise_name(lua_State *L)
+{
+    (void)L;
+    return 0;
+}
+
 /*@@@
 ```lua
 linenoise.read(prompt)
@@ -202,6 +209,7 @@ static int linenoise_version(lua_State *L)
 
 static const luaL_Reg linenoiselib[] =
 {
+    {"name",        linenoise_name},
     {"read",        linenoise_read},
     {"add",         linenoise_history_add},
     {"set_len",     linenoise_history_set_len},
