@@ -632,7 +632,7 @@ end
 
 local function cmd_compile()
 
-    local crypt = require "crypt"
+    require "crypt"
     local sys = require "sys"
     local targets = require "luax-targets"
     local luax_version = require "luax-version"
@@ -641,7 +641,6 @@ local function cmd_compile()
     local format = string.format
     local byte = string.byte
     local char = string.char
-    local sub = string.sub
 
     local magic = "LuaX"
 
@@ -723,19 +722,15 @@ local function cmd_compile()
         return main_script, scripts:filter(function(script) return script ~= main_script end)
     end
 
-    local function make_key(input, opt)
-        local function chunks_of_chars(n, s)
-            local chunks = F{}
-            for i = 1, #s, n do
-                chunks[#chunks+1] = sub(s, i, i+n-1)
-            end
-            return chunks
-        end
-        local kmin <const>, kmax <const> = 8, 256
-        local mmin <const>, mmax <const> = 256, 64*1024
-        local key_size = F.floor(kmin + (#input-mmin)*((kmax-kmin)/(mmax-mmin)))
-        key_size = F.max(kmin, F.min(kmax, key_size))
-        return chunks_of_chars(key_size, input:arc4(opt.key)) : fold1(crypt.arc4)
+    local function make_key(code, opt)
+        return F.str {
+            tostring(luax_version),
+            opt.key,
+            opt.target,
+            tostring(opt.bytecode),
+            tostring(opt.strip),
+            code : hash128() : unhex(),
+        } : hash128() : unhex()
     end
 
     local function compact(s)
