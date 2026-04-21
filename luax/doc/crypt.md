@@ -255,6 +255,16 @@ crypt.hash128(data)
 returns a 128-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 
 
+### SHA-1 hash
+
+
+
+```lua
+crypt.sha1(data)
+```
+returns a SHA-1 digest of `data`.
+
+
 
 
 ## Random array access
