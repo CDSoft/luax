@@ -26,7 +26,7 @@
 #define K2 0x8F1BBCDC
 #define K3 0xCA62C1D6
 
-static void sha1_transform(SHA1_CTX *ctx)
+static void sha1_transform(t_sha1_ctx *ctx)
 {
     uint32_t w[80];
     uint32_t a, b, c, d, e, temp;
@@ -66,7 +66,7 @@ static void sha1_transform(SHA1_CTX *ctx)
     ctx->h[4] += e;
 }
 
-void sha1_init(SHA1_CTX *ctx)
+void sha1_init(t_sha1_ctx *ctx)
 {
     ctx->h[0] = 0x67452301;
     ctx->h[1] = 0xEFCDAB89;
@@ -77,7 +77,7 @@ void sha1_init(SHA1_CTX *ctx)
     ctx->blocklen = 0;
 }
 
-void sha1_update(SHA1_CTX *ctx, const uint8_t *data, size_t len)
+void sha1_update(t_sha1_ctx *ctx, const uint8_t *data, size_t len)
 {
     for (size_t i = 0; i < len; i++) {
         ctx->block[ctx->blocklen++] = data[i];
@@ -89,7 +89,7 @@ void sha1_update(SHA1_CTX *ctx, const uint8_t *data, size_t len)
     }
 }
 
-void sha1_final(SHA1_CTX *ctx, uint8_t digest[20])
+void sha1_final(t_sha1_ctx *ctx, t_sha1_digest digest)
 {
     uint32_t i = ctx->blocklen;
 
@@ -125,16 +125,16 @@ static inline char digit(uint8_t n)
     return n>=10 ? 'a'+(n-10) : '0'+n;
 }
 
-void sha1_hex(const char *input, size_t size, char out[41])
+void sha1_hex(const char *input, size_t size, t_sha1_digest_hex out)
 {
-    SHA1_CTX ctx;
-    uint8_t digest[20];
+    t_sha1_ctx ctx;
+    t_sha1_digest digest;
     sha1_init(&ctx);
     sha1_update(&ctx, (const uint8_t *)input, size);
     sha1_final(&ctx, digest);
-    for (int i = 0; i < 20; i++) {
+    for (size_t i = 0; i < sizeof(t_sha1_digest); i++) {
         out[2*i+0] = digit(digest[i]>>4);
         out[2*i+1] = digit(digest[i]&0xf);
     }
-    out[40] = '\0';
+    out[2*sizeof(t_sha1_digest)] = '\0';
 }

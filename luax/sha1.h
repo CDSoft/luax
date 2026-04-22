@@ -22,14 +22,17 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+typedef uint8_t t_sha1_digest[20];
+typedef char t_sha1_digest_hex[2*sizeof(t_sha1_digest)+1];
+
 typedef struct {
     uint32_t h[5];
     uint8_t  block[64];
     uint64_t bitlen;
     uint32_t blocklen;
-} SHA1_CTX;
+} t_sha1_ctx;
 
-void sha1_init(SHA1_CTX *ctx);
-void sha1_update(SHA1_CTX *ctx, const uint8_t *data, size_t len);
-void sha1_final(SHA1_CTX *ctx, uint8_t digest[20]);
-void sha1_hex(const char *input, size_t size, char out[41]);
+void sha1_init(t_sha1_ctx *ctx);
+void sha1_update(t_sha1_ctx *ctx, const uint8_t *data, size_t len);
+void sha1_final(t_sha1_ctx *ctx, t_sha1_digest digest);
+void sha1_hex(const char *input, size_t size, t_sha1_digest_hex out);

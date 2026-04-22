@@ -1018,7 +1018,7 @@ static int crypt_sha1(lua_State *L)
 {
     const char *data = (const char *)luaL_checkstring(L, 1);
     const size_t datalen = (size_t)lua_rawlen(L, 1);
-    char digest[21];
+    t_sha1_digest_hex digest;
     sha1_hex(data, datalen, digest);
     lua_pushstring(L, digest);
     return 1;
