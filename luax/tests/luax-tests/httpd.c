@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in address = {
         .sin_family = AF_INET,
         .sin_addr.s_addr = INADDR_ANY,
-        .sin_port = htons(port),
+        .sin_port = htons((uint16_t)port),
     };
     int opt = 1;
     check("socket", (server_fd = socket(AF_INET, SOCK_STREAM, 0)) > 0);
