@@ -17,7 +17,6 @@
 [Lsvg]: doc/lsvg/README.md
 [Ldc]: https://codeberg.org/cdsoft/ldc
 [Yreq]: https://codeberg.org/cdsoft/yreq
-[tagref]: https://codeberg.org/cdsoft/tagref
 
 [Pandoc]: https://pandoc.org
 [Pandoc Lua filter]: https://pandoc.org/lua-filters.html
@@ -113,8 +112,3 @@ These tools extend the ecosystem and rely on LuaX as their scripting foundation:
 : a lightweight requirement-tracking plugin for Ypp, providing
   traceability tags, coverage matrices and hyperlinks within technical
   documentation.
-
-**[Tagref]**
-: a cross-reference validator (LuaX port of the original Rust
-  tool) that checks `[tag:]` / `[ref:]` annotations in source comments,
-  suitable for CI pipelines managed with Bang.
