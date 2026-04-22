@@ -24,6 +24,12 @@ help.name "LuaX"
 
 version(require "luax-version" . version) -- defined in lib/version.lua
 
+args = (function()
+    local parser = require "argparse"()
+    parser : flag "-d" : description "debug"
+    return parser:parse(arg)
+end)()
+
 clean "$builddir"
 
 require "strict"
@@ -50,6 +56,6 @@ phony "all" {
     phony "compile" { compile },
     phony "test"    { test },
     phony "doc"     { doc },
-    phony "release" { release },
+    phony "release" { args.d and {} or release },
 }
 default "compile"

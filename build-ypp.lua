@@ -56,11 +56,7 @@ local function build_release(target)
             "$builddir/bin/ypp.lua",
             "$builddir/bin/ypp-pandoc.lua",
         },
-        target ~= "lua" and {
-            luax[target.name](archive/"bin/ypp") {
-                ypp_sources,
-            },
-        } or {},
+        target.name and luax[target.name](archive/"bin/ypp") { ypp_sources },
     }
 end
 

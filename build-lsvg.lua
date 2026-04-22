@@ -53,11 +53,7 @@ local function build_release(target)
         cp_to(archive/"bin") {
             "$builddir/bin/lsvg.lua",
         },
-        target ~= "lua" and {
-            luax[target.name](archive/"bin/lsvg") {
-                lsvg_sources,
-            },
-        } or {},
+        target.name and luax[target.name](archive/"bin/lsvg") { lsvg_sources },
     }
 end
 

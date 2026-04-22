@@ -56,14 +56,12 @@ local function new_luax(prog, deps)
     _luax_idx = _luax_idx + 1
     local luax = {}
     deps = F.flatten{prog:words():last(), deps}:nub()
-    F{"native", "lua", "luax", "pandoc"} : foreach(function(target_name)
+    local target_names = F.flatten {
+        "native", "lua", "luax", "pandoc",
+        targets : map(function(target) return target.name end),
+    }
+    target_names : foreach(function(target_name)
         luax[target_name] = build.luax[target_name] : new("luax-".._luax_idx.."-"..target_name)
-            : set "luax" (prog)
-            : add "implicit_in" (deps)
-            : add "flags" "-q"
-    end)
-    targets : foreach(function(target)
-        luax[target.name] = build.luax[target.name] : new("luax-".._luax_idx.."-"..target.name)
             : set "luax" (prog)
             : add "implicit_in" (deps)
             : add "flags" "-q"
@@ -83,7 +81,12 @@ rule "packlib" {
 -- Compile the LuaX loaders for all supported targets
 -------------------------------------------------------------------------------
 
+local function when(flag)
+    return flag and F.id or F.const{}
+end
+
 local function lto(target)
+    if args.d then return {} end
     if target.os == "macos" then return {} end
     return "-flto"
 end
@@ -95,6 +98,11 @@ local cflags = build.compile_flags {
     "-fPIC",
     "-Ilua",
     "-Iluax/ext/lzlib/inc",
+
+    when(args.d) {
+        "-g",
+        "-Og",
+    },
 }
 
 local luax_cflags = build.compile_flags {
@@ -127,7 +135,7 @@ local luax_cflags = build.compile_flags {
 
 local ldflags = {
     "-pipe",
-    "-s",
+    when(not args.d) "-s",
 }
 
 local loaders = F(targets) : map(function(target)
@@ -146,6 +154,10 @@ local loaders = F(targets) : map(function(target)
             linux   = "-DLUA_USE_LINUX",
             macos   = "-DLUA_USE_MACOSX",
             windows = {},
+        },
+        when(args.d) {
+            "-DLUAI_ASSERT",
+            "-DLUA_USE_APICHECK",
         },
     }
 
@@ -167,11 +179,9 @@ local loaders = F(targets) : map(function(target)
         : add "ldflags" { ldflags, lto(target) }
         : add "ldlibs" {
             "-lm",
-            case(target.os) {
-                windows = {
-                    "-lshlwapi",
-                    "-lws2_32",
-                },
+            when(target.os == "windows") {
+                "-lshlwapi",
+                "-lws2_32",
             },
         }
         : add "implicit_in" { "$zig" }
@@ -223,11 +233,7 @@ acc(compile) {
     luax0.lua    "$builddir/bin/luax.lua"        { luax_lua_sources },
     luax0.pandoc "$builddir/bin/luax-pandoc.lua" { luax_lua_sources },
     luax0.luax   "$builddir/lib/libluax.lua"     { libluax_lua_sources },
-    build "$builddir/lib/libluax.xyz" { "packlib",
-        libluax_lua_sources,
-        libluax_ext_sources,
-        loaders,
-    },
+    build.cp     "$builddir/lib/libluax.xyz"     { "$builddir/stage0/lib/libluax.xyz" },
 
     -- Add prebuilt scripts to the repository
     build.cp "bin/luax.lua"        "$builddir/bin/luax.lua",
@@ -246,9 +252,7 @@ acc(compile) {
     "$builddir/lib/libluax.xyz",
     luax0.native "$builddir/bin/luax" {
         luax_lua_sources,
-        implicit_in = {
-            "$builddir/lib/libluax.xyz",
-        },
+        implicit_in = "$builddir/lib/libluax.xyz",
     },
 }
 
@@ -257,10 +261,8 @@ acc(compile) {
 -------------------------------------------------------------------------------
 
 function archive(target)
-    if target == "lua" then
-        return "$builddir/release"/version.version/"luax-"..version.version.."-"..target
-    end
-    return "$builddir/release"/version.version/"luax-"..version.version.."-"..target.name
+    local target_name = target.name or target
+    return "$builddir/release"/version.version/"luax-"..version.version.."-"..target_name
 end
 
 function cp_to(dest) return function(files)
@@ -269,6 +271,10 @@ function cp_to(dest) return function(files)
     end)
 end end
 
+build "$builddir/tmp/libluax-lua.xyz" { "packlib",
+    libluax_lua_sources,
+}
+
 local function build_release(target)
     local archive = archive(target)
     return {
@@ -276,21 +282,15 @@ local function build_release(target)
             "$builddir/bin/luax.lua",
             "$builddir/bin/luax-pandoc.lua",
         },
-        target ~= "lua" and {
-            luax[target.name](archive/"bin/luax") {
-                luax_lua_sources,
-                implicit_in = {
-                    "$builddir/lib/libluax.xyz",
-                },
-            },
-        } or {},
+        target.name and luax[target.name](archive/"bin/luax") {
+            luax_lua_sources,
+            implicit_in = "$builddir/lib/libluax.xyz",
+        },
         cp_to(archive/"lib") {
             "$builddir/lib/libluax.lua",
-            target ~= "lua" and "$builddir/lib/libluax.xyz" or {
-                build "$builddir/tmp/libluax-lua.dat" { "packlib",
-                    libluax_lua_sources,
-                },
-            },
+            target.name
+                and "$builddir/lib/libluax.xyz"
+                or "$builddir/tmp/libluax-lua.xyz",
         },
     }
 end
@@ -401,115 +401,118 @@ acc(test) {
         },
     },
 
+    not args.d and {
 
-    ({"native"} .. native_targets) : mapi(function(i, target_name)
-        local test_libc = ("-musl"):is_suffix_of(target_name) and "musl" or libc
-        local test_name = target_name=="native" and sys.name or target_name
-        local exe_name = "$builddir/tests/luax/test-compiled".."-"..i
-        return build("$builddir/tests/luax/test-1-"..i.."-compiled_executable.ok") { test_sources,
+        ({"native"} .. native_targets) : mapi(function(i, target_name)
+            local test_libc = ("-musl"):is_suffix_of(target_name) and "musl" or libc
+            local test_name = target_name=="native" and sys.name or target_name
+            local exe_name = "$builddir/tests/luax/test-compiled".."-"..i
+            return build("$builddir/tests/luax/test-1-"..i.."-compiled_executable.ok") { test_sources,
+                description = "test $out",
+                command = {
+                    "$builddir/bin/luax compile -q", "-t", target_name, "-b -k test-1-key",
+                        "-o", exe_name,
+                        "$in",
+                    "&&",
+                    "PATH=$builddir/luax/bin:$$PATH",
+                    "LUA_PATH='luax/tests/luax-tests/?.lua'",
+                    "TEST_NUM=1", "TEST_CASE="..i,
+                    test_options,
+                    "LUAX=$builddir/bin/luax",
+                    "IS_COMPILED=true", "EXE_NAME="..exe_name,
+                    "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..test_libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..test_name,
+                    exe_name, "Lua is great",
+                    "&&",
+                    "touch $out",
+                },
+                implicit_in = {
+                    "$builddir/bin/luax",
+                    loaders,
+                    "lib/libluax.lua",
+                    imported_test_sources,
+                },
+            }
+        end),
+
+        has_pandoc and build "$builddir/tests/luax/test-5-pandoc-luax-lua.ok" { test_main,
             description = "test $out",
             command = {
-                "$builddir/bin/luax compile -q", "-t", target_name, "-b -k test-1-key",
-                    "-o", exe_name,
-                    "$in",
-                "&&",
-                "PATH=$builddir/luax/bin:$$PATH",
-                "LUA_PATH='luax/tests/luax-tests/?.lua'",
-                "TEST_NUM=1", "TEST_CASE="..i,
+                "PATH=bin:$$PATH",
+                "LUA_PATH='lib/?.lua;luax/tests/luax-tests/?.lua'",
+                "TEST_NUM=5",
                 test_options,
-                "LUAX=$builddir/bin/luax",
-                "IS_COMPILED=true", "EXE_NAME="..exe_name,
-                "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..test_libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..test_name,
-                exe_name, "Lua is great",
+                "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
+                "pandoc lua -l libluax $in Lua is great",
                 "&&",
                 "touch $out",
             },
             implicit_in = {
-                "$builddir/bin/luax",
-                loaders,
                 "lib/libluax.lua",
+                test_sources,
                 imported_test_sources,
             },
-        }
-    end),
+        } or {},
 
-    has_pandoc and build "$builddir/tests/luax/test-5-pandoc-luax-lua.ok" { test_main,
-        description = "test $out",
-        command = {
-            "PATH=bin:$$PATH",
-            "LUA_PATH='lib/?.lua;luax/tests/luax-tests/?.lua'",
-            "TEST_NUM=5",
-            test_options,
-            "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
-            "pandoc lua -l libluax $in Lua is great",
-            "&&",
-            "touch $out",
+        build "$builddir/tests/luax/test-ext-1-lua.ok" { "luax/tests/external_interpreter_tests/external_interpreters.lua",
+            description = "test $out",
+            command = {
+                "eval \"$$($builddir/bin/luax env)\";",
+                "$builddir/bin/luax compile -q -b -k test-ext-1-key -t lua -o $builddir/tests/luax/ext-lua $in",
+                "&&",
+                "PATH=$builddir/bin:.cache:$$PATH",
+                "TARGET=lua",
+                test_options,
+                "$builddir/tests/luax/ext-lua Lua is great",
+                "&&",
+                "touch $out",
+            },
+            implicit_in = {
+                "lib/libluax.lua",
+                "$builddir/bin/luax",
+                loaders,
+            },
         },
-        implicit_in = {
-            "lib/libluax.lua",
-            test_sources,
-            imported_test_sources,
-        },
-    } or {},
 
-    build "$builddir/tests/luax/test-ext-1-lua.ok" { "luax/tests/external_interpreter_tests/external_interpreters.lua",
-        description = "test $out",
-        command = {
-            "eval \"$$($builddir/bin/luax env)\";",
-            "$builddir/bin/luax compile -q -b -k test-ext-1-key -t lua -o $builddir/tests/luax/ext-lua $in",
-            "&&",
-            "PATH=$builddir/bin:.cache:$$PATH",
-            "TARGET=lua",
-            test_options,
-            "$builddir/tests/luax/ext-lua Lua is great",
-            "&&",
-            "touch $out",
+        build "$builddir/tests/luax/test-ext-2-luax.ok" { "luax/tests/external_interpreter_tests/external_interpreters.lua",
+            description = "test $out",
+            command = {
+                "eval \"$$($builddir/bin/luax env)\";",
+                "$builddir/bin/luax compile -q -b -k test-ext-2-key -t luax -o $builddir/tests/luax/ext-luax-key $in",
+                "&&",
+                "PATH=$builddir/bin:$$PATH",
+                "TARGET=luax-key",
+                test_options,
+                "$builddir/tests/luax/ext-luax-key Lua is great",
+                "&&",
+                "touch $out",
+            },
+            implicit_in = {
+                "lib/libluax.lua",
+                "$builddir/bin/luax",
+                loaders,
+            },
         },
-        implicit_in = {
-            "lib/libluax.lua",
-            "$builddir/bin/luax",
-            loaders,
-        },
-    },
 
-    build "$builddir/tests/luax/test-ext-2-luax.ok" { "luax/tests/external_interpreter_tests/external_interpreters.lua",
-        description = "test $out",
-        command = {
-            "eval \"$$($builddir/bin/luax env)\";",
-            "$builddir/bin/luax compile -q -b -k test-ext-2-key -t luax -o $builddir/tests/luax/ext-luax-key $in",
-            "&&",
-            "PATH=$builddir/bin:$$PATH",
-            "TARGET=luax-key",
-            test_options,
-            "$builddir/tests/luax/ext-luax-key Lua is great",
-            "&&",
-            "touch $out",
-        },
-        implicit_in = {
-            "lib/libluax.lua",
-            "$builddir/bin/luax",
-            loaders,
-        },
-    },
+        has_pandoc and build "$builddir/tests/luax/test-ext-4-pandoc.ok" { "luax/tests/external_interpreter_tests/external_interpreters.lua",
+            description = "test $out",
+            command = {
+                "eval \"$$($builddir/bin/luax env)\";",
+                "$builddir/bin/luax compile -q -t pandoc -o $builddir/tests/luax/ext-pandoc $in", -- no bytecode to remain compatible with pandoc
+                "&&",
+                "PATH=$builddir/bin:$$PATH",
+                "TARGET=pandoc",
+                test_options,
+                "$builddir/tests/luax/ext-pandoc Lua is great",
+                "&&",
+                "touch $out",
+            },
+            implicit_in = {
+                "lib/libluax.lua",
+                "$builddir/bin/luax",
+                loaders,
+            },
+        } or {},
 
-    has_pandoc and build "$builddir/tests/luax/test-ext-4-pandoc.ok" { "luax/tests/external_interpreter_tests/external_interpreters.lua",
-        description = "test $out",
-        command = {
-            "eval \"$$($builddir/bin/luax env)\";",
-            "$builddir/bin/luax compile -q -t pandoc -o $builddir/tests/luax/ext-pandoc $in", -- no bytecode to remain compatible with pandoc
-            "&&",
-            "PATH=$builddir/bin:$$PATH",
-            "TARGET=pandoc",
-            test_options,
-            "$builddir/tests/luax/ext-pandoc Lua is great",
-            "&&",
-            "touch $out",
-        },
-        implicit_in = {
-            "lib/libluax.lua",
-            "$builddir/bin/luax",
-            loaders,
-        },
     } or {},
 
 }

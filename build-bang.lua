@@ -53,11 +53,7 @@ local function build_release(target)
         cp_to(archive/"bin") {
             "$builddir/bin/bang.lua",
         },
-        target ~= "lua" and {
-            luax[target.name](archive/"bin/bang") {
-                bang_sources,
-            },
-        }
+        target.name and luax[target.name](archive/"bin/bang") { bang_sources },
     }
 end
 
