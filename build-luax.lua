@@ -493,6 +493,26 @@ acc(test) {
             },
         },
 
+        build "$builddir/tests/luax/test-ext-3-luax.ok" { "luax/tests/external_interpreter_tests/external_interpreters.lua",
+            description = "test $out",
+            command = {
+                "eval \"$$($builddir/bin/luax env)\";",
+                "$builddir/bin/luax compile -q -b -z -t luax -o $builddir/tests/luax/ext-luax-z $in",
+                "&&",
+                "PATH=$builddir/bin:$$PATH",
+                "TARGET=luax-z",
+                test_options,
+                "$builddir/tests/luax/ext-luax-z Lua is great",
+                "&&",
+                "touch $out",
+            },
+            implicit_in = {
+                "lib/libluax.lua",
+                "$builddir/bin/luax",
+                loaders,
+            },
+        },
+
         has_pandoc and build "$builddir/tests/luax/test-ext-4-pandoc.ok" { "luax/tests/external_interpreter_tests/external_interpreters.lua",
             description = "test $out",
             command = {

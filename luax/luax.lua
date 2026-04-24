@@ -94,6 +94,7 @@ usage: %{arg[0]:basename()} [cmd] [options]
   -o file         name the executable file to create
   -b              compile to Lua bytecode
   -s              emit bytecode without debug information
+  -z              compress with lzip
   -k key          script encryption key
   -q              quiet compilation (error messages only)
   scripts         scripts to compile
@@ -741,7 +742,7 @@ local function cmd_compile()
             : str";"
     end
 
-    local function bytecode(code, opt, names)
+    local function compile_bytecode(code, opt, names)
         if opt.bytecode then
             code = assert(string.dump(assert(load(code, "@$"..F(names):str":")), opt.strip))
         end
@@ -749,7 +750,7 @@ local function cmd_compile()
     end
 
     local function obfuscate_lua(code, opt, names)
-        code = bytecode(code, opt, names)
+        code = compile_bytecode(code, opt, names)
         if opt.key then
             -- Encrypt code by xoring bytes with pseudo random values
             local key = make_key(code, opt)
@@ -770,23 +771,39 @@ local function cmd_compile()
                 for i=1,#b do r=r*a+c x[i]=ch(bt(b,i)~((r>>33)&0xff))end
                 return l(tc(x))()
             ]===])
-            code = bytecode(code, opt, F.take(1, names))
+            code = compile_bytecode(code, opt, F.take(1, names))
         end
         return code
     end
 
+    local function compress(code, opt)
+        if not opt.compression and not opt.key then return code, "" end
+        return code:lzip(), 'rq("_".."l".."z".."i".."p")["u".."n".."l".."z".."i".."p"]'
+    end
+
     local function obfuscate_luax(code, opt, names)
 
-        code = bytecode(code, opt, names)
+        code = compile_bytecode(code, opt, names)
+
+        local uncompress
+        code, uncompress = compress(code, opt)
 
         if opt.key then
             local key = make_key(code, opt)
-            code = compact(F.I { b=escape(code:arc4(key)), k=escape(key) } [===[
+            code = compact(F.I { b=escape(code:arc4(key)), k=escape(key), uc=uncompress } [===[
                 local g=_G
-                local u,l=g["r".."e".."q".."u".."i".."r".."e"]("_".."c".."r".."y".."p".."t")["a".."r".."c".."4"],g["l".."o".."a".."d"]
-                return l(u($(b),$(k)))()
+                local rq,l=g["r".."e".."q".."u".."i".."r".."e"],g["l".."o".."a".."d"]
+                local u=rq("_".."c".."r".."y".."p".."t")["a".."r".."c".."4"]
+                return l($(uc)(u($(b),$(k))))()
             ]===])
-            code = bytecode(code, opt, F.take(1, names))
+            code = compile_bytecode(code, opt, F.take(1, names))
+        elseif opt.compression then
+            code = compact(F.I { b=escape(code), uc=uncompress } [===[
+                local g=_G
+                local rq,l=g["r".."e".."q".."u".."i".."r".."e"],g["l".."o".."a".."d"]
+                return l($(uc)($(b)))()
+            ]===])
+            code = compile_bytecode(code, opt, F.take(1, names))
         end
 
         return code
@@ -887,7 +904,7 @@ local function cmd_compile()
                 assert(load(script.content, ("@%s"):format(script.path)))
                 if opt.bytecode then
                     -- compile the script with file path containing the product name
-                    return qstr(bytecode(script.content, opt, {product_name, script.path}))
+                    return qstr(compile_bytecode(script.content, opt, {product_name, script.path}))
                 else
                     return mlstr(script.content)
                 end
@@ -976,6 +993,7 @@ local function cmd_compile()
     local quiet = false
     local bytecode = nil
     local strip = nil
+    local compression = false
     local key = nil
 
     do
@@ -997,6 +1015,8 @@ local function cmd_compile()
             elseif a == '-s' then
                 bytecode = true
                 strip = true
+            elseif a == '-z' then
+                compression = true
             elseif a == '-k' then
                 i = i+1
                 if key then wrong_arg(a) end
@@ -1053,6 +1073,7 @@ local function cmd_compile()
             target = interpreter.name,
             bytecode = bytecode,
             strip = strip,
+            compression = compression,
             key = key,
         }
 
@@ -1090,6 +1111,7 @@ local function cmd_compile()
             add_shebang = false,
             bytecode = bytecode or "-b",
             strip = strip,
+            compression = compression,
             key = key,
         })
 
