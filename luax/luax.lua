@@ -763,7 +763,10 @@ local function cmd_compile()
                 xs[i] = char(b ~ ((r>>33) & 0xff))
             end
             code = compact(F.I { a=a, c=c, b=escape(table.concat(xs)), seed=seed } [===[
-                local b,a,c,r,x,bt,ch,l,tc=$(b),$(a),$(c),$(("0x%x"):format(seed)),{},string.byte,string.char,load,table.concat
+                local g=_G
+                local s=g["s".."t".."r".."i".."n".."g"]
+                local bt,ch,l,tc=s["b".."y".."t".."e"],s["c".."h".."a".."r"],g["l".."o".."a".."d"],g["t".."a".."b".."l".."e"]["c".."o".."n".."c".."a".."t"]
+                local b,a,c,r,x=$(b),$(a),$(c),$(("0x%x"):format(seed)),{}
                 for i=1,#b do r=r*a+c x[i]=ch(bt(b,i)~((r>>33)&0xff))end
                 return l(tc(x))()
             ]===])
@@ -779,7 +782,9 @@ local function cmd_compile()
         if opt.key then
             local key = make_key(code, opt)
             code = compact(F.I { b=escape(code:arc4(key)), k=escape(key) } [===[
-                return load(require"_crypt".unarc4($(b), $(k)))()
+                local g=_G
+                local u,l=g["r".."e".."q".."u".."i".."r".."e"]("_".."c".."r".."y".."p".."t")["a".."r".."c".."4"],g["l".."o".."a".."d"]
+                return l(u($(b),$(k)))()
             ]===])
             code = bytecode(code, opt, F.take(1, names))
         end
