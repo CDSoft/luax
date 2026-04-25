@@ -395,8 +395,7 @@ acc(test) {
         },
         implicit_in = {
             "$builddir/bin/luax",
-            loaders,
-            "lib/libluax.lua",
+            "$builddir/lib/libluax.xyz",
             imported_test_sources,
             "$httpd",
         },
@@ -426,8 +425,7 @@ acc(test) {
             },
             implicit_in = {
                 "$builddir/bin/luax",
-                loaders,
-                "lib/libluax.lua",
+                "$builddir/lib/libluax.xyz",
                 imported_test_sources,
             },
         }
@@ -466,9 +464,8 @@ acc(test) {
             "touch $out",
         },
         implicit_in = {
-            "lib/libluax.lua",
+            "$builddir/lib/libluax.xyz",
             "$builddir/bin/luax",
-            loaders,
         },
     },
 
@@ -486,9 +483,8 @@ acc(test) {
             "touch $out",
         },
         implicit_in = {
-            "lib/libluax.lua",
+            "$builddir/lib/libluax.xyz",
             "$builddir/bin/luax",
-            loaders,
         },
     },
 
@@ -506,9 +502,8 @@ acc(test) {
             "touch $out",
         },
         implicit_in = {
-            "lib/libluax.lua",
+            "$builddir/lib/libluax.xyz",
             "$builddir/bin/luax",
-            loaders,
         },
     },
 
@@ -526,9 +521,8 @@ acc(test) {
             "touch $out",
         },
         implicit_in = {
-            "lib/libluax.lua",
+            "$builddir/lib/libluax.xyz",
             "$builddir/bin/luax",
-            loaders,
         },
     } or {},
 
