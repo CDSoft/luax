@@ -46,6 +46,8 @@ require "build-lsvg"
 
 require "build-releases" -- must be called last
 
+section "Ninja targets"
+
 help "compile" "Compilation"
 help "test"    "Run tests"
 help "doc"     "Generate the documentation"
