@@ -14875,6 +14875,13 @@ local function get_first_level(base, files)
     end) : nub()
 end
 
+local function in_dir(dir)
+    local dirs = dir:splitpath()
+    return function(file)
+        return F.op.ueq(file:splitpath():take(#dirs), dirs)
+    end
+end
+
 local function tar(output)
     tar_rule()
     return function(inputs)
@@ -14887,7 +14894,7 @@ local function tar(output)
             end)
         end
         if base and name then
-            local files = build.files(base/name)
+            local files = build.files(in_dir(base/name))
             return build(output) { "tar",
                 base = base,
                 name = name,
@@ -14896,7 +14903,7 @@ local function tar(output)
             }
         end
         if base then
-            local files = build.files(base)
+            local files = build.files(in_dir(base))
             return build(output) { "tar",
                 base = base,
                 name = get_first_level(base, files),
