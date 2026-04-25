@@ -45,8 +45,8 @@ for _, file in ipairs(args.files) do
     local name = file:basename()
     local content = assert(fs.read_bin(file))
 
-    if file:match "/ext/" and name:ext() == ".lua" then lib.ext["luax/ext"/name] = content
-    elseif name:ext() == ".lua"                    then lib.lua["luax"/name] = content
+    if name:ext() == ".lua" and file:match "/ext/" then lib.ext[file] = content
+    elseif name:ext() == ".lua"                    then lib.lua[file] = content
     elseif name:has_prefix "luax-loader-"          then lib.loader[name] = content
     else error(file..": can not be added to "..args.o)
     end
