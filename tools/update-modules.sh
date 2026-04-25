@@ -131,7 +131,7 @@ update_lqmath()
         echo "limath and lqmath use different versions of imath"
         exit 1
     fi
-    rm "$ROOT/luax/ext/lqmath/imath.c"
+    rm "$ROOT/luax/ext/lqmath"/imath.[ch]
 }
 
 update_lmathx()

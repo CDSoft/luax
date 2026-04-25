@@ -98,6 +98,7 @@ local cflags = build.compile_flags {
     "-fPIC",
     "-Ilua",
     "-Iluax/ext/lzlib/inc",
+    "-Iluax/ext/limath",
 
     when(args.d) {
         "-g",
