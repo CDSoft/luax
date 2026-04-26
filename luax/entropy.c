@@ -38,7 +38,7 @@ uint64_t entropy(void *ptr)
 {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
-    int pid = getpid();
+    const int pid = getpid();
 
     feed((uintptr_t)ptr);           /* Address of a characteristic variable */
     feed((uintptr_t)&ptr);          /* Address of a local variable */

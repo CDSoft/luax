@@ -112,7 +112,7 @@ static bool read_header(FILE *f, size_t offset, struct t_header *header)
     return fnv1a_32_cmp(&hash, &header->hash) == 0;
 }
 
-static char *read_payload(FILE *f, size_t offset, struct t_header *header)
+static char *read_payload(FILE *f, size_t offset, const struct t_header *header)
 {
     char *payload = (char*)malloc(header->size);
     check("malloc", payload != NULL);

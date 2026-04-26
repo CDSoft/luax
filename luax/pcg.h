@@ -37,4 +37,4 @@ double pcg_float(t_pcg *prng);
 double pcg_float_range(t_pcg *prng, double a, double b);
 void pcg_str(t_pcg *prng, size_t size, char *buf);
 void pcg_seed(t_pcg *prng, uint64_t state, uint64_t increment);
-void pcg_clone(t_pcg *src, t_pcg *dst);
+void pcg_clone(const t_pcg *src, t_pcg *dst);

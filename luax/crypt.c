@@ -239,7 +239,7 @@ static const luaL_Reg prng_funcs[] =
 ### Global random number generator
 @@@*/
 
-static t_pcg prng;
+static t_pcg global_prng;
 
 /*@@@
 ```lua
@@ -253,11 +253,11 @@ static int crypt_seed(lua_State *L)
 {
     const uint64_t seed = lua_type(L, 1) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 1)
-        : entropy(&prng);
+        : entropy(&global_prng);
     const uint64_t increment = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
-        : entropy(&prng+1);
-    pcg_seed(&prng, seed, increment);
+        : entropy(&global_prng+1);
+    pcg_seed(&global_prng, seed, increment);
     return 0;
 }
 
@@ -281,16 +281,16 @@ returns a random integral number between `m` and `n`.
 static int crypt_int(lua_State *L)
 {
     if (lua_type(L, 1) != LUA_TNUMBER) {
-        lua_pushinteger(L, pcg_int(&prng));
+        lua_pushinteger(L, pcg_int(&global_prng));
         return 1;
     }
     const lua_Integer m = luaL_checkinteger(L, 1);
     if (lua_type(L, 2) != LUA_TNUMBER) {
-        lua_pushinteger(L, pcg_int_range(&prng, 1, m));
+        lua_pushinteger(L, pcg_int_range(&global_prng, 1, m));
         return 1;
     }
     const lua_Integer n = luaL_checkinteger(L, 2);
-    lua_pushinteger(L, pcg_int_range(&prng, m, n));
+    lua_pushinteger(L, pcg_int_range(&global_prng, m, n));
     return 1;
 }
 
@@ -314,16 +314,16 @@ returns a random floating point number between `a` and `b`.
 static int crypt_float(lua_State *L)
 {
     if (lua_type(L, 1) != LUA_TNUMBER) {
-        lua_pushnumber(L, pcg_float(&prng));
+        lua_pushnumber(L, pcg_float(&global_prng));
         return 1;
     }
     const lua_Number a = luaL_checknumber(L, 1);
     if (lua_type(L, 2) != LUA_TNUMBER) {
-        lua_pushnumber(L, pcg_float_range(&prng, 0, a));
+        lua_pushnumber(L, pcg_float_range(&global_prng, 0, a));
         return 1;
     }
     const lua_Number b = luaL_checknumber(L, 2);
-    lua_pushnumber(L, pcg_float_range(&prng, a, b));
+    lua_pushnumber(L, pcg_float_range(&global_prng, a, b));
     return 1;
 }
 
@@ -341,7 +341,7 @@ static int crypt_str(lua_State *L)
     luaL_Buffer B;
     luaL_buffinit(L, &B);
     if (bytes > 0 && bytes < SSIZE_MAX-3) {
-        pcg_str(&prng, (size_t)bytes, luaL_prepbuffsize(&B, (size_t)bytes+3));
+        pcg_str(&global_prng, (size_t)bytes, luaL_prepbuffsize(&B, (size_t)bytes+3));
         luaL_addsize(&B, (size_t)bytes);
     }
     luaL_pushresult(&B);
@@ -873,7 +873,7 @@ static inline void arc4_drop(t_arc4 *arc4, size_t n)
     }
 }
 
-static inline uint8_t arc4_byte(t_arc4 *arc4)
+static inline uint8_t arc4_byte(const t_arc4 *arc4)
 {
     const uint8_t *S = arc4->S;
     return S[(S[arc4->i] + S[arc4->j]) % 256];
@@ -1071,7 +1071,7 @@ LUAMOD_API int luaopen_crypt(lua_State *L)
     lua_pushvalue(L, -2);
     lua_settable(L, -3);
 
-    pcg_seed(&prng, entropy(&prng), entropy(&prng+1));
+    pcg_seed(&global_prng, entropy(&global_prng), entropy(&global_prng+1));
 
     /* module initialization */
 

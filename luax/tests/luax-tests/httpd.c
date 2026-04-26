@@ -39,7 +39,7 @@ static void check(const char *name, bool condition) {
     exit(EXIT_FAILURE);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, const char *argv[]) {
     if (argc != 2) { fprintf(stderr, "Usage: %s <port>\n", argv[0]); exit(EXIT_FAILURE); }
     int port = atoi(argv[1]);
     if (port < 1024 || port > 65535) { fprintf(stderr, "Erreur: Le port doit être entre 1024 et 65535\n"); exit(EXIT_FAILURE); }

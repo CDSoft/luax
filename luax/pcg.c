@@ -93,7 +93,7 @@ void pcg_seed(t_pcg *prng, uint64_t state, uint64_t increment)
     pcg_advance(prng);
 }
 
-void pcg_clone(t_pcg *src, t_pcg *dst)
+void pcg_clone(const t_pcg *src, t_pcg *dst)
 {
     dst->state = src->state;
     dst->increment = src->increment;
