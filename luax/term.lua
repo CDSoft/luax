@@ -284,4 +284,25 @@ function term.prompt(p)
     return io.stdin:read "l"
 end
 
+--[[------------------------------------------------------------------------@@@
+## Title
+
+Set the terminal title.
+@@@]]
+
+--[[@@@
+```lua
+term.title(t)
+```
+sets the terminal title.
+@@@]]
+
+function term.title(t)
+    if term.isatty(io.stdout) then
+        io.stdout:write(ESC, "]0;", t, "\a")
+        io.stdout:flush()
+    end
+end
+
+
 return term

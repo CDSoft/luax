@@ -156,6 +156,17 @@ s = term.prompt(p)
 prints `p` and waits for a user input
 
 
+## Title
+
+Set the terminal title.
+
+
+```lua
+term.title(t)
+```
+sets the terminal title.
+
+
 
 
 ## Terminal characterization

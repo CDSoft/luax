@@ -12815,6 +12815,27 @@ function term.prompt(p)
     return io.stdin:read "l"
 end
 
+--[[------------------------------------------------------------------------@@@
+## Title
+
+Set the terminal title.
+@@@]]
+
+--[[@@@
+```lua
+term.title(t)
+```
+sets the terminal title.
+@@@]]
+
+function term.title(t)
+    if term.isatty(io.stdout) then
+        io.stdout:write(ESC, "]0;", t, "\a")
+        io.stdout:flush()
+    end
+end
+
+
 return term
 ]=])
 package.preload["toml"] = lib("luax/toml.lua", [=[
@@ -15251,9 +15272,16 @@ local function cmd_compile()
     local prefix = find_exe(arg[0]):realpath():dirname():dirname()
     local libluax_xyz = (function()
         local salt = tostring(luax_version)
-        local data = assert(fs.read_bin(prefix/"lib/libluax.xyz"))
+        local embeded, data = pcall(require, "libluax.xyz")
+        if not embeded then
+            data = assert(fs.read_bin(prefix/"lib/libluax.xyz"))
+        end
         if data:sub(#data-7) ~= (salt..data:sub(1, #data-8)):hash64():unhex() then
-            print_error("%s: corrupted file", prefix/"lib/libluax.xyz")
+            if embeded then
+                print_error("corrupted compilation artifacts")
+            else
+                print_error("%s: corrupted file", prefix/"lib/libluax.xyz")
+            end
         end
         return cbor.decode(data:sub(1, -9))
     end)()
