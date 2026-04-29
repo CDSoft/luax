@@ -57,9 +57,22 @@ local function build_release(target)
     }
 end
 
+local function build_standalone(target)
+    local dir = standalone_dir()
+    if target == "lua" then
+        return luax.lua(dir/"lsvg.lua") { lsvg_sources }
+    else
+        return luax[target.name](dir/"lsvg-"..target.name) { lsvg_sources }
+    end
+end
+
 acc(release) {
     targets : map(build_release),
     build_release "lua",
+}
+acc(standalone) {
+    targets : map(build_standalone),
+    build_standalone "lua",
 }
 
 -------------------------------------------------------------------------------

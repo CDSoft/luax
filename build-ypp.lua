@@ -60,9 +60,25 @@ local function build_release(target)
     }
 end
 
+local function build_standalone(target)
+    local dir = standalone_dir()
+    if target == "lua" then
+        return {
+            luax.lua(dir/"ypp.lua") { ypp_sources },
+            luax.pandoc(dir/"ypp-pandoc.lua") { ypp_sources },
+        }
+    else
+        return luax[target.name](dir/"ypp-"..target.name) { ypp_sources }
+    end
+end
+
 acc(release) {
     targets : map(build_release),
     build_release "lua",
+}
+acc(standalone) {
+    targets : map(build_standalone),
+    build_standalone "lua",
 }
 
 -------------------------------------------------------------------------------

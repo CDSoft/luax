@@ -692,11 +692,22 @@ local function cmd_compile()
     local prefix = find_exe(arg[0]):realpath():dirname():dirname()
     local libluax_xyz = (function()
         local salt = tostring(luax_version)
-        local data = assert(fs.read_bin(prefix/"lib/libluax.xyz"))
-        if data:sub(#data-7) ~= (salt..data:sub(1, #data-8)):hash64():unhex() then
-            print_error("%s: corrupted file", prefix/"lib/libluax.xyz")
+        local embeded, data = pcall(require, "libluax.xyz.lz")
+        if embeded then
+            data = data:unlzip()
+        else
+            data = assert(fs.read_bin(prefix/"lib/libluax.xyz"))
         end
-        return cbor.decode(data:sub(1, -9))
+        if data:sub(#data-7) ~= (salt..data:sub(1, #data-8)):hash64():unhex() then
+            if embeded then
+                print_error("corrupted compilation artifacts")
+            else
+                print_error("%s: corrupted file", prefix/"lib/libluax.xyz")
+            end
+        end
+        local lib = cbor.decode(data:sub(1, -9))
+        lib.embeded = embeded
+        return lib
     end)()
 
     local function find_main(scripts)
@@ -968,7 +979,9 @@ local function cmd_compile()
                 path and path:gsub("^"..home, "~") or name,
                 path and "" or term.color.red" [NOT FOUND]"))
         end)
-        local libluax = prefix/"lib/libluax_xyz"
+        local libluax = libluax_xyz.embeded
+                            and find_exe(arg[0]).." (standalone cross-compiler)"
+                            or prefix/"lib/libluax_xyz"
         local native = libluax_xyz.loader["luax-loader-"..sys.name..sys.exe]
         print(("%-22s%s%s"):format(
             "native",

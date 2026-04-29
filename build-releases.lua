@@ -24,18 +24,18 @@ section "Releases"
 
 release = {
     require "luax-targets" : map(function(target)
-        local archive = archive(target)
-        return build.tar(archive..".tar.xz") {
-            base = archive:dirname(),
-            name = archive:basename(),
+        local archive_build, archive_dist = archive(target)
+        return build.tar(archive_dist..".tar.xz") {
+            base = archive_build:dirname(),
+            name = archive_build:basename(),
             implicit_in = release,
         }
     end),
     (function()
-        local archive = archive("lua")
-        return build.tar(archive..".tar.xz") {
-            base = archive:dirname(),
-            name = archive:basename(),
+        local archive_build, archive_dist = archive("lua")
+        return build.tar(archive_dist..".tar.xz") {
+            base = archive_build:dirname(),
+            name = archive_build:basename(),
             implicit_in = release,
         }
     end)(),

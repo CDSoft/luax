@@ -3,7 +3,7 @@
 -- Generated with LuaX
 -- Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord
 
-_LUAX_VERSION = "LuaX 10.2.2"
+_LUAX_VERSION = "LuaX 10.3"
 
 local function lib(path, src) return assert(load(src, '@$luax-pandoc:'..path)) end
 package.preload["F"] = lib("luax/F.lua", [==[--[[
@@ -11094,7 +11094,7 @@ return F{
     {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
 }
 ]=])
-package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.2.2"
+package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.3"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"
@@ -15272,8 +15272,10 @@ local function cmd_compile()
     local prefix = find_exe(arg[0]):realpath():dirname():dirname()
     local libluax_xyz = (function()
         local salt = tostring(luax_version)
-        local embeded, data = pcall(require, "libluax.xyz")
-        if not embeded then
+        local embeded, data = pcall(require, "libluax.xyz.lz")
+        if embeded then
+            data = data:unlzip()
+        else
             data = assert(fs.read_bin(prefix/"lib/libluax.xyz"))
         end
         if data:sub(#data-7) ~= (salt..data:sub(1, #data-8)):hash64():unhex() then
@@ -15283,7 +15285,9 @@ local function cmd_compile()
                 print_error("%s: corrupted file", prefix/"lib/libluax.xyz")
             end
         end
-        return cbor.decode(data:sub(1, -9))
+        local lib = cbor.decode(data:sub(1, -9))
+        lib.embeded = embeded
+        return lib
     end)()
 
     local function find_main(scripts)
@@ -15555,7 +15559,9 @@ local function cmd_compile()
                 path and path:gsub("^"..home, "~") or name,
                 path and "" or term.color.red" [NOT FOUND]"))
         end)
-        local libluax = prefix/"lib/libluax_xyz"
+        local libluax = libluax_xyz.embeded
+                            and find_exe(arg[0]).." (standalone cross-compiler)"
+                            or prefix/"lib/libluax_xyz"
         local native = libluax_xyz.loader["luax-loader-"..sys.name..sys.exe]
         print(("%-22s%s%s"):format(
             "native",

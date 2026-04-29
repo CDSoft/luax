@@ -34,10 +34,11 @@ clean "$builddir"
 
 require "strict"
 
-compile = {}
-test = {}
-doc = {}
-release = {}
+compile = {}        -- compilation targets
+test = {}           -- test targets
+doc = {}            -- documentation targets
+release = {}        -- installable tarballs
+standalone = {}     -- standalone executables and scripts
 
 require "build-luax"
 require "build-bang"
@@ -48,16 +49,16 @@ require "build-releases" -- must be called last
 
 section "Ninja targets"
 
-help "compile" "Compilation"
-help "test"    "Run tests"
-help "doc"     "Generate the documentation"
-help "release" "Build the release archives"
-help "all"     "Compile, test and build documentation"
+help "compile"    "Compilation"
+help "test"       "Run tests"
+help "doc"        "Generate the documentation"
+help "release"    "Build the release archives"
+help "all"        "Compile, test and build documentation"
 
 phony "all" {
-    phony "compile" { compile },
-    phony "test"    { test },
-    phony "doc"     { doc },
-    phony "release" { args.d and {} or release },
+    phony "compile"    { compile },
+    phony "test"       { test },
+    phony "doc"        { doc },
+    phony "release"    { args.d and {} or {release, standalone} },
 }
 default "compile"

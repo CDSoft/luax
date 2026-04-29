@@ -245,6 +245,12 @@ acc(compile) {
 -- Compile using LuaX binaries
 luax = new_luax("$builddir/bin/luax")
 
+-- Compile and compress
+luaxz = new_luax("$builddir/bin/luax")
+targets : foreach(function(target)
+    luaxz[target.name] : add "flags" "-z"
+end)
+
 -------------------------------------------------------------------------------
 -- Generate the native LuaX interpreter
 -------------------------------------------------------------------------------
@@ -257,13 +263,26 @@ acc(compile) {
     },
 }
 
+rule "lzip" {
+    command = "$builddir/bin/luax tools/lzip.lua $in -o $out",
+    implicit_in = "$builddir/bin/luax tools/lzip.lua",
+}
+
+build "$builddir/tmp/libluax.xyz.lz" { "lzip", "$builddir/lib/libluax.xyz" }
+
 -------------------------------------------------------------------------------
 -- Generate the release archives
 -------------------------------------------------------------------------------
 
 function archive(target)
     local target_name = target.name or target
-    return "$builddir/release"/version.version/"luax-"..version.version.."-"..target_name
+    local dir = version.version/"luax-"..version.version.."-"..target_name
+    return "$builddir/tmp/release"/dir, "$builddir/release"/dir
+end
+
+function standalone_dir()
+    local _, dist = archive("")
+    return dist:dirname()
 end
 
 function cp_to(dest) return function(files)
@@ -272,7 +291,7 @@ function cp_to(dest) return function(files)
     end)
 end end
 
-build "$builddir/tmp/libluax-lua.xyz" { "packlib",
+build "$builddir/tmp/lua/libluax.xyz" { "packlib",
     libluax_lua_sources,
 }
 
@@ -291,14 +310,33 @@ local function build_release(target)
             "$builddir/lib/libluax.lua",
             target.name
                 and "$builddir/lib/libluax.xyz"
-                or "$builddir/tmp/libluax-lua.xyz",
+                or "$builddir/tmp/lua/libluax.xyz",
         },
     }
+end
+
+local function build_standalone(target)
+    local dir = standalone_dir()
+    if target == "lua" then
+        return luax.lua(dir/"luax.lua") {
+            luax_lua_sources,
+            "$builddir/tmp/lua/libluax.xyz",
+        }
+    else
+        return luax[target.name](dir/"luax-"..target.name) {
+            luax_lua_sources,
+            "$builddir/tmp/libluax.xyz.lz",
+        }
+    end
 end
 
 acc(release) {
     targets : map(build_release),
     build_release "lua",
+}
+acc(standalone) {
+    targets : map(build_standalone),
+    build_standalone "lua",
 }
 
 -------------------------------------------------------------------------------
