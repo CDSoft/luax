@@ -52,7 +52,7 @@ local function print_welcome()
 ]===]
 
     if term.isatty(io.stdout) then
-        colorize(1)
+        colorize(io.stdout)
         print((term.color.green+term.color.bold)(welcome))
     end
 
@@ -60,7 +60,7 @@ local function print_welcome()
 end
 
 local function usage()
-    colorize(1)
+    colorize(io.stdout)
     local I = (F.I % "%%{}") (term.color) {
         arg = arg,
         lua_init = { "LUA_INIT_".._VERSION:words()[2]:gsub("%.", "_"), "LUA_INIT" },
@@ -133,7 +133,7 @@ local function print_usage()
 end
 
 local function print_error(fmt, ...)
-    colorize(2)
+    colorize(io.stderr)
     io.stderr:write("\n")
     io.stderr:write((term.color.red"error: %s"):format(fmt:format(...)), "\n")
     io.stderr:write("\n")
@@ -182,19 +182,15 @@ local function cmd_run()
         return string.format("(error object is a %s value)", type(msg))
     end
 
-    local function traceback(message)
-        colorize(2)
-        local trace = F.flatten {
-            term.color.red("luax: "..msgtostr(message)),
-            debug.traceback():lines(),
-        }
-        local pos = 1
-        trace:foreachi(function(i, line)
-            if line:trim() == "[C]: in function 'xpcall'" then
-                pos = i-1
-            end
-        end)
-        io.stderr:write(trace:take(pos):unlines())
+    local function luax_xpcall(f)
+        local initial_stack_size = #debug.traceback():lines()
+        local function traceback(message)
+            local trace = debug.traceback():lines()
+            colorize(io.stderr)
+            io.stderr:write(term.color.red("luax: "..msgtostr(message)), "\n")
+            io.stderr:write(trace:take(#trace - initial_stack_size):unlines())
+        end
+        return xpcall(f, traceback)
     end
 
     -- Read options
@@ -392,11 +388,11 @@ prints `show(x)`
                     chunk, chunk_err = load(code, "="..var)
                 end
                 if not chunk then
-                    colorize(2)
+                    colorize(io.stderr)
                     io.stderr:write(term.color.red(chunk_err), "\n")
                     os.exit(1)
                 end
-                if chunk and not xpcall(chunk, traceback) then
+                if chunk and not luax_xpcall(chunk) then
                     os.exit(1)
                 end
             end)
@@ -427,12 +423,12 @@ prints `show(x)`
                     assert(stat)
                     local chunk, msg = load(stat, "=(command line)")
                     if not chunk then
-                        colorize(2)
+                        colorize(io.stderr)
                         io.stderr:write((term.color.red"%s: %s"):format(arg[0], msg), "\n")
                         os.exit(1)
                     end
                     assert(chunk)
-                    local res = pack_res(xpcall(chunk, traceback))
+                    local res = pack_res(luax_xpcall(chunk))
                     if res.ok then
                         if res.n > 0 then
                             print(show_res(res, show):unpack())
@@ -526,7 +522,7 @@ prints `show(x)`
                             return candidate
                         end
                     end
-                    colorize(2)
+                    colorize(io.stderr)
                     candidates : foreach(function(path)
                         io.stderr:write((term.color.red"    no file '%s' in '%s'"):format(name, path), "\n")
                     end)
@@ -536,12 +532,12 @@ prints `show(x)`
                 chunk, msg = load(comment_shebang(assert(fs.read_bin(real_script))), "@"..real_script)
             end
             if not chunk then
-                colorize(2)
+                colorize(io.stderr)
                 io.stderr:write((term.color.red"%s: %s"):format(script, msg), "\n")
                 os.exit(1)
             end
             assert(chunk)
-            local res = pack_res(xpcall(chunk, traceback))
+            local res = pack_res(luax_xpcall(chunk))
             if res.ok then
                 if res.n > 0 then
                     print(show_res(res, show):unpack())
@@ -572,7 +568,7 @@ prints `show(x)`
                     if msg and type(msg) == "string" and msg:match "<eof>$" then return "cont" end
                     return nil, msg
                 end
-                local res = pack_res(xpcall(chunk, traceback))
+                local res = pack_res(luax_xpcall(chunk))
                 if res.ok and res.n > 0 then
                     print(show_res(res, show):unpack())
                 end
@@ -596,7 +592,7 @@ prints `show(x)`
                     local try_stat, err_stat = try(input)
                     if try_stat == "done" then break end
                     if try_expr ~= "cont" and try_stat ~= "cont" then
-                        colorize(2)
+                        colorize(io.stderr)
                         io.stderr:write(term.color.red(try_stat == nil and err_stat or err_expr), "\n")
                         break
                     end
@@ -964,7 +960,7 @@ local function cmd_compile()
     end
 
     local function print_targets()
-        colorize(1)
+        colorize(io.stdout)
         print((term.color.green"%-22s%-25s"):format("Target", "Interpreter / LuaX loader"))
         print((term.color.green"%-22s%-25s"):format(("-"):rep(21), ("-"):rep(25)))
         local home = os.getenv(F.case(sys.os) {
@@ -1254,7 +1250,7 @@ local function cmd_postinstall()
     local not_found = term.color.red "✖"
     local recycle = term.color.yellow "♻"
 
-    colorize(1)
+    colorize(io.stdout)
 
     local expected_files = F.flatten {
         (sys.libc=="gnu" or sys.libc=="musl") and {

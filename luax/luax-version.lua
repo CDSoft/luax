@@ -1,4 +1,4 @@
-local version = "10.3.2"
+local version = "10.3.3"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"
