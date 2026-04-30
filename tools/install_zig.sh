@@ -22,6 +22,7 @@ set -e
 
 ZIG="$1"
 ZIG_VERSION="0.15.2"
+ZIG_VERSION="0.16.0"
 ZIG_KEY="RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U"
 REQUEST_SOURCE="codeberg.org-cdsoft-luax"
 

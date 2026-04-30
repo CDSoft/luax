@@ -86,9 +86,13 @@ local function when(flag)
 end
 
 local function lto(target)
-    if args.d then return {} end
-    if target.os == "macos" then return {} end
-    return "-flto"
+    return when(not args.d) {
+        case(target.os) {
+            linux   = "-flto",
+            macos   = {},
+            windows = {},
+        }
+    }
 end
 
 local cflags = build.compile_flags {
