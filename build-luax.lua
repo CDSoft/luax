@@ -32,8 +32,12 @@ local F = require "F"
 local fs = require "fs"
 local sh = require "sh"
 local sys = require "sys"
+local crypt = require "crypt"
 local targets = require "luax-targets"
 local version = require "luax-version"
+
+var "zig_hash" { crypt.hash(sh { vars%"$zig", "env" }) }
+var "lua_hash" { crypt.hash(sh { vars%"$lua", "-v" }) }
 
 -------------------------------------------------------------------------------
 -- Sources
@@ -62,7 +66,10 @@ local function new_luax(prog, deps)
     }
     target_names : foreach(function(target_name)
         luax[target_name] = build.luax[target_name] : new("luax-".._luax_idx.."-"..target_name)
-            : set "luax" (prog)
+            : set "luax" {
+                "export LUA_HASH=$lua_hash;", -- force execution when Lua is updated
+                prog,
+            }
             : add "implicit_in" (deps)
             : add "flags" "-q"
     end)
@@ -71,10 +78,11 @@ end
 
 rule "packlib" {
     command = {
+        "export LUA_HASH=$lua_hash;", -- force execution when Lua is updated
         "export LUA_PATH=luax/?.lua;",
-        "$cache/lua tools/packlib.lua -o $out $in",
+        "$lua tools/packlib.lua -o $out $in",
     },
-    implicit_in = "tools/packlib.lua",
+    implicit_in = "$lua tools/packlib.lua",
 }
 
 -------------------------------------------------------------------------------
@@ -108,6 +116,8 @@ local cflags = build.compile_flags {
         "-g",
         "-Og",
     },
+
+    "-DZIG_HASH=$zig_hash", -- force recompilation when zig is updated
 }
 
 local luax_cflags = build.compile_flags {
@@ -225,7 +235,7 @@ end)
 -- Generate the pure-Lua LuaX interpreters and library
 -------------------------------------------------------------------------------
 
-local luax0 = new_luax("export LUA_PATH='luax/?.lua'; $cache/lua $builddir/stage0/bin/luax.lua", {
+local luax0 = new_luax("export LUA_PATH='luax/?.lua'; $lua $builddir/stage0/bin/luax.lua", {
     build.cp "$builddir/stage0/bin/luax.lua" "luax/luax.lua",
     build "$builddir/stage0/lib/libluax.xyz" { "packlib",
         libluax_lua_sources,

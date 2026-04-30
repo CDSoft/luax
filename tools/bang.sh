@@ -64,15 +64,21 @@ fi
 # Zig
 ##############################################################################
 
-if ! [ -x $ZIG ]; then
-    tools/install_zig.sh $ZIG
-fi
+tools/install_zig.sh $ZIG
 
 ##############################################################################
 # Lua
 ##############################################################################
 
-if ! [ -x $LUA ]; then
+cat <<EOF | $ZIG cc -xc -I"$PWD/lua" - -o $LUA-version
+#include "lua.h"
+#include <stdio.h>
+int main(void) {
+    printf("%d.%d.%d\n", LUA_VERSION_MAJOR_N, LUA_VERSION_MINOR_N, LUA_VERSION_RELEASE_N);
+}
+EOF
+
+if ! [ -x $LUA ] || [ "$($LUA -v | awk '{print $2}')" != "$($LUA-version)" ]; then
     CFLAGS=(
         -Os
         -Ilua

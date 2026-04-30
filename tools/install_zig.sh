@@ -21,7 +21,6 @@
 set -e
 
 ZIG="$1"
-ZIG_VERSION="0.15.2"
 ZIG_VERSION="0.16.0"
 ZIG_KEY="RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U"
 REQUEST_SOURCE="codeberg.org-cdsoft-luax"
@@ -70,10 +69,8 @@ download()
     exit 1
 }
 
-if ! [ -x "$ZIG" ]; then
+if ! [ -x "$ZIG" ] || [ "$($ZIG version)" != $ZIG_VERSION ]; then
     mkdir -p "$(dirname "$ZIG")"
     download "$(dirname "$ZIG")/$ZIG_ARCHIVE"
     tar xaf "$(dirname "$ZIG")/$ZIG_ARCHIVE" -C "$(dirname "$ZIG")" --strip-components 1
 fi
-
-touch "$ZIG"
