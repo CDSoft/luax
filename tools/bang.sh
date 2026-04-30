@@ -21,7 +21,7 @@
 # This script install LuaX dependencies
 # and builds a standard Lua interpreter use to execute bang
 
-set -e
+set -eu
 
 ZIG=.cache/zig/zig
 LUA=.cache/lua

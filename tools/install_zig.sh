@@ -18,7 +18,7 @@
 # For further information about luax you can visit
 # https://codeberg.org/cdsoft/luax
 
-set -e
+set -eu
 
 ZIG="$1"
 ZIG_VERSION="0.16.0"
