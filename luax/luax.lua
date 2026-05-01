@@ -828,8 +828,6 @@ local function cmd_compile()
 
     local function bundle(opt)
 
-        opt.bytecode = opt.bytecode or opt.strip -- strip implies bytecode
-
         local scripts = F{}
 
         local function load_script(script, content, patch)
@@ -948,7 +946,7 @@ local function cmd_compile()
                 end
             end
             local obfuscate = opt.target:match "^luax" and obfuscate_luax or obfuscate_lua
-            out = obfuscate(out:flatten():unlines(), F(opt):patch{strip=true}, {product_name})
+            out = obfuscate(out:flatten():unlines(), opt, {product_name})
             local is_executable = main_script and not main_script.is_lib
             return F{
                 output = F{shebang, out}:flatten():unlines(),
@@ -1080,9 +1078,9 @@ local function cmd_compile()
             add_shebang = interpreter.add_shebang,
             output = current_output,
             target = interpreter.name,
-            bytecode = bytecode,
-            strip = strip,
-            compression = compression,
+            bytecode = interpreter.name:match"luax" and bytecode,           -- bytecode for LuaX only
+            strip = bytecode and strip,                                     -- only strip bytecode
+            compression = interpreter.name:match"luax" and compression,     -- compression for LuaX only
             key = key,
         }
 
@@ -1118,9 +1116,9 @@ local function cmd_compile()
             output = current_output,
             target = "luax-loader",
             add_shebang = false,
-            bytecode = bytecode or "-b",
+            bytecode = true,                    -- always bytecode with the LuaX loader
             strip = strip,
-            compression = compression,
+            compression = compression or key,   -- with the loader, encryption implies compression
             key = key,
         })
 

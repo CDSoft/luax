@@ -3,7 +3,7 @@
 -- Generated with LuaX
 -- Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord
 
-_LUAX_VERSION = "LuaX 10.3.3"
+_LUAX_VERSION = "LuaX 10.3.4"
 
 local function lib(path, src) return assert(load(src, '@$luax-pandoc:'..path)) end
 package.preload["F"] = lib("luax/F.lua", [==[--[[
@@ -11094,7 +11094,7 @@ return F{
     {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
 }
 ]=])
-package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.3.3"
+package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.3.4"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"
@@ -15408,8 +15408,6 @@ local function cmd_compile()
 
     local function bundle(opt)
 
-        opt.bytecode = opt.bytecode or opt.strip -- strip implies bytecode
-
         local scripts = F{}
 
         local function load_script(script, content, patch)
@@ -15528,7 +15526,7 @@ local function cmd_compile()
                 end
             end
             local obfuscate = opt.target:match "^luax" and obfuscate_luax or obfuscate_lua
-            out = obfuscate(out:flatten():unlines(), F(opt):patch{strip=true}, {product_name})
+            out = obfuscate(out:flatten():unlines(), opt, {product_name})
             local is_executable = main_script and not main_script.is_lib
             return F{
                 output = F{shebang, out}:flatten():unlines(),
@@ -15660,9 +15658,9 @@ local function cmd_compile()
             add_shebang = interpreter.add_shebang,
             output = current_output,
             target = interpreter.name,
-            bytecode = bytecode,
-            strip = strip,
-            compression = compression,
+            bytecode = interpreter.name:match"luax" and bytecode,           -- bytecode for LuaX only
+            strip = bytecode and strip,                                     -- only strip bytecode
+            compression = interpreter.name:match"luax" and compression,     -- compression for LuaX only
             key = key,
         }
 
@@ -15698,9 +15696,9 @@ local function cmd_compile()
             output = current_output,
             target = "luax-loader",
             add_shebang = false,
-            bytecode = bytecode or "-b",
+            bytecode = true,                    -- always bytecode with the LuaX loader
             strip = strip,
-            compression = compression,
+            compression = compression or key,   -- with the loader, encryption implies compression
             key = key,
         })
 
