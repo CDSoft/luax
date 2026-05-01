@@ -733,12 +733,9 @@ local function cmd_compile()
     local function make_key(code, opt)
         return F.str {
             tostring(luax_version),
-            opt.key,
-            opt.target,
-            tostring(opt.bytecode),
-            tostring(opt.strip),
-            code : hash128() : unhex(),
-        } : hash128() : unhex()
+            cbor.encode(opt, {pairs=F.pairs}),
+            code,
+        } : sha1() : unhex()
     end
 
     local function compact(s)
