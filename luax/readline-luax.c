@@ -31,9 +31,9 @@ The following functions work on Windows but are stubbed using the C `fgets` func
 The history can not be saved on Windows.
 @@@*/
 
-#include "readline.h"
+#include "readline-luax.h"
 
-#include "linenoise.h"
+#include "linenoise-luax.h"
 #include "tools.h"
 
 #include <ctype.h>

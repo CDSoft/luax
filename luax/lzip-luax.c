@@ -33,7 +33,7 @@ The source code is available at <https://www.nongnu.org/lzip/lzlib.html>.
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "lzip.h"
+#include "lzip-luax.h"
 #include "ext/lzlib/lzlib.h"
 
 #include "tools.h"

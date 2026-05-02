@@ -28,7 +28,7 @@ The following functions work on Windows but are stubbed using the C `fgets` func
 The history can not be saved on Windows.
 @@@*/
 
-#include "linenoise.h"
+#include "linenoise-luax.h"
 
 #include <stdbool.h>
 #include <unistd.h>

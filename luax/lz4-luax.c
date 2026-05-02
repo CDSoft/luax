@@ -31,7 +31,7 @@ The source code is on Github: <https://github.com/lz4/lz4>.
 More information on <https://www.lz4.org>.
 @@@*/
 
-#include "lz4.h"
+#include "lz4-luax.h"
 #include "ext/lz4/lz4hc.h"
 #include "ext/lz4/lz4frame.h"
 

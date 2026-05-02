@@ -17,7 +17,7 @@
  * https://codeberg.org/cdsoft/luax
  */
 
-#include "luasocket.h"
+#include "luasocket-luax.h"
 
 #include "ext/luasocket/luasocket.h"
 #include "ext/luasocket/mime.h"
