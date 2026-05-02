@@ -36,6 +36,9 @@ local crypt = require "crypt"
 #include "fnv1a_32.h"
 #include "fnv1a_64.h"
 #include "fnv1a_128.h"
+#include "fnv1a_256.h"
+#include "fnv1a_512.h"
+#include "fnv1a_1024.h"
 #include "lua.h"
 #include "lauxlib.h"
 #include "pcg.h"
@@ -1002,6 +1005,72 @@ static int crypt_hash128(lua_State *L)
     return 1;
 }
 
+/*@@@
+```lua
+crypt.hash256(data)
+```
+returns a 256-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+@@@*/
+
+static int crypt_hash256(lua_State *L)
+{
+    const char *data = (const char *)luaL_checkstring(L, 1);
+    const size_t datalen = (size_t)lua_rawlen(L, 1);
+
+    t_fnv1a_256 hash;
+    t_fnv1a_256_digest digest;
+    fnv1a_256_init(&hash);
+    fnv1a_256_update(&hash, data, datalen);
+    fnv1a_256_digest(&hash, digest);
+    lua_pushstring(L, digest);
+
+    return 1;
+}
+
+/*@@@
+```lua
+crypt.hash512(data)
+```
+returns a 512-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+@@@*/
+
+static int crypt_hash512(lua_State *L)
+{
+    const char *data = (const char *)luaL_checkstring(L, 1);
+    const size_t datalen = (size_t)lua_rawlen(L, 1);
+
+    t_fnv1a_512 hash;
+    t_fnv1a_512_digest digest;
+    fnv1a_512_init(&hash);
+    fnv1a_512_update(&hash, data, datalen);
+    fnv1a_512_digest(&hash, digest);
+    lua_pushstring(L, digest);
+
+    return 1;
+}
+
+/*@@@
+```lua
+crypt.hash1024(data)
+```
+returns a 1024-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+@@@*/
+
+static int crypt_hash1024(lua_State *L)
+{
+    const char *data = (const char *)luaL_checkstring(L, 1);
+    const size_t datalen = (size_t)lua_rawlen(L, 1);
+
+    t_fnv1a_1024 hash;
+    t_fnv1a_1024_digest digest;
+    fnv1a_1024_init(&hash);
+    fnv1a_1024_update(&hash, data, datalen);
+    fnv1a_1024_digest(&hash, digest);
+    lua_pushstring(L, digest);
+
+    return 1;
+}
+
 /***************************************************************************@@@
 ### SHA-1 hash
 
@@ -1050,6 +1119,9 @@ static const luaL_Reg crypt_module[] =
     {"hash32", crypt_hash32},
     {"hash64", crypt_hash64},
     {"hash128", crypt_hash128},
+    {"hash256", crypt_hash256},
+    {"hash512", crypt_hash512},
+    {"hash1024", crypt_hash1024},
     {"sha1", crypt_sha1},
 
     {NULL, NULL}

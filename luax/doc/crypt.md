@@ -255,6 +255,24 @@ crypt.hash128(data)
 returns a 128-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 
 
+```lua
+crypt.hash256(data)
+```
+returns a 256-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+
+
+```lua
+crypt.hash512(data)
+```
+returns a 512-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+
+
+```lua
+crypt.hash1024(data)
+```
+returns a 1024-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+
+
 ### SHA-1 hash
 
 
@@ -307,6 +325,9 @@ s:hash32()          == crypt.hash32(s)
 s:hash64()          == crypt.hash64(s)
 s:hash128()         == crypt.hash128(s)
 s:sha1()            == crypt.sha1(s)
+s:hash256()         == crypt.hash256(s)
+s:hash512()         == crypt.hash512(s)
+s:hash1024()        == crypt.hash1024(s)
 ```
 
 

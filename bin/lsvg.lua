@@ -3,7 +3,7 @@
 -- Generated with LuaX
 -- Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord
 
-_LUAX_VERSION = "LuaX 10.3.4"
+_LUAX_VERSION = "LuaX 10.4"
 
 local function lib(path, src) return assert(load(src, '@$lsvg:'..path)) end
 package.preload["F"] = lib("luax/F.lua", [==[--[[
@@ -7854,19 +7854,130 @@ if not has_crypt then
     end
 
     local fnv1a_128_init = {0x6c62272e, 0x07bb0142, 0x62b82175, 0x6295c58d}
-    local fnv1a_128_prime_b, fnv1a_128_prime_d = 1<<(88-2*32), 1<<8 | 0x3b
+    local fnv1a_128_prime_2, fnv1a_128_prime_0 = 1<<(88-2*32), 1<<8 | 0x3b
     local function fnv1a_128(hash, bs)
-        local a, b, c, d = tunpack(hash)
+        local h3, h2, h1, h0 = tunpack(hash)
         for i=1,#bs do
-            d = d ~ byte(bs, i)
-            local c0, d0 = c, d
+            h0 = h0 ~ byte(bs, i)
+            local h1i, h0i = h1, h0
             local carry
-            d =         d0*fnv1a_128_prime_d                            d, carry = d & 0xFFFFFFFF, d >> 32
-            c = carry + c0*fnv1a_128_prime_d                            c, carry = c & 0xFFFFFFFF, c >> 32
-            b = carry + b *fnv1a_128_prime_d + d0*fnv1a_128_prime_b     b, carry = b & 0xFFFFFFFF, b >> 32
-            a = carry + a *fnv1a_128_prime_d + c0*fnv1a_128_prime_b
+            h0 =         h0i*fnv1a_128_prime_0                            h0, carry = h0 & 0xFFFFFFFF, h0 >> 32
+            h1 = carry + h1i*fnv1a_128_prime_0                            h1, carry = h1 & 0xFFFFFFFF, h1 >> 32
+            h2 = carry + h2 *fnv1a_128_prime_0 + h0i*fnv1a_128_prime_2    h2, carry = h2 & 0xFFFFFFFF, h2 >> 32
+            h3 = carry + h3 *fnv1a_128_prime_0 + h1i*fnv1a_128_prime_2
         end
-        return a&0xFFFFFFFF, b, c, d
+        return h3&0xFFFFFFFF, h2, h1, h0
+    end
+
+    local fnv1a_256_init = {
+        0xdd268dbc, 0xaac55036, 0x2d98c384, 0xc4e576cc,
+        0xc8b15368, 0x47b6bbb3, 0x1023b4c8, 0xcaee0535,
+    }
+    local fnv1a_256_prime_5, fnv1a_256_prime_0 = 1<<(168-5*32), 1<<8 | 0x63
+    local function fnv1a_256(hash, bs)
+        local h7, h6, h5, h4, h3, h2, h1, h0 = tunpack(hash)
+        for i=1,#bs do
+            h0 = h0 ~ byte(bs, i)
+            local h2i, h1i, h0i = h2, h1, h0
+            local carry
+            h0 =         h0i*fnv1a_256_prime_0                            h0, carry = h0 & 0xFFFFFFFF, h0 >> 32
+            h1 = carry + h1i*fnv1a_256_prime_0                            h1, carry = h1 & 0xFFFFFFFF, h1 >> 32
+            h2 = carry + h2i*fnv1a_256_prime_0                            h2, carry = h2 & 0xFFFFFFFF, h2 >> 32
+            h3 = carry + h3 *fnv1a_256_prime_0                            h3, carry = h3 & 0xFFFFFFFF, h3 >> 32
+            h4 = carry + h4 *fnv1a_256_prime_0                            h4, carry = h4 & 0xFFFFFFFF, h4 >> 32
+            h5 = carry + h5 *fnv1a_256_prime_0 + h0i*fnv1a_256_prime_5    h5, carry = h5 & 0xFFFFFFFF, h5 >> 32
+            h6 = carry + h6 *fnv1a_256_prime_0 + h1i*fnv1a_256_prime_5    h6, carry = h6 & 0xFFFFFFFF, h6 >> 32
+            h7 = carry + h7 *fnv1a_256_prime_0 + h2i*fnv1a_256_prime_5
+        end
+        return h7&0xFFFFFFFF, h6, h5, h4, h3, h2, h1, h0
+    end
+
+    local fnv1a_512_init = {
+        0xb86db0b1, 0x171f4416, 0xdca1e50f, 0x309990ac,
+        0xac87d059, 0xc9000000, 0x00000000, 0x00000d21,
+        0xe948f68a, 0x34c192f6, 0x2ea79bc9, 0x42dbe7ce,
+        0x18203641, 0x5f56e34b, 0xac982aac, 0x4afe9fd9,
+    }
+    local fnv1a_512_prime_10, fnv1a_512_prime_0 = 1<<(344-10*32), 1<<8 | 0x57
+    local function fnv1a_512(hash, bs)
+        local h15, h14, h13, h12, h11, h10, h9, h8, h7, h6, h5, h4, h3, h2, h1, h0 = tunpack(hash)
+        for i=1,#bs do
+            h0 = h0 ~ byte(bs, i)
+            local h5i, h4i, h3i, h2i, h1i, h0i = h5, h4, h3, h2, h1, h0
+            local carry
+            h0  =         h0i*fnv1a_512_prime_0                            h0,  carry = h0  & 0xFFFFFFFF, h0  >> 32
+            h1  = carry + h1i*fnv1a_512_prime_0                            h1,  carry = h1  & 0xFFFFFFFF, h1  >> 32
+            h2  = carry + h2i*fnv1a_512_prime_0                            h2,  carry = h2  & 0xFFFFFFFF, h2  >> 32
+            h3  = carry + h3 *fnv1a_512_prime_0                            h3,  carry = h3  & 0xFFFFFFFF, h3  >> 32
+            h4  = carry + h4 *fnv1a_512_prime_0                            h4,  carry = h4  & 0xFFFFFFFF, h4  >> 32
+            h5  = carry + h5 *fnv1a_512_prime_0                            h5,  carry = h5  & 0xFFFFFFFF, h5  >> 32
+            h6  = carry + h6 *fnv1a_512_prime_0                            h6,  carry = h6  & 0xFFFFFFFF, h6  >> 32
+            h7  = carry + h7 *fnv1a_512_prime_0                            h7,  carry = h7  & 0xFFFFFFFF, h7  >> 32
+            h8  = carry + h8 *fnv1a_512_prime_0                            h8,  carry = h8  & 0xFFFFFFFF, h8  >> 32
+            h9  = carry + h9 *fnv1a_512_prime_0                            h9,  carry = h9  & 0xFFFFFFFF, h9  >> 32
+            h10 = carry + h10*fnv1a_512_prime_0 + h0i*fnv1a_512_prime_10   h10, carry = h10 & 0xFFFFFFFF, h10 >> 32
+            h11 = carry + h11*fnv1a_512_prime_0 + h1i*fnv1a_512_prime_10   h11, carry = h11 & 0xFFFFFFFF, h11 >> 32
+            h12 = carry + h12*fnv1a_512_prime_0 + h2i*fnv1a_512_prime_10   h12, carry = h12 & 0xFFFFFFFF, h12 >> 32
+            h13 = carry + h13*fnv1a_512_prime_0 + h3i*fnv1a_512_prime_10   h13, carry = h13 & 0xFFFFFFFF, h13 >> 32
+            h14 = carry + h14*fnv1a_512_prime_0 + h4i*fnv1a_512_prime_10   h14, carry = h14 & 0xFFFFFFFF, h14 >> 32
+            h15 = carry + h15*fnv1a_512_prime_0 + h5i*fnv1a_512_prime_10
+        end
+        return h15&0xFFFFFFFF, h14, h13, h12, h11, h10, h9, h8, h7, h6, h5, h4, h3, h2, h1, h0
+    end
+
+    local fnv1a_1024_init = {
+        0x00000000, 0x00000000, 0x005f7a76, 0x758ecc4d,
+        0x32e56d5a, 0x591028b7, 0x4b29fc42, 0x23fdada1,
+        0x6c3bf34e, 0xda3674da, 0x9a21d900, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x0004c6d7,
+        0xeb6e7380, 0x2734510a, 0x555f256c, 0xc005ae55,
+        0x6bde8cc9, 0xc6a93b21, 0xaff4b16c, 0x71ee90b3,
+    }
+    local fnv1a_1024_prime_21, fnv1a_1024_prime_0 = 1<<(680-21*32), 1<<8 | 0x8d
+    local function fnv1a_1024(hash, bs)
+        local h31, h30, h29, h28, h27, h26, h25, h24, h23, h22, h21, h20, h19, h18, h17, h16,
+              h15, h14, h13, h12, h11, h10, h9, h8, h7, h6, h5, h4, h3, h2, h1, h0 = tunpack(hash)
+        for i=1,#bs do
+            h0 = h0 ~ byte(bs, i)
+            local h10i, h9i, h8i, h7i, h6i, h5i, h4i, h3i, h2i, h1i, h0i = h10, h9, h8, h7, h6, h5, h4, h3, h2, h1, h0
+            local carry
+            h0  =         h0i*fnv1a_1024_prime_0                              h0,  carry = h0  & 0xFFFFFFFF, h0  >> 32
+            h1  = carry + h1i*fnv1a_1024_prime_0                              h1,  carry = h1  & 0xFFFFFFFF, h1  >> 32
+            h2  = carry + h2i*fnv1a_1024_prime_0                              h2,  carry = h2  & 0xFFFFFFFF, h2  >> 32
+            h3  = carry + h3 *fnv1a_1024_prime_0                              h3,  carry = h3  & 0xFFFFFFFF, h3  >> 32
+            h4  = carry + h4 *fnv1a_1024_prime_0                              h4,  carry = h4  & 0xFFFFFFFF, h4  >> 32
+            h5  = carry + h5 *fnv1a_1024_prime_0                              h5,  carry = h5  & 0xFFFFFFFF, h5  >> 32
+            h6  = carry + h6 *fnv1a_1024_prime_0                              h6,  carry = h6  & 0xFFFFFFFF, h6  >> 32
+            h7  = carry + h7 *fnv1a_1024_prime_0                              h7,  carry = h7  & 0xFFFFFFFF, h7  >> 32
+            h8  = carry + h8 *fnv1a_1024_prime_0                              h8,  carry = h8  & 0xFFFFFFFF, h8  >> 32
+            h9  = carry + h9 *fnv1a_1024_prime_0                              h9,  carry = h9  & 0xFFFFFFFF, h9  >> 32
+            h10 = carry + h10*fnv1a_1024_prime_0                              h10, carry = h10 & 0xFFFFFFFF, h10 >> 32
+            h11 = carry + h11*fnv1a_1024_prime_0                              h11, carry = h11 & 0xFFFFFFFF, h11 >> 32
+            h12 = carry + h12*fnv1a_1024_prime_0                              h12, carry = h12 & 0xFFFFFFFF, h12 >> 32
+            h13 = carry + h13*fnv1a_1024_prime_0                              h13, carry = h13 & 0xFFFFFFFF, h13 >> 32
+            h14 = carry + h14*fnv1a_1024_prime_0                              h14, carry = h14 & 0xFFFFFFFF, h14 >> 32
+            h15 = carry + h15*fnv1a_1024_prime_0                              h15, carry = h15 & 0xFFFFFFFF, h15 >> 32
+            h16 = carry + h16*fnv1a_1024_prime_0                              h16, carry = h16 & 0xFFFFFFFF, h16 >> 32
+            h17 = carry + h17*fnv1a_1024_prime_0                              h17, carry = h17 & 0xFFFFFFFF, h17 >> 32
+            h18 = carry + h18*fnv1a_1024_prime_0                              h18, carry = h18 & 0xFFFFFFFF, h18 >> 32
+            h19 = carry + h19*fnv1a_1024_prime_0                              h19, carry = h19 & 0xFFFFFFFF, h19 >> 32
+            h20 = carry + h20*fnv1a_1024_prime_0                              h20, carry = h20 & 0xFFFFFFFF, h20 >> 32
+            h21 = carry + h21*fnv1a_1024_prime_0 + h0i *fnv1a_1024_prime_21   h21, carry = h21 & 0xFFFFFFFF, h21 >> 32
+            h22 = carry + h22*fnv1a_1024_prime_0 + h1i *fnv1a_1024_prime_21   h22, carry = h22 & 0xFFFFFFFF, h22 >> 32
+            h23 = carry + h23*fnv1a_1024_prime_0 + h2i *fnv1a_1024_prime_21   h23, carry = h23 & 0xFFFFFFFF, h23 >> 32
+            h24 = carry + h24*fnv1a_1024_prime_0 + h3i *fnv1a_1024_prime_21   h24, carry = h24 & 0xFFFFFFFF, h24 >> 32
+            h25 = carry + h25*fnv1a_1024_prime_0 + h4i *fnv1a_1024_prime_21   h25, carry = h25 & 0xFFFFFFFF, h25 >> 32
+            h26 = carry + h26*fnv1a_1024_prime_0 + h5i *fnv1a_1024_prime_21   h26, carry = h26 & 0xFFFFFFFF, h26 >> 32
+            h27 = carry + h27*fnv1a_1024_prime_0 + h6i *fnv1a_1024_prime_21   h27, carry = h27 & 0xFFFFFFFF, h27 >> 32
+            h28 = carry + h28*fnv1a_1024_prime_0 + h7i *fnv1a_1024_prime_21   h28, carry = h28 & 0xFFFFFFFF, h28 >> 32
+            h29 = carry + h29*fnv1a_1024_prime_0 + h8i *fnv1a_1024_prime_21   h29, carry = h29 & 0xFFFFFFFF, h29 >> 32
+            h30 = carry + h30*fnv1a_1024_prime_0 + h9i *fnv1a_1024_prime_21   h30, carry = h30 & 0xFFFFFFFF, h30 >> 32
+            h31 = carry + h31*fnv1a_1024_prime_0 + h10i*fnv1a_1024_prime_21
+        end
+        return h31&0xFFFFFFFF, h30, h29, h28, h27, h26, h25, h24, h23, h22, h21, h20, h19, h18, h17, h16,
+               h15, h14, h13, h12, h11, h10, h9, h8, h7, h6, h5, h4, h3, h2, h1, h0
     end
 
     -- Random number generator
@@ -8203,8 +8314,23 @@ if not has_crypt then
     function crypt.hash64(s) return ("<I8"):pack(fnv1a_64(fnv1a_64_init, s)):hex() end
 
     function crypt.hash128(s)
-        local a, b, c, d = fnv1a_128(fnv1a_128_init, s)
-        return ("<I4I4I4I4"):pack(d, c, b, a):hex()
+        local h = {fnv1a_128(fnv1a_128_init, s)}
+        return ("<"..("I4"):rep(#h)):pack(F.reverse(h):unpack()):hex()
+    end
+
+    function crypt.hash256(s)
+        local h = {fnv1a_256(fnv1a_256_init, s)}
+        return ("<"..("I4"):rep(#h)):pack(F.reverse(h):unpack()):hex()
+    end
+
+    function crypt.hash512(s)
+        local h = {fnv1a_512(fnv1a_512_init, s)}
+        return ("<"..("I4"):rep(#h)):pack(F.reverse(h):unpack()):hex()
+    end
+
+    function crypt.hash1024(s)
+        local h = {fnv1a_1024(fnv1a_1024_init, s)}
+        return ("<"..("I4"):rep(#h)):pack(F.reverse(h):unpack()):hex()
     end
 
     crypt.hash = crypt.hash64
@@ -8336,6 +8462,9 @@ s:hash32()          == crypt.hash32(s)
 s:hash64()          == crypt.hash64(s)
 s:hash128()         == crypt.hash128(s)
 s:sha1()            == crypt.sha1(s)
+s:hash256()         == crypt.hash256(s)
+s:hash512()         == crypt.hash512(s)
+s:hash1024()        == crypt.hash1024(s)
 ```
 @@@]]
 
@@ -8351,6 +8480,9 @@ string.hash         = crypt.hash
 string.hash32       = crypt.hash32
 string.hash64       = crypt.hash64
 string.hash128      = crypt.hash128
+string.hash256      = crypt.hash256
+string.hash512      = crypt.hash512
+string.hash1024     = crypt.hash1024
 string.sha1         = crypt.sha1
 string.crc32        = crypt.crc32
 string.crc64        = crypt.crc64
@@ -11094,7 +11226,7 @@ return F{
     {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
 }
 ]=])
-package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.3.4"
+package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.4"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"

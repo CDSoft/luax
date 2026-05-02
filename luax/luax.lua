@@ -735,7 +735,7 @@ local function cmd_compile()
             tostring(luax_version),
             cbor.encode(opt, {pairs=F.pairs}),
             code,
-        } : sha1() : unhex()
+        } : hash1024() : unhex()
     end
 
     local function compact(s)
