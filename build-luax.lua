@@ -366,7 +366,7 @@ if bang.output:dirname() == bang.input:dirname() then
     file(bang.input:dirname()/".luarc.json")(F.unlines(F.flatten{
         "{",
         [=[  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",]=],
-        [=[  "runtime.version": "Lua 5.5",]=],
+        [=[  "runtime.version": "]=].._VERSION..[=[",]=],
         [=[  "workspace.library": []=],
         [=[    "luax",]=],
         dirs "luax/ext",
