@@ -47,6 +47,8 @@ extern "C" {
 
 extern char *linenoiseEditMore;
 
+#define LINENOISE_MAX_FOLDS 16
+
 /* The linenoiseState structure represents the state during line editing.
  * We pass this state to functions implementing specific editing
  * functionalities. */
@@ -58,6 +60,7 @@ struct linenoiseState {
     int ofd;            /* Terminal stdout file descriptor. */
     char *buf;          /* Edited line buffer. */
     size_t buflen;      /* Edited line buffer size. */
+    size_t buflen_max;  /* Max buffer size, or 0 if fixed. */
     const char *prompt; /* Prompt to display. */
     size_t plen;        /* Prompt length. */
     size_t pos;         /* Current cursor position. */
@@ -67,6 +70,9 @@ struct linenoiseState {
     size_t oldrows;     /* Rows used by last refrehsed line (multiline mode) */
     int oldrpos;        /* Cursor row from last refresh (for multiline clearing). */
     int history_index;  /* The history index we are currently editing. */
+    int fold_count;    /* Number of folded ranges. */
+    size_t fold_start[LINENOISE_MAX_FOLDS]; /* Folded range start offsets. */
+    size_t fold_end[LINENOISE_MAX_FOLDS];   /* Folded range end offsets. */
 };
 
 typedef struct linenoiseCompletions {
