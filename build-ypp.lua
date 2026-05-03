@@ -108,6 +108,7 @@ acc(test) {
                 "-DVAR6",
                 "$in",
                 "-o $out",
+            "&& touch $builddir/tests/ypp/ypp_images/hello.svg.meta",   -- to avoid useless rebuilds
         },
         depfile = "$out.d",
         implicit_in = {

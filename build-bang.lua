@@ -87,8 +87,8 @@ rule "diff" {
 rule "run_test" {
     description = "BANG $in",
     command = {
-        "rm -f $builddir/bang/tests/new_file.txt;",
-        "rm -f $builddir/bang/tests/compile_flags.txt;", -- ensures the timestamp changes
+        "rm -f $$(dirname $out)/new_file.txt;",      -- ensures the timestamp changes
+        "rm -f $$(dirname $out)/compile_flags.txt;", -- ensures the timestamp changes
         "PATH=$cache:$$PATH $bang -g $bang -q $in -o $out -- arg1 arg2 -x=y",
     },
     implicit_in = "$bang",
