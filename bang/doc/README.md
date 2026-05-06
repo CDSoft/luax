@@ -39,7 +39,7 @@ Bang is part of [LuaX](https://codeberg.org/cdsoft/luax).
 ## Pure Lua implementation
 
 Bang also comes with a pure Lua implementation for environments where LuaX can not be executed.
-In this case `$PREFIX/bin/bang.lua` can be executed with any standard Lua 5.4 interpreter.
+In this case `$PREFIX/bin/bang.lua` can be executed with any standard Lua 5.4 or 5.5 interpreter.
 
 > [!NOTE]
 > `bang.lua` may be slower than `bang`,

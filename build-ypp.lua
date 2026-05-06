@@ -87,7 +87,7 @@ acc(standalone) {
 
 acc(test) {
     build "$builddir/tests/ypp/test.md" { "ypp/tests/test.md",
-        description = "YPP $in",
+        description = "ypp $out",
         command = {
             "export PATH=$cache:$$PATH;",
             "export BUILD=$builddir;",
@@ -132,7 +132,7 @@ acc(test) {
         end),
     },
     build "$builddir/tests/ypp/test123-no-separator.md" { "ypp/tests/test1.md", "ypp/tests/test2.md", "ypp/tests/test3.md",
-        description = "YPP $in",
+        description = "ypp $out",
         command = {
             "$builddir/bin/ypp",
                 "--MF $depfile",
@@ -154,7 +154,7 @@ acc(test) {
         end),
     },
     build "$builddir/tests/ypp/test123-separator.md" { "ypp/tests/test1.md", "ypp/tests/test2.md", "ypp/tests/test3.md",
-        description = "YPP $in",
+        description = "ypp $out",
         command = {
             "$builddir/bin/ypp",
                 "--MF $depfile",
@@ -177,7 +177,7 @@ acc(test) {
         end),
     },
     build "$builddir/tests/ypp/test-error.err" { "ypp/tests/test-error.md",
-        description = "YPP $in",
+        description = "ypp $out",
         command = {
             "$builddir/bin/ypp",
                 "-p", "ypp/tests",
@@ -197,7 +197,7 @@ acc(test) {
         end),
     },
     build "$builddir/tests/ypp/test-error-color.err" { "ypp/tests/test-error.md",
-        description = "YPP $in",
+        description = "ypp $out",
         command = {
             "$builddir/bin/ypp",
                 "-a",
@@ -218,7 +218,7 @@ acc(test) {
         end),
     },
     build "$builddir/tests/ypp/test-syntax-error.err" { "ypp/tests/test-syntax-error.md",
-        description = "YPP $in",
+        description = "ypp $out",
         command = {
             "$builddir/bin/ypp",
                 "$in",
@@ -236,7 +236,7 @@ acc(test) {
         end),
     },
     build "$builddir/tests/ypp/test-syntax-error-color.err" { "ypp/tests/test-syntax-error.md",
-        description = "YPP $in",
+        description = "ypp $out",
         command = {
             "$builddir/bin/ypp",
                 "-a",

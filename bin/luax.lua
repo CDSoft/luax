@@ -15499,11 +15499,7 @@ local function cmd_compile()
     end
 
     local function make_key(code, opt)
-        return F.str {
-            tostring(luax_version),
-            cbor.encode(opt, {pairs=F.pairs}),
-            code,
-        } : hash1024() : unhex()
+        return cbor.encode({luax_version, opt, code}, {pairs=F.pairs}) : hash1024() : unhex()
     end
 
     local function compact(s)

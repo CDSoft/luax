@@ -10,7 +10,7 @@
 [Lua]: http://www.lua.org/
 [Codeberg]: https://codeberg.org/cdsoft/
 [CDSoft]: https://cdsoft.codeberg.page
-[GraphViz]: http://graphviz.org/
+[Graphviz]: http://graphviz.org/
 [PlantUML]: http://plantuml.sourceforge.net/
 [ditaa]: http://ditaa.sourceforge.net/
 [blockdiag]: http://blockdiag.com/
@@ -22,10 +22,7 @@
 [gnuplot]: http://www.gnuplot.info/
 [lsvg]: https://codeberg.org/cdsoft/luax/
 [LuaX]: https://codeberg.org/cdsoft/luax "Lua eXtended interpreter"
-[LuaX documentation]: https://codeberg.org/cdsoft/luax
 [Octave]: https://octave.org/
-[bang]: https://codeberg.org/cdsoft/luax "Ninja file generator"
-[Ninja]: https://ninja-build.org
 
 `ypp` is yet another preprocessor. It's an attempt to merge [UPP] and [Panda].
 It acts as a generic text preprocessor as [UPP] and comes with macros
@@ -41,7 +38,7 @@ It provides several interesting features:
 - conditional blocks
 - file inclusion (e.g. for source code examples)
 - script execution (e.g. to include the result of a command)
-- diagrams ([Graphviz], [PlantUML], [Asymptote], [blockdiag], [mermaid], [Octave], [lsvg], ...)
+- diagrams ([Graphviz], [PlantUML], [ditaa], [Asymptote], [gnuplot], [blockdiag], [mermaid], [Octave], [lsvg], ...)
 - documentation extraction (e.g. from comments in source files)
 
 # Releases
@@ -264,7 +261,7 @@ $\sum_{i=0}^100 = @sum$
 ypp is written in [Lua] and [LuaX].
 All Lua and LuaX libraries are available to ypp.
 
-[LuaX] is a Lua interpreter and REPL based on Lua 5.4, augmented with some useful packages.
+[LuaX] is a Lua interpreter and REPL based on Lua 5.5, augmented with some useful packages.
 
 LuaX comes with a standard Lua interpreter and provides some libraries (embedded
 in a single executable, no external dependency required).

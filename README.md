@@ -12,9 +12,8 @@
 [LuaX]: https://codeberg.org/cdsoft/luax
 [Bang]: https://codeberg.org/cdsoft/luax
 [Ypp]: https://codeberg.org/cdsoft/luax
-[Panda]: doc/panda/README.md
-[Upp]: https://codeberg.org/cdsoft/upp
-[Lsvg]: doc/lsvg/README.md
+[Panda]: https://codeberg.org/cdsoft/panda
+[Lsvg]: https://codeberg.org/cdsoft/luax
 [Ldc]: https://codeberg.org/cdsoft/ldc
 [Yreq]: https://codeberg.org/cdsoft/yreq
 
@@ -22,13 +21,9 @@
 [Pandoc Lua filter]: https://pandoc.org/lua-filters.html
 [Typst]: https://typst.app
 [Ninja]: https://ninja-build.org
-[GraphViz]: https://graphviz.org
+[Graphviz]: https://graphviz.org
 [PlantUML]: https://plantuml.org
-[Asymptote]: https://asy.marris.fr
-[BlockDiag]: http://blockdiag.com
 [Mermaid]: https://mermaid.js.org
-[Octave]: https://octave.org
-[ditaa]: https://github.com/stathissideris/ditaa
 
 ## TL;DR
 

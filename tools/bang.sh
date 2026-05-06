@@ -30,11 +30,7 @@ LUA=.cache/lua
 # Dependencies (contributions are welcome)
 ##############################################################################
 
-DEPS=(
-    ninja
-    curl
-    minisign
-)
+DEPS=( ninja curl minisign )
 
 found() {
     command -v "$1" > /dev/null
@@ -79,14 +75,8 @@ int main(void) {
 EOF
 
 if ! [ -x $LUA ] || [ "$($LUA -v | awk '{print $2}')" != "$($LUA-version)" ]; then
-    CFLAGS=(
-        -Os
-        -Ilua
-    )
-    LDFLAGS=(
-        -lm
-        -s
-    )
+    CFLAGS=( -Os -Ilua )
+    LDFLAGS=( -lm -s )
     case $(uname -s) in
         Linux)  CFLAGS+=( -DLUA_USE_LINUX ) ;;
         Darwin) CFLAGS+=( -DLUA_USE_MACOSX ) ;;

@@ -80,12 +80,12 @@ acc(standalone) {
 -------------------------------------------------------------------------------
 
 rule "diff" {
-    description = "DIFF $in",
+    description = "diff $in",
     command = "diff $in > $out || (cat $out && false)",
 }
 
 rule "run_test" {
-    description = "BANG $in",
+    description = "bang $in",
     command = {
         "rm -f $$(dirname $out)/new_file.txt;",      -- ensures the timestamp changes
         "rm -f $$(dirname $out)/compile_flags.txt;", -- ensures the timestamp changes
@@ -95,36 +95,36 @@ rule "run_test" {
 }
 
 rule "run_test-builddir" {
-    description = "BANG $in",
+    description = "bang $in",
     command = "PATH=$cache:$$PATH $bang -g $bang -q $in -o $out $args",
     implicit_in = "$bang",
 }
 
 rule "run_test-future-version" {
-    description = "BANG $in",
+    description = "bang $in",
     command = "PATH=$cache:$$PATH $bang -g $bang -q $in -o $out",
     implicit_in = "$bang",
 }
 
 rule "run_test-default" {
-    description = "BANG $in",
+    description = "bang $in",
     command = "PATH=$cache:$$PATH $bang -g $bang -q $in -o $out",
     implicit_in = "$bang",
 }
 
 rule "run_test-error" {
-    description = "BANG $in",
+    description = "bang $in",
     command = "PATH=$cache:$$PATH $bang -g $bang -q $in -o $ninja_file 2> $out; test $$? -ne 0",
     implicit_in = "$bang",
 }
 
 rule "missing" {
-    description = "TEST $missing",
+    description = "test $missing",
     command = "test ! -f $missing_file > $out",
 }
 
 rule "run_test-error-unknown_file" {
-    description = "BANG $in",
+    description = "bang $in",
     command = "PATH=$cache:$$PATH $bang -g $bang -q $unknown_input -o $ninja_file 2> $out; test $$? -ne 0",
     implicit_in = "$bang",
 }

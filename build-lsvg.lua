@@ -80,7 +80,7 @@ acc(standalone) {
 -------------------------------------------------------------------------------
 
 rule "lsvg" {
-    description = "LSVG $in",
+    description = "lsvg $in",
     command = {
         "LUA_PATH=lsvg/tests/?.lua",
         "PATH=$cache:$$PATH $lsvg $in -o $out --MF $depfile -- lsvg demo",
