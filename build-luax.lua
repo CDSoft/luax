@@ -39,6 +39,18 @@ local version = require "luax-version"
 var "zig_hash" { crypt.hash(sh { vars%"$zig", "env" }) }
 var "lua_hash" { crypt.hash(sh { vars%"$lua", "-v" }) }
 
+build.ypp
+    : set "cmd" "$builddir/bin/ypp"
+    : add "implicit_in" { "$builddir/bin/ypp" }
+    : set "depfile" "$builddir/tmp/$out.d"
+    : add "flags" {
+        "-a",
+        "-t svg",
+        build.ypp_vars {
+            BUILD = "$builddir",
+        },
+    }
+
 -------------------------------------------------------------------------------
 -- Sources
 -------------------------------------------------------------------------------
@@ -393,7 +405,13 @@ local zigcc = build.zigcc : new("cc-native")
 
 local imported_test_sources = ls "luax/tests/luax-tests/to_be_imported-*.lua"
 local test_sources = {
-    ls "luax/tests/luax-tests/*.*" : difference(imported_test_sources),
+    ls "luax/tests/luax-tests/*.*"
+        : filter(function(name) return name:ext() ~= ".in" end)
+        : difference(imported_test_sources),
+    ls "luax/tests/luax-tests/*.in"
+        : map(function(name)
+            return build.ypp("$builddir/tests/luax"/name:basename():splitext()) { name }
+        end),
 }
 local test_main = "luax/tests/luax-tests/main.lua"
 
@@ -583,18 +601,6 @@ acc(test) {
 -------------------------------------------------------------------------------
 -- Documentation
 -------------------------------------------------------------------------------
-
-build.ypp
-    : set "cmd" "$builddir/bin/ypp"
-    : add "implicit_in" { "$builddir/bin/ypp" }
-    : set "depfile" "$builddir/tmp/$out.d"
-    : add "flags" {
-        "-a",
-        "-t svg",
-        build.ypp_vars {
-            BUILD = "$builddir",
-        },
-    }
 
 build.lsvg.svg
     : set "cmd" "$builddir/bin/lsvg"

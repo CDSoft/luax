@@ -1,0 +1,7 @@
+@@ bin =  F.range(0, 256*256-1) : map(function(i) return ("<I2"):pack(i) end) : str()
+
+Binary resources can also be added as Lua modules:
+
+@bin
+
+@bin:lzip()

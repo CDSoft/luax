@@ -35,11 +35,22 @@ return function()
         [[    that returns 'this string'.]],
     }
 
+    local bin = F.range(0, 256*256-1) : map(function(i) return ("<I2"):pack(i) end) : str()
+
+    local binrc = F.unlines {
+        [[Binary resources can also be added as Lua modules:]],
+        [[]],
+        bin,
+        [[]],
+        bin : lzip(),
+    }
+
     local test_num = tonumber(os.getenv "TEST_NUM")
 
     if test_num == 1 then
 
         eq(require "resource.txt", rc)
+        eq(require "resource.bin" : ltrim(), binrc)
 
     end
 
