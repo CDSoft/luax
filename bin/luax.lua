@@ -16007,13 +16007,15 @@ local function cmd_postinstall()
 
     colorize(io.stdout)
 
+    local compiled_files = F{
+        "bin"/"luax"..sys.exe,
+        "bin"/"bang"..sys.exe,
+        "bin"/"lsvg"..sys.exe,
+        "bin"/"ypp"..sys.exe,
+    }
+
     local expected_files = F.flatten {
-        (sys.libc=="gnu" or sys.libc=="musl") and {
-            "bin"/"luax"..sys.exe,
-            "bin"/"bang"..sys.exe,
-            "bin"/"lsvg"..sys.exe,
-            "bin"/"ypp"..sys.exe,
-        } or {},
+        sys.libc~="lua" and compiled_files or {},
         "bin"/"luax.lua",
         "bin"/"luax-pandoc.lua",
         "bin"/"bang.lua",
@@ -16047,6 +16049,7 @@ local function cmd_postinstall()
     local lib = prefix/"lib"
     local new_files = expected_files : map(function(file) return prefix/file end)
     local new_dirs = expected_dirs : map(function(dir) return prefix/dir end)
+    compiled_files = compiled_files : map(function(file) return prefix/file end)
 
     local copyright = F.flatten{
         tostring(version),
@@ -16079,7 +16082,11 @@ local function cmd_postinstall()
 
     local obsolete_files = (fs.ls(bin/"**") .. fs.ls(lib/"**"))
         : filter(function(file) return file:match("luax", #prefix) end)
-        : filter(function(file) return new_files:not_elem(file) and new_dirs:not_elem(file) end)
+        : filter(function(file)
+            return new_files:not_elem(file)
+               and new_dirs:not_elem(file)
+               and compiled_files:not_elem(file)
+        end)
 
     if #obsolete_files > 0 then
         print("")
