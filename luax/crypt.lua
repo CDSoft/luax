@@ -195,9 +195,9 @@ if not has_crypt then
     local entropy do
         local hash = fnv1a_64_init
         entropy = function(ptr)
-            hash = fnv1a_64(hash, pack("<I8I8I8I8",
+            hash = fnv1a_64(hash, pack("<I8dI8I8",
                 os.time(),
-                floor(os.clock()*1000000),
+                os.clock(),
                 tonumber(format("%p", ptr)),
                 tonumber(format("%p", {}))
             ))

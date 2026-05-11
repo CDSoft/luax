@@ -3,7 +3,7 @@
 -- Generated with LuaX
 -- Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord
 
-_LUAX_VERSION = "LuaX 10.4.1"
+_LUAX_VERSION = "LuaX 10.4.2"
 
 local function lib(path, src) return assert(load(src, '@$luax-pandoc:'..path)) end
 package.preload["F"] = lib("luax/F.lua", [==[--[[
@@ -7987,9 +7987,9 @@ if not has_crypt then
     local entropy do
         local hash = fnv1a_64_init
         entropy = function(ptr)
-            hash = fnv1a_64(hash, pack("<I8I8I8I8",
+            hash = fnv1a_64(hash, pack("<I8dI8I8",
                 os.time(),
-                floor(os.clock()*1000000),
+                os.clock(),
                 tonumber(format("%p", ptr)),
                 tonumber(format("%p", {}))
             ))
@@ -11282,7 +11282,7 @@ return F{
     {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
 }
 ]=])
-package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.4.1"
+package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.4.2"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"

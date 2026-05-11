@@ -30,8 +30,10 @@ static const uint64_t prime = 0x100000001b3;
 
 static inline void feed(uint64_t data)
 {
-    hash ^= data;
-    hash *= prime;
+    for (size_t i = 0; i < sizeof(data); i++) {
+        hash ^= ((uint8_t*)&data)[i];
+        hash *= prime;
+    }
 }
 
 uint64_t entropy(void *ptr)
