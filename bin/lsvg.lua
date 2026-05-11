@@ -14624,7 +14624,7 @@ local function chain(env1, env2)
         __index = function(_, k)
             local v = env2[k]
             if v ~= nil then return v end
-            return env1 and env1[k]
+            return env1[k]
         end
     })
 end
