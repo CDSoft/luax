@@ -14967,14 +14967,10 @@ local function cmd_run()
     local run_stdin = false
     local args = F{}
 
-    local actions = setmetatable({
-            actions = F{}
-        }, {
-        __index = {
-            add = function(self, action) self.actions[#self.actions+1] = action end,
-            run = function(self) self.actions:foreach(F.call) end,
-        },
-    })
+    local actions = {
+        add = function(self, action) self[#self+1] = action end,
+        run = function(self) F.foreach(self, F.call) end,
+    }
 
 --[=[-----------------------------------------------------------------------@@@
 # LuaX interactive usage
