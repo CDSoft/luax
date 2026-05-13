@@ -37,8 +37,9 @@ static void sha1_transform(t_sha1_ctx *ctx)
              | ((uint32_t)ctx->block[4*i + 2] << (8*1))
              | ((uint32_t)ctx->block[4*i + 3] << (8*0));
     }
-    for (int i = 16; i < 80; i++)
+    for (int i = 16; i < 80; i++) {
         w[i] = ROTL32(w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16], 1);
+    }
 
     a = ctx->h[0];
     b = ctx->h[1];
@@ -95,11 +96,11 @@ void sha1_final(t_sha1_ctx *ctx, t_sha1_digest digest)
 
     ctx->block[i++] = 0x80;
     if (i > 56) {
-        while (i < 64) ctx->block[i++] = 0x00;
+        while (i < 64) { ctx->block[i++] = 0x00; }
         sha1_transform(ctx);
         i = 0;
     }
-    while (i < 56) ctx->block[i++] = 0x00;
+    while (i < 56) { ctx->block[i++] = 0x00; }
 
     ctx->bitlen += (uint64_t)ctx->blocklen * 8;
     ctx->block[56] = (ctx->bitlen >> (8*7)) & 0xFF;

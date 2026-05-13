@@ -22,4 +22,4 @@
 #include "lua.h"
 
 /* C module registration function */
-LUAMOD_API int luaopen_libluax(lua_State *L);
+LUAMOD_API void luaopen_libluax(lua_State *L);

@@ -56,12 +56,10 @@ static const luaL_Reg lrun_libs[] = {
     {NULL, NULL},
 };
 
-LUAMOD_API int luaopen_libluax(lua_State *L)
+LUAMOD_API void luaopen_libluax(lua_State *L)
 {
     for (const luaL_Reg *lib = lrun_libs; lib->func != NULL; lib++) {
         luaL_requiref(L, lib->name, lib->func, 0);
         lua_pop(L, 1);
     }
-
-    return 1;
 }
