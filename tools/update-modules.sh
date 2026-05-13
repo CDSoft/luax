@@ -21,12 +21,14 @@
 set -ex
 
 ROOT=$(git rev-parse --show-toplevel)
-TMP=/tmp/luax-update
-mkdir -p $TMP
+TMP=$ROOT/.cache/update
+mkdir -p "$TMP"
 
 update_all()
 {
-    update_lua          5.5.0
+    #update_lua          5.5.0
+    #update_lua-git      master
+    update_lua-git      v5.5.0
     update_lcomplex     100
     update_limath       106
     update_lqmath       108
@@ -70,13 +72,28 @@ update_lua()
         *-rc*)  LUA_URL="https://www.lua.org/work/$LUA_ARCHIVE" ;;
         *)      LUA_URL="https://www.lua.org/ftp/$LUA_ARCHIVE" ;;
     esac
-
+    rm -rf "$ROOT/lua" "$TMP/lua"
     download "$LUA_URL" "$TMP/$LUA_ARCHIVE"
-
-    rm -rf "$ROOT/lua"
     mkdir -p "$ROOT/lua" "$TMP/lua"
     tar -xaf "$TMP/$LUA_ARCHIVE" -C "$TMP/lua" --exclude=luac.c --strip-components=2 "lua-${LUA_VERSION%-*}/src"
     cp "$TMP"/lua/*.[ch] "$ROOT/lua/"
+}
+
+update_lua-git()
+{
+    local LUA_VERSION="$1"
+    local LUA_ARCHIVE="lua-$LUA_VERSION.zip"
+    local LUA_URL
+    case $LUA_VERSION in
+        master) LUA_URL="https://github.com/lua/lua/archive/refs/heads/$LUA_VERSION.zip" ;;
+        *)      LUA_URL="https://github.com/lua/lua/archive/refs/tags/$LUA_VERSION.zip" ;;
+    esac
+    rm -rf "$ROOT/lua" "$TMP/lua"
+    download "$LUA_URL" "$TMP/$LUA_ARCHIVE"
+    mkdir -p "$ROOT/lua" "$TMP/lua"
+    unzip "$TMP/$LUA_ARCHIVE" -d "$TMP/lua"
+    cp "$TMP"/lua/*/l*.[ch] "$ROOT/lua/"
+    rm "$ROOT"/lua/ltests.[ch]
 }
 
 update_lcomplex()
@@ -84,10 +101,8 @@ update_lcomplex()
     local LCOMPLEX_VERSION="$1"
     local LCOMPLEX_ARCHIVE="lcomplex-$LCOMPLEX_VERSION.tar.gz"
     local LCOMPLEX_URL="https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$LCOMPLEX_ARCHIVE"
-
+    rm -rf "$ROOT/luax/ext/lcomplex" "$TMP/lcomplex"
     download "$LCOMPLEX_URL" "$TMP/$LCOMPLEX_ARCHIVE"
-
-    rm -rf "$ROOT/luax/ext/lcomplex"
     mkdir -p "$ROOT/luax/ext/lcomplex" "$TMP/lcomplex"
     tar -xaf "$TMP/$LCOMPLEX_ARCHIVE" -C "$TMP/lcomplex" --exclude=Makefile --exclude=test.lua --strip-components=1
     cp "$TMP"/lcomplex/*.[ch] "$ROOT/luax/ext/lcomplex/"
@@ -98,10 +113,8 @@ update_limath()
     local LIMATH_VERSION="$1"
     local LIMATH_ARCHIVE="limath-$LIMATH_VERSION.tar.gz"
     local LIMATH_URL="https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$LIMATH_ARCHIVE"
-
+    rm -rf "$ROOT/luax/ext/limath" "$TMP/limath"
     download "$LIMATH_URL" "$TMP/$LIMATH_ARCHIVE"
-
-    rm -rf "$ROOT/luax/ext/limath"
     mkdir -p "$ROOT/luax/ext/limath" "$TMP/limath"
     tar -xaf "$TMP/$LIMATH_ARCHIVE" -C "$TMP/limath" --exclude=Makefile --exclude=test.lua --strip-components=1
     cp "$TMP"/limath/*.[ch] "$ROOT/luax/ext/limath/"
@@ -113,10 +126,8 @@ update_lqmath()
     local LQMATH_VERSION="$1"
     local LQMATH_ARCHIVE="lqmath-$LQMATH_VERSION.tar.gz"
     local LQMATH_URL="https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$LQMATH_ARCHIVE"
-
+    rm -rf "$ROOT/luax/ext/lqmath" "$TMP/lqmath"
     download "$LQMATH_URL" "$TMP/$LQMATH_ARCHIVE"
-
-    rm -rf "$ROOT/luax/ext/lqmath"
     mkdir -p "$ROOT/luax/ext/lqmath" "$TMP/lqmath"
     tar -xaf "$TMP/$LQMATH_ARCHIVE" -C "$TMP/lqmath" --exclude=Makefile --exclude=test.lua --strip-components=1
     cp "$TMP"/lqmath/*.[ch] "$ROOT/luax/ext/lqmath/"
@@ -138,10 +149,8 @@ update_lmathx()
 {
     local LMATHX_ARCHIVE=lmathx.tar.gz
     local LMATHX_URL="https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/5.3/$LMATHX_ARCHIVE"
-
+    rm -rf "$ROOT/luax/ext/mathx" "$TMP/mathx"
     download "$LMATHX_URL" "$TMP/$LMATHX_ARCHIVE"
-
-    rm -rf "$ROOT/luax/ext/mathx"
     mkdir -p "$ROOT/luax/ext/mathx" "$TMP/mathx"
     tar -xaf "$TMP/$LMATHX_ARCHIVE" -C "$TMP/mathx" --exclude=Makefile --exclude=test.lua --strip-components=1
     cp "$TMP"/mathx/*.[ch] "$ROOT/luax/ext/mathx/"
@@ -152,10 +161,8 @@ update_lpeg()
     local LPEG_VERSION="$1"
     local LPEG_ARCHIVE="lpeg-$LPEG_VERSION.tar.gz"
     local LPEG_URL="https://www.inf.puc-rio.br/~roberto/lpeg/$LPEG_ARCHIVE"
-
+    rm -rf "$ROOT/luax/ext/lpeg" "$TMP/lpeg"
     download "$LPEG_URL" "$TMP/$LPEG_ARCHIVE"
-
-    rm -rf "$ROOT/luax/ext/lpeg"
     mkdir -p "$ROOT/luax/ext/lpeg" "$TMP/lpeg"
     tar xaf "$TMP/$LPEG_ARCHIVE" -C "$TMP/lpeg" --exclude=HISTORY --exclude=*.gif --exclude=*.html --exclude=makefile --exclude=test.lua --strip-components=1
     cp "$TMP"/lpeg/*.{c,h,lua} "$ROOT/luax/ext/lpeg/"
@@ -166,9 +173,8 @@ update_argparse()
     local ARGPARSE_VERSION="$1"
     local ARGPARSE_ARCHIVE="argparse-$ARGPARSE_VERSION.zip"
     local ARGPARSE_URL="https://codeberg.org/cdsoft/argparse/archive/$ARGPARSE_VERSION.zip"
-
+    rm -rf "$TMP"/argparse*
     download "$ARGPARSE_URL" "$TMP/$ARGPARSE_ARCHIVE"
-
     unzip -o "$TMP/$ARGPARSE_ARCHIVE" -d "$TMP"
     cp "$TMP/argparse/src/argparse.lua" "$ROOT/luax/"
 }
@@ -178,9 +184,8 @@ update_serpent()
     local SERPENT_VERSION="$1"
     local SERPENT_ARCHIVE="serpent-$SERPENT_VERSION.zip"
     local SERPENT_URL="https://github.com/pkulchenko/serpent/archive/refs/heads/$SERPENT_VERSION.zip"
-
+    rm -rf "$TMP"/serpent*
     download "$SERPENT_URL" "$TMP/$SERPENT_ARCHIVE"
-
     unzip -o "$TMP/$SERPENT_ARCHIVE" -d "$TMP"
     cp "$TMP/serpent-$SERPENT_VERSION/src/serpent.lua" "$ROOT/luax/"
     sed -i -e 's/(loadstring or load)/load/g'                       \
@@ -194,13 +199,10 @@ update_serpent()
 update_cbor()
 {
     local CBOR_REPO="https://code.zash.se/lua-cbor/"
-
     rm -rf "$TMP/lua-cbor"
     hg clone $CBOR_REPO "$TMP/lua-cbor"
-
     cp "$TMP/lua-cbor"/cbor.lua "$ROOT/luax/"
     echo "--@LIB" >> "$ROOT/luax/cbor.lua"
-
     patch -p1 <<EOF
 diff --git a/luax/cbor.lua b/luax/cbor.lua
 index 2b6cc0b..322f8ef 100644
@@ -255,10 +257,8 @@ update_linenoise()
     local LINENOISE_VERSION="$1"
     local LINENOISE_ARCHIVE="linenoise-$LINENOISE_VERSION.zip"
     local LINENOISE_URL="https://github.com/$LINENOISE_REPO/archive/refs/heads/$LINENOISE_VERSION.zip"
-
+    rm -rf "$ROOT/luax/ext/linenoise" "$TMP"/linenoise*
     download "$LINENOISE_URL" "$TMP/$LINENOISE_ARCHIVE"
-
-    rm -rf "$ROOT/luax/ext/linenoise"
     mkdir -p "$ROOT/luax/ext/linenoise"
     unzip -o "$TMP/$LINENOISE_ARCHIVE" -d "$TMP"
     cp "$TMP/linenoise-$LINENOISE_VERSION"/linenoise.[ch] "$ROOT/luax/ext/linenoise/"
@@ -273,11 +273,8 @@ update_dkjson()
     local JSON_VERSION="$1"
     local JSON_SCRIPT="dkjson-$JSON_VERSION.lua"
     local JSON_URL="http://dkolf.de/dkjson-lua/$JSON_SCRIPT"
-
     download "$JSON_URL" "$TMP/$JSON_SCRIPT"
-
     cp "$TMP/$JSON_SCRIPT" "$ROOT/luax/json.lua"
-
     patch -p1 <<EOF
 diff --git a/luax/json.lua b/luax/json.lua
 index 7a86724..076f679 100644
@@ -301,11 +298,9 @@ update_toml()
     local TOML_VERSION="$1"
     local TOML_ARCHIVE="toml-$TOML_VERSION.zip"
     local TOML_URL="https://github.com/$TOML_REPO/archive/refs/tags/$TOML_VERSION.zip"
-
+    rm -rf "$TMP"/*toml*
     download "$TOML_URL" "$TMP/$TOML_ARCHIVE"
-
     unzip -o "$TMP/$TOML_ARCHIVE" -d "$TMP"
-
     cp "$TMP/tinytoml-$TOML_VERSION/tinytoml.lua" "$ROOT/luax/toml.lua"
     patch -p1 <<EOF
 diff --git a/luax/toml.lua b/luax/toml.lua
@@ -357,10 +352,8 @@ update_luasocket()
     local LUASOCKET_VERSION="$1"
     local LUASOCKET_ARCHIVE="luasocket-$LUASOCKET_VERSION.zip"
     local LUASOCKET_URL="https://github.com/lunarmodules/luasocket/archive/refs/tags/v$LUASOCKET_VERSION.zip"
-
+    rm -rf "$ROOT/luax/ext/luasocket" "$TMP"/luasocket*
     download "$LUASOCKET_URL" "$TMP/$LUASOCKET_ARCHIVE"
-
-    rm -rf "$ROOT/luax/ext/luasocket"
     mkdir -p "$ROOT/luax/ext/luasocket"
     unzip -o "$TMP/$LUASOCKET_ARCHIVE" -d "$TMP"
     cp "$TMP/luasocket-$LUASOCKET_VERSION"/src/*.{c,h,lua} "$ROOT/luax/ext/luasocket"
@@ -405,10 +398,8 @@ update_lz4()
     local LZ4_VERSION="$1"
     local LZ4_ARCHIVE="lz4-$LZ4_VERSION.zip"
     local LZ4_URL="https://github.com/lz4/lz4/archive/refs/heads/$LZ4_VERSION.zip"
-
+    rm -rf "$ROOT/luax/ext/lz4" "$TMP"/lz4*
     download "$LZ4_URL" "$TMP/$LZ4_ARCHIVE"
-
-    rm -rf "$ROOT/luax/ext/lz4"
     mkdir -p "$ROOT/luax/ext/lz4"
     unzip -o "$TMP/$LZ4_ARCHIVE" -d "$TMP"
     cp "$TMP/lz4-release"/lib/*.{c,h} "$ROOT/luax/ext/lz4"
@@ -419,10 +410,8 @@ update_lzlib()
     local LZLIB_VERSION="$1"
     local LZLIB_ARCHIVE="lzlib-$LZLIB_VERSION.tar.gz"
     local LZLIB_URL="http://download.savannah.gnu.org/releases/lzip/lzlib/$LZLIB_ARCHIVE"
-
+    rm -rf "$ROOT/luax/ext/lzlib" "$TMP"/lzlib*
     download "$LZLIB_URL" "$TMP/$LZLIB_ARCHIVE"
-
-    rm -rf "$ROOT/luax/ext/lzlib"
     mkdir -p "$ROOT/luax/ext/lzlib" "$ROOT/luax/ext/lzlib/inc"
     tar -xzf "$TMP/$LZLIB_ARCHIVE" -C "$TMP"
 
