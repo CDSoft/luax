@@ -19,34 +19,28 @@
 
 #include "entropy.h"
 
-#include <sys/time.h>
-#include <time.h>
-#include <unistd.h>
+#if defined (_WIN32)
+#include <windows.h>
+#include <bcrypt.h>
+#endif
+#if defined(__linux__) || defined(__APPLE__)
+#include <sys/random.h>
+#endif
 
-/* Entropy sources for PRNG initialization */
+/* Entropy for PRNG initialization */
 
-static uint64_t hash = 0xcbf29ce484222325;
-static const uint64_t prime = 0x100000001b3;
-
-static inline void feed(uint64_t data)
+uint64_t entropy(void)
 {
-    for (size_t i = 0; i < sizeof(data); i++) {
-        hash ^= ((uint8_t*)&data)[i];
-        hash *= prime;
-    }
-}
+    uint64_t random;
+#if defined(__linux__)
+    getrandom(&random, sizeof(random), 0);
+#endif
+#if defined(__APPLE__)
+    getentropy(&random, sizeof(random));
+#endif
+#if defined(_WIN32)
+    BCryptGenRandom(NULL, (PUCHAR)&random, (ULONG)sizeof(random), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+#endif
 
-uint64_t entropy(void *ptr)
-{
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    const int pid = getpid();
-
-    feed((uintptr_t)ptr);           /* Address of a characteristic variable */
-    feed((uintptr_t)&ptr);          /* Address of a local variable */
-    feed((uint64_t)ts.tv_sec);      /* Time in seconds */
-    feed((uint64_t)ts.tv_nsec);     /* ... and nanoseconds */
-    feed((uint64_t)pid);            /* Process ID */
-
-    return hash;
+    return random;
 }

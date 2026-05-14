@@ -29,7 +29,11 @@ if not has_crypt then
 
     crypt = {}
 
-    local floor = math.floor
+    local math = math
+    local random = math.random
+
+    local clock = os.clock
+    local time = os.time
 
     local byte = string.byte
     local char = string.char
@@ -194,12 +198,13 @@ if not has_crypt then
 
     local entropy do
         local hash = fnv1a_64_init
-        entropy = function(ptr)
-            hash = fnv1a_64(hash, pack("<I8dI8I8",
-                os.time(),
-                os.clock(),
-                tonumber(format("%p", ptr)),
-                tonumber(format("%p", {}))
+        entropy = function()
+            hash = fnv1a_64(hash, pack("<I8dI8I8d",
+                time(),
+                clock(),
+                tonumber(format("%p", {})),
+                tonumber(format("%p", math)),
+                random()
             ))
             return hash
         end
@@ -221,8 +226,8 @@ if not has_crypt then
     function prng_mt.__index:seed(seed, incr)
         if seed == -1 then seed = default_pcg_state end
         if incr == -1 then incr = default_pcg_increment end
-        self.state = seed or entropy(self)
-        self.increment = incr or entropy({})
+        self.state = seed or entropy()
+        self.increment = incr or entropy()
         self.state = pcg_multiplier*self.state + self.increment
         self.state = pcg_multiplier*self.state + self.increment
         return self

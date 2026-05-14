@@ -91,10 +91,10 @@ static int crypt_prng(lua_State *L)
     t_pcg *prng = (t_pcg *)lua_newuserdata(L, sizeof(t_pcg));
     const uint64_t seed = lua_type(L, 1) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 1)
-        : entropy(prng);
+        : entropy();
     const uint64_t increment = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
-        : entropy(prng+1);
+        : entropy();
     luaL_setmetatable(L, PRNG_MT);
     pcg_seed(prng, seed, increment);
     return 1;
@@ -113,10 +113,10 @@ static int crypt_prng_seed(lua_State *L)
     t_pcg *prng = (t_pcg*)luaL_checkudata(L, 1, PRNG_MT);
     const uint64_t seed = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
-        : entropy(prng);
+        : entropy();
     const uint64_t increment = lua_type(L, 3) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 3)
-        : entropy(prng+1);
+        : entropy();
     pcg_seed(prng, seed, increment);
     lua_pushvalue(L, 1); /* return the PRNG */
     return 1;
@@ -256,10 +256,10 @@ static int crypt_seed(lua_State *L)
 {
     const uint64_t seed = lua_type(L, 1) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 1)
-        : entropy(&global_prng);
+        : entropy();
     const uint64_t increment = lua_type(L, 2) == LUA_TNUMBER
         ? (uint64_t)luaL_checkinteger(L, 2)
-        : entropy(&global_prng+1);
+        : entropy();
     pcg_seed(&global_prng, seed, increment);
     return 0;
 }
@@ -1143,7 +1143,7 @@ LUAMOD_API int luaopen_crypt(lua_State *L)
     lua_pushvalue(L, -2);
     lua_settable(L, -3);
 
-    pcg_seed(&global_prng, entropy(&global_prng), entropy(&global_prng+1));
+    pcg_seed(&global_prng, entropy(), entropy());
 
     /* module initialization */
 

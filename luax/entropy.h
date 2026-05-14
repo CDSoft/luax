@@ -19,5 +19,5 @@
 
 #include <stdint.h>
 
-/* Entropy sources for PRNG initialization */
-uint64_t entropy(void *ptr);
+/* Entropy for PRNG initialization */
+uint64_t entropy(void);

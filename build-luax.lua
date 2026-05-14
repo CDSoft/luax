@@ -209,6 +209,7 @@ local loaders = F(targets) : map(function(target)
             when(target.os == "windows") {
                 "-lshlwapi",
                 "-lws2_32",
+                "-lbcrypt",
             },
         }
         : add "implicit_in" { "$zig" }
