@@ -14842,14 +14842,14 @@ function P_mt.__index:unit() return self/self:norm() end
 
 function P_mt.__add(M1, M2)
     if not is_point(M1) or not is_point(M2) then
-        error("Can not add "..F.show(a).." and "..F.show(b))
+        error("Can not add "..F.show(M1).." and "..F.show(M2))
     end
     return Point(F.zip_with(F.op.add, {M1, M2}):unpack())
 end
 
 function P_mt.__sub(M1, M2)
     if not is_point(M1) or not is_point(M2) then
-        error("Can not substract "..F.show(a).." and "..F.show(b))
+        error("Can not substract "..F.show(M1).." and "..F.show(M2))
     end
     return Point(F.zip_with(F.op.sub, {M1, M2}):unpack())
 end
@@ -14867,7 +14867,7 @@ end
 
 function P_mt.__div(M, k)
     if not is_point(M) or not type(k) == "number" then
-        error("Can not multiply "..F.show(a).." by "..F.show(b))
+        error("Can not divide "..F.show(M).." by "..F.show(k))
     end
     return Point(F.map(F.curry(F.flip(F.op.div))(k), M):unpack())
 end
