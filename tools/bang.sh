@@ -66,21 +66,20 @@ tools/install_zig.sh $ZIG
 # Lua
 ##############################################################################
 
-cat <<EOF | $ZIG cc -xc -I"$PWD/lua" - -o $LUA-version
+CFLAGS=( -Os -Ilua )
+LDFLAGS=( -lm -s )
+case $(uname -s) in
+    Linux)  CFLAGS+=( -DLUA_USE_LINUX ) ;;
+    Darwin) CFLAGS+=( -DLUA_USE_MACOSX ) ;;
+esac
+
+cat <<EOF | $ZIG cc -xc "${CFLAGS[@]}" - "${LDFLAGS[@]}" -o $LUA-version
 #include "lua.h"
 #include <stdio.h>
-int main(void) {
-    printf("%d.%d.%d\n", LUA_VERSION_MAJOR_N, LUA_VERSION_MINOR_N, LUA_VERSION_RELEASE_N);
-}
+int main(void) { puts(LUA_COPYRIGHT); }
 EOF
 
-if ! [ -x $LUA ] || [ "$($LUA -v | awk '{print $2}')" != "$($LUA-version)" ]; then
-    CFLAGS=( -Os -Ilua )
-    LDFLAGS=( -lm -s )
-    case $(uname -s) in
-        Linux)  CFLAGS+=( -DLUA_USE_LINUX ) ;;
-        Darwin) CFLAGS+=( -DLUA_USE_MACOSX ) ;;
-    esac
+if ! [ -x $LUA ] || [ "$($LUA -v)" != "$($LUA-version)" ]; then
     echo "Compiling Lua..."
     mkdir -p "$(dirname $LUA)"
     $ZIG cc "${CFLAGS[@]}" lua/*.c "${LDFLAGS[@]}" -o $LUA
