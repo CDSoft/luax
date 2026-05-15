@@ -9,11 +9,12 @@
 
 [Lua]: https://www.lua.org
 
-[LuaX]: https://codeberg.org/cdsoft/luax
-[Bang]: https://codeberg.org/cdsoft/luax
-[Ypp]: https://codeberg.org/cdsoft/luax
+[LuaX]: luax/doc/README.md
+[Bang]: bang/doc/README.md
+[Ypp]: ypp/doc/README.md
+[Lsvg]: lsvg/doc/README.md
+
 [Panda]: https://codeberg.org/cdsoft/panda
-[Lsvg]: https://codeberg.org/cdsoft/luax
 [Ldc]: https://codeberg.org/cdsoft/ldc
 [Yreq]: https://codeberg.org/cdsoft/yreq
 
@@ -29,16 +30,16 @@
 
 The LuaX repository now contains some softwares that are closely coupled with LuaX:
 
-[LuaX](luax/doc/README.md)
+[LuaX]
 : The LuaX interpreter / compiler itself.
 
-[Bang](bang/doc/README.md)
+[Bang]
 : The LuaX build system that enhances Nina with some powerful Lua scripting capabilities.
 
-[Ypp](ypp/doc/README.md)
+[Ypp]
 : A generic text preprocessor used to build the LuaX documentation.
 
-[lsvg](lsvg/doc/README.md)
+[lsvg]
 : An SVG image generator scriptable in LuaX used to generate the LuaX logo.
 
 ### Installation
@@ -66,7 +67,7 @@ Feel free to promote LuaX!
 
 **[LuaX]**
 : is an extended [Lua] 5.5 interpreter and compiler. It enriches Lua
-  with 20+ built-in modules (file system, shell, cryptography, compression…) and
+  with 25+ built-in modules (file system, shell, cryptography, compression…) and
   can produce standalone cross-platform executables. LuaX uses **Lua tables as a
   universal data format**, allowing all tools in the ecosystem to share
   configuration and data without any conversion glue.

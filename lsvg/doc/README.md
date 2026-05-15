@@ -4,7 +4,7 @@
 
 `lsvg` is a Lua interpreter specialized to generate SVG images.
 
-It is based on [LuaX](https://codeberg.org/cdsoft/luax) and uses a pure Lua
+It is based on [LuaX](../../luax/doc/README.md) and uses a pure Lua
 library to generate SVG images. It optionally requires
 [ImageMagick](https://imagemagick.org/) to make PNG, JPEG or PDF images.
 
@@ -20,7 +20,7 @@ this page offers a selection for various platforms: <https://cdelord.fr/pub>.
 
 ## Installation
 
-`lsvg` is now part of [LuaX](https://codeberg.org/cdsoft/luax).
+`lsvg` is now part of [LuaX](../../README.md).
 
 ## Usage
 

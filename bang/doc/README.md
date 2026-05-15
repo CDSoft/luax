@@ -3,7 +3,7 @@
 BANG (Bang Automates Ninja Generation)
 ======================================
 
-Bang is a [Ninja](https://ninja-build.org) file generator scriptable in [LuaX](https://codeberg.org/cdsoft/luax).
+Bang is a [Ninja](https://ninja-build.org) file generator scriptable in [LuaX](../../luax/doc/README.md).
 
 Releases
 ========
@@ -34,7 +34,7 @@ Feel free to promote Bang!
 Installation
 ============
 
-Bang is part of [LuaX](https://codeberg.org/cdsoft/luax).
+Bang is now part of [LuaX](../../README.md).
 
 ## Pure Lua implementation
 
@@ -348,7 +348,7 @@ value) in a list. `Nil` is ignored by bang.
 
 The `ls` function lists files in a directory.
 It returns a list of filenames,
-with the metatable of [LuaX F lists](https://codeberg.org/cdsoft/luax/blob/master/doc/F.md).
+with the metatable of [LuaX F lists](../../luax/doc/F.md).
 
 - `ls "path"`: list of file names in `path`
 - `ls "path/*.c"`: list of file names matching the "`*.c`" pattern in `path`
@@ -803,8 +803,8 @@ The `build` metamethods contain some predefined builders:
 | ------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `build.cat`               | File concatenation.                                                                                   |
 | `build.cp`                | Copy a file.                                                                                          |
-| `build.ypp`               | Preprocess a file with [ypp](https://codeberg.org/cdsoft/luax).                                        |
-| `build.ypp-pandoc`        | Preprocess a file with [ypp](https://codeberg.org/cdsoft/luax) with the Pandoc Lua interpreter.        |
+| `build.ypp`               | Preprocess a file with [ypp](../../ypp/doc/README.md).                                                |
+| `build.ypp-pandoc`        | Preprocess a file with [ypp](../../ypp/doc/README.md) with the Pandoc Lua interpreter.                |
 | `build.pandoc`            | Convert a file with [pandoc](https://pandoc.org).                                                     |
 | `build.pandoc_gfm`        | Convert a file with [pandoc](https://pandoc.org) for Github.                                          |
 | `build.panda`             | Convert a file with [panda](https://codeberg.org/cdsoft/panda).                                       |
@@ -819,7 +819,7 @@ The `build` metamethods contain some predefined builders:
 | `build.blockdiag.prog.img`| [Blockdiag](http://blockdiag.com/en/) image rendered with *prog*[^blockdiag] as an *img*[^img] image. |
 | `build.gnuplot.img`       | [Gnuplot](http://www.gnuplot.info/) image rendered as an *img*[^img] image.                           |
 | `build.octave.img`        | [Octave](https://octave.org/) image rendered as an *img*[^img] image.                                 |
-| `build.lsvg.img`          | [Lsvg](https://codeberg.org/cdsoft/luax) image rendered as an *img*[^img] image.                      |
+| `build.lsvg.img`          | [Lsvg](../../lsvg/doc/README.md) image rendered as an *img*[^img] image.                              |
 
 [^img]: The available image formats are: `svg`, `png` and `pdf`.
 [^graphviz]: Graphviz renderers are: `dot`, `neato`, `twopi`, `circo`, `fdp`, `sfdp`, `patchwork` and `osage`.
@@ -960,4 +960,3 @@ License
 
     For further information about bang you can visit
     https://codeberg.org/cdsoft/luax
-

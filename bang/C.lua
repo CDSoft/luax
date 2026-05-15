@@ -211,7 +211,7 @@ compiler_mt = {
 local cc      = new(default_options, "C")
 local gcc     = cc  : new "gcc"     : set "cc" "gcc"     : set "so" "gcc"     : set "ld" "gcc"
 local clang   = cc  : new "clang"   : set "cc" "clang"   : set "so" "clang"   : set "ld" "clang"
-local cpp     = cc  : new "Cpp"     : set "cc" "c++"     : set "so" "c++"     : set "ld" "c++"     : set "c_exts" { ".cc", ".cpp" }
+local cpp     = cc  : new "cpp"     : set "cc" "c++"     : set "so" "c++"     : set "ld" "c++"     : set "c_exts" { ".cc", ".cpp" }
 local gpp     = cpp : new "gpp"     : set "cc" "g++"     : set "so" "g++"     : set "ld" "g++"
 local clangpp = cpp : new "clangpp" : set "cc" "clang++" : set "so" "clang++" : set "ld" "clang++"
 

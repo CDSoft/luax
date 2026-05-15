@@ -553,30 +553,30 @@ build file.exe: my-zig-ld f1.o lib.a f3.o $builddir/tmp/file.exe.tmp/f4.o | $bui
 # C++ compilers
 ######################################################################
 
-rule Cpp-cc
+rule cpp-cc
   description = c++ $out
   command = c++ -c -MMD -MF $depfile $in -o $out
   depfile = $out.d
 
-rule Cpp-ar
+rule cpp-ar
   description = ar $out
   command = ar -crs $out $in
 
-rule Cpp-so
+rule cpp-so
   description = c++ $out
   command = c++ -shared -o $out $in
 
-rule Cpp-ld
+rule cpp-ld
   description = c++ $out
   command = c++ -o $out $in
 
-build f1++.o: Cpp-cc f1.cc
-build $builddir/tmp/lib++.a.tmp/f2.o: Cpp-cc f2.cpp
-build lib++.a: Cpp-ar f1++.o $builddir/tmp/lib++.a.tmp/f2.o
-build $builddir/tmp/libf3++.so.tmp/f3.o: Cpp-cc f3.cc
-build libf3++.so: Cpp-so f1++.o lib++.a $builddir/tmp/libf3++.so.tmp/f3.o
-build $builddir/tmp/file++.exe.tmp/f4.o: Cpp-cc f4.cc
-build file++.exe: Cpp-ld f1++.o lib++.a f3++.o $builddir/tmp/file++.exe.tmp/f4.o
+build f1++.o: cpp-cc f1.cc
+build $builddir/tmp/lib++.a.tmp/f2.o: cpp-cc f2.cpp
+build lib++.a: cpp-ar f1++.o $builddir/tmp/lib++.a.tmp/f2.o
+build $builddir/tmp/libf3++.so.tmp/f3.o: cpp-cc f3.cc
+build libf3++.so: cpp-so f1++.o lib++.a $builddir/tmp/libf3++.so.tmp/f3.o
+build $builddir/tmp/file++.exe.tmp/f4.o: cpp-cc f4.cc
+build file++.exe: cpp-ld f1++.o lib++.a f3++.o $builddir/tmp/file++.exe.tmp/f4.o
 
 ######################################################################
 # Cross compilation

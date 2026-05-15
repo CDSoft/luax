@@ -2,7 +2,7 @@
 
 # Yet a PreProcessor
 
-[ypp]: https://codeberg.org/cdsoft/luax "Yet another PreProcessor"
+[ypp]: README.md "Yet another PreProcessor"
 [UPP]: https://codeberg.org/cdsoft/upp "Universal PreProcessor"
 [Panda]: https://codeberg.org/cdsoft/panda "Pandoc add-ons (Lua filters for Pandoc)"
 [Pandoc]: https://pandoc.org "A universal document converter"
@@ -20,8 +20,8 @@
 [Python]: https://www.python.org/
 [Lua]: http://www.lua.org/
 [gnuplot]: http://www.gnuplot.info/
-[lsvg]: https://codeberg.org/cdsoft/luax/
-[LuaX]: https://codeberg.org/cdsoft/luax "Lua eXtended interpreter"
+[lsvg]: ../../lsvg/doc/README.md
+[LuaX]: ../../README.md "Lua eXtended interpreter"
 [Octave]: https://octave.org/
 
 `ypp` is yet another preprocessor. It's an attempt to merge [UPP] and [Panda].
@@ -568,19 +568,23 @@ Here are some LuaX modules that can be useful in ypp documents:
 
 
 
-- [F](https://codeberg.org/cdsoft/luax/blob/master/doc/F.md): functional programming inspired functions
-- [fs](https://codeberg.org/cdsoft/luax/blob/master/doc/fs.md): file system management
-- [sh](https://codeberg.org/cdsoft/luax/blob/master/doc/sh.md): shell command execution
-- [mathx](https://codeberg.org/cdsoft/luax/blob/master/doc/mathx.md): complete math library for Lua
-- [imath](https://codeberg.org/cdsoft/luax/blob/master/doc/imath.md): arbitrary precision integer and rational arithmetic library
-- [qmath](https://codeberg.org/cdsoft/luax/blob/master/doc/qmath.md): rational number library
-- [complex](https://codeberg.org/cdsoft/luax/blob/master/doc/complex.md): math library for complex numbers based on C99
-- [crypt](https://codeberg.org/cdsoft/luax/blob/master/doc/crypt.md): cryptography module
-- [lpeg](https://codeberg.org/cdsoft/luax/blob/master/doc/lpeg.md): Parsing Expression Grammars For Lua
-- [serpent](https://codeberg.org/cdsoft/luax/blob/master/doc/serpent.md): Lua serializer and pretty printer
-- [json](https://codeberg.org/cdsoft/luax/blob/master/doc/json.md): JSON encoder/decoder
+- [F](../../luax/doc/F.md): functional programming inspired functions
+- [fs](../../luax/doc/fs.md): file system management
+- [sh](../../luax/doc/sh.md): shell command execution
+- [mathx](../../luax/doc/mathx.md): complete math library for Lua
+- [imath](../../luax/doc/imath.md): arbitrary precision integer and rational arithmetic library
+- [qmath](../../luax/doc/qmath.md): rational number library
+- [complex](../../luax/doc/complex.md): math library for complex numbers based on C99
+- [crypt](../../luax/doc/crypt.md): cryptography module
+- [lpeg](../../luax/doc/lpeg.md): Parsing Expression Grammars For Lua
+- [curl](../../luax/doc/curl.md): Simple curl command line interface with HTTP functions
+- [serpent](../../luax/doc/serpent.md): Lua serializer and pretty printer
+- [cbor](../../luax/doc/cbor.md): pure Lua implementation of the CBOR
+- [json](../../luax/doc/json.md): JSON encoder/decoder
+- [toml](../../luax/doc/toml.md): a pure Lua TOML parser (tinytoml)
+- [tomlx](../../luax/doc/tomlx.md): a layer on top of toml with macros
 
-More information here: <https://codeberg.org/cdsoft/luax>
+More information in the [LuaX documentation](../../luax/doc/README.md).
 
 # License
 

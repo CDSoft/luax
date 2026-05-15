@@ -2,7 +2,7 @@
 
 # Yet a PreProcessor
 
-[ypp]: https://codeberg.org/cdsoft/luax "Yet another PreProcessor"
+[ypp]: README.md "Yet another PreProcessor"
 [UPP]: https://codeberg.org/cdsoft/upp "Universal PreProcessor"
 [Panda]: https://codeberg.org/cdsoft/panda "Pandoc add-ons (Lua filters for Pandoc)"
 [Pandoc]: https://pandoc.org "A universal document converter"
@@ -20,8 +20,8 @@
 [Python]: https://www.python.org/
 [Lua]: http://www.lua.org/
 [gnuplot]: http://www.gnuplot.info/
-[lsvg]: https://codeberg.org/cdsoft/luax/
-[LuaX]: https://codeberg.org/cdsoft/luax "Lua eXtended interpreter"
+[lsvg]: ../../lsvg/doc/README.md
+[LuaX]: ../../README.md "Lua eXtended interpreter"
 [Octave]: https://octave.org/
 
 `ypp` is yet another preprocessor. It's an attempt to merge [UPP] and [Panda].
@@ -268,7 +268,7 @@ in a single executable, no external dependency required).
 Here are some LuaX modules that can be useful in ypp documents:
 
 @@ luaxdoc = F.curry(function(name, descr)
-    return ("[%s](https://codeberg.org/cdsoft/luax/blob/master/doc/%s.md): %s"):format(name, name, descr)
+    return ("[%s](../../luax/doc/%s.md): %s"):format(name, name, descr)
 end)
 
 - @luaxdoc "F"       "functional programming inspired functions"
@@ -280,10 +280,14 @@ end)
 - @luaxdoc "complex" "math library for complex numbers based on C99"
 - @luaxdoc "crypt"   "cryptography module"
 - @luaxdoc "lpeg"    "Parsing Expression Grammars For Lua"
+- @luaxdoc "curl"    "Simple curl command line interface with HTTP functions"
 - @luaxdoc "serpent" "Lua serializer and pretty printer"
+- @luaxdoc "cbor"    "pure Lua implementation of the CBOR"
 - @luaxdoc "json"    "JSON encoder/decoder"
+- @luaxdoc "toml"    "a pure Lua TOML parser (tinytoml)"
+- @luaxdoc "tomlx"   "a layer on top of toml with macros"
 
-More information here: <https://codeberg.org/cdsoft/luax>
+More information in the [LuaX documentation](../../luax/doc/README.md).
 
 # License
 
