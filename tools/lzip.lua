@@ -21,7 +21,7 @@ https://codeberg.org/cdsoft/luax
 local fs = require "fs"
 
 local args = (function()
-    local parser = require "argparse"() : name "packlib"
+    local parser = require "argparse"() : name "lzip"
     parser : argument "file" : description "Input file"
     parser : option "-o" : description "Output file" : count "1"
     return parser:parse(arg)
