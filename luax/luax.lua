@@ -425,12 +425,9 @@ prints `show(x)`
                     end
                     assert(chunk)
                     local res = pack_res(luax_xpcall(chunk))
-                    if res.ok then
-                        if res.n > 0 then
-                            print(show_res(res, show):unpack())
-                        end
-                    else
-                        os.exit(1)
+                    if not res.ok then os.exit(1) end
+                    if res.n > 0 then
+                        print(show_res(res, show):unpack())
                     end
                 end)
             elseif a == '-i' then
@@ -534,12 +531,9 @@ prints `show(x)`
             end
             assert(chunk)
             local res = pack_res(luax_xpcall(chunk))
-            if res.ok then
-                if res.n > 0 then
-                    print(show_res(res, show):unpack())
-                end
-            else
-                os.exit(1)
+            if not res.ok then os.exit(1) end
+            if res.n > 0 then
+                print(show_res(res, show):unpack())
             end
         end
 
@@ -613,14 +607,11 @@ local function find_exe(name)
 
     local sys = require "sys"
 
-    local exe = fs.is_file(name) and name
-            or (sys.exe ~= "" and fs.is_file(name..sys.exe) and name..sys.exe)
-            or fs.findpath(name)
-            or (sys.exe ~= "" and fs.findpath(name..sys.exe))
-    if not exe then
-        print_error("%s: not found", name)
-    end
-    return exe
+    return fs.is_file(name) and name
+        or (sys.exe ~= "" and fs.is_file(name..sys.exe) and name..sys.exe)
+        or fs.findpath(name)
+        or (sys.exe ~= "" and fs.findpath(name..sys.exe))
+        or print_error("%s: not found", name)
 end
 
 local function cmd_compile()
@@ -681,21 +672,18 @@ local function cmd_compile()
         end
     end
 
-    local prefix = find_exe(arg[0]):realpath():dirname():dirname()
+    local luax_exe = find_exe(arg[0]):realpath()
+    local prefix = luax_exe:dirname():dirname()
     local libluax_xyz = (function()
         local salt = tostring(luax_version)
+        local function check(data) return data:sub(#data-7) == (salt..data:sub(1, -9)):hash64():unhex() end
         local embeded, data = pcall(require, "libluax.xyz.lz")
         if embeded then
             data = data:unlzip()
+            if not check(data) then print_error("%s: corrupted compilation artifacts", luax_exe) end
         else
             data = assert(fs.read_bin(prefix/"lib/libluax.xyz"))
-        end
-        if data:sub(#data-7) ~= (salt..data:sub(1, #data-8)):hash64():unhex() then
-            if embeded then
-                print_error("corrupted compilation artifacts")
-            else
-                print_error("%s: corrupted file", prefix/"lib/libluax.xyz")
-            end
+            if not check(data) then print_error("%s: corrupted file", prefix/"lib/libluax.xyz") end
         end
         local lib = cbor.decode(data:sub(1, -9))
         lib.embeded = embeded
@@ -714,14 +702,10 @@ local function cmd_compile()
             end
         end
         local main_script = nil
-        if #explicit_main > 1 then
-            error("Too many main scripts: "..explicit_main:map(F.partial(F.nth, "path")):str", ")
-        elseif #explicit_main == 1 then
-            main_script = explicit_main[1]
-        elseif #implicit_main > 1 then
-            error("Too many main scripts: "..implicit_main:map(F.partial(F.nth, "path")):str", ")
-        elseif #implicit_main == 1 then
-            main_script = implicit_main[1]
+        if #explicit_main > 1      then error("Too many main scripts: "..explicit_main:map(F.partial(F.nth, "path")):str", ")
+        elseif #explicit_main == 1 then main_script = explicit_main[1]
+        elseif #implicit_main > 1  then error("Too many main scripts: "..implicit_main:map(F.partial(F.nth, "path")):str", ")
+        elseif #implicit_main == 1 then main_script = implicit_main[1]
         end
         return main_script, scripts:filter(function(script) return script ~= main_script end)
     end
