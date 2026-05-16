@@ -682,8 +682,8 @@ local function cmd_compile()
             data = data:unlzip()
             if not check(data) then print_error("%s: corrupted compilation artifacts", luax_exe) end
         else
-            data = assert(fs.read_bin(prefix/"lib/libluax.xyz"))
-            if not check(data) then print_error("%s: corrupted file", prefix/"lib/libluax.xyz") end
+            data = assert(fs.read_bin(prefix/"lib"/"libluax.xyz"))
+            if not check(data) then print_error("%s: corrupted file", prefix/"lib"/"libluax.xyz") end
         end
         local lib = cbor.decode(data:sub(1, -9))
         lib.embeded = embeded
@@ -948,7 +948,7 @@ local function cmd_compile()
         end)
         local libluax = libluax_xyz.embeded
                             and find_exe(arg[0]).." (standalone cross-compiler)"
-                            or prefix/"lib/libluax_xyz"
+                            or prefix/"lib"/"libluax.xyz"
         local native = libluax_xyz.loader["luax-loader-"..sys.name..sys.exe]
         print(("%-22s%s%s"):format(
             "native",

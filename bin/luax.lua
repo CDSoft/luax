@@ -3,7 +3,7 @@
 -- Generated with LuaX
 -- Copyright (C) 2021-2026 codeberg.org/cdsoft/luax, Christophe Delord
 
-_LUAX_VERSION = "LuaX 10.4.3"
+_LUAX_VERSION = "LuaX 10.4.4"
 
 local function lib(path, src) return assert(load(src, '@$luax:'..path)) end
 package.preload["F"] = lib("luax/F.lua", [==[--[[
@@ -11287,7 +11287,7 @@ return F{
     {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
 }
 ]=])
-package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.4.3"
+package.preload["luax-version"] = lib("luax/luax-version.lua", [[local version = "10.4.4"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"
@@ -15455,8 +15455,8 @@ local function cmd_compile()
             data = data:unlzip()
             if not check(data) then print_error("%s: corrupted compilation artifacts", luax_exe) end
         else
-            data = assert(fs.read_bin(prefix/"lib/libluax.xyz"))
-            if not check(data) then print_error("%s: corrupted file", prefix/"lib/libluax.xyz") end
+            data = assert(fs.read_bin(prefix/"lib"/"libluax.xyz"))
+            if not check(data) then print_error("%s: corrupted file", prefix/"lib"/"libluax.xyz") end
         end
         local lib = cbor.decode(data:sub(1, -9))
         lib.embeded = embeded
@@ -15721,7 +15721,7 @@ local function cmd_compile()
         end)
         local libluax = libluax_xyz.embeded
                             and find_exe(arg[0]).." (standalone cross-compiler)"
-                            or prefix/"lib/libluax_xyz"
+                            or prefix/"lib"/"libluax.xyz"
         local native = libluax_xyz.loader["luax-loader-"..sys.name..sys.exe]
         print(("%-22s%s%s"):format(
             "native",
