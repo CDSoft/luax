@@ -17,6 +17,8 @@
  * https://codeberg.org/cdsoft/luax
  */
 
+#pragma once
+
 #if defined(__linux__)
 
 #include <endian.h>

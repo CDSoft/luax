@@ -17,6 +17,8 @@
  * https://codeberg.org/cdsoft/luax
  */
 
+#pragma once
+
 #include <stddef.h>
 #include <stdint.h>
 

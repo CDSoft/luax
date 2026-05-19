@@ -17,6 +17,8 @@
  * https://codeberg.org/cdsoft/luax
  */
 
+#pragma once
+
 #include <stdint.h>
 
 /* Entropy for PRNG initialization */
