@@ -25,6 +25,7 @@ local crypt = require "crypt"
 local version = require "luax-version"
 
 local salt = tostring(version)
+local hash = F.compose { crypt.unhex, crypt.hash64 }
 
 local args = (function()
     local parser = require "argparse"() : name "packlib"
@@ -35,7 +36,7 @@ end)()
 
 local lib = {
     lua = {},
-    ext = {},
+    luax = {},
     loader = {},
 }
 
@@ -44,7 +45,7 @@ for _, file in ipairs(args.files) do
     local name = file:basename()
     local content = assert(fs.read_bin(file))
 
-    if name:ext() == ".lua" and file:match "/ext/" then lib.ext[file] = content
+    if name:ext() == ".lua" and file:match "/ext/" then lib.luax[file] = content
     elseif name:ext() == ".lua"                    then lib.lua[file] = content
     elseif name:has_prefix "luax-loader-"          then lib.loader[name] = content
     else error(file..": can not be added to "..args.o)
@@ -54,4 +55,4 @@ end
 
 local data = cbor.encode(lib, {pairs=F.pairs})
 
-assert(fs.write_bin(args.o, data, crypt.hash64(salt..data):unhex()))
+assert(fs.write_bin(args.o, hash(salt..data), data))

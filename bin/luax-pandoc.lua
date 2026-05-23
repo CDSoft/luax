@@ -14794,6 +14794,7 @@ https://codeberg.org/cdsoft/luax
 --@MAIN
 
 local F = require "F"
+local crypt = require "crypt"
 local fs = require "fs"
 local term = require "term"
 
@@ -15389,7 +15390,6 @@ end
 
 local function cmd_compile()
 
-    require "crypt"
     local sys = require "sys"
     local targets = require "luax-targets"
     local luax_version = require "luax-version"
@@ -15449,16 +15449,20 @@ local function cmd_compile()
     local prefix = luax_exe:dirname():dirname()
     local libluax_xyz = (function()
         local salt = tostring(luax_version)
-        local function check(data) return data:sub(#data-7) == (salt..data:sub(1, -9)):hash64():unhex() end
+        local hash = F.compose { crypt.unhex, crypt.hash64 }
+        local function check(data, origin)
+            local signature, payload = data:split_at(#hash(""))
+            if hash(salt..payload) ~= signature then print_error("%s: corrupted file", origin) end
+            return payload
+        end
         local embeded, data = pcall(require, "libluax.xyz.lz")
         if embeded then
-            data = data:unlzip()
-            if not check(data) then print_error("%s: corrupted compilation artifacts", luax_exe) end
+            data = check(data:unlzip(), luax_exe)
         else
-            data = assert(fs.read_bin(prefix/"lib"/"libluax.xyz"))
-            if not check(data) then print_error("%s: corrupted file", prefix/"lib"/"libluax.xyz") end
+            local libfile = prefix/"lib"/"libluax.xyz"
+            data = check(assert(fs.read_bin(libfile)), libfile)
         end
-        local lib = cbor.decode(data:sub(1, -9))
+        local lib = cbor.decode(data)
         lib.embeded = embeded
         return lib
     end)()
@@ -15615,7 +15619,7 @@ local function cmd_compile()
                 load_script(script, content, { is_main=false })
             end)
             if opt.add_ext_runtime then
-                F.foreachk(libluax_xyz.ext, function(script, content)
+                F.foreachk(libluax_xyz.luax, function(script, content)
                     load_script(script, content, { is_main=false })
                 end)
             end
@@ -15720,7 +15724,7 @@ local function cmd_compile()
                 path and "" or term.color.red" [NOT FOUND]"))
         end)
         local libluax = libluax_xyz.embeded
-                            and find_exe(arg[0]).." (standalone cross-compiler)"
+                            and find_exe(arg[0]).." (cross-compiler)"
                             or prefix/"lib"/"libluax.xyz"
         local native = libluax_xyz.loader["luax-loader-"..sys.name..sys.exe]
         print(("%-22s%s%s"):format(

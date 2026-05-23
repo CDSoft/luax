@@ -295,7 +295,7 @@ rule "lzip" {
     implicit_in = "$builddir/bin/luax tools/lzip.lua",
 }
 
-build "$builddir/tmp/libluax.xyz.lz" { "lzip", "$builddir/lib/libluax.xyz" }
+build "$builddir/lib/libluax.xyz.lz" { "lzip", "$builddir/lib/libluax.xyz" }
 
 -------------------------------------------------------------------------------
 -- Generate the release archives
@@ -352,7 +352,7 @@ local function build_standalone(target)
     else
         return luax[target.name](dir/"luax-"..target.name) {
             luax_lua_sources,
-            "$builddir/tmp/libluax.xyz.lz",
+            "$builddir/lib/libluax.xyz.lz",
         }
     end
 end
