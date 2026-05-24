@@ -10111,7 +10111,7 @@ local global_module_name = 'json'
 
 David Kolf's JSON module for Lua 5.1 - 5.5
 
-Version 2.9
+Version 2.10
 
 
 For the documentation see the corresponding readme.txt or visit
@@ -10156,7 +10156,7 @@ local strrep, gsub, strsub, strbyte, strchar, strfind, strlen, strformat =
 local strmatch = string.match
 local concat = table.concat
 
-local json = { version = "dkjson 2.9" }
+local json = { version = "dkjson 2.10" }
 
 local jsonlpeg = {}
 
@@ -10523,6 +10523,8 @@ local function scanwhite (str, pos)
         pos = strfind (str, "*/", pos + 2)
         if not pos then return nil end
         pos = pos + 2
+      else
+        return pos, n1
       end
     elseif n1 == nil then
       return nil

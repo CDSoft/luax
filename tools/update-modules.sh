@@ -38,7 +38,7 @@ update_all()
     update_serpent      master
     update_cbor
     update_linenoise    master
-    update_dkjson       2.9
+    update_dkjson       2.10
     update_toml         1.0.0
     update_luasocket    3.1.0
     update_lz4          release
