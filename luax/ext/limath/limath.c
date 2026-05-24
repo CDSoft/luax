@@ -2,7 +2,7 @@
 * limath.c
 * big-integer library for Lua based on imath
 * Luiz Henrique de Figueiredo <lhf@tecgraf.puc-rio.br>
-* 31 Mar 2024 19:07:43
+* 20 May 2026 08:01:31
 * This code is hereby placed in the public domain and also under the MIT license
 */
 
@@ -15,7 +15,7 @@
 #include "mycompat.h"
 
 #define MYNAME		"imath"
-#define MYVERSION	MYNAME " library for " LUA_VERSION " / Mar 2024"
+#define MYVERSION	MYNAME " library for " LUA_VERSION " / May 2026"
 #define MYTYPE		MYNAME " biginteger"
 
 static int report(lua_State *L, mp_result rc, int n)
@@ -94,10 +94,10 @@ static int Ltostring(lua_State *L)		/** tostring(x,[base]) */
 {
  mp_int a=Pget(L,1);
  mp_size b=Pgetbase(L,2);
- mp_result rc=mp_int_string_len(a,b);
- int l=rc;
+ mp_size l=mp_int_string_len(a,b);
+ mp_result rc;
  char *s=malloc(l);
- if (s==NULL) return 0;
+ if (s==NULL) report(L,MP_MEMORY,0);
  rc=mp_int_to_string(a,b,s,l);
  if (rc==MP_OK) lua_pushstring(L,s);
  free(s);
@@ -107,10 +107,10 @@ static int Ltostring(lua_State *L)		/** tostring(x,[base]) */
 static int Ltotext(lua_State *L)		/** totext(x) */
 {
  mp_int a=Pget(L,1);
- mp_result rc=mp_int_unsigned_len(a);
- int l=rc;
+ mp_size l=mp_int_unsigned_len(a);
+ mp_result rc;
  char *s=malloc(l);
- if (s==NULL) return 0;
+ if (s==NULL) report(L,MP_MEMORY,0);
  rc=mp_int_to_unsigned(a,(unsigned char*)s,l);
  if (rc==MP_OK) lua_pushlstring(L,s,l);
  free(s);
@@ -145,6 +145,13 @@ static int Lbits(lua_State *L)			/** bits(x) */
 {
  mp_int a=Pget(L,1);
  lua_pushinteger(L,mp_int_count_bits(a));
+ return 1;
+}
+
+static int Lsign(lua_State *L)			/** sign(x) */
+{
+ mp_int a=Pget(L,1);
+ lua_pushinteger(L,mp_int_compare_zero(a));
  return 1;
 }
 
@@ -234,10 +241,10 @@ static int Lroot(lua_State *L)			/** root(x,n) */
 static int Pshift(lua_State *L, int d)	
 {
  mp_int a=Pget(L,1);
- mp_small n=d*luaL_optinteger(L,2,2);
+ mp_small n=d*luaL_optinteger(L,2,1);
  mp_int c=Pnew(L);
  mp_int r=NULL;
- mp_result rc= (n>=0) ?  mp_int_mul_pow2(a,n,c) : mp_int_div_pow2(a,-n,c,r);
+ mp_result rc= (n>=0) ? mp_int_mul_pow2(a,n,c) : mp_int_div_pow2(a,-n,c,r);
  return report(L,rc,1);
 }
 
@@ -375,6 +382,7 @@ static const luaL_Reg R[] =
 	{ "quotrem",	Lquotrem},
 	{ "root",	Lroot	},
 	{ "shift",	Lshl	},
+	{ "sign",	Lsign	},
 	{ "sqr",	Lsqr	},
 	{ "sqrt",	Lsqrt	},
 	{ "sub",	Lsub	},

@@ -2,7 +2,7 @@
 * lqmath.c
 * rational number library for Lua based on imath
 * Luiz Henrique de Figueiredo <lhf@tecgraf.puc-rio.br>
-* 31 Mar 2024 19:15:42
+* 24 May 2026 07:26:24
 * This code is hereby placed in the public domain and also under the MIT license
 */
 
@@ -16,7 +16,7 @@
 #include "mycompat.h"
 
 #define MYNAME		"qmath"
-#define MYVERSION	MYNAME " library for " LUA_VERSION " / Mar 2024"
+#define MYVERSION	MYNAME " library for " LUA_VERSION " / May 2026"
 #define MYTYPE		MYNAME " rational"
 
 static int report(lua_State *L, mp_result rc, int n)
@@ -76,10 +76,10 @@ static int Lnew(lua_State *L)			/** new(x,[d]) */
 static int Ltostring(lua_State *L)		/** tostring(x) */
 {
  mp_rat a=Pget(L,1);
- mp_result rc=mp_rat_string_len(a,10);
- int l=rc;
+ mp_size l=mp_rat_string_len(a,10);
+ mp_result rc;
  char *s=malloc(l);
- if (s==NULL) return 0;
+ if (s==NULL) report(L,MP_MEMORY,0);
  rc=mp_rat_to_string(a,10,s,l);
  if (rc==MP_OK)
  {
@@ -91,26 +91,30 @@ static int Ltostring(lua_State *L)		/** tostring(x) */
  return report(L,rc,1);
 }
 
-static int Ltodecimal(lua_State *L)		/** todecimal(x,[n]) */
+static int Ptodecimal(lua_State *L, int n)
 {
  mp_rat a=Pget(L,1);
- mp_small m=luaL_optinteger(L,2,0);
- mp_small n= (m<0) ? 0 : m;
- mp_result rc=mp_rat_decimal_len(a,10,n);
- int l=rc;
+ mp_size l=mp_rat_decimal_len(a,10,n);
+ mp_result rc;
  char *s=malloc(l);
- if (s==NULL) return 0;
+ if (s==NULL) report(L,MP_MEMORY,0);
  rc=mp_rat_to_decimal(a,10,n,MP_ROUND_HALF_UP,s,l);
  if (rc==MP_OK) lua_pushstring(L,s);
  free(s);
  return report(L,rc,1);
 }
 
+static int Ltodecimal(lua_State *L)		/** todecimal(x,[n]) */
+{
+ int n=luaL_optinteger(L,2,0);
+ if (n<0) n=0;
+ Ptodecimal(L,n);
+ return 1;
+}
+
 static int Ltonumber(lua_State *L)		/** tonumber(x) */
 {
- lua_settop(L,1);
- lua_pushinteger(L,40);
- Ltodecimal(L);
+ Ptodecimal(L,40);
  lua_pushnumber(L,lua_tonumber(L,-1));
  return 1;
 }
@@ -135,7 +139,7 @@ static int Lnumer(lua_State *L)			/** numer(x) */
  mp_rat a=Pget(L,1);
  mp_int b=mp_rat_numer_ref(a);
  mp_rat c=Pnew(L);
- return report(L,mp_rat_add_int(c,b,c),1);
+ return report(L,mp_rat_set(c,b,NULL),1);
 }
 
 static int Ldenom(lua_State *L)			/** denom(x) */
@@ -143,7 +147,7 @@ static int Ldenom(lua_State *L)			/** denom(x) */
  mp_rat a=Pget(L,1);
  mp_int b=mp_rat_denom_ref(a);
  mp_rat c=Pnew(L);
- return report(L,mp_rat_add_int(c,b,c),1);
+ return report(L,mp_rat_set(c,b,NULL),1);
 }
 
 static int Lsign(lua_State *L)			/** sign(x) */
@@ -209,24 +213,44 @@ static int Labs(lua_State *L)			/** abs(x) */
  return Pdo1(L,mp_rat_abs);
 }
 
+static mp_result Pdecompose(mp_rat r, mp_rat ipart, mp_rat fpart) 
+{
+ if (ipart==NULL)
+  return mp_rat_decompose(r,NULL,fpart);
+ else
+ {
+  mpz_t z;
+  mp_int_init(&z);
+  mp_result rc=mp_rat_decompose(r,&z,fpart);
+  if (rc==MP_OK) rc=mp_rat_set(ipart,&z,NULL);
+  mp_int_clear(&z);
+  return rc;
+ }
+}
+
 static int Lint(lua_State *L)			/** int(x) */
 {
  mp_rat a=Pget(L,1);
- mp_int n=mp_rat_numer_ref(a);
- mp_int d=mp_rat_denom_ref(a);
- mp_int q=mp_int_alloc();
  mp_rat c=Pnew(L);
- mp_result rc;
- if (q==NULL) return report(L,MP_MEMORY,0);
- rc=mp_int_div(n,d,q,NULL);
- if (rc!=MP_OK)
- {
-  mp_int_free(q);
-  return report(L,rc,0);
- }
- rc=mp_rat_add_int(c,q,c);
- mp_int_free(q);
+ mp_result rc=Pdecompose(a,c,NULL);
  return report(L,rc,1);
+}
+
+static int Lfrac(lua_State *L)			/** frac(x) */
+{
+ mp_rat a=Pget(L,1);
+ mp_rat c=Pnew(L);
+ mp_result rc=Pdecompose(a,NULL,c);
+ return report(L,rc,1);
+}
+
+static int Ldecompose(lua_State *L)		/** decompose(x) */
+{
+ mp_rat a=Pget(L,1);
+ mp_rat i=Pnew(L);
+ mp_rat f=Pnew(L);
+ mp_result rc=Pdecompose(a,i,f);
+ return report(L,rc,2);
 }
 
 static int Linv(lua_State *L)			/** inv(x) */
@@ -296,8 +320,10 @@ static const luaL_Reg R[] =
 	{ "abs",	Labs	},
 	{ "add",	Ladd	},
 	{ "compare",	Lcompare},
+	{ "decompose",	Ldecompose},
 	{ "denom",	Ldenom	},
 	{ "div",	Ldiv	},
+	{ "frac",	Lfrac	},
 	{ "int",	Lint	},
 	{ "inv",	Linv	},
 	{ "isinteger",	Lisinteger},

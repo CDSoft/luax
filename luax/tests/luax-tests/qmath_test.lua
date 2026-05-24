@@ -25,6 +25,7 @@ https://codeberg.org/cdsoft/luax
 local test = require "test"
 local eq = test.eq
 
+local F = require "F"
 local sys = require "sys"
 
 return function()
@@ -61,6 +62,16 @@ return function()
     eq(qmath.compare(x, x), 0)
     eq(qmath.compare(x, y), -1)
     eq(qmath.compare(y, x), 1)
+
+    eq(F.map(tostring, {qmath.decompose(Q(0,3))}), {"0", "0"})
+    eq(F.map(tostring, {qmath.decompose(Q(1,3))}), {"0", "1/3"})
+    eq(F.map(tostring, {qmath.decompose(Q(7,3))}), {"2", "1/3"})
+    eq(F.map(tostring, {qmath.decompose(-Q(1,3))}), {"0", "-1/3"})
+    eq(F.map(tostring, {qmath.decompose(-Q(7,3))}), {"-2", "-1/3"})
+
+    eq(tostring(qmath.frac(Q(0,3))), "0")
+    eq(tostring(qmath.frac(Q(7,3))), "1/3")
+    eq(tostring(qmath.frac(-Q(7,3))), "-1/3")
 
     eq(x * y, Q(370, 1071))     eq(qmath.mul(x, y), x*y)
 

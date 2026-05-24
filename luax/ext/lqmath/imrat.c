@@ -103,6 +103,28 @@ mp_result mp_rat_init_copy(mp_rat r, mp_rat old) {
   return res;
 }
 
+mp_result mp_rat_set(mp_rat r, mp_int numer, mp_int denom) {
+  mp_result res;
+
+  if (numer == NULL && denom == NULL) return MP_BADARG;
+  if (denom != NULL && mp_int_compare_zero(denom) == 0) {
+    return MP_UNDEF;
+  }
+
+  if (numer == NULL) {
+    mp_int_set_uvalue(MP_NUMER_P(r), 1);
+  } else if ((res = mp_int_copy(numer, MP_NUMER_P(r))) != MP_OK) {
+    return res;
+  }
+
+  if (denom == NULL) {
+    mp_int_set_uvalue(MP_DENOM_P(r), 1);
+  } else if ((res = mp_int_copy(denom, MP_DENOM_P(r))) != MP_OK) {
+    return res;
+  }
+  return s_rat_reduce(r);
+}
+
 mp_result mp_rat_set_value(mp_rat r, mp_small numer, mp_small denom) {
   mp_result res;
 
@@ -376,6 +398,61 @@ mp_result mp_rat_expt(mp_rat a, mp_small b, mp_rat c) {
   return mp_int_expt(MP_DENOM_P(a), b, MP_DENOM_P(c));
 }
 
+mp_result mp_rat_decompose(mp_rat r, mp_int ipart, mp_rat fpart) {
+  if (ipart == NULL && fpart == NULL) {
+    return MP_BADARG;
+  }
+
+  int cmp;
+  if ((cmp = mp_int_compare_unsigned(MP_NUMER_P(r), MP_DENOM_P(r))) == 0) {
+    // Case 1: The value is 1/1,  no division required.
+    if (fpart != NULL) mp_rat_zero(fpart);
+    if (ipart != NULL) {
+      return mp_int_set_uvalue(ipart, 1);
+    }
+    return MP_OK;
+  } else if (cmp < 0) {
+    // Case 2: The numerator is smaller than the denominator, no division
+    // required.
+    if (ipart != NULL) mp_int_zero(ipart);
+    if (fpart != NULL) {
+      return mp_rat_copy(r, fpart);
+    }
+    return MP_OK;
+  }
+
+  // Case 3: The numerator is strictly greater (magnitude) than the denominator.
+  mpz_t temp[3];
+  mp_result res;
+  int last = 0;
+
+  SETUP(mp_int_init_copy(TEMP(last), MP_NUMER_P(r)), last);
+  mp_int_abs(TEMP(0), TEMP(0));
+
+  SETUP(mp_int_init(TEMP(last)), last);
+  SETUP(mp_int_init(TEMP(last)), last);
+
+  if ((res = mp_int_div(TEMP(0), MP_DENOM_P(r), TEMP(1), TEMP(2))) != MP_OK) {
+    goto CLEANUP;
+  }
+  if (ipart != NULL) {
+    if ((res = mp_int_copy(TEMP(1), ipart)) != MP_OK) {
+      goto CLEANUP;
+    }
+    ipart->sign = MP_NUMER_SIGN(r);
+  }
+  if (fpart != NULL) {
+    if ((res = mp_rat_set(fpart, TEMP(2), MP_DENOM_P(r))) != MP_OK) {
+      goto CLEANUP;
+    }
+    MP_NUMER_P(fpart)->sign = MP_NUMER_SIGN(r);
+  }
+
+CLEANUP:
+  while (--last >= 0) mp_int_clear(TEMP(last));
+  return res;
+}
+
 int mp_rat_compare(mp_rat a, mp_rat b) {
   /* Quick check for opposite signs.  Works because the sign of the numerator
      is always definitive. */
@@ -455,7 +532,7 @@ bool mp_rat_is_integer(mp_rat r) {
   return (mp_int_compare_value(MP_DENOM_P(r), 1) == 0);
 }
 
-mp_result mp_rat_to_ints(mp_rat r, mp_small *num, mp_small *den) {
+mp_result mp_rat_to_ints(mp_rat r, mp_small* num, mp_small* den) {
   mp_result res;
 
   if ((res = mp_int_to_int(MP_NUMER_P(r), num)) != MP_OK) {
@@ -466,7 +543,7 @@ mp_result mp_rat_to_ints(mp_rat r, mp_small *num, mp_small *den) {
   return res;
 }
 
-mp_result mp_rat_to_string(mp_rat r, mp_size radix, char *str, int limit) {
+mp_result mp_rat_to_string(mp_rat r, mp_size radix, char* str, int limit) {
   /* Write the numerator.  The sign of the rational number is written by the
      underlying integer implementation. */
   mp_result res;
@@ -482,7 +559,7 @@ mp_result mp_rat_to_string(mp_rat r, mp_size radix, char *str, int limit) {
   /* Locate the end of the numerator, and make sure we are not going to exceed
      the limit by writing a slash. */
   int len = strlen(str);
-  char *start = str + len;
+  char* start = str + len;
   limit -= len;
   if (limit == 0) return MP_TRUNC;
 
@@ -493,7 +570,7 @@ mp_result mp_rat_to_string(mp_rat r, mp_size radix, char *str, int limit) {
 }
 
 mp_result mp_rat_to_decimal(mp_rat r, mp_size radix, mp_size prec,
-                            mp_round_mode round, char *str, int limit) {
+                            mp_round_mode round, char* str, int limit) {
   mpz_t temp[3];
   mp_result res;
   int last = 0;
@@ -587,7 +664,7 @@ mp_result mp_rat_to_decimal(mp_rat r, mp_size radix, mp_size prec,
   /* The sign of the output should be the sign of the numerator, but if all the
      displayed digits will be zero due to the precision, a negative shouldn't
      be shown. */
-  char *start = str;
+  char* start = str;
   int left = limit;
   if (MP_NUMER_SIGN(r) == MP_NEG && (mp_int_compare_zero(TEMP(0)) != 0 ||
                                      mp_int_compare_zero(TEMP(1)) != 0)) {
@@ -625,9 +702,9 @@ CLEANUP:
   return res;
 }
 
-mp_result mp_rat_string_len(mp_rat r, mp_size radix) {
-  mp_result d_len = 0;
-  mp_result n_len = mp_int_string_len(MP_NUMER_P(r), radix);
+mp_size mp_rat_string_len(mp_rat r, mp_size radix) {
+  mp_size d_len = 0;
+  mp_size n_len = mp_int_string_len(MP_NUMER_P(r), radix);
 
   if (mp_int_compare_zero(MP_NUMER_P(r)) != 0) {
     d_len = mp_int_string_len(MP_DENOM_P(r), radix);
@@ -641,7 +718,7 @@ mp_result mp_rat_string_len(mp_rat r, mp_size radix) {
   return n_len + d_len;
 }
 
-mp_result mp_rat_decimal_len(mp_rat r, mp_size radix, mp_size prec) {
+mp_size mp_rat_decimal_len(mp_rat r, mp_size radix, mp_size prec) {
   int f_len;
   int z_len = mp_int_string_len(MP_NUMER_P(r), radix);
 
@@ -654,14 +731,14 @@ mp_result mp_rat_decimal_len(mp_rat r, mp_size radix, mp_size prec) {
   return z_len + f_len;
 }
 
-mp_result mp_rat_read_string(mp_rat r, mp_size radix, const char *str) {
+mp_result mp_rat_read_string(mp_rat r, mp_size radix, const char* str) {
   return mp_rat_read_cstring(r, radix, str, NULL);
 }
 
-mp_result mp_rat_read_cstring(mp_rat r, mp_size radix, const char *str,
-                              char **end) {
+mp_result mp_rat_read_cstring(mp_rat r, mp_size radix, const char* str,
+                              char** end) {
   mp_result res;
-  char *endp;
+  char* endp;
 
   if ((res = mp_int_read_cstring(MP_NUMER_P(r), radix, str, &endp)) != MP_OK &&
       (res != MP_TRUNC)) {
@@ -669,7 +746,7 @@ mp_result mp_rat_read_cstring(mp_rat r, mp_size radix, const char *str,
   }
 
   /* Skip whitespace between numerator and (possible) separator */
-  char *sp = endp;
+  char* sp = endp;
   while (isspace((unsigned char)*sp)) {
     ++sp;
   }
@@ -701,9 +778,9 @@ mp_result mp_rat_read_cstring(mp_rat r, mp_size radix, const char *str,
 
    This function will accept either a/b notation or decimal notation.
  */
-mp_result mp_rat_read_ustring(mp_rat r, mp_size radix, const char *str,
-                              char **end) {
-  char *endp = "";
+mp_result mp_rat_read_ustring(mp_rat r, mp_size radix, const char* str,
+                              char** end) {
+  char* endp = "";
   mp_result res;
 
   if (radix == 0) radix = 10; /* default to decimal input */
@@ -716,15 +793,15 @@ mp_result mp_rat_read_ustring(mp_rat r, mp_size radix, const char *str,
   return res;
 }
 
-mp_result mp_rat_read_decimal(mp_rat r, mp_size radix, const char *str) {
+mp_result mp_rat_read_decimal(mp_rat r, mp_size radix, const char* str) {
   return mp_rat_read_cdecimal(r, radix, str, NULL);
 }
 
-mp_result mp_rat_read_cdecimal(mp_rat r, mp_size radix, const char *str,
-                               char **end) {
+mp_result mp_rat_read_cdecimal(mp_rat r, mp_size radix, const char* str,
+                               char** end) {
   mp_result res;
   mp_sign osign;
-  char *endp;
+  char* endp;
 
   while (isspace((unsigned char)*str)) ++str;
 
@@ -767,7 +844,7 @@ mp_result mp_rat_read_cdecimal(mp_rat r, mp_size radix, const char *str,
   } else {
     mpz_t frac;
     mp_result save_res;
-    char *save = endp;
+    char* save = endp;
     int num_lz = 0;
 
     /* Make a temporary to hold the part after the decimal point. */

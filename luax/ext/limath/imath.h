@@ -186,9 +186,9 @@ mp_result mp_int_mul_pow2(mp_int a, mp_small p2, mp_int c);
 /** Sets `c` to the square of `a`. */
 mp_result mp_int_sqr(mp_int a, mp_int c);
 
-/** Sets `q` and `r` to the quotient and remainder of `a / b`. Division by
-    powers of 2 is detected and handled efficiently.  The remainder is pinned
-    to `0 <= r < b`.
+/** Sets `q` and `r` to the quotient and remainder of `a / b`, so that the
+    equation `a == b*q + r` is satisfied and `0 <= |r| < |b|`.
+    Division by powers of 2 is detected and handled efficiently.
 
     Either of `q` or `r` may be NULL, but not both, and `q` and `r` may not
     point to the same value. */
@@ -206,7 +206,8 @@ mp_result mp_int_div_value(mp_int a, mp_small value, mp_int q, mp_small *r);
 mp_result mp_int_div_pow2(mp_int a, mp_small p2, mp_int q, mp_int r);
 
 /** Sets `c` to the remainder of `a / m`.
-    The remainder is pinned to `0 <= c < m`. */
+    It returns `MP_UNDEF` if `m == 0`, or `MP_RANGE` if `m < 0` .
+    Otherwise the remainder is pinned to `0 <= c < m`. */
 mp_result mp_int_mod(mp_int a, mp_int m, mp_int c);
 
 /** Sets `c` to the value of `a` raised to the `b` power.
@@ -329,7 +330,7 @@ mp_result mp_int_to_string(mp_int z, mp_size radix, char *str, int limit);
 /** Reports the minimum number of characters required to represent `z` as a
     zero-terminated string in the given `radix`.
     Requires `MP_MIN_RADIX <= radix <= MP_MAX_RADIX`. */
-mp_result mp_int_string_len(mp_int z, mp_size radix);
+mp_size mp_int_string_len(mp_int z, mp_size radix);
 
 /** Reads a string of ASCII digits in the specified `radix` from the zero
     terminated `str` provided into `z`. For values of `radix > 10`, the letters
@@ -365,7 +366,7 @@ mp_result mp_int_read_string(mp_int z, mp_size radix, const char *str);
 mp_result mp_int_read_cstring(mp_int z, mp_size radix, const char *str, char **end);
 
 /** Returns the number of significant bits in `z`. */
-mp_result mp_int_count_bits(mp_int z);
+mp_size mp_int_count_bits(mp_int z);
 
 /** Converts `z` to 2's complement binary, writing at most `limit` bytes into
     the given `buf`.  Returns `MP_TRUNC` if the buffer limit was too small to
@@ -388,7 +389,7 @@ mp_result mp_int_to_binary(mp_int z, unsigned char *buf, int limit);
 mp_result mp_int_read_binary(mp_int z, unsigned char *buf, int len);
 
 /** Returns the number of bytes to represent `z` in 2's complement binary. */
-mp_result mp_int_binary_len(mp_int z);
+mp_size mp_int_binary_len(mp_int z);
 
 /** Converts the magnitude of `z` to unsigned binary, writing at most `limit`
     bytes into the given `buf`.  The sign of `z` is ignored, but `z` is not
@@ -408,7 +409,7 @@ mp_result mp_int_read_unsigned(mp_int z, unsigned char *buf, int len);
 
 /** Returns the number of bytes required to represent `z` as an unsigned binary
     value in base 256. */
-mp_result mp_int_unsigned_len(mp_int z);
+mp_size mp_int_unsigned_len(mp_int z);
 
 /** Returns a pointer to a brief, human-readable, zero-terminated string
     describing `res`. The returned string is statically allocated and must not

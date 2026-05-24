@@ -44,8 +44,8 @@ const mp_result MP_MINERR = -6;
 const mp_sign MP_NEG = 1;  /* value is strictly negative */
 const mp_sign MP_ZPOS = 0; /* value is non-negative      */
 
-static const char *const s_unknown_err = "unknown result code";
-static const char *const s_error_msg[] = {
+static const char* const s_unknown_err = "unknown result code";
+static const char* const s_error_msg[] = {
     "error code 0",     "boolean true",
     "out of memory",    "argument out of range",
     "result undefined", "output truncated",
@@ -84,24 +84,24 @@ static const double s_log2[] = {
 static inline mp_size s_round_prec(mp_size P) { return 2 * ((P + 1) / 2); }
 
 /* Set array P of S digits to zero */
-static inline void ZERO(mp_digit *P, mp_size S) {
+static inline void ZERO(mp_digit* P, mp_size S) {
   mp_size i__ = S * sizeof(mp_digit);
-  mp_digit *p__ = P;
+  mp_digit* p__ = P;
   memset(p__, 0, i__);
 }
 
 /* Copy S digits from array P to array Q */
-static inline void COPY(mp_digit *P, mp_digit *Q, mp_size S) {
+static inline void COPY(mp_digit* P, mp_digit* Q, mp_size S) {
   mp_size i__ = S * sizeof(mp_digit);
-  mp_digit *p__ = P;
-  mp_digit *q__ = Q;
+  mp_digit* p__ = P;
+  mp_digit* q__ = Q;
   memcpy(q__, p__, i__);
 }
 
 /* Reverse N elements of unsigned char in A. */
-static inline void REV(unsigned char *A, int N) {
-  unsigned char *u_ = A;
-  unsigned char *v_ = u_ + N - 1;
+static inline void REV(unsigned char* A, int N) {
+  unsigned char* u_ = A;
+  unsigned char* v_ = u_ + N - 1;
   while (u_ < v_) {
     unsigned char xch = *u_;
     *u_++ = *v_;
@@ -112,7 +112,7 @@ static inline void REV(unsigned char *A, int N) {
 /* Strip leading zeroes from z_ in-place. */
 static inline void CLAMP(mp_int z_) {
   mp_size uz_ = MP_USED(z_);
-  mp_digit *dz_ = MP_DIGITS(z_) + uz_ - 1;
+  mp_digit* dz_ = MP_DIGITS(z_) + uz_ - 1;
   while (uz_ > 1 && (*dz_-- == 0)) --uz_;
   z_->used = uz_;
 }
@@ -212,10 +212,10 @@ void mp_int_multiply_threshold(mp_size thresh) {
 
 /* Allocate a buffer of (at least) num digits, or return
    NULL if that couldn't be done.  */
-static mp_digit *s_alloc(mp_size num);
+static mp_digit* s_alloc(mp_size num);
 
 /* Release a buffer of digits allocated by s_alloc(). */
-static void s_free(void *ptr);
+static void s_free(void* ptr);
 
 /* Insure that z has at least min digits allocated, resizing if
    necessary.  Returns true if successful, false if out of memory. */
@@ -231,7 +231,7 @@ static void s_fake(mp_int z, mp_small value, mp_digit vbuf[]);
 static void s_ufake(mp_int z, mp_usmall value, mp_digit vbuf[]);
 
 /* Compare two runs of digits of given length, returns <0, 0, >0 */
-static int s_cdig(mp_digit *da, mp_digit *db, mp_size len);
+static int s_cdig(mp_digit* da, mp_digit* db, mp_size len);
 
 /* Pack the unsigned digits of v into array t */
 static int s_uvpack(mp_usmall v, mp_digit t[]);
@@ -245,26 +245,26 @@ static int s_uvcmp(mp_int a, mp_usmall uv);
 
 /* Unsigned magnitude addition; assumes dc is big enough.
    Carry out is returned (no memory allocated). */
-static mp_digit s_uadd(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
+static mp_digit s_uadd(mp_digit* da, mp_digit* db, mp_digit* dc, mp_size size_a,
                        mp_size size_b);
 
 /* Unsigned magnitude subtraction.  Assumes dc is big enough. */
-static void s_usub(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
+static void s_usub(mp_digit* da, mp_digit* db, mp_digit* dc, mp_size size_a,
                    mp_size size_b);
 
 /* Unsigned recursive multiplication.  Assumes dc is big enough. */
-static int s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
+static int s_kmul(mp_digit* da, mp_digit* db, mp_digit* dc, mp_size size_a,
                   mp_size size_b);
 
 /* Unsigned magnitude multiplication.  Assumes dc is big enough. */
-static void s_umul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
+static void s_umul(mp_digit* da, mp_digit* db, mp_digit* dc, mp_size size_a,
                    mp_size size_b);
 
 /* Unsigned recursive squaring.  Assumes dc is big enough. */
-static int s_ksqr(mp_digit *da, mp_digit *dc, mp_size size_a);
+static int s_ksqr(mp_digit* da, mp_digit* dc, mp_size size_a);
 
 /* Unsigned magnitude squaring.  Assumes dc is big enough. */
-static void s_usqr(mp_digit *da, mp_digit *dc, mp_size size_a);
+static void s_usqr(mp_digit* da, mp_digit* dc, mp_size size_a);
 
 /* Single digit addition.  Assumes a is big enough. */
 static void s_dadd(mp_int a, mp_digit b);
@@ -273,7 +273,7 @@ static void s_dadd(mp_int a, mp_digit b);
 static void s_dmul(mp_int a, mp_digit b);
 
 /* Single digit multiplication on buffers; assumes dc is big enough. */
-static void s_dbmul(mp_digit *da, mp_digit b, mp_digit *dc, mp_size size_a);
+static void s_dbmul(mp_digit* da, mp_digit b, mp_digit* dc, mp_size size_a);
 
 /* Single digit division.  Replaces a with the quotient,
    returns the remainder.  */
@@ -336,12 +336,12 @@ static int s_ch2val(char c, int r);
 static char s_val2ch(int v, int caps);
 
 /* Take 2's complement of a buffer in place */
-static void s_2comp(unsigned char *buf, int len);
+static void s_2comp(unsigned char* buf, int len);
 
 /* Convert a value to binary, ignoring sign.  On input, *limpos is the bound on
    how many bytes should be written to buf; on output, *limpos is set to the
    number of bytes actually written. */
-static mp_result s_tobin(mp_int z, unsigned char *buf, int *limpos, int pad);
+static mp_result s_tobin(mp_int z, unsigned char* buf, int* limpos, int pad);
 
 /* Multiply X by Y into Z, ignoring signs.  Requires that Z have enough storage
    preallocated to hold the result. */
@@ -683,7 +683,7 @@ mp_result mp_int_mul(mp_int a, mp_int b, mp_int c) {
   mp_size osize = MAX(ua, ub);
   osize = 4 * ((osize + 1) / 2);
 
-  mp_digit *out;
+  mp_digit* out;
   mp_size p = 0;
   if (c == a || c == b) {
     p = MAX(s_round_prec(osize), default_precision);
@@ -702,7 +702,7 @@ mp_result mp_int_mul(mp_int a, mp_int b, mp_int c) {
      using, and fix up its fields to reflect that.
    */
   if (out != MP_DIGITS(c)) {
-    if ((void *)MP_DIGITS(c) != (void *)c) s_free(MP_DIGITS(c));
+    if ((void*)MP_DIGITS(c) != (void*)c) s_free(MP_DIGITS(c));
     c->digits = out;
     c->alloc = p;
   }
@@ -742,7 +742,7 @@ mp_result mp_int_sqr(mp_int a, mp_int c) {
   /* Get a temporary buffer big enough to hold the result */
   mp_size osize = (mp_size)4 * ((MP_USED(a) + 1) / 2);
   mp_size p = 0;
-  mp_digit *out;
+  mp_digit* out;
   if (a == c) {
     p = s_round_prec(osize);
     p = MAX(p, default_precision);
@@ -761,7 +761,7 @@ mp_result mp_int_sqr(mp_int a, mp_int c) {
      reflect the new digit array it's using
    */
   if (out != MP_DIGITS(c)) {
-    if ((void *)MP_DIGITS(c) != (void *)c) s_free(MP_DIGITS(c));
+    if ((void*)MP_DIGITS(c) != (void*)c) s_free(MP_DIGITS(c));
     c->digits = out;
     c->alloc = p;
   }
@@ -860,6 +860,10 @@ mp_result mp_int_div(mp_int a, mp_int b, mp_int q, mp_int r) {
 
 mp_result mp_int_mod(mp_int a, mp_int m, mp_int c) {
   DECLARE_TEMP(1);
+  if (CMPZ(m) < 0) {
+    return MP_RANGE;
+  }
+
   mp_int out = (m == c) ? TEMP(0) : c;
   REQUIRE(mp_int_div(a, m, NULL, out));
   if (CMPZ(out) < 0) {
@@ -871,7 +875,7 @@ mp_result mp_int_mod(mp_int a, mp_int m, mp_int c) {
   return MP_OK;
 }
 
-mp_result mp_int_div_value(mp_int a, mp_small value, mp_int q, mp_small *r) {
+mp_result mp_int_div_value(mp_int a, mp_small value, mp_int q, mp_small* r) {
   mpz_t vtmp;
   mp_digit vbuf[MP_VALUE_DIGITS(value)];
   s_fake(&vtmp, value, vbuf);
@@ -1392,7 +1396,7 @@ mp_result mp_int_root(mp_int a, mp_small b, mp_int c) {
   return MP_OK;
 }
 
-mp_result mp_int_to_int(mp_int z, mp_small *out) {
+mp_result mp_int_to_int(mp_int z, mp_small* out) {
   assert(z != NULL);
 
   /* Make sure the value is representable as a small integer */
@@ -1403,7 +1407,7 @@ mp_result mp_int_to_int(mp_int z, mp_small *out) {
   }
 
   mp_usmall uz = MP_USED(z);
-  mp_digit *dz = MP_DIGITS(z) + uz - 1;
+  mp_digit* dz = MP_DIGITS(z) + uz - 1;
   mp_small uv = 0;
   while (uz > 0) {
     uv <<= MP_DIGIT_BIT / 2;
@@ -1416,7 +1420,7 @@ mp_result mp_int_to_int(mp_int z, mp_small *out) {
   return MP_OK;
 }
 
-mp_result mp_int_to_uint(mp_int z, mp_usmall *out) {
+mp_result mp_int_to_uint(mp_int z, mp_usmall* out) {
   assert(z != NULL);
 
   /* Make sure the value is representable as an unsigned small integer */
@@ -1426,7 +1430,7 @@ mp_result mp_int_to_uint(mp_int z, mp_usmall *out) {
   }
 
   mp_size uz = MP_USED(z);
-  mp_digit *dz = MP_DIGITS(z) + uz - 1;
+  mp_digit* dz = MP_DIGITS(z) + uz - 1;
   mp_usmall uv = 0;
 
   while (uz > 0) {
@@ -1440,7 +1444,7 @@ mp_result mp_int_to_uint(mp_int z, mp_usmall *out) {
   return MP_OK;
 }
 
-mp_result mp_int_to_string(mp_int z, mp_size radix, char *str, int limit) {
+mp_result mp_int_to_string(mp_int z, mp_size radix, char* str, int limit) {
   assert(z != NULL && str != NULL && limit >= 2);
   assert(radix >= MP_MIN_RADIX && radix <= MP_MAX_RADIX);
 
@@ -1489,7 +1493,7 @@ mp_result mp_int_to_string(mp_int z, mp_size radix, char *str, int limit) {
   }
 }
 
-mp_result mp_int_string_len(mp_int z, mp_size radix) {
+mp_size mp_int_string_len(mp_int z, mp_size radix) {
   assert(z != NULL);
   assert(radix >= MP_MIN_RADIX && radix <= MP_MAX_RADIX);
 
@@ -1502,12 +1506,12 @@ mp_result mp_int_string_len(mp_int z, mp_size radix) {
 }
 
 /* Read zero-terminated string into z */
-mp_result mp_int_read_string(mp_int z, mp_size radix, const char *str) {
+mp_result mp_int_read_string(mp_int z, mp_size radix, const char* str) {
   return mp_int_read_cstring(z, radix, str, NULL);
 }
 
-mp_result mp_int_read_cstring(mp_int z, mp_size radix, const char *str,
-                              char **end) {
+mp_result mp_int_read_cstring(mp_int z, mp_size radix, const char* str,
+                              char** end) {
   assert(z != NULL && str != NULL);
   assert(radix >= MP_MIN_RADIX && radix <= MP_MAX_RADIX);
 
@@ -1548,7 +1552,7 @@ mp_result mp_int_read_cstring(mp_int z, mp_size radix, const char *str,
   /* Override sign for zero, even if negative specified. */
   if (CMPZ(z) == 0) z->sign = MP_ZPOS;
 
-  if (end != NULL) *end = (char *)str;
+  if (end != NULL) *end = (char*)str;
 
   /* Return a truncation error if the string has unprocessed characters
      remaining, so the caller can tell if the whole string was done */
@@ -1559,7 +1563,7 @@ mp_result mp_int_read_cstring(mp_int z, mp_size radix, const char *str,
   }
 }
 
-mp_result mp_int_count_bits(mp_int z) {
+mp_size mp_int_count_bits(mp_int z) {
   assert(z != NULL);
 
   mp_size uz = MP_USED(z);
@@ -1577,7 +1581,7 @@ mp_result mp_int_count_bits(mp_int z) {
   return nbits;
 }
 
-mp_result mp_int_to_binary(mp_int z, unsigned char *buf, int limit) {
+mp_result mp_int_to_binary(mp_int z, unsigned char* buf, int limit) {
   static const int PAD_FOR_2C = 1;
 
   assert(z != NULL && buf != NULL);
@@ -1590,7 +1594,7 @@ mp_result mp_int_to_binary(mp_int z, unsigned char *buf, int limit) {
   return res;
 }
 
-mp_result mp_int_read_binary(mp_int z, unsigned char *buf, int len) {
+mp_result mp_int_read_binary(mp_int z, unsigned char* buf, int len) {
   assert(z != NULL && buf != NULL && len > 0);
 
   /* Figure out how many digits are needed to represent this value */
@@ -1606,8 +1610,8 @@ mp_result mp_int_read_binary(mp_int z, unsigned char *buf, int len) {
     s_2comp(buf, len);
   }
 
-  mp_digit *dz = MP_DIGITS(z);
-  unsigned char *tmp = buf;
+  mp_digit* dz = MP_DIGITS(z);
+  unsigned char* tmp = buf;
   for (int i = len; i > 0; --i, ++tmp) {
     s_qmul(z, (mp_size)CHAR_BIT);
     *dz |= *tmp;
@@ -1619,11 +1623,11 @@ mp_result mp_int_read_binary(mp_int z, unsigned char *buf, int len) {
   return MP_OK;
 }
 
-mp_result mp_int_binary_len(mp_int z) {
-  mp_result res = mp_int_count_bits(z);
-  if (res <= 0) return res;
+mp_size mp_int_binary_len(mp_int z) {
+  mp_size res = mp_int_count_bits(z);
+  if (res == 0) return res;
 
-  int bytes = mp_int_unsigned_len(z);
+  mp_size bytes = mp_int_unsigned_len(z);
 
   /* If the highest-order bit falls exactly on a byte boundary, we need to pad
      with an extra byte so that the sign will be read correctly when reading it
@@ -1633,7 +1637,7 @@ mp_result mp_int_binary_len(mp_int z) {
   return bytes;
 }
 
-mp_result mp_int_to_unsigned(mp_int z, unsigned char *buf, int limit) {
+mp_result mp_int_to_unsigned(mp_int z, unsigned char* buf, int limit) {
   static const int NO_PADDING = 0;
 
   assert(z != NULL && buf != NULL);
@@ -1641,7 +1645,7 @@ mp_result mp_int_to_unsigned(mp_int z, unsigned char *buf, int limit) {
   return s_tobin(z, buf, &limit, NO_PADDING);
 }
 
-mp_result mp_int_read_unsigned(mp_int z, unsigned char *buf, int len) {
+mp_result mp_int_read_unsigned(mp_int z, unsigned char* buf, int len) {
   assert(z != NULL && buf != NULL && len > 0);
 
   /* Figure out how many digits are needed to represent this value */
@@ -1650,7 +1654,7 @@ mp_result mp_int_read_unsigned(mp_int z, unsigned char *buf, int len) {
 
   mp_int_zero(z);
 
-  unsigned char *tmp = buf;
+  unsigned char* tmp = buf;
   for (int i = len; i > 0; --i, ++tmp) {
     (void)s_qmul(z, CHAR_BIT);
     *MP_DIGITS(z) |= *tmp;
@@ -1659,21 +1663,18 @@ mp_result mp_int_read_unsigned(mp_int z, unsigned char *buf, int len) {
   return MP_OK;
 }
 
-mp_result mp_int_unsigned_len(mp_int z) {
-  mp_result res = mp_int_count_bits(z);
-  if (res <= 0) return res;
-
-  int bytes = (res + (CHAR_BIT - 1)) / CHAR_BIT;
+mp_size mp_int_unsigned_len(mp_int z) {
+  mp_size res = mp_int_count_bits(z);
+  mp_size bytes = (res + (CHAR_BIT - 1)) / CHAR_BIT;
   return bytes;
 }
 
-const char *mp_error_string(mp_result res) {
+const char* mp_error_string(mp_result res) {
   if (res > 0) return s_unknown_err;
 
   res = -res;
   int ix;
-  for (ix = 0; ix < res && s_error_msg[ix] != NULL; ++ix)
-    ;
+  for (ix = 0; ix < res && s_error_msg[ix] != NULL; ++ix);
 
   if (s_error_msg[ix] != NULL) {
     return s_error_msg[ix];
@@ -1689,8 +1690,8 @@ const char *mp_error_string(mp_result res) {
 static const mp_digit fill = (mp_digit)0xdeadbeefabad1dea;
 #endif
 
-static mp_digit *s_alloc(mp_size num) {
-  mp_digit *out = malloc(num * sizeof(mp_digit));
+static mp_digit* s_alloc(mp_size num) {
+  mp_digit* out = malloc(num * sizeof(mp_digit));
   assert(out != NULL);
 
 #if DEBUG
@@ -1699,27 +1700,27 @@ static mp_digit *s_alloc(mp_size num) {
   return out;
 }
 
-static mp_digit *s_realloc(mp_digit *old, mp_size osize, mp_size nsize) {
+static mp_digit* s_realloc(mp_digit* old, mp_size osize, mp_size nsize) {
 #if DEBUG
-  mp_digit *new = s_alloc(nsize);
+  mp_digit* new = s_alloc(nsize);
   assert(new != NULL);
 
   for (mp_size ix = 0; ix < nsize; ++ix) new[ix] = fill;
   memcpy(new, old, osize * sizeof(mp_digit));
 #else
-  mp_digit *new = realloc(old, nsize * sizeof(mp_digit));
+  mp_digit* new = realloc(old, nsize * sizeof(mp_digit));
   assert(new != NULL);
 #endif
 
   return new;
 }
 
-static void s_free(void *ptr) { free(ptr); }
+static void s_free(void* ptr) { free(ptr); }
 
 static bool s_pad(mp_int z, mp_size min) {
   if (MP_ALLOC(z) < min) {
     mp_size nsize = s_round_prec(min);
-    mp_digit *tmp;
+    mp_digit* tmp;
 
     if (z->digits == &(z->single)) {
       if ((tmp = s_alloc(nsize)) == NULL) return false;
@@ -1751,7 +1752,7 @@ static void s_ufake(mp_int z, mp_usmall value, mp_digit vbuf[]) {
   z->digits = vbuf;
 }
 
-static int s_cdig(mp_digit *da, mp_digit *db, mp_size len) {
+static int s_cdig(mp_digit* da, mp_digit* db, mp_size len) {
   mp_digit *dat = da + len - 1, *dbt = db + len - 1;
 
   for (/* */; len != 0; --len, --dat, --dbt) {
@@ -1806,14 +1807,14 @@ static int s_uvcmp(mp_int a, mp_usmall uv) {
   return s_ucmp(a, &vtmp);
 }
 
-static mp_digit s_uadd(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
+static mp_digit s_uadd(mp_digit* da, mp_digit* db, mp_digit* dc, mp_size size_a,
                        mp_size size_b) {
   mp_size pos;
   mp_word w = 0;
 
   /* Insure that da is the longer of the two to simplify later code */
   if (size_b > size_a) {
-    SWAP(mp_digit *, da, db);
+    SWAP(mp_digit*, da, db);
     SWAP(mp_size, size_a, size_b);
   }
 
@@ -1836,7 +1837,7 @@ static mp_digit s_uadd(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
   return (mp_digit)w;
 }
 
-static void s_usub(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
+static void s_usub(mp_digit* da, mp_digit* db, mp_digit* dc, mp_size size_a,
                    mp_size size_b) {
   mp_size pos;
   mp_word w = 0;
@@ -1868,13 +1869,13 @@ static void s_usub(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
   assert(w == 0);
 }
 
-static int s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
+static int s_kmul(mp_digit* da, mp_digit* db, mp_digit* dc, mp_size size_a,
                   mp_size size_b) {
   mp_size bot_size;
 
   /* Make sure b is the smaller of the two input values */
   if (size_b > size_a) {
-    SWAP(mp_digit *, da, db);
+    SWAP(mp_digit*, da, db);
     SWAP(mp_size, size_a, size_b);
   }
 
@@ -1890,8 +1891,8 @@ static int s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
   if (multiply_threshold && size_a >= multiply_threshold && size_b > bot_size) {
     mp_digit *t1, *t2, *t3, carry;
 
-    mp_digit *a_top = da + bot_size;
-    mp_digit *b_top = db + bot_size;
+    mp_digit* a_top = da + bot_size;
+    mp_digit* b_top = db + bot_size;
 
     mp_size at_size = size_a - bot_size;
     mp_size bt_size = size_b - bot_size;
@@ -1947,14 +1948,14 @@ static int s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
   return 1;
 }
 
-static void s_umul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
+static void s_umul(mp_digit* da, mp_digit* db, mp_digit* dc, mp_size size_a,
                    mp_size size_b) {
   mp_size a, b;
   mp_word w;
 
   for (a = 0; a < size_a; ++a, ++dc, ++da) {
-    mp_digit *dct = dc;
-    mp_digit *dbt = db;
+    mp_digit* dct = dc;
+    mp_digit* dbt = db;
 
     if (*da == 0) continue;
 
@@ -1970,10 +1971,10 @@ static void s_umul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
   }
 }
 
-static int s_ksqr(mp_digit *da, mp_digit *dc, mp_size size_a) {
+static int s_ksqr(mp_digit* da, mp_digit* dc, mp_size size_a) {
   if (multiply_threshold && size_a > multiply_threshold) {
     mp_size bot_size = (size_a + 1) / 2;
-    mp_digit *a_top = da + bot_size;
+    mp_digit* a_top = da + bot_size;
     mp_digit *t1, *t2, *t3, carry;
     mp_size at_size = size_a - bot_size;
     mp_size buf_size = 2 * bot_size;
@@ -2020,7 +2021,7 @@ static int s_ksqr(mp_digit *da, mp_digit *dc, mp_size size_a) {
   return 1;
 }
 
-static void s_usqr(mp_digit *da, mp_digit *dc, mp_size size_a) {
+static void s_usqr(mp_digit* da, mp_digit* dc, mp_size size_a) {
   mp_size i, j;
   mp_word w;
 
@@ -2072,7 +2073,7 @@ static void s_usqr(mp_digit *da, mp_digit *dc, mp_size size_a) {
 
 static void s_dadd(mp_int a, mp_digit b) {
   mp_word w = 0;
-  mp_digit *da = MP_DIGITS(a);
+  mp_digit* da = MP_DIGITS(a);
   mp_size ua = MP_USED(a);
 
   w = (mp_word)*da + b;
@@ -2094,7 +2095,7 @@ static void s_dadd(mp_int a, mp_digit b) {
 
 static void s_dmul(mp_int a, mp_digit b) {
   mp_word w = 0;
-  mp_digit *da = MP_DIGITS(a);
+  mp_digit* da = MP_DIGITS(a);
   mp_size ua = MP_USED(a);
 
   while (ua > 0) {
@@ -2110,7 +2111,7 @@ static void s_dmul(mp_int a, mp_digit b) {
   }
 }
 
-static void s_dbmul(mp_digit *da, mp_digit b, mp_digit *dc, mp_size size_a) {
+static void s_dbmul(mp_digit* da, mp_digit b, mp_digit* dc, mp_size size_a) {
   mp_word w = 0;
 
   while (size_a > 0) {
@@ -2127,7 +2128,7 @@ static void s_dbmul(mp_digit *da, mp_digit b, mp_digit *dc, mp_size size_a) {
 static mp_digit s_ddiv(mp_int a, mp_digit b) {
   mp_word w = 0, qdigit;
   mp_size ua = MP_USED(a);
-  mp_digit *da = MP_DIGITS(a) + ua - 1;
+  mp_digit* da = MP_DIGITS(a) + ua - 1;
 
   for (/* */; ua > 0; --ua, --da) {
     w = (w << MP_DIGIT_BIT) | *da;
@@ -2216,7 +2217,7 @@ static int s_qmul(mp_int z, mp_size p2) {
      they will be shifted off the end if not preserved */
   extra = 0;
   if (rest != 0) {
-    mp_digit *dz = MP_DIGITS(z) + uz - 1;
+    mp_digit* dz = MP_DIGITS(z) + uz - 1;
 
     if ((*dz >> (MP_DIGIT_BIT - rest)) != 0) extra = 1;
   }
@@ -2328,7 +2329,7 @@ static int s_isp2(mp_int z) {
 
 static int s_2expt(mp_int z, mp_small k) {
   mp_size ndig, rest;
-  mp_digit *dz;
+  mp_digit* dz;
 
   ndig = (k + MP_DIGIT_BIT) / MP_DIGIT_BIT;
   rest = k % MP_DIGIT_BIT;
@@ -2415,8 +2416,8 @@ static int s_reduce(mp_int x, mp_int m, mp_int mu, mp_int q1, mp_int q2) {
    reduction constant for m.  Assumes a < m, b > 0. */
 static mp_result s_embar(mp_int a, mp_int b, mp_int m, mp_int mu, mp_int c) {
   mp_digit umu = MP_USED(mu);
-  mp_digit *db = MP_DIGITS(b);
-  mp_digit *dbt = db + MP_USED(b) - 1;
+  mp_digit* db = MP_DIGITS(b);
+  mp_digit* dbt = db + MP_USED(b) - 1;
 
   DECLARE_TEMP(3);
   REQUIRE(GROW(TEMP(0), 4 * umu));
@@ -2723,7 +2724,7 @@ static char s_val2ch(int v, int caps) {
   }
 }
 
-static void s_2comp(unsigned char *buf, int len) {
+static void s_2comp(unsigned char* buf, int len) {
   unsigned short s = 1;
 
   for (int i = len - 1; i >= 0; --i) {
@@ -2739,10 +2740,10 @@ static void s_2comp(unsigned char *buf, int len) {
   /* last carry out is ignored */
 }
 
-static mp_result s_tobin(mp_int z, unsigned char *buf, int *limpos, int pad) {
+static mp_result s_tobin(mp_int z, unsigned char* buf, int* limpos, int pad) {
   int pos = 0, limit = *limpos;
   mp_size uz = MP_USED(z);
-  mp_digit *dz = MP_DIGITS(z);
+  mp_digit* dz = MP_DIGITS(z);
 
   while (uz > 0 && pos < limit) {
     mp_digit d = *dz++;

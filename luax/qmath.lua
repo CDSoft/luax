@@ -59,6 +59,26 @@ if not has_qmath then
         return (a.num*b.den):compare(b.num*a.den)
     end
 
+    local function decompose(r)
+        if r >= 0 then
+            local a = r.num//r.den
+            return a, r - a
+        else
+            local a = -r.num//r.den
+            return -a, r + a
+        end
+    end
+
+    local function frac(r)
+        if r >= 0 then
+            local a = r.num//r.den
+            return r - a
+        else
+            local a = -r.num//r.den
+            return r + a
+        end
+    end
+
     mt.__add = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den + b.num*a.den, a.den*b.den) end
     mt.__div = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den, a.den*b.num) end
     mt.__eq = function(a, b) a, b = rat(a), rat(b); return compare(a, b) == 0 end
@@ -84,8 +104,10 @@ if not has_qmath then
     mt.__index.abs = function(a) return rat(a.num:abs(), a.den) end
     mt.__index.add = mt.__add
     mt.__index.compare = function(a, b) return compare(rat(a), rat(b)) end
+    mt.__index.decompose = function(a) return decompose(rat(a)) end
     mt.__index.denom = function(a) return rat(a.den) end
     mt.__index.div = mt.__div
+    mt.__index.frac = frac
     mt.__index.int = function(a) return rat(a.num / a.den) end
     mt.__index.inv = function(a) return rat(a.den, a.num) end
     mt.__index.isinteger = function(a) return a.den:isone() end
@@ -102,8 +124,10 @@ if not has_qmath then
     qmath.abs = function(a) return rat(a):abs() end
     qmath.add = function(a, b) return rat(a) + rat(b) end
     qmath.compare = function(a, b) return rat(a):compare(rat(b)) end
+    qmath.decompose = function(a) return rat(a):decompose() end
     qmath.denom = function(a) return rat(a):denom() end
     qmath.div = function(a, b) return rat(a) / rat(b) end
+    qmath.frac = frac
     qmath.int = function(a) return rat(a):int() end
     qmath.inv = function(a) return rat(a):inv() end
     qmath.isinteger = function(a) return rat(a):isinteger() end

@@ -80,6 +80,14 @@ mp_result mp_rat_init_size(mp_rat r, mp_size n_prec, mp_size d_prec);
 mp_result mp_rat_init_copy(mp_rat r, mp_rat old);
 
 /** Sets the value of `r` to the ratio of signed `numer` to signed `denom`.  It
+    returns `MP_UNDEF` if `denom` is zero.
+
+    At least one of `numer` and `denom` must be non-NULL.
+    If `numer` is NULL, the value of `r` is set to 1 / `denom`.
+    If `denom` is NULL, the value of `r` is set to `numer` / 1. */
+mp_result mp_rat_set(mp_rat r, mp_int numer, mp_int denom);
+
+/** Sets the value of `r` to the ratio of signed `numer` to signed `denom`.  It
     returns `MP_UNDEF` if `denom` is zero. */
 mp_result mp_rat_set_value(mp_rat r, mp_small numer, mp_small denom);
 
@@ -157,6 +165,15 @@ mp_result mp_rat_div_int(mp_rat a, mp_int b, mp_rat c);
     It returns `MP_RANGE` if `b < 0`. */
 mp_result mp_rat_expt(mp_rat a, mp_small b, mp_rat c);
 
+/** Sets `ipart` to the integer part of `r` and `fpart` to the difference
+    of `r - ipart`. If `r < 0` then the signs of `ipart` and `fpart` will also
+    be negative, unless they are zero.
+
+    At least one of `ipart` and `fpart` must be non-NULL.
+    If `ipart` is NULL the integer part is discarded.
+    If `fpart` is NULL, the fractional part is discarded. */
+mp_result mp_rat_decompose(mp_rat r, mp_int ipart, mp_rat fpart);
+
 /** Returns the comparator of `a` and `b`. */
 int mp_rat_compare(mp_rat a, mp_rat b);
 
@@ -218,12 +235,12 @@ mp_result mp_rat_to_decimal(mp_rat r, mp_size radix, mp_size prec,
 /** Reports the minimum number of characters required to represent `r` as a
     zero-terminated string in the given `radix`.
     Requires `MP_MIN_RADIX <= radix <= MP_MAX_RADIX`. */
-mp_result mp_rat_string_len(mp_rat r, mp_size radix);
+mp_size mp_rat_string_len(mp_rat r, mp_size radix);
 
 /** Reports the length in bytes of the buffer needed to convert `r` using the
     `mp_rat_to_decimal()` function with the specified `radix` and `prec`. The
     buffer size estimate may slightly exceed the actual required capacity. */
-mp_result mp_rat_decimal_len(mp_rat r, mp_size radix, mp_size prec);
+mp_size mp_rat_decimal_len(mp_rat r, mp_size radix, mp_size prec);
 
 /** Sets `r` to the value represented by a zero-terminated string `str` in the
     format `"n/d"` including a sign flag. It returns `MP_UNDEF` if the encoded

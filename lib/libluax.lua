@@ -9613,6 +9613,8 @@ if not has_imath then
 
     local mt = {__index={}}
 
+    local F = require "F"
+
     ---@diagnostic disable:unused-vararg
     local function ni(f) return function(...) error(f.." not implemented") end end
 
@@ -9621,6 +9623,8 @@ if not has_imath then
     local sqrt = math.sqrt
     local log = math.log
     local max = math.max
+
+    local concat = table.concat
 
     local RADIX <const> = 10000000
     local RADIX_LEN <const> = floor(log(RADIX, 10))
@@ -9634,7 +9638,7 @@ if not has_imath then
             if a[i] and a[i] ~= 0 then break end
             a[i] = nil
         end
-        if #a == 0 then a.sign = 1 end
+        if #a == 0 then a.s = 1 end
     end
 
     local function int(n, base)
@@ -9659,23 +9663,23 @@ if not has_imath then
         elseif n:sub(d, d+1) == "0b" then d = d+2; base = 2
         else base = base or 10
         end
-        local self = {sign=1}
+        local self = {s=1}
         if base == 10 then
             for i = #n, d, -RADIX_LEN do
                 local digit = n:sub(max(d, i-RADIX_LEN+1), i)
                 self[#self+1] = tonumber(digit)
             end
         else
-            local bn_base = {sign=1, base}
-            local bn_shift = {sign=1, 1}
-            local bn_digit = {sign=1, 0}
+            local bn_base = {s=1, base}
+            local bn_shift = {s=1, 1}
+            local bn_digit = {s=1, 0}
             for i = #n, d, -1 do
                 bn_digit[1] = tonumber(n:sub(i, i), base)
                 self = int_add(self, int_mul(bn_digit, bn_shift))
                 bn_shift = int_mul(bn_shift, bn_base)
             end
         end
-        self.sign = sign
+        self.s = sign
         int_trim(self)
         return setmetatable(self, mt)
     end
@@ -9685,7 +9689,7 @@ if not has_imath then
     local int_two <const> = int(2)
 
     local function int_copy(n)
-        local c = {sign=n.sign}
+        local c = {s=n.s}
         for i = 1, #n do
             c[i] = n[i]
         end
@@ -9693,23 +9697,25 @@ if not has_imath then
     end
 
     local function int_tonumber(n)
-        local s = n.sign < 0 and "-0" or "0"
+        local s = {(n.s < 0 and #n > 0) and "-0" or "0"}
         local fmt = ("%%0%dd"):format(RADIX_LEN)
         for i = #n, 1, -1 do
-            s = s..fmt:format(n[i])
+            s[#s+1] = fmt:format(n[i])
         end
-        return tonumber(s..".")
+        s[#s+1] = "."
+        return tonumber(concat(s))
     end
 
     local function int_tostring(n, base)
         base = base or 10
-        local s = ""
-        local sign = n.sign
+        local s = F{}
+        local sign = n.s
         if base == 10 then
             local fmt = ("%%0%dd"):format(RADIX_LEN)
             for i = 1, #n do
-                s = fmt:format(n[i]) .. s
+                s[#s+1] = fmt:format(n[i])
             end
+            s = concat(s:reverse())
             s = s:gsub("^[_0]+", "")
             if s == "" then s = "0" end
         else
@@ -9719,12 +9725,13 @@ if not has_imath then
                 local d
                 absn, d = int_divmod(absn, bn_base)
                 d = int_tonumber(d)
-                s = ("0123456789ABCDEF"):sub(d+1, d+1) .. s
+                s[#s+1] = ("0123456789ABCDEF"):sub(d+1, d+1)
             end
+            s = concat(s:reverse())
             s = s:gsub("^0+", "")
             if s == "" then s = "0" end
         end
-        if sign < 0 then s = "-" .. s end
+        if sign < 0 and s ~= "0" then s = "-" .. s end
         return s
     end
 
@@ -9733,18 +9740,18 @@ if not has_imath then
     end
 
     local function int_isone(a)
-        return #a == 1 and a[1] == 1 and a.sign == 1
+        return #a == 1 and a[1] == 1 and a.s == 1
     end
 
     local function int_cmp(a, b)
         if #a == 0 and #b == 0 then return 0 end -- 0 == -0
-        if a.sign > b.sign then return 1 end
-        if a.sign < b.sign then return -1 end
-        if #a > #b then return a.sign end
-        if #a < #b then return -a.sign end
+        if a.s > b.s then return 1 end
+        if a.s < b.s then return -1 end
+        if #a > #b then return a.s end
+        if #a < #b then return -a.s end
         for i = #a, 1, -1 do
-            if a[i] > b[i] then return a.sign end
-            if a[i] < b[i] then return -a.sign end
+            if a[i] > b[i] then return a.s end
+            if a[i] < b[i] then return -a.s end
         end
         return 0
     end
@@ -9761,14 +9768,15 @@ if not has_imath then
 
     local function int_neg(a)
         local b = int_copy(a)
-        b.sign = -a.sign
+        b.s = -a.s
+        int_trim(a)
         return b
     end
 
     int_add = function(a, b)
-        if a.sign == b.sign then            -- a+b = a+b, (-a)+(-b) = -(a+b)
+        if a.s == b.s then            -- a+b = a+b, (-a)+(-b) = -(a+b)
             local c = int()
-            c.sign = a.sign
+            c.s = a.s
             local carry = 0
             for i = 1, max(#a, #b) + 1 do -- +1 for the last carry
                 c[i] = carry + (a[i] or 0) + (b[i] or 0)
@@ -9787,7 +9795,7 @@ if not has_imath then
     end
 
     int_sub = function(a, b)
-        if a.sign == b.sign then
+        if a.s == b.s then
             local A, B
             local cmp = int_abscmp(a, b)
             if cmp >= 0 then A = a; B = b; else A = b; B = a; end
@@ -9803,12 +9811,12 @@ if not has_imath then
                 end
             end
             assert(carry == 0) -- should be true if |A| >= |B|
-            c.sign = (cmp >= 0) and a.sign or -a.sign
+            c.s = (cmp >= 0) and a.s or -a.s
             int_trim(c)
             return c
         else
             local c = int_add(a, int_neg(b))
-            c.sign = a.sign
+            c.s = a.s
             return c
         end
     end
@@ -9827,7 +9835,7 @@ if not has_imath then
             end
         end
         int_trim(c)
-        c.sign = a.sign * b.sign
+        c.s = a.s * b.s
         return c
     end
 
@@ -9845,7 +9853,7 @@ if not has_imath then
                 carry = 0
             end
         end
-        c.sign = a.sign
+        c.s = a.s
         int_trim(c)
         return c, (a[1] or 0) % 2
     end
@@ -9856,19 +9864,19 @@ if not has_imath then
         assert(not int_iszero(b), "Division by zero")
         if int_iszero(a) then return int_zero, int_zero end
         if int_isone(b) then return a, int_zero end
-        if b.sign < 0 then a = int_neg(a); b = int_neg(b) end
+        if b.s < 0 then a = int_neg(a); b = int_neg(b) end
         local qmin = int_neg(a)
         local qmax = a
         if int_cmp(qmax, qmin) < 0 then qmin, qmax = qmax, qmin end
         local rmin = int_sub(a, int_mul(qmin, b))
-        if rmin.sign > 0 and int_cmp(rmin, b) < 0 then return qmin, rmin end
+        if rmin.s > 0 and int_cmp(rmin, b) < 0 then return qmin, rmin end
         local rmax = int_sub(a, int_mul(qmax, b))
-        if rmax.sign > 0 and int_cmp(rmax, b) < 0 then return qmax, rmax end
-        assert(rmin.sign ~= rmax.sign)
+        if rmax.s > 0 and int_cmp(rmax, b) < 0 then return qmax, rmax end
+        assert(rmin.s ~= rmax.s)
         local q = int_absdiv2(int_add(qmin, qmax))
         local r = int_sub(a, int_mul(q, b))
-        while r.sign < 0 or int_cmp(r, b) >= 0 do
-            if r.sign == rmin.sign then
+        while r.s < 0 or int_cmp(r, b) >= 0 do
+            if r.s == rmin.s then
                 qmin, qmax = q, qmax
                 rmin, rmax = r, rmax
             else
@@ -9882,7 +9890,7 @@ if not has_imath then
     end
 
     local function int_sqrt(a)
-        assert(a.sign >= 0, "Square root of a negative number")
+        assert(a.s >= 0, "Square root of a negative number")
         if int_iszero(a) then return int_zero end
         local b = int()
         local c = int()
@@ -9898,7 +9906,7 @@ if not has_imath then
     end
 
     local function int_pow(a, b)
-        assert(b.sign > 0)
+        assert(b.s > 0)
         if #b == 0 then return int_one end
         if #b == 1 and b[1] == 1 then return a end
         if #b == 1 and b[1] == 2 then return int_mul(a, a) end
@@ -9912,7 +9920,8 @@ if not has_imath then
 
     int_abs = function(a)
         local b = int_copy(a)
-        b.sign = 1
+        b.s = 1
+        int_trim(b)
         return b
     end
 
@@ -9951,7 +9960,7 @@ if not has_imath then
 
     int_shift_left = function(a, b)
         if int_iszero(b) then return a end
-        if b.sign > 0 then
+        if b.s > 0 then
             return int_mul(a, int_two^b)
         else
             return int_shift_right(a, int_neg(b))
@@ -9960,7 +9969,7 @@ if not has_imath then
 
     int_shift_right = function(a, b)
         if int_iszero(b) then return a end
-        if b.sign < 0 then
+        if b.s < 0 then
             return int_shift_left(a, int_neg(b))
         else
             return (int_divmod(a, int_two^b))
@@ -10002,6 +10011,7 @@ if not has_imath then
     mt.__index.quotrem = function(a, b) return int_divmod(int(a), int(b)) end
     mt.__index.root = ni "root"
     mt.__index.shift = mt.__index.shl
+    mt.__index.sign = function(a) return int_cmp(int(a), int_zero) end
     mt.__index.sqr = function(a) return int_mul(a, a) end
     mt.__index.sqrt = int_sqrt
     mt.__index.sub = mt.__sub
@@ -10032,6 +10042,7 @@ if not has_imath then
     imath.quotrem = function(a, b) return int(a):quotrem(int(b)) end
     imath.root = function(a) return int(a):root() end
     imath.shift = function(a, b) return int(a) << b end
+    imath.sign = function(a) return int_cmp(int(a), int_zero) end
     imath.sqr = function(a) return int(a):sqr() end
     imath.sqrt = function(a) return int(a):sqrt() end
     imath.sub = function(a, b) return int(a) - int(b) end
@@ -11707,6 +11718,26 @@ if not has_qmath then
         return (a.num*b.den):compare(b.num*a.den)
     end
 
+    local function decompose(r)
+        if r >= 0 then
+            local a = r.num//r.den
+            return a, r - a
+        else
+            local a = -r.num//r.den
+            return -a, r + a
+        end
+    end
+
+    local function frac(r)
+        if r >= 0 then
+            local a = r.num//r.den
+            return r - a
+        else
+            local a = -r.num//r.den
+            return r + a
+        end
+    end
+
     mt.__add = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den + b.num*a.den, a.den*b.den) end
     mt.__div = function(a, b) a, b = rat(a), rat(b); return rat(a.num*b.den, a.den*b.num) end
     mt.__eq = function(a, b) a, b = rat(a), rat(b); return compare(a, b) == 0 end
@@ -11732,8 +11763,10 @@ if not has_qmath then
     mt.__index.abs = function(a) return rat(a.num:abs(), a.den) end
     mt.__index.add = mt.__add
     mt.__index.compare = function(a, b) return compare(rat(a), rat(b)) end
+    mt.__index.decompose = function(a) return decompose(rat(a)) end
     mt.__index.denom = function(a) return rat(a.den) end
     mt.__index.div = mt.__div
+    mt.__index.frac = frac
     mt.__index.int = function(a) return rat(a.num / a.den) end
     mt.__index.inv = function(a) return rat(a.den, a.num) end
     mt.__index.isinteger = function(a) return a.den:isone() end
@@ -11750,8 +11783,10 @@ if not has_qmath then
     qmath.abs = function(a) return rat(a):abs() end
     qmath.add = function(a, b) return rat(a) + rat(b) end
     qmath.compare = function(a, b) return rat(a):compare(rat(b)) end
+    qmath.decompose = function(a) return rat(a):decompose() end
     qmath.denom = function(a) return rat(a):denom() end
     qmath.div = function(a, b) return rat(a) / rat(b) end
+    qmath.frac = frac
     qmath.int = function(a) return rat(a):int() end
     qmath.inv = function(a) return rat(a):inv() end
     qmath.isinteger = function(a) return rat(a):isinteger() end
