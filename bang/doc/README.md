@@ -14,9 +14,6 @@ as this is the only reliable way to install the exact version you need.
 However, if you do require precompiled binaries,
 this page offers a selection for various platforms: <https://cdelord.fr/pub>.
 
-Note that the `bin` directory contains prebuilt Bang scripts
-that can run with a Lua or LuaX interpreter.
-
 Pricing
 =======
 

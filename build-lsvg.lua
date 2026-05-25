@@ -38,9 +38,6 @@ local lsvg_sources = ls "lsvg/*.lua"
 acc(compile) {
     luax.lua    "$builddir/bin/lsvg.lua" { lsvg_sources },
     luax.native "$builddir/bin/lsvg"     { lsvg_sources },
-
-    -- Add prebuilt scripts to the repository
-    build.cp "bin/lsvg.lua" "$builddir/bin/lsvg.lua",
 }
 
 -------------------------------------------------------------------------------

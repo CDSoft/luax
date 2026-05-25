@@ -39,10 +39,6 @@ acc(compile) {
     luax.lua    "$builddir/bin/ypp.lua"        { ypp_sources },
     luax.pandoc "$builddir/bin/ypp-pandoc.lua" { ypp_sources },
     luax.native "$builddir/bin/ypp"            { ypp_sources },
-
-    -- Add prebuilt scripts to the repository
-    build.cp "bin/ypp.lua"        "$builddir/bin/ypp.lua",
-    build.cp "bin/ypp-pandoc.lua" "$builddir/bin/ypp-pandoc.lua",
 }
 
 -------------------------------------------------------------------------------

@@ -57,7 +57,7 @@ return function()
         end
     end
     do
-        local s = assert(fs.read_bin("lib/libluax.lua"))
+        local s = assert(fs.read_bin("build.ninja"))
         local level_min     = s:lz4(0)        eq(level_min:unlz4(), s)
         local level_default = s:lz4(9)        eq(level_default:unlz4(), s)
         local level_max     = s:lz4(12)       eq(level_max:unlz4(), s)

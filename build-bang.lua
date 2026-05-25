@@ -38,9 +38,6 @@ local bang_sources = ls "bang/*.lua"
 acc(compile) {
     luax.lua    "$builddir/bin/bang.lua" { bang_sources },
     luax.native "$builddir/bin/bang"     { bang_sources },
-
-    -- Add prebuilt scripts to the repository
-    build.cp "bin/bang.lua" "$builddir/bin/bang.lua",
 }
 
 -------------------------------------------------------------------------------

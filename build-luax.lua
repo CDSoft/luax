@@ -262,11 +262,6 @@ acc(compile) {
     luax0.pandoc "$builddir/bin/luax-pandoc.lua" { luax_lua_sources },
     luax0.luax   "$builddir/lib/libluax.lua"     { libluax_lua_sources },
     build.cp     "$builddir/lib/libluax.xyz"     { "$builddir/stage0/lib/libluax.xyz" },
-
-    -- Add prebuilt scripts to the repository
-    build.cp "bin/luax.lua"        "$builddir/bin/luax.lua",
-    build.cp "bin/luax-pandoc.lua" "$builddir/bin/luax-pandoc.lua",
-    build.cp "lib/libluax.lua"     "$builddir/lib/libluax.lua",
 }
 
 -- Compile using LuaX binaries
@@ -506,7 +501,7 @@ acc(test) {
         description = "test $out",
         command = {
             "PATH=bin:$$PATH",
-            "LUA_PATH='lib/?.lua;luax/tests/luax-tests/?.lua'",
+            "LUA_PATH='$builddir/lib/?.lua;luax/tests/luax-tests/?.lua'",
             "TEST_NUM=5",
             test_options,
             "ARCH="..sys.arch, "OS="..sys.os, "LIBC=lua", "EXE="..sys.exe, "SO="..sys.so, "NAME="..sys.name,
@@ -515,7 +510,7 @@ acc(test) {
             "touch $out",
         },
         implicit_in = {
-            "lib/libluax.lua",
+            "$builddir/lib/libluax.lua",
             test_sources,
             imported_test_sources,
         },
@@ -616,7 +611,7 @@ local ypp_config_params = {
 }
 
 gfm = build.ypp : new "ypp.md"
-    : add "implicit_in" "lib/libluax.lua"
+    : add "implicit_in" "$builddir/lib/libluax.lua"
     : add "flags" { ypp_config_params }
 
 acc(doc) {

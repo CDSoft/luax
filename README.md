@@ -75,7 +75,7 @@ Feel free to promote LuaX!
 **[Bang]** (Bang Automates Ninja Generation)
 : is a [Ninja] build file generator
   scriptable in LuaX. It turns readable LuaX build scripts into fast, incremental
-  Ninja build files, with built-in support for C/C++ compilation,
+  Ninja build files, with built-in support for Lua, C, C++ compilation,
   cross-compilation, and common document processors.
 
 **[Ypp]** (Yet a PreProcessor)
