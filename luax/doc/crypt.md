@@ -283,6 +283,16 @@ crypt.sha1(data)
 returns a SHA-1 digest of `data`.
 
 
+### SHA-256 hash
+
+
+
+```lua
+crypt.sha256(data)
+```
+returns a SHA-256 digest of `data`.
+
+
 
 
 ## Random array access
@@ -325,6 +335,7 @@ s:hash32()          == crypt.hash32(s)
 s:hash64()          == crypt.hash64(s)
 s:hash128()         == crypt.hash128(s)
 s:sha1()            == crypt.sha1(s)
+s:sha256()          == crypt.sha256(s)
 s:hash256()         == crypt.hash256(s)
 s:hash512()         == crypt.hash512(s)
 s:hash1024()        == crypt.hash1024(s)
