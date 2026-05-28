@@ -69,6 +69,7 @@ return function()
         test            = "luax/tests/luax-tests/test.lua",
         test_test       = "luax/tests/luax-tests/test_test.lua",
         version_test    = "luax/tests/luax-tests/version_test.lua",
+        yaml_test       = "luax/tests/luax-tests/yaml_test.lua",
     }
     or {}
 

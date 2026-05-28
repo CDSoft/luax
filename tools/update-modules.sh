@@ -40,6 +40,7 @@ update_all()
     update_linenoise    master
     update_dkjson       2.10
     update_toml         1.0.0
+    update_tinyyaml     master
     update_luasocket    3.1.0
     update_lz4          release
     update_lzlib        1.16
@@ -345,6 +346,19 @@ index ef81455..b26e867 100644
              table.insert(depth, escape_key(k))
 EOF
     rm -f "$ROOT/luax/toml.lua.orig"
+}
+
+update_tinyyaml()
+{
+    local YAML_REPO=zepinglee/lua-tinyyaml
+    local YAML_VERSION="$1"
+    local YAML_ARCHIVE="tinyyaml-$YAML_VERSION.zip"
+    local YAML_URL="https://github.com/$YAML_REPO/archive/refs/heads/$YAML_VERSION.zip"
+    rm -rf "$TMP"/*yaml*
+    download "$YAML_URL" "$TMP/$YAML_ARCHIVE"
+    unzip -o "$TMP/$YAML_ARCHIVE" -d "$TMP"
+    cp "$TMP/lua-tinyyaml-$YAML_VERSION/tinyyaml.lua" "$ROOT/luax/yaml.lua"
+    echo "--@LIB" >> "$ROOT/luax/yaml.lua"
 }
 
 update_luasocket()

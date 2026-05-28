@@ -123,7 +123,7 @@ with "%{italic'luax env'}".
 E.g.: %{italic'eval $(luax env)'}
 
 "%{italic'luax env"'} can also generate shell variables from a script
-or a TOML file.
+or a TOML/JSON/YAML file.
 E.g.: %{italic'eval $(luax env script.lua)'}
 ]===]):trim()
 end
@@ -1177,9 +1177,16 @@ local function cmd_env()
     local function user_env(scripts)
         local import = require "import"
         local tomlx = require "tomlx"
+        local json = require "json"
+        local yaml = require "yaml"
         local function read(name)
-            if name:ext() == ".toml" then return assert(tomlx.read(name)) end
-            return assert(import(name))
+            local decode = F.case(name:ext()) {
+                [".toml"] = F.compose{assert, tomlx.read},
+                [".json"] = F.compose{assert, json.decode, assert, fs.read},
+                [".yaml"] = F.compose{assert, yaml.parse, assert, fs.read},
+                [F.Nil]   = F.compose{assert, import},
+            }
+            return decode(name)
         end
         local script = {}
         local function dump(t, p)

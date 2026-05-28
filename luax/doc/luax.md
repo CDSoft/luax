@@ -230,7 +230,7 @@ with "luax env".
 E.g.: eval $(luax env)
 
 "luax env" can also generate shell variables from a script
-or a TOML file.
+or a TOML/JSON/YAML file.
 E.g.: eval $(luax env script.lua)
 ```
 
@@ -330,6 +330,7 @@ The `luax` runtime comes with a few builtin modules.
 - [json](json.md): JSON Module for Lua
 - [toml](toml.md): a pure Lua TOML parser (tinytoml)
 - [tomlx](tomlx.md): a layer on top of toml with macros
+- [yaml](yaml.md): YAML Module for Lua
 
 ## Pure Lua modules
 
@@ -391,3 +392,6 @@ script `lib/libluax.lua` can be reused in pure Lua programs:
   CBOR ([License](https://code.zash.se/lua-cbor/file/tip/COPYING))
 - **[tinytoml](https://github.com/FourierTransformer/tinytoml)**: a pure Lua TOML parser
   ([MIT License](https://github.com/FourierTransformer/tinytoml?tab=MIT-1-ov-file#readme))
+- **[lua-tinyyaml](https://github.com/zepinglee/lua-tinyyaml)**: a tiny yaml
+  (subset) parser for pure lua ([MIT
+  License](https://github.com/zepinglee/lua-tinyyaml/blob/master/LICENSE))
