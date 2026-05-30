@@ -34,7 +34,7 @@ The LuaX repository now contains some softwares that are closely coupled with Lu
 : The LuaX interpreter / compiler itself.
 
 [Bang]
-: The LuaX build system that enhances Nina with some powerful Lua scripting capabilities.
+: The LuaX build system that enhances Ninja with some powerful Lua scripting capabilities.
 
 [Ypp]
 : A generic text preprocessor used to build the LuaX documentation.
