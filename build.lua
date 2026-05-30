@@ -22,7 +22,7 @@ https://codeberg.org/cdsoft/luax
 
 help.name "LuaX"
 
-version(require "luax-version" . version) -- defined in lib/version.lua
+version(require "luax-version" . version) -- defined in [file:luax/luax-version.lua]
 
 args = (function()
     local parser = require "argparse"()

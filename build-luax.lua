@@ -32,12 +32,11 @@ local F = require "F"
 local fs = require "fs"
 local sh = require "sh"
 local sys = require "sys"
-local crypt = require "crypt"
 local targets = require "luax-targets"
 local version = require "luax-version"
 
-var "zig_hash" { crypt.hash(sh { vars%"$zig", "env" }) }
-var "lua_hash" { crypt.hash(sh { vars%"$lua", "-v" }) }
+var "zig_version" { sh { vars%"$zig", "version" } : words()[1] }
+var "lua_version" { sh { vars%"$lua", "-v" } : words()[2] }
 
 build.ypp
     : set "cmd" "$builddir/bin/ypp"
@@ -79,7 +78,7 @@ local function new_luax(prog, deps)
     target_names : foreach(function(target_name)
         luax[target_name] = build.luax[target_name] : new("luax-".._luax_idx.."-"..target_name)
             : set "luax" {
-                "export LUA_HASH=$lua_hash;", -- force execution when Lua is updated
+                "LUA_VERSION=$lua_version;", -- force execution when Lua is updated
                 prog,
             }
             : add "implicit_in" (deps)
@@ -90,7 +89,7 @@ end
 
 rule "packlib" {
     command = {
-        "export LUA_HASH=$lua_hash;", -- force execution when Lua is updated
+        "LUA_VERSION=$lua_version;", -- force execution when Lua is updated
         "export LUA_PATH=luax/?.lua;",
         "$lua tools/packlib.lua -o $out $in",
     },
@@ -129,7 +128,7 @@ local cflags = build.compile_flags {
         "-Og",
     },
 
-    "-DZIG_HASH=$zig_hash", -- force recompilation when zig is updated
+    "-DZIG_VERSION=$zig_version", -- force recompilation when zig is updated
 }
 
 local luax_cflags = build.compile_flags {
