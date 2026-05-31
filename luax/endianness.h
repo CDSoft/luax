@@ -27,7 +27,7 @@
 
 #include <stdint.h>
 
-static uint32_t le32toh(uint32_t little_endian_32bits)
+static inline uint32_t le32toh(uint32_t little_endian_32bits)
 {
     return (uint32_t) ( ((uint8_t*)&little_endian_32bits)[0] << (8*0)
                       | ((uint8_t*)&little_endian_32bits)[1] << (8*1)

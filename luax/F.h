@@ -20,6 +20,10 @@
 #pragma once
 
 #include "lua.h"
+#include "lauxlib.h"
 
 /* set the F module metatable to the table at the top of the stack */
-void set_F_metatable(lua_State *L);
+static inline void set_F_metatable(lua_State *L)
+{
+    luaL_setmetatable(L, "luax_F_mt");
+}
