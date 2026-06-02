@@ -114,7 +114,7 @@ return function()
         "foo.baz.array[3]: foo.bar + baz:1: attempt to perform arithmetic on a table value (global 'baz')",
     })
 
-    local tmp = os.getenv "TESTDIR" / os.getenv "TEST_NUM"
+    local tmp = os.getenv "TESTDIR" / os.getenv "TEST_NUM" / (os.getenv "TEST_CASE" or "0")
     fs.mkdirs(tmp)
     local schema = tmp/"schema.toml"
     fs.write(schema, [===[

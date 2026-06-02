@@ -77,7 +77,7 @@ return function()
     modpath["luax/tests/luax-tests/to_be_imported-1.lua"] = "luax/tests/luax-tests/to_be_imported-1.lua"
     modpath["luax/tests/luax-tests/to_be_imported-2.lua"] = "luax/tests/luax-tests/to_be_imported-2.lua"
     -- files read by the tomlx tests
-    local tmp = os.getenv "TESTDIR" / os.getenv "TEST_NUM"
+    local tmp = os.getenv "TESTDIR" / os.getenv "TEST_NUM" / (os.getenv "TEST_CASE" or "0")
     modpath[tmp/"f1.toml"] = tmp/"f1.toml"
     modpath[tmp/"f2.toml"] = tmp/"f2.toml"
     modpath[tmp/"f3.toml"] = tmp/"f3.toml"
