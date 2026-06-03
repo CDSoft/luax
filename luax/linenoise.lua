@@ -21,18 +21,9 @@ https://codeberg.org/cdsoft/luax
 --@LIB
 
 local has_linenoise, linenoise = pcall(require, "_linenoise")
+if has_linenoise then return linenoise end
 
-if not has_linenoise then
+local read = require "term".prompt
+local function nop() return nop end
 
-    local F = require "F"
-    local term = require "term"
-
-    linenoise = setmetatable({
-        read = term.prompt,
-    }, {
-        __index = F.const(F.const()),
-    })
-
-end
-
-return linenoise
+return setmetatable({read=read}, {__index=nop})

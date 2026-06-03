@@ -21,18 +21,9 @@ https://codeberg.org/cdsoft/luax
 --@LIB
 
 local has_readline, readline = pcall(require, "_readline")
+if has_readline then return readline end
 
-if not has_readline then
+local read = require "term".prompt
+local function nop() return nop end
 
-    local F = require "F"
-    local term = require "term"
-
-    readline = setmetatable({
-        read = term.prompt,
-    }, {
-        __index = F.const(F.const()),
-    })
-
-end
-
-return readline
+return setmetatable({read=read}, {__index=nop})
