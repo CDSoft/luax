@@ -115,7 +115,7 @@ local function lto(target)
 end
 
 local cflags = build.compile_flags {
-    "-std=gnu2x",
+    "-std=gnu23",
     "-O3",
     "-pipe",
     "-fPIC",
@@ -148,9 +148,8 @@ local luax_cflags = build.compile_flags {
 
     "-Weverything",
     "-Wno-padded",
-    "-Wno-reserved-identifier",
+    "-Wno-reserved-macro-identifier",
     "-Wno-disabled-macro-expansion",
-    "-Wno-used-but-marked-unused",
     "-Wno-documentation-unknown-command",
     "-Wno-declaration-after-statement",
     "-Wno-unsafe-buffer-usage",

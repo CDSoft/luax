@@ -30,10 +30,10 @@ int luax_push_errno(lua_State *L, const char *filename);
 int luax_pusherror(lua_State *L, const char *msg, ...);
 
 typedef struct {
+    char *s;
     size_t capacity;
     size_t len;
     bool overflow;
-    char *s;
 } t_str;
 
 void str_init(t_str *str, char *mem, size_t capacity);
