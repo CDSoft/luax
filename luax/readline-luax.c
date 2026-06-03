@@ -27,7 +27,7 @@ provides a set of functions for use by applications that allow users to edit com
 If it fails, it uses the linenoise module that has similar and slightly more limited editing and history capabilities.
 
 **Warning**: readline and linenoise have not been ported to Windows.
-The following functions work on Windows but are stubbed using the C `fgets` function.
+The following functions work on Windows but are stubbed using the `term` module.
 The history can not be saved on Windows.
 @@@*/
 
@@ -37,21 +37,16 @@ The history can not be saved on Windows.
 #include "tools.h"
 
 #include <ctype.h>
+#include <dlfcn.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#ifndef _WIN32
-#include <dlfcn.h>
-#endif
-
 #include "lua.h"
 #include "lauxlib.h"
 
-#ifndef _WIN32
 #define LUAX_HISTORY_LEN    1000
-#endif
 #define LUAX_APPNAME_LEN    64
 #define MAX_HISTORY_SEARCH  1000
 
@@ -99,7 +94,6 @@ static t_free_history_entry rl_free_history_entry = NULL;
 
 static bool loaded = false;
 
-#ifndef _WIN32
 static const char *libs[] = {
 #ifdef __linux__
     "libreadline.so.8",
@@ -112,7 +106,6 @@ static const char *libs[] = {
 #endif
     NULL,
 };
-#endif
 
 static void load_readline(void)
 {
@@ -121,8 +114,6 @@ static void load_readline(void)
 
     running_in_a_tty = isatty(STDIN_FILENO);
     if (!running_in_a_tty) { return; }
-
-#ifndef _WIN32
 
     void *handle = NULL;
     for (int i = 0; handle == NULL && libs[i] != NULL; i++) {
@@ -172,8 +163,6 @@ static void load_readline(void)
     if (has_history_set_len) {
         rl_stifle_history(LUAX_HISTORY_LEN);
     }
-
-#endif
 }
 
 /*@@@

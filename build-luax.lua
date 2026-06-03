@@ -221,7 +221,14 @@ local loaders = F(targets) : map(function(target)
         : add "cflags" { }
 
     return zigcc_luax:executable("$builddir/tmp/luax-loader-"..target.name..target.exe) {
-        zigcc_luax:static_lib("$builddir/tmp"/target.name/"libluax.a") { luax_c_sources },
+        zigcc_luax:static_lib("$builddir/tmp"/target.name/"libluax.a") {
+            luax_c_sources : difference(
+                target.os == "windows" and {
+                    -- Linux/MacOS only
+                    "luax/linenoise-luax.c",
+                    "luax/readline-luax.c",
+                } or {})
+        },
         zigcc_lua:static_lib("$builddir/tmp"/target.name/"liblua.a") { lua_c_sources },
         zigcc_ext:static_lib("$builddir/tmp"/target.name/"libext.a") {
             ext_c_sources : difference(

@@ -25,8 +25,6 @@
 #include "crypt.h"
 #include "fs.h"
 #include "imath-luax.h"
-#include "readline-luax.h"
-#include "linenoise-luax.h"
 #include "lpeg-luax.h"
 #include "lz4-luax.h"
 #include "lzip-luax.h"
@@ -37,13 +35,16 @@
 #include "sys.h"
 #include "term.h"
 
+#if defined(__linux__) || defined(__APPLE__)
+#include "readline-luax.h"
+#include "linenoise-luax.h"
+#endif
+
 static const luaL_Reg lrun_libs[] = {
     {"_complex",    luaopen_complex},
     {"_crypt",      luaopen_crypt},
     {"_fs",         luaopen_fs},
     {"_imath",      luaopen_imath},
-    {"_readline",   luaopen_readline},
-    {"_linenoise",  luaopen_linenoise},
     {"lpeg",        luaopen_lpeg},
     {"_lz4",        luaopen_lz4},
     {"_lzip",       luaopen_lzip},
@@ -53,6 +54,10 @@ static const luaL_Reg lrun_libs[] = {
     {"socket",      luaopen_luasocket},
     {"_sys",        luaopen_sys},
     {"_term",       luaopen_term},
+#if defined(__linux__) || defined(__APPLE__)
+    {"_readline",   luaopen_readline},
+    {"_linenoise",  luaopen_linenoise},
+#endif
     {NULL, NULL},
 };
 

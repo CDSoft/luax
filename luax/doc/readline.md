@@ -8,7 +8,7 @@ provides a set of functions for use by applications that allow users to edit com
 If it fails, it uses the linenoise module that has similar and slightly more limited editing and history capabilities.
 
 **Warning**: readline and linenoise have not been ported to Windows.
-The following functions work on Windows but are stubbed using the C `fgets` function.
+The following functions work on Windows but are stubbed using the `term` module.
 The history can not be saved on Windows.
 
 

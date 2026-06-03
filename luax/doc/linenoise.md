@@ -5,7 +5,7 @@
 is a small self-contained alternative to readline and libedit.
 
 **Warning**: linenoise has not been ported to Windows.
-The following functions work on Windows but are stubbed using the C `fgets` function.
+The following functions work on Windows but are stubbed using the `term` module.
 The history can not be saved on Windows.
 
 
