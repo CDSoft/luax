@@ -49,8 +49,9 @@ The history can not be saved on Windows.
 #include "lua.h"
 #include "lauxlib.h"
 
+#ifndef _WIN32
 #define LUAX_HISTORY_LEN    1000
-#define LUAX_MAXINPUT       4096
+#endif
 #define LUAX_APPNAME_LEN    64
 #define MAX_HISTORY_SEARCH  1000
 

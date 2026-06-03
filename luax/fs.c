@@ -40,8 +40,11 @@ local fs = require "fs"
 #include <stdint.h>
 #include <windows.h>
 #else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-macros"
 #define _GNU_SOURCE
 #define _DARWIN_C_SOURCE
+#pragma GCC diagnostic pop
 #include <fnmatch.h>
 #include <glob.h>
 #endif

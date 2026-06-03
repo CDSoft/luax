@@ -146,8 +146,6 @@ local luax_cflags = build.compile_flags {
     "-Werror=implicit-fallthrough",
     "-Werror=missing-prototypes",
 
-    "-Wno-unused-macros",
-
     "-Weverything",
     "-Wno-padded",
     "-Wno-reserved-identifier",
