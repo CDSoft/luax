@@ -19,6 +19,9 @@
 
 #include "sha256.h"
 
+#include "bits.h"
+#include "hex.h"
+
 #include <string.h>
 
 static const uint32_t K[64] = {
@@ -45,8 +48,6 @@ static const uint32_t H0[8] = {
     0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
 };
 
-static inline uint32_t rotr32(uint32_t x, size_t n) { return (x >> n) | (x << (32 - n)); }
-
 static inline uint32_t ch(uint32_t e, uint32_t f, uint32_t g) { return (e & f) ^ (~e & g); }
 static inline uint32_t maj(uint32_t a, uint32_t b, uint32_t c) { return (a & b) ^ (a & c) ^ (b & c); }
 
@@ -54,32 +55,6 @@ static inline uint32_t Sigma0(uint32_t a) { return rotr32(a,  2) ^ rotr32(a, 13)
 static inline uint32_t Sigma1(uint32_t e) { return rotr32(e,  6) ^ rotr32(e, 11) ^ rotr32(e, 25); }
 static inline uint32_t sigma0(uint32_t x) { return rotr32(x,  7) ^ rotr32(x, 18) ^ (x >>  3); }
 static inline uint32_t sigma1(uint32_t x) { return rotr32(x, 17) ^ rotr32(x, 19) ^ (x >> 10); }
-
-static inline uint32_t load_be32(const uint8_t *p) {
-    return (uint32_t)(p[0]) << (8*3)
-         | (uint32_t)(p[1]) << (8*2)
-         | (uint32_t)(p[2]) << (8*1)
-         | (uint32_t)(p[3]) << (8*0)
-         ;
-}
-
-static inline void store_be32(uint8_t *p, uint32_t v) {
-    p[0] = (uint8_t)(v >> (8*3));
-    p[1] = (uint8_t)(v >> (8*2));
-    p[2] = (uint8_t)(v >> (8*1));
-    p[3] = (uint8_t)(v >> (8*0));
-}
-
-static inline void store_be64(uint8_t *p, uint64_t v) {
-    p[0] = (uint8_t)(v >> (8*7));
-    p[1] = (uint8_t)(v >> (8*6));
-    p[2] = (uint8_t)(v >> (8*5));
-    p[3] = (uint8_t)(v >> (8*4));
-    p[4] = (uint8_t)(v >> (8*3));
-    p[5] = (uint8_t)(v >> (8*2));
-    p[6] = (uint8_t)(v >> (8*1));
-    p[7] = (uint8_t)(v >> (8*0));
-}
 
 static void sha256_compress(uint32_t state[8], const uint8_t block[64])
 {
@@ -161,11 +136,6 @@ void sha256_final(t_sha256_ctx *ctx, t_sha256_digest digest)
     memset(ctx, 0, sizeof *ctx);
 }
 
-static inline char digit(uint8_t n)
-{
-    return n>=10 ? 'a'+(n-10) : '0'+n;
-}
-
 void sha256_hex(const char *input, size_t size, t_sha256_digest_hex out)
 {
     t_sha256_ctx ctx;
@@ -173,9 +143,6 @@ void sha256_hex(const char *input, size_t size, t_sha256_digest_hex out)
     sha256_init(&ctx);
     sha256_update(&ctx, (const uint8_t *)input, size);
     sha256_final(&ctx, digest);
-    for (size_t i = 0; i < sizeof(t_sha256_digest); i++) {
-        out[2*i+0] = digit(digest[i]>>4);
-        out[2*i+1] = digit(digest[i]&0xf);
-    }
+    raw_to_hex((const char *)digest, sizeof(t_sha256_digest), out);
     out[2*sizeof(t_sha256_digest)] = '\0';
 }

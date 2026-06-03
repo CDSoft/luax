@@ -19,21 +19,17 @@
 
 #pragma once
 
-#if defined(__linux__)
+#include <stdbool.h>
+#include <stdlib.h>
 
-#include <endian.h>
+typedef struct {
+    char *s;
+    size_t capacity;
+    size_t len;
+    bool overflow;
+} t_str;
 
-#else
-
-#include <stdint.h>
-
-static inline uint32_t le32toh(uint32_t little_endian_32bits)
-{
-    return (uint32_t) ( ((uint8_t*)&little_endian_32bits)[0] << (8*0)
-                      | ((uint8_t*)&little_endian_32bits)[1] << (8*1)
-                      | ((uint8_t*)&little_endian_32bits)[2] << (8*2)
-                      | ((uint8_t*)&little_endian_32bits)[3] << (8*3)
-                      );
-}
-
-#endif
+void str_init(t_str *str, char *mem, size_t capacity);
+void str_reset(t_str *str);
+void str_add(t_str *str, const char *s, size_t len);
+bool str_ok(t_str *str);

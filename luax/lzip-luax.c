@@ -36,7 +36,7 @@ The source code is available at <https://www.nongnu.org/lzip/lzlib.html>.
 #include "lzip-luax.h"
 #include "ext/lzlib/lzlib.h"
 
-#include "tools.h"
+#include "luax-push.h"
 
 #include "lua.h"
 #include "lauxlib.h"

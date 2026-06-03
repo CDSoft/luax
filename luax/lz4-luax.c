@@ -35,7 +35,7 @@ More information on <https://www.lz4.org>.
 #include "ext/lz4/lz4hc.h"
 #include "ext/lz4/lz4frame.h"
 
-#include "tools.h"
+#include "luax-push.h"
 
 #include "lua.h"
 #include "lauxlib.h"

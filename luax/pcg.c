@@ -19,6 +19,8 @@
 
 #include "pcg.h"
 
+#include "bits.h"
+
 /* https://www.pcg-random.org */
 
 /* Low level random functions */
@@ -71,11 +73,7 @@ double pcg_float_range(t_pcg *prng, double a, double b)
 void pcg_str(t_pcg *prng, size_t size, char *buf)
 {
     for (size_t i = 0; i < size; i+=4) {
-        const uint32_t r = pcg_int(prng);
-        buf[i+0] = (char)(r>>(0*8));
-        buf[i+1] = (char)(r>>(1*8));
-        buf[i+2] = (char)(r>>(2*8));
-        buf[i+3] = (char)(r>>(3*8));
+        store_le32((uint8_t*)&buf[i], pcg_int(prng));
     }
 }
 

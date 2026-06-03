@@ -17,26 +17,42 @@
  * https://codeberg.org/cdsoft/luax
  */
 
-#pragma once
-
-#include <stdbool.h>
-
+#include "luax-push.h"
 #include "lua.h"
 
-static inline int imax(int a, int b) { return a < b ? b : a; }
+#include <errno.h>
+#include <stdarg.h>
+#include <string.h>
 
-int luax_push_result_or_errno(lua_State *L, int res, const char *filename);
-int luax_push_errno(lua_State *L, const char *filename);
-int luax_pusherror(lua_State *L, const char *msg, ...);
+int luax_push_result_or_errno(lua_State *L, int res, const char *filename)
+{
+    if (!res) {
+        return luax_push_errno(L, filename);
+    }
 
-typedef struct {
-    char *s;
-    size_t capacity;
-    size_t len;
-    bool overflow;
-} t_str;
+    lua_pushboolean(L, 1);
+    return 1;
+}
 
-void str_init(t_str *str, char *mem, size_t capacity);
-void str_reset(t_str *str);
-void str_add(t_str *str, const char *s, size_t len);
-bool str_ok(t_str *str);
+int luax_push_errno(lua_State *L, const char *filename)
+{
+    const int en = errno;  /* calls to Lua API may change this value */
+
+    lua_pushnil(L);
+    lua_pushfstring(L, "%s: %s", filename, strerror(en));
+    lua_pushinteger(L, en);
+    return 3;
+}
+
+int luax_pusherror(lua_State *L, const char *msg, ...)
+{
+    va_list args;
+    va_start(args, msg);
+
+    lua_pushnil(L);
+    lua_pushvfstring(L, msg, args);
+
+    va_end(args);
+
+    return 2;
+}

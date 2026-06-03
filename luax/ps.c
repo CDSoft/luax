@@ -27,7 +27,7 @@ local ps = require "ps"
 
 #include "ps.h"
 
-#include "tools.h"
+#include "luax-push.h"
 
 #include <dirent.h>
 #include <fcntl.h>

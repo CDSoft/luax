@@ -19,12 +19,25 @@
 
 #include "sha1.h"
 
-#define ROTL32(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
+#include "bits.h"
+#include "hex.h"
 
-#define K0 0x5A827999
-#define K1 0x6ED9EBA1
-#define K2 0x8F1BBCDC
-#define K3 0xCA62C1D6
+#include <string.h>
+
+static const uint32_t K[4] = {
+    0x5A827999,
+    0x6ED9EBA1,
+    0x8F1BBCDC,
+    0xCA62C1D6,
+};
+
+static const uint32_t H0[5] = {
+    0x67452301,
+    0xEFCDAB89,
+    0x98BADCFE,
+    0x10325476,
+    0xC3D2E1F0,
+};
 
 static void sha1_transform(t_sha1_ctx *ctx)
 {
@@ -32,13 +45,10 @@ static void sha1_transform(t_sha1_ctx *ctx)
     uint32_t a, b, c, d, e, temp;
 
     for (int i = 0; i < 16; i++) {
-        w[i] = ((uint32_t)ctx->block[4*i + 0] << (8*3))
-             | ((uint32_t)ctx->block[4*i + 1] << (8*2))
-             | ((uint32_t)ctx->block[4*i + 2] << (8*1))
-             | ((uint32_t)ctx->block[4*i + 3] << (8*0));
+        w[i] = load_be32(&ctx->block[4*i]);
     }
     for (int i = 16; i < 80; i++) {
-        w[i] = ROTL32(w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16], 1);
+        w[i] = rotl32(w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16], 1);
     }
 
     a = ctx->h[0];
@@ -48,17 +58,17 @@ static void sha1_transform(t_sha1_ctx *ctx)
     e = ctx->h[4];
 
     #define ROUND(f, k)                                 \
-        temp = ROTL32(a, 5) + (f) + e + (k) + w[i];     \
+        temp = rotl32(a, 5) + (f) + e + (k) + w[i];     \
         e = d;                                          \
         d = c;                                          \
-        c = ROTL32(b, 30);                              \
+        c = rotl32(b, 30);                              \
         b = a;                                          \
         a = temp;
 
-    for (int i =  0; i < 20; i++) { ROUND((b & c) | (~b & d),          K0) }
-    for (int i = 20; i < 40; i++) { ROUND(b ^ c ^ d,                   K1) }
-    for (int i = 40; i < 60; i++) { ROUND((b & c) | (b & d) | (c & d), K2) }
-    for (int i = 60; i < 80; i++) { ROUND(b ^ c ^ d,                   K3) }
+    for (int i =  0; i < 20; i++) { ROUND((b & c) | (~b & d),          K[0]) }
+    for (int i = 20; i < 40; i++) { ROUND(b ^ c ^ d,                   K[1]) }
+    for (int i = 40; i < 60; i++) { ROUND((b & c) | (b & d) | (c & d), K[2]) }
+    for (int i = 60; i < 80; i++) { ROUND(b ^ c ^ d,                   K[3]) }
 
     ctx->h[0] += a;
     ctx->h[1] += b;
@@ -69,11 +79,7 @@ static void sha1_transform(t_sha1_ctx *ctx)
 
 void sha1_init(t_sha1_ctx *ctx)
 {
-    ctx->h[0] = 0x67452301;
-    ctx->h[1] = 0xEFCDAB89;
-    ctx->h[2] = 0x98BADCFE;
-    ctx->h[3] = 0x10325476;
-    ctx->h[4] = 0xC3D2E1F0;
+    memcpy(ctx->h, H0, sizeof H0);
     ctx->bitlen = 0;
     ctx->blocklen = 0;
 }
@@ -103,27 +109,12 @@ void sha1_final(t_sha1_ctx *ctx, t_sha1_digest digest)
     while (i < 56) { ctx->block[i++] = 0x00; }
 
     ctx->bitlen += (uint64_t)ctx->blocklen * 8;
-    ctx->block[56] = (ctx->bitlen >> (8*7)) & 0xFF;
-    ctx->block[57] = (ctx->bitlen >> (8*6)) & 0xFF;
-    ctx->block[58] = (ctx->bitlen >> (8*5)) & 0xFF;
-    ctx->block[59] = (ctx->bitlen >> (8*4)) & 0xFF;
-    ctx->block[60] = (ctx->bitlen >> (8*3)) & 0xFF;
-    ctx->block[61] = (ctx->bitlen >> (8*2)) & 0xFF;
-    ctx->block[62] = (ctx->bitlen >> (8*1)) & 0xFF;
-    ctx->block[63] = (ctx->bitlen >> (8*0)) & 0xFF;
+    store_be64(&ctx->block[56], ctx->bitlen);
     sha1_transform(ctx);
 
     for (int j = 0; j < 5; j++) {
-        digest[4*j + 0] = (ctx->h[j] >> (8*3)) & 0xFF;
-        digest[4*j + 1] = (ctx->h[j] >> (8*2)) & 0xFF;
-        digest[4*j + 2] = (ctx->h[j] >> (8*1)) & 0xFF;
-        digest[4*j + 3] = (ctx->h[j] >> (8*0)) & 0xFF;
+        store_be32(&digest[4*j], ctx->h[j]);
     }
-}
-
-static inline char digit(uint8_t n)
-{
-    return n>=10 ? 'a'+(n-10) : '0'+n;
 }
 
 void sha1_hex(const char *input, size_t size, t_sha1_digest_hex out)
@@ -133,9 +124,6 @@ void sha1_hex(const char *input, size_t size, t_sha1_digest_hex out)
     sha1_init(&ctx);
     sha1_update(&ctx, (const uint8_t *)input, size);
     sha1_final(&ctx, digest);
-    for (size_t i = 0; i < sizeof(t_sha1_digest); i++) {
-        out[2*i+0] = digit(digest[i]>>4);
-        out[2*i+1] = digit(digest[i]&0xf);
-    }
+    raw_to_hex((const char *)digest, sizeof(t_sha1_digest), out);
     out[2*sizeof(t_sha1_digest)] = '\0';
 }

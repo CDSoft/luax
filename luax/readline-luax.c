@@ -34,7 +34,7 @@ The history can not be saved on Windows.
 #include "readline-luax.h"
 
 #include "linenoise-luax.h"
-#include "tools.h"
+#include "luax-push.h"
 
 #include <ctype.h>
 #include <dlfcn.h>
@@ -213,6 +213,8 @@ The history is cleaned on the fly:
 - empty lines are ignored
 - duplicates are removed, only the last entry is kept
 @@@*/
+
+static inline int imax(int a, int b) { return a < b ? b : a; }
 
 static int readline_history_add(lua_State *L)
 {

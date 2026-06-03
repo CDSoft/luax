@@ -136,7 +136,6 @@ local luax_cflags = build.compile_flags {
     "-Wall",
     "-Wextra",
     "-pedantic",
-    "-DFNV1A_BIT128",
 
     "-Wstrict-prototypes",
     "-Wmissing-field-initializers",

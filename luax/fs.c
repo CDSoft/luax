@@ -33,7 +33,8 @@ local fs = require "fs"
 
 #include "luaconf.h"
 #include "F.h"
-#include "tools.h"
+#include "luax-push.h"
+#include "strbuf.h"
 
 #ifdef _WIN32
 #include <shlwapi.h>

@@ -19,8 +19,8 @@
 
 #include "libluax.h"
 
-#include "fnv1a_32.h"
-#include "endianness.h"
+#include "fnv1a.h"
+#include "bits.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -107,9 +107,9 @@ static bool read_header(FILE *f, size_t offset, struct t_header *header)
     t_fnv1a_32 hash;
     fnv1a_32_init(&hash);
     fnv1a_32_update(&hash, header, sizeof(struct t_header)-sizeof(header->hash));
-    header->size = le32toh(header->size);
-    header->hash = le32toh(header->hash);
-    return fnv1a_32_cmp(&hash, &header->hash) == 0;
+    header->size = load_le32((uint8_t*)&header->size);
+    header->hash = load_le32((uint8_t*)&header->hash);
+    return memcmp(&hash, &header->hash, sizeof(hash)) == 0;
 }
 
 static char *read_payload(FILE *f, size_t offset, const struct t_header *header)

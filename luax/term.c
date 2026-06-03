@@ -17,7 +17,7 @@
  * https://codeberg.org/cdsoft/luax
  */
 
-#include "tools.h"
+#include "luax-push.h"
 
 #include <stdio.h>
 

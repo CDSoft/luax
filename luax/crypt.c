@@ -33,12 +33,8 @@ local crypt = require "crypt"
 #include "crypt.h"
 
 #include "entropy.h"
-#include "fnv1a_32.h"
-#include "fnv1a_64.h"
-#include "fnv1a_128.h"
-#include "fnv1a_256.h"
-#include "fnv1a_512.h"
-#include "fnv1a_1024.h"
+#include "fnv1a.h"
+#include "hex.h"
 #include "lua.h"
 #include "lauxlib.h"
 #include "pcg.h"
@@ -359,31 +355,11 @@ The hexadecimal encoder transforms a string into a string
 where bytes are coded with hexadecimal digits.
 @@@*/
 
-static const char hex_map[] = "0123456789abcdef";
-
-static const char digit[256] =
-{
-    ['0'] = 0,      ['A'] = 10,     ['a'] = 10,
-    ['1'] = 1,      ['B'] = 11,     ['b'] = 11,
-    ['2'] = 2,      ['C'] = 12,     ['c'] = 12,
-    ['3'] = 3,      ['D'] = 13,     ['d'] = 13,
-    ['4'] = 4,      ['E'] = 14,     ['e'] = 14,
-    ['5'] = 5,      ['F'] = 15,     ['f'] = 15,
-    ['6'] = 6,
-    ['7'] = 7,
-    ['8'] = 8,
-    ['9'] = 9,
-};
-
 static void hex_encode(const char *plain, size_t n_in, luaL_Buffer *B)
 {
     const size_t n_out = n_in*2;
     char *buf = luaL_prepbuffsize(B, n_out);
-    for (size_t i = 0; i < n_in; i++) {
-        const char c = plain[i];
-        buf[2*i+0] = hex_map[(c>>4)&0xF];
-        buf[2*i+1] = hex_map[c&0xF];
-    }
+    raw_to_hex(plain, n_in, buf);
     luaL_addsize(B, n_out);
 }
 
@@ -391,11 +367,7 @@ static void hex_decode(const char *hex, size_t n_in, luaL_Buffer *B)
 {
     const size_t n_out = n_in/2;
     char *buf = luaL_prepbuffsize(B, n_out);
-    for (size_t i = 0; i < n_in-1; i += 2) {
-        const size_t d1 = hex[i] & 0xFF;
-        const size_t d2 = hex[i+1] & 0xFF;
-        buf[i/2] = (char)((digit[d1]<<4) | digit[d2]);
-    }
+    hex_to_raw(hex, n_in, buf);
     luaL_addsize(B, n_out);
 }
 
