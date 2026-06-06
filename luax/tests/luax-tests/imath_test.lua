@@ -42,6 +42,7 @@ return function()
     eq(x+x, Z"246913578246913578246913578246913578") eq(imath.add(x, x), x+x)
     eq(x+y, Z"123456789123456789123456789246913578") eq(imath.add(x, y), x+y)
 
+    eq(tostring(x/2), "61728394561728394561728394561728394") eq(imath.div(x, 2), x/2)
     eq(tostring(x/y), "1000000001000000001000000001") eq(imath.div(x, y), x/y)
     eq(tostring(y/x), "0")                            eq(imath.div(y, x), y/x)
     eq(tostring(x//y), "1000000001000000001000000001")
