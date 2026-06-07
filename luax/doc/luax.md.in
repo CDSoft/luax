@@ -281,6 +281,7 @@ The `luax` runtime comes with a few builtin modules.
 - [toml](toml.md): a pure Lua TOML parser (tinytoml)
 - [tomlx](tomlx.md): a layer on top of toml with macros
 - [yaml](yaml.md): YAML Module for Lua
+- [strict](strict.md): checks uses of undeclared global variables
 
 ## Pure Lua modules
 
