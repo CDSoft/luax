@@ -4292,7 +4292,7 @@ function string.matches(s, pattern, init)
     while true do
         local xs = {iterator()}
         if #xs == 0 then return ms end
-        ms[#ms+1] = #xs==1 and xs[1] or xs
+        ms[#ms+1] = #xs==1 and xs[1] or setmetatable(xs, mt)
     end
 end
 
