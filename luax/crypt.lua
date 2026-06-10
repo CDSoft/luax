@@ -693,7 +693,7 @@ end
 prng:choose(xs)
 crypt.choose(xs)    -- using the global PRNG
 ```
-returns a random item from `xs`
+> returns a random item from `xs`
 @@@]]
 
 local prng_mt = getmetatable(crypt.prng())
@@ -711,7 +711,7 @@ end
 prng:shuffle(xs)
 crypt.shuffle(xs)    -- using the global PRNG
 ```
-returns a shuffled copy of `xs`
+> returns a shuffled copy of `xs`
 @@@]]
 
 function prng_mt.__index:shuffle(xs)

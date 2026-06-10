@@ -33,14 +33,13 @@ term.color.X("...")
 -- build a complex color with attributes
 local c = term.color.red + term.color.italic + term.color.oncyan
 ```
-
-The user can disable the color support (e.g. when not running on a terminal):
-
-``` lua
-if not term.isatty(io.stdout) then
-    term.color.disable()
-end
-```
+> The user can disable the color support (e.g. when not running on a terminal):
+>
+> ``` lua
+> if not term.isatty(io.stdout) then
+>     term.color.disable()
+> end
+> ```
 
 | `term.color` field     | Description                          |
 | ---------------------- | ------------------------------------ |
@@ -107,7 +106,7 @@ term.cursor.bar_blink()
 ``` lua
 term.reset()
 ```
-resets the colors and the cursor shape.
+> resets the colors and the cursor shape.
 
 
 ``` lua
@@ -116,20 +115,20 @@ term.clearline()
 term.cleareol()
 term.clearend()
 ```
-clears the terminal, the current line, the end of the current line or from the cursor to the end of the terminal.
+> clears the terminal, the current line, the end of the current line or from the cursor to the end of the terminal.
 
 
 ``` lua
 term.pos(row, col)
 ```
-moves the cursor to the line `row` and the column `col`.
+> moves the cursor to the line `row` and the column `col`.
 
 
 ``` lua
 term.save_pos()
 term.restore_pos()
 ```
-saves and restores the position of the cursor.
+> saves and restores the position of the cursor.
 
 
 ``` lua
@@ -138,7 +137,7 @@ term.down([n])
 term.right([n])
 term.left([n])
 ```
-moves the cursor by `n` characters up, down, right or left.
+> moves the cursor by `n` characters up, down, right or left.
 
 
 ## Prompt
@@ -153,7 +152,7 @@ is highly recommended for a better user experience on Linux.
 ```lua
 s = term.prompt(p)
 ```
-prints `p` and waits for a user input
+> prints `p` and waits for a user input
 
 
 ## Title
@@ -164,7 +163,7 @@ Set the terminal title.
 ```lua
 term.title(t)
 ```
-sets the terminal title.
+> sets the terminal title.
 
 
 
@@ -176,14 +175,14 @@ sets the terminal title.
 ```lua
 term.isatty([fileno])
 ```
-returns `true` if `fileno` is a tty.
-The default file descriptor is `stdin` (`0`).
+> returns `true` if `fileno` is a tty.
+> The default file descriptor is `stdin` (`0`).
 
 
 ```lua
 term.size([fileno])
 ```
-returns a table with the number of rows (field `rows`) and columns (field `cols`) of the terminal attached to `fileno`.
-The default file descriptor is `stdout` (`1`).
+> returns a table with the number of rows (field `rows`) and columns (field `cols`) of the terminal attached to `fileno`.
+> The default file descriptor is `stdout` (`1`).
 
 

@@ -79,37 +79,37 @@ LuaX preloads the following modules with the `-e` option or before entering the 
 ```lua
 show(x)
 ```
-returns a string representing `x` with nice formatting for tables and numbers.
+> returns a string representing `x` with nice formatting for tables and numbers.
 
 
 ```lua
 precision(len, frac)
 ```
-changes the format of floats. `len` is the
-total number of characters and `frac` the number of decimals after the floating
-point (`frac` can be `nil`). `len` can also be a string (custom format string)
-or `nil` (to reset the float format). `b` can be `10` (decimal numbers), `16`
-(hexadecimal numbers), `8` (octal numbers), a custom format string or `nil` (to
-reset the integer format).
+> changes the format of floats. `len` is the
+> total number of characters and `frac` the number of decimals after the floating
+> point (`frac` can be `nil`). `len` can also be a string (custom format string)
+> or `nil` (to reset the float format). `b` can be `10` (decimal numbers), `16`
+> (hexadecimal numbers), `8` (octal numbers), a custom format string or `nil` (to
+> reset the integer format).
 
 
 ```lua
 base(b)
 ```
-changes the format of integers. `b` can be `10` (decimal
-numbers), `16` (hexadecimal numbers), `8` (octal numbers), a custom format
-string or `nil` (to reset the integer format).
+> changes the format of integers. `b` can be `10` (decimal
+> numbers), `16` (hexadecimal numbers), `8` (octal numbers), a custom format
+> string or `nil` (to reset the integer format).
 
 
 ```lua
 indent(i)
 ```
-indents tables (`i` spaces). If `i` is `nil`, tables are not indented.
+> indents tables (`i` spaces). If `i` is `nil`, tables are not indented.
 
 
 ```lua
 prints(x)
 ```
-prints `show(x)`
+> prints `show(x)`
 
 

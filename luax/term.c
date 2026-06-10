@@ -73,8 +73,8 @@ static bool get_file_handle(lua_State *L, int default_fd, DWORD *fh)
 ```lua
 term.isatty([fileno])
 ```
-returns `true` if `fileno` is a tty.
-The default file descriptor is `stdin` (`0`).
+> returns `true` if `fileno` is a tty.
+> The default file descriptor is `stdin` (`0`).
 @@@*/
 
 static int term_isatty(lua_State *L)
@@ -91,8 +91,8 @@ static int term_isatty(lua_State *L)
 ```lua
 term.size([fileno])
 ```
-returns a table with the number of rows (field `rows`) and columns (field `cols`) of the terminal attached to `fileno`.
-The default file descriptor is `stdout` (`1`).
+> returns a table with the number of rows (field `rows`) and columns (field `cols`) of the terminal attached to `fileno`.
+> The default file descriptor is `stdout` (`1`).
 @@@*/
 
 static inline void set_integer(lua_State *L, const char *name, lua_Integer val)

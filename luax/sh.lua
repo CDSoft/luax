@@ -40,7 +40,7 @@ local __WINDOWS__ = sys.os == "windows"
 ```lua
 sh.run(...)
 ```
-Runs the command `...` with `os.execute`.
+> Runs the command `...` with `os.execute`.
 @@@]]
 
 function sh.run(...)
@@ -52,9 +52,9 @@ end
 ```lua
 sh.read(...)
 ```
-Runs the command `...` with `io.popen`.
-When `sh.read` succeeds, it returns the content of stdout.
-Otherwise it returns the error identified by `io.popen`.
+> Runs the command `...` with `io.popen`.
+> When `sh.read` succeeds, it returns the content of stdout.
+> Otherwise it returns the error identified by `io.popen`.
 @@@]]
 
 function sh.read(...)
@@ -74,8 +74,8 @@ end
 ```lua
 sh.write(...)(data)
 ```
-Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
-`sh.write` returns the same values returned by `os.execute`.
+> Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
+> `sh.write` returns the same values returned by `os.execute`.
 @@@]]
 
 function sh.write(...)
@@ -95,9 +95,9 @@ end
 ```lua
 sh.pipe(...)(data)
 ```
-Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
-When `sh.pipe` succeeds, it returns the content of stdout.
-Otherwise it returns the error identified by `io.popen`.
+> Runs the command `...` with `io.popen` and feeds `stdin` with `data`.
+> When `sh.pipe` succeeds, it returns the content of stdout.
+> Otherwise it returns the error identified by `io.popen`.
 @@@]]
 
 function sh.pipe(...)
@@ -119,7 +119,7 @@ end
 ``` lua
 sh(...)
 ```
-`sh` can be called as a function. `sh(...)` is a shortcut to `sh.read(...)`.
+> `sh` can be called as a function. `sh(...)` is a shortcut to `sh.read(...)`.
 @@@]]
 setmetatable(sh, {
     __call = function(_, ...) return sh.read(...) end,

@@ -107,12 +107,12 @@ end:
 ```lua
 lzip.lzip(data, [level])
 ```
-compresses `data` with lzip.
-The compressed data is an lzip frame that can be stored in a file and
-decompressed by the `lzip` command line utility.
-
-The optional `level` parameter is the compression level (from 0 to 9).
-The default compression level is 6.
+> compresses `data` with lzip.
+> The compressed data is an lzip frame that can be stored in a file and
+> decompressed by the `lzip` command line utility.
+>
+> The optional `level` parameter is the compression level (from 0 to 9).
+> The default compression level is 6.
 @@@*/
 
 static int compress(lua_State *L)
@@ -168,9 +168,9 @@ end:
 ```lua
 lzip.unlzip(data)
 ```
-decompresses `data` with lzip.
-`data` shall be an lzip frame and
-can be the content of a file produced by the `lzip` command line utility.
+> decompresses `data` with lzip.
+> `data` shall be an lzip frame and
+> can be the content of a file produced by the `lzip` command line utility.
 @@@*/
 
 static int decompress(lua_State *L)

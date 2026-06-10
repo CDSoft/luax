@@ -13,150 +13,150 @@ local fs = require "fs"
 ```lua
 fs.getcwd()
 ```
-returns the current working directory.
+> returns the current working directory.
 
 
 ```lua
 fs.chdir(path)
 ```
-changes the current directory to `path`.
+> changes the current directory to `path`.
 
 
 ```lua
 fs.dir([path])
 ```
-returns the list of files and directories in
-`path` (the default path is the current directory).
+> returns the list of files and directories in
+> `path` (the default path is the current directory).
 
 
 ```lua
 fs.ls(path, [dotted])
 ```
-returns a list of file names.
-`path` can be a directory name or a simple file pattern.
-Patterns can contain jokers (`*` to match any character and `**` to search files recursively).
-If `dotted` is true, hidden files are also listed.
-
-Examples:
-
-- `fs.ls "src"`: list all files/directories in `src`
-- `fs.ls "src/*.c"`: list all C files in `src`
-- `fs.ls "src/**.c"`: list all C files in `src` and its subdirectories
+> returns a list of file names.
+> `path` can be a directory name or a simple file pattern.
+> Patterns can contain jokers (`*` to match any character and `**` to search files recursively).
+> If `dotted` is true, hidden files are also listed.
+>
+> Examples:
+>
+> - `fs.ls "src"`: list all files/directories in `src`
+> - `fs.ls "src/*.c"`: list all C files in `src`
+> - `fs.ls "src/**.c"`: list all C files in `src` and its subdirectories
 
 
 ```lua
 fs.glob(pattern)
 ```
-returns the list of path names matching a pattern.
-
-*Note*: The windows implementation is limited and accepts wildcards in the basename only, not in the path components.
+> returns the list of path names matching a pattern.
+>
+> *Note*: The windows implementation is limited and accepts wildcards in the basename only, not in the path components.
 
 
 ```lua
 fs.fnmatch(pattern, string, [flags])
 ```
-matches `string` against the `pattern` using the `fnmatch` function.
-Returns `true` if the string matches the pattern, `false` otherwise.
-Optional `flags` parameter can be used to modify the matching behavior.
+> matches `string` against the `pattern` using the `fnmatch` function.
+> Returns `true` if the string matches the pattern, `false` otherwise.
+> Optional `flags` parameter can be used to modify the matching behavior.
 
 
 ```lua
 fs.remove(name)
 fs.rm(name)
 ```
-deletes the file `name`.
+> deletes the file `name`.
 
 
 ```lua
 fs.rename(old_name, new_name)
 fs.mv(old_name, new_name)
 ```
-renames the file `old_name` to `new_name`.
+> renames the file `old_name` to `new_name`.
 
 
 ```lua
 fs.copy(source_name, target_name)
 ```
-copies file `source_name` to `target_name`.
-The attributes and times are preserved.
+> copies file `source_name` to `target_name`.
+> The attributes and times are preserved.
 
 
 ```lua
 fs.symlink(target, linkpath)
 ```
-creates a symbolic link `linkpath` pointing to `target`.
+> creates a symbolic link `linkpath` pointing to `target`.
 
 
 ```lua
 fs.mkdir(path)
 ```
-creates a new directory `path`.
+> creates a new directory `path`.
 
 
 ```lua
 fs.mkdirs(path)
 ```
-creates a new directory `path` and its parent directories.
+> creates a new directory `path` and its parent directories.
 
 
 ```lua
 fs.stat(name)
 fs.lstat(name)
 ```
-reads attributes of the file `name`. Attributes are:
-
-- `name`: name
-- `type`: `"file"`, `"directory"` or `"link"`
-- `size`: size in bytes
-- `mtime`, `atime`, `ctime`: modification, access and creation times.
-- `mode`: file permissions
-- `uR`, `uW`, `uX`: user Read/Write/eXecute permissions
-- `gR`, `gW`, `gX`: group Read/Write/eXecute permissions
-- `oR`, `oW`, `oX`: other Read/Write/eXecute permissions
-- `aR`, `aW`, `aX`: anybody Read/Write/eXecute permissions
-
-`fs.lstat` is like `fs.stat` but gives information on links instead of pointed files.
+> reads attributes of the file `name`. Attributes are:
+>
+> - `name`: name
+> - `type`: `"file"`, `"directory"` or `"link"`
+> - `size`: size in bytes
+> - `mtime`, `atime`, `ctime`: modification, access and creation times.
+> - `mode`: file permissions
+> - `uR`, `uW`, `uX`: user Read/Write/eXecute permissions
+> - `gR`, `gW`, `gX`: group Read/Write/eXecute permissions
+> - `oR`, `oW`, `oX`: other Read/Write/eXecute permissions
+> - `aR`, `aW`, `aX`: anybody Read/Write/eXecute permissions
+>
+> `fs.lstat` is like `fs.stat` but gives information on links instead of pointed files.
 
 
 ```lua
 fs.inode(name)
 ```
-reads device and inode attributes of the file `name`.
-Attributes are:
-
-- `dev`, `ino`: device and inode numbers
+> reads device and inode attributes of the file `name`.
+> Attributes are:
+>
+> - `dev`, `ino`: device and inode numbers
 
 
 ```lua
 fs.chmod(name, other_file_name)
 ```
-sets file `name` permissions as
-file `other_file_name` (string containing the name of another file).
+> sets file `name` permissions as
+> file `other_file_name` (string containing the name of another file).
 
 ```lua
 fs.chmod(name, bit1, ..., bitn)
 ```
-sets file `name` permissions as
-`bit1` or ... or `bitn` (integers).
+> sets file `name` permissions as
+> `bit1` or ... or `bitn` (integers).
 
 
 ```lua
 fs.touch(name)
 ```
-sets the access time and the modification time of
-file `name` with the current time.
+> sets the access time and the modification time of
+> file `name` with the current time.
 
 ```lua
 fs.touch(name, number)
 ```
-sets the access time and the modification
-time of file `name` with `number`.
+> sets the access time and the modification
+> time of file `name` with `number`.
 
 ```lua
 fs.touch(name, other_name)
 ```
-sets the access time and the
-modification time of file `name` with the times of file `other_name`.
+> sets the access time and the
+> modification time of file `name` with the times of file `other_name`.
 
 
 ```lua
@@ -164,96 +164,96 @@ fs.ltouch(name)
 fs.ltouch(name, number)
 fs.ltouch(name, other_name)
 ```
-like `fs.touch` without following symbolic links.
+> like `fs.touch` without following symbolic links.
 
 
 ```lua
 fs.basename(path)
 ```
-return the last component of path.
+> return the last component of path.
 
 
 ```lua
 fs.dirname(path)
 ```
-return all but the last component of path.
+> return all but the last component of path.
 
 
 ```lua
 fs.splitext(path)
 ```
-return the name without the extension and the extension.
+> return the name without the extension and the extension.
 
 
 ```lua
 fs.ext(path)
 ```
-return the extension of a filename.
+> return the extension of a filename.
 
 
 ```lua
 fs.chext(path, ext)
 ```
-replace the extension of `path` with `ext`.
+> replace the extension of `path` with `ext`.
 
 
 ```lua
 fs.realpath(path)
 ```
-return the resolved path name of path.
+> return the resolved path name of path.
 
 
 ```lua
 fs.readlink(path)
 ```
-return the content of a symbolic link.
+> return the content of a symbolic link.
 
 
 ```lua
 fs.absname(path)
 ```
-return the absolute path name of path.
+> return the absolute path name of path.
 
 
 ```lua
 fs.is_file(name)
 ```
-returns `true` if `name` is a file.
+> returns `true` if `name` is a file.
 
 
 ```lua
 fs.is_dir(name)
 ```
-returns `true` if `name` is a directory.
+> returns `true` if `name` is a directory.
 
 
 ```lua
 fs.is_link(name)
 ```
-returns `true` if `name` is a symbolic link.
+> returns `true` if `name` is a symbolic link.
 
 
 ```lua
 fs.tmpfile()
 ```
-return the name of a temporary file.
+> return the name of a temporary file.
 
 
 ```lua
 fs.tmpdir()
 ```
-return the name of a temporary directory.
+> return the name of a temporary directory.
 
 
 ```lua
 fs.sep
 ```
-is the directory separator.
+> is the directory separator.
 
 ```lua
 fs.path_sep
 ```
-is the path separator in `$LUA_PATH`.
+> is the path separator in `$LUA_PATH`.
 
 ```lua
 fs.uR, fs.uW, fs.uX
@@ -261,7 +261,7 @@ fs.gR, fs.gW, fs.gX
 fs.oR, fs.oW, fs.oX
 fs.aR, fs.aW, fs.aX
 ```
-are the User/Group/Other/All Read/Write/eXecute mask for `fs.chmod`.
+> are the User/Group/Other/All Read/Write/eXecute mask for `fs.chmod`.
 
 ```lua
 fs.FNM_NOESCAPE
@@ -272,7 +272,7 @@ fs.FNM_LEADING_DIR
 fs.FNM_CASEFOLD
 fs.FNM_EXTMATCH
 ```
-are flags for `fs.fnmatch`.
+> are flags for `fs.fnmatch`.
 
 
 
@@ -283,97 +283,97 @@ are flags for `fs.fnmatch`.
 ```lua
 fs.join(...)
 ```
-return a path name made of several path components
-(separated by `fs.sep`).
-If a component is absolute, the previous components are removed.
+> return a path name made of several path components
+> (separated by `fs.sep`).
+> If a component is absolute, the previous components are removed.
 
 
 ```lua
 fs.splitpath(path)
 ```
-return a list of path components.
+> return a list of path components.
 
 
 ```lua
 fs.findpath(name)
 ```
-returns the full path of `name` if `name` is found in `$PATH` or `nil`.
+> returns the full path of `name` if `name` is found in `$PATH` or `nil`.
 
 
 ```lua
 fs.rmdir(path)
 ```
-deletes the directory `path` and its content recursively.
+> deletes the directory `path` and its content recursively.
 
 
 ```lua
 fs.walk([path], [{reverse=true|false, links=true|false, cross=true|false}])
 ```
-returns a list listing directory and
-file names in `path` and its subdirectories (the default path is the current
-directory).
-
-Options:
-
-- `stat`: returns the list of stat results instead of just filenames
-- `reverse`: the list is built in a reverse order
-  (suitable for recursive directory removal)
-- `cross`: walk across several devices
-- `func`: function applied to the current file or directory.
-  `func` takes two parameters (path of the file or directory and the stat object returned by `fs.stat`)
-  and returns a boolean (to continue or not walking recursively through the subdirectories)
-  and the value to add to the list.
+> returns a list listing directory and
+> file names in `path` and its subdirectories (the default path is the current
+> directory).
+>
+> Options:
+>
+> - `stat`: returns the list of stat results instead of just filenames
+> - `reverse`: the list is built in a reverse order
+>   (suitable for recursive directory removal)
+> - `cross`: walk across several devices
+> - `func`: function applied to the current file or directory.
+>   `func` takes two parameters (path of the file or directory and the stat object returned by `fs.stat`)
+>   and returns a boolean (to continue or not walking recursively through the subdirectories)
+>   and the value to add to the list.
 
 
 ```lua
 fs.with_tmpfile(f)
 ```
-calls `f(tmp)` where `tmp` is the name of a temporary file.
+> calls `f(tmp)` where `tmp` is the name of a temporary file.
 
 
 ```lua
 fs.with_tmpdir(f)
 ```
-calls `f(tmp)` where `tmp` is the name of a temporary directory.
+> calls `f(tmp)` where `tmp` is the name of a temporary directory.
 
 
 ```lua
 fs.with_dir(path, f)
 ```
-changes the current working directory to `path` and calls `f()`.
+> changes the current working directory to `path` and calls `f()`.
 
 
 ```lua
 fs.expand(path, [vars])
 ```
-returns the expanded path
-where `"~"` at the beginning of the path is replaced by the home directory of the current user
-and `$XXX` or `${XXX}` is replaced by the environment variable `XXX`.
-Variable values can also be taken from the optional `vars` table.
+> returns the expanded path
+> where `"~"` at the beginning of the path is replaced by the home directory of the current user
+> and `$XXX` or `${XXX}` is replaced by the environment variable `XXX`.
+> Variable values can also be taken from the optional `vars` table.
 
 
 ```lua
 fs.read(filename)
 ```
-returns the content of the text file `filename`.
+> returns the content of the text file `filename`.
 
 
 ```lua
 fs.write(filename, ...)
 ```
-write `...` to the text file `filename`.
+> write `...` to the text file `filename`.
 
 
 ```lua
 fs.read_bin(filename)
 ```
-returns the content of the binary file `filename`.
+> returns the content of the binary file `filename`.
 
 
 ```lua
 fs.write_bin(filename, ...)
 ```
-write `...` to the binary file `filename`.
+> write `...` to the binary file `filename`.
 
 
 ## String methods

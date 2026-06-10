@@ -67,7 +67,7 @@ static int linenoise_name(lua_State *L)
 ```lua
 linenoise.read(prompt)
 ```
-prints `prompt` and returns the string entered by the user.
+> prints `prompt` and returns the string entered by the user.
 @@@*/
 
 int linenoise_read(lua_State *L)
@@ -84,7 +84,7 @@ int linenoise_read(lua_State *L)
 ```lua
 linenoise.add(line)
 ```
-adds `line` to the current history.
+> adds `line` to the current history.
 @@@*/
 
 int linenoise_history_add(lua_State *L)
@@ -102,7 +102,7 @@ int linenoise_history_add(lua_State *L)
 ```lua
 linenoise.set_len(len)
 ```
-sets the maximal history length to `len`.
+> sets the maximal history length to `len`.
 @@@*/
 
 int linenoise_history_set_len(lua_State *L)
@@ -116,7 +116,7 @@ int linenoise_history_set_len(lua_State *L)
 ```lua
 linenoise.save(filename)
 ```
-saves the history to the file `filename`.
+> saves the history to the file `filename`.
 @@@*/
 
 int linenoise_history_save(lua_State *L)
@@ -133,7 +133,7 @@ int linenoise_history_save(lua_State *L)
 ```lua
 linenoise.load(filename)
 ```
-loads the history from the file `filename`.
+> loads the history from the file `filename`.
 @@@*/
 
 int linenoise_history_load(lua_State *L)
@@ -150,7 +150,7 @@ int linenoise_history_load(lua_State *L)
 ```lua
 linenoise.version()
 ```
-returns the library version (if available).
+> returns the library version (if available).
 @@@*/
 
 static int linenoise_version(lua_State *L)

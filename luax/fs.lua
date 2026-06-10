@@ -355,9 +355,9 @@ end
 ```lua
 fs.join(...)
 ```
-return a path name made of several path components
-(separated by `fs.sep`).
-If a component is absolute, the previous components are removed.
+> return a path name made of several path components
+> (separated by `fs.sep`).
+> If a component is absolute, the previous components are removed.
 @@@]]
 
 function fs.join(...)
@@ -377,7 +377,7 @@ end
 ```lua
 fs.splitpath(path)
 ```
-return a list of path components.
+> return a list of path components.
 @@@]]
 
 function fs.splitpath(path)
@@ -391,7 +391,7 @@ end
 ```lua
 fs.findpath(name)
 ```
-returns the full path of `name` if `name` is found in `$PATH` or `nil`.
+> returns the full path of `name` if `name` is found in `$PATH` or `nil`.
 @@@]]
 
 function fs.findpath(name)
@@ -407,7 +407,7 @@ end
 ```lua
 fs.rmdir(path)
 ```
-deletes the directory `path` and its content recursively.
+> deletes the directory `path` and its content recursively.
 @@@]]
 
 function fs.rmdir(path)
@@ -423,20 +423,20 @@ end
 ```lua
 fs.walk([path], [{reverse=true|false, links=true|false, cross=true|false}])
 ```
-returns a list listing directory and
-file names in `path` and its subdirectories (the default path is the current
-directory).
-
-Options:
-
-- `stat`: returns the list of stat results instead of just filenames
-- `reverse`: the list is built in a reverse order
-  (suitable for recursive directory removal)
-- `cross`: walk across several devices
-- `func`: function applied to the current file or directory.
-  `func` takes two parameters (path of the file or directory and the stat object returned by `fs.stat`)
-  and returns a boolean (to continue or not walking recursively through the subdirectories)
-  and the value to add to the list.
+> returns a list listing directory and
+> file names in `path` and its subdirectories (the default path is the current
+> directory).
+>
+> Options:
+>
+> - `stat`: returns the list of stat results instead of just filenames
+> - `reverse`: the list is built in a reverse order
+>   (suitable for recursive directory removal)
+> - `cross`: walk across several devices
+> - `func`: function applied to the current file or directory.
+>   `func` takes two parameters (path of the file or directory and the stat object returned by `fs.stat`)
+>   and returns a boolean (to continue or not walking recursively through the subdirectories)
+>   and the value to add to the list.
 @@@]]
 
 function fs.walk(path, options)
@@ -507,7 +507,7 @@ end
 ```lua
 fs.with_tmpfile(f)
 ```
-calls `f(tmp)` where `tmp` is the name of a temporary file.
+> calls `f(tmp)` where `tmp` is the name of a temporary file.
 @@@]]
 
 function fs.with_tmpfile(f)
@@ -526,7 +526,7 @@ end
 ```lua
 fs.with_tmpdir(f)
 ```
-calls `f(tmp)` where `tmp` is the name of a temporary directory.
+> calls `f(tmp)` where `tmp` is the name of a temporary directory.
 @@@]]
 
 function fs.with_tmpdir(f)
@@ -543,7 +543,7 @@ end
 ```lua
 fs.with_dir(path, f)
 ```
-changes the current working directory to `path` and calls `f()`.
+> changes the current working directory to `path` and calls `f()`.
 @@@]]
 
 function fs.with_dir(path, f)
@@ -564,10 +564,10 @@ end
 ```lua
 fs.expand(path, [vars])
 ```
-returns the expanded path
-where `"~"` at the beginning of the path is replaced by the home directory of the current user
-and `$XXX` or `${XXX}` is replaced by the environment variable `XXX`.
-Variable values can also be taken from the optional `vars` table.
+> returns the expanded path
+> where `"~"` at the beginning of the path is replaced by the home directory of the current user
+> and `$XXX` or `${XXX}` is replaced by the environment variable `XXX`.
+> Variable values can also be taken from the optional `vars` table.
 @@@]]
 
 local function expanduser(path)
@@ -593,7 +593,7 @@ end
 ```lua
 fs.read(filename)
 ```
-returns the content of the text file `filename`.
+> returns the content of the text file `filename`.
 @@@]]
 
 function fs.read(name)
@@ -606,7 +606,7 @@ end
 ```lua
 fs.write(filename, ...)
 ```
-write `...` to the text file `filename`.
+> write `...` to the text file `filename`.
 @@@]]
 
 function fs.write(name, ...)
@@ -620,7 +620,7 @@ end
 ```lua
 fs.read_bin(filename)
 ```
-returns the content of the binary file `filename`.
+> returns the content of the binary file `filename`.
 @@@]]
 
 function fs.read_bin(name)
@@ -633,7 +633,7 @@ end
 ```lua
 fs.write_bin(filename, ...)
 ```
-write `...` to the binary file `filename`.
+> write `...` to the binary file `filename`.
 @@@]]
 
 function fs.write_bin(name, ...)

@@ -75,7 +75,7 @@ local fs = require "fs"
 ```lua
 fs.getcwd()
 ```
-returns the current working directory.
+> returns the current working directory.
 @@@*/
 
 static int fs_getcwd(lua_State *L)
@@ -89,7 +89,7 @@ static int fs_getcwd(lua_State *L)
 ```lua
 fs.chdir(path)
 ```
-changes the current directory to `path`.
+> changes the current directory to `path`.
 @@@*/
 
 static int fs_chdir(lua_State *L)
@@ -102,8 +102,8 @@ static int fs_chdir(lua_State *L)
 ```lua
 fs.dir([path])
 ```
-returns the list of files and directories in
-`path` (the default path is the current directory).
+> returns the list of files and directories in
+> `path` (the default path is the current directory).
 @@@*/
 
 static int fs_dir(lua_State *L)
@@ -142,16 +142,16 @@ static int fs_dir(lua_State *L)
 ```lua
 fs.ls(path, [dotted])
 ```
-returns a list of file names.
-`path` can be a directory name or a simple file pattern.
-Patterns can contain jokers (`*` to match any character and `**` to search files recursively).
-If `dotted` is true, hidden files are also listed.
-
-Examples:
-
-- `fs.ls "src"`: list all files/directories in `src`
-- `fs.ls "src/*.c"`: list all C files in `src`
-- `fs.ls "src/**.c"`: list all C files in `src` and its subdirectories
+> returns a list of file names.
+> `path` can be a directory name or a simple file pattern.
+> Patterns can contain jokers (`*` to match any character and `**` to search files recursively).
+> If `dotted` is true, hidden files are also listed.
+>
+> Examples:
+>
+> - `fs.ls "src"`: list all files/directories in `src`
+> - `fs.ls "src/*.c"`: list all C files in `src`
+> - `fs.ls "src/**.c"`: list all C files in `src` and its subdirectories
 @@@*/
 
 #ifdef _WIN32
@@ -332,9 +332,9 @@ static int fs_ls(lua_State *L)
 ```lua
 fs.glob(pattern)
 ```
-returns the list of path names matching a pattern.
-
-*Note*: The windows implementation is limited and accepts wildcards in the basename only, not in the path components.
+> returns the list of path names matching a pattern.
+>
+> *Note*: The windows implementation is limited and accepts wildcards in the basename only, not in the path components.
 @@@*/
 
 #ifdef _WIN32
@@ -420,9 +420,9 @@ static int fs_glob(lua_State *L)
 ```lua
 fs.fnmatch(pattern, string, [flags])
 ```
-matches `string` against the `pattern` using the `fnmatch` function.
-Returns `true` if the string matches the pattern, `false` otherwise.
-Optional `flags` parameter can be used to modify the matching behavior.
+> matches `string` against the `pattern` using the `fnmatch` function.
+> Returns `true` if the string matches the pattern, `false` otherwise.
+> Optional `flags` parameter can be used to modify the matching behavior.
 @@@*/
 
 static int fs_fnmatch(lua_State *L)
@@ -439,7 +439,7 @@ static int fs_fnmatch(lua_State *L)
 fs.remove(name)
 fs.rm(name)
 ```
-deletes the file `name`.
+> deletes the file `name`.
 @@@*/
 
 static int fs_remove(lua_State *L)
@@ -460,7 +460,7 @@ static int fs_remove(lua_State *L)
 fs.rename(old_name, new_name)
 fs.mv(old_name, new_name)
 ```
-renames the file `old_name` to `new_name`.
+> renames the file `old_name` to `new_name`.
 @@@*/
 
 static int fs_rename(lua_State *L)
@@ -474,8 +474,8 @@ static int fs_rename(lua_State *L)
 ```lua
 fs.copy(source_name, target_name)
 ```
-copies file `source_name` to `target_name`.
-The attributes and times are preserved.
+> copies file `source_name` to `target_name`.
+> The attributes and times are preserved.
 @@@*/
 
 static int fs_copy(lua_State *L)
@@ -524,7 +524,7 @@ static int fs_copy(lua_State *L)
 ```lua
 fs.symlink(target, linkpath)
 ```
-creates a symbolic link `linkpath` pointing to `target`.
+> creates a symbolic link `linkpath` pointing to `target`.
 @@@*/
 
 static int fs_symlink(lua_State *L)
@@ -542,7 +542,7 @@ static int fs_symlink(lua_State *L)
 ```lua
 fs.mkdir(path)
 ```
-creates a new directory `path`.
+> creates a new directory `path`.
 @@@*/
 
 static int fs_mkdir(lua_State *L)
@@ -559,7 +559,7 @@ static int fs_mkdir(lua_State *L)
 ```lua
 fs.mkdirs(path)
 ```
-creates a new directory `path` and its parent directories.
+> creates a new directory `path` and its parent directories.
 @@@*/
 
 static bool mkdirs(const char *path)
@@ -593,19 +593,19 @@ static int fs_mkdirs(lua_State *L)
 fs.stat(name)
 fs.lstat(name)
 ```
-reads attributes of the file `name`. Attributes are:
-
-- `name`: name
-- `type`: `"file"`, `"directory"` or `"link"`
-- `size`: size in bytes
-- `mtime`, `atime`, `ctime`: modification, access and creation times.
-- `mode`: file permissions
-- `uR`, `uW`, `uX`: user Read/Write/eXecute permissions
-- `gR`, `gW`, `gX`: group Read/Write/eXecute permissions
-- `oR`, `oW`, `oX`: other Read/Write/eXecute permissions
-- `aR`, `aW`, `aX`: anybody Read/Write/eXecute permissions
-
-`fs.lstat` is like `fs.stat` but gives information on links instead of pointed files.
+> reads attributes of the file `name`. Attributes are:
+>
+> - `name`: name
+> - `type`: `"file"`, `"directory"` or `"link"`
+> - `size`: size in bytes
+> - `mtime`, `atime`, `ctime`: modification, access and creation times.
+> - `mode`: file permissions
+> - `uR`, `uW`, `uX`: user Read/Write/eXecute permissions
+> - `gR`, `gW`, `gX`: group Read/Write/eXecute permissions
+> - `oR`, `oW`, `oX`: other Read/Write/eXecute permissions
+> - `aR`, `aW`, `aX`: anybody Read/Write/eXecute permissions
+>
+> `fs.lstat` is like `fs.stat` but gives information on links instead of pointed files.
 @@@*/
 
 static inline void set_string(lua_State *L, const char *name, const char *val)
@@ -682,10 +682,10 @@ static int fs_lstat(lua_State *L)
 ```lua
 fs.inode(name)
 ```
-reads device and inode attributes of the file `name`.
-Attributes are:
-
-- `dev`, `ino`: device and inode numbers
+> reads device and inode attributes of the file `name`.
+> Attributes are:
+>
+> - `dev`, `ino`: device and inode numbers
 @@@*/
 
 #ifdef _WIN32
@@ -760,14 +760,14 @@ static int fs_inode(lua_State *L)
 ```lua
 fs.chmod(name, other_file_name)
 ```
-sets file `name` permissions as
-file `other_file_name` (string containing the name of another file).
+> sets file `name` permissions as
+> file `other_file_name` (string containing the name of another file).
 
 ```lua
 fs.chmod(name, bit1, ..., bitn)
 ```
-sets file `name` permissions as
-`bit1` or ... or `bitn` (integers).
+> sets file `name` permissions as
+> `bit1` or ... or `bitn` (integers).
 @@@*/
 
 static int fs_chmod(lua_State *L)
@@ -795,20 +795,20 @@ static int fs_chmod(lua_State *L)
 ```lua
 fs.touch(name)
 ```
-sets the access time and the modification time of
-file `name` with the current time.
+> sets the access time and the modification time of
+> file `name` with the current time.
 
 ```lua
 fs.touch(name, number)
 ```
-sets the access time and the modification
-time of file `name` with `number`.
+> sets the access time and the modification
+> time of file `name` with `number`.
 
 ```lua
 fs.touch(name, other_name)
 ```
-sets the access time and the
-modification time of file `name` with the times of file `other_name`.
+> sets the access time and the
+> modification time of file `name` with the times of file `other_name`.
 @@@*/
 
 #ifdef _WIN32
@@ -864,7 +864,7 @@ fs.ltouch(name)
 fs.ltouch(name, number)
 fs.ltouch(name, other_name)
 ```
-like `fs.touch` without following symbolic links.
+> like `fs.touch` without following symbolic links.
 @@@*/
 
 static int fs_ltouch(lua_State *L)
@@ -880,7 +880,7 @@ static int fs_ltouch(lua_State *L)
 ```lua
 fs.basename(path)
 ```
-return the last component of path.
+> return the last component of path.
 @@@*/
 
 static int fs_basename(lua_State *L)
@@ -895,7 +895,7 @@ static int fs_basename(lua_State *L)
 ```lua
 fs.dirname(path)
 ```
-return all but the last component of path.
+> return all but the last component of path.
 @@@*/
 
 static int fs_dirname(lua_State *L)
@@ -910,7 +910,7 @@ static int fs_dirname(lua_State *L)
 ```lua
 fs.splitext(path)
 ```
-return the name without the extension and the extension.
+> return the name without the extension and the extension.
 @@@*/
 
 static size_t find_ext(const char *path, size_t len)
@@ -941,7 +941,7 @@ static int fs_splitext(lua_State *L)
 ```lua
 fs.ext(path)
 ```
-return the extension of a filename.
+> return the extension of a filename.
 @@@*/
 
 static int fs_ext(lua_State *L)
@@ -957,7 +957,7 @@ static int fs_ext(lua_State *L)
 ```lua
 fs.chext(path, ext)
 ```
-replace the extension of `path` with `ext`.
+> replace the extension of `path` with `ext`.
 @@@*/
 
 static int fs_chext(lua_State *L)
@@ -978,7 +978,7 @@ static int fs_chext(lua_State *L)
 ```lua
 fs.realpath(path)
 ```
-return the resolved path name of path.
+> return the resolved path name of path.
 @@@*/
 
 static int fs_realpath(lua_State *L)
@@ -1004,7 +1004,7 @@ static int fs_realpath(lua_State *L)
 ```lua
 fs.readlink(path)
 ```
-return the content of a symbolic link.
+> return the content of a symbolic link.
 @@@*/
 
 static int fs_readlink(lua_State *L)
@@ -1028,7 +1028,7 @@ static int fs_readlink(lua_State *L)
 ```lua
 fs.absname(path)
 ```
-return the absolute path name of path.
+> return the absolute path name of path.
 @@@*/
 
 static int fs_absname(lua_State *L)
@@ -1058,7 +1058,7 @@ static int fs_absname(lua_State *L)
 ```lua
 fs.is_file(name)
 ```
-returns `true` if `name` is a file.
+> returns `true` if `name` is a file.
 @@@*/
 
 static int fs_is_file(lua_State *L)
@@ -1073,7 +1073,7 @@ static int fs_is_file(lua_State *L)
 ```lua
 fs.is_dir(name)
 ```
-returns `true` if `name` is a directory.
+> returns `true` if `name` is a directory.
 @@@*/
 
 static int fs_is_dir(lua_State *L)
@@ -1088,7 +1088,7 @@ static int fs_is_dir(lua_State *L)
 ```lua
 fs.is_link(name)
 ```
-returns `true` if `name` is a symbolic link.
+> returns `true` if `name` is a symbolic link.
 @@@*/
 
 static int fs_is_link(lua_State *L)
@@ -1107,7 +1107,7 @@ static int fs_is_link(lua_State *L)
 ```lua
 fs.tmpfile()
 ```
-return the name of a temporary file.
+> return the name of a temporary file.
 @@@*/
 
 static int fs_tmpfile(lua_State *L)
@@ -1140,7 +1140,7 @@ static int fs_tmpfile(lua_State *L)
 ```lua
 fs.tmpdir()
 ```
-return the name of a temporary directory.
+> return the name of a temporary directory.
 @@@*/
 
 static int fs_tmpdir(lua_State *L)
@@ -1217,12 +1217,12 @@ static const luaL_Reg fslib[] =
 ```lua
 fs.sep
 ```
-is the directory separator.
+> is the directory separator.
 
 ```lua
 fs.path_sep
 ```
-is the path separator in `$LUA_PATH`.
+> is the path separator in `$LUA_PATH`.
 
 ```lua
 fs.uR, fs.uW, fs.uX
@@ -1230,7 +1230,7 @@ fs.gR, fs.gW, fs.gX
 fs.oR, fs.oW, fs.oX
 fs.aR, fs.aW, fs.aX
 ```
-are the User/Group/Other/All Read/Write/eXecute mask for `fs.chmod`.
+> are the User/Group/Other/All Read/Write/eXecute mask for `fs.chmod`.
 
 ```lua
 fs.FNM_NOESCAPE
@@ -1241,7 +1241,7 @@ fs.FNM_LEADING_DIR
 fs.FNM_CASEFOLD
 fs.FNM_EXTMATCH
 ```
-are flags for `fs.fnmatch`.
+> are flags for `fs.fnmatch`.
 @@@*/
 
 LUAMOD_API int luaopen_fs(lua_State *L)

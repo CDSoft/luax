@@ -33,10 +33,10 @@ configuration parameters being global variables defined in the configuration fil
 ```lua
 local conf = import("myconf.lua", [env])
 ```
-Evaluates `"myconf.lua"` in a new table and returns this table.
-All files are tracked in `package.modpath`.
-
-The execution environment inherits from `env` (or `_ENV` if `env` is not defined).
+> Evaluates `"myconf.lua"` in a new table and returns this table.
+> All files are tracked in `package.modpath`.
+>
+> The execution environment inherits from `env` (or `_ENV` if `env` is not defined).
 @@@]]
 
 return function(fname, env)

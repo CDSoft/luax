@@ -67,20 +67,20 @@ and can instantiate independent generators with their own seeds.
 ```lua
 local rng = crypt.prng([seed, incr])
 ```
-returns a random number generator starting from the optional seed `seed` and increment `incr`.
-This object has five methods: `seed([seed, incr])`, `clone()`, `int([m, [n]])`, `float([a, [b]])` and `str(n)`.
-
-Special `seed` and `incr` values:
-
-| `seed`    | Initial PRNG state    | `incr`    | PRNG increment        |
-|-----------|-----------------------|-----------|-----------------------|
-| `nil`     | Random value          | `nil`     | Random value          |
-| `-1`      | `0x4d595df4d0f33173`  | `-1`      | `1442695040888963407` |
-| `n`       | `n`                   | `n`       | `n\|1`                |
-
-The increment shall be an odd number (i.e. even values are added 1).
-
-Random state and increment values are taken from some entropy sources (time, memory...).
+> returns a random number generator starting from the optional seed `seed` and increment `incr`.
+> This object has five methods: `seed([seed, incr])`, `clone()`, `int([m, [n]])`, `float([a, [b]])` and `str(n)`.
+>
+> Special `seed` and `incr` values:
+>
+> | `seed`    | Initial PRNG state    | `incr`    | PRNG increment        |
+> |-----------|-----------------------|-----------|-----------------------|
+> | `nil`     | Random value          | `nil`     | Random value          |
+> | `-1`      | `0x4d595df4d0f33173`  | `-1`      | `1442695040888963407` |
+> | `n`       | `n`                   | `n`       | `n\|1`                |
+>
+> The increment shall be an odd number (i.e. even values are added 1).
+>
+> Random state and increment values are taken from some entropy sources (time, memory...).
 @@@*/
 
 static int crypt_prng(lua_State *L)
@@ -101,8 +101,8 @@ static int crypt_prng(lua_State *L)
 ```lua
 rng:seed([seed, incr])
 ```
-sets the seed of the PRNG and returns the PRNG itself.
-The default seed is a number based on the current time and the process id.
+> sets the seed of the PRNG and returns the PRNG itself.
+> The default seed is a number based on the current time and the process id.
 @@@*/
 
 static int crypt_prng_seed(lua_State *L)
@@ -123,7 +123,7 @@ static int crypt_prng_seed(lua_State *L)
 ```lua
 rng:clone()
 ```
-returns a clone of the PRNG (same seed, same increment).
+> returns a clone of the PRNG (same seed, same increment).
 @@@*/
 
 static int crypt_prng_clone(lua_State *L)
@@ -139,17 +139,17 @@ static int crypt_prng_clone(lua_State *L)
 ```lua
 rng:int()
 ```
-returns a random integral number between `0` and `crypt.RAND_MAX`.
+> returns a random integral number between `0` and `crypt.RAND_MAX`.
 
 ```lua
 rng:int(m)
 ```
-returns a random integral number between `1` and `m`.
+> returns a random integral number between `1` and `m`.
 
 ```lua
 rng:int(m, n)
 ```
-returns a random integral number between `m` and `n`.
+> returns a random integral number between `m` and `n`.
 @@@*/
 
 static int crypt_prng_int(lua_State *L)
@@ -173,17 +173,17 @@ static int crypt_prng_int(lua_State *L)
 ```lua
 rng:float()
 ```
-returns a random floating point number between `0.0` and `1.0`.
+> returns a random floating point number between `0.0` and `1.0`.
 
 ```lua
 rng:float(a)
 ```
-returns a random floating point number between `0.0` and `a`.
+> returns a random floating point number between `0.0` and `a`.
 
 ```lua
 rng:float(a, b)
 ```
-returns a random floating point number between `a` and `b`.
+> returns a random floating point number between `a` and `b`.
 @@@*/
 
 static int crypt_prng_float(lua_State *L)
@@ -207,8 +207,8 @@ static int crypt_prng_float(lua_State *L)
 ```lua
 rng:str(bytes)
 ```
-returns a string with `bytes` random bytes.
-If `bytes` is negative, `str` returns an empty string.
+> returns a string with `bytes` random bytes.
+> If `bytes` is negative, `str` returns an empty string.
 @@@*/
 
 static int crypt_prng_str(lua_State *L)
@@ -245,8 +245,8 @@ static t_pcg global_prng;
 ```lua
 crypt.seed([seed, incr])
 ```
-sets the seed of the global PRNG.
-The default seed is a number based on the current time and the process id.
+> sets the seed of the global PRNG.
+> The default seed is a number based on the current time and the process id.
 @@@*/
 
 static int crypt_seed(lua_State *L)
@@ -265,17 +265,17 @@ static int crypt_seed(lua_State *L)
 ```lua
 crypt.int()
 ```
-returns a random integral number between `0` and `crypt.RAND_MAX`.
+> returns a random integral number between `0` and `crypt.RAND_MAX`.
 
 ```lua
 crypt.int(m)
 ```
-returns a random integral number between `1` and `m`.
+> returns a random integral number between `1` and `m`.
 
 ```lua
 crypt.int(m, n)
 ```
-returns a random integral number between `m` and `n`.
+> returns a random integral number between `m` and `n`.
 @@@*/
 
 static int crypt_int(lua_State *L)
@@ -298,17 +298,17 @@ static int crypt_int(lua_State *L)
 ```lua
 crypt.float()
 ```
-returns a random floating point number between `0.0` and `1.0`.
+> returns a random floating point number between `0.0` and `1.0`.
 
 ```lua
 crypt.float(a)
 ```
-returns a random floating point number between `0.0` and `a`.
+> returns a random floating point number between `0.0` and `a`.
 
 ```lua
 crypt.float(a, b)
 ```
-returns a random floating point number between `a` and `b`.
+> returns a random floating point number between `a` and `b`.
 @@@*/
 
 static int crypt_float(lua_State *L)
@@ -331,8 +331,8 @@ static int crypt_float(lua_State *L)
 ```lua
 crypt.str(bytes)
 ```
-returns a string with `bytes` random bytes.
-If `bytes` is negative, `str` returns an empty string.
+> returns a string with `bytes` random bytes.
+> If `bytes` is negative, `str` returns an empty string.
 @@@*/
 
 static int crypt_str(lua_State *L)
@@ -375,7 +375,7 @@ static void hex_decode(const char *hex, size_t n_in, luaL_Buffer *B)
 ```lua
 crypt.hex(data)
 ```
-encodes `data` in hexa.
+> encodes `data` in hexa.
 @@@*/
 
 static int crypt_hex_encode(lua_State *L)
@@ -393,7 +393,7 @@ static int crypt_hex_encode(lua_State *L)
 ```lua
 crypt.unhex(data)
 ```
-decodes the hexa `data`.
+> decodes the hexa `data`.
 @@@*/
 
 static int crypt_hex_decode(lua_State *L)
@@ -554,7 +554,7 @@ static void base64_decode(const char *rev, const unsigned char *b64, size_t n_in
 ```lua
 crypt.base64(data)
 ```
-encodes `data` in base64.
+> encodes `data` in base64.
 @@@*/
 
 static int crypt_base64_encode(lua_State *L)
@@ -572,7 +572,7 @@ static int crypt_base64_encode(lua_State *L)
 ```lua
 crypt.unbase64(data)
 ```
-decodes the base64 `data`.
+> decodes the base64 `data`.
 @@@*/
 
 static int crypt_base64_decode(lua_State *L)
@@ -590,7 +590,7 @@ static int crypt_base64_decode(lua_State *L)
 ```lua
 crypt.base64url(data)
 ```
-encodes `data` in base64url.
+> encodes `data` in base64url.
 @@@*/
 
 static int crypt_base64url_encode(lua_State *L)
@@ -608,7 +608,7 @@ static int crypt_base64url_encode(lua_State *L)
 ```lua
 crypt.unbase64url(data)
 ```
-decodes the base64url `data`.
+> decodes the base64url `data`.
 @@@*/
 
 static int crypt_base64url_decode(lua_State *L)
@@ -678,7 +678,7 @@ static uint32_t crc32(const char *s, size_t n)
 ```lua
 crypt.crc32(data)
 ```
-computes the CRC32 of `data`.
+> computes the CRC32 of `data`.
 @@@*/
 
 static int crypt_crc32(lua_State *L)
@@ -778,7 +778,7 @@ static uint64_t crc64(const char *s, size_t n)
 ```lua
 crypt.crc64(data)
 ```
-computes the CRC64 of `data`.
+> computes the CRC64 of `data`.
 @@@*/
 
 static int crypt_crc64(lua_State *L)
@@ -879,9 +879,9 @@ static void arc4(const char *key, size_t key_size, size_t drop, const char *inpu
 crypt.arc4(data, key, [drop])
 crypt.unarc4(data, key, [drop])     -- note that unarc4 == arc4
 ```
-encrypts/decrypts `data` using the ARC4Drop
-algorithm and the encryption key `key` (drops the first `drop` encryption
-steps, the default value of `drop` is 768).
+> encrypts/decrypts `data` using the ARC4Drop
+> algorithm and the encryption key `key` (drops the first `drop` encryption
+> steps, the default value of `drop` is 768).
 @@@*/
 
 static int crypt_arc4(lua_State *L)
@@ -916,7 +916,7 @@ static int crypt_arc4(lua_State *L)
 crypt.hash32(data)
 crypt.hash(data)        -- alias for crypt.hash32
 ```
-returns a 32-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+> returns a 32-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 @@@*/
 
 static int crypt_hash32(lua_State *L)
@@ -938,7 +938,7 @@ static int crypt_hash32(lua_State *L)
 ```lua
 crypt.hash64(data)
 ```
-returns a 64-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+> returns a 64-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 @@@*/
 
 static int crypt_hash64(lua_State *L)
@@ -960,7 +960,7 @@ static int crypt_hash64(lua_State *L)
 ```lua
 crypt.hash128(data)
 ```
-returns a 128-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+> returns a 128-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 @@@*/
 
 static int crypt_hash128(lua_State *L)
@@ -982,7 +982,7 @@ static int crypt_hash128(lua_State *L)
 ```lua
 crypt.hash256(data)
 ```
-returns a 256-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+> returns a 256-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 @@@*/
 
 static int crypt_hash256(lua_State *L)
@@ -1004,7 +1004,7 @@ static int crypt_hash256(lua_State *L)
 ```lua
 crypt.hash512(data)
 ```
-returns a 512-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+> returns a 512-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 @@@*/
 
 static int crypt_hash512(lua_State *L)
@@ -1026,7 +1026,7 @@ static int crypt_hash512(lua_State *L)
 ```lua
 crypt.hash1024(data)
 ```
-returns a 1024-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+> returns a 1024-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 @@@*/
 
 static int crypt_hash1024(lua_State *L)
@@ -1053,7 +1053,7 @@ static int crypt_hash1024(lua_State *L)
 ```lua
 crypt.sha1(data)
 ```
-returns a SHA-1 digest of `data`.
+> returns a SHA-1 digest of `data`.
 @@@*/
 
 static int crypt_sha1(lua_State *L)
@@ -1075,7 +1075,7 @@ static int crypt_sha1(lua_State *L)
 ```lua
 crypt.sha256(data)
 ```
-returns a SHA-256 digest of `data`.
+> returns a SHA-256 digest of `data`.
 @@@*/
 
 static int crypt_sha256(lua_State *L)

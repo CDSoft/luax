@@ -17,12 +17,12 @@ The source code is available at <https://www.nongnu.org/lzip/lzlib.html>.
 ```lua
 lzip.lzip(data, [level])
 ```
-compresses `data` with lzip.
-The compressed data is an lzip frame that can be stored in a file and
-decompressed by the `lzip` command line utility.
-
-The optional `level` parameter is the compression level (from 0 to 9).
-The default compression level is 6.
+> compresses `data` with lzip.
+> The compressed data is an lzip frame that can be stored in a file and
+> decompressed by the `lzip` command line utility.
+>
+> The optional `level` parameter is the compression level (from 0 to 9).
+> The default compression level is 6.
 
 
 ## lzip decompression
@@ -31,9 +31,9 @@ The default compression level is 6.
 ```lua
 lzip.unlzip(data)
 ```
-decompresses `data` with lzip.
-`data` shall be an lzip frame and
-can be the content of a file produced by the `lzip` command line utility.
+> decompresses `data` with lzip.
+> `data` shall be an lzip frame and
+> can be the content of a file produced by the `lzip` command line utility.
 
 
 

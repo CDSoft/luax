@@ -4650,7 +4650,7 @@ F.choose(xs)    -- using the global PRNG
 xs:choose(prng)
 xs:choose()     -- using the global PRNG
 ```
-returns a random item from `xs`
+> returns a random item from `xs`
 @@@]]
 
 function F.choose(xs, prng)
@@ -4669,7 +4669,7 @@ F.shuffle(xs)   -- using the global PRNG
 xs:shuffle(prng)
 xs:shuffle()    -- using the global PRNG
 ```
-returns a shuffled copy of `xs`
+> returns a shuffled copy of `xs`
 @@@]]
 
 function F.shuffle(xs, prng)
@@ -4710,12 +4710,12 @@ The optional types can be combined with other types. E.g.: `{ "option", "range",
 ```lua
 F.validate(schema, input, [options])
 ```
-returns `true` if `input` is validated by `schema`. Otherwise it returns `false`
-and a list of failures.
-
-| Options           | Description                                               | Default value |
-| ----------------- | --------------------------------------------------------- | ------------- |
-| `options.strict`  | Strict validation (unspecified fields are not allowed)    | `true`        |
+> returns `true` if `input` is validated by `schema`. Otherwise it returns `false`
+> and a list of failures.
+>
+> | Options           | Description                                               | Default value |
+> | ----------------- | --------------------------------------------------------- | ------------- |
+> | `options.strict`  | Strict validation (unspecified fields are not allowed)    | `true`        |
 @@@]]
 
 function F.validate(schema, input, options)

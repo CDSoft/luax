@@ -93,14 +93,13 @@ term.color.X("...")
 -- build a complex color with attributes
 local c = term.color.red + term.color.italic + term.color.oncyan
 ```
-
-The user can disable the color support (e.g. when not running on a terminal):
-
-``` lua
-if not term.isatty(io.stdout) then
-    term.color.disable()
-end
-```
+> The user can disable the color support (e.g. when not running on a terminal):
+>
+> ``` lua
+> if not term.isatty(io.stdout) then
+>     term.color.disable()
+> end
+> ```
 @@@]]
 
 local color_mt, color_reset
@@ -206,7 +205,7 @@ end
 ``` lua
 term.reset()
 ```
-resets the colors and the cursor shape.
+> resets the colors and the cursor shape.
 @@@]]
 term.reset    = f(color_reset..     -- reset colors
                   CSI.."0 q"..      -- reset cursor shape
@@ -220,7 +219,7 @@ term.clearline()
 term.cleareol()
 term.clearend()
 ```
-clears the terminal, the current line, the end of the current line or from the cursor to the end of the terminal.
+> clears the terminal, the current line, the end of the current line or from the cursor to the end of the terminal.
 @@@]]
 term.clear       = f(CSI..'1;1H'..CSI..'2J')
 term.clearline   = f(CSI..'2K'..CSI..'E')
@@ -231,7 +230,7 @@ term.clearend    = f(CSI..'J')
 ``` lua
 term.pos(row, col)
 ```
-moves the cursor to the line `row` and the column `col`.
+> moves the cursor to the line `row` and the column `col`.
 @@@]]
 term.pos         = f(CSI..'%d;%dH')
 
@@ -240,7 +239,7 @@ term.pos         = f(CSI..'%d;%dH')
 term.save_pos()
 term.restore_pos()
 ```
-saves and restores the position of the cursor.
+> saves and restores the position of the cursor.
 @@@]]
 term.save_pos    = f(CSI..'s')
 term.restore_pos = f(CSI..'u')
@@ -252,7 +251,7 @@ term.down([n])
 term.right([n])
 term.left([n])
 ```
-moves the cursor by `n` characters up, down, right or left.
+> moves the cursor by `n` characters up, down, right or left.
 @@@]]
 term.up          = f(CSI..'%d;A')
 term.down        = f(CSI..'%d;B')
@@ -273,7 +272,7 @@ is highly recommended for a better user experience on Linux.
 ```lua
 s = term.prompt(p)
 ```
-prints `p` and waits for a user input
+> prints `p` and waits for a user input
 @@@]]
 
 function term.prompt(p)
@@ -294,7 +293,7 @@ Set the terminal title.
 ```lua
 term.title(t)
 ```
-sets the terminal title.
+> sets the terminal title.
 @@@]]
 
 function term.title(t)

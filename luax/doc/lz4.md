@@ -30,12 +30,12 @@ Only the compression level can be changed.
 ```lua
 lz4.lz4(data, [level])
 ```
-compresses `data` with LZ4.
-The compressed data is an LZ4 frame that can be stored in a file and
-decompressed by the `lz4` command line utility.
-
-The optional `level` parameter is the compression level (from 0 to 12).
-The default compression level is 9.
+> compresses `data` with LZ4.
+> The compressed data is an LZ4 frame that can be stored in a file and
+> decompressed by the `lz4` command line utility.
+>
+> The optional `level` parameter is the compression level (from 0 to 12).
+> The default compression level is 9.
 
 
 ## LZ4 frame decompression
@@ -44,9 +44,9 @@ The default compression level is 9.
 ```lua
 lz4.unlz4(data)
 ```
-decompresses `data` with LZ4.
-`data` shall be an LZ4 frame and
-can be the content of a file produced by the `lz4` command line utility.
+> decompresses `data` with LZ4.
+> `data` shall be an LZ4 frame and
+> can be the content of a file produced by the `lz4` command line utility.
 
 
 

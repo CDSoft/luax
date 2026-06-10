@@ -51,7 +51,7 @@ local ps = require "ps"
 ```lua
 ps.sleep(n)
 ```
-sleeps for `n` seconds.
+> sleeps for `n` seconds.
 @@@*/
 
 static int ps_sleep(lua_State *L)
@@ -81,7 +81,7 @@ static int ps_sleep(lua_State *L)
 ```lua
 ps.time()
 ```
-returns the current time in seconds (the resolution is OS dependant).
+> returns the current time in seconds (the resolution is OS dependant).
 @@@*/
 
 static inline lua_Number gettime(void)
@@ -109,8 +109,8 @@ static int ps_time(lua_State *L)
 ```lua
 ps.clock()
 ```
-returns an approximation of the amount in seconds of CPU time used by the program,
-as returned by the underlying ISO C function `clock`.
+> returns an approximation of the amount in seconds of CPU time used by the program,
+> as returned by the underlying ISO C function `clock`.
 @@@*/
 
 static inline lua_Number getclock(void)
@@ -129,7 +129,7 @@ static int ps_clock(lua_State *L)
 ```lua
 ps.profile(func)
 ```
-executes `func` and returns its execution time in seconds (using `ps.clock`).
+> executes `func` and returns its execution time in seconds (using `ps.clock`).
 @@@*/
 
 static int ps_profile(lua_State *L)

@@ -169,8 +169,8 @@ static void load_readline(void)
 ``` lua
 readline.name(appname)
 ```
-sets a unique application name.
-This name allows conditional parsing of the inputrc file.
+> sets a unique application name.
+> This name allows conditional parsing of the inputrc file.
 @@@*/
 
 static int readline_name(lua_State *L)
@@ -188,7 +188,7 @@ static int readline_name(lua_State *L)
 ```lua
 readline.read(prompt)
 ```
-prints `prompt` and returns the string entered by the user.
+> prints `prompt` and returns the string entered by the user.
 @@@*/
 
 static int readline_read(lua_State *L)
@@ -206,12 +206,12 @@ static int readline_read(lua_State *L)
 ```lua
 readline.add(line)
 ```
-adds `line` to the current history.
-
-The history is cleaned on the fly:
-
-- empty lines are ignored
-- duplicates are removed, only the last entry is kept
+> adds `line` to the current history.
+>
+> The history is cleaned on the fly:
+>
+> - empty lines are ignored
+> - duplicates are removed, only the last entry is kept
 @@@*/
 
 static inline int imax(int a, int b) { return a < b ? b : a; }
@@ -249,7 +249,7 @@ done:
 ```lua
 readline.set_len(len)
 ```
-sets the maximal history length to `len`.
+> sets the maximal history length to `len`.
 @@@*/
 
 static int readline_history_set_len(lua_State *L)
@@ -266,8 +266,8 @@ static int readline_history_set_len(lua_State *L)
 ```lua
 readline.save(filename)
 ```
-saves the history to the file `filename`
-(unless the history has not been modified).
+> saves the history to the file `filename`
+> (unless the history has not been modified).
 @@@*/
 
 static int readline_history_save(lua_State *L)
@@ -285,7 +285,7 @@ static int readline_history_save(lua_State *L)
 ```lua
 readline.load(filename)
 ```
-loads the history from the file `filename`.
+> loads the history from the file `filename`.
 @@@*/
 
 static int readline_history_load(lua_State *L)
@@ -303,7 +303,7 @@ static int readline_history_load(lua_State *L)
 ```lua
 readline.version()
 ```
-returns the library version (if available).
+> returns the library version (if available).
 @@@*/
 
 static int readline_version(lua_State *L)

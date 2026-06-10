@@ -28,72 +28,72 @@ and can instantiate independent generators with their own seeds.
 ```lua
 local rng = crypt.prng([seed, incr])
 ```
-returns a random number generator starting from the optional seed `seed` and increment `incr`.
-This object has five methods: `seed([seed, incr])`, `clone()`, `int([m, [n]])`, `float([a, [b]])` and `str(n)`.
-
-Special `seed` and `incr` values:
-
-| `seed`    | Initial PRNG state    | `incr`    | PRNG increment        |
-|-----------|-----------------------|-----------|-----------------------|
-| `nil`     | Random value          | `nil`     | Random value          |
-| `-1`      | `0x4d595df4d0f33173`  | `-1`      | `1442695040888963407` |
-| `n`       | `n`                   | `n`       | `n\|1`                |
-
-The increment shall be an odd number (i.e. even values are added 1).
-
-Random state and increment values are taken from some entropy sources (time, memory...).
+> returns a random number generator starting from the optional seed `seed` and increment `incr`.
+> This object has five methods: `seed([seed, incr])`, `clone()`, `int([m, [n]])`, `float([a, [b]])` and `str(n)`.
+>
+> Special `seed` and `incr` values:
+>
+> | `seed`    | Initial PRNG state    | `incr`    | PRNG increment        |
+> |-----------|-----------------------|-----------|-----------------------|
+> | `nil`     | Random value          | `nil`     | Random value          |
+> | `-1`      | `0x4d595df4d0f33173`  | `-1`      | `1442695040888963407` |
+> | `n`       | `n`                   | `n`       | `n\|1`                |
+>
+> The increment shall be an odd number (i.e. even values are added 1).
+>
+> Random state and increment values are taken from some entropy sources (time, memory...).
 
 
 ```lua
 rng:seed([seed, incr])
 ```
-sets the seed of the PRNG and returns the PRNG itself.
-The default seed is a number based on the current time and the process id.
+> sets the seed of the PRNG and returns the PRNG itself.
+> The default seed is a number based on the current time and the process id.
 
 
 ```lua
 rng:clone()
 ```
-returns a clone of the PRNG (same seed, same increment).
+> returns a clone of the PRNG (same seed, same increment).
 
 
 ```lua
 rng:int()
 ```
-returns a random integral number between `0` and `crypt.RAND_MAX`.
+> returns a random integral number between `0` and `crypt.RAND_MAX`.
 
 ```lua
 rng:int(m)
 ```
-returns a random integral number between `1` and `m`.
+> returns a random integral number between `1` and `m`.
 
 ```lua
 rng:int(m, n)
 ```
-returns a random integral number between `m` and `n`.
+> returns a random integral number between `m` and `n`.
 
 
 ```lua
 rng:float()
 ```
-returns a random floating point number between `0.0` and `1.0`.
+> returns a random floating point number between `0.0` and `1.0`.
 
 ```lua
 rng:float(a)
 ```
-returns a random floating point number between `0.0` and `a`.
+> returns a random floating point number between `0.0` and `a`.
 
 ```lua
 rng:float(a, b)
 ```
-returns a random floating point number between `a` and `b`.
+> returns a random floating point number between `a` and `b`.
 
 
 ```lua
 rng:str(bytes)
 ```
-returns a string with `bytes` random bytes.
-If `bytes` is negative, `str` returns an empty string.
+> returns a string with `bytes` random bytes.
+> If `bytes` is negative, `str` returns an empty string.
 
 
 ### Global random number generator
@@ -102,47 +102,47 @@ If `bytes` is negative, `str` returns an empty string.
 ```lua
 crypt.seed([seed, incr])
 ```
-sets the seed of the global PRNG.
-The default seed is a number based on the current time and the process id.
+> sets the seed of the global PRNG.
+> The default seed is a number based on the current time and the process id.
 
 
 ```lua
 crypt.int()
 ```
-returns a random integral number between `0` and `crypt.RAND_MAX`.
+> returns a random integral number between `0` and `crypt.RAND_MAX`.
 
 ```lua
 crypt.int(m)
 ```
-returns a random integral number between `1` and `m`.
+> returns a random integral number between `1` and `m`.
 
 ```lua
 crypt.int(m, n)
 ```
-returns a random integral number between `m` and `n`.
+> returns a random integral number between `m` and `n`.
 
 
 ```lua
 crypt.float()
 ```
-returns a random floating point number between `0.0` and `1.0`.
+> returns a random floating point number between `0.0` and `1.0`.
 
 ```lua
 crypt.float(a)
 ```
-returns a random floating point number between `0.0` and `a`.
+> returns a random floating point number between `0.0` and `a`.
 
 ```lua
 crypt.float(a, b)
 ```
-returns a random floating point number between `a` and `b`.
+> returns a random floating point number between `a` and `b`.
 
 
 ```lua
 crypt.str(bytes)
 ```
-returns a string with `bytes` random bytes.
-If `bytes` is negative, `str` returns an empty string.
+> returns a string with `bytes` random bytes.
+> If `bytes` is negative, `str` returns an empty string.
 
 
 ## Hexadecimal encoding
@@ -154,13 +154,13 @@ where bytes are coded with hexadecimal digits.
 ```lua
 crypt.hex(data)
 ```
-encodes `data` in hexa.
+> encodes `data` in hexa.
 
 
 ```lua
 crypt.unhex(data)
 ```
-decodes the hexa `data`.
+> decodes the hexa `data`.
 
 
 ## Base64 encoding
@@ -172,25 +172,25 @@ into a printable string (see <https://en.wikipedia.org/wiki/Base64>).
 ```lua
 crypt.base64(data)
 ```
-encodes `data` in base64.
+> encodes `data` in base64.
 
 
 ```lua
 crypt.unbase64(data)
 ```
-decodes the base64 `data`.
+> decodes the base64 `data`.
 
 
 ```lua
 crypt.base64url(data)
 ```
-encodes `data` in base64url.
+> encodes `data` in base64url.
 
 
 ```lua
 crypt.unbase64url(data)
 ```
-decodes the base64url `data`.
+> decodes the base64url `data`.
 
 
 ## CRC32 hash
@@ -202,7 +202,7 @@ with the `crc-32` algorithm.
 ```lua
 crypt.crc32(data)
 ```
-computes the CRC32 of `data`.
+> computes the CRC32 of `data`.
 
 
 ## CRC64 hash
@@ -214,7 +214,7 @@ with the `crc-64-xz` algorithm.
 ```lua
 crypt.crc64(data)
 ```
-computes the CRC64 of `data`.
+> computes the CRC64 of `data`.
 
 
 ## ARC4 encryption
@@ -227,9 +227,9 @@ It is designed to be fast and simple.
 crypt.arc4(data, key, [drop])
 crypt.unarc4(data, key, [drop])     -- note that unarc4 == arc4
 ```
-encrypts/decrypts `data` using the ARC4Drop
-algorithm and the encryption key `key` (drops the first `drop` encryption
-steps, the default value of `drop` is 768).
+> encrypts/decrypts `data` using the ARC4Drop
+> algorithm and the encryption key `key` (drops the first `drop` encryption
+> steps, the default value of `drop` is 768).
 
 
 ### Fast FNV-1a hash
@@ -240,37 +240,37 @@ steps, the default value of `drop` is 768).
 crypt.hash32(data)
 crypt.hash(data)        -- alias for crypt.hash32
 ```
-returns a 32-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+> returns a 32-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 
 
 ```lua
 crypt.hash64(data)
 ```
-returns a 64-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+> returns a 64-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 
 
 ```lua
 crypt.hash128(data)
 ```
-returns a 128-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+> returns a 128-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 
 
 ```lua
 crypt.hash256(data)
 ```
-returns a 256-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+> returns a 256-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 
 
 ```lua
 crypt.hash512(data)
 ```
-returns a 512-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+> returns a 512-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 
 
 ```lua
 crypt.hash1024(data)
 ```
-returns a 1024-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
+> returns a 1024-bit digest of `data` based on FNV-1a (not suitable for cryptographic usage).
 
 
 ### SHA-1 hash
@@ -280,7 +280,7 @@ returns a 1024-bit digest of `data` based on FNV-1a (not suitable for cryptograp
 ```lua
 crypt.sha1(data)
 ```
-returns a SHA-1 digest of `data`.
+> returns a SHA-1 digest of `data`.
 
 
 ### SHA-256 hash
@@ -290,7 +290,7 @@ returns a SHA-1 digest of `data`.
 ```lua
 crypt.sha256(data)
 ```
-returns a SHA-256 digest of `data`.
+> returns a SHA-256 digest of `data`.
 
 
 
@@ -303,14 +303,14 @@ returns a SHA-256 digest of `data`.
 prng:choose(xs)
 crypt.choose(xs)    -- using the global PRNG
 ```
-returns a random item from `xs`
+> returns a random item from `xs`
 
 
 ```lua
 prng:shuffle(xs)
 crypt.shuffle(xs)    -- using the global PRNG
 ```
-returns a shuffled copy of `xs`
+> returns a shuffled copy of `xs`
 
 
 ## String methods

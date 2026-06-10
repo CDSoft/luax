@@ -12,37 +12,37 @@ The history can not be saved on Windows.
 ```lua
 linenoise.read(prompt)
 ```
-prints `prompt` and returns the string entered by the user.
+> prints `prompt` and returns the string entered by the user.
 
 
 ```lua
 linenoise.add(line)
 ```
-adds `line` to the current history.
+> adds `line` to the current history.
 
 
 ```lua
 linenoise.set_len(len)
 ```
-sets the maximal history length to `len`.
+> sets the maximal history length to `len`.
 
 
 ```lua
 linenoise.save(filename)
 ```
-saves the history to the file `filename`.
+> saves the history to the file `filename`.
 
 
 ```lua
 linenoise.load(filename)
 ```
-loads the history from the file `filename`.
+> loads the history from the file `filename`.
 
 
 ```lua
 linenoise.version()
 ```
-returns the library version (if available).
+> returns the library version (if available).
 
 
 
