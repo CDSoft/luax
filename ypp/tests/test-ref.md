@@ -274,20 +274,20 @@ int main(void) {
 
 ### Images with the default format (SVG)
 
-- ypp_images/b49087009670ddd6.svg
-- .build/tests/ypp/ypp_images/b49087009670ddd6.svg
+- ypp_images/d6dd7096008790b4.svg
+- .build/tests/ypp/ypp_images/d6dd7096008790b4.svg
 
 
 ### Images with a specific format (e.g. PNG)
 
-- ypp_images/20cdbe6a97b8872c.png
-- .build/tests/ypp/ypp_images/20cdbe6a97b8872c.png
+- ypp_images/2c87b8976abecd20.png
+- .build/tests/ypp/ypp_images/2c87b8976abecd20.png
 
 
 ### Images with a custom command
 
-- ypp_images/b49087009670ddd6.svg
-- .build/tests/ypp/ypp_images/b49087009670ddd6.svg
+- ypp_images/d6dd7096008790b4.svg
+- .build/tests/ypp/ypp_images/d6dd7096008790b4.svg
 
 
 ### Images generated with Asymptote
@@ -298,13 +298,13 @@ ypp_images/test-asy.svg
 
 ypp_images/test-octave.svg
 
-ypp_images/3c127c622c6eeecc.svg
+ypp_images/ccee6e2c627c123c.svg
 
 ### Images from an external file
 
 ypp_images/test-dot.svg
 
-ypp_images/a6ae6726874bd0b6.svg
+ypp_images/b6d04b872667aea6.svg
 
 ### Images preprocessed with ypp
 

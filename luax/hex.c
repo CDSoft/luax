@@ -40,15 +40,15 @@ void raw_to_hex(const char *raw, size_t size, char *hex)
     for (size_t i = 0; i < size; i++) {
         const char c = raw[i];
         hex[2*i+0] = hex_digits[(c>>4)&0xF];
-        hex[2*i+1] = hex_digits[c&0xF];
+        hex[2*i+1] = hex_digits[(c>>0)&0xF];
     }
 }
 
 void hex_to_raw(const char *hex, size_t size, char *raw)
 {
     for (size_t i = 0; i < size-1; i += 2) {
-        const unsigned char d1 = hex[i] & 0xFF;
+        const unsigned char d1 = hex[i+0] & 0xFF;
         const unsigned char d2 = hex[i+1] & 0xFF;
-        raw[i/2] = (char)((hex_values[d1]<<4) | hex_values[d2]);
+        raw[i/2] = (char)((hex_values[d1]<<4) | (hex_values[d2]<<0));
     }
 }

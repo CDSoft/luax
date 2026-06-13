@@ -19,9 +19,53 @@
 
 #include "fnv1a.h"
 
-#include "hex.h"
-
 #include <string.h>
+#include <sys/types.h>
+
+/******************************************************************************
+ * Big endian hexadecimal digests
+ *****************************************************************************/
+
+static const char hex[] = "0123456789abcdef";
+
+static inline void to_hex_32(const t_fnv1a_32 w, char *d)
+{
+    size_t k = 0;
+    for (ssize_t j = 2*sizeof(w)-1; j >= 0; j--) {
+        d[k++] = hex[(w >> (4*j)) & 0xF];
+    }
+    d[k] = '\0';
+}
+
+static inline void to_hex_64(const t_fnv1a_64 w, char *d)
+{
+    size_t k = 0;
+    for (ssize_t j = 2*sizeof(w)-1; j >= 0; j--) {
+        d[k++] = hex[(w >> (4*j)) & 0xF];
+    }
+    d[k] = '\0';
+}
+
+static inline void to_hex_128(const t_fnv1a_128 w, char *d)
+{
+    size_t k = 0;
+    for (ssize_t j = 2*sizeof(w)-1; j >= 0; j--) {
+        d[k++] = hex[(w >> (4*j)) & 0xF];
+    }
+    d[k] = '\0';
+}
+
+static inline void to_hex_big(const t_fnv1a_digit *ws, size_t n, char *d)
+{
+    size_t k = 0;
+    for (ssize_t i = (ssize_t)(n/sizeof(ws[0]))-1; i >= 0; i--) {
+        const t_fnv1a_digit w = ws[i];
+        for (ssize_t j = 2*sizeof(w)-1; j >= 0; j--) {
+            d[k++] = hex[(w >> (4*j)) & 0xF];
+        }
+    }
+    d[k] = '\0';
+}
 
 /******************************************************************************
  * FNV1A - 32 bit
@@ -47,8 +91,7 @@ void fnv1a_32_update(t_fnv1a_32 *hash, const void *data, size_t size)
 
 void fnv1a_32_digest(const t_fnv1a_32 *hash, t_fnv1a_32_digest digest)
 {
-    raw_to_hex((const char *)hash, sizeof(*hash), digest);
-    digest[sizeof(t_fnv1a_32_digest)-1] = '\0';
+    to_hex_32(*hash, digest);
 }
 
 /******************************************************************************
@@ -74,8 +117,7 @@ void fnv1a_64_update(t_fnv1a_64 *hash, const void *data, size_t size)
 
 void fnv1a_64_digest(const t_fnv1a_64 *hash, t_fnv1a_64_digest digest)
 {
-    raw_to_hex((const char *)hash, sizeof(*hash), digest);
-    digest[sizeof(t_fnv1a_64_digest)-1] = '\0';
+    to_hex_64(*hash, digest);
 }
 
 /******************************************************************************
@@ -104,8 +146,7 @@ void fnv1a_128_update(t_fnv1a_128 *hash, const void *data, size_t size)
 
 void fnv1a_128_digest(const t_fnv1a_128 *hash, t_fnv1a_128_digest digest)
 {
-    raw_to_hex((const char *)hash, sizeof(*hash), digest);
-    digest[sizeof(t_fnv1a_128_digest)-1] = '\0';
+    to_hex_128(*hash, digest);
 }
 
 /******************************************************************************
@@ -129,12 +170,14 @@ void fnv1a_256_init(t_fnv1a_256 *hash)
     memcpy(hash, &fnv1a_256_offset_basis, sizeof(t_fnv1a_256));
 }
 
-static inline void split(t_fnv1a_digit *digit, t_fnv1a_digit *carry, t_fnv1a_double_digit n) {
+static inline void split(t_fnv1a_digit *digit, t_fnv1a_digit *carry, t_fnv1a_double_digit n)
+{
     *digit = n & (t_fnv1a_digit)~0;
     *carry = n >> 8*sizeof(t_fnv1a_digit);
 }
 
-static inline void step_256(uint8_t data, t_fnv1a_256 *h1, t_fnv1a_256 *h2) {
+static inline void step_256(uint8_t data, t_fnv1a_256 *h1, t_fnv1a_256 *h2)
+{
     t_fnv1a_digit carry = 0;
     (*h1)[0] ^= data;
     split(&(*h2)[0], &carry, carry + (t_fnv1a_double_digit)(*h1)[0]*fnv1a_256_prime[0]);
@@ -160,8 +203,7 @@ void fnv1a_256_update(t_fnv1a_256 *hash, const void *data, size_t size)
 
 void fnv1a_256_digest(const t_fnv1a_256 *hash, t_fnv1a_256_digest digest)
 {
-    raw_to_hex((const char *)hash, sizeof(*hash), digest);
-    digest[sizeof(t_fnv1a_256_digest)-1] = '\0';
+    to_hex_big(*hash, sizeof(*hash), digest);
 }
 
 /******************************************************************************
@@ -189,7 +231,8 @@ void fnv1a_512_init(t_fnv1a_512 *hash)
     memcpy(hash, &fnv1a_512_offset_basis, sizeof(t_fnv1a_512));
 }
 
-static inline void step_512(uint8_t data, t_fnv1a_512 *h1, t_fnv1a_512 *h2) {
+static inline void step_512(uint8_t data, t_fnv1a_512 *h1, t_fnv1a_512 *h2)
+{
     t_fnv1a_digit carry = 0;
     (*h1)[0] ^= data;
     split(&(*h2)[0], &carry, carry + (t_fnv1a_double_digit)(*h1)[0]*fnv1a_512_prime[0]);
@@ -219,8 +262,7 @@ void fnv1a_512_update(t_fnv1a_512 *hash, const void *data, size_t size)
 
 void fnv1a_512_digest(const t_fnv1a_512 *hash, t_fnv1a_512_digest digest)
 {
-    raw_to_hex((const char *)hash, sizeof(*hash), digest);
-    digest[sizeof(t_fnv1a_512_digest)-1] = '\0';
+    to_hex_big(*hash, sizeof(*hash), digest);
 }
 
 /******************************************************************************
@@ -256,7 +298,8 @@ void fnv1a_1024_init(t_fnv1a_1024 *hash)
     memcpy(hash, &fnv1a_1024_offset_basis, sizeof(t_fnv1a_1024));
 }
 
-static inline void step_1024(uint8_t data, t_fnv1a_1024 *h1, t_fnv1a_1024 *h2) {
+static inline void step_1024(uint8_t data, t_fnv1a_1024 *h1, t_fnv1a_1024 *h2)
+{
     t_fnv1a_digit carry = 0;
     (*h1)[0] ^= data;
     split(&(*h2)[ 0], &carry, carry + (t_fnv1a_double_digit)(*h1)[ 0]*fnv1a_1024_prime[0]);
@@ -294,6 +337,5 @@ void fnv1a_1024_update(t_fnv1a_1024 *hash, const void *data, size_t size)
 
 void fnv1a_1024_digest(const t_fnv1a_1024 *hash, t_fnv1a_1024_digest digest)
 {
-    raw_to_hex((const char *)hash, sizeof(*hash), digest);
-    digest[sizeof(t_fnv1a_1024_digest)-1] = '\0';
+    to_hex_big(*hash, sizeof(*hash), digest);
 }

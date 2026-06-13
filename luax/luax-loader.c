@@ -108,7 +108,7 @@ static bool read_header(FILE *f, size_t offset, struct t_header *header)
     fnv1a_32_init(&hash);
     fnv1a_32_update(&hash, header, sizeof(struct t_header)-sizeof(header->hash));
     header->size = load_le32((uint8_t*)&header->size);
-    header->hash = load_le32((uint8_t*)&header->hash);
+    header->hash = load_be32((uint8_t*)&header->hash);
     return memcmp(&hash, &header->hash, sizeof(hash)) == 0;
 }
 

@@ -305,10 +305,10 @@ if not has_crypt then
     -- see <https://en.wikipedia.org/wiki/Base64>
 
     local base64_map = { [0] =
-    'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-    'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
-    '0','1','2','3','4','5','6','7','8','9',
-    '+','/',
+        'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+        'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+        '0','1','2','3','4','5','6','7','8','9',
+        '+','/',
     }
 
     local base64_rev = {}
@@ -352,9 +352,9 @@ if not has_crypt then
         for i = 1, #s, 4 do
             local a, b, c, d = byte(s, i, i+3)
             local u24 = (base64_rev[a] << (3*6))
-                    | (base64_rev[b] << (2*6))
-                    | (base64_rev[c] << (1*6))
-                    | (base64_rev[d] << (0*6))
+                      | (base64_rev[b] << (2*6))
+                      | (base64_rev[c] << (1*6))
+                      | (base64_rev[d] << (0*6))
             tokens[#tokens+1] = char((u24 >> (2*8)) & 0xFF)
             tokens[#tokens+1] = char((u24 >> (1*8)) & 0xFF)
             tokens[#tokens+1] = char((u24 >> (0*8)) & 0xFF)
@@ -522,28 +522,28 @@ if not has_crypt then
 
     crypt.unarc4 = crypt.arc4
 
-    function crypt.hash32(s) return ("<I4"):pack(fnv1a_32(fnv1a_32_init, s)):hex() end
+    function crypt.hash32(s) return (">I4"):pack(fnv1a_32(fnv1a_32_init, s)):hex() end
 
-    function crypt.hash64(s) return ("<I8"):pack(fnv1a_64(fnv1a_64_init, s)):hex() end
+    function crypt.hash64(s) return (">I8"):pack(fnv1a_64(fnv1a_64_init, s)):hex() end
 
     function crypt.hash128(s)
         local h = {fnv1a_128(fnv1a_128_init, s)}
-        return ("<"..("I4"):rep(#h)):pack(F.reverse(h):unpack()):hex()
+        return (">"..("I4"):rep(#h)):pack(F.unpack(h)):hex()
     end
 
     function crypt.hash256(s)
         local h = {fnv1a_256(fnv1a_256_init, s)}
-        return ("<"..("I4"):rep(#h)):pack(F.reverse(h):unpack()):hex()
+        return (">"..("I4"):rep(#h)):pack(F.unpack(h)):hex()
     end
 
     function crypt.hash512(s)
         local h = {fnv1a_512(fnv1a_512_init, s)}
-        return ("<"..("I4"):rep(#h)):pack(F.reverse(h):unpack()):hex()
+        return (">"..("I4"):rep(#h)):pack(F.unpack(h)):hex()
     end
 
     function crypt.hash1024(s)
         local h = {fnv1a_1024(fnv1a_1024_init, s)}
-        return ("<"..("I4"):rep(#h)):pack(F.reverse(h):unpack()):hex()
+        return (">"..("I4"):rep(#h)):pack(F.unpack(h)):hex()
     end
 
     crypt.hash = crypt.hash64
