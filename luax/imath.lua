@@ -314,7 +314,7 @@ if not has_imath then
             q[j+1] = qhat
             -- D6: substract top
             if top < 0 then
-                q[j+i] = qhat - 1
+                q[j+1] = qhat - 1
                 local carry = 0
                 for i = 1, n do
                     local s = u[j+i] + v[i] + carry
