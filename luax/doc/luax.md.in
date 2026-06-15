@@ -341,22 +341,31 @@ script `lib/libluax.lua` can be reused in pure Lua programs:
 
 `luax` uses other third party softwares:
 
-- **[Argparse](https://github.com/mpeterv/argparse)**: a feature-rich command line parser for Lua ([MIT license](https://github.com/mpeterv/argparse/blob/master/LICENSE))
-- **[CBOR](https://www.zash.se/lua-cbor.html)**: pure Lua implementation of the CBOR ([License](https://code.zash.se/lua-cbor/file/tip/COPYING))
-- **[dkjson.lua](http://dkolf.de/dkjson-lua/)**: JSON Module for Lua ([MIT license](http://www.lua.org/license.html))
-- **[imath](https://github.com/creachadair/imath)**: arbitrary precision library IMath written by Michael J. Fromberger ([LICENSE](https://github.com/creachadair/imath/blob/main/LICENSE))
-- **[lcomplex](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/)**: support for complex numbers in Lua ([MIT license](https://mit-license.org/))
-- **[limath](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/)**: a big-integer library for Lua ([MIT license](https://mit-license.org/))
-- **[Linenoise](https://github.com/antirez/linenoise)**: A minimal, zero-config, BSD licensed, readline replacement ([BSD license](https://github.com/antirez/linenoise/blob/master/LICENSE))
-- **[Lpeg](http://www.inf.puc-rio.br/~roberto/lpeg/)**: Parsing Expression Grammars For Lua ([MIT license](http://www.lua.org/license.html))
-- **[lqmath](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/)**: rational number library for Lua ([MIT license](https://mit-license.org/))
-- **[Lua 5.5](http://www.lua.org)**: Copyright (C) 1994-2025 Lua.org, PUC-Rio ([MIT license](http://www.lua.org/license.html))
-- **[luasocket](https://github.com/diegonehab/luasocket)**: Network support for the Lua language ([LuaSocket 3.0 license](https://github.com/diegonehab/luasocket/blob/master/LICENSE))
-- **[lua-tinyyaml](https://github.com/zepinglee/lua-tinyyaml)**: a tiny yaml (subset) parser for pure lua ([MIT License](https://github.com/zepinglee/lua-tinyyaml/blob/master/LICENSE))
-- **[LZ4](https://github.com/lz4/lz4)**: Extremely Fast Compression algorithm ([License](https://github.com/lz4/lz4/blob/dev/lib/LICENSE))
-- **[lzip](https://www.nongnu.org/lzip/)**: A compression library for the lzip format ([License](http://www.gnu.org/licenses/gpl-2.0.html))
-- **[mathx](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/)**: complete math library for Lua ([MIT license](https://mit-license.org/))
-- **[readline](https://tiswww.case.edu/php/chet/readline/rltop.html)**: Command line editing functions [GPLv3 License](https://www.gnu.org/licenses/gpl-3.0.html)
-- **[serpent](https://github.com/pkulchenko/serpent)**: Lua serializer and pretty printer ([MIT license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))
-- **[tinytoml](https://github.com/FourierTransformer/tinytoml)**: a pure Lua TOML parser ([MIT License](https://github.com/FourierTransformer/tinytoml?tab=MIT-1-ov-file#readme))
-- **[Zig](https://ziglang.org/)**: General-purpose programming language and toolchain for maintaining robust, optimal, and reusable software ([MIT license](https://github.com/ziglang/zig/blob/master/LICENSE))
+@@[===[
+
+    local function lic(name) return function(url) return function(text) return function(license) return function (license_url)
+        return F.str { "- **[", name, "](", url, ")**: ", text, " ([", license, "](", license_url, "))" }
+    end end end end end
+
+    return {
+        lic "Argparse"     "https://github.com/mpeterv/argparse"            "a feature-rich command line parser for Lua"                                                                "MIT license"           "https://github.com/mpeterv/argparse/blob/master/LICENSE",
+        lic "CBOR"         "https://www.zash.se/lua-cbor.html"              "pure Lua implementation of the CBOR"                                                                       "License"               "https://code.zash.se/lua-cbor/file/tip/COPYING",
+        lic "dkjson.lua"   "http://dkolf.de/dkjson-lua/"                    "JSON Module for Lua"                                                                                       "MIT license"           "http://www.lua.org/license.html",
+        lic "imath"        "https://github.com/creachadair/imath"           "arbitrary precision library IMath written by Michael J. Fromberger"                                        "LICENSE"               "https://github.com/creachadair/imath/blob/main/LICENSE",
+        lic "lcomplex"     "https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/"   "support for complex numbers in Lua"                                                                        "MIT license"           "https://mit-license.org/",
+        lic "limath"       "https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/"   "a big-integer library for Lua"                                                                             "MIT license"           "https://mit-license.org/",
+        lic "Linenoise"    "https://github.com/antirez/linenoise"           "A minimal, zero-config, BSD licensed, readline replacement"                                                "BSD license"           "https://github.com/antirez/linenoise/blob/master/LICENSE",
+        lic "Lpeg"         "http://www.inf.puc-rio.br/~roberto/lpeg/"       "Parsing Expression Grammars For Lua"                                                                       "MIT license"           "http://www.lua.org/license.html",
+        lic "lqmath"       "https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/"   "rational number library for Lua"                                                                           "MIT license"           "https://mit-license.org/",
+        lic "Lua 5.5"      "http://www.lua.org"                             "Copyright (C) 1994-2025 Lua.org, PUC-Rio"                                                                  "MIT license"           "http://www.lua.org/license.html",
+        lic "luasocket"    "https://github.com/diegonehab/luasocket"        "Network support for the Lua language"                                                                      "LuaSocket 3.0 license" "https://github.com/diegonehab/luasocket/blob/master/LICENSE",
+        lic "lua-tinyyaml" "https://github.com/zepinglee/lua-tinyyaml"      "a tiny yaml (subset) parser for pure lua"                                                                  "MIT License"           "https://github.com/zepinglee/lua-tinyyaml/blob/master/LICENSE",
+        lic "LZ4"          "https://github.com/lz4/lz4"                     "Extremely Fast Compression algorithm"                                                                      "License"               "https://github.com/lz4/lz4/blob/dev/lib/LICENSE",
+        lic "lzip"         "https://www.nongnu.org/lzip/"                   "A compression library for the lzip format"                                                                 "License"               "http://www.gnu.org/licenses/gpl-2.0.html",
+        lic "mathx"        "https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/"   "complete math library for Lua"                                                                             "MIT license"           "https://mit-license.org/",
+        lic "serpent"      "https://github.com/pkulchenko/serpent"          "Lua serializer and pretty printer"                                                                         "MIT license"           "https://github.com/pkulchenko/serpent/blob/master/LICENSE",
+        lic "tinytoml"     "https://github.com/FourierTransformer/tinytoml" "a pure Lua TOML parser"                                                                                    "MIT License"           "https://github.com/FourierTransformer/tinytoml?tab=MIT-1-ov-file#readme",
+        lic "Zig"          "https://ziglang.org/"                           "General-purpose programming language and toolchain for maintaining robust, optimal, and reusable software" "MIT license"           "https://github.com/ziglang/zig/blob/master/LICENSE",
+    }
+
+]===]

@@ -406,7 +406,7 @@ script `lib/libluax.lua` can be reused in pure Lua programs:
 - **[LZ4](https://github.com/lz4/lz4)**: Extremely Fast Compression algorithm ([License](https://github.com/lz4/lz4/blob/dev/lib/LICENSE))
 - **[lzip](https://www.nongnu.org/lzip/)**: A compression library for the lzip format ([License](http://www.gnu.org/licenses/gpl-2.0.html))
 - **[mathx](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/)**: complete math library for Lua ([MIT license](https://mit-license.org/))
-- **[readline](https://tiswww.case.edu/php/chet/readline/rltop.html)**: Command line editing functions [GPLv3 License](https://www.gnu.org/licenses/gpl-3.0.html)
 - **[serpent](https://github.com/pkulchenko/serpent)**: Lua serializer and pretty printer ([MIT license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))
 - **[tinytoml](https://github.com/FourierTransformer/tinytoml)**: a pure Lua TOML parser ([MIT License](https://github.com/FourierTransformer/tinytoml?tab=MIT-1-ov-file#readme))
 - **[Zig](https://ziglang.org/)**: General-purpose programming language and toolchain for maintaining robust, optimal, and reusable software ([MIT license](https://github.com/ziglang/zig/blob/master/LICENSE))
+
