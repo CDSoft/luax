@@ -672,6 +672,68 @@ local function cmd_compile()
         end
     end
 
+    local function minify(s)
+        local find, sub, gsub = string.find, string.sub, string.gsub
+        local t = F{}
+        local function emit(x) t[#t+1] = x end
+        local eof = math.huge
+        local i = 1
+        while i <= #s do
+            -- Search for a string or comment
+            -- long string
+            local ls1, ls2, open_string = find(s, "^(%[=*%[)", i)
+            if ls1 then
+                -- keep long strings
+                local _, j2 = find(s, gsub(open_string, "%[", "]"), ls2, true)
+                emit(sub(s, i, j2))
+                i = (j2 or eof) + 1
+                goto continue
+            end
+            -- short strings
+            local quote = sub(s, i, i)
+            if quote == "'" or quote == '"' then
+                -- keep short strings
+                local i1 = i+1
+                while i1 <= #s do
+                    local c = sub(s, i1, i1)
+                    if c == quote or c == "\r" or c == "\n" then break end
+                    if c == "\\" then i1 = i1+1 end
+                    i1 = i1+1
+                end
+                emit(sub(s, i, i1))
+                i = i1+1
+                goto continue
+            end
+            -- long comments
+            local lc1, lc2, open_comment = find(s, "^[ \t]*%-%-(%[=*%[)", i)
+            if lc1 then
+                -- remove long comments, preserve line sync
+                local j1, j2 = find(s, gsub(open_comment, "%[", "]"), lc2, true)
+                if j1 then
+                    emit(gsub(sub(s, lc2+1, j1-1), "[^\r\n]", "")) -- keep line numbers in sync
+                    i = j2+1
+                else
+                    emit(sub(s, i))
+                    i = eof
+                end
+                goto continue
+            end
+            -- short comments
+            local sc1, sc2 = find(s, "^[ \t]*%-%-[^\r\n]*", i)
+            if sc1 then
+                -- remove short comments
+                emit(sub(s, i, sc1-1))
+                i = sc2+1
+                goto continue
+            end
+            -- no strings or comments at the current position
+            emit(sub(s, i, i))
+            i = i+1
+            ::continue::
+        end
+        return t:str()
+    end
+
     local luax_exe = find_exe(arg[0]):realpath()
     local prefix = luax_exe:dirname():dirname()
     local libluax_xyz = (function()
@@ -814,7 +876,7 @@ local function cmd_compile()
             if ext == ".lua" then
                 module = F {
                     path      = script,
-                    content   = comment_shebang(content),
+                    content   = minify(comment_shebang(content)),
                     is_main   = content:match("@".."MAIN") and true,
                     is_lib    = content:match("@".."LIB") and true,
                     lib_name  = content:match("@".."LIB=([%w%._%-]+)") or script:basename():splitext(),
