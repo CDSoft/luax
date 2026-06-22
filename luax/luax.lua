@@ -676,9 +676,9 @@ local function cmd_compile()
         local find, sub, gsub = string.find, string.sub, string.gsub
         local t = F{}
         local function emit(x) t[#t+1] = x end
-        local eof = math.huge
+        local eof = #s+1
         local i = 1
-        while i <= #s do
+        while i < eof do
             -- Search for a string or comment
             -- long string
             local ls1, ls2, open_string = find(s, "^(%[=*%[)", i)
@@ -694,7 +694,7 @@ local function cmd_compile()
             if quote == "'" or quote == '"' then
                 -- keep short strings
                 local i1 = i+1
-                while i1 <= #s do
+                while i1 < eof do
                     local c = sub(s, i1, i1)
                     if c == quote or c == "\r" or c == "\n" then break end
                     if c == "\\" then i1 = i1+1 end
