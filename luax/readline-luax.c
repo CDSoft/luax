@@ -34,7 +34,6 @@ The history can not be saved on Windows.
 #include "readline-luax.h"
 
 #include "linenoise-luax.h"
-#include "luax-push.h"
 
 #include <ctype.h>
 #include <dlfcn.h>
