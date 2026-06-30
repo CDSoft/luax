@@ -425,7 +425,12 @@ local test_options = {
 }
 
 local native_targets = targets
-    : filter(function(t) return t.os==sys.os and t.arch==sys.arch end)
+    : filter(function(t)
+        return t.os==sys.os
+           and (  t.arch==sys.arch
+               or t.arch=="x86" and sys.arch=="x86_64"
+               )
+       end)
     : map(function(t) return t.name end)
 
 local _port = 8000
@@ -471,6 +476,7 @@ acc(test) {
 
     ({"native"} .. native_targets) : mapi(function(i, target_name)
         local test_libc = ("-musl"):is_suffix_of(target_name) and "musl" or libc
+        local test_arch =  target_name=="native" and sys.arch or target_name:split"-"[2]
         local test_name = target_name=="native" and sys.name or target_name
         local exe_name = "$builddir/tests/luax/test-compiled".."-"..i
         return build("$builddir/tests/luax/test-1-"..i.."-compiled_executable.ok") { test_sources,
@@ -486,7 +492,7 @@ acc(test) {
                 test_options,
                 "LUAX=$builddir/bin/luax",
                 "IS_COMPILED=true", "EXE_NAME="..exe_name,
-                "ARCH="..sys.arch, "OS="..sys.os, "LIBC="..test_libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..test_name,
+                "ARCH="..test_arch, "OS="..sys.os, "LIBC="..test_libc, "EXE="..sys.exe, "SO="..sys.so, "NAME="..test_name,
                 exe_name, "Lua is great",
                 "&&",
                 "touch $out",

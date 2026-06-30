@@ -22,8 +22,20 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#if (defined(__SIZEOF_INT128__) && __SIZEOF_INT128__ == 16) || \
+    (defined(__clang__) && __has_feature(c_int128))
+    #define HAS_UINT128_T 1
+#else
+    #define HAS_UINT128_T 0
+#endif
+
+#if HAS_UINT128_T
 typedef uint64_t t_fnv1a_digit;
 typedef __uint128_t t_fnv1a_double_digit;
+#else
+typedef uint32_t t_fnv1a_digit;
+typedef uint64_t t_fnv1a_double_digit;
+#endif
 
 /******************************************************************************
  * FNV1A - 32 bit
@@ -51,7 +63,11 @@ void fnv1a_64_digest(const t_fnv1a_64 *hash, t_fnv1a_64_digest digest);
  * FNV1A - 128 bit
  *****************************************************************************/
 
+#if HAS_UINT128_T
 typedef __uint128_t t_fnv1a_128;
+#else
+typedef t_fnv1a_digit t_fnv1a_128[128/(8*sizeof(t_fnv1a_digit))];
+#endif
 typedef char t_fnv1a_128_digest[sizeof(t_fnv1a_128)*2 + 1];
 
 void fnv1a_128_init(t_fnv1a_128 *hash);

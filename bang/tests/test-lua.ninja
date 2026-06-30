@@ -681,6 +681,18 @@ rule luax-linux-aarch64-musl
 
 build hello-linux-aarch64-musl: luax-linux-aarch64-musl hello.lua module.lua
 
+rule luax-linux-x86
+  description = luax-linux-x86 $out
+  command = /path/to/luax compile -t linux-x86 $in -o $out -s -k "a \"super\" key"
+
+build hello-linux-x86: luax-linux-x86 hello.lua module.lua
+
+rule luax-linux-x86-musl
+  description = luax-linux-x86-musl $out
+  command = /path/to/luax compile -t linux-x86-musl $in -o $out -s -k "a \"super\" key"
+
+build hello-linux-x86-musl: luax-linux-x86-musl hello.lua module.lua
+
 rule luax-macos-x86_64
   description = luax-macos-x86_64 $out
   command = /path/to/luax compile -t macos-x86_64 $in -o $out -s -k "a \"super\" key"
@@ -817,6 +829,8 @@ build doc.md: myypp src/doc.md
 # foo5.o
 # hello-linux-aarch64
 # hello-linux-aarch64-musl
+# hello-linux-x86
+# hello-linux-x86-musl
 # hello-linux-x86_64
 # hello-linux-x86_64-musl
 # hello-lua
