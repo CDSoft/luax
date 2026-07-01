@@ -291,6 +291,8 @@ linux-x86_64          ~/.local/lib/libluax_xyz
 linux-x86_64-musl     ~/.local/lib/libluax_xyz
 linux-aarch64         ~/.local/lib/libluax_xyz
 linux-aarch64-musl    ~/.local/lib/libluax_xyz
+linux-x86             ~/.local/lib/libluax.xyz
+linux-x86-musl        ~/.local/lib/libluax.xyz
 macos-x86_64          ~/.local/lib/libluax_xyz
 macos-aarch64         ~/.local/lib/libluax_xyz
 windows-x86_64        ~/.local/lib/libluax_xyz
