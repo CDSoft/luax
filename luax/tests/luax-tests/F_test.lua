@@ -443,9 +443,8 @@ local function miscellaneous_functions()
         eq({fib(5)}, {imath.new"5", 5})
         eq({fib(6)}, {imath.new"8", 6})
 
-        local fib100
-        local dt, err = ps.profile(function() fib100 = {fib(100)} end) -- this should be fast because of memoization
-        assert(dt, err)
+        local dt, fib100 = ps.profile(function() return {fib(100)} end) -- this should be fast because of memoization
+        assert(dt, fib100)
         assert(dt < 1.0, "the memoized fibonacci suite takes too much time")
         eq(fib100, {imath.new"354224848179261915075", 100})
     end
@@ -467,9 +466,8 @@ local function miscellaneous_functions()
             return r(x, n-1) + r(x, n-2), n
         end))
 
-        local fib100
-        local dt, err = ps.profile(function() fib100 = {fib(nil, 100)} end) -- this should be fast because of memoization
-        assert(dt, err)
+        local dt, fib100 = ps.profile(function() return {fib(nil, 100)} end) -- this should be fast because of memoization
+        assert(dt, fib100)
         assert(dt < 1.0, "the memoized fibonacci suite takes too much time")
         eq(fib100, {imath.new"354224848179261915075", 100})
     end

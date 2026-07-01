@@ -127,24 +127,31 @@ static int ps_clock(lua_State *L)
 
 /*@@@
 ```lua
-ps.profile(func)
+ps.profile(func, ...)
 ```
-> executes `func` and returns its execution time in seconds (using `ps.clock`).
+> executes `func` with the provided arguments and returns:
+>
+> - On success: execution time (number) followed by all return values of `func`
+> - On error: `false`, error message
 @@@*/
 
 static int ps_profile(lua_State *L)
 {
-    if (lua_gettop(L) != 1 || !lua_isfunction(L, 1)) {
-        return luax_pusherror(L, "ps.profile argument shall be callable");
+    if (lua_gettop(L) < 1 || !lua_isfunction(L, 1)) {
+        return luax_pusherror(L, "ps.profile first argument shall be a function");
     }
+    const int nargs = lua_gettop(L) - 1; /* number of arguments for the function */
     volatile const lua_Number t0 = getclock();
-    const int status = lua_pcall(L, 0, 0, 0);
+    const int status = lua_pcall(L, nargs, LUA_MULTRET, 0); /* Call the function with all arguments */
     volatile const lua_Number t1 = getclock();
     if (status != LUA_OK) {
-        return luax_pusherror(L, "ps.profile argument failed");
+        lua_pushboolean(L, 0);  /* [false] */
+        lua_insert(L, 1);       /* [false, original error message] */
+        return 2;
     }
-    lua_pushnumber(L, t1 - t0);
-    return 1;
+    lua_pushnumber(L, t1 - t0); /* Push execution time */
+    lua_insert(L, 1); /* Move time to the first position: [time, func_results...] */
+    return lua_gettop(L); /* Return time + all function results */
 }
 
 static const luaL_Reg pslib[] =

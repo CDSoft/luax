@@ -26,28 +26,26 @@ if not has_ps then
 
     ps = {}
 
+    local pack, unpack = table.pack, table.unpack
+    local clock = os.clock
+
     function ps.sleep(n)
         io.popen("sleep "..tostring(n)):close()
     end
 
     ps.time = os.time
 
-    ps.clock = os.clock
+    ps.clock = clock
 
-    function ps.profile(func)
-        local clock = ps.clock
-        local ok, dt = pcall(function()
-            local t0 = clock()
-            func()
-            local t1 = clock()
-            return t1 - t0
-        end)
-        if ok then
-            return dt
+    function ps.profile(func, ...)
+        local t0 = clock()
+        local results = pack(pcall(func, ...))
+        local t1 = clock()
+        if results[1] then
+            return t1 - t0, unpack(results, 2, results.n)
         else
-            return ok, dt
+            return results[1], results[2]
         end
-
     end
 
 end

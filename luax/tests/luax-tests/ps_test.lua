@@ -26,16 +26,19 @@ local ps = require "ps"
 
 local sys = require "sys"
 
+local test = require "test"
+local eq = test.eq
+
 local eps = sys.libc == "lua" and 1 or 0.02
 
-local function try(test, ...)
+local function try(func, ...)
     -- These tests may fail when the system is loaded.
     -- => Try to execute them several times before considering a failure.
     for _ = 1, 10 do
-        if pcall(test, ...) then return end
+        if pcall(func, ...) then return end
         ps.sleep(3*math.random()) -- wait a bit before retrying
     end
-    test(...)
+    func(...)
 end
 
 local function time_test()
@@ -85,12 +88,22 @@ local function sleep_test(n)
 end
 
 local function profile_test(n)
-    local dt, err = ps.profile(function()
-        local t = os.clock() + n
-        repeat until os.clock() >= t
-    end)
-    assert(dt, err)
-    assert(n-1e-6 <= dt and dt <= n+eps, ("Expected delay: %f, actual delay: %f"):format(n, dt))
+    do
+        local dt, x, y = ps.profile(function(a, b)
+            local t = os.clock() + n
+            repeat until os.clock() >= t
+            return a+1, b+1
+        end, 10, 20)
+        assert(dt, x)
+        assert(n-1e-6 <= dt and dt <= n+eps, ("Expected delay: %f, actual delay: %f"):format(n, dt))
+        assert(x == 11)
+        assert(y == 21)
+    end
+    do
+        local dt, err = ps.profile(function() error("it failed") end)
+        eq(dt, false)
+        eq(err:split(":"):last():trim(), "it failed")
+    end
 end
 
 return function()

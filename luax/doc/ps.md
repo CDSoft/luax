@@ -26,8 +26,11 @@ ps.clock()
 
 
 ```lua
-ps.profile(func)
+ps.profile(func, ...)
 ```
-> executes `func` and returns its execution time in seconds (using `ps.clock`).
+> executes `func` with the provided arguments and returns:
+>
+> - On success: execution time (number) followed by all return values of `func`
+> - On error: `false`, error message
 
 
