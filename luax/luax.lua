@@ -1296,6 +1296,8 @@ local function cmd_postinstall()
 
     colorize(io.stdout)
 
+    local patterns = {"luax", "libluax", "bang", "ypp", "lsvg"}
+
     local compiled_files = F{
         "bin"/"luax"..sys.exe,
         "bin"/"bang"..sys.exe,
@@ -1370,7 +1372,11 @@ local function cmd_postinstall()
     -- Search for obsolete files
 
     local obsolete_files = (fs.ls(bin/"**") .. fs.ls(lib/"**"))
-        : filter(function(file) return file:match("luax", #prefix) end)
+        : filter(function(file)
+            for _, pattern in ipairs(patterns) do
+                if file:basename():match("^"..pattern) then return true end
+            end
+        end)
         : filter(function(file)
             return new_files:not_elem(file)
                and new_dirs:not_elem(file)
