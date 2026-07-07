@@ -37,6 +37,7 @@ local curl = {
 }
 
 local F = require "F"
+local fs = require "fs"
 local sh = require "sh"
 
 --[[------------------------------------------------------------------------@@@
