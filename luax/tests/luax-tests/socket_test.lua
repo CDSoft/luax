@@ -51,7 +51,7 @@ return function()
         assert(require "ltn12")
 
         if server then
-            local port = os.getenv "HTTP_PORT_RANGE" + 3
+            local port = os.getenv "HTTP_PORT_RANGE" + 0
             local httpd<close> = assert(io.popen(server.." "..port))
             ps.sleep(0.1)
             local s, code, _ = http.request("http://localhost:"..port)

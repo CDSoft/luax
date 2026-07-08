@@ -26,6 +26,7 @@ local test = require "test"
 local eq = test.eq
 
 local F = require "F"
+local fs = require "fs"
 local ps = require "ps"
 
 local server = os.getenv "HTTP_SERVER"
@@ -67,16 +68,35 @@ return function()
             ok = true,
             status = 200,
             status_msg = "OK",
-            headers = {content_type="text/plain"},
+            headers = {content_type="text/plain", content_length=13},
             body = "Hello, World!",
         })
         eq(msg, nil)
+    end
+
+    if server then
+        local port = os.getenv "HTTP_PORT_RANGE" + 3
+        local httpd<close> = assert(io.popen(server.." "..port))
+        ps.sleep(0.1)
+        fs.with_tmpfile(function(tmp)
+            local ok = http.download("http://localhost:"..port, tmp)
+            eq(ok, true)
+            eq(fs.read_bin(tmp), "Hello, World!")
+        end)
     end
 
     do
         local s, err = http.get "https://not-in-this-world.com"
         eq(s, nil)
         eq(err, "Could not resolve host. The given remote host could not be resolved.")
+    end
+
+    do
+        fs.with_tmpfile(function(tmp)
+            local ok, msg = http.download("https://not-in-this-world.com", tmp)
+            eq(ok, nil)
+            eq(msg, "Could not resolve host. The given remote host could not be resolved.")
+        end)
     end
 
 end
