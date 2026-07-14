@@ -517,7 +517,7 @@ function fs.with_tmpfile(f)
         end)
     end
     local tmp = fs.tmpfile()
-    local ret = {f(tmp)}
+    local ret = table.pack(f(tmp))
     fs.rm(tmp)
     return table.unpack(ret)
 end
@@ -534,7 +534,7 @@ function fs.with_tmpdir(f)
         return pandoc.system.with_temporary_directory("luax", f)
     end
     local tmp = fs.tmpdir()
-    local ret = {f(tmp)}
+    local ret = table.pack(f(tmp))
     fs.rmdir(tmp)
     return table.unpack(ret)
 end
@@ -553,7 +553,7 @@ function fs.with_dir(path, f)
     if fs.chdir then
         local old = fs.getcwd()
         fs.chdir(path)
-        local ret = {f(path)}
+        local ret = table.pack(f(path))
         fs.chdir(old)
         return table.unpack(ret)
     end

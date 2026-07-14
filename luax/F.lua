@@ -65,9 +65,9 @@ local tostring = tostring
 local type = type
 
 local t_concat = table.concat
-local t_insert, t_remove = table.insert, table.remove
+local t_insert, t_remove, t_move = table.insert, table.remove, table.move
 local t_sort = table.sort
-local t_unpack = table.unpack
+local t_pack, t_unpack = table.pack, table.unpack
 
 local s_byte, s_char = string.byte, string.char
 local s_find, s_match, s_gmatch, s_gsub = string.find, string.match, string.gmatch, string.gsub
@@ -849,7 +849,7 @@ F.const(...)
 @@@]]
 
 F_const = function(...)
-    local val = {...}
+    local val = t_pack(...)
     return function(...) ---@diagnostic disable-line:unused-vararg
         return t_unpack(val)
     end
@@ -924,28 +924,20 @@ F.partial(f, ...)
 
 function F.partial(f, ...)
     local n = select("#", ...)
-    if n == 0 then
-        return f
-    elseif n == 1 then
-        local x1 = ...
-        return function(...)
-            return f(x1, ...)
-        end
-    elseif n == 2 then
-        local x1, x2 = ...
-        return function(...)
-            return f(x1, x2, ...)
-        end
-    elseif n == 3 then
-        local x1, x2, x3 = ...
-        return function(...)
-            return f(x1, x2, x3, ...)
-        end
-    else
-        local xs = {...}
-        return function(...)
-            return f(t_unpack(F_concat{xs, {...}}))
-        end
+    if n == 0 then return f end
+    if n == 1 then local x1                     = ... return function(...) return f(x1, ...) end end
+    if n == 2 then local x1, x2                 = ... return function(...) return f(x1, x2, ...) end end
+    if n == 3 then local x1, x2, x3             = ... return function(...) return f(x1, x2, x3, ...) end end
+    if n == 4 then local x1, x2, x3, x4         = ... return function(...) return f(x1, x2, x3, x4, ...) end end
+    if n == 5 then local x1, x2, x3, x4, x5     = ... return function(...) return f(x1, x2, x3, x4, x5, ...) end end
+    if n == 6 then local x1, x2, x3, x4, x5, x6 = ... return function(...) return f(x1, x2, x3, x4, x5, x6, ...) end end
+    local xs = t_pack(...)
+    local xn = xs.n
+    return function(...)
+        local ys = t_pack(...)
+        local yn = ys.n
+        t_move(ys, 1, yn, xn+1, xs)
+        return f(t_unpack(xs, 1, xn+yn))
     end
 end
 
@@ -1051,7 +1043,7 @@ function F.memo1(f)
         __call = function(_, k)
             local v = mem[k]
             if v then return t_unpack(v) end
-            v = {f(k)}
+            v = t_pack(f(k))
             mem[k] = v
             return t_unpack(v)
         end,
@@ -1082,7 +1074,7 @@ function F.memo(f)
                 cur[k] = cur[k] or {}
                 cur = cur[k]
             end
-            cur[_value] = cur[_value] or {f(...)}
+            cur[_value] = cur[_value] or t_pack(f(...))
             return t_unpack(cur[_value])
         end,
     })
@@ -1225,10 +1217,10 @@ F.read(s)
 function F.read(s)
     local chunk, msg = load("return "..s)
     if chunk == nil then return nil, msg end
-    local ret = F{pcall(chunk)}
-    local status, value = ret:head(), ret:tail()
-    if not status then return nil, value:unpack() end
-    return value:unpack()
+    local ret = t_pack(pcall(chunk))
+    local status, value = ret[1], t_pack(t_unpack(ret, 2, ret.n))
+    if not status then return nil, t_unpack(value) end
+    return t_unpack(value)
 end
 
 --[[------------------------------------------------------------------------@@@

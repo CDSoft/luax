@@ -211,9 +211,9 @@ local function with_inputfile(filename, func)
     if filename == "-" then return func(filename) end
     local full_filepath = find_file(filename)
     input_files[#input_files+1] = full_filepath
-    local res = {func(full_filepath)}
+    local res = table.pack(func(full_filepath))
     input_files[#input_files] = nil
-    return F.unpack(res)
+    return table.unpack(res, 1, res.n)
 end
 
 ypp.with_inputfile = with_inputfile

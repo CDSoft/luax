@@ -398,7 +398,9 @@ prints(x)
     actions:add(run_lua_init)
 
     local function pack_res(ok, ...)
-        return { ok = ok, n = select("#", ...), ... }
+        local res = table.pack(...)
+        res.ok = ok
+        return res
     end
 
     local function show_res(res, show)
