@@ -13,7 +13,9 @@
 
 # Lua eXtended
 
-`luax` is a Lua interpreter and REPL based on Lua 5.5, augmented with some
+[Lua]: https://www.lua.org
+
+`luax` is a [Lua] interpreter and REPL based on Lua 5.5, augmented with some
 useful packages. `luax` can also produce executable scripts from Lua scripts.
 
 `luax` runs on several platforms with no dependency:
@@ -62,7 +64,6 @@ Feel free to promote LuaX!
 ## Requirements
 
 - [Ninja](https://ninja-build.org): to compile LuaX using the LuaX Ninja file
-- a C compiler to bootstrap the standard Lua interpreter
 - a decent modern and programming friendly OS...
 
 ## Compilation
