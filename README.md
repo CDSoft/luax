@@ -17,6 +17,9 @@
 [Panda]: https://codeberg.org/cdsoft/panda
 [Ldc]: https://codeberg.org/cdsoft/ldc
 [Yreq]: https://codeberg.org/cdsoft/yreq
+[Req]: https://codeberg.org/cdsoft/req
+[Badges]: https://codeberg.org/cdsoft/badges
+[Calculadoira]: https://codeberg.org/cdsoft/calculadoira
 
 [Pandoc]: https://pandoc.org
 [Pandoc Lua filter]: https://pandoc.org/lua-filters.html
@@ -25,6 +28,7 @@
 [Graphviz]: https://graphviz.org
 [PlantUML]: https://plantuml.org
 [Mermaid]: https://mermaid.js.org
+[Tagref]: https://github.com/stepchowfun/tagref
 
 ## TL;DR
 
@@ -92,7 +96,9 @@ Feel free to promote LuaX!
 
 ## Other tools in the ecosystem
 
-These tools extend the ecosystem and rely on LuaX as their scripting foundation:
+These tools extend the ecosystem and rely on LuaX as their scripting foundation.
+
+### Scriptable in LuaX
 
 **[Panda]**
 : a [Pandoc Lua filter] that processes documents at the AST level,
@@ -108,3 +114,17 @@ These tools extend the ecosystem and rely on LuaX as their scripting foundation:
 : a lightweight requirement-tracking plugin for Ypp, providing
   traceability tags, coverage matrices and hyperlinks within technical
   documentation.
+
+### Not scriptable but written in LuaX
+
+**[Req]**
+: a minimalist requirement management tool inspired by [Tagref] with
+  additional notions (sets, relations).
+
+**[Badges]**
+: a static SVG badge generator.
+
+**[Calculadoira]**
+: a simple yet powerful calculator (programmable, TUI REPL,
+  integral, rational and floating point numbers, base conversions, math
+  functions...)
