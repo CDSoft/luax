@@ -35,9 +35,6 @@ local sys = require "sys"
 local targets = require "luax-targets"
 local version = require "luax-version"
 
-var "zig_version" { sh { vars%"$zig", "version" } : words()[1] }
-var "lua_version" { sh { vars%"$lua", "-v" } : words()[2] }
-
 build.ypp
     : set "cmd" "$builddir/bin/ypp"
     : add "implicit_in" { "$builddir/bin/ypp" }
@@ -77,11 +74,8 @@ local function new_luax(prog, deps)
     }
     target_names : foreach(function(target_name)
         luax[target_name] = build.luax[target_name] : new("luax-".._luax_idx.."-"..target_name)
-            : set "luax" {
-                "LUA_VERSION=$lua_version;", -- force execution when Lua is updated
-                prog,
-            }
-            : add "implicit_in" (deps)
+            : set "luax" { prog }
+            : add "implicit_in" { deps }
             : add "flags" "-q"
     end)
     return luax
@@ -89,7 +83,6 @@ end
 
 rule "packlib" {
     command = {
-        "LUA_VERSION=$lua_version;", -- force execution when Lua is updated
         "export LUA_PATH=luax/?.lua;",
         "$lua tools/packlib.lua -o $out $in",
     },
@@ -127,8 +120,6 @@ local cflags = build.compile_flags {
         "-g",
         "-Og",
     },
-
-    "-DZIG_VERSION=$zig_version", -- force recompilation when zig is updated
 }
 
 local luax_cflags = build.compile_flags {
@@ -251,6 +242,7 @@ end)
 -------------------------------------------------------------------------------
 
 local luax0 = new_luax("export LUA_PATH='luax/?.lua'; $lua $builddir/stage0/bin/luax.lua", {
+    "$lua",
     build.cp "$builddir/stage0/bin/luax.lua" "luax/luax.lua",
     build "$builddir/stage0/lib/libluax.xyz" { "packlib",
         libluax_lua_sources,

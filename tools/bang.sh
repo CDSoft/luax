@@ -73,16 +73,13 @@ case $(uname -s) in
     Darwin) CFLAGS+=( -DLUA_USE_MACOSX ) ;;
 esac
 
-cat <<EOF | $ZIG cc -xc "${CFLAGS[@]}" - "${LDFLAGS[@]}" -o $LUA-version
-#include "lua.h"
-#include <stdio.h>
-int main(void) { puts(LUA_COPYRIGHT); }
-EOF
-
-if ! [ -x $LUA ] || [ "$($LUA -v)" != "$($LUA-version)" ]; then
+OLD_MD5=$(cat $LUA.md5 2>/dev/null || true)
+NEW_MD5=$(cat lua/*.c | md5sum)
+if [ "$NEW_MD5" != "$OLD_MD5" ]; then
     echo "Compiling Lua..."
     mkdir -p "$(dirname $LUA)"
     $ZIG cc "${CFLAGS[@]}" lua/*.c "${LDFLAGS[@]}" -o $LUA
+    echo "$NEW_MD5" > $LUA.md5
 fi
 
 ##############################################################################
