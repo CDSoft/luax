@@ -26,9 +26,9 @@ mkdir -p "$TMP"
 
 update_all()
 {
-    #update_lua          5.5.0
+    update_lua          5.5.1-rc1
     #update_lua-git      master
-    update_lua-git      v5.5.0
+    #update_lua-git      v5.5.0
     update_lcomplex     100
     update_limath       106
     update_lqmath       110
@@ -63,6 +63,16 @@ download()
     curl --insecure -L "$URL" -o "$OUTPUT" --progress-bar --fail
 }
 
+patch_lua()
+{
+    case "$1" in
+        5.5.1-rc1)
+            # Fix Lua 5.5.1-rc1 undefined behaviours
+            sed -i -e 's/^  lua_State l;/  _Alignas(union { LUAI_MAXALIGN; }) lua_State l;/' "$ROOT/lua/lstate.h"
+            ;;
+    esac
+}
+
 update_lua()
 {
     local LUA_VERSION="$1"
@@ -78,6 +88,7 @@ update_lua()
     mkdir -p "$ROOT/lua" "$TMP/lua"
     tar -xaf "$TMP/$LUA_ARCHIVE" -C "$TMP/lua" --exclude=luac.c --strip-components=2 "lua-${LUA_VERSION%-*}/src"
     cp "$TMP"/lua/*.[ch] "$ROOT/lua/"
+    patch_lua "$LUA_VERSION"
 }
 
 update_lua-git()
@@ -95,6 +106,7 @@ update_lua-git()
     unzip "$TMP/$LUA_ARCHIVE" -d "$TMP/lua"
     cp "$TMP"/lua/*/l*.[ch] "$ROOT/lua/"
     rm "$ROOT"/lua/ltests.[ch]
+    patch_lua "$LUA_VERSION"
 }
 
 update_lcomplex()
