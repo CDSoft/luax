@@ -300,6 +300,7 @@ macos-x86_64          ~/.local/lib/libluax.xyz
 macos-aarch64         ~/.local/lib/libluax.xyz
 windows-x86_64        ~/.local/lib/libluax.xyz
 windows-aarch64       ~/.local/lib/libluax.xyz
+windows-x86           ~/.local/lib/libluax.xyz
 ```
 
 ## Built-in modules
