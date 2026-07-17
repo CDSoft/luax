@@ -252,6 +252,7 @@ macos-x86_64          ~/.local/lib/libluax_xyz
 macos-aarch64         ~/.local/lib/libluax_xyz
 windows-x86_64        ~/.local/lib/libluax_xyz
 windows-aarch64       ~/.local/lib/libluax_xyz
+windows-x86           ~/.local/lib/libluax.xyz
 ```
 
 ## Built-in modules

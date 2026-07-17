@@ -52,4 +52,6 @@ return F{
     -- 64-bit Windows
     {name="windows-x86_64",     machine="AMD64",   kernel="Windows_NT", os="windows", arch="x86_64",  libc="gnu",   exe=".exe", so=".dll"  },
     {name="windows-aarch64",    machine="ARM64",   kernel="Windows_NT", os="windows", arch="aarch64", libc="gnu",   exe=".exe", so=".dll"  },
+    -- 32-bit Windows
+    {name="windows-x86",        machine="x86",     kernel="Windows_NT", os="windows", arch="x86",     libc="gnu",   exe=".exe", so=".dll"  },
 }
