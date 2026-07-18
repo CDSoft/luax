@@ -636,7 +636,7 @@ A compiler has two methods to modify options:
 | `cc`          | Compilation command                       | `"cc"`                            |
 | `cflags`      | Compilation options                       | `{"-c", "-MD -MF $depfile"}`      |
 | `cargs`       | Input and output                          | `"$in -o $out"`                   |
-| `depfile`     | Dependency file name                      | `"$out.d"`                        |
+| `depfile`     | Dependency file name                      | `"$builddir/d/$out.d"`            |
 | `cvalid`      | Validation rule                           | `{}`                              |
 | `ar`          | Archive command (static libraries)        | `"ar"`                            |
 | `aflags`      | Archive flags                             | `"-crs"`                          |
@@ -844,12 +844,12 @@ A builder has two methods to modify options:
 - `add` adds values to the current value of an option
 - `insert` adds values before the current value of an option
 
-| Option        | Description                           |
-| ------------- | ------------------------------------- |
-| `cmd`         | Command to execute                    |
-| `flags`       | Command options                       |
-| `args`        | Input and output                      |
-| `depfile`     | Dependency file name                  |
+| Option        | Description                           | Default value                     |
+| ------------- | ------------------------------------- | --------------------------------- |
+| `cmd`         | Command to execute                    |                                   |
+| `flags`       | Command options                       |                                   |
+| `args`        | Input and output                      |                                   |
+| `depfile`     | Dependency file name                  | `"$builddir/d/$out.d"`            |
 
 Other options are added to the rule definition (note that `name` can not be used as a rule variable).
 

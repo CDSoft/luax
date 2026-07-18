@@ -25,7 +25,7 @@ local tmp = require "tmp"
 local default_options = {
     builddir = "$builddir/tmp",
     cc = "cc", cflags = {"-c", "-MMD -MF $depfile"}, cargs = "$in -o $out",
-    depfile = "$out.d",
+    depfile = "$builddir/d/$out.d",
     cvalid = {},
     ar = "ar", aflags = "-crs", aargs = "$out $in",
     so = "cc", soflags = "-shared", soargs = "-o $out $in", solibs = {},

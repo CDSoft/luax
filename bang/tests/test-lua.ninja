@@ -104,7 +104,7 @@ build b2 | o2: r2 | i4 i5
 rule special_target.txt
   description = a rule embedded inside a build statement
   command = cat $in > $out
-  depfile = $out.d
+  depfile = foo/$out.d
 
 build special_target.txt | hidden_output: special_target.txt file1.txt file2.txt | hidden_input
 
@@ -138,7 +138,7 @@ build $builddir/doc/file3.pdf | bar.out: wkhtmltopdf.pdf $builddir/tmp/doc/file3
 rule C-cc
   description = cc $out
   command = cc -c -MMD -MF $depfile $in -o $out
-  depfile = $out.d
+  depfile = $builddir/d/$out.d
 
 rule C-ar
   description = ar $out
@@ -155,7 +155,7 @@ rule C-ld
 rule ypp
   description = ypp $out
   command = ypp --MF $depfile $in -o $out
-  depfile = $out.d
+  depfile = $builddir/d/$out.d
 
 build $builddir/conf.c: ypp conf.c.in
 build $builddir/version.c: ypp version.c.in
@@ -168,7 +168,7 @@ build $builddir/foo-0: C-ld $builddir/tmp/foo-0.tmp/src.o $builddir/tmp/foo-0.tm
 rule ypp-prepro
   description = ypp-prepro $out
   command = ypp --MF $depfile -e 'X="x"' -e 'Y="y"' $in -o $out
-  depfile = $out.d
+  depfile = $builddir/d/$out.d
 
 build $builddir/tmp/conf.c: ypp-prepro conf.c.in
 build $builddir/tmp/version.c: ypp-prepro version.c.in
@@ -529,7 +529,7 @@ default foo bar
 rule my-zig-cc
   description = zig cc -target x86_64-linux-musl $out
   command = zig cc -target x86_64-linux-musl -c -MMD -MF $depfile -Og -g -Iinc $in -o $out
-  depfile = $out.d
+  depfile = $builddir/d/$out.d
 
 rule my-zig-ar
   description = zig ar $out
@@ -558,7 +558,7 @@ build file.exe: my-zig-ld f1.o lib.a f3.o $builddir/tmp/file.exe.tmp/f4.o | $bui
 rule cpp-cc
   description = c++ $out
   command = c++ -c -MMD -MF $depfile $in -o $out
-  depfile = $out.d
+  depfile = $builddir/d/$out.d
 
 rule cpp-ar
   description = ar $out
@@ -587,7 +587,7 @@ build file++.exe: cpp-ld f1++.o lib++.a f3++.o $builddir/tmp/file++.exe.tmp/f4.o
 rule zigcc-macos-x86_64-cc
   description = zig cc -target x86_64-macos-none $out
   command = zig cc -target x86_64-macos-none -c -MMD -MF $depfile $in -o $out
-  depfile = $out.d
+  depfile = $builddir/d/$out.d
 
 rule zigcc-macos-x86_64-ar
   description = zig ar $out
@@ -609,7 +609,7 @@ build mac_exe: zigcc-macos-x86_64-ld x.a $builddir/tmp/mac_exe.tmp/y.o
 rule zigcc-windows-x86_64-cc
   description = zig cc -target x86_64-windows-gnu $out
   command = zig cc -target x86_64-windows-gnu -c -MMD -MF $depfile $in -o $out
-  depfile = $out.d
+  depfile = $builddir/d/$out.d
 
 rule zigcc-windows-x86_64-ar
   description = zig ar $out
@@ -765,7 +765,7 @@ build doc-c.pdf: pandoc $builddir/tmp/doc-c.pdf.tmp/doc-c-1.md
 rule myypp
   description = myypp $out
   command = ypp --MF $depfile -e 'X="x"' -e 'Y="Hello, World!"' -e 'Z=42' -e 'TABLE=("{\"A complex table\", BAR={42}, FOO=\"foo\"}"):read()' $in -o $out
-  depfile = $out.d
+  depfile = $builddir/d/$out.d
 
 build doc.md: myypp src/doc.md
 

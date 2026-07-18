@@ -118,7 +118,7 @@ local ypp = new(default_options, "ypp")
     : set "cmd" "ypp"
     : set "args" "$in -o $out"
     : set "flags" "--MF $depfile"
-    : set "depfile" "$out.d"
+    : set "depfile" "$builddir/d/$out.d"
 
 local function ypp_var(name)
     return function(val)
@@ -143,7 +143,7 @@ local panda = pandoc:new "panda"
         "-Vpanda_target=$out",
         "-Vpanda_dep_file=$depfile",
     }
-    : set "depfile" "$out.d"
+    : set "depfile" "$builddir/d/$out.d"
 
 local typst = new(default_options, "typst")
     : set "cmd" "typst"
@@ -197,7 +197,7 @@ local gnuplot = new(default_options, "gnuplot")
 local lsvg = new(default_options, "lsvg")
     : set "cmd" "lsvg"
     : set "flags" { "--MF $depfile" }
-    : set "depfile" "$out.d"
+    : set "depfile" "$builddir/d/$out.d"
     : set "args" "$in -o $out -- $args"
 
 local octave = new(default_options, "octave")

@@ -139,7 +139,7 @@ build "special_target.txt" { "file1.txt", "file2.txt",
     command = "cat $in > $out",
     implicit_in = "hidden_input",
     implicit_out = "hidden_output",
-    depfile = "$out.d",
+    depfile = "foo/$out.d",
 }
 
 section "Nested rules (pipe simulation)"
