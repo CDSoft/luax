@@ -1,1 +1,0 @@
-generator("42") -- [test/test-err-bad_generator_arg-2.lua:1] ERROR: generator: boolean or table expected

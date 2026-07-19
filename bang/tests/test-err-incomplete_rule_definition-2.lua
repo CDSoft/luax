@@ -1,4 +1,0 @@
-generator(false)
-
-rule "doit" {
-}

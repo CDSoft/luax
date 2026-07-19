@@ -1,3 +1,0 @@
-This string is embeded
-  as a "Lua module"
-    that returns 'this string'.
