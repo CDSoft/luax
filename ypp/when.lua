@@ -19,7 +19,7 @@ https://codeberg.org/cdsoft/luax
 --]]
 
 --[[@@@
-* `when(cond)(text)`: emit `text` only if `cond` is true.
+- `when(cond)(text)`: emit `text` only if `cond` is true.
 
 E.g.:
 

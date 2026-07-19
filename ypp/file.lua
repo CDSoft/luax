@@ -19,10 +19,10 @@ https://codeberg.org/cdsoft/luax
 --]]
 
 --[[@@@
-* `f = file(name)`: return a file object that can be used to create files incrementally.
+- `f = file(name)`: return a file object that can be used to create files incrementally.
   Files are only saved once ypp succeed
-* `f(s)`: add `s` to the file
-* `f:ypp(s)`: preprocess and add `s` to the file
+- `f(s)`: add `s` to the file
+- `f:ypp(s)`: preprocess and add `s` to the file
 @@@]]
 
 local F = require "F"

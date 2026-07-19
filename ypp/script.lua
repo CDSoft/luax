@@ -19,7 +19,7 @@ https://codeberg.org/cdsoft/luax
 --]]
 
 --[[@@@
-* `script(cmd)(source)`: execute `cmd` to interpret `source`.
+- `script(cmd)(source)`: execute `cmd` to interpret `source`.
   `source` is first saved to a temporary file which name is added to the command `cmd`.
   If `cmd` contains `%s` then `%s` is replaces by the temporary script name.
   Otherwise the script name is appended to the command.

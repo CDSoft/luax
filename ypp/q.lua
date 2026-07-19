@@ -19,7 +19,7 @@ https://codeberg.org/cdsoft/luax
 --]]
 
 --[[@@@
-* `q(source)`: return `source` unpreprocessed.
+- `q(source)`: return `source` unpreprocessed.
   `q` is used to avoid macro execution in a portion of text.
 @@@]]
 

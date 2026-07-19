@@ -16,9 +16,6 @@
 [blockdiag]: http://blockdiag.com/
 [Asymptote]: http://asymptote.sourceforge.net/
 [mermaid]: https://mermaidjs.github.io/
-[Pandoc Lua filter]: http://pandoc.org/lua-filters.html
-[Python]: https://www.python.org/
-[Lua]: http://www.lua.org/
 [gnuplot]: http://www.gnuplot.info/
 [lsvg]: ../../lsvg/doc/README.md
 [LuaX]: ../../README.md "Lua eXtended interpreter"
@@ -41,7 +38,7 @@ It provides several interesting features:
 - diagrams ([Graphviz], [PlantUML], [ditaa], [Asymptote], [gnuplot], [blockdiag], [mermaid], [Octave], [lsvg], ...)
 - documentation extraction (e.g. from comments in source files)
 
-# Releases
+## Releases
 
 It is strongly recommended to build Ypp from source,
 as this is the only reliable way to install the exact version you need.
@@ -49,7 +46,7 @@ as this is the only reliable way to install the exact version you need.
 However, if you do require precompiled binaries,
 this page offers a selection for various platforms: <https://cdelord.fr/pub>.
 
-# Pricing
+## Pricing
 
 Ypp is a free and open source software.
 But it has a cost. It takes time to develop, maintain and support.
@@ -66,7 +63,7 @@ end end end]]
 
 Feel free to promote Ypp!
 
-# Open source
+## Open source
 
 [ypp] is an Open source software.
 Anybody can contribute on [Codeberg] to:
@@ -78,11 +75,11 @@ Anybody can contribute on [Codeberg] to:
 - find new usages
 - ...
 
-# Installation
+## Installation
 
 Ypp is now part of [LuaX].
 
-# Usage
+## Usage
 
 ```
 @script.sh(BUILD/"bin/ypp -h") : gsub("ypp %d+.%d+[0-9a-g.-]*", "ypp")
@@ -112,7 +109,7 @@ found, it is searched in the installation directory of `luax` or in `$PATH`.
 | `-m char`             | Sets the default macro character (default: '@')               |
 | `-s`                  | Separate files with a blank line                              |
 
-# Documentation
+## Documentation
 
 @q[=====[
 
@@ -198,9 +195,9 @@ Here, @ has no special meaning.
 ]]
 ```
 
-## Examples
+### Examples
 
-### Lua expression
+#### Lua expression
 
 ```
 The user's home is @(os.getenv "HOME").
@@ -208,7 +205,7 @@ The user's home is @(os.getenv "HOME").
 $\sum_{i=0}^100 = @(F.range(100):sum())$
 ```
 
-### Lua chunk
+#### Lua chunk
 
 ```
 @@[[
@@ -223,13 +220,13 @@ $\sum_{i=0}^100 = @sum$
 
 ]=====]
 
-## Builtin ypp functions
+### Builtin ypp functions
 
 @@[[
 
     function module(modname)
         return {
-            "### `"..modname.."`",
+            "#### `"..modname.."`",
             "",
             doc("ypp"/modname..".lua"),
         }
@@ -239,7 +236,7 @@ $\sum_{i=0}^100 = @sum$
 
 @module "ypp"
 
-## Builtin ypp modules
+### Builtin ypp modules
 
 @module "atexit"
 @module "comment"
@@ -253,7 +250,7 @@ $\sum_{i=0}^100 = @sum$
 @module "script"
 @module "when"
 
-## LuaX modules
+### LuaX modules
 
 ypp is written in [Lua] and [LuaX].
 All Lua and LuaX libraries are available to ypp.
@@ -286,26 +283,27 @@ end)
 
 More information in the [LuaX documentation](../../luax/doc/README.md).
 
-# License
+## License
 
-    Ypp is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+```
+Ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    Ypp is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+Ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
 
-    For further information about ypp you can visit
-    https://codeberg.org/cdsoft/luax
+For further information about ypp you can visit
+https://codeberg.org/cdsoft/luax
+```
 
-Feedback
-========
+## Feedback
 
 Your feedback and contributions are welcome.
 You can contact me at [CDSoft].

@@ -16,9 +16,6 @@
 [blockdiag]: http://blockdiag.com/
 [Asymptote]: http://asymptote.sourceforge.net/
 [mermaid]: https://mermaidjs.github.io/
-[Pandoc Lua filter]: http://pandoc.org/lua-filters.html
-[Python]: https://www.python.org/
-[Lua]: http://www.lua.org/
 [gnuplot]: http://www.gnuplot.info/
 [lsvg]: ../../lsvg/doc/README.md
 [LuaX]: ../../README.md "Lua eXtended interpreter"
@@ -41,7 +38,7 @@ It provides several interesting features:
 - diagrams ([Graphviz], [PlantUML], [ditaa], [Asymptote], [gnuplot], [blockdiag], [mermaid], [Octave], [lsvg], ...)
 - documentation extraction (e.g. from comments in source files)
 
-# Releases
+## Releases
 
 It is strongly recommended to build Ypp from source,
 as this is the only reliable way to install the exact version you need.
@@ -49,7 +46,7 @@ as this is the only reliable way to install the exact version you need.
 However, if you do require precompiled binaries,
 this page offers a selection for various platforms: <https://cdelord.fr/pub>.
 
-# Pricing
+## Pricing
 
 Ypp is a free and open source software.
 But it has a cost. It takes time to develop, maintain and support.
@@ -64,7 +61,7 @@ users are cordially invited to contribute financially to its development.
 
 Feel free to promote Ypp!
 
-# Open source
+## Open source
 
 [ypp] is an Open source software.
 Anybody can contribute on [Codeberg] to:
@@ -76,11 +73,11 @@ Anybody can contribute on [Codeberg] to:
 - find new usages
 - ...
 
-# Installation
+## Installation
 
 Ypp is now part of [LuaX].
 
-# Usage
+## Usage
 
 ```
 Usage: ypp [-h] [-v] [-a] [-l script] [-e statement] [-D definition]
@@ -139,7 +136,7 @@ found, it is searched in the installation directory of `luax` or in `$PATH`.
 | `-m char`             | Sets the default macro character (default: '@')               |
 | `-s`                  | Separate files with a blank line                              |
 
-# Documentation
+## Documentation
 
 
 Lua expressions and chunks are embedded in the document to process.
@@ -224,9 +221,9 @@ Here, @ has no special meaning.
 ]]
 ```
 
-## Examples
+### Examples
 
-### Lua expression
+#### Lua expression
 
 ```
 The user's home is @(os.getenv "HOME").
@@ -234,7 +231,7 @@ The user's home is @(os.getenv "HOME").
 $\sum_{i=0}^100 = @(F.range(100):sum())$
 ```
 
-### Lua chunk
+#### Lua chunk
 
 ```
 @@[[
@@ -249,39 +246,39 @@ $\sum_{i=0}^100 = @sum$
 
 
 
-## Builtin ypp functions
+### Builtin ypp functions
 
 
 
-### `ypp`
+#### `ypp`
 
 
-* `ypp(s)`: apply the `ypp` preprocessor to a string.
-* `ypp.input_file()`: return the name of the current input file.
-* `ypp.input_path()`: return the path of the current input file.
-* `ypp.input_file(n)`: return the name of the nth input file in the current *include* stack.
-* `ypp.input_path(n)`: return the path of the nth input file in the current *include* stack.
-* `ypp.output_file`: name of the output file.
-* `ypp.find_file(filename)`: return the full path name of `filename` that can be in the current input file directory or in the current directory.
-* `ypp.read_file(filename)`: return the content of the file `filename` and adds this file to the dependency file.
-* `ypp.macro(c)`: use the character `c` to start Lua expressions instead of `"@"` (and `cc` instead of `"@@"`).
-
-
-
-
-## Builtin ypp modules
-
-### `atexit`
-
-
-* `atexit(func)`: execute `func` when the whole output is computed, before actually writing the output.
+- `ypp(s)`: apply the `ypp` preprocessor to a string.
+- `ypp.input_file()`: return the name of the current input file.
+- `ypp.input_path()`: return the path of the current input file.
+- `ypp.input_file(n)`: return the name of the nth input file in the current *include* stack.
+- `ypp.input_path(n)`: return the path of the nth input file in the current *include* stack.
+- `ypp.output_file`: name of the output file.
+- `ypp.find_file(filename)`: return the full path name of `filename` that can be in the current input file directory or in the current directory.
+- `ypp.read_file(filename)`: return the content of the file `filename` and adds this file to the dependency file.
+- `ypp.macro(c)`: use the character `c` to start Lua expressions instead of `"@"` (and `cc` instead of `"@@"`).
 
 
 
-### `comment`
+
+### Builtin ypp modules
+
+#### `atexit`
 
 
-* `comment(...)`: returns an empty string (useful for commenting some text)
+- `atexit(func)`: execute `func` when the whole output is computed, before actually writing the output.
+
+
+
+#### `comment`
+
+
+- `comment(...)`: returns an empty string (useful for commenting some text)
 
 E.g.:
 
@@ -295,10 +292,10 @@ and is not part of the output document.
 
 
 
-### `convert`
+#### `convert`
 
 
-* `convert(s, [opts])`:
+- `convert(s, [opts])`:
   convert the string `s` from the format `opts.from` to the format `opts.to` and shifts the header levels by `opts.shift`.
 
 This function requires a Pandoc Lua interpreter. The conversion is made by [Pandoc] itself.
@@ -308,25 +305,29 @@ By default Pandoc converts documents from and to Markdown and the header level i
 
 The `convert` macro can also be called as a curried function (arguments can be swapped). E.g.:
 
-    @convert {from="csv"} (script.python [===[
-    # python script that produces a CSV document
-    ]===])
+```
+@convert {from="csv"} (script.python [===[
+# python script that produces a CSV document
+]===])
+```
 
 Notice that `convert` can be implicitely called by `include` or `script` by giving the appropriate options. E.g.:
 
-    @script.python {from="csv"} [===[
-    # python script that produces a CSV document
-    ]===]
+```
+@script.python {from="csv"} [===[
+# python script that produces a CSV document
+]===]
+```
 
 
 
 
 
-### `defer`
+#### `defer`
 
 
-* `defer(func, ...)`: emit a unique tag that will later be replaced by the result of `func(...)` if `func` is callable.
-* `defer(table, ...)`: emit a unique tag that will later be replaced by the concatenation of `table` (one item per line).
+- `defer(func, ...)`: emit a unique tag that will later be replaced by the result of `func(...)` if `func` is callable.
+- `defer(table, ...)`: emit a unique tag that will later be replaced by the concatenation of `table` (one item per line).
 
 E.g.:
 
@@ -341,41 +342,43 @@ total = @defer(function() return N end) (should be "2")
 
 
 
-### `doc`
+#### `doc`
 
 
-* `doc(filename, [opts])`: extract documentation fragments from the file `filename` (all fragments are concatenated).
+- `doc(filename, [opts])`: extract documentation fragments from the file `filename` (all fragments are concatenated).
 
-    - `opts.pattern` is the Lua pattern used to identify the documentation fragments. The default pattern is `@@@(.-)@@@`.
-    - `opts.from` is the format of the documentation fragments (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
-    - `opts.to` is the destination format of the documentation (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
-    - `opts.shift` is the offset applied to the header levels. The default offset is `0`.
-    - `opts.code` extract code (i.e. everything but documentation fragments) in code blocks.
-      The code language is given by the filename (if `opts.code==true`) or by `opts.code` if it is a string.
-    - `opts.hide` is a Lua pattern used to identify portions of documentations or code to exclude.
+  - `opts.pattern` is the Lua pattern used to identify the documentation fragments. The default pattern is `@@@(.-)@@@`.
+  - `opts.from` is the format of the documentation fragments (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
+  - `opts.to` is the destination format of the documentation (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
+  - `opts.shift` is the offset applied to the header levels. The default offset is `0`.
+  - `opts.code` extract code (i.e. everything but documentation fragments) in code blocks.
+    The code language is given by the filename (if `opts.code==true`) or by `opts.code` if it is a string.
+  - `opts.hide` is a Lua pattern used to identify portions of documentations or code to exclude.
 
 The `doc` macro can also be called as a curried function (arguments can be swapped). E.g.:
 
-    @doc "file.c" {pattern="///(.-)///"}
+```
+@doc "file.c" {pattern="///(.-)///"}
+```
 
 
 
 
 
-### `file`
+#### `file`
 
 
-* `f = file(name)`: return a file object that can be used to create files incrementally.
+- `f = file(name)`: return a file object that can be used to create files incrementally.
   Files are only saved once ypp succeed
-* `f(s)`: add `s` to the file
-* `f:ypp(s)`: preprocess and add `s` to the file
+- `f(s)`: add `s` to the file
+- `f:ypp(s)`: preprocess and add `s` to the file
 
 
 
-### `image`
+#### `image`
 
 
-* `image(render, ext)(source)`: use the command `render` to produce an image from the source `source` with the format `ext` (`"svg"`, `"png"` or `"pdf"`).
+- `image(render, ext)(source)`: use the command `render` to produce an image from the source `source` with the format `ext` (`"svg"`, `"png"` or `"pdf"`).
   `image` returns the name of the image (e.g. to point to the image once deployed) and the actual file path (e.g. to embed the image in the final document).
 
 The `render` parameter is a string that defines the command to execute to generate the image.
@@ -418,10 +421,10 @@ They can be used similaryly to `image`: `X(source)`.
 
 An optional table can be given before `source` to set some options:
 
-* `X {name="output_name"} (source)` renders `source` and save the image to a file named `output_name`.
+- `X {name="output_name"} (source)` renders `source` and save the image to a file named `output_name`.
   This can help distributing documents with user friendly image names.
 
-* `X {pp=func} (source)` renders `func(source)` instead of `source`.
+- `X {pp=func} (source)` renders `func(source)` instead of `source`.
   E.g.: if `func` is `ypp` then `source` is preprocessed by `ypp` before being rendered.
 
 Image engine | ypp function | Example
@@ -470,40 +473,42 @@ is rendered as
 
 
 
-### `include`
+#### `include`
 
 
-* `include(filename, [opts])`: include the file `filename`.
+- `include(filename, [opts])`: include the file `filename`.
 
-    - `opts.pattern` is the Lua pattern used to identify the part of the file to include. If the pattern is not given, the whole file is included.
-    - `opts.exclude` is the Lua pattern used to identify parts of the file to exclude. If the pattern is not given, the whole file is included.
-    - `opts.from` is the format of the input file (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
-    - `opts.to` is the destination format (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
-    - `opts.shift` is the offset applied to the header levels. The default offset is `0`.
+  - `opts.pattern` is the Lua pattern used to identify the part of the file to include. If the pattern is not given, the whole file is included.
+  - `opts.exclude` is the Lua pattern used to identify parts of the file to exclude. If the pattern is not given, the whole file is included.
+  - `opts.from` is the format of the input file (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
+  - `opts.to` is the destination format (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
+  - `opts.shift` is the offset applied to the header levels. The default offset is `0`.
 
-* `include.raw(filename, [opts])`: like `include` but the content of the file is not preprocessed with `ypp`.
+- `include.raw(filename, [opts])`: like `include` but the content of the file is not preprocessed with `ypp`.
 
 The `include` macro can also be called as a curried function (arguments can be swapped). E.g.:
 
-    @include "file.csv" {from="csv"}
-    @include {from="csv"} "file.csv"
+```
+@include "file.csv" {from="csv"}
+@include {from="csv"} "file.csv"
+```
 
 
 
 
 
-### `q`
+#### `q`
 
 
-* `q(source)`: return `source` unpreprocessed.
+- `q(source)`: return `source` unpreprocessed.
   `q` is used to avoid macro execution in a portion of text.
 
 
 
-### `script`
+#### `script`
 
 
-* `script(cmd)(source)`: execute `cmd` to interpret `source`.
+- `script(cmd)(source)`: execute `cmd` to interpret `source`.
   `source` is first saved to a temporary file which name is added to the command `cmd`.
   If `cmd` contains `%s` then `%s` is replaces by the temporary script name.
   Otherwise the script name is appended to the command.
@@ -534,10 +539,10 @@ $\sum_{i=0}^100 = 5050$
 
 
 
-### `when`
+#### `when`
 
 
-* `when(cond)(text)`: emit `text` only if `cond` is true.
+- `when(cond)(text)`: emit `text` only if `cond` is true.
 
 E.g.:
 
@@ -552,7 +557,7 @@ The current language is English.
 
 
 
-## LuaX modules
+### LuaX modules
 
 ypp is written in [Lua] and [LuaX].
 All Lua and LuaX libraries are available to ypp.
@@ -583,26 +588,27 @@ Here are some LuaX modules that can be useful in ypp documents:
 
 More information in the [LuaX documentation](../../luax/doc/README.md).
 
-# License
+## License
 
-    Ypp is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+```
+Ypp is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    Ypp is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+Ypp is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with ypp.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with ypp.  If not, see <https://www.gnu.org/licenses/>.
 
-    For further information about ypp you can visit
-    https://codeberg.org/cdsoft/luax
+For further information about ypp you can visit
+https://codeberg.org/cdsoft/luax
+```
 
-Feedback
-========
+## Feedback
 
 Your feedback and contributions are welcome.
 You can contact me at [CDSoft].

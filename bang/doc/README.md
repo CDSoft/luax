@@ -1,12 +1,10 @@
-<img src="bang-banner.svg" style="width:100%" />
+# BANG (Bang Automates Ninja Generation)
 
-BANG (Bang Automates Ninja Generation)
-======================================
+![Bang logo](bang-banner.svg)
 
 Bang is a [Ninja](https://ninja-build.org) file generator scriptable in [LuaX](../../luax/doc/README.md).
 
-Releases
-========
+## Releases
 
 It is strongly recommended to build Bang from source,
 as this is the only reliable way to install the exact version you need.
@@ -14,8 +12,7 @@ as this is the only reliable way to install the exact version you need.
 However, if you do require precompiled binaries,
 this page offers a selection for various platforms: <https://cdelord.fr/pub>.
 
-Pricing
-=======
+## Pricing
 
 Bang is a free and open source software.
 But it has a cost. It takes time to develop, maintain and support.
@@ -28,12 +25,11 @@ users are cordially invited to contribute financially to its development.
 
 Feel free to promote Bang!
 
-Installation
-============
+## Installation
 
 Bang is now part of [LuaX](../../README.md).
 
-## Pure Lua implementation
+### Pure Lua implementation
 
 Bang also comes with a pure Lua implementation for environments where LuaX can not be executed.
 In this case `$PREFIX/bin/bang.lua` can be executed with any standard Lua 5.4 or 5.5 interpreter.
@@ -42,8 +38,7 @@ In this case `$PREFIX/bin/bang.lua` can be executed with any standard Lua 5.4 or
 > `bang.lua` may be slower than `bang`,
 > especially when dealing with a large amount of source files.
 
-Usage
-=====
+## Usage
 
 ```
 $ bang -h
@@ -70,12 +65,12 @@ Options:
 For more information, see https://codeberg.org/cdsoft/luax
 ```
 
-* `bang` reads `build.lua` and produces `build.ninja`.
-* `bang input.lua -o output.ninja` reads `input.lua` and produces `output.ninja`.
+- `bang` reads `build.lua` and produces `build.ninja`.
+- `bang input.lua -o output.ninja` reads `input.lua` and produces `output.ninja`.
 
-## Ninja functions
+### Ninja functions
 
-### Comments
+#### Comments
 
 `bang` can add comments to the Ninja file:
 
@@ -92,7 +87,7 @@ that can run on several lines
 ]]
 ```
 
-### Variables
+#### Variables
 
 `var` adds a new variable definition:
 
@@ -119,7 +114,7 @@ vars%"$foo/bar" -- "xyz/bar"
 > the special variable `builddir` can be redefined by the `-b` option.
 > Its default value is `".build"`.
 
-### Ninja required version
+#### Ninja required version
 
 The special variable `ninja_required_version` shall be set by the `ninja_required_version` function.
 `ninja_required_version` will change the default required version only if the script requires a higher version.
@@ -128,7 +123,7 @@ The special variable `ninja_required_version` shall be set by the `ninja_require
 ninja_required_version "1.42"
 ```
 
-### Rules
+#### Rules
 
 `rule` adds a new rule definition:
 
@@ -156,7 +151,7 @@ in the build statements that use this rule.
 
 The `rule` function returns the name of the rule (`"rule_name"`).
 
-### Build statements
+#### Build statements
 
 `build` adds a new build statement:
 
@@ -200,7 +195,7 @@ The `build.files` function returns the current list of outputs of all previous `
 - `build.files(predicate)`: list of all output files that match the predicate `predicate`
   (`predicate` takes two arguments: the name of the file and the name of the rule that generates the file)
 
-### Rules embedded in build statements
+#### Rules embedded in build statements
 
 Some rules are specific to a single output and are used once.
 This leads to write pairs of rules and build statements.
@@ -236,7 +231,7 @@ build "output" { "output", "inputs" }
 > [!NOTE]
 > the rule name is the output name where special characters are replaced with underscores.
 
-### Pools
+#### Pools
 
 `pool` adds a pool definition:
 
@@ -248,7 +243,7 @@ pool "name" {
 
 The `pool` function returns the name of the pool (`"pool_name"`).
 
-### Default targets
+#### Default targets
 
 `default` adds targets to the default target:
 
@@ -261,7 +256,7 @@ default {"target2", "target3"}
 > if no custom target is defined and if there are help, install or clean targets,
 > bang will generate an explicit default target with all targets, except from help, install and clean targets.
 
-### Phony targets
+#### Phony targets
 
 `phony` is a shortcut to `build` that uses the `phony` rule:
 
@@ -271,9 +266,9 @@ phony "all" {"target1", "target2"}
 build "all" {"phony", "target1", "target2"}
 ```
 
-## Bang variables
+### Bang variables
 
-### Bang arguments
+#### Bang arguments
 
 The command line arguments of bang are stored in a global table named `bang`.
 This table contains:
@@ -281,13 +276,13 @@ This table contains:
 - `bang.input`: name of the Lua input script
 - `bang.output`: name of the output Ninja file
 
-### Build script arguments
+#### Build script arguments
 
 Arguments after "--" are given to the input script in the global `arg` table.
 
-## Bang functions
+### Bang functions
 
-### Version
+#### Version
 
 Bang can set a `version` variable and check it matches the latest git tag (when in a git repository).
 The curried function `version` takes a version and optionally a date and sets the `version` and `date` variables.
@@ -302,7 +297,7 @@ The goal of the `version` function is to be able to set/get the version,
 even if the project is not a git repository
 (e.g. to compile a project from a git archive or any other kind of archive).
 
-### Accumulations
+#### Accumulations
 
 Bang can accumulate names (rules, targets, ...) in a list
 that can later be used to define other rules or build statements.
@@ -319,7 +314,7 @@ acc(my_list) {"item2", "item3"}
 my_list -- contains {"item1", {"item2", "item3"}}
 ```
 
-### Case expressions
+#### Case expressions
 
 The `case` function provides a switch-like structure to simplify conditional expressions.
 `case` is a curried function that takes a value (generally a string) and a table.
@@ -341,7 +336,7 @@ local cflags = {
 **Note**: `Nil` is a special value that can be used to represent nothing (no
 value) in a list. `Nil` is ignored by bang.
 
-### File listing
+#### File listing
 
 The `ls` function lists files in a directory.
 It returns a list of filenames,
@@ -362,7 +357,7 @@ end)
 -- where md_to_pdf is a rule to convert Markdown files to PDF
 ```
 
-### Dynamic file creation
+#### Dynamic file creation
 
 The `file` function creates new files.
 It returns a callable object to add text to a file (note that the `write` method is deprecated).
@@ -394,7 +389,7 @@ local sources = {
 }
 ```
 
-### Pipes
+#### Pipes
 
 It is common in Makefiles to write commands with pipes.
 But pipes can be error prone since only the failure of the last process is captured by default.
@@ -464,7 +459,7 @@ build "out.html" { "panda.html", "$builddir/tmp/doc/out-1.md",
 }
 ```
 
-### Source preprocessor
+#### Source preprocessor
 
 Sometimes source files must be preprocessed before usage (configuration, compilation, documentation...).
 
@@ -505,7 +500,7 @@ build.cc:executable "$builddir/foo" {
 }
 ```
 
-### Clean
+#### Clean
 
 Bang can generate targets to clean the generated files.
 The `clean` function takes a directory name that shall be deleted by `ninja clean`.
@@ -520,7 +515,7 @@ and a line in the help message (see `ninja help`).
 
 In the same vein, `clean.mrproper` takes directories to clean with `ninja mrproper`.
 
-### Install
+#### Install
 
 Bang can generate targets to install files outside the build directories.
 The `install` function adds targets to be installed with `ninja install`
@@ -536,7 +531,7 @@ The default prefix in `~/.local`.
 It can be overridden by the `PREFIX` environment variable when calling Ninja. E.g.:
 
 ``` bash
-$ PREFIX=~/bar/foo ninja install
+PREFIX=~/bar/foo ninja install
 ```
 
 Artifacts are added to the list of files to be installed by the function `install`.
@@ -554,10 +549,10 @@ Additionally the `DESTDIR` environment variable can be set to do a staged instal
 Note that the default prefix is not compatible with `DESTDIR` and must be redefined when `DESTDIR` is used.
 
 ``` bash
-$ DESTDIR=/foo PREFIX=/opt/xxx ninja install # installs files to `$DESTDIR$PREFIX` (`/foo/opt/xxx`)
+DESTDIR=/foo PREFIX=/opt/xxx ninja install # installs files to `$DESTDIR$PREFIX` (`/foo/opt/xxx`)
 ```
 
-### Help
+#### Help
 
 Bang can generate an help message (stored in a file next to the Ninja file) displayed by `ninja help`.
 
@@ -582,7 +577,7 @@ help "compile" "Compile every thing"
 > the `clean` and `install` target are automatically documented
 > by the `clean` and `install` functions.
 
-### Generator
+#### Generator
 
 Bang generates a generator rule to update the Ninja file when the build description changes.
 This behaviour can be customized or disabled with the `generator` function:
@@ -604,9 +599,9 @@ generator {
 In this example, the generator statement will be executed if the Lua script has
 changed as well as `foo` and `bar`.
 
-## Higher level build modules
+### Higher level build modules
 
-### C compilers
+#### C compilers
 
 The module `C` creates C compilation objects.
 This module is available as a `build` function metamethod.
@@ -743,7 +738,7 @@ These compilers are also available as `build` metamethods.
 | `build.zigcpp["windows-x86_64"]`      | C++       | `zig c++` | `windows-x86_64`      |
 | `build.zigcpp["windows-aarch64"]`     | C++       | `zig c++` | `windows-aarch64`     |
 
-### LuaX compilers
+#### LuaX compilers
 
 The module `luax` creates LuaX compilation objects.
 This module is available as a `build` function metamethod.
@@ -789,7 +784,7 @@ build.luax.add_global "flags" "-q"
 build.luax["linux-x86_64-musl"] "hello" { "hello.lua", "lib1.lua", "lib2.lua" }
 ```
 
-### Builders
+#### Builders
 
 The `build` function has methods to create new builder objects
 (note that these methods are also available in the "builders" module).
@@ -818,8 +813,8 @@ The `build` metamethods contain some predefined builders:
 | `build.octave.img`        | [Octave](https://octave.org/) image rendered as an *img*[^img] image.                                 |
 | `build.lsvg.img`          | [Lsvg](../../lsvg/doc/README.md) image rendered as an *img*[^img] image.                              |
 
-[^img]: The available image formats are: `svg`, `png` and `pdf`.
 [^graphviz]: Graphviz renderers are: `dot`, `neato`, `twopi`, `circo`, `fdp`, `sfdp`, `patchwork` and `osage`.
+[^img]: The available image formats are: `svg`, `png` and `pdf`.
 [^blockdiag]: Other Blockdiag renderers are: `activity`, `network`, `packet`, `rack` and `sequence`.
 
 A new builder can be created by calling the `new` method of an existing builder with a new name
@@ -888,14 +883,14 @@ build.ypp : add "flags" {
 }
 ```
 
-### Archivers
+#### Archivers
 
 The `archivers` module define rules to archive files.
 These archivers are also available as `build` metamethods.
 
 Currently only [tar](https://en.wikipedia.org/wiki/Tar_(computing)) archives are supported.
 
-#### Tar archives
+##### Tar archives
 
 `build.tar` creates a tar archive from a directory which must be populated by previous build statements.
 It takes three arguments:
@@ -903,7 +898,7 @@ It takes three arguments:
 - `base`: base directory where tar will start archiving files
 - `name` (optional): name of the subdirectory (in `base`) that will actually be archived.
   If `name` is not defined, all files and directories below `base` will be archived.
-- `transform` (optional): [`sed`]() expression(s) used to transform file names in the archive.
+- `transform` (optional): [`sed`](https://www.man7.org/linux/man-pages/man1/sed.1.html) expression(s) used to transform file names in the archive.
 
 The tar rule uses the `--auto-compress` option to determine the compression program to use according to the archive name.
 
@@ -917,8 +912,7 @@ build.tar "$builddir/foo.tar.gz" {
 }
 ```
 
-Examples
-========
+## Examples
 
 The LuaX build system uses bang and show how to compile C and Lua programs.
 
@@ -937,23 +931,24 @@ The `examples` directory contains some more examples:
     - OS detection to infer compilation options
     - Lua interpreter compilation and installation
 
-License
-=======
+## License
 
-    This file is part of bang.
+```
+This file is part of bang.
 
-    bang is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+bang is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    bang is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+bang is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with bang.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with bang.  If not, see <https://www.gnu.org/licenses/>.
 
-    For further information about bang you can visit
-    https://codeberg.org/cdsoft/luax
+For further information about bang you can visit
+https://codeberg.org/cdsoft/luax
+```

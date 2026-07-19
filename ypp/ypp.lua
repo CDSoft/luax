@@ -21,15 +21,15 @@ https://codeberg.org/cdsoft/luax
 --@MAIN
 
 --[[@@@
-* `ypp(s)`: apply the `ypp` preprocessor to a string.
-* `ypp.input_file()`: return the name of the current input file.
-* `ypp.input_path()`: return the path of the current input file.
-* `ypp.input_file(n)`: return the name of the nth input file in the current *include* stack.
-* `ypp.input_path(n)`: return the path of the nth input file in the current *include* stack.
-* `ypp.output_file`: name of the output file.
-* `ypp.find_file(filename)`: return the full path name of `filename` that can be in the current input file directory or in the current directory.
-* `ypp.read_file(filename)`: return the content of the file `filename` and adds this file to the dependency file.
-* `ypp.macro(c)`: use the character `c` to start Lua expressions instead of `"@"` (and `cc` instead of `"@@"`).
+- `ypp(s)`: apply the `ypp` preprocessor to a string.
+- `ypp.input_file()`: return the name of the current input file.
+- `ypp.input_path()`: return the path of the current input file.
+- `ypp.input_file(n)`: return the name of the nth input file in the current *include* stack.
+- `ypp.input_path(n)`: return the path of the nth input file in the current *include* stack.
+- `ypp.output_file`: name of the output file.
+- `ypp.find_file(filename)`: return the full path name of `filename` that can be in the current input file directory or in the current directory.
+- `ypp.read_file(filename)`: return the content of the file `filename` and adds this file to the dependency file.
+- `ypp.macro(c)`: use the character `c` to start Lua expressions instead of `"@"` (and `cc` instead of `"@@"`).
 @@@]]
 
 local F = require "F"

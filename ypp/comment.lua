@@ -19,7 +19,7 @@ https://codeberg.org/cdsoft/luax
 --]]
 
 --[[@@@
-* `comment(...)`: returns an empty string (useful for commenting some text)
+- `comment(...)`: returns an empty string (useful for commenting some text)
 
 E.g.:
 

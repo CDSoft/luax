@@ -1,4 +1,6 @@
-![](luax-banner.svg)
+# Lua eXtended
+
+![LuaX logo](luax-banner.svg)
 
 > [!IMPORTANT]
 >
@@ -10,8 +12,6 @@
 > - Smaller binaries
 > - No more LuaSec and OpenSSL libraries (heavy to maintain, easily replaced with the HTTP functions of `curl`)
 > - Bang, ypp and lsvg are now part of LuaX (more easily maintained and updated)
-
-# Lua eXtended
 
 [Lua]: https://www.lua.org
 
@@ -86,20 +86,20 @@ Once done, LuaX can be installed with `ninja install`.
 `git` must be installed to clone the LuaX repository but it can also be compiled from a source archive without git.
 
 ``` sh
-$ git clone https://codeberg.org/cdsoft/luax
-$ cd luax
-$ ./build.lua
-$ ninja install
+git clone https://codeberg.org/cdsoft/luax
+cd luax
+./build.lua
+ninja install
 ```
 
 Or from a source archive:
 
 ``` sh
-$ curl https://codeberg.org/cdsoft/luax/archive/X.Y.Z.tar.gz -o luax-X.Y.Z.tar.gz
-$ tar xzf luax-X.Y.Z.tar.gz
-$ cd luax
-$ ./build.lua
-$ ninja install
+curl https://codeberg.org/cdsoft/luax/archive/X.Y.Z.tar.gz -o luax-X.Y.Z.tar.gz
+tar xzf luax-X.Y.Z.tar.gz
+cd luax
+./build.lua
+ninja install
 ```
 
 The latest source archives are available at <https://codeberg.org/cdsoft/luax/tags>.
@@ -117,21 +117,21 @@ E.g.: to produce an executable containing the LuaX runtime for the current host
 and `hello.lua`:
 
 ``` sh
-$ luax compile -t native -o hello hello.lua
+luax compile -t native -o hello hello.lua
 ```
 
 E.g.: to produce an executable containing the LuaX runtime for `linux-x86_64-musl`
 and `hello.lua`:
 
 ``` sh
-$ luax compile -t linux-x86_64-musl -o hello hello.lua
+luax compile -t linux-x86_64-musl -o hello hello.lua
 ```
 
 E.g.: to produce an executable with the compiled Lua bytecode with no debug
 information:
 
 ``` sh
-$ luax compile -s -t linux-x86_64-musl -o hello hello.lua
+luax compile -s -t linux-x86_64-musl -o hello hello.lua
 ```
 
 `luax compile` can compile Lua scripts to Lua bytecode. If scripts are large they will
@@ -140,8 +140,8 @@ start quickly but will run as fast as the original Lua scripts.
 ## Installation
 
 ``` sh
-$ ninja install                 # install luax to ~/.local/bin and ~/.local/lib
-$ PREFIX=/usr ninja install     # install luax to /usr/bin and /usr/lib
+ninja install                 # install luax to ~/.local/bin and ~/.local/lib
+PREFIX=/usr ninja install     # install luax to /usr/bin and /usr/lib
 ```
 
 `luax` is a single autonomous executable.
@@ -167,7 +167,7 @@ It checks that all required files are actually installed
 and removes obsolete files if any.
 
 ``` sh
-$ path/to/luax postinstall [-f]
+path/to/luax postinstall [-f]
 ```
 
 The `-f` option forces the removal of obsolete files without confirmation.
@@ -326,21 +326,23 @@ script `lib/libluax.lua` can be reused in pure Lua programs:
 
 ## License
 
-    luax is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+```
+luax is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    luax is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+luax is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with luax.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
-    For further information about luax you can visit
-    https://codeberg.org/cdsoft/luax
+For further information about luax you can visit
+https://codeberg.org/cdsoft/luax
+```
 
 `luax` uses other third party softwares:
 

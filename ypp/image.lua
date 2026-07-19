@@ -19,7 +19,7 @@ https://codeberg.org/cdsoft/luax
 --]]
 
 --[[@@@
-* `image(render, ext)(source)`: use the command `render` to produce an image from the source `source` with the format `ext` (`"svg"`, `"png"` or `"pdf"`).
+- `image(render, ext)(source)`: use the command `render` to produce an image from the source `source` with the format `ext` (`"svg"`, `"png"` or `"pdf"`).
   `image` returns the name of the image (e.g. to point to the image once deployed) and the actual file path (e.g. to embed the image in the final document).
 
 The `render` parameter is a string that defines the command to execute to generate the image.
@@ -62,10 +62,10 @@ They can be used similaryly to `image`: `X(source)`.
 
 An optional table can be given before `source` to set some options:
 
-* `X {name="output_name"} (source)` renders `source` and save the image to a file named `output_name`.
+- `X {name="output_name"} (source)` renders `source` and save the image to a file named `output_name`.
   This can help distributing documents with user friendly image names.
 
-* `X {pp=func} (source)` renders `func(source)` instead of `source`.
+- `X {pp=func} (source)` renders `func(source)` instead of `source`.
   E.g.: if `func` is `ypp` then `source` is preprocessed by `ypp` before being rendered.
 
 @@[===[

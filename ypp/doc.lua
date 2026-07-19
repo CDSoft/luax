@@ -23,20 +23,22 @@ local flex = require "flex"
 local convert = require "convert"
 
 --[[@@@
-* `doc(filename, [opts])`: extract documentation fragments from the file `filename` (all fragments are concatenated).
+- `doc(filename, [opts])`: extract documentation fragments from the file `filename` (all fragments are concatenated).
 
-    - `opts.pattern` is the Lua pattern used to identify the documentation fragments. The default pattern is `@("@".."@@(.-)@@".."@")`.
-    - `opts.from` is the format of the documentation fragments (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
-    - `opts.to` is the destination format of the documentation (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
-    - `opts.shift` is the offset applied to the header levels. The default offset is `0`.
-    - `opts.code` extract code (i.e. everything but documentation fragments) in code blocks.
-      The code language is given by the filename (if `opts.code==true`) or by `opts.code` if it is a string.
-    - `opts.hide` is a Lua pattern used to identify portions of documentations or code to exclude.
+  - `opts.pattern` is the Lua pattern used to identify the documentation fragments. The default pattern is `@("@".."@@(.-)@@".."@")`.
+  - `opts.from` is the format of the documentation fragments (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
+  - `opts.to` is the destination format of the documentation (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
+  - `opts.shift` is the offset applied to the header levels. The default offset is `0`.
+  - `opts.code` extract code (i.e. everything but documentation fragments) in code blocks.
+    The code language is given by the filename (if `opts.code==true`) or by `opts.code` if it is a string.
+  - `opts.hide` is a Lua pattern used to identify portions of documentations or code to exclude.
 
 @q[=====[
 The `doc` macro can also be called as a curried function (arguments can be swapped). E.g.:
 
-    @doc "file.c" {pattern="///(.-)///"}
+```
+@doc "file.c" {pattern="///(.-)///"}
+```
 
 ]=====]
 @@@]]

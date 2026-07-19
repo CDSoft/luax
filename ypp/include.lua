@@ -24,21 +24,23 @@ local flex = require "flex"
 local convert = require "convert"
 
 --[[@@@
-* `include(filename, [opts])`: include the file `filename`.
+- `include(filename, [opts])`: include the file `filename`.
 
-    - `opts.pattern` is the Lua pattern used to identify the part of the file to include. If the pattern is not given, the whole file is included.
-    - `opts.exclude` is the Lua pattern used to identify parts of the file to exclude. If the pattern is not given, the whole file is included.
-    - `opts.from` is the format of the input file (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
-    - `opts.to` is the destination format (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
-    - `opts.shift` is the offset applied to the header levels. The default offset is `0`.
+  - `opts.pattern` is the Lua pattern used to identify the part of the file to include. If the pattern is not given, the whole file is included.
+  - `opts.exclude` is the Lua pattern used to identify parts of the file to exclude. If the pattern is not given, the whole file is included.
+  - `opts.from` is the format of the input file (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
+  - `opts.to` is the destination format (e.g. `"markdown"`, `"rst"`, ...). The default format is Markdown.
+  - `opts.shift` is the offset applied to the header levels. The default offset is `0`.
 
-* `include.raw(filename, [opts])`: like `include` but the content of the file is not preprocessed with `ypp`.
+- `include.raw(filename, [opts])`: like `include` but the content of the file is not preprocessed with `ypp`.
 
 @q[=====[
 The `include` macro can also be called as a curried function (arguments can be swapped). E.g.:
 
-    @include "file.csv" {from="csv"}
-    @include {from="csv"} "file.csv"
+```
+@include "file.csv" {from="csv"}
+@include {from="csv"} "file.csv"
+```
 
 ]=====]
 @@@]]

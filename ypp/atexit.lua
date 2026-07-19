@@ -19,7 +19,7 @@ https://codeberg.org/cdsoft/luax
 --]]
 
 --[[@@@
-* `atexit(func)`: execute `func` when the whole output is computed, before actually writing the output.
+- `atexit(func)`: execute `func` when the whole output is computed, before actually writing the output.
 @@@]]
 
 local F = require "F"

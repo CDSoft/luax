@@ -21,7 +21,7 @@ https://codeberg.org/cdsoft/luax
 local flex = require "flex"
 
 --[[@@@
-* `convert(s, [opts])`:
+- `convert(s, [opts])`:
   convert the string `s` from the format `opts.from` to the format `opts.to` and shifts the header levels by `opts.shift`.
 
 This function requires a Pandoc Lua interpreter. The conversion is made by [Pandoc] itself.
@@ -32,15 +32,19 @@ By default Pandoc converts documents from and to Markdown and the header level i
 @q[=====[
 The `convert` macro can also be called as a curried function (arguments can be swapped). E.g.:
 
-    @convert {from="csv"} (script.python [===[
-    # python script that produces a CSV document
-    ]===])
+```
+@convert {from="csv"} (script.python [===[
+# python script that produces a CSV document
+]===])
+```
 
 Notice that `convert` can be implicitely called by `include` or `script` by giving the appropriate options. E.g.:
 
-    @script.python {from="csv"} [===[
-    # python script that produces a CSV document
-    ]===]
+```
+@script.python {from="csv"} [===[
+# python script that produces a CSV document
+]===]
+```
 
 ]=====]
 @@@]]

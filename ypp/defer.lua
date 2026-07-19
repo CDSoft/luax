@@ -21,8 +21,8 @@ https://codeberg.org/cdsoft/luax
 local F = require "F"
 
 --[[@@@
-* `defer(func, ...)`: emit a unique tag that will later be replaced by the result of `func(...)` if `func` is callable.
-* `defer(table, ...)`: emit a unique tag that will later be replaced by the concatenation of `table` (one item per line).
+- `defer(func, ...)`: emit a unique tag that will later be replaced by the result of `func(...)` if `func` is callable.
+- `defer(table, ...)`: emit a unique tag that will later be replaced by the concatenation of `table` (one item per line).
 
 E.g.:
 

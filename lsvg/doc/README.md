@@ -1,6 +1,6 @@
-<img src="lsvg-banner.svg" style="width:100%" />
-
 # Lua scriptable SVG image generator
+
+![Lsvg logo](lsvg-banner.svg)
 
 `lsvg` is a Lua interpreter specialized to generate SVG images.
 
@@ -70,18 +70,20 @@ No documentation yet. Just read the source code...
 
 ## License
 
-    lsvg is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+```
+lsvg is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    lsvg is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+lsvg is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with lsvg.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with lsvg.  If not, see <https://www.gnu.org/licenses/>.
 
-    For further information about lsvg you can visit
-    https://codeberg.org/cdsoft/luax
+For further information about lsvg you can visit
+https://codeberg.org/cdsoft/luax
+```
