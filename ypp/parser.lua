@@ -95,8 +95,8 @@ end
 local function alt(ps)
     return function(s, i0)
         if not i0 then return end
-        for _, p in ipairs(ps) do
-            local i1, i2 = p(s, i0)
+        for i = 1, #ps do
+            local i1, i2 = ps[i](s, i0)
             if i1 then return i1, i2 end
         end
     end

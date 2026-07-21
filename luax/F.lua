@@ -55,6 +55,8 @@ t"mapk"(func)   -- works and is equivalent to F.mapk(func, t)
 
 @@@]]
 
+require "luax-compat"
+
 local getmetatable, setmetatable = getmetatable, setmetatable
 local ipairs, pairs, next = ipairs, pairs, next
 local load = load
@@ -64,10 +66,16 @@ local select = select
 local tostring = tostring
 local type = type
 
+local t_create = table.create
 local t_concat = table.concat
 local t_insert, t_remove, t_move = table.insert, table.remove, table.move
 local t_sort = table.sort
 local t_pack, t_unpack = table.pack, table.unpack
+
+local function t_create_safe(nseq)
+    if nseq <= 0 then return {} end
+    return t_create(nseq)
+end
 
 local s_byte, s_char = string.byte, string.char
 local s_find, s_match, s_gmatch, s_gsub = string.find, string.match, string.gmatch, string.gsub
@@ -84,6 +92,7 @@ local s_init, s_last
 local s_split
 
 local abs = math.abs
+local ceil = math.ceil
 local fmod = math.fmod
 local math_type = math.type
 local max = math.max
@@ -1110,13 +1119,12 @@ local default_show_options = {
     lt = F.op.klt,
 }
 
-local keywords = {}
-for _, k in ipairs {
-    "and",       "break",     "do",        "else",      "elseif",    "end",
-    "false",     "for",       "function",  "global",    "goto",      "if",
-    "in",        "local",     "nil",       "not",       "or",        "repeat",
-    "return",    "then",      "true",      "until",     "while",
-} do keywords[k] = true end
+local keywords = {
+    ["and"]=true,       ["break"]=true,     ["do"]=true,        ["else"]=true,      ["elseif"]=true,    ["end"]=true,
+    ["false"]=true,     ["for"]=true,       ["function"]=true,  ["global"]=true,    ["goto"]=true,      ["if"]=true,
+    ["in"]=true,        ["local"]=true,     ["nil"]=true,       ["not"]=true,       ["or"]=true,        ["repeat"]=true,
+    ["return"]=true,    ["then"]=true,      ["true"]=true,      ["until"]=true,     ["while"]=true,
+}
 
 function F.show(x, opt)
 
@@ -1280,7 +1288,7 @@ F.rep(n, x)
 @@@]]
 
 function F.rep(n, x)
-    local xs = {}
+    local xs = t_create_safe(n)
     for i = 1, n do
         xs[i] = x
     end
@@ -1300,18 +1308,8 @@ function F.range(a, b, step)
     step = step or 1
     if step == 0 then return nil, "range step can not be zero" end
     if b == nil then a, b = 1, a end
-    local r = {}
-    if step > 0 then
-        while a <= b do
-            r[#r+1] = a
-            a = a + step
-        end
-    else
-        while a >= b do
-            r[#r+1] = a
-            a = a + step
-        end
-    end
+    local r = t_create_safe(ceil((b-a)/step) + 1)
+    for x = a, b, step do r[#r+1] = x end
     return setmetatable(r, mt)
 end
 
@@ -1325,12 +1323,10 @@ xs1 .. xs2
 @@@]]
 
 F_concat = function(xss)
-    local ys = {}
+    local ys = t_create(F_map(F.op.len, xss):sum())
     for i = 1, #xss do
         local xs = xss[i]
-        for j = 1, #xs do
-            ys[#ys+1] = xs[j]
-        end
+        t_move(xs, 1, #xs, #ys+1, ys)
     end
     return setmetatable(ys, mt)
 end
@@ -1489,7 +1485,7 @@ mt.__index.keys = F_keys
 
 function F.values(t, comp_lt)
     local ks = F_keys(t, comp_lt)
-    local vs = {}
+    local vs = t_create(#ks)
     for i = 1, #ks do vs[i] = t[ks[i]] end
     return setmetatable(vs, mt)
 end
@@ -1497,7 +1493,7 @@ mt.__index.values = F.values
 
 function F.items(t, comp_lt)
     local ks = F_keys(t, comp_lt)
-    local kvs = {}
+    local kvs = t_create(#ks)
     for i = 1, #ks do
         local k = ks[i]
         kvs[i] = setmetatable({k, t[k]}, mt) end
@@ -1538,18 +1534,14 @@ xs:init()
 @@@]]
 
 F_tail = function(xs)
-    if #xs == 0 then return nil end
-    local tail = {}
-    for i = 2, #xs do tail[#tail+1] = xs[i] end
+    local tail = t_move(xs, 2, #xs, 1, {})
     return setmetatable(tail, mt)
 end
 F.tail = F_tail
 mt.__index.tail = F_tail
 
 F_init = function(xs)
-    if #xs == 0 then return nil end
-    local init = {}
-    for i = 1, #xs-1 do init[#init+1] = xs[i] end
+    local init = t_move(xs, 1, #xs-1, 1, {})
     return setmetatable(init, mt)
 end
 F.init = F_init
@@ -1586,10 +1578,7 @@ xs:take(n)
 @@@]]
 
 F_take = function(n, xs)
-    local ys = {}
-    for i = 1, n do
-        ys[i] = xs[i]
-    end
+    local ys = t_move(xs, 1, n, 1, {})
     return setmetatable(ys, mt)
 end
 F.take = F_take
@@ -1604,10 +1593,7 @@ xs:drop(n)
 @@@]]
 
 F_drop = function(n, xs)
-    local ys = {}
-    for i = n+1, #xs do
-        ys[#ys+1] = xs[i]
-    end
+    local ys = t_move(xs, n+1, #xs, 1, {})
     return setmetatable(ys, mt)
 end
 F.drop = F_drop
@@ -1640,12 +1626,9 @@ xs:take_while(p)
 @@@]]
 
 F_take_while = function(p, xs)
-    local ys = {}
     local i = 1
-    while i <= #xs and p(xs[i]) do
-        ys[i] = xs[i]
-        i = i+1
-    end
+    while i <= #xs and p(xs[i]) do i = i+1 end
+    local ys = t_move(xs, 1, i-1, 1, {})
     return setmetatable(ys, mt)
 end
 F.take_while = F_take_while
@@ -1660,15 +1643,9 @@ xs:drop_while(p)
 @@@]]
 
 F_drop_while = function(p, xs)
-    local zs = {}
     local i = 1
-    while i <= #xs and p(xs[i]) do
-        i = i+1
-    end
-    while i <= #xs do
-        zs[#zs+1] = xs[i]
-        i = i+1
-    end
+    while i <= #xs and p(xs[i]) do i = i+1 end
+    local zs = t_move(xs, i, #xs, 1, {})
     return setmetatable(zs, mt)
 end
 F.drop_while = F_drop_while
@@ -1683,14 +1660,9 @@ xs:drop_while_end(p)
 @@@]]
 
 F_drop_while_end = function(p, xs)
-    local zs = {}
     local i = #xs
-    while i > 0 and p(xs[i]) do
-        i = i-1
-    end
-    for j = 1, i do
-        zs[j] = xs[j]
-    end
+    while i > 0 and p(xs[i]) do i = i-1 end
+    local zs = t_move(xs, 1, i, 1, {})
     return setmetatable(zs, mt)
 end
 F.drop_while_end = F_drop_while_end
@@ -1707,17 +1679,10 @@ xs:span(p)
 do
 
 local function F_span(p, xs)
-    local ys = {}
-    local zs = {}
     local i = 1
-    while i <= #xs and p(xs[i]) do
-        ys[i] = xs[i]
-        i = i+1
-    end
-    while i <= #xs do
-        zs[#zs+1] = xs[i]
-        i = i+1
-    end
+    while i <= #xs and p(xs[i]) do i = i+1 end
+    local ys = t_move(xs, 1, i-1, 1, {})
+    local zs = t_move(xs, i, #xs, 1, {})
     return setmetatable(ys, mt), setmetatable(zs, mt)
 end
 F.span = F_span
@@ -1736,17 +1701,10 @@ xs:break_(p)
 do
 
 local function F_break(p, xs)
-    local ys = {}
-    local zs = {}
     local i = 1
-    while i <= #xs and not p(xs[i]) do
-        ys[i] = xs[i]
-        i = i+1
-    end
-    while i <= #xs do
-        zs[#zs+1] = xs[i]
-        i = i+1
-    end
+    while i <= #xs and not p(xs[i]) do i = i+1 end
+    local ys = t_move(xs, 1, i-1, 1, {})
+    local zs = t_move(xs, i, #xs, 1, {})
     return setmetatable(ys, mt), setmetatable(zs, mt)
 end
 F.break_ = F_break
@@ -1768,10 +1726,7 @@ local function F_strip_prefix(prefix, xs)
     for i = 1, #prefix do
         if xs[i] ~= prefix[i] then return nil end
     end
-    local ys = {}
-    for i = #prefix+1, #xs do
-        ys[#ys+1] = xs[i]
-    end
+    local ys = t_move(xs, #prefix+1, #xs, 1, {})
     return setmetatable(ys, mt)
 end
 F.strip_prefix = F_strip_prefix
@@ -1793,10 +1748,7 @@ local function F_strip_suffix(suffix, xs)
     for i = 1, #suffix do
         if xs[#xs-#suffix+i] ~= suffix[i] then return nil end
     end
-    local ys = {}
-    for i = 1, #xs-#suffix do
-        ys[i] = xs[i]
-    end
+    local ys = t_move(xs, 1, #xs-#suffix, 1, {})
     return setmetatable(ys, mt)
 end
 F.strip_suffix = F_strip_suffix
@@ -1842,12 +1794,9 @@ xs:inits()
 @@@]]
 
 function F.inits(xs)
-    local yss = {}
+    local yss = t_create(#xs+1)
     for i = 0, #xs do
-        local ys = {}
-        for j = 1, i do
-            ys[j] = xs[j]
-        end
+        local ys = t_move(xs, 1, i, 1, {})
         yss[#yss+1] = setmetatable(ys, mt)
     end
     return setmetatable(yss, mt)
@@ -1863,12 +1812,9 @@ xs:tails()
 @@@]]
 
 function F.tails(xs)
-    local yss = {}
+    local yss = t_create(#xs+1)
     for i = 1, #xs+1 do
-        local ys = {}
-        for j = i, #xs do
-            ys[#ys+1] = xs[j]
-        end
+        local ys = t_move(xs, i, #xs, 1, {})
         yss[#yss+1] = setmetatable(ys, mt)
     end
     return setmetatable(yss, mt)
@@ -2646,7 +2592,7 @@ xs:map(f)
 @@@]]
 
 F_map = function(f, xs)
-    local ys = {}
+    local ys = t_create(#xs)
     for i = 1, #xs do ys[#ys+1] = f(xs[i]) end
     return setmetatable(ys, mt)
 end
@@ -2665,7 +2611,7 @@ xs:mapi(f)
 do
 
 local function F_mapi(f, xs)
-    local ys = {}
+    local ys = t_create(#xs)
     for i = 1, #xs do ys[#ys+1] = f(i, xs[i]) end
     return setmetatable(ys, mt)
 end
@@ -2817,7 +2763,7 @@ xs:reverse()
 @@@]]
 
 function F.reverse(xs)
-    local ys = {}
+    local ys = t_create(#xs)
     for i = #xs, 1, -1 do ys[#ys+1] = xs[i] end
     return setmetatable(ys, mt)
 end
@@ -2834,9 +2780,9 @@ xss:transpose()
 function F.transpose(xss)
     local N = #xss
     local M = max(t_unpack(F_map(F_length, xss)))
-    local yss = {}
+    local yss = t_create(M)
     for j = 1, M do
-        local ys = {}
+        local ys = t_create(N)
         for i = 1, N do ys[i] = xss[i][j] end
         yss[j] = setmetatable(ys, mt)
     end
@@ -3266,8 +3212,8 @@ xss:zip([f])
 @@@]]
 
 F_zip = function(xss, f)
-    local yss = {}
     local ns = F_minimum(F_map(F_length, xss))
+    local yss = t_create(ns)
     if f then
         for i = 1, ns do
             local ys = F_map(function(xs) return xs[i] end, xss)
@@ -3322,18 +3268,19 @@ xss:cross([f])
 
 local function F_cross(xss, f)
     f = f or function(...) return setmetatable({...}, mt) end
-    local ts = {}
+    local ts = t_create(F_map(F.op.len, xss):product())
     local function rec(i, t)
         if i <= #xss then
-            for _, x in ipairs(xss[i]) do
-                t[i] = x
+            local xs = xss[i]
+            for j = 1, #xs do
+                t[i] = xs[j]
                 rec(i+1, t)
             end
         else
             ts[#ts+1] = f(t_unpack(t))
         end
     end
-    rec(1, {})
+    rec(1, t_create(#xss))
     return setmetatable(ts, mt)
 end
 F.cross = F_cross
@@ -3364,7 +3311,7 @@ xs:nub([comp_eq])
 
 function F.nub(xs, comp_eq)
     comp_eq = comp_eq or F_op_eq
-    local ys = {}
+    local ys = t_create(#xs)
     for i = 1, #xs do
         local x = xs[i]
         local found = false
@@ -3389,18 +3336,11 @@ do
 
 local function F_delete(x, xs, comp_eq)
     comp_eq = comp_eq or F_op_eq
-    local ys = {}
+    local ys = t_create(#xs)
     local i = 1
-    while i <= #xs do
-        if comp_eq(xs[i], x) then break end
-        ys[#ys+1] = xs[i]
-        i = i+1
-    end
-    i = i+1
-    while i <= #xs do
-        ys[#ys+1] = xs[i]
-        i = i+1
-    end
+    while i <= #xs and not comp_eq(xs[i], x) do i = i+1 end
+    t_move(xs, 1, i-1, 1, ys)
+    t_move(xs, i+1, #xs, #ys+1, ys)
     return setmetatable(ys, mt)
 end
 F.delete = F_delete
@@ -3418,7 +3358,7 @@ xs:difference(ys, [comp_eq])
 
 function F.difference(xs, ys, comp_eq)
     comp_eq = comp_eq or F_op_eq
-    local zs = {}
+    local zs = t_create(#xs)
     ys = {t_unpack(ys)}
     for i = 1, #xs do
         local x = xs[i]
@@ -3808,8 +3748,7 @@ xs:sort([comp_lt])
 @@@]]
 
 function F.sort(xs, comp_lt)
-    local ys = {}
-    for i = 1, #xs do ys[i] = xs[i] end
+    local ys = t_move(xs, 1, #xs, 1, {})
     t_sort(ys, comp_lt)
     return setmetatable(ys, mt)
 end
@@ -3827,10 +3766,10 @@ do
 
 local function F_sort_on(f, xs, comp_lt)
     comp_lt = comp_lt or F_op_lt
-    local ys = {}
+    local ys = t_create(#xs)
     for i = 1, #xs do ys[i] = {f(xs[i]), xs[i]} end
     t_sort(ys, function(a, b) return comp_lt(a[1], b[1]) end)
-    local zs = {}
+    local zs = t_create(#xs)
     for i = 1, #ys do zs[i] = ys[i][2] end
     return setmetatable(zs, mt)
 end
@@ -3851,17 +3790,12 @@ do
 
 local function F_insert(x, xs, comp_lt)
     comp_lt = comp_lt or F_op_lt
-    local ys = {}
+    local ys = t_create(#xs+1)
     local i = 1
-    while i <= #xs and not comp_lt(x, xs[i]) do
-        ys[#ys+1] = xs[i]
-        i = i+1
-    end
+    while i <= #xs and not comp_lt(x, xs[i]) do i = i+1 end
+    t_move(xs, 1, i-1, 1, ys)
     ys[#ys+1] = x
-    while i <= #xs do
-        ys[#ys+1] = xs[i]
-        i = i+1
-    end
+    t_move(xs, i, #xs, #ys+1, ys)
     return setmetatable(ys, mt)
 end
 F.insert = F_insert
@@ -3902,12 +3836,18 @@ xs:permutations()
 > Returns the list of all permutations of the argument.
 @@@]]
 
+local function fact(n)
+    local p = 1
+    for i = 2, n do p = p * i end
+    return p
+end
+
 F_permutations = function(xs)
-    local perms = {}
+    local perms = t_create(fact(#xs))
     local n = #xs
-    xs = F_clone(xs)
+    xs = t_move(xs, 1, #xs, 1, {})
     local function permute(k)
-        if k > n then perms[#perms+1] = F_clone(xs)
+        if k > n then perms[#perms+1] = t_move(xs, 1, #xs, 1, {})
         else
             for i = k, n do
                 xs[k], xs[i] = xs[i], xs[k]
@@ -4054,7 +3994,7 @@ c:intersperse(s)
 
 function string.intersperse(c, s)
     if #s < 2 then return s end
-    local cs = {}
+    local cs = t_create(#s*2)
     for i = 1, #s-1 do
         cs[#cs+1] = s_sub(s, i, i)
         cs[#cs+1] = c
@@ -4216,7 +4156,7 @@ s:inits()
 @@@]]
 
 function string.inits(s)
-    local ss = {}
+    local ss = t_create(#s+1)
     for i = 0, #s do
         ss[#ss+1] = s_sub(s, 1, i)
     end
@@ -4232,7 +4172,7 @@ s:tails()
 @@@]]
 
 function string.tails(s)
-    local ss = {}
+    local ss = t_create(#s+1)
     for i = 1, #s+1 do
         ss[#ss+1] = s_sub(s, i)
     end
@@ -4397,7 +4337,7 @@ xs:unlines()
 @@@]]
 
 function F.unlines(xs)
-    local s = {}
+    local s = t_create(#xs*2)
     for i = 1, #xs do
         s[#s+1] = xs[i]
         s[#s+1] = "\n"

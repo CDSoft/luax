@@ -25,12 +25,15 @@ local has_crypt, crypt = pcall(require, "_crypt")
 
 local F = require "F"
 
+local t_move = table.move
+
 if not has_crypt then
 
     crypt = {}
 
     local math = math
     local random = math.random
+    local ceil = math.ceil
 
     local clock = os.clock
     local time = os.time
@@ -43,6 +46,7 @@ if not has_crypt then
 
     local concat = table.concat
     local tunpack = table.unpack
+    local t_create = table.create
 
     local tonumber = tonumber
 
@@ -267,7 +271,7 @@ if not has_crypt then
     prng_mt.__index.float = pcg_float
 
     local function pcg_str(self, n)
-        local bs = {}
+        local bs = t_create(n+4)
         for i = 1, n, 4 do
             local r = pcg_int(self)
             bs[i  ] = char((r>>(0*8))&0xff)
@@ -316,7 +320,7 @@ if not has_crypt then
     base64_rev[byte'='] = 0
 
     function crypt.base64(s)
-        local tokens = {}
+        local tokens = t_create(ceil(#s*4/3+4))
         local remainder = #s % 3
         for i = 1, #s-remainder, 3 do
             local a, b, c = byte(s, i, i+2)
@@ -348,7 +352,7 @@ if not has_crypt then
     end
 
     function crypt.unbase64(s)
-        local tokens = {}
+        local tokens = t_create(ceil(#s*3/4))
         for i = 1, #s, 4 do
             local a, b, c, d = byte(s, i, i+3)
             local u24 = (base64_rev[a] << (3*6))
@@ -494,7 +498,7 @@ if not has_crypt then
     function crypt.arc4(input, key, drop)
         assert(type(key) == "string", "arc4 key shall be a string")
         drop = drop or 768
-        local S = {}
+        local S = t_create(255, 1)
         for i = 0, 255 do S[i] = i end
         local j = 0
         if #key > 0 then
@@ -510,7 +514,7 @@ if not has_crypt then
             j = (j + S[i]) % 256
             S[i], S[j] = S[j], S[i]
         end
-        local output = {}
+        local output = t_create(#input)
         for k = 1, #input do
             i = (i + 1) % 256
             j = (j + S[i]) % 256
@@ -569,7 +573,7 @@ if not has_crypt then
 
         -- 512 bit blocks
         for chunk_start = 1, #bytes, 64 do
-            local w = {}
+            local w = t_create(79, 1)
             for i = 0, 15 do
                 w[i] = unpack(">I4", bytes, chunk_start + i * 4)
             end
@@ -636,8 +640,7 @@ if not has_crypt then
         local function sigma0(x)    return rotr(x,  7) ~ rotr(x, 18) ~ u32(x >>  3) end
         local function sigma1(x)    return rotr(x, 17) ~ rotr(x, 19) ~ u32(x >> 10) end
 
-        local H = {}
-        for i = 1, #H0 do H[i] = H0[i] end
+        local H = t_move(H0, 1, #H0, 1, {})
 
         local msgLen = #message
         local bitLen = msgLen * 8
@@ -652,7 +655,7 @@ if not has_crypt then
         }
 
         for offset = 1, #padded, 64 do
-            local W = {}
+            local W = t_create(64)
             for i = 1, 16 do
                 W[i] = (">I4"):unpack(padded, offset + (i - 1) * 4)
             end
@@ -715,21 +718,21 @@ crypt.shuffle(xs)    -- using the global PRNG
 @@@]]
 
 function prng_mt.__index:shuffle(xs)
-    local ys = F.clone(xs)
+    local ys = t_move(xs, 1, #xs, 1, {})
     for i = 1, #ys-1 do
         local j = self:int(i, #ys)
         ys[i], ys[j] = ys[j], ys[i]
     end
-    return ys
+    return F(ys)
 end
 
 function crypt.shuffle(xs)
-    local ys = F.clone(xs)
+    local ys = t_move(xs, 1, #xs, 1, {})
     for i = 1, #ys-1 do
         local j = crypt.int(i, #ys)
         ys[i], ys[j] = ys[j], ys[i]
     end
-    return ys
+    return F(ys)
 end
 
 --[[------------------------------------------------------------------------@@@
