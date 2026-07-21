@@ -1313,6 +1313,23 @@ xss:zip_with(f)
 > `zip_with` generalises `zip` by zipping with the function given as the first argument, instead of a tupling function.
 
 
+## Cartesian product
+
+
+```lua
+F.cross(xss, [f])
+xss:cross([f])
+```
+> `cross` takes a list of lists and returns the Cartesian product of these lists.
+
+
+```lua
+F.cross_with(f, xss)
+xss:cross_with(f)
+```
+> `cross_with` generalises `cross` by crossing with the function given as the first argument, instead of a tupling function.
+
+
 ## Set operations
 
 

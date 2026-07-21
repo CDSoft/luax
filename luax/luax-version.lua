@@ -20,7 +20,7 @@ https://codeberg.org/cdsoft/luax
 
 --@LIB
 
-local version = "10.7.3"
+local version = "10.8"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"

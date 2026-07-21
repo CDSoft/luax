@@ -3309,6 +3309,51 @@ function F.zip_with(f, xss) return F_zip(xss, f) end
 mt.__index.zip_with = F_zip
 
 --[[------------------------------------------------------------------------@@@
+## Cartesian product
+@@@]]
+
+--[[@@@
+```lua
+F.cross(xss, [f])
+xss:cross([f])
+```
+> `cross` takes a list of lists and returns the Cartesian product of these lists.
+@@@]]
+
+local function F_cross(xss, f)
+    local p = {{}}
+    for _, xs in ipairs(xss) do
+        local yss = {}
+        for _, comb in ipairs(p) do
+            for _, x in ipairs(xs) do
+                local new_comb = {}
+                for i, y in ipairs(comb) do new_comb[i] = y end
+                new_comb[#new_comb+1] = x
+                yss[#yss+1] = new_comb
+            end
+        end
+        p = yss
+    end
+    if f then
+        p = F_map(function(xs) return f(t_unpack(xs)) end, p)
+    end
+    return p
+end
+F.cross = F_cross
+mt.__index.cross = F_cross
+
+--[[@@@
+```lua
+F.cross_with(f, xss)
+xss:cross_with(f)
+```
+> `cross_with` generalises `cross` by crossing with the function given as the first argument, instead of a tupling function.
+@@@]]
+
+function F.cross_with(f, xss) return F_cross(xss, f) end
+mt.__index.cross_with = F_cross
+
+--[[------------------------------------------------------------------------@@@
 ## Set operations
 @@@]]
 
