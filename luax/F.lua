@@ -3321,23 +3321,20 @@ xss:cross([f])
 @@@]]
 
 local function F_cross(xss, f)
-    local p = {{}}
-    for _, xs in ipairs(xss) do
-        local yss = {}
-        for _, comb in ipairs(p) do
-            for _, x in ipairs(xs) do
-                local new_comb = {}
-                for i, y in ipairs(comb) do new_comb[i] = y end
-                new_comb[#new_comb+1] = x
-                yss[#yss+1] = new_comb
+    f = f or function(...) return setmetatable({...}, mt) end
+    local ts = {}
+    local function rec(i, t)
+        if i <= #xss then
+            for _, x in ipairs(xss[i]) do
+                t[i] = x
+                rec(i+1, t)
             end
+        else
+            ts[#ts+1] = f(t_unpack(t))
         end
-        p = yss
     end
-    if f then
-        p = F_map(function(xs) return f(t_unpack(xs)) end, p)
-    end
-    return p
+    rec(1, {})
+    return setmetatable(ts, mt)
 end
 F.cross = F_cross
 mt.__index.cross = F_cross
