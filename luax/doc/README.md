@@ -302,67 +302,81 @@ windows-aarch64       ~/.local/lib/libluax_xyz
 
 The `luax` runtime comes with a few builtin modules.
 
-Interactive usage
-: - [LuaX interactive usage](repl.md): improved Lua REPL
+### Interactive usage
 
-Functional programming
-: - [F](F.md): functional programming inspired functions
+- [LuaX interactive usage](repl.md): improved Lua REPL
 
-Math
-: - [complex](complex.md): math library for complex numbers based on C99
-  - [imath](imath.md): arbitrary precision integer and rational arithmetic library
-  - [mathx](mathx.md): complete math library for Lua
-  - [qmath](qmath.md): rational number library
+### Functional programming
 
-Serialization/deserialization
-: - [cbor](cbor.md): pure Lua implementation of the CBOR
-  - [import](import.md): import Lua scripts to user table instead of `_G`
-  - [json](json.md): JSON Module for Lua
-  - [serpent](serpent.md): Lua serializer and pretty printer
-  - [toml](toml.md): a pure Lua TOML parser (tinytoml)
-  - [tomlx](tomlx.md): a layer on top of toml with macros
-  - [yaml](yaml.md): YAML Module for Lua
+- [F](F.md): functional programming inspired functions
 
-Parsers
-: - [argparse](argparse.md): Feature-rich command line parser for Lua
-  - [lpeg](lpeg.md): Parsing Expression Grammars For Lua
+### Math
 
-Filesystem management
-: - [fs](fs.md): file system management
+- [complex](complex.md): math library for complex numbers based on C99
+- [imath](imath.md): arbitrary precision integer and rational arithmetic library
+- [mathx](mathx.md): complete math library for Lua
+- [qmath](qmath.md): rational number library
 
-Cryptography
-: - [crypt](crypt.md): cryptography module
+### Serialization/deserialization
 
-Compression
-: - [lz4](lz4.md): Extremely Fast Compression algorithm
-  - [lzip](lzip.md): A compression library for the lzip format
-  - [tar](tar.md): A minimalistic tar archiving library
+- [cbor](cbor.md): pure Lua implementation of the CBOR
+- [import](import.md): import Lua scripts to user table instead of `_G`
+- [json](json.md): JSON Module for Lua
+- [serpent](serpent.md): Lua serializer and pretty printer
+- [toml](toml.md): a pure Lua TOML parser (tinytoml)
+- [tomlx](tomlx.md): a layer on top of toml with macros
+- [yaml](yaml.md): YAML Module for Lua
 
-Terminal and prompt
-: - [linenoise](linenoise.md): A small, portable GNU readline replacement with UTF-8 support
-  - [readline](readline.md): Command line editing functions
-  - [term](term.md): Terminal manipulation module
+### Parsers
 
-Shell
-: - [sh](sh.md): shell command execution
+- [argparse](argparse.md): Feature-rich command line parser for Lua
+- [lpeg](lpeg.md): Parsing Expression Grammars For Lua
 
-Process
-: - [ps](ps.md): Process management module
+### Filesystem management
 
-System information
-: - [sys](sys.md): System module
+- [fs](fs.md): file system management
 
-Network
-: - [curl](curl.md): Simple curl command line interface with HTTP functions
-  - [luasocket](luasocket.md): Network support for the Lua language
+### Cryptography
 
-Additions to standard Lua modules
-: - [luax-debug](debug.md): modified Lua package `debug`
-  - [luax-package](package.md): modified Lua package `package`
-  - [F](F.md): also extends the `string` and `table` packages
-  - [fs](fs.md): also extends the `string` module
-  - [crypt](crypt.md), [lz4](lz4.md), [lzip](lzip.md): also extends the `string` module
-  - [strict](strict.md): checks uses of undeclared global variables
+- [crypt](crypt.md): cryptography module
+
+### Compression
+
+- [lz4](lz4.md): Extremely Fast Compression algorithm
+- [lzip](lzip.md): A compression library for the lzip format
+- [tar](tar.md): A minimalistic tar archiving library
+
+### Terminal and prompt
+
+- [linenoise](linenoise.md): A small, portable GNU readline replacement with UTF-8 support
+- [readline](readline.md): Command line editing functions
+- [term](term.md): Terminal manipulation module
+
+### Shell
+
+- [sh](sh.md): shell command execution
+
+### Process
+
+- [ps](ps.md): Process management module
+
+### System information
+
+- [sys](sys.md): System module
+
+### Network
+
+- [curl](curl.md): Simple curl command line interface with HTTP functions
+- [luasocket](luasocket.md): Network support for the Lua language
+
+### Additions to standard Lua modules
+
+- [luax-debug](debug.md): modified Lua package `debug`
+- [luax-package](package.md): modified Lua package `package`
+- [F](F.md): also extends the `string` and `table` packages
+- [fs](fs.md): also extends the `string` module
+- [crypt](crypt.md), [lz4](lz4.md), [lzip](lzip.md): also extends the `string` module
+- [strict](strict.md): checks uses of undeclared global variables
 
 ## Pure Lua modules
 
@@ -400,15 +414,15 @@ https://codeberg.org/cdsoft/luax
 - **[imath](https://github.com/creachadair/imath)**: arbitrary precision library IMath written by Michael J. Fromberger ([LICENSE](https://github.com/creachadair/imath/blob/main/LICENSE))
 - **[lcomplex](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/)**: support for complex numbers in Lua ([MIT license](https://mit-license.org/))
 - **[limath](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/)**: a big-integer library for Lua ([MIT license](https://mit-license.org/))
-- **[Linenoise](https://github.com/antirez/linenoise)**: A minimal, zero-config, BSD licensed, readline replacement ([BSD license](https://github.com/antirez/linenoise/blob/master/LICENSE))
+- **[Linenoise](https://github.com/antirez/linenoise)**: a minimal, zero-config, BSD licensed, readline replacement ([BSD license](https://github.com/antirez/linenoise/blob/master/LICENSE))
 - **[Lpeg](http://www.inf.puc-rio.br/~roberto/lpeg/)**: Parsing Expression Grammars For Lua ([MIT license](http://www.lua.org/license.html))
 - **[lqmath](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/)**: rational number library for Lua ([MIT license](https://mit-license.org/))
-- **[Lua 5.5](http://www.lua.org)**: Copyright (C) 1994-2025 Lua.org, PUC-Rio ([MIT license](http://www.lua.org/license.html))
-- **[luasocket](https://github.com/diegonehab/luasocket)**: Network support for the Lua language ([LuaSocket 3.0 license](https://github.com/diegonehab/luasocket/blob/master/LICENSE))
+- **[Lua](http://www.lua.org)**: a powerful, efficient, lightweight, embeddable scripting language ([MIT license](http://www.lua.org/license.html))
+- **[luasocket](https://github.com/diegonehab/luasocket)**: network support for the Lua language ([LuaSocket 3.0 license](https://github.com/diegonehab/luasocket/blob/master/LICENSE))
 - **[lua-tinyyaml](https://github.com/zepinglee/lua-tinyyaml)**: a tiny yaml (subset) parser for pure lua ([MIT License](https://github.com/zepinglee/lua-tinyyaml/blob/master/LICENSE))
-- **[LZ4](https://github.com/lz4/lz4)**: Extremely Fast Compression algorithm ([License](https://github.com/lz4/lz4/blob/dev/lib/LICENSE))
-- **[lzip](https://www.nongnu.org/lzip/)**: A compression library for the lzip format ([License](http://www.gnu.org/licenses/gpl-2.0.html))
+- **[LZ4](https://github.com/lz4/lz4)**: extremely fast compression algorithm ([License](https://github.com/lz4/lz4/blob/dev/lib/LICENSE))
+- **[lzip](https://www.nongnu.org/lzip/)**: a compression library for the lzip format ([License](http://www.gnu.org/licenses/gpl-2.0.html))
 - **[mathx](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/)**: complete math library for Lua ([MIT license](https://mit-license.org/))
 - **[serpent](https://github.com/pkulchenko/serpent)**: Lua serializer and pretty printer ([MIT license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))
 - **[tinytoml](https://github.com/FourierTransformer/tinytoml)**: a pure Lua TOML parser ([MIT License](https://github.com/FourierTransformer/tinytoml?tab=MIT-1-ov-file#readme))
-- **[Zig](https://ziglang.org/)**: General-purpose programming language and toolchain for maintaining robust, optimal, and reusable software ([MIT license](https://github.com/ziglang/zig/blob/master/LICENSE))
+- **[Zig](https://ziglang.org/)**: general-purpose programming language and toolchain for maintaining robust, optimal, and reusable software ([MIT license](https://github.com/ziglang/zig/blob/master/LICENSE))
