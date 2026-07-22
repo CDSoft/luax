@@ -5,7 +5,13 @@ local tar = require "tar"
 ```
 
 The `tar` module can read and write tar archives.
-Only files, directories and symbolic links are supported.
+
+**Limitations**:
+
+- Only files, directories and symbolic links are supported.
+- File names longer than 100 bytes are rejected.                                                                                                   ▆
+- Files larger than 8 GiB are rejected.
+- Only classic USTAR format is supported (no PAX, no long names).
 
 ```lua
 tar.tar(files, [xform])
