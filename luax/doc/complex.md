@@ -1,4 +1,3 @@
-
 # complex: math library for complex numbers based on C99
 
 ```lua
@@ -19,5 +18,3 @@ complex library:
     __mul(z,w)  acosh(z)    cos(z)      proj(z)     tostring(z)
     __pow(z,w)  arg(z)      cosh(z)     real(z)     version
     __sub(z,w)  asin(z)     exp(z)      sin(z)
-
-

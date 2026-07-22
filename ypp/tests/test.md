@@ -1,4 +1,23 @@
+
+
+@string.rep(" ", 10)
+
+
 # ypp tests
+
+Note that empty heading lines will be removed.
+And trailing spaces are remove at the end of each line:
+line 1 @string.rep(" ", 10)
+line 2 @string.rep(" ", 10) <- these one are kept
+line 3 @string.rep(" ", 10)
+
+Consecutive empty lines are removed too:
+
+
+@string.rep(" ", 10)
+
+
+^-- there should be only one blank line here
 
 ## Variables defined on the command line
 
@@ -395,3 +414,9 @@ words: @defer(F.unwords, words)
 ## End of the document
 
 This text shall not be forgotten.
+But trailing blank lines are ignored
+
+
+@string.rep(" ", 10)
+
+

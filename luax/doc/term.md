@@ -1,4 +1,3 @@
-
 # Terminal
 
 `term` provides some functions to deal with the terminal in a quite portable way.
@@ -10,7 +9,6 @@ It is heavily inspired by:
 ```lua
 local term = require "term"
 ```
-
 
 ## Colors
 
@@ -88,7 +86,6 @@ The table `term.cursor` contains functions to change the shape of the cursor:
 term.cursor.bar_blink()
 ```
 
-
 | `term.cursor` field      | Description                 |
 | ------------------------ | --------------------------- |
 | `reset`                  | reset to the initial shape  |
@@ -101,13 +98,10 @@ term.cursor.bar_blink()
 
 ## Terminal
 
-
-
 ``` lua
 term.reset()
 ```
 > resets the colors and the cursor shape.
-
 
 ``` lua
 term.clear()
@@ -117,19 +111,16 @@ term.clearend()
 ```
 > clears the terminal, the current line, the end of the current line or from the cursor to the end of the terminal.
 
-
 ``` lua
 term.pos(row, col)
 ```
 > moves the cursor to the line `row` and the column `col`.
-
 
 ``` lua
 term.save_pos()
 term.restore_pos()
 ```
 > saves and restores the position of the cursor.
-
 
 ``` lua
 term.up([n])
@@ -139,7 +130,6 @@ term.left([n])
 ```
 > moves the cursor by `n` characters up, down, right or left.
 
-
 ## Prompt
 
 The prompt function is a basic prompt implementation
@@ -148,29 +138,21 @@ to display a prompt and get user inputs.
 The use of [rlwrap](https://github.com/hanslub42/rlwrap)
 is highly recommended for a better user experience on Linux.
 
-
 ```lua
 s = term.prompt(p)
 ```
 > prints `p` and waits for a user input
 
-
 ## Title
 
 Set the terminal title.
-
 
 ```lua
 term.title(t)
 ```
 > sets the terminal title.
 
-
-
-
 ## Terminal characterization
-
-
 
 ```lua
 term.isatty([fileno])
@@ -178,11 +160,8 @@ term.isatty([fileno])
 > returns `true` if `fileno` is a tty.
 > The default file descriptor is `stdin` (`0`).
 
-
 ```lua
 term.size([fileno])
 ```
 > returns a table with the number of rows (field `rows`) and columns (field `cols`) of the terminal attached to `fileno`.
 > The default file descriptor is `stdout` (`1`).
-
-

@@ -1,4 +1,3 @@
-
 # qmath: rational number library
 
 ```lua
@@ -24,11 +23,7 @@ Lua](https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/#lqmath).
     __tostring(x)       iszero(x)           tostring(x)
     __unm(x)            mul(x,y)            version
 
-
-
-
 ## qmath additional functions
-
 
 ```lua
 q = qmath.torat(x, [eps])
@@ -36,5 +31,3 @@ q = qmath.torat(x, [eps])
 approximates a floating point number `x` with a rational value.
 The rational number `q` is an approximation of `x` such that $|q - x| < eps$.
 The default `eps` value is $10^{-6}$.
-
-

@@ -1,4 +1,3 @@
-
 # strict: checks uses of undeclared global variables
 
 The `strict` module checks uses of undeclared global variables.
@@ -16,5 +15,3 @@ This module is `strict.lua` from <https://www.lua.org/extras/>
 adpated for LuaX.
 
 This module not loaded by default since some global variables are tested when LuaX start but may not be defined.
-
-

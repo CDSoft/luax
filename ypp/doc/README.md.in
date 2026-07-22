@@ -1,6 +1,6 @@
-![](ypp-banner.svg)
-
 # Yet a PreProcessor
+
+![ypp logo](ypp-banner.svg)
 
 [ypp]: README.md "Yet another PreProcessor"
 [UPP]: https://codeberg.org/cdsoft/upp "Universal PreProcessor"
@@ -89,27 +89,30 @@ Ypp is now part of [LuaX].
 shall be explicitly launched with `luax` (e.g.: `luax ypp`). If `ypp` is not
 found, it is searched in the installation directory of `luax` or in `$PATH`.
 
-| Option                | Description                                                   |
-| --------------------- | ------------------------------------------------------------- |
-| `-v`                  | Prints ypp version                                            |
-| `-a`                  | Forces message colorization even is not writing to a terminal |
+| Option                | Description                                                       |
+| --------------------- | ----------------------------------------------------------------- |
+| `-v`                  | Prints ypp version                                                |
+| `-a`                  | Forces message colorization even is not writing to a terminal     |
 | `-l module`           | Loads a module or an external Lua script with `require`, the module is stored in the global variable `module` |
 | `-l name=module`      | Loads a module or an external Lua script, the module is stored in the global variable `name` |
 | `-l _=module`         | Loads a module or an external Lua script, the module is not stored in a global variable |
-| `-e stat`             | Executes a Lua statement `stat` in the ypp Lua interpreter    |
-| `-D name=val`         | Defines a Lua variable (shortcut for `-e 'name="val"'`)       |
-| `p path`              | Adds a search path to `package.path`                          |
-| `-o file`             | Redirects the output to `file` instead of the standard output |
-| `-t {svg,pdf,png}`    | Sets the default format of generated images                   |
-| `--MT target`         | Adds `target` to the target list (implies `--MD`)             |
-| `--MF name`           | Sets the dependency file name (implies `--MD`)                |
-| `--MD`                | Generates a dependency file                                   |
-| `--img path`          | Sets the path for generated images                            |
-| `--meta path`         | Sets the path for generated meta image files                  |
-| `-m char`             | Sets the default macro character (default: '@')               |
-| `-s`                  | Separate files with a blank line                              |
+| `-e stat`             | Executes a Lua statement `stat` in the ypp Lua interpreter        |
+| `-D name=val`         | Defines a Lua variable (shortcut for `-e 'name="val"'`)           |
+| `p path`              | Adds a search path to `package.path`                              |
+| `-o file`             | Redirects the output to `file` instead of the standard output     |
+| `-t {svg,pdf,png}`    | Sets the default format of generated images                       |
+| `--MT target`         | Adds `target` to the target list (implies `--MD`)                 |
+| `--MF name`           | Sets the dependency file name (implies `--MD`)                    |
+| `--MD`                | Generates a dependency file                                       |
+| `--img path`          | Sets the path for generated images                                |
+| `--meta path`         | Sets the path for generated meta image files                      |
+| `-m char`             | Sets the default macro character (default: '@')                   |
+| `-s`                  | Separate files with a blank line                                  |
+| `-k`                  | Keep the input file layout (otherwise blank lines are removed)    |
 
 ## Documentation
+
+### Macro syntax
 
 @q[=====[
 
@@ -194,6 +197,17 @@ For documentation purpose, ypp macros can be disabled with the `q` macro:
 Here, @ has no special meaning.
 ]]
 ```
+
+### Document layout
+
+By default, the output document layout is modified by ypp:
+
+1. heading and trailing blank lines are removed.
+2. trailing spaces are removed
+
+This is usually a nice way to remove spaces and blank lines around macros.
+
+This can be disabled with the `-k` parameter.
 
 ### Examples
 

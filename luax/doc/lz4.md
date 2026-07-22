@@ -1,4 +1,3 @@
-
 # lz4: Extremely Fast Compression algorithm
 
 ```lua
@@ -11,7 +10,6 @@ The source code is on Github: <https://github.com/lz4/lz4>.
 
 More information on <https://www.lz4.org>.
 
-
 ## LZ4 compression preferences
 
 Some compression preferences are hard coded:
@@ -22,10 +20,7 @@ Some compression preferences are hard coded:
 
 Only the compression level can be changed.
 
-
-
 ## LZ4 frame compression
-
 
 ```lua
 lz4.lz4(data, [level])
@@ -37,9 +32,7 @@ lz4.lz4(data, [level])
 > The optional `level` parameter is the compression level (from 0 to 12).
 > The default compression level is 9.
 
-
 ## LZ4 frame decompression
-
 
 ```lua
 lz4.unlz4(data)
@@ -48,17 +41,11 @@ lz4.unlz4(data)
 > `data` shall be an LZ4 frame and
 > can be the content of a file produced by the `lz4` command line utility.
 
-
-
-
 ## String methods
 
 The `lz4` functions are also available as `string` methods:
-
 
 ```lua
 s:lz4()         == lz4.lz4(s)
 s:unlz4()       == lz4.unlz4(s)
 ```
-
-

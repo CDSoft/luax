@@ -291,8 +291,25 @@ function ypp_mt.__call(_, content)
     return parser(content, lconf:top())
 end
 
+local function compact(content)
+    local lines = content : lines()
+    local clean = table.create(#lines)
+    local prev_blank = true
+    for i = 1, #lines do
+        local line = lines[i]:rtrim()
+        local blank = line==""
+        if not (prev_blank and blank) then clean[#clean+1] = line end
+        prev_blank = blank
+    end
+    if prev_blank then clean[#clean] = nil end
+    return F.unlines(clean)
+end
+
 local function write_outputs(args)
     local content = defer.replace(output_contents:str())
+    if not args.keep then
+        content = compact(content)
+    end
     if not args.output or args.output == "-" then
         io.stdout:write(content)
     else
@@ -417,6 +434,10 @@ local function parse_args()
         : action(function(_, _, _, _)
             update_separator("\n")
         end)
+
+    parser : flag "-k"
+        : description "Keep original layout"
+        : target "keep"
 
     parser : argument "input"
         : description "Input file"

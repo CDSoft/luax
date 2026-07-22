@@ -1,4 +1,3 @@
-
 # readline: read lines from a user with editing
 
 [The GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html)
@@ -11,19 +10,16 @@ If it fails, it uses the linenoise module that has similar and slightly more lim
 The following functions work on Windows but are stubbed using the `term` module.
 The history can not be saved on Windows.
 
-
 ``` lua
 readline.name(appname)
 ```
 > sets a unique application name.
 > This name allows conditional parsing of the inputrc file.
 
-
 ```lua
 readline.read(prompt)
 ```
 > prints `prompt` and returns the string entered by the user.
-
 
 ```lua
 readline.add(line)
@@ -35,12 +31,10 @@ readline.add(line)
 > - empty lines are ignored
 > - duplicates are removed, only the last entry is kept
 
-
 ```lua
 readline.set_len(len)
 ```
 > sets the maximal history length to `len`.
-
 
 ```lua
 readline.save(filename)
@@ -48,18 +42,12 @@ readline.save(filename)
 > saves the history to the file `filename`
 > (unless the history has not been modified).
 
-
 ```lua
 readline.load(filename)
 ```
 > loads the history from the file `filename`.
 
-
 ```lua
 readline.version()
 ```
 > returns the library version (if available).
-
-
-
-

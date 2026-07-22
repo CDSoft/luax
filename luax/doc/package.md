@@ -1,8 +1,6 @@
-
 # package
 
 The standard Lua package `package` is added some information about packages loaded by LuaX.
-
 
 ```lua
 package.modpath      -- { module_name = module_path }
@@ -16,5 +14,3 @@ package.modpath      -- { module_name = module_path }
 package.track(name, [path])     -- package.modpath[name] = path or name
 ```
 > add `name` to `package.modpath`.
-
-

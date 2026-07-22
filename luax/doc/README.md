@@ -52,8 +52,6 @@ But it has a cost. It takes time to develop, maintain and support.
 To help LuaX remain free, open source and supported,
 users are cordially invited to contribute financially to its development.
 
-
-
 <a href='https://liberapay.com/LuaX/donate' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://liberapay.com/assets/widgets/donate.svg' border='0' alt='Donate using Liberapay' /></a>
 <a href='https://ko-fi.com/K3K11CD108' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
@@ -414,4 +412,3 @@ https://codeberg.org/cdsoft/luax
 - **[serpent](https://github.com/pkulchenko/serpent)**: Lua serializer and pretty printer ([MIT license](https://github.com/pkulchenko/serpent/blob/master/LICENSE))
 - **[tinytoml](https://github.com/FourierTransformer/tinytoml)**: a pure Lua TOML parser ([MIT License](https://github.com/FourierTransformer/tinytoml?tab=MIT-1-ov-file#readme))
 - **[Zig](https://ziglang.org/)**: General-purpose programming language and toolchain for maintaining robust, optimal, and reusable software ([MIT license](https://github.com/ziglang/zig/blob/master/LICENSE))
-

@@ -1,4 +1,3 @@
-
 # mathx: complete math library for Lua
 
 ```lua
@@ -28,5 +27,3 @@ mathx library:
     ceil        fdim        isnan       nextafter   trunc
     copysign    floor       isnormal    pow         version
     cos         fma         ldexp       rad
-
-

@@ -393,6 +393,9 @@ local zigcc = build.zigcc : new("cc-native")
 -- Tests
 -------------------------------------------------------------------------------
 
+local ypp_k = build.ypp : new "ypp-k"
+    : add "flags" { "-k" }
+
 local imported_test_sources = ls "luax/tests/luax-tests/to_be_imported-*.lua"
 local test_sources = {
     ls "luax/tests/luax-tests/*.*"
@@ -400,7 +403,7 @@ local test_sources = {
         : difference(imported_test_sources),
     ls "luax/tests/luax-tests/*.in"
         : map(function(name)
-            return build.ypp("$builddir/tests/luax"/name:basename():splitext()) { name }
+            return ypp_k("$builddir/tests/luax"/name:basename():splitext()) { name }
         end),
 }
 local test_main = "luax/tests/luax-tests/main.lua"

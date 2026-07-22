@@ -1,10 +1,8 @@
-
 # sys: System module
 
 ```lua
 local sys = require "sys"
 ```
-
 
 ```lua
 sys.os
@@ -35,7 +33,3 @@ sys.so
 sys.name
 ```
 > Name of the platform.
-
-
-
-

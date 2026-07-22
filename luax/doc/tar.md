@@ -1,4 +1,3 @@
-
 # Minimal tar file support
 
 ```lua
@@ -7,7 +6,6 @@ local tar = require "tar"
 
 The `tar` module can read and write tar archives.
 Only files, directories and symbolic links are supported.
-
 
 ```lua
 tar.tar(files, [xform])
@@ -24,7 +22,6 @@ tar.tar(files, [xform])
 >
 > `xform` is an optional function used to transform filenames in the archive.
 
-
 ```lua
 tar.untar(archive, [xform])
 ```
@@ -32,12 +29,10 @@ tar.untar(archive, [xform])
 >
 > `xform` is an optional function used to transform filenames in the archive.
 
-
 ```lua
 tar.chain(xforms)
 ```
 > returns a filename transformation function that applies all functions from `funcs`.
-
 
 ```lua
 tar.strip(x)
@@ -46,16 +41,12 @@ tar.strip(x)
 > If `x` is a number, the function removes `x` path components in the filename.
 > If `x` is a string, the function removes `x` at the beginning of the filename.
 
-
 ```lua
 tar.add(p)
 ```
 > returns a transformation function that adds `p` at the beginning of a filename.
 
-
 ```lua
 tar.xform(x, y)
 ```
 > returns a transformation function that chains `tar.strip(x)` and `tar.add(y)`.
-
-

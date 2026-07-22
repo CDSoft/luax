@@ -1,4 +1,3 @@
-
 # tomlx
 
 `tomlx` is a layer on top of `toml` ([tinytoml](https://github.com/FourierTransformer/tinytoml)).
@@ -16,10 +15,8 @@ The evaluation environment contains two specific symbols:
 local tomlx = require "tomlx"
 ```
 
-
 The default environment contains the global variables (`_G`)
 and some LuaX modules (`crypt`, `F`, `fs`, `sh`).
-
 
 ```lua
 tomlx.read(filename, [options])
@@ -30,7 +27,6 @@ tomlx.read(filename, [options])
 > tomlx adds the env option (`options.env`) to define the initial evaluation environment.
 > The table returned by `tinytoml` is then processed to evaluate `tomlx` macros.
 
-
 ```lua
 tomlx.decode(s, [options])
 ```
@@ -40,14 +36,12 @@ tomlx.decode(s, [options])
 > tomlx adds the env option (`options.env`) to define the initial evaluation environment.
 > The table returned by `tinytoml` is then processed to evaluate `tomlx` macros.
 
-
 ```lua
 tomlx.encode(s, [options])
 ```
 > calls `toml.encode` to encode a Lua table into a TOML string.
 > Options are optional
 > and described in the [tinytoml documentation](https://github.com/FourierTransformer/tinytoml?tab=readme-ov-file#encoding-toml).
-
 
 ```lua
 tomlx.write(filename, t, [options])
@@ -56,7 +50,6 @@ tomlx.write(filename, t, [options])
 > and save it the file `filename`.
 > Options are optional
 > and described in the [tinytoml documentation](https://github.com/FourierTransformer/tinytoml?tab=readme-ov-file#encoding-toml).
-
 
 ```lua
 tomlx.validate(schema, filename, [options])
@@ -68,5 +61,3 @@ tomlx.validate(schema, filename, [options])
 > Both files are read with `tomlx.read` and the corresponding tables are validated with `F.validate`.
 >
 > Options (the `option` table) contains options for `tomlx.read` and `F.validate`.
-
-

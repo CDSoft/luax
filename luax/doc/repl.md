@@ -1,4 +1,3 @@
-
 # LuaX interactive usage
 
 The LuaX REPL can be run in various environments:
@@ -55,15 +54,11 @@ Pandoc (Meta {unMeta = fromList []}) [Para [Emph [Str "Pandoc"],Space,Str "is",S
 Note that [rlwrap](https://github.com/hanslub42/rlwrap)
 can be used to give nice edition facilities to the Pandoc Lua interpreter.
 
-
-
-
 ## Additional modules
 
 The `luax` repl provides a few functions for the interactive mode.
 
 In interactive mode, these functions are available as global functions and modules.
-
 
 LuaX preloads the following modules with the `-e` option or before entering the REPL:
 
@@ -74,13 +69,10 @@ LuaX preloads the following modules with the `-e` option or before entering the 
 - sh
 - sys
 
-
-
 ```lua
 show(x)
 ```
 > returns a string representing `x` with nice formatting for tables and numbers.
-
 
 ```lua
 precision(len, frac)
@@ -92,7 +84,6 @@ precision(len, frac)
 > (hexadecimal numbers), `8` (octal numbers), a custom format string or `nil` (to
 > reset the integer format).
 
-
 ```lua
 base(b)
 ```
@@ -100,16 +91,12 @@ base(b)
 > numbers), `16` (hexadecimal numbers), `8` (octal numbers), a custom format
 > string or `nil` (to reset the integer format).
 
-
 ```lua
 indent(i)
 ```
 > indents tables (`i` spaces). If `i` is `nil`, tables are not indented.
 
-
 ```lua
 prints(x)
 ```
 > prints `show(x)`
-
-

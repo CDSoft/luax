@@ -1,6 +1,6 @@
-![](ypp-banner.svg)
-
 # Yet a PreProcessor
+
+![ypp logo](ypp-banner.svg)
 
 [ypp]: README.md "Yet another PreProcessor"
 [UPP]: https://codeberg.org/cdsoft/upp "Universal PreProcessor"
@@ -54,8 +54,6 @@ But it has a cost. It takes time to develop, maintain and support.
 To help Ypp remain free, open source and supported,
 users are cordially invited to contribute financially to its development.
 
-
-
 <a href='https://liberapay.com/LuaX/donate' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://liberapay.com/assets/widgets/donate.svg' border='0' alt='Donate using Liberapay' /></a>
 <a href='https://ko-fi.com/K3K11CD108' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
@@ -83,7 +81,7 @@ Ypp is now part of [LuaX].
 Usage: ypp [-h] [-v] [-a] [-l script] [-e statement] [-D definition]
        [-p path] [-o file] [-t {svg,pdf,png}] [--MT target]
        [--MF name] [--MD] [--img path] [--meta path] [-m char] [-s]
-       [<input>] ...
+       [-k] [<input>] ...
 
 ypp
 Yet a PreProcessor
@@ -108,6 +106,7 @@ Options:
    --meta path           Set the path for generated meta image files
    -m char               Set the default macro character (default: '@')
    -s                    Add a blank line separator between all input files
+   -k                    Keep original layout
 
 For more information, see https://codeberg.org/cdsoft/luax
 ```
@@ -116,28 +115,30 @@ For more information, see https://codeberg.org/cdsoft/luax
 shall be explicitly launched with `luax` (e.g.: `luax ypp`). If `ypp` is not
 found, it is searched in the installation directory of `luax` or in `$PATH`.
 
-| Option                | Description                                                   |
-| --------------------- | ------------------------------------------------------------- |
-| `-v`                  | Prints ypp version                                            |
-| `-a`                  | Forces message colorization even is not writing to a terminal |
+| Option                | Description                                                       |
+| --------------------- | ----------------------------------------------------------------- |
+| `-v`                  | Prints ypp version                                                |
+| `-a`                  | Forces message colorization even is not writing to a terminal     |
 | `-l module`           | Loads a module or an external Lua script with `require`, the module is stored in the global variable `module` |
 | `-l name=module`      | Loads a module or an external Lua script, the module is stored in the global variable `name` |
 | `-l _=module`         | Loads a module or an external Lua script, the module is not stored in a global variable |
-| `-e stat`             | Executes a Lua statement `stat` in the ypp Lua interpreter    |
-| `-D name=val`         | Defines a Lua variable (shortcut for `-e 'name="val"'`)       |
-| `p path`              | Adds a search path to `package.path`                          |
-| `-o file`             | Redirects the output to `file` instead of the standard output |
-| `-t {svg,pdf,png}`    | Sets the default format of generated images                   |
-| `--MT target`         | Adds `target` to the target list (implies `--MD`)             |
-| `--MF name`           | Sets the dependency file name (implies `--MD`)                |
-| `--MD`                | Generates a dependency file                                   |
-| `--img path`          | Sets the path for generated images                            |
-| `--meta path`         | Sets the path for generated meta image files                  |
-| `-m char`             | Sets the default macro character (default: '@')               |
-| `-s`                  | Separate files with a blank line                              |
+| `-e stat`             | Executes a Lua statement `stat` in the ypp Lua interpreter        |
+| `-D name=val`         | Defines a Lua variable (shortcut for `-e 'name="val"'`)           |
+| `p path`              | Adds a search path to `package.path`                              |
+| `-o file`             | Redirects the output to `file` instead of the standard output     |
+| `-t {svg,pdf,png}`    | Sets the default format of generated images                       |
+| `--MT target`         | Adds `target` to the target list (implies `--MD`)                 |
+| `--MF name`           | Sets the dependency file name (implies `--MD`)                    |
+| `--MD`                | Generates a dependency file                                       |
+| `--img path`          | Sets the path for generated images                                |
+| `--meta path`         | Sets the path for generated meta image files                      |
+| `-m char`             | Sets the default macro character (default: '@')                   |
+| `-s`                  | Separate files with a blank line                                  |
+| `-k`                  | Keep the input file layout (otherwise blank lines are removed)    |
 
 ## Documentation
 
+### Macro syntax
 
 Lua expressions and chunks are embedded in the document to process.
 Expressions are introduced by `@` and chunks by `@@`.
@@ -221,6 +222,17 @@ Here, @ has no special meaning.
 ]]
 ```
 
+### Document layout
+
+By default, the output document layout is modified by ypp:
+
+1. heading and trailing blank lines are removed.
+2. trailing spaces are removed
+
+This is usually a nice way to remove spaces and blank lines around macros.
+
+This can be disabled with the `-k` parameter.
+
 ### Examples
 
 #### Lua expression
@@ -244,14 +256,9 @@ $\sum_{i=0}^100 = @(F.range(100):sum())$
 $\sum_{i=0}^100 = @sum$
 ```
 
-
-
 ### Builtin ypp functions
 
-
-
 #### `ypp`
-
 
 - `ypp(s)`: apply the `ypp` preprocessor to a string.
 - `ypp.input_file()`: return the name of the current input file.
@@ -263,20 +270,13 @@ $\sum_{i=0}^100 = @sum$
 - `ypp.read_file(filename)`: return the content of the file `filename` and adds this file to the dependency file.
 - `ypp.macro(c)`: use the character `c` to start Lua expressions instead of `"@"` (and `cc` instead of `"@@"`).
 
-
-
-
 ### Builtin ypp modules
 
 #### `atexit`
 
-
 - `atexit(func)`: execute `func` when the whole output is computed, before actually writing the output.
 
-
-
 #### `comment`
-
 
 - `comment(...)`: returns an empty string (useful for commenting some text)
 
@@ -289,11 +289,7 @@ and is not part of the output document.
 ]===]
 ```
 
-
-
-
 #### `convert`
-
 
 - `convert(s, [opts])`:
   convert the string `s` from the format `opts.from` to the format `opts.to` and shifts the header levels by `opts.shift`.
@@ -319,12 +315,7 @@ Notice that `convert` can be implicitely called by `include` or `script` by givi
 ]===]
 ```
 
-
-
-
-
 #### `defer`
-
 
 - `defer(func, ...)`: emit a unique tag that will later be replaced by the result of `func(...)` if `func` is callable.
 - `defer(table, ...)`: emit a unique tag that will later be replaced by the concatenation of `table` (one item per line).
@@ -339,11 +330,7 @@ total = @defer(function() return N end) (should be "2")
 @@(N = N+1)
 ```
 
-
-
-
 #### `doc`
-
 
 - `doc(filename, [opts])`: extract documentation fragments from the file `filename` (all fragments are concatenated).
 
@@ -361,22 +348,14 @@ The `doc` macro can also be called as a curried function (arguments can be swapp
 @doc "file.c" {pattern="///(.-)///"}
 ```
 
-
-
-
-
 #### `file`
-
 
 - `f = file(name)`: return a file object that can be used to create files incrementally.
   Files are only saved once ypp succeed
 - `f(s)`: add `s` to the file
 - `f:ypp(s)`: preprocess and add `s` to the file
 
-
-
 #### `image`
-
 
 - `image(render, ext)(source)`: use the command `render` to produce an image from the source `source` with the format `ext` (`"svg"`, `"png"` or `"pdf"`).
   `image` returns the name of the image (e.g. to point to the image once deployed) and the actual file path (e.g. to embed the image in the final document).
@@ -451,7 +430,6 @@ Image engine | ypp function | Example
 [lsvg] | `lsvg` | `image.lsvg(source)`
 [octave] | `octave` | `image.octave(source)`
 
-
 Example:
 
 ``` markdown
@@ -464,17 +442,11 @@ digraph {
 ]===])
 ```
 
-
 is rendered as
-
 
 ![ypp image generation example](img/image.svg)
 
-
-
-
 #### `include`
-
 
 - `include(filename, [opts])`: include the file `filename`.
 
@@ -493,20 +465,12 @@ The `include` macro can also be called as a curried function (arguments can be s
 @include {from="csv"} "file.csv"
 ```
 
-
-
-
-
 #### `q`
-
 
 - `q(source)`: return `source` unpreprocessed.
   `q` is used to avoid macro execution in a portion of text.
 
-
-
 #### `script`
-
 
 - `script(cmd)(source)`: execute `cmd` to interpret `source`.
   `source` is first saved to a temporary file which name is added to the command `cmd`.
@@ -525,7 +489,6 @@ The `include` macro can also be called as a curried function (arguments can be s
 - `script.sh(source)`: run a script with sh
 - `script.zsh(source)`: run a script with zsh
 
-
 Example:
 
 ```
@@ -537,10 +500,7 @@ is rendered as
 $\sum_{i=0}^100 = 5050$
 ```
 
-
-
 #### `when`
-
 
 - `when(cond)(text)`: emit `text` only if `cond` is true.
 
@@ -553,10 +513,6 @@ The current language is English.
 ]===]
 ```
 
-
-
-
-
 ### LuaX modules
 
 ypp is written in [Lua] and [LuaX].
@@ -567,8 +523,6 @@ All Lua and LuaX libraries are available to ypp.
 LuaX comes with a standard Lua interpreter and provides some libraries (embedded
 in a single executable, no external dependency required).
 Here are some LuaX modules that can be useful in ypp documents:
-
-
 
 - [F](../../luax/doc/F.md): functional programming inspired functions
 - [fs](../../luax/doc/fs.md): file system management

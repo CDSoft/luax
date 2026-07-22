@@ -1,4 +1,3 @@
-
 # imath: arbitrary precision integer and rational arithmetic library
 
 ```lua
@@ -28,5 +27,3 @@ imath library:
     __tostring(x)       mul(x,y)            version
     __unm(x)            neg(x)
     abs(x)              new(x,[base])
-
-

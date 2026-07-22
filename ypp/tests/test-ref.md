@@ -1,19 +1,27 @@
 # ypp tests
 
+Note that empty heading lines will be removed.
+And trailing spaces are remove at the end of each line:
+line 1
+line 2            <- these one are kept
+line 3
+
+Consecutive empty lines are removed too:
+
+^-- there should be only one blank line here
+
 ## Variables defined on the command line
 
-VAR1 = <42>      
-VAR2 = <43>      
-VAR3 = <44>      
-VAR4 = <val4>      
-VAR5 = <>      
-VAR6 = <>      
+VAR1 = <42>
+VAR2 = <43>
+VAR3 = <44>
+VAR4 = <val4>
+VAR5 = <>
+VAR6 = <>
 
 ## Basic text substitution
 
 $1 + 2 = 3$
-
-
 
 $$ \sum_{n=1}^{100} = 5050 $$
 
@@ -28,12 +36,9 @@ $$ \sum_{n=1}^{100} = 5050 $$
 - Line 9
 - Line 10
 
-
 nil in an expression = @(nil)
 
-nil in a statement = 
-
-
+nil in a statement =
 
 weird = bizarre string )) => ) unbalanced ())
 
@@ -69,8 +74,6 @@ multiline single quoted string
 
 ### pattern_3
 
-
-
 pi = 3.1415926535898
 math.max(2, 3) = 3
 F.maximum{2, 3, 1} = 3
@@ -87,32 +90,17 @@ undefined variable: @undefined
 
 ### Special syntax for assignments
 
-
 $golden\_ratio = 1.6$
-
-
 
 vrai = true, faux = false
 
-
 a = 14
-
 
 b = {x=1, y=2}
 
-
 c = a long string
 
-
-
 d = 1, 4, 9, 16, 25, 36, 49, 64, 81, 100
-
-
-
-
-
-
-
 
 t = {nil, 2, {...}, 4, x="x", y="y", z="z"}
 
@@ -125,11 +113,7 @@ t = {nil, 2, {...}, 4, x="x", y="y", z="z"}
 
 ## File inclusion
 
-
-
 Macro char is <!> now in this file but not in the included files.
-
-
 
 foo = bar
 foo = @foo
@@ -152,21 +136,18 @@ This part is not included:
 
 This part is also not included:
 
-
 foo = bar
 foo = @foo
 
 Using a special character with ypp.macro:
-     ^ => bar     
-     $ => bar     
-     % => bar     
-     . => bar   
-     * => bar     
-     + => bar     
-     - => bar     
-     ? => bar     
-
-
+     ^ => bar
+     $ => bar
+     % => bar
+     . => bar
+     * => bar
+     + => bar
+     - => bar
+     ? => bar
 
 Macro char <@> is back.
 
@@ -177,14 +158,7 @@ lines: 28
 
 ## Comments
 
-
-
-
-
 ## Conditional
-
-
-
 
 Texte français conservé (lang=fr)
 
@@ -210,9 +184,7 @@ const char *answer(const char *question)
 }
 ```
 
-
 ### Doc blocks and code in code blocks
-
 
 #### Example of *reversed* literate programming
 
@@ -237,7 +209,6 @@ int main(void) {
 }
 ```
 
-
 ## Scripts
 
 ### Custom language
@@ -259,7 +230,6 @@ int main(void) {
   a   b   c
   d   e   f
 
-
 #### Implicit conversion
 
   X   Y   Z
@@ -267,28 +237,22 @@ int main(void) {
   a   b   c
   d   e   f
 
-
 ## Images
-
-
 
 ### Images with the default format (SVG)
 
 - ypp_images/d6dd7096008790b4.svg
 - .build/tests/ypp/ypp_images/d6dd7096008790b4.svg
 
-
 ### Images with a specific format (e.g. PNG)
 
 - ypp_images/2c87b8976abecd20.png
 - .build/tests/ypp/ypp_images/2c87b8976abecd20.png
 
-
 ### Images with a custom command
 
 - ypp_images/d6dd7096008790b4.svg
 - .build/tests/ypp/ypp_images/d6dd7096008790b4.svg
-
 
 ### Images generated with Asymptote
 
@@ -308,7 +272,6 @@ ypp_images/b6d04b872667aea6.svg
 
 ### Images preprocessed with ypp
 
-
 ypp_images/hello.svg
 
 ## Scripts loaded on the command line
@@ -321,18 +284,11 @@ ypp_images/hello.svg
 
 ## Scripts loaded by test.md
 
-
-
 `test_2_loaded` = `true`
-
-
 
 `test3.test_3_loaded` = `true`
 
 ## File creation
-
-
-
 
 check .build/tests/ypp/test-file.txt
 
@@ -342,7 +298,6 @@ check .build/tests/ypp/test-file.txt
 
 1. Chapter 1
 2. Chapter 2
-
 
 nbch = 2
 
@@ -356,8 +311,6 @@ nbch = 2
 
 ### Accumulation in a table
 
-
-
 lines:
 one
 two
@@ -367,21 +320,9 @@ five
 6
 42
 
-
-
-
-
-
-
-
-
-
 words: un deux trois
-
-
-
-
 
 ## End of the document
 
 This text shall not be forgotten.
+But trailing blank lines are ignored

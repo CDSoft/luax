@@ -1,4 +1,3 @@
-
 # import: import Lua scripts into tables
 
 ```lua
@@ -15,5 +14,3 @@ local conf = import("myconf.lua", [env])
 > All files are tracked in `package.modpath`.
 >
 > The execution environment inherits from `env` (or `_ENV` if `env` is not defined).
-
-

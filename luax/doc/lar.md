@@ -1,6 +1,4 @@
-
 ## Lua Archive
-
 
 ```lua
 local lar = require "lar"
@@ -14,7 +12,6 @@ It contains a Lua value:
 - encrypted with `arc4`
 
 The Lua value is only encrypted if a key is provided.
-
 
 ```lua
 lar.lar(lua_value, [opt])
@@ -33,7 +30,6 @@ lar.lar(lua_value, [opt])
 >
 > - `opt.key`: encryption key (no encryption by default)
 
-
 ```lua
 lar.unlar(archive, [opt])
 ```
@@ -42,5 +38,3 @@ lar.unlar(archive, [opt])
 > Options:
 >
 > - `opt.key`: encryption key (no encryption by default)
-
-
