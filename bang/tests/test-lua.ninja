@@ -246,8 +246,6 @@ default foo bar
 # bang/tests/test-err-incomplete_rule_definition-2.stderr
 # bang/tests/test-err-multiple_build.lua
 # bang/tests/test-err-multiple_build.stderr
-# bang/tests/test-err-multiple_generator.lua
-# bang/tests/test-err-multiple_generator.stderr
 # bang/tests/test-err-multiple_pool.lua
 # bang/tests/test-err-multiple_pool.stderr
 # bang/tests/test-err-multiple_rule.lua
@@ -311,8 +309,6 @@ default foo bar
 # bang/tests/test-err-incomplete_rule_definition-2.stderr
 # bang/tests/test-err-multiple_build.lua
 # bang/tests/test-err-multiple_build.stderr
-# bang/tests/test-err-multiple_generator.lua
-# bang/tests/test-err-multiple_generator.stderr
 # bang/tests/test-err-multiple_pool.lua
 # bang/tests/test-err-multiple_pool.stderr
 # bang/tests/test-err-multiple_rule.lua
@@ -356,7 +352,6 @@ default foo bar
 # bang/tests/test-err-incomplete_rule_definition-1.lua
 # bang/tests/test-err-incomplete_rule_definition-2.lua
 # bang/tests/test-err-multiple_build.lua
-# bang/tests/test-err-multiple_generator.lua
 # bang/tests/test-err-multiple_pool.lua
 # bang/tests/test-err-multiple_rule.lua
 # bang/tests/test-err-multiple_var.lua
@@ -416,8 +411,6 @@ default foo bar
 # bang/tests/test-err-incomplete_rule_definition-2.stderr
 # bang/tests/test-err-multiple_build.lua
 # bang/tests/test-err-multiple_build.stderr
-# bang/tests/test-err-multiple_generator.lua
-# bang/tests/test-err-multiple_generator.stderr
 # bang/tests/test-err-multiple_pool.lua
 # bang/tests/test-err-multiple_pool.stderr
 # bang/tests/test-err-multiple_rule.lua
@@ -470,7 +463,6 @@ default foo bar
 # bang/tests/test-err-incomplete_rule_definition-1.lua
 # bang/tests/test-err-incomplete_rule_definition-2.lua
 # bang/tests/test-err-multiple_build.lua
-# bang/tests/test-err-multiple_generator.lua
 # bang/tests/test-err-multiple_pool.lua
 # bang/tests/test-err-multiple_rule.lua
 # bang/tests/test-err-multiple_var.lua
