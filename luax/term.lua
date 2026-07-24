@@ -110,7 +110,9 @@ color_mt = {
     __call = function(self, s) return color_enable and self..s..color_reset or s end,
     __add = function(self, other) return setmetatable({value=self.value..other}, color_mt) end,
 }
-local function color(value) return setmetatable({value=CSI..tostring(value).."m"}, color_mt) end
+local function color(value) return setmetatable({value=CSI..value.."m"}, color_mt) end
+local function rgb(r,g,b) return setmetatable({value=CSI.."38;2;"..r..";"..g..";"..b.."m"}, color_mt) end
+local function onrgb(r,g,b) return setmetatable({value=CSI.."48;2;"..r..";"..g..";"..b.."m"}, color_mt) end
 local function enable(en) color_enable = en==nil or en end
 local function disable() color_enable = false end
 --                                @@@| `term.color` field     | Description                          |@@@
@@ -139,6 +141,7 @@ term.color = {
     magenta     = color(35),    --@@@| `magenta`              | magenta foreground                   |@@@
     cyan        = color(36),    --@@@| `cyan`                 | cyan foreground                      |@@@
     white       = color(37),    --@@@| `white`                | white foreground                     |@@@
+    rgb         = rgb,          --@@@| `rgb(R,G,B)`           | true color foreground                |@@@
     -- background               --@@@| *Background colors*    |                                      |@@@
     onblack     = color(40),    --@@@| `onblack`              | black background                     |@@@
     onred       = color(41),    --@@@| `onred`                | red background                       |@@@
@@ -148,6 +151,7 @@ term.color = {
     onmagenta   = color(45),    --@@@| `onmagenta`            | magenta background                   |@@@
     oncyan      = color(46),    --@@@| `oncyan`               | cyan background                      |@@@
     onwhite     = color(47),    --@@@| `onwhite`              | white background                     |@@@
+    onrgb       = onrgb,        --@@@| `onrgb(R,G,B)`         | true color background                |@@@
     -- enable/disable           --@@@| *Control functions*    |                                      |@@@
     enable      = enable,       --@@@| `enable(b)`            | enable colors if `b` is `true` or `nil` (default) |@@@
     disable     = disable,      --@@@| `disable`              | disable colors                       |@@@
@@ -302,6 +306,5 @@ function term.title(t)
         io.stdout:flush()
     end
 end
-
 
 return term

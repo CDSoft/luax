@@ -64,6 +64,7 @@ local c = term.color.red + term.color.italic + term.color.oncyan
 | `magenta`              | magenta foreground                   |
 | `cyan`                 | cyan foreground                      |
 | `white`                | white foreground                     |
+| `rgb(R,G,B)`           | true color foreground                |
 | *Background colors*    |                                      |
 | `onblack`              | black background                     |
 | `onred`                | red background                       |
@@ -73,6 +74,7 @@ local c = term.color.red + term.color.italic + term.color.oncyan
 | `onmagenta`            | magenta background                   |
 | `oncyan`               | cyan background                      |
 | `onwhite`              | white background                     |
+| `onrgb(R,G,B)`         | true color background                |
 | *Control functions*    |                                      |
 | `enable(b)`            | enable colors if `b` is `true` or `nil` (default) |
 | `disable`              | disable colors                       |
