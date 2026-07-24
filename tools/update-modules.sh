@@ -26,7 +26,7 @@ mkdir -p "$TMP"
 
 update_all()
 {
-    update_lua          5.5.1-rc1
+    update_lua          5.5.1-rc2
     #update_lua-git      master
     #update_lua-git      v5.5.0
     update_lcomplex     100
