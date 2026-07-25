@@ -9,7 +9,6 @@
 [Typst]: https://typst.app/ "Compose papers faster"
 [Lua]: http://www.lua.org/
 [Codeberg]: https://codeberg.org/cdsoft/
-[CDSoft]: https://cdsoft.codeberg.page
 [Graphviz]: http://graphviz.org/
 [PlantUML]: http://plantuml.sourceforge.net/
 [ditaa]: http://ditaa.sourceforge.net/
@@ -561,8 +560,3 @@ along with ypp.  If not, see <https://www.gnu.org/licenses/>.
 For further information about ypp you can visit
 https://codeberg.org/cdsoft/luax
 ```
-
-## Feedback
-
-Your feedback and contributions are welcome.
-You can contact me at [CDSoft].
