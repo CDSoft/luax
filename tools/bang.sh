@@ -88,4 +88,6 @@ fi
 
 export LUA_PATH="bang/?.lua;luax/?.lua;./?.lua"
 
-$LUA bang/bang.lua "$@" -g "LUA_PATH=\"$LUA_PATH\" $LUA bang/bang.lua"
+$LUA \
+    -l luax-package \
+    bang/bang.lua -g "LUA_PATH=\"$LUA_PATH\" $LUA -l luax-package bang/bang.lua"

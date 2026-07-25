@@ -62,3 +62,7 @@ phony "all" {
     phony "release"    { args.d and {} or {release, standalone} },
 }
 default "compile"
+
+generator {
+    implicit_in = "bang/bang.lua", -- cannot be tracked automatically
+}
