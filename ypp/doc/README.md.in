@@ -268,7 +268,7 @@ $\sum_{i=0}^100 = @sum$
 ypp is written in [Lua] and [LuaX].
 All Lua and LuaX libraries are available to ypp.
 
-[LuaX] is a Lua interpreter and REPL based on Lua 5.5, augmented with some useful packages.
+[LuaX] is a Lua interpreter and REPL based on @_VERSION, augmented with some useful packages.
 
 LuaX comes with a standard Lua interpreter and provides some libraries (embedded
 in a single executable, no external dependency required).

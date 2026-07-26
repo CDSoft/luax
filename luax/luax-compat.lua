@@ -22,20 +22,30 @@ https://codeberg.org/cdsoft/luax
 
 -- Lua 5.4 / 5.5 compatibility
 
-if _VERSION == "Lua 5.5" then return end
+local function lua54()
 
-local mathx = require "mathx"
+    local mathx = require "mathx"
 
--------------------------------------------------------------------------------
--- missing math functions
--------------------------------------------------------------------------------
+    ---------------------------------------------------------------------------
+    -- missing math functions
+    ---------------------------------------------------------------------------
 
-math.frexp = mathx.frexp
-math.ldexp = mathx.ldexp
+    math.frexp = mathx.frexp
+    math.ldexp = mathx.ldexp
 
--------------------------------------------------------------------------------
--- missing table functions
--------------------------------------------------------------------------------
+    ---------------------------------------------------------------------------
+    -- missing table functions
+    ---------------------------------------------------------------------------
 
----@diagnostic disable-next-line: duplicate-set-field
-table.create = function(nseq, nrec) return {} end ---@diagnostic disable-line: unused-local
+    ---@diagnostic disable-next-line: duplicate-set-field
+    table.create = function(nseq, nrec) return {} end ---@diagnostic disable-line: unused-local
+
+end
+
+local function lua55()
+end
+
+if _VERSION == "Lua 5.4" then return lua54() end
+if _VERSION == "Lua 5.5" then return lua55() end
+
+io.stderr:write(_VERSION, ": unsupported Lua version\n")
