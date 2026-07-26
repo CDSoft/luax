@@ -279,13 +279,14 @@ local function fs_test(tmp)
         eq(err:gsub(":.*", ": ..."), "/foo: ...")
     end
 
-    local a, b, c = "aaa", "bb", "ccc"
+    local a, b, c = "aaa", "bb"..fs.sep, "ccc"
     eq(fs.join(a, b, c), "aaa/bb/ccc")
     eq(a/b/c, "aaa/bb/ccc")
     eq(fs.join(a, fs.sep..b, c), "/bb/ccc")
     eq(a/(fs.sep..b)/c, "/bb/ccc")
     eq(fs.dirname(fs.join(a,b,c)), fs.join(a,b))
     eq((a/b/c):dirname(), a/b)
+    eq(a/"/"/b/c, fs.sep..b/c)
     eq(fs.dirname(a), ".")
     eq((a):dirname(), ".")
     eq(fs.basename(fs.join(a,b,c)), fs.join(c))

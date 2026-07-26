@@ -167,6 +167,8 @@ t = @F.show(t)
 
 ## File inclusion
 
+@@(shift = function(n) return pandoc and n or nil end)
+
 @@ypp.macro "!"
 
 Macro char is <!> now in this file but not in the included files.
@@ -179,7 +181,7 @@ foo = @foo
 !include "test_inc.md" {
     pattern = "===(.-)===",
     exclude = "ignored%s*%b{}",
-    shift = 2,
+    shift = shift(2),
 }
 
 foo = !foo
@@ -225,7 +227,7 @@ This comment is also ignored
 
 ### Doc blocks only
 
-@doc "test.c" {pattern="@@@(.-)@@@", shift=3}
+@doc "test.c" {pattern="@@@(.-)@@@", shift=shift(3)}
 
 ### Doc blocks and code in code blocks
 
@@ -234,7 +236,7 @@ This comment is also ignored
     code = true,
     hide = "//%-%-%-[%-]*.-//%-%-%-[%-]*",
 }
-@codedoc "test2.c" {shift=3}
+@codedoc "test2.c" {shift=shift(3)}
 
 ## Scripts
 
@@ -249,6 +251,10 @@ This comment is also ignored
 - 4+4 = @script.sh [[echo $((4+4))]]
 
 ### Formatting script output
+
+@when(not pandoc) "Available with ypp-pandoc.lua only"
+
+@when(pandoc) [======[
 
 #### Explicit conversion
 
@@ -265,6 +271,8 @@ print("X, Y, Z")
 print("a, b, c")
 print("d, e, f")
 ]===]
+
+]======]
 
 ## Images
 

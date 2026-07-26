@@ -361,16 +361,16 @@ fs.join(...)
 @@@]]
 
 function fs.join(...)
-    if __PANDOC__ then return pandoc.path.join(F.flatten{...}) end
+    local function clean_path(p)
+        -- remove duplicate and trailing separators
+        return (p : gsub("[/\\]+", fs.sep) : gsub("[/\\]+$", ""))
+    end
     local function add_path(ps, p)
         if p:match("^"..fs.sep) then return F{p} end
         ps[#ps+1] = p
         return ps
     end
-    return F{...}
-        :flatten()
-        :fold(add_path, F{})
-        :str(fs.sep)
+    return clean_path(F.flatten{...}:fold(add_path, F{}):str(fs.sep))
 end
 
 --[[@@@

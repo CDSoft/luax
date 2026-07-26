@@ -74,7 +74,7 @@ multiline single quoted string
 
 ### pattern_3
 
-pi = 3.1415926535898
+pi = 3.1415926535897931
 math.max(2, 3) = 3
 F.maximum{2, 3, 1} = 3
 func(1, 2)[[three]] = three = 1 + 2
@@ -118,7 +118,7 @@ Macro char is <!> now in this file but not in the included files.
 foo = bar
 foo = @foo
 
-### Included from another file
+# Included from another file
 
 This paragraph has been included.
 
@@ -166,17 +166,16 @@ Texte français conservé (lang=fr)
 
 ### Doc blocks only
 
-**`answer`** takes any question and returns the most relevant answer.
+**`answer`** takes any question
+and returns the most relevant answer.
 
 Example:
-
 ``` c
     const char *meaning
         = answer("What's the meaning of life?");
 ```
 
 The code is:
-
 ``` c
 const char *answer(const char *question)
 {
@@ -186,28 +185,30 @@ const char *answer(const char *question)
 
 ### Doc blocks and code in code blocks
 
-#### Example of *reversed* literate programming
+# Example of *reversed* literate programming
 
-##### Fibonacci sequence
+## Fibonacci sequence
 
 Native implementation:
 
-``` c
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.c}
 int fib(int n) {
     if (n <= 1) return 1;       /* fib(0) == fib(1) == 1         */
     return fib(n-1) + fib(n-2); /* fib(n) == fib(n-1) + fib(n-2) */
 }
-```
 
-##### Tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``` c
+## Tests
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.c}
 int main(void) {
     assert(fib(0) == 1);
     assert(fib(1) == 1);
     assert(fib(10) == 89);
 }
-```
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ## Scripts
 
@@ -223,56 +224,44 @@ int main(void) {
 
 ### Formatting script output
 
-#### Explicit conversion
-
-  X   Y   Z
-  --- --- ---
-  a   b   c
-  d   e   f
-
-#### Implicit conversion
-
-  X   Y   Z
-  --- --- ---
-  a   b   c
-  d   e   f
+Available with ypp-pandoc.lua only
 
 ## Images
 
 ### Images with the default format (SVG)
 
-- ypp_images/d6dd7096008790b4.svg
-- .build/tests/ypp/ypp_images/d6dd7096008790b4.svg
+- ypp.lua/ypp_images/d6dd7096008790b4.svg
+- .build/tests/ypp/ypp.lua/ypp_images/d6dd7096008790b4.svg
 
 ### Images with a specific format (e.g. PNG)
 
-- ypp_images/2c87b8976abecd20.png
-- .build/tests/ypp/ypp_images/2c87b8976abecd20.png
+- ypp.lua/ypp_images/2c87b8976abecd20.png
+- .build/tests/ypp/ypp.lua/ypp_images/2c87b8976abecd20.png
 
 ### Images with a custom command
 
-- ypp_images/d6dd7096008790b4.svg
-- .build/tests/ypp/ypp_images/d6dd7096008790b4.svg
+- ypp.lua/ypp_images/d6dd7096008790b4.svg
+- .build/tests/ypp/ypp.lua/ypp_images/d6dd7096008790b4.svg
 
 ### Images generated with Asymptote
 
-ypp_images/test-asy.svg
+ypp.lua/ypp_images/test-asy.svg
 
 ### Images generated with Octave
 
-ypp_images/test-octave.svg
+ypp.lua/ypp_images/test-octave.svg
 
-ypp_images/ccee6e2c627c123c.svg
+ypp.lua/ypp_images/ccee6e2c627c123c.svg
 
 ### Images from an external file
 
-ypp_images/test-dot.svg
+ypp.lua/ypp_images/test-dot.svg
 
-ypp_images/b6d04b872667aea6.svg
+ypp.lua/ypp_images/b6d04b872667aea6.svg
 
 ### Images preprocessed with ypp
 
-ypp_images/hello.svg
+ypp.lua/ypp_images/hello.svg
 
 ## Scripts loaded on the command line
 
@@ -290,7 +279,7 @@ ypp_images/hello.svg
 
 ## File creation
 
-check .build/tests/ypp/test-file.txt
+check .build/tests/ypp/ypp.lua/test-file.txt
 
 ## Deferred evaluation
 

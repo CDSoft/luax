@@ -82,51 +82,57 @@ acc(standalone) {
 -------------------------------------------------------------------------------
 
 acc(test) {
-    build "$builddir/tests/ypp/test.md" { "ypp/tests/test.md",
-        description = "ypp $out",
-        command = {
-            "export PATH=$cache:$$PATH;",
-            "export BUILD=$builddir;",
-            "export YPP_IMG=[$builddir/tests/ypp/]ypp_images;",
-            "$builddir/bin/ypp-pandoc.lua",
-                "-t svg",
-                "--MF $depfile",
-                "-p", "ypp/tests",
-                "-l", "test.lua",
-                "-l", "mod1",
-                "-l", "mymod=mod2",
-                "-l", "_=mod3",
-                "-e", "'VAR1 = 2 * 3 * 7'",
-                "-e", "'VAR2 = [[43]]'",
-                "-DVAR3=44",
-                "-DVAR4=val4",
-                "-DVAR5=",
-                "-DVAR6",
-                "$in",
-                "-o $out",
-            "&& touch $builddir/tests/ypp/ypp_images/hello.svg.meta",   -- to avoid useless rebuilds
-        },
-        depfile = "$out.d",
-        implicit_in = {
-            "$builddir/bin/ypp-pandoc.lua",
-        },
-        implicit_out = {
-            "$builddir/tests/ypp/test.md.d",
-            "$builddir/tests/ypp/test-file.txt",
-            -- Images meta files are not touched when their contents are not changed
-            -- Ninja will consider them as always dirty => "ninja test" may always have something to do
-            -- This is for test purpose only. In normal usage, meta files are internal files, not output files.
-            "$builddir/tests/ypp/ypp_images/hello.svg.meta",
-        },
-        validations = F{
-            { "$builddir/tests/ypp/test.md", "ypp/tests/test-ref.md" },
-            { "$builddir/tests/ypp/test.md.d", "ypp/tests/test-ref.d" },
-            { "$builddir/tests/ypp/test-file.txt", "ypp/tests/test-file.txt" },
-            { "$builddir/tests/ypp/ypp_images/hello.svg.meta", "ypp/tests/hello.svg.meta" },
-        } : map(function(files)
-            return build(files[1]..".diff") { "diff", files }
-        end),
-    },
+    F {
+        "ypp",
+        "ypp.lua",
+        "ypp-pandoc.lua",
+    } : map(function(ypp)
+        return build("$builddir/tests/ypp"/ypp/"test.md") { "ypp/tests/test.md",
+            description = "ypp $out",
+            command = {
+                "export PATH=$cache:$$PATH;",
+                "export BUILD=$builddir;",
+                "export YPP_IMG=[$builddir/tests/ypp/]"..ypp.."/ypp_images;",
+                "$builddir/bin"/ypp,
+                    "-t svg",
+                    "--MF $depfile",
+                    "-p", "ypp/tests",
+                    "-l", "test.lua",
+                    "-l", "mod1",
+                    "-l", "mymod=mod2",
+                    "-l", "_=mod3",
+                    "-e", "'VAR1 = 2 * 3 * 7'",
+                    "-e", "'VAR2 = [[43]]'",
+                    "-DVAR3=44",
+                    "-DVAR4=val4",
+                    "-DVAR5=",
+                    "-DVAR6",
+                    "$in",
+                    "-o $out",
+                "&& touch", "$builddir/tests/ypp"/ypp/"ypp_images/hello.svg.meta",   -- to avoid useless rebuilds
+            },
+            depfile = "$out.d",
+            implicit_in = {
+                "$builddir/bin"/ypp,
+            },
+            implicit_out = {
+                "$builddir/tests/ypp"/ypp/"test.md.d",
+                "$builddir/tests/ypp"/ypp/"test-file.txt",
+                -- Images meta files are not touched when their contents are not changed
+                -- Ninja will consider them as always dirty => "ninja test" may always have something to do
+                -- This is for test purpose only. In normal usage, meta files are internal files, not output files.
+                "$builddir/tests/ypp"/ypp/"ypp_images/hello.svg.meta",
+            },
+            validations = F{
+                { "$builddir/tests/ypp"/ypp/"test.md", "ypp/tests"/ypp/"test-ref.md" },
+                { "$builddir/tests/ypp"/ypp/"test.md.d", "ypp/tests"/ypp/"test-ref.d" },
+                { "$builddir/tests/ypp"/ypp/"test-file.txt", "ypp/tests"/ypp/"test-file.txt" },
+                { "$builddir/tests/ypp"/ypp/"ypp_images/hello.svg.meta", "ypp/tests"/ypp/"hello.svg.meta" },
+            } : map(function(files)
+                return build(files[1]..".diff") { "diff", files }
+            end),
+        }
+    end),
     build "$builddir/tests/ypp/test123-no-separator.md" { "ypp/tests/test1.md", "ypp/tests/test2.md", "ypp/tests/test3.md",
         description = "ypp $out",
         command = {
