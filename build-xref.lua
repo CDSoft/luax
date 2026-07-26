@@ -18,20 +18,20 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 --]]
 
---@LIB
+local fs = require "fs"
 
--- [tag:luax-version]
+-------------------------------------------------------------------------------
+section "Cross references"
+-------------------------------------------------------------------------------
 
-local version = "10.9.1"
-local year = 2026
-local url = "codeberg.org/cdsoft/luax"
-local author = "Christophe Delord"
+if fs.findpath "req" then
 
-return setmetatable({
-    version = version,
-    copyright = ("Copyright (C) 2021-%d %s, %s"):format(year, url, author),
-    url = url,
-    author = author,
-}, {
-    __tostring = function() return "LuaX "..version end,
-})
+    acc(xref) {
+        build "$builddir/xref.txt" {
+            command = "req -g -f > $out || req -g -f",
+            implicit_in = { compile, test, doc, ls "build*.lua", ls "tools/**" },
+            pool = "console",
+        }
+    }
+
+end

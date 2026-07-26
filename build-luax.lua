@@ -23,8 +23,8 @@ section "LuaX"
 -------------------------------------------------------------------------------
 
 var "cache"       ".cache"
-var "zig"         "$cache/zig/zig"  -- installed by bang.sh
-var "lua"         "$cache/lua"      -- installed by bang.sh
+var "zig"         "$cache/zig/zig"  -- installed by [ref:zig_install]
+var "lua"         "$cache/lua"      -- installed by [ref:lua_bootstrap]
 
 clean.mrproper "$cache"
 

@@ -1,0 +1,15 @@
+#####################################################################
+# Cross references                                                  #
+#####################################################################
+
+# Not really a requirement check process, just an improved tagref.
+
+[set.AllFiles]
+noun = "tag"
+path = "."
+ignore = [ ".build/**", ".cache/**", ".git/**", ".github/**", "tmp/**" ]
+
+[relation.XRef]
+verb = "ref"
+up = "AllFiles"
+down = "AllFiles"
