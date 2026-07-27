@@ -1,6 +1,6 @@
 # BANG (Bang Automates Ninja Generation)
 
-![Bang logo](bang-banner.svg)
+![](bang-banner.svg)
 
 Bang is a [Ninja](https://ninja-build.org) file generator scriptable in [LuaX](../../luax/doc/README.md).
 

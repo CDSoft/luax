@@ -1,6 +1,6 @@
 # Lua scriptable SVG image generator
 
-![Lsvg logo](lsvg-banner.svg)
+![](lsvg-banner.svg)
 
 `lsvg` is a Lua interpreter specialized to generate SVG images.
 

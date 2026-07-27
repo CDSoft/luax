@@ -1,6 +1,6 @@
 # Lua eXtended
 
-![LuaX logo](luax-banner.svg)
+![](luax-banner.svg)
 
 > [!IMPORTANT]
 >

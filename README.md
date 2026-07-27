@@ -1,11 +1,11 @@
 # LuaX-based Development Tools
 
-![LuaX logo](luax/doc/luax-banner.svg)
+![](luax/doc/luax-banner.svg)
 
 > [!IMPORTANT]
 > Version 10 is a significant rework: Bang, Ypp and Lsvg are now part of the
 > LuaX repository. Binaries are smaller and the build system is faster.
-> LuaSec and OpenSSL have been removed (use `curl.http` instead).
+> LuaSec and OpenSSL have been removed (use [`curl.http`](luax/doc/curl.md) instead).
 
 [Lua]: https://www.lua.org
 

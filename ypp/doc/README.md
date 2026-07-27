@@ -1,6 +1,6 @@
 # Yet a PreProcessor
 
-![ypp logo](ypp-banner.svg)
+![](ypp-banner.svg)
 
 [ypp]: README.md "Yet another PreProcessor"
 [UPP]: https://codeberg.org/cdsoft/upp "Universal PreProcessor"
