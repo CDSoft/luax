@@ -25,6 +25,8 @@ section "Ypp"
 local F = require "F"
 local targets = require "luax-targets"
 
+local has = require "build-detection"
+
 -------------------------------------------------------------------------------
 -- Sources
 -------------------------------------------------------------------------------
@@ -85,7 +87,7 @@ acc(test) {
     F {
         "ypp",
         "ypp.lua",
-        "ypp-pandoc.lua",
+        has.pandoc and "ypp-pandoc.lua" or {},
     } : map(function(ypp)
         return build("$builddir/tests/ypp"/ypp/"test.md") { "ypp/tests/test.md",
             description = "ypp $out",

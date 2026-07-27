@@ -18,20 +18,22 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 --]]
 
---@LIB
+local F = require "F"
+local sh = require "sh"
 
--- [tag:luax-version]
+local has = {}
 
-local version = "10.9.3"
-local year = 2026
-local url = "codeberg.org/cdsoft/luax"
-local author = "Christophe Delord"
+-------------------------------------------------------------------------------
+-- Pandoc detection
+-------------------------------------------------------------------------------
 
-return setmetatable({
-    version = version,
-    copyright = ("Copyright (C) 2021-%d %s, %s"):format(year, url, author),
-    url = url,
-    author = author,
-}, {
-    __tostring = function() return "LuaX "..version end,
-})
+local minimal_pandoc_version = {3, 1, 12, 3}
+local pandoc_version = (sh"pandoc --version 2>/dev/null" or "0") : match"[%d%.]+" : split"%." : map(tonumber)
+
+has.pandoc = F.op.uge(pandoc_version, minimal_pandoc_version)
+
+-------------------------------------------------------------------------------
+-- Return the feature table
+-------------------------------------------------------------------------------
+
+return has

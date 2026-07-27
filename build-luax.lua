@@ -30,10 +30,11 @@ clean.mrproper "$cache"
 
 local F = require "F"
 local fs = require "fs"
-local sh = require "sh"
 local sys = require "sys"
 local targets = require "luax-targets"
 local version = require "luax-version"
+
+local has = require "build-detection"
 
 build.ypp
     : set "cmd" "$builddir/bin/ypp"
@@ -437,9 +438,6 @@ end
 var "httpd" "$builddir/tests/luax/httpd"
 zigcc "$httpd" { "luax/tests/luax-tests/httpd.c" }
 
-local pandoc_version = (sh"pandoc --version" or "0") : match"[%d%.]+" : split"%." : map(tonumber)
-local has_pandoc = F.op.uge(pandoc_version, {3, 1, 12, 3})
-
 acc(test) {
 
     build "$builddir/tests/luax/test-1-luax_executable.ok" { test_sources,
@@ -500,7 +498,7 @@ acc(test) {
         }
     end),
 
-    has_pandoc and build "$builddir/tests/luax/test-5-pandoc-luax-lua.ok" { test_main,
+    has.pandoc and build "$builddir/tests/luax/test-5-pandoc-luax-lua.ok" { test_main,
         description = "test $out",
         command = {
             "PATH=bin:$$PATH",
@@ -576,7 +574,7 @@ acc(test) {
         },
     },
 
-    has_pandoc and build "$builddir/tests/luax/test-ext-4-pandoc.ok" { "luax/tests/external_interpreter_tests/external_interpreters.lua",
+    has.pandoc and build "$builddir/tests/luax/test-ext-4-pandoc.ok" { "luax/tests/external_interpreter_tests/external_interpreters.lua",
         description = "test $out",
         command = {
             "eval \"$$($builddir/bin/luax env)\";",
