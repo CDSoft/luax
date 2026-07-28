@@ -84,7 +84,7 @@ acc(standalone) {
 -------------------------------------------------------------------------------
 
 acc(test) {
-    F {
+    F.flatten {
         "ypp",
         "ypp.lua",
         has.pandoc and "ypp-pandoc.lua" or {},
