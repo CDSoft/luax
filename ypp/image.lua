@@ -90,6 +90,7 @@ An optional table can be given before `source` to set some options:
         ditaa = "ditaa",
         gnuplot = "gnuplot",
         lsvg = "lsvg",
+        figure = "figure",
         octave = "octave",
     }
     local function cmp(x, y)
@@ -272,6 +273,7 @@ local blockdiag = "%exe -a -T%ext -o %o %i"
 local ditaa = "java -jar "..DITAA.." $(ext=='svg' and '--svg' or '') -o -e UTF-8 %i %o"
 local gnuplot = "%exe -e 'set terminal %ext' -e 'set output \"%o\"' -c %i"
 local lsvg = "%exe %i.lua -o %o"
+local figure = "%exe %i.lua -o %o"
 local octave = { "octave --silent --no-gui %i", 'figure("visible", "off")\n\n%s\nprint %o;' }
 
 local function define(t)
@@ -317,6 +319,7 @@ return define {
     ditaa       = instantiate("ditaa", ditaa),
     gnuplot     = instantiate("gnuplot", gnuplot),
     lsvg        = instantiate("lsvg", lsvg),
+    figure      = instantiate("figure", figure),
     octave      = instantiate("octave", octave),
     __call = function(_, render, ext) return diagram(nil, render, ext) end,
     __index = {

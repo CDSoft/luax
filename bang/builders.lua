@@ -200,6 +200,12 @@ local lsvg = new(default_options, "lsvg")
     : set "depfile" "$builddir/d/$out.d"
     : set "args" "$in -o $out -- $args"
 
+local figure = new(default_options, "figure")
+    : set "cmd" "fig"
+    : set "flags" { "-M $depfile" }
+    : set "depfile" "$builddir/d/$out.d"
+    : set "args" "$in -o $out -- $args"
+
 local octave = new(default_options, "octave")
     : set "cmd" "octave"
     : set "flags" {
@@ -334,6 +340,12 @@ return setmetatable({
         png = lsvg:new "lsvg.png" : set "ext" ".png",
         jpg = lsvg:new "lsvg.jpg" : set "ext" ".jpg",
         pdf = lsvg:new "lsvg.pdf" : set "ext" ".pdf",
+    },
+    figure = {
+        svg = figure:new "figure.svg" : set "ext" ".svg",
+        png = figure:new "figure.png" : set "ext" ".png",
+        jpg = figure:new "figure.jpg" : set "ext" ".jpg",
+        pdf = figure:new "figure.pdf" : set "ext" ".pdf",
     },
     octave = {
         svg = octave:new "octave.svg" : set "ext" ".svg",

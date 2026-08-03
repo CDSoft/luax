@@ -812,6 +812,7 @@ The `build` metamethods contain some predefined builders:
 | `build.gnuplot.img`       | [Gnuplot](http://www.gnuplot.info/) image rendered as an *img*[^img] image.                           |
 | `build.octave.img`        | [Octave](https://octave.org/) image rendered as an *img*[^img] image.                                 |
 | `build.lsvg.img`          | [Lsvg](../../lsvg/doc/README.md) image rendered as an *img*[^img] image.                              |
+| `build.figure.img`        | [figure](https://codeberg.org/cdsoft/figure) image rendered as an *img*[^img] image.                  |
 
 [^graphviz]: Graphviz renderers are: `dot`, `neato`, `twopi`, `circo`, `fdp`, `sfdp`, `patchwork` and `osage`.
 [^img]: The available image formats are: `svg`, `png` and `pdf`.
@@ -848,11 +849,12 @@ A builder has two methods to modify options:
 
 Other options are added to the rule definition (note that `name` can not be used as a rule variable).
 
-`build.lsvg.img` adds a `$args` ninja variable in the `args` field to pass additional arguments to the lsvg script.
+`build.lsvg.img`/`build.figure.img` adds a `$args` ninja variable in the `args` field
+to pass additional arguments to the lsvg/figure script.
 E.g.:
 
 > ``` lua
-> build.lsvg.png "image.png" { "image.lua", args="arg given to image.lua" }
+> build.figure.png "image.png" { "image.lua", args="arg given to image.lua" }
 > ```
 
 Examples:
