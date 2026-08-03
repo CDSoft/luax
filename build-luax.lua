@@ -599,11 +599,6 @@ acc(test) {
 -- Documentation
 -------------------------------------------------------------------------------
 
-build.lsvg.svg
-    : set "cmd" "$builddir/bin/lsvg"
-    : add "implicit_in" { "$builddir/bin/lsvg" }
-    : set "depfile" "$builddir/tmp/$out.d"
-
 local ypp_config_params = {
     build.ypp_vars {
         LUAX = "$builddir/bin/luax",
@@ -617,8 +612,10 @@ gfm = build.ypp : new "ypp.md"
 
 acc(doc) {
 
-    build.lsvg.svg "luax/doc/luax-banner.svg" {"luax/doc/luax-logo.lua", args={1024,  192}},
-    build.lsvg.svg "luax/doc/luax-logo.svg"   {"luax/doc/luax-logo.lua", args={ 256,  256}},
+    has.figure and {
+        build.figure.svg "luax/doc/luax-banner.svg" {"luax/doc/luax-logo.lua", args={1024,  192}},
+        build.figure.svg "luax/doc/luax-logo.svg"   {"luax/doc/luax-logo.lua", args={ 256,  256}},
+    } or {},
 
     ls "luax/doc/*.md.in" : map(function(src)
         return gfm((src:splitext())) { src }

@@ -19,6 +19,7 @@ https://codeberg.org/cdsoft/luax
 --]]
 
 local F = require "F"
+local fs = require "fs"
 local sh = require "sh"
 
 local has = {}
@@ -31,6 +32,12 @@ local minimal_pandoc_version = {3, 1, 12, 3}
 local pandoc_version = (sh"pandoc --version 2>/dev/null" or "0") : match"[%d%.]+" : split"%." : map(tonumber)
 
 has.pandoc = F.op.uge(pandoc_version, minimal_pandoc_version)
+
+-------------------------------------------------------------------------------
+-- Figure detection
+-------------------------------------------------------------------------------
+
+has.figure = fs.findpath "fig" ~= nil
 
 -------------------------------------------------------------------------------
 -- Return the feature table

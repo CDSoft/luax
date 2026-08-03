@@ -265,7 +265,9 @@ acc(test) {
 -------------------------------------------------------------------------------
 
 acc(doc) {
-    build.lsvg.svg "ypp/doc/ypp-banner.svg" {"luax/doc/luax-logo.lua", args={1024, 192, "--name ypp"}},
+    has.figure and {
+        build.figure.svg "ypp/doc/ypp-banner.svg" {"luax/doc/luax-logo.lua", args={1024, 192, "--name ypp"}},
+    } or {},
     ls "ypp/doc/*.md.in" : map(function(src)
         return gfm((src:splitext())) { src }
     end),

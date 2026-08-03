@@ -3,7 +3,7 @@
 ![](luax/doc/luax-banner.svg)
 
 > [!IMPORTANT]
-> Version 10 is a significant rework: Bang, Ypp and Lsvg are now part of the
+> Version 10 is a significant rework: Bang and Ypp are now part of the
 > LuaX repository. Binaries are smaller and the build system is faster.
 > LuaSec and OpenSSL have been removed (use [`curl.http`](luax/doc/curl.md) instead).
 
@@ -12,7 +12,6 @@
 [LuaX]: luax/doc/README.md
 [Bang]: bang/doc/README.md
 [Ypp]: ypp/doc/README.md
-[Lsvg]: lsvg/doc/README.md
 
 [Panda]: https://codeberg.org/cdsoft/panda
 [Ldc]: https://codeberg.org/cdsoft/ldc
@@ -20,6 +19,8 @@
 [Req]: https://codeberg.org/cdsoft/req
 [Badges]: https://codeberg.org/cdsoft/badges
 [Calculadoira]: https://codeberg.org/cdsoft/calculadoira
+[Figure]: https://codeberg.org/cdsoft/figure
+[Lsvg]: https://codeberg.org/cdsoft/lsvg
 
 [Pandoc]: https://pandoc.org
 [Pandoc Lua filter]: https://pandoc.org/lua-filters.html
@@ -42,9 +43,6 @@ The LuaX repository now contains some softwares that are closely coupled with Lu
 
 [Ypp]
 : A generic text preprocessor used to build the LuaX documentation.
-
-[lsvg]
-: An SVG image generator scriptable in LuaX used to generate the LuaX logo.
 
 ### Installation
 
@@ -85,14 +83,8 @@ Feel free to promote LuaX!
 **[Ypp]** (Yet a PreProcessor)
 : is a generic text preprocessor driven by LuaX
   macros. It supports variable expansion, file inclusion, diagram generation
-  ([Graphviz], [PlantUML], [Mermaid], [Lsvg]…) and [Pandoc]-based format
+  ([Graphviz], [PlantUML], [Mermaid], [Figure]…) and [Pandoc]-based format
   conversion, and works equally well with [Pandoc] and [Typst] documents.
-
-**[Lsvg]**
-: is a LuaX-scriptable SVG image generator. It exposes a pure Lua
-  library covering all major SVG elements and can output SVG, PNG, JPEG or PDF.
-  It is used, for example, to generate the LuaX logo, and integrates naturally
-  with Ypp and Bang.
 
 ## Other tools in the ecosystem
 
@@ -114,6 +106,12 @@ These tools extend the ecosystem and rely on LuaX as their scripting foundation.
 : a lightweight requirement-tracking plugin for Ypp, providing
   traceability tags, coverage matrices and hyperlinks within technical
   documentation.
+
+**[Figure]** (*[Lsvg] successor*)
+: is a LuaX-scriptable SVG image generator. It exposes a pure Lua
+  library covering all major SVG elements and can output SVG, PNG, JPEG or PDF.
+  It is used, for example, to generate the LuaX logo, and integrates naturally
+  with Ypp and Bang.
 
 ### Not scriptable but written in LuaX
 

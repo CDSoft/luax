@@ -11,7 +11,7 @@
 > - Faster build system (no option, cross compilers always generated)
 > - Smaller binaries
 > - No more LuaSec and OpenSSL libraries (heavy to maintain, easily replaced with the HTTP functions of `curl`)
-> - Bang, ypp and lsvg are now part of LuaX (more easily maintained and updated)
+> - Bang and ypp are now part of LuaX (more easily maintained and updated)
 
 [Lua]: https://www.lua.org
 

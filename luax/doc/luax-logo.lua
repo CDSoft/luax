@@ -1,21 +1,21 @@
 local license = [[
-This file is part of luax.
+This file is part of figure.
 
-luax is free software: you can redistribute it and/or modify
+figure is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-luax is distributed in the hope that it will be useful,
+figure is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
+along with figure.  If not, see <https://www.gnu.org/licenses/>.
 
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
+For further information about figure you can visit
+https://codeberg.org/cdsoft/figure
 ]]
 
 local F = require "F"
@@ -30,22 +30,25 @@ local opt = (function()
     return parser:parse(arg)
 end)()
 
-img {
-    Raw (F.unlines { "<!--", license:trim(), "-->" })
+svg {
+    raw (F.unlines { "<!--", license:trim(), "-->" })
 }
 
 local w = tonumber(opt.size[1]) or 1024
 local h = tonumber(opt.size[2]) or w
 local fh = h/4
 
-img {
+svg {
     width = w,
     height = h,
-    viewBox = { width=w, height=h },
+    viewbox { x=0, y=0, width=w, height=h },
     font_size = fh,
     text_anchor = "middle",
     font_family = "Arial, Liberation Sans, sans-serif",
     font_weight = "bold",
+}
+
+output_configuration {
     transparent = "white",
 }
 
@@ -58,8 +61,8 @@ local inclination = 15
 local number_of_stars = 30
 local r_star = h * 4/1024
 
-img {
-    Raw [===[
+svg {
+    raw [===[
         <defs>
             <linearGradient id="PlanetGradient" x1="0" x2="0" y1="0" y2="1">
                 <stop offset="0%" stop-color="lightgrey"/>
@@ -91,22 +94,22 @@ img {
 }
 
 local function planet()
-    return Circle {
+    return circle {
         r = r_planet,
         fill = "url(#PlanetGradient)",
     }
 end
 
 local function moon()
-    return Circle {
-        cxy = Point(r_orbit, 0):rot(-math.pi/4),
+    return circle {
+        V(r_orbit, 0):rot(-math.pi/4):cxy(),
         r = r_moon,
         fill = "url(#MoonGradient)",
     }
 end
 
 local function ring(dir)
-    return Ellipse {
+    return ellipse {
         rx = r_ring,
         ry = r_ring*0.33,
         fill_opacity = 0,
@@ -116,7 +119,7 @@ local function ring(dir)
 end
 
 local function sky()
-    local stars = G {
+    local stars = g {
         stroke_width = h * 3/1024,
         stroke_linecap = "round",
     }
@@ -136,9 +139,9 @@ local function sky()
             local yi = F.even(i) and y or h-y
             if xi > 0 and xi < w then
                 stars {
-                    Circle { cxy=Point(xi, yi), r=r_star, fill=c },
-                    Line { xy1=Point(xi, yi-l), xy2=Point(xi,yi+l), stroke=c },
-                    Line { xy1=Point(xi-l, yi), xy2=Point(xi+l,yi), stroke=c },
+                    circle { V(xi, yi):cxy(), r=r_star, fill=c },
+                    line { V(xi, yi-l):xy1(), V(xi,yi+l):xy2(), stroke=c },
+                    line { V(xi-l, yi):xy1(), V(xi+l,yi):xy2(), stroke=c },
                 }
             end
         end
@@ -149,28 +152,28 @@ end
 local d = h * 16/1024
 
 if opt.sky then
-    img { sky() }
+    svg { sky() }
 end
 
 local name, size = "LuaX", nil
 if opt.name then name, size = opt.name, 4 * fh // #opt.name end
 if #name == 4 then size = nil end
 
-img {
-    G {
+svg {
+    g {
         transform = ("translate(%d, %d) rotate(%d)"):format(w//2, h//2, inclination),
         moon(),
         ring(-1),
         planet(),
         ring(1),
-        Text (name) { font_size=size, dx =  0, dy = fh/4,   fill="black", stroke="black", stroke_width=d/2 },
-        Text (name) { font_size=size, dx = -d, dy = fh/4-d, fill="SeaShell" },
+        text (name) { font_size=size, dx =  0, dy = fh/4,   fill="black", stroke="black", stroke_width=d/2 },
+        text (name) { font_size=size, dx = -d, dy = fh/4-d, fill="SeaShell" },
     },
 }
 
 if opt.text then
-    img {
-        Text(opt.text) {
+    svg {
+        text(opt.text) {
             x = w - fh/8, y = h - fh/8,
             text_anchor = "end",
             font_size = fh/4,

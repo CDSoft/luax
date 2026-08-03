@@ -1298,12 +1298,11 @@ local function cmd_postinstall()
 
     colorize(io.stdout)
 
-    local patterns = {"luax", "libluax", "bang", "ypp", "lsvg"}
+    local patterns = {"luax", "libluax", "bang", "ypp"}
 
     local compiled_files = F{
         "bin"/"luax"..sys.exe,
         "bin"/"bang"..sys.exe,
-        "bin"/"lsvg"..sys.exe,
         "bin"/"ypp"..sys.exe,
     }
 
@@ -1312,7 +1311,6 @@ local function cmd_postinstall()
         "bin"/"luax.lua",
         "bin"/"luax-pandoc.lua",
         "bin"/"bang.lua",
-        "bin"/"lsvg.lua",
         "bin"/"ypp.lua",
         "bin"/"ypp-pandoc.lua",
         "lib"/"libluax.lua",

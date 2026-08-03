@@ -1,22 +1,22 @@
-<svg font-family="Arial, Liberation Sans, sans-serif" font-size="48" font-weight="bold" height="192" text-anchor="middle" version="1.1" viewBox="0 0 1024 192" width="1024" xmlns="http://www.w3.org/2000/svg">
+<svg font-family="Arial, Liberation Sans, sans-serif" font-size="48" font-weight="bold" height="192" text-anchor="middle" viewBox="0 0 1024 192" width="1024" xmlns="http://www.w3.org/2000/svg">
 <!--
-This file is part of luax.
+This file is part of figure.
 
-luax is free software: you can redistribute it and/or modify
+figure is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-luax is distributed in the hope that it will be useful,
+figure is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
+along with figure.  If not, see <https://www.gnu.org/licenses/>.
 
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
+For further information about figure you can visit
+https://codeberg.org/cdsoft/figure
 -->
         <defs>
             <linearGradient id="PlanetGradient" x1="0" x2="0" y1="0" y2="1">
@@ -46,11 +46,11 @@ https://codeberg.org/cdsoft/luax
             </linearGradient>
         </defs>
     <g transform="translate(512, 96) rotate(15)">
-<circle cx="57.28" cy="-57.28" fill="url(#MoonGradient)" r="22.5"/>
+<circle cx="57.2756" cy="-57.2756" fill="url(#MoonGradient)" r="22.5"/>
 <ellipse fill-opacity="0" rx="90" ry="29.7" stroke="url(#BottomRingGradient)" stroke-width="15"/>
 <circle fill="url(#PlanetGradient)" r="72"/>
 <ellipse fill-opacity="0" rx="90" ry="29.7" stroke="url(#TopRingGradient)" stroke-width="15"/>
-<text dx="0" dy="12.0" fill="black" stroke="black" stroke-width="1.5">LuaX</text>
-<text dx="-3.0" dy="9.0" fill="SeaShell">LuaX</text>
+<text dx="0" dy="12" fill="black" stroke="black" stroke-width="1.5">LuaX</text>
+<text dx="-3" dy="9" fill="SeaShell">LuaX</text>
 </g>
 </svg>

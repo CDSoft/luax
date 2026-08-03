@@ -25,6 +25,8 @@ section "Bang"
 local F = require "F"
 local targets = require "luax-targets"
 
+local has = require "build-detection"
+
 -------------------------------------------------------------------------------
 -- Sources
 -------------------------------------------------------------------------------
@@ -246,7 +248,9 @@ acc(test) {
 -------------------------------------------------------------------------------
 
 acc(doc) {
-    build.lsvg.svg "bang/doc/bang-banner.svg" {"luax/doc/luax-logo.lua", args={1024, 192, "--name Bang"}},
+    has.figure and {
+        build.figure.svg "bang/doc/bang-banner.svg" {"luax/doc/luax-logo.lua", args={1024, 192, "--name Bang"}},
+    } or {},
     ls "bang/doc/*.md.in" : map(function(src)
         return gfm((src:splitext())) { src }
     end),

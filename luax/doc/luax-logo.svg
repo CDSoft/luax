@@ -1,22 +1,22 @@
-<svg font-family="Arial, Liberation Sans, sans-serif" font-size="64" font-weight="bold" height="256" text-anchor="middle" version="1.1" viewBox="0 0 256 256" width="256" xmlns="http://www.w3.org/2000/svg">
+<svg font-family="Arial, Liberation Sans, sans-serif" font-size="64" font-weight="bold" height="256" text-anchor="middle" viewBox="0 0 256 256" width="256" xmlns="http://www.w3.org/2000/svg">
 <!--
-This file is part of luax.
+This file is part of figure.
 
-luax is free software: you can redistribute it and/or modify
+figure is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-luax is distributed in the hope that it will be useful,
+figure is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with luax.  If not, see <https://www.gnu.org/licenses/>.
+along with figure.  If not, see <https://www.gnu.org/licenses/>.
 
-For further information about luax you can visit
-https://codeberg.org/cdsoft/luax
+For further information about figure you can visit
+https://codeberg.org/cdsoft/figure
 -->
         <defs>
             <linearGradient id="PlanetGradient" x1="0" x2="0" y1="0" y2="1">
@@ -46,11 +46,11 @@ https://codeberg.org/cdsoft/luax
             </linearGradient>
         </defs>
     <g transform="translate(128, 128) rotate(15)">
-<circle cx="76.37" cy="-76.37" fill="url(#MoonGradient)" r="30"/>
+<circle cx="76.3675" cy="-76.3675" fill="url(#MoonGradient)" r="30"/>
 <ellipse fill-opacity="0" rx="120" ry="39.6" stroke="url(#BottomRingGradient)" stroke-width="20"/>
 <circle fill="url(#PlanetGradient)" r="96"/>
 <ellipse fill-opacity="0" rx="120" ry="39.6" stroke="url(#TopRingGradient)" stroke-width="20"/>
-<text dx="0" dy="16.0" fill="black" stroke="black" stroke-width="2">LuaX</text>
-<text dx="-4.0" dy="12.0" fill="SeaShell">LuaX</text>
+<text dx="0" dy="16" fill="black" stroke="black" stroke-width="2">LuaX</text>
+<text dx="-4" dy="12" fill="SeaShell">LuaX</text>
 </g>
 </svg>
