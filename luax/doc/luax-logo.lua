@@ -1,21 +1,21 @@
 local license = [[
-This file is part of figure.
+This file is part of LuaX.
 
-figure is free software: you can redistribute it and/or modify
+LuaX is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-figure is distributed in the hope that it will be useful,
+LuaX is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with figure.  If not, see <https://www.gnu.org/licenses/>.
+along with LuaX.  If not, see <https://www.gnu.org/licenses/>.
 
-For further information about figure you can visit
-https://codeberg.org/cdsoft/figure
+For further information about LuaX you can visit
+https://codeberg.org/cdsoft/luax
 ]]
 
 local F = require "F"
@@ -30,7 +30,7 @@ local opt = (function()
     return parser:parse(arg)
 end)()
 
-svg {
+fig {
     raw (F.unlines { "<!--", license:trim(), "-->" })
 }
 
@@ -38,7 +38,7 @@ local w = tonumber(opt.size[1]) or 1024
 local h = tonumber(opt.size[2]) or w
 local fh = h/4
 
-svg {
+fig {
     width = w,
     height = h,
     viewbox { x=0, y=0, width=w, height=h },
@@ -61,36 +61,34 @@ local inclination = 15
 local number_of_stars = 30
 local r_star = h * 4/1024
 
-svg {
-    raw [===[
-        <defs>
-            <linearGradient id="PlanetGradient" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stop-color="lightgrey"/>
-                <stop offset="15%" stop-color="cyan"/>
-                <stop offset="30%" stop-color="orange"/>
-                <stop offset="70%" stop-color="green"/>
-                <stop offset="85%" stop-color="blue"/>
-                <stop offset="100%" stop-color="lightgrey"/>
-            </linearGradient>
-            <linearGradient id="MoonGradient" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stop-color="darkgrey"/>
-                <stop offset="50%" stop-color="lightgrey"/>
-                <stop offset="100%" stop-color="darkgrey"/>
-            </linearGradient>
-            <linearGradient id="TopRingGradient" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stop-color="black" stop-opacity="0"/>
-                <stop offset="49%" stop-color="grey" stop-opacity="0"/>
-                <stop offset="50%" stop-color="grey" stop-opacity="1"/>
-                <stop offset="100%" stop-color="darkgrey" stop-opacity="1"/>
-            </linearGradient>
-            <linearGradient id="BottomRingGradient" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stop-color="black" stop-opacity="1"/>
-                <stop offset="50%" stop-color="grey" stop-opacity="1"/>
-                <stop offset="51%" stop-color="grey" stop-opacity="0"/>
-                <stop offset="100%" stop-color="darkgrey" stop-opacity="0"/>
-            </linearGradient>
-        </defs>
-    ]===],
+fig {
+    defs {
+        linearGradient { id="PlanetGradient", x1=0, x2=0, y1=0, y2=1,
+            stop { offset="0%", stop_color="lightgrey" },
+            stop { offset="15%", stop_color="cyan" },
+            stop { offset="30%", stop_color="orange" },
+            stop { offset="70%", stop_color="green" },
+            stop { offset="85%", stop_color="blue" },
+            stop { offset="100%", stop_color="lightgrey" },
+        },
+        linearGradient { id="MoonGradient", x1=0, x2=0, y1=0, y2=1,
+            stop { offset="0%", stop_color="darkgrey" },
+            stop { offset="50%", stop_color="lightgrey" },
+            stop { offset="100%", stop_color="darkgrey" },
+        },
+        linearGradient { id="TopRingGradient", x1=0, x2=0, y1=0, y2=1,
+            stop { offset="0%", stop_color="black", stop_opacity="0" },
+            stop { offset="49%", stop_color="grey", stop_opacity="0" },
+            stop { offset="50%", stop_color="grey", stop_opacity="1" },
+            stop { offset="100%", stop_color="darkgrey", stop_opacity="1" },
+        },
+        linearGradient { id="BottomRingGradient", x1=0, x2=0, y1=0, y2=1,
+            stop { offset="0%", stop_color="black", stop_opacity="1" },
+            stop { offset="50%", stop_color="grey", stop_opacity="1" },
+            stop { offset="51%", stop_color="grey", stop_opacity="0" },
+            stop { offset="100%", stop_color="darkgrey", stop_opacity="0" },
+        },
+    },
 }
 
 local function planet()
@@ -124,12 +122,24 @@ local function sky()
         stroke_linecap = "round",
     }
     local star_colors = { "gold", "red", "cyan", "brown" }
+    for i, c in ipairs(star_colors) do
+        local l = r_star * 2
+        stars {
+            symbol {
+                id = "star"..i,
+                x = -l, y = -l, width = 2*l, height = 2*l,
+                viewbox { x=-l, y=-l, width=2*l, height=2*l },
+                circle { cx=0, cy=0, r=r_star, fill=c },
+                line { x1=-l, x2=l, stroke=c },
+                line { y1=-l, y2=l, stroke=c },
+            },
+        }
+    end
     local rnd = crypt.prng(42, 1)
     for _ = 1, number_of_stars do
         local x = F.floor(rnd:float(h))
         local y = F.floor(rnd:float(h))
-        local l = r_star * 2
-        local c = star_colors[rnd:int(1, #star_colors)]
+        local c = rnd:int(1, #star_colors)
         -- periodic sky, the square h*h around the planet repeats
         -- xi = x + i*h + w/2 ∈ [0, w]
         -- xi > 0 <=> i > (-w/2 - x)/h
@@ -139,9 +149,7 @@ local function sky()
             local yi = F.even(i) and y or h-y
             if xi > 0 and xi < w then
                 stars {
-                    circle { V(xi, yi):cxy(), r=r_star, fill=c },
-                    line { V(xi, yi-l):xy1(), V(xi,yi+l):xy2(), stroke=c },
-                    line { V(xi-l, yi):xy1(), V(xi+l,yi):xy2(), stroke=c },
+                    use { href="#star"..c, x=xi, y=yi }
                 }
             end
         end
@@ -152,14 +160,14 @@ end
 local d = h * 16/1024
 
 if opt.sky then
-    svg { sky() }
+    fig { sky() }
 end
 
 local name, size = "LuaX", nil
 if opt.name then name, size = opt.name, 4 * fh // #opt.name end
 if #name == 4 then size = nil end
 
-svg {
+fig {
     g {
         transform = ("translate(%d, %d) rotate(%d)"):format(w//2, h//2, inclination),
         moon(),
@@ -172,7 +180,7 @@ svg {
 }
 
 if opt.text then
-    svg {
+    fig {
         text(opt.text) {
             x = w - fh/8, y = h - fh/8,
             text_anchor = "end",
