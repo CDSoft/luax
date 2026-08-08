@@ -100,7 +100,7 @@ end
 
 local function moon()
     return circle {
-        V(r_orbit, 0):rot(-math.pi/4):cxy(),
+        cxy(V(r_orbit, 0):rot(-math.pi/4)),
         r = r_moon,
         fill = "url(#MoonGradient)",
     }
