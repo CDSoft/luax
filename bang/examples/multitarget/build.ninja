@@ -233,7 +233,7 @@ build $ex0/windows/bin/hi.exe: ld_windows $ex0/windows/lib/hello/hello.a $ex0/wi
 rule x86_64-linux-musl-cc
   description = zig cc -target x86_64-linux-musl $out
   command = zig cc -target x86_64-linux-musl -c -MMD -MF $depfile -DTARGET="x86_64-linux-musl" $cflags $cflags_linux $in -o $out
-  depfile = $out.d
+  depfile = $builddir/d/$out.d
 
 rule x86_64-linux-musl-ar
   description = zig ar $out
@@ -280,7 +280,7 @@ build $ex1/linux/bin/hi: x86_64-linux-musl-ld $ex1/linux/bin/hi.tmp/bin/hi.o $ex
 rule x86_64-macos-none-cc
   description = zig cc -target x86_64-macos-none $out
   command = zig cc -target x86_64-macos-none -c -MMD -MF $depfile -DTARGET="x86_64-macos-none" $cflags $cflags_macos $in -o $out
-  depfile = $out.d
+  depfile = $builddir/d/$out.d
 
 rule x86_64-macos-none-ar
   description = zig ar $out
@@ -327,7 +327,7 @@ build $ex1/macos/bin/hi: x86_64-macos-none-ld $ex1/macos/bin/hi.tmp/bin/hi.o $ex
 rule x86_64-windows-gnu-cc
   description = zig cc -target x86_64-windows-gnu $out
   command = zig cc -target x86_64-windows-gnu -c -MMD -MF $depfile -DTARGET="x86_64-windows-gnu" $cflags $cflags_windows $in -o $out
-  depfile = $out.d
+  depfile = $builddir/d/$out.d
 
 rule x86_64-windows-gnu-ar
   description = zig ar $out

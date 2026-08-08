@@ -88,7 +88,7 @@ build $builddir/src/lzio.h: cp ../../../lua/lzio.h
 rule C-cc
   description = cc $out
   command = cc -c -MMD -MF $depfile -O2 -I$builddir/src -DLUA_USE_LINUX $in -o $out
-  depfile = $out.d
+  depfile = $builddir/d/$out.d
 
 rule C-ar
   description = ar $out
