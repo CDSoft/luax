@@ -319,7 +319,7 @@ return define {
     ditaa       = instantiate("ditaa", ditaa),
     gnuplot     = instantiate("gnuplot", gnuplot),
     lsvg        = instantiate("lsvg", lsvg),
-    figure      = instantiate("figure", figure),
+    figure      = instantiate("fig", figure),
     octave      = instantiate("octave", octave),
     __call = function(_, render, ext) return diagram(nil, render, ext) end,
     __index = {
