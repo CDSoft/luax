@@ -34,7 +34,7 @@ update_all()
     update_lqmath       110
     update_lmathx
     update_lpeg         1.1.0
-    update_argparse     LuaX
+    update_argparse     master
     update_serpent      master
     update_cbor
     update_linenoise    master
@@ -185,11 +185,32 @@ update_argparse()
 {
     local ARGPARSE_VERSION="$1"
     local ARGPARSE_ARCHIVE="argparse-$ARGPARSE_VERSION.zip"
-    local ARGPARSE_URL="https://codeberg.org/cdsoft/argparse/archive/$ARGPARSE_VERSION.zip"
+    local ARGPARSE_URL="https://github.com/luarocks/argparse/archive/refs/heads/$ARGPARSE_VERSION.zip"
     rm -rf "$TMP"/argparse*
     download "$ARGPARSE_URL" "$TMP/$ARGPARSE_ARCHIVE"
     unzip -o "$TMP/$ARGPARSE_ARCHIVE" -d "$TMP"
-    cp "$TMP/argparse/src/argparse.lua" "$ROOT/luax/"
+    cp "$TMP/argparse-$ARGPARSE_VERSION/src/argparse.lua" "$ROOT/luax/"
+    patch -p1 <<EOF
+diff --git a/luax/argparse.lua b/luax/argparse.lua
+index 858911e..e1391f2 100644
+--- a/luax/argparse.lua
++++ b/luax/argparse.lua
+@@ -539,13 +540,8 @@ function Option:_get_label_lines()
+    local argument_list_repr = table.concat(argument_list, " ")
+    local lines = {}
+
+-   for i, alias in ipairs(self._public_aliases) do
+-      local line = (" "):rep(longest_alias_length - #alias) .. alias .. " " .. argument_list_repr
+-
+-      if i ~= #self._public_aliases then
+-         line = line .. ","
+-      end
+-
++   for _, alias in ipairs(self._public_aliases) do
++      local line = alias .. " " .. argument_list_repr
+       table.insert(lines, line)
+    end
+EOF
 }
 
 update_serpent()
