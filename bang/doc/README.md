@@ -811,7 +811,7 @@ The `build` metamethods contain some predefined builders:
 | `build.blockdiag.prog.img`| [Blockdiag](http://blockdiag.com/en/) image rendered with *prog*[^blockdiag] as an *img*[^img] image. |
 | `build.gnuplot.img`       | [Gnuplot](http://www.gnuplot.info/) image rendered as an *img*[^img] image.                           |
 | `build.octave.img`        | [Octave](https://octave.org/) image rendered as an *img*[^img] image.                                 |
-| `build.lsvg.img`          | [Lsvg](../../lsvg/doc/README.md) image rendered as an *img*[^img] image.                              |
+| `build.lsvg.img`          | [Lsvg](https://codeberg.org/cdsoft/lsvg) image rendered as an *img*[^img] image.                      |
 | `build.figure.img`        | [figure](https://codeberg.org/cdsoft/figure) image rendered as an *img*[^img] image.                  |
 
 [^graphviz]: Graphviz renderers are: `dot`, `neato`, `twopi`, `circo`, `fdp`, `sfdp`, `patchwork` and `osage`.

@@ -16,8 +16,7 @@
 [Asymptote]: http://asymptote.sourceforge.net/
 [mermaid]: https://mermaidjs.github.io/
 [gnuplot]: http://www.gnuplot.info/
-[lsvg]: https://codeberg.org/cdsoft/lsvg
-[figure]: https://codeberg.org/cdsoft/figure
+[Figure]: https://codeberg.org/cdsoft/figure
 [LuaX]: ../../README.md "Lua eXtended interpreter"
 [Octave]: https://octave.org/
 
@@ -35,7 +34,7 @@ It provides several interesting features:
 - conditional blocks
 - file inclusion (e.g. for source code examples)
 - script execution (e.g. to include the result of a command)
-- diagrams ([Graphviz], [PlantUML], [ditaa], [Asymptote], [gnuplot], [blockdiag], [mermaid], [Octave], [figure], ...)
+- diagrams ([Graphviz], [PlantUML], [ditaa], [Asymptote], [gnuplot], [blockdiag], [mermaid], [Octave], [Figure], ...)
 - documentation extraction (e.g. from comments in source files)
 
 ## Releases
