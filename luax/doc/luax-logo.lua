@@ -93,23 +93,21 @@ fig {
 
 local function planet()
     return circle {
-        r = r_planet,
+        r_planet,
         fill = "url(#PlanetGradient)",
     }
 end
 
 local function moon()
     return circle {
-        cxy(V(r_orbit, 0):rot(-math.pi/4)),
-        r = r_moon,
+        V(r_orbit, 0):rot(-math.pi/4), r_moon,
         fill = "url(#MoonGradient)",
     }
 end
 
 local function ring(dir)
     return ellipse {
-        rx = r_ring,
-        ry = r_ring*0.33,
+        r_ring, r_ring*0.33,
         fill_opacity = 0,
         stroke = dir > 0 and "url(#TopRingGradient)" or "url(#BottomRingGradient)",
         stroke_width = ring_width,
@@ -127,9 +125,9 @@ local function sky()
         stars {
             symbol {
                 id = "star"..i,
-                x = -l, y = -l, width = 2*l, height = 2*l,
-                viewbox { x=-l, y=-l, width=2*l, height=2*l },
-                circle { cx=0, cy=0, r=r_star, fill=c },
+                V(-l, -l), 2*l, 2*l,
+                viewbox { V(-l, -l), 2*l, 2*l },
+                circle { r_star, fill=c },
                 line { x1=-l, x2=l, stroke=c },
                 line { y1=-l, y2=l, stroke=c },
             },
@@ -149,7 +147,7 @@ local function sky()
             local yi = F.even(i) and y or h-y
             if xi > 0 and xi < w then
                 stars {
-                    use { href="#star"..c, x=xi, y=yi }
+                    use { V(xi, yi), href="#star"..c }
                 }
             end
         end
@@ -182,7 +180,7 @@ fig {
 if opt.text then
     fig {
         text(opt.text) {
-            x = w - fh/8, y = h - fh/8,
+            V(w - fh/8, h - fh/8),
             text_anchor = "end",
             font_size = fh/4,
             fill = "green",

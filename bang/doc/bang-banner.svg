@@ -46,7 +46,7 @@ https://codeberg.org/cdsoft/luax
 </linearGradient>
 </defs>
 <g transform="translate(512, 96) rotate(15)">
-<circle r="22.5" fill="url(#MoonGradient)" cx="57.2756" cy="-57.2756"/>
+<circle cx="57.2756" cy="-57.2756" r="22.5" fill="url(#MoonGradient)"/>
 <ellipse rx="90" ry="29.7" fill-opacity="0" stroke="url(#BottomRingGradient)" stroke-width="15"/>
 <circle r="72" fill="url(#PlanetGradient)"/>
 <ellipse rx="90" ry="29.7" fill-opacity="0" stroke="url(#TopRingGradient)" stroke-width="15"/>
