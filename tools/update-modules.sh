@@ -467,8 +467,12 @@ update_lzlib()
     local LZLIB_VERSION="$1"
     local LZLIB_ARCHIVE="lzlib-$LZLIB_VERSION.tar.gz"
     local LZLIB_URL="http://download.savannah.gnu.org/releases/lzip/lzlib/$LZLIB_ARCHIVE"
+    local LZLIB_URL_1="http://download-mirror.savannah.gnu.org/releases/lzip/lzlib/$LZLIB_ARCHIVE"
+    local LZLIB_URL_2="http://download-mirror.savannah.nongnu.org/releases/lzip/lzlib/$LZLIB_ARCHIVE"
     rm -rf "$TMP"/lzlib*
-    download "$LZLIB_URL" "$TMP/$LZLIB_ARCHIVE"
+    download "$LZLIB_URL" "$TMP/$LZLIB_ARCHIVE" \
+        || download "$LZLIB_URL_1" "$TMP/$LZLIB_ARCHIVE" \
+        || download "$LZLIB_URL_2" "$TMP/$LZLIB_ARCHIVE"
     rm -rf "$ROOT/luax/ext/lzlib"
     mkdir -p "$ROOT/luax/ext/lzlib" "$ROOT/luax/ext/lzlib/inc"
     tar -xzf "$TMP/$LZLIB_ARCHIVE" -C "$TMP"
