@@ -284,7 +284,8 @@ function term.prompt(p)
         io.stdout:write(p)
         io.stdout:flush()
     end
-    return io.stdin:read "l"
+    local ok, line = pcall(io.stdin.read, io.stdin, "l")
+    return ok and line or nil
 end
 
 --[[------------------------------------------------------------------------@@@
