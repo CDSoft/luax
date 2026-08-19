@@ -284,18 +284,18 @@ Target                Interpreter / LuaX loader
 --------------------- -------------------------
 luax                  ~/.local/bin/luax
 lua                   /usr/bin/lua
-pandoc                ~/.local/bin/pandoc
-native                ~/.local/lib/libluax_xyz
-linux-x86_64          ~/.local/lib/libluax_xyz
-linux-x86_64-musl     ~/.local/lib/libluax_xyz
-linux-aarch64         ~/.local/lib/libluax_xyz
-linux-aarch64-musl    ~/.local/lib/libluax_xyz
+pandoc                /usr/bin/pandoc
+native                ~/.local/lib/libluax.xyz
+linux-x86_64          ~/.local/lib/libluax.xyz
+linux-x86_64-musl     ~/.local/lib/libluax.xyz
+linux-aarch64         ~/.local/lib/libluax.xyz
+linux-aarch64-musl    ~/.local/lib/libluax.xyz
 linux-x86             ~/.local/lib/libluax.xyz
 linux-x86-musl        ~/.local/lib/libluax.xyz
-macos-x86_64          ~/.local/lib/libluax_xyz
-macos-aarch64         ~/.local/lib/libluax_xyz
-windows-x86_64        ~/.local/lib/libluax_xyz
-windows-aarch64       ~/.local/lib/libluax_xyz
+macos-x86_64          ~/.local/lib/libluax.xyz
+macos-aarch64         ~/.local/lib/libluax.xyz
+windows-x86_64        ~/.local/lib/libluax.xyz
+windows-aarch64       ~/.local/lib/libluax.xyz
 ```
 
 ## Built-in modules

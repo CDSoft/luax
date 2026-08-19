@@ -236,22 +236,19 @@ $ ./executable      # equivalent to pandoc lua main.lua
 
 # Available targets
 $ luax compile -t list
-Target                Interpreter / LuaX loader
---------------------- -------------------------
-luax                  ~/.local/bin/luax
-lua                   /usr/bin/lua
-pandoc                ~/.local/bin/pandoc
-native                ~/.local/lib/libluax_xyz
-linux-x86_64          ~/.local/lib/libluax_xyz
-linux-x86_64-musl     ~/.local/lib/libluax_xyz
-linux-aarch64         ~/.local/lib/libluax_xyz
-linux-aarch64-musl    ~/.local/lib/libluax_xyz
-linux-x86             ~/.local/lib/libluax.xyz
-linux-x86-musl        ~/.local/lib/libluax.xyz
-macos-x86_64          ~/.local/lib/libluax_xyz
-macos-aarch64         ~/.local/lib/libluax_xyz
-windows-x86_64        ~/.local/lib/libluax_xyz
-windows-aarch64       ~/.local/lib/libluax_xyz
+@@[[
+    local targets = sh(LUAX, "compile", "-t list") : lines()
+    return F.flatten {
+        targets : take(2),
+        targets : drop(2)
+        : take_while(function(line) return line~="" end)
+        : map(function(line) return line:words():head() end)
+        : mapi(function(i, t)
+            local p = { "~/.local/bin/luax", "/usr/bin/lua", "/usr/bin/pandoc" }
+            return t:ljust(22)..(p[i] or "~/.local/lib/libluax.xyz")
+        end)
+    } : unlines() : rtrim()
+]]
 ```
 
 ## Built-in modules
