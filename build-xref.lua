@@ -18,17 +18,17 @@ For further information about luax you can visit
 https://codeberg.org/cdsoft/luax
 --]]
 
-local fs = require "fs"
+local has = require "build-detection"
 
 -------------------------------------------------------------------------------
 section "Cross references"
 -------------------------------------------------------------------------------
 
-if fs.findpath "req" then
+if has.req then
 
     acc(xref) {
         build "$builddir/xref.txt" {
-            command = "req -g -f > $out || req -g -f",
+            command = "req -g -f -o $out || req -g -f",
             implicit_in = { compile, test, doc, ls "build*.lua", ls "tools/**" },
             pool = "console",
         }
