@@ -621,6 +621,13 @@ xs:tails()
 ```
 > Returns all final segments of the argument, longest first.
 
+```lua
+F.sub(xs, i, [j])
+xs:sub(i, [j])
+```
+> Returns the sublist of `xs` that starts at `i` and continues until `j`.
+> `i` and `j` can be negative (see `string.sub`).
+
 ## Predicates
 
 ```lua

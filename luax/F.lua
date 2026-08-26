@@ -1821,6 +1821,28 @@ function F.tails(xs)
 end
 mt.__index.tails = F.tails
 
+--[[@@@
+```lua
+F.sub(xs, i, [j])
+xs:sub(i, [j])
+```
+> Returns the sublist of `xs` that starts at `i` and continues until `j`.
+> `i` and `j` can be negative (see `string.sub`).
+@@@]]
+
+function F.sub(xs, i, j)
+    j = j or -1
+    local n = #xs
+    if i < 0 then i = n+1 + i end
+    if j < 0 then j = n+1 + j end
+    local ys = {}
+    for k = i, j do
+        ys[#ys+1] = xs[k]
+    end
+    return setmetatable(ys, mt)
+end
+mt.__index.sub = F.sub
+
 --[[------------------------------------------------------------------------@@@
 ## Predicates
 @@@]]
