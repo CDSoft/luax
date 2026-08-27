@@ -4,6 +4,10 @@
 
 Bang is a [Ninja](https://ninja-build.org) file generator scriptable in [LuaX](../../luax/doc/README.md).
 
+## Contributing
+
+See [`CONTRIBUTING.md`](../../CONTRIBUTING.md) for development and contribution guidelines.
+
 ## Releases
 
 It is strongly recommended to build Bang from source,

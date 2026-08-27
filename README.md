@@ -56,6 +56,10 @@ ninja install  # installs to ~/.local/bin and ~/.local/lib
 Precompiled binaries for various platforms are also available at <https://cdelord.fr/pub>,
 but building from source is recommended.
 
+### Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for development and contribution guidelines.
+
 ### Support
 
 LuaX is free and open source. Contributions are welcome:

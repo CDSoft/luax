@@ -36,6 +36,10 @@ cross-compile[^cross-compilation] scripts for a supported platform.
 
 LuaX is available on Codeberg: <https://codeberg.org/cdsoft/luax>
 
+## Contributing
+
+See [`CONTRIBUTING.md`](../../CONTRIBUTING.md) for development and contribution guidelines.
+
 ## Releases
 
 It is strongly recommended to build LuaX from source,

@@ -37,6 +37,10 @@ It provides several interesting features:
 - diagrams ([Graphviz], [PlantUML], [ditaa], [Asymptote], [gnuplot], [blockdiag], [mermaid], [Octave], [Figure], ...)
 - documentation extraction (e.g. from comments in source files)
 
+## Contributing
+
+See [`CONTRIBUTING.md`](../../CONTRIBUTING.md) for development and contribution guidelines.
+
 ## Releases
 
 It is strongly recommended to build Ypp from source,
