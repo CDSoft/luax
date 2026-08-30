@@ -1403,7 +1403,7 @@ ks:from_set(f)
 @@@]]
 
 F_from_set = function(f, ks)
-    local t = {}
+    local t = t_create(0, #ks)
     for i = 1, #ks do
         local k = ks[i]
         t[k] = f(k)
@@ -1422,7 +1422,7 @@ kvs:from_list()
 @@@]]
 
 function F.from_list(kvs)
-    local t = {}
+    local t = t_create(0, #kvs)
     for i = 1, #kvs do
         local k, v = t_unpack(kvs[i])
         t[k] = v
@@ -1835,7 +1835,7 @@ function F.sub(xs, i, j)
     local n = #xs
     if i < 0 then i = n+1 + i end
     if j < 0 then j = n+1 + j end
-    local ys = {}
+    local ys = t_create_safe(j-i+1)
     for k = i, j do
         ys[#ys+1] = xs[k]
     end
