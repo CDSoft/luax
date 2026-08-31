@@ -71,20 +71,20 @@ Feel free to promote LuaX!
 
 ## Core tools
 
-**[LuaX]**
+[LuaX]
 : is an extended [Lua] 5.5 interpreter and compiler. It enriches Lua
   with 25+ built-in modules (file system, shell, cryptography, compression…) and
   can produce standalone cross-platform executables. LuaX uses **Lua tables as a
   universal data format**, allowing all tools in the ecosystem to share
   configuration and data without any conversion glue.
 
-**[Bang]** (Bang Automates Ninja Generation)
+[Bang] (Bang Automates Ninja Generation)
 : is a [Ninja] build file generator
   scriptable in LuaX. It turns readable LuaX build scripts into fast, incremental
   Ninja build files, with built-in support for Lua, C, C++ compilation,
   cross-compilation, and common document processors.
 
-**[Ypp]** (Yet a PreProcessor)
+[Ypp] (Yet a PreProcessor)
 : is a generic text preprocessor driven by LuaX
   macros. It supports variable expansion, file inclusion, diagram generation
   ([Graphviz], [PlantUML], [Mermaid], [Figure]…) and [Pandoc]-based format
@@ -96,22 +96,22 @@ These tools extend the ecosystem and rely on LuaX as their scripting foundation.
 
 ### Scriptable in LuaX
 
-**[Panda]**
+[Panda]
 : a [Pandoc Lua filter] that processes documents at the AST level,
   adding templating, file inclusion, diagram rendering and dependency tracking.
   Complements Ypp for Pandoc-specific workflows.
 
-**[Ldc]**
+[Ldc]
 : a cross-language code generator: reads LuaX data definitions and
   emits equivalent source code in C, Haskell, Shell, YAML, etc., keeping
   constants in sync across a polyglot project.
 
-**[Yreq]**
+[Yreq]
 : a lightweight requirement-tracking plugin for Ypp, providing
   traceability tags, coverage matrices and hyperlinks within technical
   documentation.
 
-**[Figure]** (*[Lsvg] successor*)
+[Figure] (*[Lsvg] successor*)
 : is a LuaX-scriptable SVG image generator. It exposes a pure Lua
   library covering all major SVG elements and can output SVG, PNG, JPEG or PDF.
   It is used, for example, to generate the LuaX logo, and integrates naturally
@@ -119,14 +119,14 @@ These tools extend the ecosystem and rely on LuaX as their scripting foundation.
 
 ### Not scriptable but written in LuaX
 
-**[Req]**
+[Req]
 : a minimalist requirement management tool inspired by [Tagref] with
   additional notions (sets, relations).
 
-**[Badges]**
+[Badges]
 : a static SVG badge generator.
 
-**[Calculadoira]**
+[Calculadoira]
 : a simple yet powerful calculator (programmable, TUI REPL,
   integral, rational and floating point numbers, base conversions, math
   functions...)
