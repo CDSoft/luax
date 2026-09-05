@@ -424,7 +424,7 @@ local native_targets = targets
     : filter(function(t)
         return t.os==sys.os
            and (  t.arch==sys.arch
-               or t.arch=="x86" and sys.arch=="x86_64"
+               or has.x86_support and t.arch=="x86" and sys.arch=="x86_64"
                )
        end)
     : map(function(t) return t.name end)

@@ -25,6 +25,7 @@ set -eu
 
 ZIG=.cache/zig/zig
 LUA=.cache/lua
+TEST32=.cache/test32
 
 ##############################################################################
 # Dependencies (contributions are welcome)
@@ -66,20 +67,32 @@ tools/install_zig.sh $ZIG
 # Lua [tag:lua_bootstrap]
 ##############################################################################
 
-CFLAGS=( -Os -Ilua )
-LDFLAGS=( -lm -s )
+FLAGS=( -Os -s -Ilua -lm )
 case $(uname -s) in
-    Linux)  CFLAGS+=( -DLUA_USE_LINUX ) ;;
-    Darwin) CFLAGS+=( -DLUA_USE_MACOSX ) ;;
+    Linux)  FLAGS+=( -DLUA_USE_LINUX ) ;;
+    Darwin) FLAGS+=( -DLUA_USE_MACOSX ) ;;
 esac
 
 OLD_MD5=$(cat $LUA.md5 2>/dev/null || true)
 NEW_MD5=$(cat lua/*.c | md5sum)
 if [ "$NEW_MD5" != "$OLD_MD5" ]; then
-    echo "Compiling Lua..."
+    echo "Compiling $LUA"
     mkdir -p "$(dirname $LUA)"
-    $ZIG cc "${CFLAGS[@]}" lua/*.c "${LDFLAGS[@]}" -o $LUA
+    $ZIG cc "${FLAGS[@]}" lua/*.c -o $LUA
     echo "$NEW_MD5" > $LUA.md5
+fi
+
+##############################################################################
+# 32-bit support tester
+##############################################################################
+
+OLD_MD5=$(cat $TEST32.md5 2>/dev/null || true)
+NEW_MD5=$(cat tools/test32.c | md5sum)
+if [ "$NEW_MD5" != "$OLD_MD5" ]; then
+    echo "Compiling $TEST32"
+    mkdir -p "$(dirname $TEST32)"
+    $ZIG cc -target x86-linux-musl "${FLAGS[@]}" tools/test32.c -o $TEST32
+    echo "$NEW_MD5" > $TEST32.md5
 fi
 
 ##############################################################################
