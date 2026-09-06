@@ -46,7 +46,7 @@ local without_keys = F.without_keys
 
 local default_builddir = ".build"
 local overridden_builddir = nil
-local ninja_required_version_for_bang = F"1.11.1"
+local ninja_required_version_for_bang = F"1.13.0"
 
 local help_token = {}
 local install_token = {}

@@ -2,7 +2,7 @@
 # .build/bin/bang -g ".build/bin/bang" -q bang/tests/test-default-3.lua -o .build/tests/bang/luax/test-default-3.ninja
 
 builddir = .build
-ninja_required_version = 1.11.1
+ninja_required_version = 1.13.0
 
 $builddir = .build
 

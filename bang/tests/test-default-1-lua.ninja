@@ -8,7 +8,7 @@
 #   mrproper   clean generated files and more
 
 builddir = .build
-ninja_required_version = 1.11.1
+ninja_required_version = 1.13.0
 
 $builddir = .build
 
