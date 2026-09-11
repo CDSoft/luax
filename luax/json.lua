@@ -7,7 +7,7 @@ local global_module_name = 'json'
 
 David Kolf's JSON module for Lua 5.1 - 5.5
 
-Version 2.10
+Version 2.11
 
 
 For the documentation see the corresponding readme.txt or visit
@@ -52,7 +52,7 @@ local strrep, gsub, strsub, strbyte, strchar, strfind, strlen, strformat =
 local strmatch = string.match
 local concat = table.concat
 
-local json = { version = "dkjson 2.10" }
+local json = { version = "dkjson 2.11" }
 
 local jsonlpeg = {}
 
@@ -542,7 +542,9 @@ local function scanobject (str, startpos, nullval, objectmeta, arraymeta)
     char = strbyte (str, pos)
     if char ~= 58 then -- ":"
       pos, char = scanwhite (str, pos)
-      if char ~= 58 then
+      if not pos then
+        return unterminated (str, "object", startpos)
+      elseif char ~= 58 then
         return nil, pos, "missing colon at " .. loc (str, pos)
       end
     end
@@ -633,7 +635,9 @@ scanvalue = function (str, pos, nullval, objectmeta, arraymeta)
   local c
   pos, c = scanwhite (str, pos)
 
-  if c == 34 then -- '"'
+  if not pos then
+    return nil, strlen (str) + 1, "no valid JSON value (reached the end)"
+  elseif c == 34 then -- '"'
     return scanstring (str, pos)
   elseif c == 123 then -- "{"
     return scanobject (str, pos, nullval, objectmeta, arraymeta)
@@ -647,8 +651,6 @@ scanvalue = function (str, pos, nullval, objectmeta, arraymeta)
     return scanliteral (str, pos, "false", false)
   elseif c == 110 then -- "n"
     return scanliteral (str, pos, "null", nullval)
-  elseif not pos then
-    return nil, strlen (str) + 1, "no valid JSON value (reached the end)"
   else
     return scaninvalid (str, pos)
   end
