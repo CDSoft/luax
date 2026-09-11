@@ -29,7 +29,7 @@ update_all()
     update_lua          5.5.1
     #update_lua-git      master
     #update_lua-git      v5.5.0
-    update_lcomplex     100
+    update_lcomplex     101
     update_limath       106
     update_lqmath       110
     update_lmathx

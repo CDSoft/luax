@@ -2,18 +2,11 @@
 * mycompat.h
 * cross-version compatibility and convenience macros for my Lua libraries
 * Luiz Henrique de Figueiredo <lhf@tecgraf.puc-rio.br>
-* 26 Jul 2018 17:53:25
+* 25 Jul 2018 11:16:12
 * This code is hereby placed in the public domain and also under the MIT license
 */
 
 /* compatibility macros */
-
-#if LUA_VERSION_NUM <= 502
-
-#undef  l_mathop
-#define l_mathop(op)	op
-
-#endif
 
 #if LUA_VERSION_NUM <= 501
 

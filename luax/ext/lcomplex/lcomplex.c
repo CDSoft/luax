@@ -1,8 +1,8 @@
 /*
 * lcomplex.c
-* C99 complex numbers for Lua 5.3
+* C99 complex numbers for Lua
 * Luiz Henrique de Figueiredo <lhf@tecgraf.puc-rio.br>
-* 26 Jul 2018 17:57:06
+* 10 Sep 2026 13:18:05
 * This code is hereby placed in the public domain and also under the MIT license
 */
 
@@ -12,20 +12,43 @@
 #include "lauxlib.h"
 #include "mycompat.h"
 
+#if LUA_VERSION_NUM <= 502
+#undef  l_mathop
+#define l_mathop(op)	op
+#endif
+
 #define Complex		LUA_NUMBER complex
 #define MYNAME		"complex"
 #define MYTYPE		MYNAME " number"
-#define MYVERSION	MYTYPE " library for " LUA_VERSION " / Jul 2018"
+#define MYVERSION	MYTYPE " library for " LUA_VERSION " / Sep 2026"
 
 #define Z(i)		Pget(L,i)
 #define O(i)		luaL_optnumber(L,i,0)
 
-#define cadd(z,w)	((z)+(w))
-#define csub(z,w)	((z)-(w))
-#define cmul(z,w)	((z)*(w))
-#define cdiv(z,w)	((z)/(w))
-#define cneg(z)		(-(z))
-#define cconj		l_mathop(conj)
+#define ADD(z,w)	((z)+(w))
+#define SUB(z,w)	((z)-(w))
+#define MUL(z,w)	((z)*(w))
+#define DIV(z,w)	((z)/(w))
+#define NEG(z)		(-(z))
+
+#define cadd		ADD
+#define caddf		ADD
+#define caddl		ADD
+#define csub		SUB
+#define csubf		SUB
+#define csubl		SUB
+#define cmul		MUL
+#define cmulf		MUL
+#define cmull		MUL
+#define cdiv		DIV
+#define cdivf		DIV
+#define cdivl		DIV
+#define cneg		NEG
+#define cnegf		NEG
+#define cnegl		NEG
+#define cconj		conj
+#define cconjf		conj
+#define cconjl		conj
 
 static Complex Pget(lua_State *L, int i)
 {
@@ -56,8 +79,8 @@ static int Leq(lua_State *L)			/** __eq(z,w) */
 static int Ltostring(lua_State *L)		/** tostring(z) */
 {
  Complex z=Z(1);
- LUA_NUMBER x=creal(z);
- LUA_NUMBER y=cimag(z);
+ LUA_NUMBER x=l_mathop(creal)(z);
+ LUA_NUMBER y=l_mathop(cimag)(z);
  lua_settop(L,0);
  if (x!=0 || y==0) lua_pushnumber(L,x);
  if (y!=0)
