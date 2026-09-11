@@ -38,13 +38,15 @@ local pack = string.pack
 local unpack = string.unpack
 
 local inf <const> = 1/0
+local fp_norm_min <const> = 2.2250738585072014e-308
+local fp_norm_max <const> = 1.7976931348623157e308
 
 ---@diagnostic disable:unused-vararg
 local function ni(f) return function(...) error(f.." not implemented") end end
 
 local function sign(x) return x < 0 and -1 or 1 end
 
-mathx.fabs = math.abs
+mathx.abs = math.abs
 mathx.acos = math.acos
 mathx.acosh = function(x) return log(x + (x^2-1)^0.5) end
 mathx.asin = math.asin
@@ -63,12 +65,21 @@ mathx.erfc = ni "erfc"
 mathx.exp = math.exp
 mathx.exp2 = function(x) return 2^x end
 mathx.expm1 = function(x) return exp(x)-1 end
+mathx.fabs = math.abs
 mathx.fdim = function(x, y) return max(x-y, 0) end
 mathx.floor = math.floor
 mathx.fma = function(x, y, z) return x*y + z end
 mathx.fmax = math.max
 mathx.fmin = math.min
 mathx.fmod = math.fmod
+mathx.fpclassify = function(x)
+    if x ~= x then return "nan" end
+    x = abs(x)
+    if x > fp_norm_max then return "inf" end
+    if x >= fp_norm_min then return "normal" end
+    if x > 0.0 then return "surnormal" end
+    return "zero"
+end
 mathx.frexp = function(x)
     if x == 0 then return 0, 0 end
     local ax = abs(x)
@@ -87,7 +98,7 @@ end
 mathx.isfinite = function(x) return abs(x) < inf end
 mathx.isinf = function(x) return abs(x) == inf end
 mathx.isnan = function(x) return x ~= x end
-mathx.isnormal = ni "isnormal"
+mathx.isnormal = function(x) x = abs(x); return fp_norm_min <= x and x <= fp_norm_max end
 mathx.ldexp = function(x, e) return x*2^e end
 mathx.lgamma = ni "lgamma"
 mathx.log = math.log
@@ -120,8 +131,14 @@ mathx.nextafter = function(x, y)
 end
 mathx.pow = function(x, y) return x^y end
 mathx.rad = math.rad
+mathx.remainder = ni "remainder"
+mathx.remquo = ni "remquo"
+mathx.rint = ni "rint"
 mathx.round = function(x) return x >= 0 and floor(x+0.5) or ceil(x-0.5) end
 mathx.scalbn = ni "scalbn"
+mathx.signbit = function(x)
+    return unpack("I8", pack("d", x)) & 0x8000000000000000 ~= 0
+end
 mathx.sin = math.sin
 mathx.sinh = function(x) return (exp(x)-exp(-x))/2 end
 mathx.sqrt = math.sqrt

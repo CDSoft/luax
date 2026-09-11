@@ -32,7 +32,7 @@ update_all()
     update_lcomplex     101
     update_limath       106
     update_lqmath       110
-    update_lmathx
+    update_lmathx       100
     update_lpeg         1.1.0
     update_argparse     master
     update_serpent      master
@@ -165,8 +165,9 @@ update_lqmath()
 
 update_lmathx()
 {
-    local LMATHX_ARCHIVE=lmathx.tar.gz
-    local LMATHX_URL="https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/5.3/$LMATHX_ARCHIVE"
+    local LMATHX_VERSION="$1"
+    local LMATHX_ARCHIVE=lmathx-$LMATHX_VERSION.tar.gz
+    local LMATHX_URL="https://web.tecgraf.puc-rio.br/~lhf/ftp/lua/ar/$LMATHX_ARCHIVE"
     rm -rf "$TMP/mathx"
     download "$LMATHX_URL" "$TMP/$LMATHX_ARCHIVE"
     rm -rf "$ROOT/luax/ext/mathx"

@@ -86,6 +86,7 @@ end
 local function test_module(mathx)
 
     for x = -10, 10, 0.25 do
+        eq(mathx.abs(x), math.abs(x))
         eq(mathx.fabs(x), math.abs(x))
         eq(mathx.cbrt(x), cbrt(x))
         eq(mathx.ceil(x), math.ceil(x))
@@ -135,9 +136,6 @@ local function test_module(mathx)
         end
         if x > 0 then
             eq(mathx.log(x), math.log(x))
-            for y = 2, 10 do
-                eq(mathx.log(x, y), math.log(x, y))
-            end
             eq(mathx.log10(x), math.log(x, 10))
             eq(mathx.log1p(x), math.log(1+x))
             eq(mathx.log2(x), math.log(x, 2))
@@ -169,6 +167,7 @@ local function test_module(mathx)
         end
         eq(mathx.round(x), x >= 0 and math.floor(x+0.5) or math.ceil(x-0.5))
         eq(mathx.rad(x), math.rad(x))
+        eq(mathx.signbit(x), x < 0.0)
         eq(mathx.sin(x), math.sin(x))
         if x >= 0 then
             eq(mathx.sqrt(x), math.sqrt(x))
