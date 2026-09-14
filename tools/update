@@ -18,33 +18,30 @@
 # For further information about luax you can visit
 # https://codeberg.org/cdsoft/luax
 
-set -ex
+set -e
 
 ROOT=$(git rev-parse --show-toplevel)
 TMP=$ROOT/.cache/update
 mkdir -p "$TMP"
 
-update_all()
-{
-    update_lua          5.5.1
-    #update_lua-git      master
-    #update_lua-git      v5.5.0
-    update_lcomplex     101
-    update_limath       106
-    update_lqmath       110
-    update_lmathx       100
-    update_lpeg         1.1.0
-    update_argparse     master
-    update_serpent      master
-    update_cbor
-    update_linenoise    master
-    update_dkjson       2.11
-    update_toml         1.0.0
-    update_tinyyaml     master
-    update_luasocket    3.1.0
-    update_lz4          release
-    update_lzlib        1.16
-}
+MODS=(
+    lua         5.5.1
+    complex     101
+    imath       106
+    qmath       110
+    mathx       100
+    lpeg        1.1.0
+    argparse    master
+    serpent     master
+    cbor        ""
+    linenoise   master
+    dkjson      2.11
+    toml        1.0.0
+    yaml        master
+    luasocket   3.1.0
+    lz4         release
+    lzlib       1.16
+)
 
 found()
 {
@@ -111,7 +108,7 @@ update_lua-git()
     patch_lua "$LUA_VERSION"
 }
 
-update_lcomplex()
+update_complex()
 {
     local LCOMPLEX_VERSION="$1"
     local LCOMPLEX_ARCHIVE="lcomplex-$LCOMPLEX_VERSION.tar.gz"
@@ -124,7 +121,7 @@ update_lcomplex()
     cp "$TMP"/lcomplex/*.[ch] "$ROOT/luax/ext/lcomplex/"
 }
 
-update_limath()
+update_imath()
 {
     local LIMATH_VERSION="$1"
     local LIMATH_ARCHIVE="limath-$LIMATH_VERSION.tar.gz"
@@ -138,7 +135,7 @@ update_limath()
     cp "$TMP"/limath/src/*.[ch] "$ROOT/luax/ext/limath/"
 }
 
-update_lqmath()
+update_qmath()
 {
     local LQMATH_VERSION="$1"
     local LQMATH_ARCHIVE="lqmath-$LQMATH_VERSION.tar.gz"
@@ -163,7 +160,7 @@ update_lqmath()
     rm "$ROOT/luax/ext/lqmath"/imath.[ch]
 }
 
-update_lmathx()
+update_mathx()
 {
     local LMATHX_VERSION="$1"
     local LMATHX_ARCHIVE=lmathx-$LMATHX_VERSION.tar.gz
@@ -390,7 +387,7 @@ EOF
     rm -f "$ROOT/luax/toml.lua.orig"
 }
 
-update_tinyyaml()
+update_yaml()
 {
     local YAML_REPO=zepinglee/lua-tinyyaml
     local YAML_VERSION="$1"
@@ -487,4 +484,53 @@ update_lzlib()
     cp "$TMP/lzlib-$LZLIB_VERSION"/fast_encoder.{c,h} "$ROOT/luax/ext/lzlib/inc"
 }
 
-update_all
+title()
+{
+    local NAME="$1"
+    local VERSION="$2"
+    echo "======================================="
+    echo "= $NAME $VERSION"
+    echo "======================================="
+}
+
+case "$1" in
+    "")
+        echo "modules      version"
+        echo "------------ -------"
+        i=0
+        while [ -n "${MODS[$i]}" ]; do
+            printf "%-12s %s\n" "${MODS[$i]}" "${MODS[$((i+1))]}"
+            i=$((i+2))
+        done
+        ;;
+    all)
+        i=0
+        while [ -n "${MODS[$i]}" ]; do
+            title "${MODS[$i]}" "${MODS[$((i+1))]}"
+            set -x
+            update_"${MODS[$i]}" "${MODS[$((i+1))]}"
+            set +x
+            i=$((i+2))
+        done
+        ;;
+    *)
+        while [ -n "$1" ]; do
+            i=0
+            while [ -n "${MODS[$i]}" ]; do
+                if [ "${MODS[$i]}" = "$1" ]; then
+                    title "${MODS[$i]}" "${MODS[$((i+1))]}"
+                    set -x
+                    update_"${MODS[$i]}" "${MODS[$((i+1))]}"
+                    set +x
+                    break
+                fi
+                i=$((i+2))
+            done
+            if [ -z "${MODS[$i]}" ]; then
+                echo "Unknown module: $1"
+                exit 1;
+            fi
+            shift
+        done
+        ;;
+esac
