@@ -45,7 +45,7 @@ require "build-luax"
 require "build-bang"
 require "build-ypp"
 require "build-releases" -- must be called after luax, bang and ypp
-require "build-xref" -- must be called last, once all dependencies are known
+require "build-xref"
 
 section "Ninja targets"
 

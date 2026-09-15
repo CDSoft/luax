@@ -28,7 +28,7 @@ release = {
         return build.tar(archive_dist..".tar.xz") {
             base = archive_build:dirname(),
             name = archive_build:basename(),
-            implicit_in = release,
+            implicit_in = "release",
         }
     end),
     (function()
@@ -36,7 +36,7 @@ release = {
         return build.tar(archive_dist..".tar.xz") {
             base = archive_build:dirname(),
             name = archive_build:basename(),
-            implicit_in = release,
+            implicit_in = "release",
         }
     end)(),
 }

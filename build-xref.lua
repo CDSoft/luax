@@ -29,7 +29,7 @@ if has.req then
     acc(xref) {
         build "$builddir/xref.txt" {
             command = "req -g -f -o $out || req -g -f",
-            implicit_in = { compile, test, doc, ls "build*.lua", ls "tools/**" },
+            implicit_in = { "compile", "test", "doc", ls "build*.lua", ls "tools/**" },
             pool = "console",
         }
     }
