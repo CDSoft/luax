@@ -399,7 +399,7 @@ after the `%i` tag (e.g.: `%i.xyz`).
 Some render commands are predefined.
 For each render `X` (which produces images in the default format)
 there are 3 other render commands `X.svg`, `X.png` and `X.pdf` which explicitely specify the image format.
-They can be used similaryly to `image`: `X(source)`.
+They can be used similarly to `image`: `X(source)`.
 
 An optional table can be given before `source` to set some options:
 
