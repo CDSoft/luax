@@ -169,6 +169,7 @@ local loaders = F(targets) : map(function(target)
             macos   = "-DLUA_USE_MACOSX",
             windows = {},
         },
+        "-DLUA_COMPAT_MATHLIB",
         when(args.d) {
             "-DLUAI_ASSERT",
             "-DLUA_USE_APICHECK",
