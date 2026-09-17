@@ -353,7 +353,8 @@ index ef81455..b26e867 100644
 
 -
 +local F = require "F"
- local _unpack = unpack or table.unpack
+-local _unpack = unpack or table.unpack
++local _unpack = table.unpack
  local _tointeger = math.tointeger or tonumber
 
 @@ -1450,7 +1450,7 @@ local function encode_element(element, allow_multiline_strings)
