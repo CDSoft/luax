@@ -28,16 +28,6 @@ local UNESCAPES = {
 
 -------------------------------------------------------------------------------
 -- utils
-local function select(list, pred)
-  local selected = {}
-  for i = 0, #list do
-    local v = list[i]
-    if v and pred(v, i) then
-      tinsert(selected, v)
-    end
-  end
-  return selected
-end
 
 local function startswith(haystack, needle)
   return ssub(haystack, 1, #needle) == needle
@@ -107,7 +97,7 @@ function types.timestamp:__init(y, m, d, h, i, s, f, z)
   self.minute = tonumber(i or 0)
   self.second = tonumber(s or 0)
   if type(f) == 'string' and sfind(f, '^%d+$') then
-    self.fraction = tonumber(f) * math.pow(10, 3 - #f)
+    self.fraction = tonumber(f) * 10^(3 - #f)
   elseif f then
     self.fraction = f
   else
