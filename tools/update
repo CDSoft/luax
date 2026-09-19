@@ -522,28 +522,51 @@ title()
 {
     local NAME="$1"
     local VERSION="$2"
+    echo -e '\033[0;32m'
     echo "======================================="
     echo "= $NAME $VERSION"
     echo "======================================="
+    echo -e '\033[0m'
+}
+
+run()
+{
+    local i="$1"
+    title "${MODS[$i]}" "${MODS[$((i+1))]}"
+    set -x
+    update_"${MODS[$i]}" "${MODS[$((i+1))]}"
+    set +x
 }
 
 case "$1" in
     "")
-        echo "modules      version"
-        echo "------------ -------"
-        i=0
-        while [ -n "${MODS[$i]}" ]; do
-            printf "%-12s %s\n" "${MODS[$i]}" "${MODS[$((i+1))]}"
-            i=$((i+2))
-        done
+        if ! hash fzf 2>/dev/null; then
+            echo "modules      version"
+            echo "------------ -------"
+            i=0
+            while [ -n "${MODS[$i]}" ]; do
+                printf "%-12s %s\n" "${MODS[$i]}" "${MODS[$((i+1))]}"
+                i=$((i+2))
+            done
+        else
+            idx=$(
+                i=0
+                while [ -n "${MODS[$i]}" ]; do
+                    printf "%2d  %-12s %s\n" $((i/2+1)) "${MODS[$i]}" "${MODS[$((i+1))]}"
+                    i=$((i+2))
+                done | fzf --layout=reverse --border --border-label=" LuaX module to update " --height=~-1 --accept-nth=1
+            )
+            if [ -n "$idx" ]; then
+                run $(((idx-1)*2))
+            fi
+        fi
         ;;
     all)
         i=0
         while [ -n "${MODS[$i]}" ]; do
-            title "${MODS[$i]}" "${MODS[$((i+1))]}"
-            set -x
-            update_"${MODS[$i]}" "${MODS[$((i+1))]}"
-            set +x
+            case "${MODS[$((i+1))]}" in
+                master|release|"") run $i ;;
+            esac
             i=$((i+2))
         done
         ;;
@@ -552,10 +575,7 @@ case "$1" in
             i=0
             while [ -n "${MODS[$i]}" ]; do
                 if [ "${MODS[$i]}" = "$1" ]; then
-                    title "${MODS[$i]}" "${MODS[$((i+1))]}"
-                    set -x
-                    update_"${MODS[$i]}" "${MODS[$((i+1))]}"
-                    set +x
+                    run $i
                     break
                 fi
                 i=$((i+2))
