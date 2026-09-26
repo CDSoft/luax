@@ -844,15 +844,14 @@ local function cmd_compile()
                 local u=rq("_".."c".."r".."y".."p".."t")["a".."r".."c".."4"]
                 return l($(uc)(u($(b),$(k))))()
             ]===])
-            code = compile_bytecode(code, opt, F.take(1, names))
         elseif opt.compression then
             code = compact(F.I { b=escape(code), uc=uncompress } [===[
                 local g=_G
                 local rq,l=g["r".."e".."q".."u".."i".."r".."e"],g["l".."o".."a".."d"]
                 return l($(uc)($(b)))()
             ]===])
-            code = compile_bytecode(code, opt, F.take(1, names))
         end
+        code = compile_bytecode(code, opt, F.take(1, names))
 
         return code
     end
@@ -1112,6 +1111,7 @@ local function cmd_compile()
         log("target", "%s", interpreter.name)
         log("output", "%s", current_output)
 
+        local to_luax = interpreter.name:match"luax"
         local files = bundle {
             scripts = scripts,
             add_luax_runtime = interpreter.add_luax_runtime,
@@ -1119,9 +1119,9 @@ local function cmd_compile()
             add_shebang = interpreter.add_shebang,
             output = current_output,
             target = interpreter.name,
-            bytecode = interpreter.name:match"luax" and bytecode,           -- bytecode for LuaX only
-            strip = bytecode and strip,                                     -- only strip bytecode
-            compression = interpreter.name:match"luax" and compression,     -- compression for LuaX only
+            bytecode = to_luax and bytecode,        -- bytecode for LuaX only
+            strip = bytecode and strip,             -- only strip bytecode
+            compression = to_luax and compression,  -- compression for LuaX only
             key = key,
         }
 
