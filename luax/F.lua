@@ -4301,7 +4301,7 @@ s:split(sep, maxsplit, plain)
 @@@]]
 
 s_split = function(s, sep, maxsplit, plain)
-    assert(sep and sep ~= "")
+    assert(sep and sep ~= "", "string.split: the separator can not be empty")
     maxsplit = maxsplit or (1/0)
     local items = {}
     if #s > 0 then
@@ -4594,7 +4594,7 @@ do
 local interpolator_mt = {}
 
 function interpolator_mt:__mod(pattern)
-    assert(type(pattern)=="string" and #pattern>=3)
+    assert(type(pattern)=="string" and #pattern>=3, "string with at least 3 chars expected")
     return setmetatable({
         pattern = s_gsub(pattern, "^(.+)(.)(.)$", "%1(%%b%2%3)"),
         env = self.env,
@@ -4774,7 +4774,7 @@ function F.validate(schema, input, options)
 
         -- check enumerations
         if t[1] == "enum" then
-            local vs = assert(F.tail(t))
+            local vs = F.tail(t)
             for _, vi in pairs(vs) do
                 if v == vi then return end
             end
@@ -4784,7 +4784,7 @@ function F.validate(schema, input, options)
 
         -- check unions
         if t[1] == "union" then
-            local ts = assert(F.tail(t))
+            local ts = F.tail(t)
             for _, ti in pairs(ts) do
                 local l_errs = {}
                 walk(ti, v, path, l_errs)
