@@ -1832,6 +1832,8 @@ local function string_functions()
     eq(("/ab/cd/efg/hij"):split("/", 2), {"","ab","cd/efg/hij"})
     eq(("abcz+defzzzghi"):split("z+", nil, false), {"abc","+def","ghi"})
     eq(("abcz+defzzzghi"):split("z+", nil, true), {"abc","defzzzghi"})
+    eq((""):split("/"), {})
+    eq(("ab"):split("/"), {"ab"})
 
     eq(("aa bb cc\ndd ee ff\nhh ii jj"):lines(), {"aa bb cc","dd ee ff","hh ii jj"})
     eq(("\naa bb cc\ndd ee ff\nhh ii jj\n"):lines(), {"","aa bb cc","dd ee ff","hh ii jj"})
