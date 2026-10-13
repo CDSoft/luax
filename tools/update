@@ -27,7 +27,7 @@ mkdir -p "$TMP"
 MODS=(
     lua         5.5.1
     complex     101
-    imath       106
+    imath       107
     qmath       110
     mathx       100
     lpeg        1.1.0
@@ -133,6 +133,7 @@ update_imath()
     tar -xaf "$TMP/$LIMATH_ARCHIVE" -C "$TMP/limath" --exclude=Makefile --exclude=test.lua --strip-components=1
     cp "$TMP"/limath/*.[ch] "$ROOT/luax/ext/limath/"
     cp "$TMP"/limath/src/*.[ch] "$ROOT/luax/ext/limath/"
+    rm -f "$ROOT/luax/ext/limath/pi.c"
 }
 
 update_qmath()
