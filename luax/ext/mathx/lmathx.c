@@ -2,11 +2,10 @@
 * lmathx.c
 * C99 math functions for Lua
 * Luiz Henrique de Figueiredo <lhf@tecgraf.puc-rio.br>
-* 04 Sep 2026 08:21:11
+* 07 Oct 2026 20:10:04
 * This code is hereby placed in the public domain and also under the MIT license
 */
 
-#define _GNU_SOURCE 1
 #include <math.h>
 
 #include "lua.h"
@@ -19,7 +18,7 @@
 #endif
 
 #define MYNAME		"mathx"
-#define MYVERSION	MYNAME " library for " LUA_VERSION " / Sep 2026"
+#define MYVERSION	MYNAME " library for " LUA_VERSION " / Oct 2026"
 
 #define A(i)	luaL_checknumber(L,i)
 

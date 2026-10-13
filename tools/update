@@ -29,7 +29,7 @@ MODS=(
     complex     101
     imath       107
     qmath       110
-    mathx       100
+    mathx       101
     lpeg        1.1.0
     argparse    master
     serpent     master
