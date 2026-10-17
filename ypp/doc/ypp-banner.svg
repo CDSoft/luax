@@ -1,4 +1,4 @@
-<svg width="1024" height="192" viewBox="0 0 1024 192" data-generator="figure - https://codeberg.org/cdsoft/figure" font-family="Arial, Liberation Sans, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" xmlns="http://www.w3.org/2000/svg">
+<svg width="1024" height="192" viewBox="0 0 1024 192" font-family="Arial, Liberation Sans, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" data-generator="figure - https://codeberg.org/cdsoft/figure" xmlns="http://www.w3.org/2000/svg">
 <!--
 This file is part of LuaX.
 
@@ -50,7 +50,7 @@ https://codeberg.org/cdsoft/luax
 <ellipse rx="90" ry="29.7" fill-opacity="0" stroke="url(#BottomRingGradient)" stroke-width="15"/>
 <circle r="72" fill="url(#PlanetGradient)"/>
 <ellipse rx="90" ry="29.7" fill-opacity="0" stroke="url(#TopRingGradient)" stroke-width="15"/>
-<text dx="0" dy="12" fill="black" stroke="black" stroke-width="1.5" font-size="64">ypp</text>
-<text dx="-3" dy="9" fill="SeaShell" font-size="64">ypp</text>
+<text dx="0" dy="12" font-size="64" fill="black" stroke="black" stroke-width="1.5">ypp</text>
+<text dx="-3" dy="9" font-size="64" fill="SeaShell">ypp</text>
 </g>
 </svg>
