@@ -188,6 +188,8 @@ static int readline_name(lua_State *L)
 readline.read(prompt)
 ```
 > prints `prompt` and returns the string entered by the user.
+> `readline.prompt` implements the OSC 133 shell integration
+> (see <https://tmux.info/docs/whats-new#shell-prompt-marking-osc-133> to use it with tmux).
 @@@*/
 
 static int readline_read(lua_State *L)

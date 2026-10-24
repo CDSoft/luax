@@ -11,6 +11,8 @@ The history can not be saved on Windows.
 linenoise.read(prompt)
 ```
 > prints `prompt` and returns the string entered by the user.
+> `linenoise.prompt` implements the OSC 133 shell integration
+> (see <https://tmux.info/docs/whats-new#shell-prompt-marking-osc-133> to use it with tmux).
 
 ```lua
 linenoise.add(line)

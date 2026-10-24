@@ -143,7 +143,9 @@ is highly recommended for a better user experience on Linux.
 ```lua
 s = term.prompt(p)
 ```
-> prints `p` and waits for a user input
+> prints `p` and waits for a user input.
+> `term.prompt` implements the OSC 133 shell integration
+> (see <https://tmux.info/docs/whats-new#shell-prompt-marking-osc-133> to use it with tmux).
 
 ## Title
 

@@ -20,6 +20,8 @@ readline.name(appname)
 readline.read(prompt)
 ```
 > prints `prompt` and returns the string entered by the user.
+> `readline.prompt` implements the OSC 133 shell integration
+> (see <https://tmux.info/docs/whats-new#shell-prompt-marking-osc-133> to use it with tmux).
 
 ```lua
 readline.add(line)

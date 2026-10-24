@@ -276,15 +276,30 @@ is highly recommended for a better user experience on Linux.
 ```lua
 s = term.prompt(p)
 ```
-> prints `p` and waits for a user input
+> prints `p` and waits for a user input.
+> `term.prompt` implements the OSC 133 shell integration
+> (see <https://tmux.info/docs/whats-new#shell-prompt-marking-osc-133> to use it with tmux).
 @@@]]
 
+local start_prompt = ESC.."]133;A"..ESC.."\\"
+local end_prompt   = ESC.."]133;B"..ESC.."\\"
+local end_input    = ESC.."]133;C"..ESC.."\\"
+local end_output   = ESC.."]133;D"..ESC.."\\"
+
 function term.prompt(p)
-    if p and term.isatty(io.stdin) then
-        io.stdout:write(p)
-        io.stdout:flush()
+    local isatty = term.isatty(io.stdin)
+    if isatty then
+        io.stdout:write(end_output, start_prompt)
+        if p then
+            io.stdout:write(p)
+            io.stdout:flush()
+        end
+        io.stdout:write(end_prompt)
     end
     local ok, line = pcall(io.stdin.read, io.stdin, "l")
+    if isatty then
+        io.stdout:write(end_input)
+    end
     return ok and line or nil
 end
 

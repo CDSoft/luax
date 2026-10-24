@@ -20,10 +20,32 @@ https://codeberg.org/cdsoft/luax
 
 --@LIB
 
-local has_readline, readline = pcall(require, "_readline")
-if has_readline then return readline end
+local term = require "term"
 
-local read = require "term".prompt
-local function nop() return nop end
+local has_M, M = pcall(require, "_readline")
 
-return setmetatable({read=read}, {__index=nop})
+if not has_M then
+    local function nop() return nop end
+    return setmetatable({read=term.prompt}, {__index=nop})
+end
+
+local start_prompt = "\027]133;A\027\\"
+local end_prompt   = "\027]133;B\027\\"
+local end_input    = "\027]133;C\027\\"
+local end_output   = "\027]133;D\027\\"
+
+local read = M.read
+
+function M.read(p)
+    local isatty = term.isatty(io.stdin)
+    if isatty then
+        io.stdout:write(end_output, start_prompt)
+    end
+    local line = read(p)
+    if isatty then
+        io.stdout:write(end_prompt, end_input)
+    end
+    return line
+end
+
+return M
