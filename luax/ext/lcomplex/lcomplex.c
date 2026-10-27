@@ -2,7 +2,7 @@
 * lcomplex.c
 * C99 complex numbers for Lua
 * Luiz Henrique de Figueiredo <lhf@tecgraf.puc-rio.br>
-* 10 Sep 2026 13:18:05
+* 21 Oct 2026 10:53:26
 * This code is hereby placed in the public domain and also under the MIT license
 */
 
@@ -20,10 +20,10 @@
 #define Complex		LUA_NUMBER complex
 #define MYNAME		"complex"
 #define MYTYPE		MYNAME " number"
-#define MYVERSION	MYTYPE " library for " LUA_VERSION " / Sep 2026"
+#define MYVERSION	MYTYPE " library for " LUA_VERSION " / Oct 2026"
 
 #define Z(i)		Pget(L,i)
-#define O(i)		luaL_optnumber(L,i,0)
+#define O(i)		luaL_optnumber(L,i,0.0)
 
 #define ADD(z,w)	((z)+(w))
 #define SUB(z,w)	((z)-(w))
@@ -82,20 +82,17 @@ static int Ltostring(lua_State *L)		/** tostring(z) */
  LUA_NUMBER x=l_mathop(creal)(z);
  LUA_NUMBER y=l_mathop(cimag)(z);
  lua_settop(L,0);
- if (x!=0 || y==0) lua_pushnumber(L,x);
- if (y!=0)
- {
-  if (y==1)
-  {
-   if (x!=0) lua_pushliteral(L,"+");
-  }
-  else if (y==-1)
+ if (x!=0.0 || y==0.0) 
+  lua_pushnumber(L,x);
+ if (y!=0.0) {
+  if (x!=0.0 && y>0.0)
+   lua_pushliteral(L,"+");
+  else if (y<0.0) {
    lua_pushliteral(L,"-");
-  else
-  {
-   if (y>0 && x!=0) lua_pushliteral(L,"+");
-   lua_pushnumber(L,y);
+   y=-y;
   }
+  if (y!=1.0)
+   lua_pushnumber(L,y);
   lua_pushliteral(L,"i");
  }
  lua_concat(L,lua_gettop(L));
@@ -142,7 +139,9 @@ static const luaL_Reg R[] =
 	{ "__div",	Ldiv	},
 	{ "__eq",	Leq	},
 	{ "__mul",	Lmul	},
+	{ "__pow",	Lpow	},		/** __pow(z,w) */
 	{ "__sub",	Lsub	},
+	{ "__tostring",	Ltostring},		/** __tostring(z) */
 	{ "__unm",	Lneg	},
 	{ "abs",	Labs	},
 	{ "acos",	Lacos	},
@@ -183,14 +182,6 @@ LUALIB_API int luaopen_complex(lua_State *L)
  lua_settable(L,-3);
  lua_pushliteral(L,"I");			/** I */
  Pnew(L,I);
- lua_settable(L,-3);
- lua_pushliteral(L,"__pow");			/** __pow(z,w) */
- lua_pushliteral(L,"pow");
- lua_gettable(L,-3);
- lua_settable(L,-3);
- lua_pushliteral(L,"__tostring");		/** __tostring(z) */
- lua_pushliteral(L,"tostring");
- lua_gettable(L,-3);
  lua_settable(L,-3);
  return 1;
 }

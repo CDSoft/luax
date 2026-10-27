@@ -26,7 +26,7 @@ mkdir -p "$TMP"
 
 MODS=(
     lua         5.5.1
-    complex     101
+    complex     102
     imath       107
     qmath       110
     mathx       101
