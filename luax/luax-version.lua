@@ -11,6 +11,11 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
+Software freedom is inseparable from freedom of thought. Fascism -
+in all its forms - is incompatible with the values this project stands
+on, even though the GPL itself cannot and does not restrict who may
+use this software. See FREEDOM.md.
+
 You should have received a copy of the GNU General Public License
 along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -22,7 +27,7 @@ https://codeberg.org/cdsoft/luax
 
 -- [tag:luax-version]
 
-local version = "10.12.0"
+local version = "11.0.0"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"

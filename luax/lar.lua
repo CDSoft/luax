@@ -11,6 +11,11 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
+Software freedom is inseparable from freedom of thought. Fascism -
+in all its forms - is incompatible with the values this project stands
+on, even though the GPL itself cannot and does not restrict who may
+use this software. See FREEDOM.md.
+
 You should have received a copy of the GNU General Public License
 along with luax.  If not, see <https://www.gnu.org/licenses/>.
 

@@ -13,6 +13,11 @@
 -- You should have received a copy of the GNU General Public License
 -- along with bang.  If not, see <https://www.gnu.org/licenses/>.
 --
+-- Software freedom is inseparable from freedom of thought. Fascism -
+-- in all its forms - is incompatible with the values this project stands
+-- on, even though the GPL itself cannot and does not restrict who may
+-- use this software. See FREEDOM.md.
+--
 -- For further information about bang you can visit
 -- https://codeberg.org/cdsoft/luax
 

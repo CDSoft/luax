@@ -11,6 +11,11 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
+Software freedom is inseparable from freedom of thought. Fascism -
+in all its forms - is incompatible with the values this project stands
+on, even though the GPL itself cannot and does not restrict who may
+use this software. See FREEDOM.md.
+
 You should have received a copy of the GNU General Public License
 along with luax.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -35,14 +40,14 @@ return function()
 @$test-luax:luax/tests/luax-tests/lib.lua says: Hello World
 Traceback test
 stack traceback:
-    $test-luax:luax/tests/luax-tests/lib.lua:25: in function 'lib.hello'
-    $test-luax:luax/tests/luax-tests/require_test.lua:32: in function 'require_test']],
+    $test-luax:luax/tests/luax-tests/lib.lua:30: in function 'lib.hello'
+    $test-luax:luax/tests/luax-tests/require_test.lua:37: in function 'require_test']],
         ["Lua 5.5"] = [[
 @$test-luax:luax/tests/luax-tests/lib.lua says: Hello World
 Traceback test
 stack traceback:
-    $test-luax:luax/tests/luax-tests/lib.lua:25: in field 'hello'
-    $test-luax:luax/tests/luax-tests/require_test.lua:32: in function 'require_test']],
+    $test-luax:luax/tests/luax-tests/lib.lua:30: in field 'hello'
+    $test-luax:luax/tests/luax-tests/require_test.lua:37: in function 'require_test']],
     }
 
     local test_num = tonumber(os.getenv "TEST_NUM")
