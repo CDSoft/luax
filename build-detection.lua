@@ -26,6 +26,7 @@ https://codeberg.org/cdsoft/luax
 local F = require "F"
 local fs = require "fs"
 local sh = require "sh"
+local sys = require "sys"
 
 local has = {}
 
@@ -54,9 +55,11 @@ has.req = fs.findpath "req" ~= nil
 -- 32-bit support detection
 -------------------------------------------------------------------------------
 
-local test32 = vars%"$cache/test32" -- installed by [ref:lua_bootstrap]
+local test32 = vars%"$cache/test32" -- installed by [ref:test32]
 
-has.x86_support = sh.run { test32, "2>/dev/null" } == true
+has.x86_support =
+    sys.os == "linux" and sys.arch == "x86_64" and
+    sh.run { test32, "2>/dev/null" } == true
 
 -------------------------------------------------------------------------------
 -- Return the feature table

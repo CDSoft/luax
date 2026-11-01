@@ -88,15 +88,17 @@ if [ "$NEW_MD5" != "$OLD_MD5" ]; then
 fi
 
 ##############################################################################
-# 32-bit support tester
+# 32-bit support tester [tag:test32]
 ##############################################################################
 
+FLAGS=( -O ReleaseSmall -fno-unwind-tables -fsingle-threaded )
+
 OLD_MD5=$(cat $TEST32.md5 2>/dev/null || true)
-NEW_MD5=$(cat tools/test32.c | md5sum)
+NEW_MD5=$(cat tools/test32.zig | md5sum)
 if [ "$NEW_MD5" != "$OLD_MD5" ]; then
     echo "Compiling $TEST32"
     mkdir -p "$(dirname $TEST32)"
-    $ZIG cc -target x86-linux-musl -static -Os -s tools/test32.c -o $TEST32
+    $ZIG build-exe tools/test32.zig -target x86-linux-musl "${FLAGS[@]}" -femit-bin=$TEST32
     echo "$NEW_MD5" > $TEST32.md5
 fi
 
