@@ -26,7 +26,7 @@
 set -eu
 
 ZIG="$1"
-ZIG_VERSION="0.17.0"
+ZIG_VERSION="0.17.1"
 ZIG_KEY="RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U"
 REQUEST_SOURCE="codeberg.org-cdsoft-luax"
 
