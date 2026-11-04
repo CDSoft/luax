@@ -27,7 +27,7 @@ https://codeberg.org/cdsoft/luax
 
 -- [tag:luax-version]
 
-local version = "11.0.0"
+local version = "11.0.1"
 local year = 2026
 local url = "codeberg.org/cdsoft/luax"
 local author = "Christophe Delord"
