@@ -146,6 +146,7 @@ local luax_cflags = build.compile_flags {
     "-Wno-padded",
     "-Wno-reserved-macro-identifier",
     "-Wno-disabled-macro-expansion",
+    "-Wno-documentation",
     "-Wno-documentation-unknown-command",
     "-Wno-declaration-after-statement",
     "-Wno-unsafe-buffer-usage",
