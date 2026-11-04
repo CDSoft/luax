@@ -403,12 +403,22 @@ return function()
     end
     do
         -- compare C and Lua prng implementations
-        local r = crypt.prng(1337, 1)
-        local xs = F.range(16):map(function(_) return r:int() end)
-        eq(xs, {
-            1366936323, 2922103962, 3074544265, 4240721341, 2529631336, 316793424, 2144597218, 2478277350,
-            4254537736, 2560294415, 843227611, 3842418420, 690197939, 2249917264, 3773173077, 3200169535
-        })
+        do
+            local r = crypt.prng(1337, 1) -- odd seed
+            local xs = F.range(16):map(function(_) return r:int() end)
+            eq(xs, {
+                1366936323, 2922103962, 3074544265, 4240721341, 2529631336,  316793424, 2144597218, 2478277350,
+                4254537736, 2560294415,  843227611, 3842418420,  690197939, 2249917264, 3773173077, 3200169535,
+            })
+        end
+        do
+            local r = crypt.prng(1337, 42) -- even seed
+            local xs = F.range(16):map(function(_) return r:int() end)
+            eq(xs, {
+                2215311876, 3130654527, 3341721064, 177035157, 4103711015, 3020143106, 2334176766, 589184759,
+                1480119104, 1819947194, 3211676316, 129374662, 2942575539, 2640685578, 3544609163, 893913103,
+            })
+        end
         eq(crypt.hash "Hello World!", "8c0ec8d1fb9e6e32")
         do
             -- test setting the seed after initialization
