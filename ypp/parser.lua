@@ -155,7 +155,7 @@ end
 
 local SINGLE_QUOTE_STRING = parse_quoted_string "'"
 local DOUBLE_QUOTE_STRING = parse_quoted_string '"'
-local IDENT = token"[%w_]+"
+local IDENT = token"[a-zA-Z_][%w_]*"
 local COLON = token":"
 local DOT   = token"%."
 local EQUAL = token"="
@@ -196,16 +196,18 @@ local LHS = seq {
 
 local RHS = alt {
     token"0[xX]%x+",                -- RHS -> hexadecimal number
+    token"%-?%d+%.%d+[eE]%+%d+",    -- RHS -> real number
     token"%-?%d+%.%d+[eE]%-?%d+",   -- RHS -> real number
+    token"%-?%d+%.[eE]%+%d+",       -- RHS -> real number
     token"%-?%d+%.[eE]%-?%d+",      -- RHS -> real number
+    token"%-?%.%d+[eE]%+%d+",       -- RHS -> real number
     token"%-?%.%d+[eE]%-?%d+",      -- RHS -> real number
+    token"%-?%d+[eE]%+%d+",         -- RHS -> real number
     token"%-?%d+[eE]%-?%d+",        -- RHS -> real number
     token"%-?%d+%.%d+",             -- RHS -> real number
     token"%-?%d+%.",                -- RHS -> real number
     token"%-?%.%d+",                -- RHS -> real number
     token"%-?%d+",                  -- RHS -> integral number
-    token"true",                    -- RHS -> boolean
-    token"false",                   -- RHS -> boolean
     PARENS,                         -- RHS -> (...)
     BRACKETS,                       -- RHS -> {...}
     DOUBLE_QUOTE_STRING,            -- RHS -> "..."
