@@ -48,7 +48,7 @@ for dep in "${DEPS[@]}"; do
 done
 
 if ! $DEPS_FOUND; then
-    echo "Installing dependancies..."
+    echo "Installing dependencies..."
     case $(uname -s) in
         Linux)
             if   found dnf;    then sudo dnf install -y ninja-build curl minisign
