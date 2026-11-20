@@ -249,6 +249,13 @@ crypt.sha256(data)
 ```
 > returns a SHA-256 digest of `data`.
 
+### SHA-512 hash
+
+```lua
+crypt.sha512(data)
+```
+> returns a SHA-512 digest of `data`.
+
 ## Random array access
 
 ```lua
@@ -284,6 +291,7 @@ s:hash64()          == crypt.hash64(s)
 s:hash128()         == crypt.hash128(s)
 s:sha1()            == crypt.sha1(s)
 s:sha256()          == crypt.sha256(s)
+s:sha512()          == crypt.sha512(s)
 s:hash256()         == crypt.hash256(s)
 s:hash512()         == crypt.hash512(s)
 s:hash1024()        == crypt.hash1024(s)

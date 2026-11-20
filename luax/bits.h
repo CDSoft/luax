@@ -30,6 +30,9 @@
 static inline uint32_t rotl32(uint32_t x, size_t n) { return (x << n) | (x >> (32 - n)); }
 static inline uint32_t rotr32(uint32_t x, size_t n) { return (x >> n) | (x << (32 - n)); }
 
+static inline uint64_t rotl64(uint64_t x, size_t n) { return (x << n) | (x >> (64 - n)); }
+static inline uint64_t rotr64(uint64_t x, size_t n) { return (x >> n) | (x << (64 - n)); }
+
 static inline uint32_t load_le32(uint8_t *p)
 {
     return (uint32_t)(p[0]) << (8*0)
@@ -45,6 +48,19 @@ static inline uint32_t load_be32(const uint8_t *p)
          | (uint32_t)(p[1]) << (8*2)
          | (uint32_t)(p[2]) << (8*1)
          | (uint32_t)(p[3]) << (8*0)
+         ;
+}
+
+static inline uint64_t load_be64(const uint8_t *p)
+{
+    return (uint64_t)(p[0]) << (8*7)
+         | (uint64_t)(p[1]) << (8*6)
+         | (uint64_t)(p[2]) << (8*5)
+         | (uint64_t)(p[3]) << (8*4)
+         | (uint64_t)(p[4]) << (8*3)
+         | (uint64_t)(p[5]) << (8*2)
+         | (uint64_t)(p[6]) << (8*1)
+         | (uint64_t)(p[7]) << (8*0)
          ;
 }
 

@@ -45,6 +45,7 @@ local crypt = require "crypt"
 #include "pcg.h"
 #include "sha1.h"
 #include "sha256.h"
+#include "sha512.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -1093,6 +1094,27 @@ static int crypt_sha256(lua_State *L)
     return 1;
 }
 
+/***************************************************************************@@@
+### SHA-512 hash
+
+@@@*/
+
+/*@@@
+```lua
+crypt.sha512(data)
+```
+> returns a SHA-512 digest of `data`.
+@@@*/
+
+static int crypt_sha512(lua_State *L)
+{
+    const char *data = (const char *)luaL_checkstring(L, 1);
+    const size_t datalen = (size_t)lua_rawlen(L, 1);
+    t_sha512_digest_hex digest;
+    sha512_hex(data, datalen, digest);
+    lua_pushstring(L, digest);
+    return 1;
+}
 
 /******************************************************************************
  * Crypt package
@@ -1125,6 +1147,7 @@ static const luaL_Reg crypt_module[] =
     {"hash1024", crypt_hash1024},
     {"sha1", crypt_sha1},
     {"sha256", crypt_sha256},
+    {"sha512", crypt_sha512},
 
     {NULL, NULL}
 };
