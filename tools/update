@@ -32,8 +32,8 @@ mkdir -p "$TMP"
 MODS=(
     lua         5.5.1
     complex     102
-    imath       107
-    qmath       110
+    imath       108
+    qmath       111
     mathx       101
     lpeg        1.1.0
     argparse    master

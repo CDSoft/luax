@@ -63,7 +63,11 @@ local libluax_ext_sources = ls "luax/ext/**.lua"
 
 local luax_c_sources = ls "luax/*.c"
 local lua_c_sources = ls "lua/*.c" : difference { "lua/lua.c" }
-local ext_c_sources = ls "luax/ext/**.c" : difference(ls "luax/ext/lzlib/inc/*.c")
+local ext_c_sources = ls "luax/ext/**.c" : difference(F.flatten {
+    ls "luax/ext/lzlib/inc/*.c",
+    "luax/ext/limath/macros.c",
+    "luax/ext/lqmath/macros.c",
+})
 
 -------------------------------------------------------------------------------
 -- LuaX compilers

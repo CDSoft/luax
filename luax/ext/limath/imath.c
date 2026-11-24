@@ -31,6 +31,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define USE_IMATH_INTERNAL_TEMP_MACROS
+#include "macros.c"  // for temp value handling
+
 const mp_result MP_OK = 0;      /* no error, all is well  */
 const mp_result MP_FALSE = 0;   /* boolean false          */
 const mp_result MP_TRUE = -1;   /* boolean true           */
@@ -130,51 +133,6 @@ static inline mp_size MAX(mp_size A, mp_size B) { return (B > A ? B : A); }
     B = t_;           \
   } while (0)
 
-/* Declare a block of N temporary mpz_t values.
-   These values are initialized to zero.
-   You must add CLEANUP_TEMP() at the end of the function.
-   Use TEMP(i) to access a pointer to the ith value.
- */
-#define DECLARE_TEMP(N)                   \
-  struct {                                \
-    mpz_t value[(N)];                     \
-    int len;                              \
-    mp_result err;                        \
-  } temp_ = {                             \
-      .len = (N),                         \
-      .err = MP_OK,                       \
-  };                                      \
-  do {                                    \
-    for (int i = 0; i < temp_.len; i++) { \
-      mp_int_init(TEMP(i));               \
-    }                                     \
-  } while (0)
-
-/* Clear all allocated temp values. */
-#define CLEANUP_TEMP()                    \
-  CLEANUP:                                \
-  do {                                    \
-    for (int i = 0; i < temp_.len; i++) { \
-      mp_int_clear(TEMP(i));              \
-    }                                     \
-    if (temp_.err != MP_OK) {             \
-      return temp_.err;                   \
-    }                                     \
-  } while (0)
-
-/* A pointer to the kth temp value. */
-#define TEMP(K) (temp_.value + (K))
-
-/* Evaluate E, an expression of type mp_result expected to return MP_OK.  If
-   the value is not MP_OK, the error is cached and control resumes at the
-   cleanup handler, which returns it.
-*/
-#define REQUIRE(E)                        \
-  do {                                    \
-    temp_.err = (E);                      \
-    if (temp_.err != MP_OK) goto CLEANUP; \
-  } while (0)
-
 /* Compare value to zero. */
 static inline int CMPZ(mp_int Z) {
   if (Z->used == 1 && Z->digits[0] == 0) return 0;
@@ -261,7 +219,7 @@ static void s_umul(mp_digit* da, mp_digit* db, mp_digit* dc, mp_size size_a,
                    mp_size size_b);
 
 /* Unsigned recursive squaring.  Assumes dc is big enough. */
-static int s_ksqr(mp_digit* da, mp_digit* dc, mp_size size_a);
+static void s_ksqr(mp_digit* da, mp_digit* dc, mp_size size_a);
 
 /* Unsigned magnitude squaring.  Assumes dc is big enough. */
 static void s_usqr(mp_digit* da, mp_digit* dc, mp_size size_a);
@@ -360,7 +318,7 @@ static inline void USQR(mp_int X, mp_int Z) {
   mp_size ua_ = MP_USED(X);
   mp_size o_ = ua_ + ua_;
   ZERO(MP_DIGITS(Z), o_);
-  (void)s_ksqr(MP_DIGITS(X), MP_DIGITS(Z), ua_);
+  s_ksqr(MP_DIGITS(X), MP_DIGITS(Z), ua_);
   Z->used = o_;
   CLAMP(Z);
 }
@@ -1707,6 +1665,7 @@ static mp_digit* s_realloc(mp_digit* old, mp_size osize, mp_size nsize) {
 
   for (mp_size ix = 0; ix < nsize; ++ix) new[ix] = fill;
   memcpy(new, old, osize * sizeof(mp_digit));
+  free(old);
 #else
   mp_digit* new = realloc(old, nsize * sizeof(mp_digit));
   assert(new != NULL);
@@ -1971,7 +1930,7 @@ static void s_umul(mp_digit* da, mp_digit* db, mp_digit* dc, mp_size size_a,
   }
 }
 
-static int s_ksqr(mp_digit* da, mp_digit* dc, mp_size size_a) {
+static void s_ksqr(mp_digit* da, mp_digit* dc, mp_size size_a) {
   if (multiply_threshold && size_a > multiply_threshold) {
     mp_size bot_size = (size_a + 1) / 2;
     mp_digit* a_top = da + bot_size;
@@ -1979,13 +1938,13 @@ static int s_ksqr(mp_digit* da, mp_digit* dc, mp_size size_a) {
     mp_size at_size = size_a - bot_size;
     mp_size buf_size = 2 * bot_size;
 
-    if ((t1 = s_alloc(4 * buf_size)) == NULL) return 0;
+    if ((t1 = s_alloc(4 * buf_size)) == NULL) return;
     t2 = t1 + buf_size;
     t3 = t2 + buf_size;
     ZERO(t1, 4 * buf_size);
 
-    (void)s_ksqr(da, t1, bot_size);   /* t1 = a0 ^ 2 */
-    (void)s_ksqr(a_top, t2, at_size); /* t2 = a1 ^ 2 */
+    s_ksqr(da, t1, bot_size);   /* t1 = a0 ^ 2 */
+    s_ksqr(a_top, t2, at_size); /* t2 = a1 ^ 2 */
 
     (void)s_kmul(da, a_top, t3, bot_size, at_size); /* t3 = a0 * a1 */
 
@@ -2007,18 +1966,16 @@ static int s_ksqr(mp_digit* da, mp_digit* dc, mp_size size_a) {
     COPY(t1, dc, 2 * bot_size);
     carry = s_uadd(t3, dc + bot_size, dc + bot_size, buf_size + 1, buf_size);
     assert(carry == 0);
-
     carry =
         s_uadd(t2, dc + 2 * bot_size, dc + 2 * bot_size, buf_size, buf_size);
     assert(carry == 0);
+    (void)carry; /* suppress unused warning with NDEBUG */
 
     s_free(t1); /* note that t2 and t2 are internal pointers only */
 
   } else {
     s_usqr(da, dc, size_a);
   }
-
-  return 1;
 }
 
 static void s_usqr(mp_digit* da, mp_digit* dc, mp_size size_a) {
